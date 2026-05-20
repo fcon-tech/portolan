@@ -29,6 +29,16 @@ Branch: `codex/005-black-box-profile`
   `slice1-review-disposition.md`.
 - verified with degraded lanes: `kimi-coding/kimi-for-coding`,
   `minimax/MiniMax-M2.7`, and `zai/glm-5.1` review findings were dispositioned.
+- verified: PR-level review lanes were run after the initial draft closeout.
+  `openrouter/~google/gemini-pro-latest` and `openrouter/qwen/qwen3.6-plus`
+  reported no blocking findings.
+- accepted/fixed: `openrouter/deepseek/deepseek-v4-pro` found that
+  `specs/006-evidence-diff/` was included in the PR diff even though PR #6 is
+  the black-box profile implementation. The unrelated spec was removed from the
+  PR scope and the P1-006 backlog row was moved back to `future` / `Idea`.
+- accepted/documented: duplicate black-box fixtures under root `testdata/` and
+  `internal/app/testdata/` are retained because package tests and repository-root
+  CLI commands run from different working directories.
 
 ## PR State
 
@@ -40,6 +50,7 @@ Branch: `codex/005-black-box-profile`
 - verified before closeout push: GitHub merge state reported `CLEAN`.
 - verified after closeout push: GitHub merge state reported `UNKNOWN`, likely
   while GitHub recalculates the new head.
+- pending refresh: final ready-for-review state after scope fix.
 
 ## GitHub Checks
 
@@ -48,7 +59,7 @@ Branch: `codex/005-black-box-profile`
 
 ## Merge Readiness
 
-- not_integrated: PR is draft and has no GitHub checks to assess.
+- pending refresh: PR draft state after scope fix.
 - not_assessed: human/GitHub approval.
-- stop reason: draft PR created and readiness surfaces recorded; merge requires
-  explicit user approval and any additional PR review cycle the user requests.
+- stop reason: PR-level blocker was found and fixed; final ready-for-review
+  refresh must complete before this PR can be called ready-for-review.
