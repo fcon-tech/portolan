@@ -658,6 +658,223 @@ func TestRunImportCycloneDXOutputSafety(t *testing.T) {
 	})
 }
 
+func TestRunDiffHelpDescribesLocalGraphDiff(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"diff", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	out := stdout.String()
+	for _, want := range []string{"--base", "--head", "--out", "local", "no network", "evidence-state transitions"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout %q does not contain %q", out, want)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunDiffWritesMachineReadableEvidenceDiff(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "diff.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	result := readGraph(t, out)
+	if result["generated_by"] != "portolan" {
+		t.Fatalf("generated_by = %v, want portolan", result["generated_by"])
+	}
+	nodes := result["nodes"].(map[string]any)
+	edges := result["edges"].(map[string]any)
+	for section, want := range map[string]int{"added": 1, "removed": 1, "unchanged": 1, "changed": 1} {
+		if got := len(nodes[section].([]any)); got != want {
+			t.Fatalf("nodes.%s length = %d, want %d: %#v", section, got, want, nodes[section])
+		}
+	}
+	for section, want := range map[string]int{"added": 1, "removed": 1, "unchanged": 1, "changed": 1} {
+		if got := len(edges[section].([]any)); got != want {
+			t.Fatalf("edges.%s length = %d, want %d: %#v", section, got, want, edges[section])
+		}
+	}
+	nodeChange := nodes["changed"].([]any)[0].(map[string]any)
+	if nodeChange["id"] != "api" || nodeChange["evidence_state_transition"] != "unknown -> metadata-visible" {
+		t.Fatalf("node change = %#v, want api evidence-state transition", nodeChange)
+	}
+	edgeChange := edges["changed"].([]any)[0].(map[string]any)
+	if edgeChange["evidence_state_transition"] != "unknown -> metadata-visible" {
+		t.Fatalf("edge change = %#v, want evidence-state transition", edgeChange)
+	}
+}
+
+func TestRunDiffDoesNotEmitReadinessVerdicts(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "diff.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lower := strings.ToLower(string(data))
+	for _, forbidden := range []string{`"readiness"`, `"pass"`, `"fail"`, `"improvement"`, `"degradation"`, `"verdict"`} {
+		if strings.Contains(lower, forbidden) {
+			t.Fatalf("diff output contains forbidden verdict term %q:\n%s", forbidden, data)
+		}
+	}
+}
+
+func TestRunDiffIdenticalInputsAreUnchanged(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "diff.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/base.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	nodes := result["nodes"].(map[string]any)
+	edges := result["edges"].(map[string]any)
+	if got := len(nodes["unchanged"].([]any)); got != 3 {
+		t.Fatalf("nodes.unchanged length = %d, want 3", got)
+	}
+	if got := len(edges["unchanged"].([]any)); got != 3 {
+		t.Fatalf("edges.unchanged length = %d, want 3", got)
+	}
+	for _, section := range []string{"added", "removed", "changed"} {
+		if got := len(nodes[section].([]any)); got != 0 {
+			t.Fatalf("nodes.%s length = %d, want 0", section, got)
+		}
+		if got := len(edges[section].([]any)); got != 0 {
+			t.Fatalf("edges.%s length = %d, want 0", section, got)
+		}
+	}
+}
+
+func TestRunDiffRejectsInvalidInputs(t *testing.T) {
+	root := t.TempDir()
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "bare command",
+			args: []string{"diff"},
+			want: "--base is required",
+		},
+		{
+			name: "missing base",
+			args: []string{"diff", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "diff.json")},
+			want: "--base is required",
+		},
+		{
+			name: "missing head",
+			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--out", filepath.Join(root, "diff.json")},
+			want: "--head is required",
+		},
+		{
+			name: "missing output",
+			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json"},
+			want: "--out is required",
+		},
+		{
+			name: "malformed graph",
+			args: []string{"diff", "--base", "testdata/human-readable-packet/malformed-graph.json", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "malformed.json")},
+			want: "parse graph",
+		},
+		{
+			name: "missing base file",
+			args: []string{"diff", "--base", "testdata/evidence-diff/missing.json", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "missing-base.json")},
+			want: "read base graph",
+		},
+		{
+			name: "missing head file",
+			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/missing.json", "--out", filepath.Join(root, "missing-head.json")},
+			want: "read head graph",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run(tt.args, &stdout, &stderr)
+
+			if code == 0 {
+				t.Fatalf("Run returned 0, want error")
+			}
+			if !strings.Contains(stderr.String(), tt.want) {
+				t.Fatalf("stderr = %q, want %q", stderr.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestRunDiffOutputSafety(t *testing.T) {
+	root := t.TempDir()
+	existing := filepath.Join(root, "diff.json")
+	mustWrite(t, existing, "preserve me")
+
+	t.Run("existing output requires force", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", existing}, &stdout, &stderr)
+		if code == 0 || !strings.Contains(stderr.String(), "--force") {
+			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
+		}
+		data, err := os.ReadFile(existing)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != "preserve me" {
+			t.Fatalf("existing file changed: %q", data)
+		}
+	})
+
+	t.Run("force overwrites existing output", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", existing, "--force"}, &stdout, &stderr)
+		if code != 0 {
+			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
+		}
+		readGraph(t, existing)
+	})
+
+	t.Run("refuses output symlink", func(t *testing.T) {
+		target := filepath.Join(root, "target.json")
+		link := filepath.Join(root, "link.json")
+		mustWrite(t, target, "{}")
+		if err := os.Symlink(target, link); err != nil {
+			t.Skipf("symlink unavailable: %v", err)
+		}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", link, "--force"}, &stdout, &stderr)
+		if code == 0 || !strings.Contains(stderr.String(), "symlink") {
+			t.Fatalf("code = %d stderr = %q, want symlink error", code, stderr.String())
+		}
+	})
+}
+
 func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "graph.json")
 	var stdout bytes.Buffer

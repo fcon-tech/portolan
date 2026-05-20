@@ -24,6 +24,8 @@ Implemented:
   SBOM normalization.
 - Black-box profile scanning from local metadata, runtime export, and claim
   files without source-visible overclaiming.
+- `portolan diff --base <file> --head <file> --out <file>` for
+  machine-readable evidence graph movement without readiness verdicts.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -114,6 +116,7 @@ Backlog features live under `specs/` and are indexed in
 go test ./...
 go run ./cmd/portolan --version
 go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
+go run ./cmd/portolan diff --base testdata/evidence-diff/base.json --head testdata/evidence-diff/head.json --out /tmp/portolan-diff.json --force
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
 go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
@@ -121,6 +124,7 @@ go run ./cmd/portolan scan --selection testdata/black-box-profile/selection.json
 go run ./cmd/portolan packet render --graph /tmp/portolan-graph.json --out /tmp/portolan-packet.md --force
 jq empty /tmp/portolan-graph.json
 jq empty /tmp/portolan-black-box-graph.json
+jq empty /tmp/portolan-diff.json
 jq empty schema/*.json
 git diff --check
 ```

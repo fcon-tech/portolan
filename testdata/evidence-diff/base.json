@@ -1,0 +1,64 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "portolan",
+  "nodes": [
+    {
+      "id": "api",
+      "kind": "service",
+      "label": "API",
+      "evidence": {
+        "state": "unknown",
+        "source": "base-selection",
+        "reason": "service metadata was not available"
+      }
+    },
+    {
+      "id": "db",
+      "kind": "service",
+      "label": "Database",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "base-catalog"
+      }
+    },
+    {
+      "id": "legacy",
+      "kind": "service",
+      "label": "Legacy",
+      "evidence": {
+        "state": "claim-only",
+        "source": "base-claims"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "api",
+      "to": "db",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "unknown",
+        "source": "base-selection",
+        "reason": "dependency was expected but not observed"
+      }
+    },
+    {
+      "from": "legacy",
+      "to": "db",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "claim-only",
+        "source": "base-claims"
+      }
+    },
+    {
+      "from": "db",
+      "to": "api",
+      "kind": "owns",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "base-catalog"
+      }
+    }
+  ]
+}

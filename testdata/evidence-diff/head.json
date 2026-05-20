@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "portolan",
+  "nodes": [
+    {
+      "id": "api",
+      "kind": "service",
+      "label": "API Service",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "head-catalog"
+      }
+    },
+    {
+      "id": "db",
+      "kind": "service",
+      "label": "Database",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "base-catalog"
+      }
+    },
+    {
+      "id": "worker",
+      "kind": "service",
+      "label": "Worker",
+      "evidence": {
+        "state": "runtime-visible",
+        "source": "head-runtime"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "api",
+      "to": "db",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "head-catalog"
+      }
+    },
+    {
+      "from": "worker",
+      "to": "db",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "runtime-visible",
+        "source": "head-runtime"
+      }
+    },
+    {
+      "from": "db",
+      "to": "api",
+      "kind": "owns",
+      "evidence": {
+        "state": "metadata-visible",
+        "source": "base-catalog"
+      }
+    }
+  ]
+}

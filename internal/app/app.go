@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	graphdiff "github.com/governor/portolan/internal/diff"
 	"github.com/governor/portolan/internal/importer"
 	"github.com/governor/portolan/internal/packet"
 	"github.com/governor/portolan/internal/scan"
@@ -35,11 +36,59 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runPacket(args[1:], stdout, stderr)
 	case "import":
 		return runImport(args[1:], stdout, stderr)
+	case "diff":
+		return runDiff(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runDiff(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeDiffUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("diff", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	basePath := flags.String("base", "", "base evidence graph JSON path")
+	headPath := flags.String("head", "", "head evidence graph JSON path")
+	outputPath := flags.String("out", "", "output evidence diff JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeDiffUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected diff argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	result, err := graphdiff.Run(graphdiff.Options{
+		BasePath: *basePath,
+		HeadPath: *headPath,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "diff: %v\n", err)
+		return 2
+	}
+	if err := graphdiff.Write(*outputPath, result, *force); err != nil {
+		fmt.Fprintf(stderr, "diff: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "diff: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
 }
 
 func runImport(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -262,12 +311,31 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan import cyclonedx --in bom.cdx.json --out graph.json
+  portolan diff --base old-graph.json --head new-graph.json --out diff.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
   portolan scan --help
 
 Portolan is local-first and read-only by default. The bootstrap build documents
 the contract before it collects repository, metadata, runtime, or claim evidence.
+`)
+}
+
+func writeDiffUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan diff --base old-graph.json --head new-graph.json --out diff.json [--force]
+
+Compare two local Portolan evidence graph JSON files.
+
+Flags:
+  --base path   base evidence graph JSON path
+  --head path   head evidence graph JSON path
+  --out path    output evidence diff JSON path
+  --force       overwrite an existing output file
+
+The diff is machine-readable JSON. It reports added, removed, unchanged, and
+changed graph facts plus evidence-state transitions. It makes no network calls
+and does not emit readiness, pass/fail, improvement, or degradation verdicts.
 `)
 }
 
