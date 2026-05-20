@@ -173,6 +173,9 @@ func validateStartup(opts Options) (string, string, error) {
 	if isWithin(out, root) && !isWithin(out, filepath.Join(root, ".portolan")) {
 		return "", "", fmt.Errorf("output path inside root must be under .portolan")
 	}
+	if isWithin(root, out) {
+		return "", "", fmt.Errorf("output path must not contain mapped root")
+	}
 	if dangerousOutputPath(out, root) {
 		return "", "", fmt.Errorf("output path is too broad or unsafe")
 	}
@@ -243,7 +246,10 @@ func replaceOutput(temp, out string, force bool) error {
 		return err
 	}
 	if err := os.Rename(temp, out); err != nil {
-		_ = os.Rename(backup, out)
+		restoreErr := os.Rename(backup, out)
+		if restoreErr != nil {
+			return fmt.Errorf("%w; restore backup %s failed: %v", err, backup, restoreErr)
+		}
 		return err
 	}
 	return os.RemoveAll(backup)
@@ -442,6 +448,19 @@ func writeMap(path string, g graph.Graph, findings []Finding) error {
 	fmt.Fprintf(&b, "- Findings: %d\n", len(findings))
 	fmt.Fprintf(&b, "- Nodes: %d\n", len(g.Nodes))
 	fmt.Fprintf(&b, "- Edges: %d\n\n", len(g.Edges))
+	b.WriteString("## Skipped Surfaces\n\n")
+	wroteSkipped := false
+	for _, finding := range findings {
+		if finding.Status != "not_assessed" {
+			continue
+		}
+		wroteSkipped = true
+		fmt.Fprintf(&b, "- `%s`: %s\n", finding.Kind, finding.Summary)
+	}
+	if !wroteSkipped {
+		b.WriteString("- None.\n")
+	}
+	b.WriteString("\n")
 	b.WriteString("## Findings\n\n")
 	for _, finding := range findings {
 		fmt.Fprintf(&b, "- `%s` [%s]: %s (%s).\n", finding.ID, finding.Status, finding.Summary, finding.EvidenceState)

@@ -908,6 +908,9 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(string(mapText), "Findings: 5") {
 		t.Fatalf("map.md = %q, want finding count", string(mapText))
 	}
+	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
+		t.Fatalf("map.md = %q, want skipped surfaces warning", string(mapText))
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
@@ -1028,6 +1031,29 @@ func TestRunMapRejectsDangerousForceOutput(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "unsafe") && !strings.Contains(stderr.String(), "under .portolan") {
 		t.Fatalf("stderr = %q, want unsafe output error", stderr.String())
+	}
+}
+
+func TestRunMapRejectsOutputAncestorOfRoot(t *testing.T) {
+	parent := t.TempDir()
+	root := filepath.Join(parent, "project")
+	if err := os.Mkdir(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", parent, "--force"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want ancestor output rejection")
+	}
+	if !strings.Contains(stderr.String(), "must not contain mapped root") {
+		t.Fatalf("stderr = %q, want ancestor output error", stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, "README.md")); err != nil {
+		t.Fatalf("mapped root was modified: %v", err)
 	}
 }
 
