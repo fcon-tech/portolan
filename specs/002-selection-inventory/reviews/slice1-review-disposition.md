@@ -41,6 +41,23 @@ The implementation adds `metadata[]` and `runtime[]` input collections instead
 of accepting `metadata` as `targets[].kind`, preserving compatibility with
 `schema/evidence-graph.schema.json`.
 
+### Major: CLI Validation Accepted Schema-Unknown Fields
+
+Disposition: accepted and fixed during PR review.
+
+`schema/selection.schema.json` sets `additionalProperties: false`, but the first
+Go parser pass used default JSON decoding and silently accepted unknown fields.
+The loader now uses `DisallowUnknownFields`, and CLI tests cover the rejection.
+
+### Minor: URL Rejection Needed Windows-Path Regression Coverage
+
+Disposition: accepted narrower than stated and fixed during PR review.
+
+The URL-like path rejection already matches explicit forbidden prefixes rather
+than arbitrary colons, so Windows-style paths are not rejected by the
+implementation. Regression tests now cover both `file://` rejection and
+`C:\...` local path acceptance.
+
 ## Verification
 
 - `go test -count=1 ./...`: passed.

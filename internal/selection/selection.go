@@ -1,6 +1,7 @@
 package selection
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -40,7 +41,9 @@ func Load(path string) (Selection, error) {
 	}
 
 	var sel Selection
-	if err := json.Unmarshal(data, &sel); err != nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&sel); err != nil {
 		return Selection{}, fmt.Errorf("parse selection: %w", err)
 	}
 	if err := sel.Validate(); err != nil {

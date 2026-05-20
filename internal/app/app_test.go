@@ -134,9 +134,19 @@ func TestRunSelectionValidateRejectsInvalidInventoryInputs(t *testing.T) {
 			want: "must be local",
 		},
 		{
+			name: "file url",
+			path: writeSelection(t, t.TempDir(), "file-url", `{"schema_version":"0.1.0","targets":[{"id":"file-url","kind":"repository","path":"file:///tmp/repo"}]}`),
+			want: "must be local",
+		},
+		{
 			name: "unsupported kind",
 			path: writeSelection(t, t.TempDir(), "unsupported-kind", `{"schema_version":"0.1.0","targets":[{"id":"bad","kind":"metadata","path":"catalog.json"}]}`),
 			want: "not supported",
+		},
+		{
+			name: "unknown field",
+			path: writeSelection(t, t.TempDir(), "unknown-field", `{"schema_version":"0.1.0","targets":[],"remote_url":"https://example.com"}`),
+			want: "unknown field",
 		},
 	}
 
@@ -157,6 +167,18 @@ func TestRunSelectionValidateRejectsInvalidInventoryInputs(t *testing.T) {
 				t.Fatalf("stderr = %q, want %q", stderr.String(), tt.want)
 			}
 		})
+	}
+}
+
+func TestRunSelectionValidateAllowsWindowsStyleLocalPath(t *testing.T) {
+	path := writeSelection(t, t.TempDir(), "windows-path", `{"schema_version":"0.1.0","targets":[{"id":"windows-repo","kind":"repository","path":"C:\\repo\\service"}]}`)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"selection", "validate", "--selection", path}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 }
 
