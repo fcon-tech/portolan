@@ -114,6 +114,7 @@ go run ./cmd/portolan --version
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
 go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
+go run ./cmd/portolan packet render --graph /tmp/portolan-graph.json --out /tmp/portolan-packet.md --force
 jq empty /tmp/portolan-graph.json
 jq empty schema/*.json
 git diff --check

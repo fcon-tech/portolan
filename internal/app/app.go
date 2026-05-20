@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/governor/portolan/internal/packet"
 	"github.com/governor/portolan/internal/scan"
 	"github.com/governor/portolan/internal/selection"
 )
@@ -29,6 +30,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runScan(args[1:], stdout, stderr)
 	case "selection":
 		return runSelection(args[1:], stdout, stderr)
+	case "packet":
+		return runPacket(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
@@ -84,6 +87,66 @@ func runSelectionValidate(args []string, stdout io.Writer, stderr io.Writer) int
 	return 0
 }
 
+func runPacket(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writePacketUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "render":
+		return runPacketRender(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown packet command %q\n", args[0])
+		return 2
+	}
+}
+
+func runPacketRender(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writePacketRenderUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("packet render", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	graphPath := flags.String("graph", "", "evidence graph JSON path")
+	outputPath := flags.String("out", "", "output Markdown packet path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writePacketRenderUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected packet render argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	data, err := packet.Run(packet.Options{
+		GraphPath:  *graphPath,
+		OutputPath: *outputPath,
+		Force:      *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "packet: %v\n", err)
+		return 2
+	}
+	if err := packet.Write(*outputPath, data, *force); err != nil {
+		fmt.Fprintf(stderr, "packet: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "packet: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
 func runScan(args []string, stdout io.Writer, stderr io.Writer) int {
 	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
 		writeScanUsage(stdout)
@@ -136,6 +199,7 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan selection validate --selection selection.json
+  portolan packet render --graph graph.json --out packet.md
   portolan scan --help
 
 Portolan is local-first and read-only by default. The bootstrap build documents
@@ -165,6 +229,33 @@ Flags:
 
 Validation checks schema shape, IDs, supported kinds, and local path strings.
 It makes no network calls and does not read target contents.
+`)
+}
+
+func writePacketUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan packet render --graph graph.json --out packet.md [--force]
+
+Render a Markdown evidence packet from an existing graph-only input.
+
+Default packet behavior makes no network calls and does not inspect target
+repositories.
+`)
+}
+
+func writePacketRenderUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan packet render --graph graph.json --out packet.md [--force]
+
+Render a Markdown packet from an existing evidence graph without adding facts.
+
+Flags:
+  --graph path   evidence graph JSON path
+  --out path     output Markdown packet path
+  --force        overwrite an existing output file
+
+The renderer uses graph-only input, makes no network calls, and cites graph ids
+for non-aggregate statements.
 `)
 }
 

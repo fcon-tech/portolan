@@ -1,0 +1,35 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "portolan",
+  "nodes": [
+    {
+      "id": "api",
+      "kind": "unknown",
+      "label": "api",
+      "evidence": {
+        "state": "claim-only",
+        "source": "interview"
+      }
+    },
+    {
+      "id": "database",
+      "kind": "unknown",
+      "label": "database",
+      "evidence": {
+        "state": "claim-only",
+        "source": "interview"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "api",
+      "to": "database",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "claim-only",
+        "source": "interview"
+      }
+    }
+  ]
+}

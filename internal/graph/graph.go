@@ -5,10 +5,12 @@ const SchemaVersion = "0.1.0"
 type EvidenceState string
 
 const (
-	SourceVisible EvidenceState = "source-visible"
-	ClaimOnly     EvidenceState = "claim-only"
-	Unknown       EvidenceState = "unknown"
-	CannotVerify  EvidenceState = "cannot_verify"
+	SourceVisible   EvidenceState = "source-visible"
+	MetadataVisible EvidenceState = "metadata-visible"
+	RuntimeVisible  EvidenceState = "runtime-visible"
+	ClaimOnly       EvidenceState = "claim-only"
+	Unknown         EvidenceState = "unknown"
+	CannotVerify    EvidenceState = "cannot_verify"
 )
 
 type Evidence struct {

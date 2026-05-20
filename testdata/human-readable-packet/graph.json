@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "portolan",
+  "nodes": [
+    {
+      "id": "repo-main",
+      "kind": "repository",
+      "label": "repo",
+      "evidence": {
+        "state": "source-visible",
+        "source": "testdata/local-evidence-graph/repo"
+      }
+    },
+    {
+      "id": "api",
+      "kind": "unknown",
+      "label": "api",
+      "evidence": {
+        "state": "claim-only",
+        "source": "architecture-interview"
+      }
+    },
+    {
+      "id": "missing-service",
+      "kind": "unknown",
+      "label": "missing-service",
+      "evidence": {
+        "state": "unknown",
+        "source": "selection.json",
+        "reason": "path does not exist"
+      }
+    },
+    {
+      "id": "bad-claims",
+      "kind": "claim",
+      "label": "bad-claims",
+      "evidence": {
+        "state": "cannot_verify",
+        "source": "claims.json",
+        "reason": "malformed claim JSON"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "api",
+      "to": "database",
+      "kind": "depends-on",
+      "evidence": {
+        "state": "claim-only",
+        "source": "architecture-interview"
+      }
+    }
+  ]
+}
