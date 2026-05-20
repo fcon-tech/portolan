@@ -2,7 +2,7 @@
 
 **Feature Branch**: `008-agent-skill-pack`
 **Created**: 2026-05-20
-**Status**: Ready for implementation
+**Status**: Implemented
 **Input**: Product decision to make Portolan usable by any coding agent through
 a portable guide first, with Cursor rules as the cheapest acceptance wrapper.
 

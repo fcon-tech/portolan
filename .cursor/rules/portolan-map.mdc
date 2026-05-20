@@ -1,0 +1,18 @@
+---
+description: Use Portolan before making codebase map or architecture claims.
+globs:
+  - "**/*"
+alwaysApply: false
+---
+
+When the user asks to map, audit, inspect, understand, or explain this
+codebase, first read `agent/AGENT_GUIDE.md` and follow that portable workflow.
+
+Run Portolan before broad manual architecture claims. Start with
+`portolan doctor`; use `portolan map --root . --out .portolan/run` once
+available, or the guide's current-command fallback until then.
+
+Answer from Portolan artifacts only. Preserve `unknown`, `cannot_verify`, and
+`not_assessed` instead of guessing. Do not fetch network resources, mutate the
+repository, or collect credentials unless the user explicitly approves that
+boundary.

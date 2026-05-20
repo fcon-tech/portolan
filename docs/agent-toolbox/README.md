@@ -38,6 +38,11 @@ commands. Its job is to record concrete gaps:
 
 ## Target Agent Workflow
 
+The portable guide lives at [`agent/AGENT_GUIDE.md`](../../agent/AGENT_GUIDE.md).
+Cursor's project rule lives at
+[`.cursor/rules/portolan-map.mdc`](../../.cursor/rules/portolan-map.mdc) and is
+only a thin wrapper over that guide.
+
 The eventual workflow after `portolan map` exists:
 
 1. Read the Portolan agent guide or harness-specific wrapper.
@@ -52,6 +57,9 @@ The eventual workflow after `portolan map` exists:
 Until `portolan map` exists, the Bigtop smoke should use current Portolan
 commands and record "missing one-command map" as a product gap if that blocks
 the agent.
+
+See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
+expected evidence-backed report shape.
 
 ## Artifact Contract
 

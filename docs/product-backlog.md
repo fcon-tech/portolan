@@ -44,7 +44,7 @@ test. The point is to prevent development for development's sake.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Ready for implementation |
+| P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
 | P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the skill pack on Apache Bigtop immediately after skills to expose missing product capabilities. | Ready for acceptance-smoke planning |
 
 ## P2: Build What The Bigtop Smoke Proves Is Missing
