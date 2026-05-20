@@ -157,6 +157,9 @@ Before creating or updating the PR:
 
 ## PR Review And Shipping
 
+After creating or updating a PR, do not stop immediately. Run a PR readiness
+closeout first, even when local verification already passed.
+
 Before marking a PR ready:
 
 1. Reconstruct PR head, diff, draft state, merge state, checks, and review
@@ -176,6 +179,21 @@ Before marking a PR ready:
 5. Push, refresh PR state, and mark ready only when blockers are fixed.
 
 If GitHub has no checks configured, report CI as `not_assessed`, not green.
+
+Final status after PR work must use this matrix:
+
+- Implementation:
+- Local verification:
+- Review evidence:
+- PR state:
+- GitHub checks:
+- Merge readiness:
+- Stop reason:
+
+Do not say the PR is ready unless the PR is not draft, review evidence is
+dispositioned, checks are either passing or explicitly absent as `not_assessed`,
+and SpecKit/backlog/task/review surfaces agree. If any of those surfaces is not
+coherent, keep the PR draft or record the blocker.
 
 Merge only after explicit user approval. After merge, verify:
 

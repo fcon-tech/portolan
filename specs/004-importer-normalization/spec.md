@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-importer-normalization`
 **Created**: 2026-05-20
-**Status**: Backlog spec
+**Status**: Implemented in branch
 **Input**: Product backlog P1-004: import existing OSS/tool outputs through reviewed adapters.
 
 ## User Scenarios & Testing
@@ -35,5 +35,9 @@ A maintainer can see license, format, privacy, and maintenance notes before an i
 
 ## Assumptions
 
-- Candidate tools require fresh license review before integration.
-- File exports come before invoking external binaries.
+- The first importer target is local CycloneDX JSON because it is a mature,
+  tool-neutral SBOM standard with an official JSON encoding and broad OSS tool
+  support.
+- Candidate generators such as cdxgen, Syft, and Trivy remain external tools;
+  this slice imports their local file output instead of invoking them.
+- File exports come before invoking external binaries or live APIs.
