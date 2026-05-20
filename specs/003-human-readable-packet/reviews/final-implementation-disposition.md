@@ -4,8 +4,7 @@ Date: 2026-05-20
 
 ## Scope Completed
 
-All implementation and verification tasks except PR creation/review are
-complete in `specs/003-human-readable-packet/tasks.md`.
+All tasks are complete in `specs/003-human-readable-packet/tasks.md`.
 
 Completed:
 
@@ -22,8 +21,7 @@ Completed:
 
 - `docs/product-backlog.md`: P0-003 is `Implemented in branch`.
 - `specs/003-human-readable-packet/spec.md`: status is `Implemented in branch`.
-- `tasks.md`: implementation and local verification tasks are checked; PR task
-  remains open until PR creation and review cycle finish.
+- `tasks.md`: all tasks are checked.
 - Review artifacts are under `specs/003-human-readable-packet/reviews/`.
 
 ## Local Verification
@@ -35,6 +33,5 @@ Completed:
 
 ## Remaining State
 
-- PR creation and PR review cycle remain open.
-- GitHub CI/check state is `not_assessed` until a PR exists and checks are
-  queried.
+- PR exists at https://github.com/fall-out-bug/portolan/pull/4.
+- GitHub CI/check state is `not_assessed`; no checks were reported.
