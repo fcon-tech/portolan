@@ -37,7 +37,7 @@
 - [x] T020 Run `jq empty schema/*.json`.
 - [x] T021 Run `go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force`.
 - [x] T022 Run `git diff --check`.
-- [ ] T023 Create or update PR and run PR review cycle.
+- [x] T023 Create or update PR and run PR review cycle.
 
 ## Dependencies
 
