@@ -2,3 +2,6 @@
 /bin/
 /dist/
 /coverage.out
+.agents/*
+!.agents/skills/
+!.agents/skills/**

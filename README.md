@@ -58,10 +58,24 @@ Each graph node or relationship records how it is known:
 ## Start Here
 
 - [Product Boundary](docs/product-boundary.md)
+- [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
+- [Product Backlog](docs/product-backlog.md)
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
 - [OSS Composition](docs/oss-composition.md)
 - [Evidence Graph Schema](schema/evidence-graph.schema.json)
+
+## SpecKit Workflow
+
+Portolan uses GitHub Spec Kit for product planning. The current active
+implementation slice is:
+
+- [001 Local Evidence Graph](specs/001-local-evidence-graph/spec.md)
+- [001 Implementation Plan](specs/001-local-evidence-graph/plan.md)
+- [001 Tasks](specs/001-local-evidence-graph/tasks.md)
+
+Backlog features live under `specs/` and are indexed in
+[Product Backlog](docs/product-backlog.md).
 
 ## Commands
 
