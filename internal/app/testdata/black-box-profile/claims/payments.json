@@ -1,0 +1,11 @@
+{
+  "claims": [
+    {
+      "id": "claim-payments-ledger",
+      "subject": "payments-api",
+      "predicate": "depends-on",
+      "object": "ledger-api",
+      "source": "architecture-interview"
+    }
+  ]
+}

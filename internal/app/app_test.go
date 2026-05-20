@@ -671,6 +671,221 @@ func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) 
 	readGraph(t, out)
 }
 
+func TestRunScanWritesBlackBoxProfileEvidence(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/selection.json", "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	states := evidenceStates(t, result)
+	for _, want := range []string{"metadata-visible", "runtime-visible", "claim-only"} {
+		if !states[want] {
+			t.Fatalf("states = %#v, want %q", states, want)
+		}
+	}
+	for _, item := range result["nodes"].([]any) {
+		node := item.(map[string]any)
+		evidence := node["evidence"].(map[string]any)
+		if evidence["state"] == "source-visible" {
+			t.Fatalf("black-box node used source-visible: %#v", node)
+		}
+		if node["id"] == "payments-api" && evidence["state"] != "metadata-visible" {
+			t.Fatalf("payments-api evidence = %#v, want metadata-visible", evidence)
+		}
+	}
+	foundClaimEdge := false
+	for _, item := range result["edges"].([]any) {
+		edge := item.(map[string]any)
+		evidence := edge["evidence"].(map[string]any)
+		if evidence["state"] == "source-visible" {
+			t.Fatalf("black-box edge used source-visible: %#v", edge)
+		}
+		if edge["from"] == "payments-api" && edge["to"] == "ledger-api" && edge["kind"] == "depends-on" && evidence["state"] == "claim-only" {
+			foundClaimEdge = true
+		}
+	}
+	if !foundClaimEdge {
+		t.Fatalf("edges = %#v, want payments-api claim-only dependency edge", result["edges"])
+	}
+	assertSchemaShape(t, result)
+}
+
+func TestRunScanBlackBoxMissingExpectedDependencyIsUnknown(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/missing-dependency-selection.json", "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	for _, item := range result["edges"].([]any) {
+		edge := item.(map[string]any)
+		evidence := edge["evidence"].(map[string]any)
+		if edge["kind"] == "unknown" && evidence["state"] == "unknown" && strings.Contains(evidence["reason"].(string), "dependencies") {
+			return
+		}
+	}
+	t.Fatalf("edges = %#v, want unknown dependency edge with reason", result["edges"])
+}
+
+func TestRunScanBlackBoxMalformedRuntimeIsCannotVerify(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/malformed-runtime-selection.json", "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	states := evidenceStates(t, result)
+	if !states["metadata-visible"] || !states["cannot_verify"] {
+		t.Fatalf("states = %#v, want metadata-visible and cannot_verify", states)
+	}
+	for _, item := range result["nodes"].([]any) {
+		node := item.(map[string]any)
+		evidence := node["evidence"].(map[string]any)
+		if evidence["state"] == "cannot_verify" && strings.Contains(evidence["reason"].(string), "malformed runtime JSON") {
+			return
+		}
+	}
+	t.Fatalf("nodes = %#v, want malformed runtime cannot_verify node", result["nodes"])
+}
+
+func TestRunScanBlackBoxMalformedInputsAreCannotVerify(t *testing.T) {
+	root := t.TempDir()
+	metadata := filepath.Join(root, "metadata.json")
+	claims := filepath.Join(root, "claims.json")
+	mustWrite(t, metadata, `{`)
+	mustWrite(t, claims, `{`)
+	selection := filepath.Join(root, "selection.json")
+	mustWrite(t, selection, `{
+		"schema_version":"0.1.0",
+		"black_boxes":[{
+			"id":"payments-api",
+			"kind":"service",
+			"metadata":[{"id":"bad-metadata","path":`+quote(metadata)+`}],
+			"claims":[{"id":"bad-claims","path":`+quote(claims)+`}]
+		}]
+	}`)
+	out := filepath.Join(root, "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", selection, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	reasons := map[string]bool{}
+	for _, item := range result["nodes"].([]any) {
+		node := item.(map[string]any)
+		evidence := node["evidence"].(map[string]any)
+		if evidence["state"] == "cannot_verify" {
+			reasons[evidence["reason"].(string)] = true
+		}
+	}
+	for _, want := range []string{"malformed metadata JSON", "malformed claim JSON"} {
+		if !reasons[want] {
+			t.Fatalf("cannot_verify reasons = %#v, want %q", reasons, want)
+		}
+	}
+}
+
+func TestRunPacketBlackBoxWordingDoesNotImplySourceAnalysis(t *testing.T) {
+	root := t.TempDir()
+	graphPath := filepath.Join(root, "graph.json")
+	packetPath := filepath.Join(root, "packet.md")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/selection.json", "--out", graphPath, "--force"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("scan returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	code = Run([]string{"packet", "render", "--graph", graphPath, "--out", packetPath, "--force"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("packet returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(packetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	for _, want := range []string{"Metadata-Visible Facts", "Runtime-Visible Facts", "metadata-visible evidence", "runtime-visible evidence"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("packet missing %q:\n%s", want, text)
+		}
+	}
+	if !strings.Contains(text, "`payments-api` `depends-on` `ledger-api` is claimed, not observed") {
+		t.Fatalf("packet missing claim-only edge wording:\n%s", text)
+	}
+	if !strings.Contains(text, "`payments-api` `observes`") || !strings.Contains(text, "is runtime-visible evidence") {
+		t.Fatalf("packet missing runtime edge wording:\n%s", text)
+	}
+	if strings.Contains(text, "source analysis") || strings.Contains(text, "source code was inspected") {
+		t.Fatalf("packet implied source analysis for black-box facts:\n%s", text)
+	}
+}
+
+func TestRunSelectionValidateRejectsInvalidBlackBoxes(t *testing.T) {
+	root := t.TempDir()
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{
+			name: "unsupported kind",
+			body: `{"schema_version":"0.1.0","black_boxes":[{"id":"svc","kind":"repository"}]}`,
+			want: "kind",
+		},
+		{
+			name: "source path",
+			body: `{"schema_version":"0.1.0","black_boxes":[{"id":"svc","kind":"service","path":"/tmp/repo"}]}`,
+			want: "must not declare repository or source paths",
+		},
+		{
+			name: "live telemetry",
+			body: `{"schema_version":"0.1.0","black_boxes":[{"id":"svc","kind":"service","telemetry":"https://telemetry.example"}]}`,
+			want: "live telemetry is not supported",
+		},
+		{
+			name: "invalid expected field",
+			body: `{"schema_version":"0.1.0","black_boxes":[{"id":"svc","kind":"service","expected":["source"]}]}`,
+			want: "expected field",
+		},
+		{
+			name: "duplicate id",
+			body: `{"schema_version":"0.1.0","black_boxes":[{"id":"svc","kind":"service"},{"id":"svc","kind":"runtime"}]}`,
+			want: "duplicate selection id",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := writeSelection(t, root, "black-box-"+tt.name, tt.body)
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run([]string{"selection", "validate", "--selection", path}, &stdout, &stderr)
+
+			if code == 0 || !strings.Contains(stderr.String(), tt.want) {
+				t.Fatalf("code = %d stderr = %q, want %q", code, stderr.String(), tt.want)
+			}
+		})
+	}
+}
+
 func TestRunScanWritesEvidenceGraph(t *testing.T) {
 	root := t.TempDir()
 	repo := filepath.Join(root, "repo")

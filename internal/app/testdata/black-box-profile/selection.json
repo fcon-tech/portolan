@@ -1,0 +1,29 @@
+{
+  "schema_version": "0.1.0",
+  "black_boxes": [
+    {
+      "id": "payments-api",
+      "kind": "service",
+      "label": "Payments API",
+      "metadata": [
+        {
+          "id": "payments-catalog",
+          "path": "testdata/black-box-profile/metadata/payments.json"
+        }
+      ],
+      "runtime": [
+        {
+          "id": "payments-runtime",
+          "path": "testdata/black-box-profile/runtime/payments.json"
+        }
+      ],
+      "claims": [
+        {
+          "id": "payments-claims",
+          "path": "testdata/black-box-profile/claims/payments.json"
+        }
+      ],
+      "expected": ["owner", "dependencies", "runtime-endpoints"]
+    }
+  ]
+}

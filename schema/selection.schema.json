@@ -31,7 +31,13 @@
     "claims": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/input_source"
+        "$ref": "#/$defs/claim_source"
+      }
+    },
+    "black_boxes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/black_box"
       }
     }
   },
@@ -69,6 +75,52 @@
           "minLength": 1
         }
       }
+    },
+    "black_box": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["service", "runtime"]
+        },
+        "label": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/input_source"
+          }
+        },
+        "runtime": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/input_source"
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/claim_source"
+          }
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["owner", "dependencies", "runtime-endpoints"]
+          }
+        }
+      }
+    },
+    "claim_source": {
+      "$ref": "#/$defs/input_source"
     }
   }
 }

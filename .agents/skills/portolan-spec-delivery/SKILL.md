@@ -39,7 +39,12 @@ only when the PR state and evidence are coherent.
    target.
 5. Work in a dedicated worktree from current `origin/main` or the requested base.
    Do not use a dirty main checkout for implementation.
-6. State the decision gate:
+6. Before committing or opening a PR, verify provenance and scope with
+   `git diff --name-status <base>...HEAD`. If adjacent specs or backlog-only
+   planning files appear in the diff, remove them from the PR scope before
+   review. A local `HEAD` that already contains multiple prepared specs is not a
+   clean feature base.
+7. State the decision gate:
    - Simpler/Faster
    - Blocking Edge Cases
    - Existing Open Source
@@ -176,7 +181,9 @@ Before marking a PR ready:
    silently substitute another Gemini model.
 4. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
-5. Push, refresh PR state, and mark ready only when blockers are fixed.
+5. Push, refresh PR state, and mark ready-for-review only when blockers are
+   fixed and the PR is no longer draft. If blockers remain, keep the PR draft
+   and record the exact blocker.
 
 If GitHub has no checks configured, report CI as `not_assessed`, not green.
 
@@ -190,10 +197,13 @@ Final status after PR work must use this matrix:
 - Merge readiness:
 - Stop reason:
 
-Do not say the PR is ready unless the PR is not draft, review evidence is
-dispositioned, checks are either passing or explicitly absent as `not_assessed`,
-and SpecKit/backlog/task/review surfaces agree. If any of those surfaces is not
-coherent, keep the PR draft or record the blocker.
+Do not stop at draft PR for implementation delivery unless a blocker is
+recorded. Do not say the PR is ready-for-review unless the PR is not draft,
+review evidence is dispositioned, checks are either passing or explicitly absent
+as `not_assessed`, and SpecKit/backlog/task/review surfaces agree. Do not say
+ready-to-merge when GitHub checks or human review approval are absent; record
+those as `not_assessed` and merge only if the user explicitly accepts that
+state.
 
 Merge only after explicit user approval. After merge, verify:
 
