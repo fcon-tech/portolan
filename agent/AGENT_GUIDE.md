@@ -1,0 +1,186 @@
+# Portolan Agent Guide
+
+Portolan is a local-first evidence substrate for mapping codebases before an
+agent makes architecture, dependency, or technical-debt claims.
+
+Use this guide when the user asks you to map, audit, inspect, understand, or
+explain a repository. Trigger phrases include:
+
+- `map this repo`
+- `map this codebase`
+- `map this shit`
+- `audit this repo`
+- `understand this system`
+- `what is going on in this codebase?`
+
+## Current Reality
+
+These are the real capabilities this guide may rely on today:
+
+- `portolan --version`
+- `portolan scan --selection <selection.json> --out <graph.json> [--force]`
+- `portolan packet render --graph <graph.json> --out <packet.md> [--force]`
+- `portolan import cyclonedx --in <sbom.json> --out <graph.json> [--force]`
+- `portolan diff --base <base-graph.json> --head <head-graph.json> --out <diff.json> [--force]`
+- local selection files, local metadata, local runtime exports, local claim
+  files, and local SBOM/tool exports when the repository provides them.
+
+Current commands can produce evidence graphs, packets, importer-normalized
+graphs, and graph diffs. They do not yet produce a complete one-command map
+bundle with run metadata and findings.
+
+## Target Contract
+
+This target contract is not implemented yet. Do not write as if it already
+exists.
+
+```bash
+portolan doctor
+portolan map --root . --out .portolan/run
+```
+
+The future target bundle is:
+
+```text
+.portolan/run/
+  run.json
+  graph.json
+  findings.jsonl
+  map.md
+```
+
+Treat missing `portolan doctor`, missing `portolan map`, missing `run.json`,
+missing `findings.jsonl`, or missing detector coverage as product gaps, not as
+evidence that the repository has no relationships, duplication, configuration
+surfaces, or technical debt.
+
+## Guardrails
+
+- Work local-first and read-only.
+- Run only Portolan commands that actually exist in the current checkout or
+  installed binary.
+- Do not fetch network resources unless the user explicitly approves it.
+- Do not mutate the target repository.
+- Use temporary output paths for current fallback commands unless the user
+  explicitly selects another output location.
+- Do not replace missing `portolan map` with unmarked manual analysis.
+- Treat agent conclusions as claims until backed by local evidence.
+- Preserve weak evidence instead of hiding it.
+- Record gaps where Portolan cannot help you fulfill a product promise.
+
+Allowed evidence states:
+
+- `source-visible`
+- `metadata-visible`
+- `runtime-visible`
+- `claim-only`
+- `unknown`
+- `cannot_verify`
+
+Use `not_assessed` for a surface you did not check.
+
+## Workflow
+
+1. Inventory available local inputs before running scan commands:
+
+   - selection files;
+   - metadata files;
+   - runtime exports;
+   - claim files;
+   - SBOMs or exported tool outputs;
+   - existing Portolan artifacts.
+
+2. Try the target health check, but do not depend on it:
+
+   ```bash
+   portolan doctor
+   ```
+
+   If `portolan doctor` is unavailable, record a gap and continue with current
+   checks:
+
+   ```bash
+   portolan --version
+   portolan scan --help
+   portolan packet render --help
+   portolan import cyclonedx --help
+   ```
+
+   If these current commands are also missing or fail, stop and report the
+   blocker.
+
+3. If the future map command exists, use it:
+
+   ```bash
+   portolan map --root . --out .portolan/run
+   ```
+
+   If it does not exist, record a gap and use current commands only when you
+   have matching local inputs.
+
+4. Use a safe fallback output directory for current commands:
+
+   ```bash
+   mkdir -p /tmp/portolan-run
+   portolan scan --selection <selection.json> --out /tmp/portolan-run/graph.json --force
+   portolan packet render --graph /tmp/portolan-run/graph.json --out /tmp/portolan-run/map.md --force
+   portolan import cyclonedx --in <sbom.json> --out /tmp/portolan-run/import-graph.json --force
+   portolan diff --base <base-graph.json> --head <head-graph.json> --out /tmp/portolan-run/diff.json --force
+   ```
+
+   Run only the commands that match real local inputs. Do not invent a
+   selection file, SBOM, base graph, or head graph.
+
+5. Inspect freshness before trusting existing artifacts. Check whether each
+   artifact corresponds to the current repository and command inputs.
+
+6. Report product categories from exact local evidence and record gaps for
+   missing capabilities.
+
+## Report Shape
+
+The report is not a generic architecture summary. It must cover Portolan's
+product promises:
+
+1. Run status and current-vs-target capability status
+2. Relationships
+3. Duplication
+4. Configuration surfaces
+5. Technical debt
+6. Unknown and cannot_verify
+7. Gap ledger
+8. Not assessed
+
+Every finding row must include:
+
+- product category;
+- finding or missing capability;
+- evidence reference;
+- evidence state;
+- confidence or status;
+- source type: file, command output, generated artifact, or missing capability;
+- action or likely next spec.
+
+Do not write unsupported conclusions such as "the service mesh is probably
+X", "this is dead code", or "the architecture is clean" unless local Portolan
+inputs support that claim.
+
+## Gap Ledger Template
+
+Use this table whenever Portolan cannot support a promised mapping task:
+
+| Gap ID | Repo/Context | Attempted Task | Command/Artifact Used | Observed Limitation | Expected Capability | Affected Product Promise | Evidence State | User Impact | Priority | Likely Spec | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| GAP-001 | `<repo or corpus>` | `<task>` | `<command or artifact>` | `<what failed or was absent>` | `<needed behavior>` | `relationships` / `duplication` / `config` / `tech debt` / `evidence` / `UX` | `unknown` / `cannot_verify` / `not_assessed` / other state | `<why it matters>` | P0/P1/P2/P3 | `009` / `010` / `011` / `012` / `013` / other | open |
+
+## Stop Conditions
+
+Stop and report a blocker when:
+
+- all current Portolan command checks fail;
+- required local inputs for the attempted command are missing;
+- existing artifacts are stale and cannot be regenerated;
+- the user asks for network access, mutation, or credentials but has not
+  explicitly approved the boundary;
+- Portolan cannot verify a surface that the answer depends on and no honest
+  `unknown`, `cannot_verify`, or gap entry can represent it.

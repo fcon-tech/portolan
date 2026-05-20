@@ -4,8 +4,9 @@ Portolan is the local discovery substrate an agent runs before it claims to
 understand a codebase.
 
 The agent may be Cursor, Claude, Codex, OpenCode, pi, or another harness. The
-product contract is the same: run local Portolan commands, read Portolan
-artifacts, and answer from evidence instead of unsupported inference.
+product contract is the same: separate current capabilities from target
+contracts, run local Portolan commands that actually exist, read local evidence,
+and answer from evidence instead of unsupported inference.
 
 ## First Acceptance Client
 
@@ -20,14 +21,11 @@ Cursor + Composer 2.5 is the first cheap acceptance client because it gives us:
 Cursor is not the product boundary. Any Cursor rule must delegate to the
 portable Portolan guide and artifact contract.
 
-## Immediate Bigtop Smoke
+## Acceptance Smoke Output
 
 After the skill pack exists, the next test is not more internal feature work.
-The next test is Cursor + Composer 2.5 running the guide against the Apache
-Bigtop corpus profile.
-
-The first Bigtop smoke uses prepared local fixtures and current Portolan
-commands. Its job is to record concrete gaps:
+The next acceptance smoke should run the guide with current local Portolan
+commands and record concrete gaps:
 
 - what the agent could not run;
 - what Portolan could not map;
@@ -36,9 +34,25 @@ commands. Its job is to record concrete gaps:
 - where packet output was not useful;
 - where the agent tried to infer outside evidence.
 
+The generic guide does not prescribe corpus-specific choreography. Concrete
+smoke steps belong in acceptance notes or test logs.
+
 ## Target Agent Workflow
 
-The eventual workflow after `portolan map` exists:
+The portable guide lives at [`agent/AGENT_GUIDE.md`](../../agent/AGENT_GUIDE.md).
+Cursor's project rule lives at
+[`.cursor/rules/portolan-map.mdc`](../../.cursor/rules/portolan-map.mdc) and is
+only a thin wrapper over that guide.
+
+Current reality:
+
+- `portolan --version`
+- `portolan scan`
+- `portolan packet render`
+- `portolan import cyclonedx`
+- `portolan diff`
+
+Target contract after `portolan map` exists:
 
 1. Read the Portolan agent guide or harness-specific wrapper.
 2. Run `portolan doctor`.
@@ -49,11 +63,17 @@ The eventual workflow after `portolan map` exists:
    unknowns, and cannot-verify inputs from the artifacts.
 6. Avoid conclusions that are not backed by local evidence.
 
-Until `portolan map` exists, the Bigtop smoke should use current Portolan
-commands and record "missing one-command map" as a product gap if that blocks
-the agent.
+Until `portolan map` exists, acceptance smoke should use current commands only
+when matching local inputs exist and record missing target artifacts as gap
+ledger entries.
 
-## Artifact Contract
+See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
+expected evidence-backed report shape.
+
+## Target Artifact Contract
+
+This is the target bundle for future `portolan map`, not the current fallback
+output contract:
 
 ```text
 .portolan/run/

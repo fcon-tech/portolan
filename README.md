@@ -31,14 +31,14 @@ Implemented:
 - GitHub Spec Kit workflow and product backlog.
 - Apache Bigtop test corpus profile for immediate post-skill acceptance
   planning.
+- Portable agent guide, example report, and Cursor project rule for the first
+  agent toolbox acceptance loop.
 
 Not implemented yet:
 
 - one-command `portolan map --root <dir> --out <dir>` artifact bundle;
-- agent skill/rule pack for Cursor and other harnesses;
 - relationship, duplication, configuration, and technical-debt finding
   generators;
-- evidence graph diff;
 - platform-specific runtime importers;
 - corpus preparation or manifest-to-selection generation;
 - SPDX, Syft-native, or live tool importers;
@@ -102,6 +102,9 @@ Each graph node or relationship records how it is known:
 - [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
 - [Product Backlog](docs/product-backlog.md)
 - [Agent Toolbox](docs/agent-toolbox/README.md)
+- [Portable Agent Guide](agent/AGENT_GUIDE.md)
+- [Example Map Report](agent/examples/map-report.md)
+- [Cursor Portolan Rule](.cursor/rules/portolan-map.mdc)
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
 - [OSS Composition](docs/oss-composition.md)
