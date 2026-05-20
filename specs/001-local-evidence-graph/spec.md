@@ -51,9 +51,12 @@ A downstream tool can parse the output without scraping human text.
 
 - Selection path does not exist: return usage/data error and no partial graph unless `--allow-partial` exists in a later spec.
 - Repository path is readable but not Git: create a generic filesystem source node or `cannot_verify`, depending on selected target kind.
-- Symlink points outside selected root: record `cannot_verify` unless explicitly allowed by selection policy.
+- Symlink points outside selected root: record `cannot_verify` unless explicitly
+  allowed by selection policy; do not follow it for evidence discovery.
 - Duplicate target IDs: fail with a clear validation error.
-- Output path already exists: overwrite only with explicit `--force` or write to a deterministic new path.
+- Output path already exists: fail unless explicit `--force` is provided. The
+  output path must not be a symlink, must not be a directory, and must not be
+  inside a selected repository root.
 - Claim file has malformed JSON: record `cannot_verify` for that claim source and continue if other sources are valid.
 
 ## Requirements
@@ -83,7 +86,9 @@ A downstream tool can parse the output without scraping human text.
 ### Measurable Outcomes
 
 - **SC-001**: A fixture scan completes locally in under 2 seconds on a small repository fixture.
-- **SC-002**: Output graph validates with `jq empty` and the committed schema.
+- **SC-002**: Output graph parses with `jq empty` and fixture tests assert the
+  committed schema contract. Full JSON Schema runtime validation is deferred
+  until a dependency is justified.
 - **SC-003**: At least four evidence states appear in fixture coverage: `source-visible`, `claim-only`, `unknown`, `cannot_verify`.
 - **SC-004**: Re-running the same scan over unchanged fixtures produces semantically identical graph content.
 

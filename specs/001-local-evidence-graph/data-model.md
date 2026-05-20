@@ -27,6 +27,9 @@ Rules:
 - `targets[].id` must be unique.
 - `targets[].path` must be local and relative to the invocation directory or an
   absolute local path.
+- Scanner paths are evaluated through canonical filesystem paths. Lexical
+  variants such as `../` must not bypass selected-root boundaries, and symlinks
+  that resolve outside a selected root are recorded as `cannot_verify`.
 - `claims[].path` is optional evidence; malformed claims produce
   `cannot_verify` for that source.
 
