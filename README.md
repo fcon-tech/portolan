@@ -96,8 +96,8 @@ Each graph node or relationship records how it is known:
 
 ## SpecKit Workflow
 
-Portolan uses GitHub Spec Kit for product planning. The current active
-implementation slice is:
+Portolan uses GitHub Spec Kit for product planning. The implemented bootstrap
+slice is:
 
 - [001 Local Evidence Graph](specs/001-local-evidence-graph/spec.md)
 - [001 Implementation Plan](specs/001-local-evidence-graph/plan.md)
