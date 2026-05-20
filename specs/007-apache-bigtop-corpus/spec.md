@@ -3,17 +3,20 @@
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
 **Status**: Backlog spec
-**Input**: Product decision to start test strategy with Apache Big Data / Bigtop as the first realistic OSS ecosystem corpus for the Cursor + Composer 2.5 / Kimi 2.6 operator assembly.
+**Input**: Product decision to reserve Apache Big Data / Bigtop as the final
+realistic OSS ecosystem corpus for the Cursor + Composer 2.5 / Kimi 2.6
+operator assembly after the primary Portolan loop is runnable.
 
 ## User Scenarios & Testing
 
 ### User Story 1 - Select A Realistic Ecosystem Corpus (Priority: P1)
 
-A Portolan maintainer can point planning and fixture work at one documented OSS
-ecosystem instead of using disconnected toy repositories.
+A Portolan maintainer can point final acceptance planning and fixture work at
+one documented OSS ecosystem instead of using disconnected toy repositories.
 
-**Why this priority**: Portolan's product value depends on messy ecosystem
-evidence. Tiny fixtures cannot prove multi-repo, legacy, and black-box behavior.
+**Why this priority**: Portolan's product value eventually depends on messy
+ecosystem evidence. Tiny fixtures are right for primary assembly, but they
+cannot prove final multi-repo, legacy, and black-box behavior.
 
 **Independent Test**: Inspect the committed corpus manifest and verify that it
 contains a Bigtop root, current component repositories, retired legacy projects,
@@ -34,8 +37,9 @@ and runtime/package metadata targets.
 A reviewer can see retired Hadoop-era projects and weak evidence without
 Portolan presenting them as verified active source facts.
 
-**Why this priority**: The corpus should test the evidence model, not only the
-happy path where every repository is current and cloneable.
+**Why this priority**: The final corpus should test the evidence model after it
+works on smaller fixtures, not only the happy path where every repository is
+current and cloneable.
 
 **Independent Test**: Generate a fixture graph that includes Oozie and Sqoop
 with retirement metadata and at least one `unknown` or `cannot_verify` fact.
@@ -73,8 +77,9 @@ An evaluator can use Apache Bigtop to test the full workflow around Portolan:
 Cursor as the interactive engineering surface, Composer 2.5 / Kimi 2.6 as the
 agent/model pair, and Portolan as the evidence graph and packet substrate.
 
-**Why this priority**: The corpus should prove whether the whole working loop is
-usable, not only whether a static manifest can be parsed.
+**Why this priority**: The corpus should prove whether the whole assembled
+working loop is usable, not whether a static manifest can be parsed during the
+primary build.
 
 **Independent Test**: Run a documented operator session over a prepared Bigtop
 fixture and review whether Portolan artifacts separate machine-observed evidence
@@ -159,8 +164,8 @@ from agent claims.
 - Apache Bigtop 3.5.0 is the first pinned release profile.
 - Current upstream links are attribution and preparation inputs, not runtime scan
   permissions.
-- Full corpus cloning is an optional later preparation step, not part of the
-  default MVP.
+- Full corpus cloning is an optional final acceptance preparation step, not
+  part of the primary build or default MVP.
 - Initial schema validation may be syntax-only until a JSON Schema validator is
   introduced.
 - Composer 2.5 / Kimi 2.6 are named as the current evaluation stack, not as

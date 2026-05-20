@@ -6,11 +6,11 @@
 
 ## Summary
 
-Add Apache Bigtop as Portolan's first realistic OSS test corpus. The first slice
-is documentation and data only: define the corpus schema, commit the Bigtop
-manifest, document phased testing, and index the slice in the product backlog.
-No repository cloning, networked scan behavior, or importer implementation is in
-scope.
+Add Apache Bigtop as Portolan's final realistic OSS acceptance corpus. This
+slice is documentation and data only: define the corpus schema, commit the
+Bigtop manifest, document phased testing, and index the slice in the product
+backlog. No repository cloning, networked scan behavior, or importer
+implementation is in scope.
 
 ## Technical Context
 
@@ -30,7 +30,7 @@ scope.
 - **SpecKit before implementation**: This slice defines spec, plan, and tasks
   before any scanner behavior.
 - **Test-first**: Acceptance checks define the fixture behavior required before
-  this corpus becomes a scanner acceptance gate.
+  this corpus becomes a final scanner and workflow acceptance gate.
 
 ## Project Structure
 
@@ -45,9 +45,10 @@ specs/007-apache-bigtop-corpus/tasks.md
 
 ## Phases
 
-1. Add schema and manifest.
+1. Add schema and manifest for future final acceptance.
 2. Add human-readable corpus rationale and test strategy.
-3. Add SpecKit artifacts and backlog index entry.
+3. Add SpecKit artifacts and backlog index entry that keep Bigtop behind the
+   primary runnable product loop.
 4. Verify JSON syntax, Go baseline, whitespace, and placeholder hygiene.
 
 ## Out Of Scope

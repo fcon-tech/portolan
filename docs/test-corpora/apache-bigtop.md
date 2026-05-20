@@ -1,17 +1,19 @@
 # Apache Bigtop Test Corpus
 
-Apache Bigtop is the first proposed large OSS corpus for Portolan acceptance
+Apache Bigtop is the proposed final large OSS corpus for Portolan acceptance
 work. It is useful because it is already an integration project for big-data
 components, not a synthetic list of repositories. The corpus should stress the
-parts of Portolan that matter most: multi-repo source evidence, integration
-metadata, package/runtime surfaces, legacy projects, and honest unknowns.
+parts of Portolan that matter most after the primary product loop works:
+multi-repo source evidence, integration metadata, package/runtime surfaces,
+legacy projects, and honest unknowns.
 
-The immediate acceptance target is not "can Portolan describe Bigtop in
-isolation". The target is to test the whole working assembly: Cursor as the
-interactive surface, Composer 2.5 / Kimi 2.6 as the agent/model pair, Portolan as
-the evidence graph substrate, and Bigtop as the messy OSS ecosystem under test.
-Cursor, Composer, and Kimi are evaluation context; they are not default runtime
-dependencies for Portolan scans.
+Bigtop is not a middle-of-roadmap task. Before using it, Portolan should already
+have a runnable local scan loop, packet generation, useful evidence handling,
+and small local fixtures. The final acceptance target is to test the whole
+working assembly: Cursor as the interactive surface, Composer 2.5 / Kimi 2.6 as
+the agent/model pair, Portolan as the evidence graph substrate, and Bigtop as
+the messy OSS ecosystem under test. Cursor, Composer, and Kimi are evaluation
+context; they are not default runtime dependencies for Portolan scans.
 
 ## Why This Corpus
 
@@ -47,7 +49,8 @@ The committed machine-readable profile is
 
 ## Test Strategy
 
-Use the corpus in layers instead of cloning everything on day one.
+Use the corpus in layers after the primary Portolan build is already useful on
+small fixtures.
 
 ### Phase 1 - Manifest Acceptance
 

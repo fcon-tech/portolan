@@ -34,6 +34,15 @@ The MVP should prove one narrow product promise:
 - Keep black-box facts visibly lower authority than source-visible facts.
 - Report `unknown` or `cannot_verify` instead of inventing conclusions.
 
+## Phase 4: Final Ecosystem Acceptance
+
+- Use Apache Bigtop only after the primary Portolan loop is runnable and useful
+  on small local fixtures.
+- Validate the assembled workflow against a realistic OSS ecosystem corpus.
+- Keep corpus preparation separate from default scan execution so Bigtop does
+  not introduce surprise network access, cloning, or heavyweight setup into the
+  MVP path.
+
 ## Non-Goals For MVP
 
 - No SaaS service.
