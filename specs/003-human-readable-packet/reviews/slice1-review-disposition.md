@@ -37,6 +37,22 @@ Disposition: accepted and fixed.
 The test searched for `observed from`, which appears inside `not observed from`.
 It now checks that claim-only packets do not contain visible source evidence.
 
+### Major: Weak Edge Evidence Could Be Rendered As Observed
+
+Disposition: accepted and fixed during PR review.
+
+Relationship rendering originally described every non-claim edge as observed.
+Edges with `unknown` or `cannot_verify` evidence now render as `unknown` or
+`cannot verify`, and tests cover both states.
+
+### Major: Graph Text Needed Markdown/HTML Escaping
+
+Disposition: accepted and fixed during PR review.
+
+Graph labels, ids, sources, and reasons can come from local evidence files. The
+renderer now escapes HTML-sensitive characters and neutralizes code-span
+backticks/newlines before writing Markdown.
+
 ## Verification
 
 - `go test -count=1 ./...`: passed.

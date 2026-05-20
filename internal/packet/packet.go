@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -44,6 +46,9 @@ func LoadGraph(path string) (graph.Graph, error) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&g); err != nil {
 		return graph.Graph{}, fmt.Errorf("parse graph: %w", err)
+	}
+	if decoder.Decode(&struct{}{}) != io.EOF {
+		return graph.Graph{}, fmt.Errorf("parse graph: trailing JSON content")
 	}
 	if g.SchemaVersion != graph.SchemaVersion {
 		return graph.Graph{}, fmt.Errorf("graph schema_version must be %q", graph.SchemaVersion)
@@ -193,9 +198,9 @@ func writeNodeSection(b *strings.Builder, title string, nodes []graph.Node, stat
 			continue
 		}
 		wrote = true
-		fmt.Fprintf(b, "- `%s` (%s, id `%s`) is %s from `%s`", node.Label, node.Kind, node.ID, label, node.Evidence.Source)
+		fmt.Fprintf(b, "- `%s` (%s, id `%s`) is %s from `%s`", codeText(node.Label), codeText(node.Kind), codeText(node.ID), label, codeText(node.Evidence.Source))
 		if node.Evidence.Reason != "" {
-			fmt.Fprintf(b, ": %s", node.Evidence.Reason)
+			fmt.Fprintf(b, ": %s", markdownText(node.Evidence.Reason))
 		}
 		b.WriteString(".\n")
 	}
@@ -212,15 +217,44 @@ func writeEdgeSection(b *strings.Builder, edges []graph.Edge) {
 		return
 	}
 	for _, edge := range edges {
-		description := "observed"
-		if edge.Evidence.State == graph.ClaimOnly {
-			description = "claimed, not observed"
-		}
-		fmt.Fprintf(b, "- `%s` `%s` `%s` is %s from `%s`", edge.From, edge.Kind, edge.To, description, edge.Evidence.Source)
+		description := evidenceDescription(edge.Evidence.State)
+		fmt.Fprintf(b, "- `%s` `%s` `%s` is %s from `%s`", codeText(edge.From), codeText(edge.Kind), codeText(edge.To), description, codeText(edge.Evidence.Source))
 		if edge.Evidence.Reason != "" {
-			fmt.Fprintf(b, ": %s", edge.Evidence.Reason)
+			fmt.Fprintf(b, ": %s", markdownText(edge.Evidence.Reason))
 		}
 		b.WriteString(".\n")
 	}
 	b.WriteString("\n")
+}
+
+func codeText(value string) string {
+	value = strings.ReplaceAll(value, "`", "'")
+	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "\n", " ")
+	return html.EscapeString(value)
+}
+
+func markdownText(value string) string {
+	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "\n", " ")
+	return html.EscapeString(value)
+}
+
+func evidenceDescription(state graph.EvidenceState) string {
+	switch state {
+	case graph.SourceVisible:
+		return "visible source evidence"
+	case graph.MetadataVisible:
+		return "metadata-visible evidence"
+	case graph.RuntimeVisible:
+		return "runtime-visible evidence"
+	case graph.ClaimOnly:
+		return "claimed, not observed"
+	case graph.Unknown:
+		return "unknown"
+	case graph.CannotVerify:
+		return "cannot verify"
+	default:
+		return string(state)
+	}
 }

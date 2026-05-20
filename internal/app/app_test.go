@@ -287,6 +287,78 @@ func TestRunPacketRenderDoesNotDescribeClaimOnlyAsObserved(t *testing.T) {
 	}
 }
 
+func TestRunPacketRenderDoesNotDescribeUnknownOrCannotVerifyEdgesAsObserved(t *testing.T) {
+	root := t.TempDir()
+	graphPath := filepath.Join(root, "graph.json")
+	out := filepath.Join(root, "packet.md")
+	mustWrite(t, graphPath, `{
+		"schema_version":"0.1.0",
+		"generated_by":"portolan",
+		"nodes":[
+			{"id":"api","kind":"unknown","label":"api","evidence":{"state":"unknown","source":"selection","reason":"not visible"}},
+			{"id":"db","kind":"unknown","label":"db","evidence":{"state":"cannot_verify","source":"selection","reason":"unreadable"}}
+		],
+		"edges":[
+			{"from":"api","to":"db","kind":"depends-on","evidence":{"state":"unknown","source":"selection","reason":"not visible"}},
+			{"from":"db","to":"api","kind":"depends-on","evidence":{"state":"cannot_verify","source":"selection","reason":"unreadable"}}
+		]
+	}`)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"packet", "render", "--graph", graphPath, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	if !strings.Contains(text, "is unknown from") || !strings.Contains(text, "is cannot verify from") {
+		t.Fatalf("packet should preserve weak edge evidence:\n%s", text)
+	}
+	if strings.Contains(text, "is observed from") {
+		t.Fatalf("packet overclaimed weak edge evidence:\n%s", text)
+	}
+}
+
+func TestRunPacketRenderEscapesGraphTextForMarkdown(t *testing.T) {
+	root := t.TempDir()
+	graphPath := filepath.Join(root, "graph.json")
+	out := filepath.Join(root, "packet.md")
+	mustWrite(t, graphPath, `{
+		"schema_version":"0.1.0",
+		"generated_by":"portolan",
+		"nodes":[
+			{"id":"bad`+"`"+`id","kind":"unknown","label":"<script>alert(1)</script>","evidence":{"state":"cannot_verify","source":"source`+"`"+`path","reason":"<b>bad</b>\n# heading"}}
+		],
+		"edges":[]
+	}`)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"packet", "render", "--graph", graphPath, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	for _, want := range []string{"&lt;script&gt;alert(1)&lt;/script&gt;", "id `bad&#39;id`", "`source&#39;path`", "&lt;b&gt;bad&lt;/b&gt; # heading"} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("packet missing escaped text %q:\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "<script>") || strings.Contains(text, "\n# heading") {
+		t.Fatalf("packet contains unescaped markdown/html:\n%s", text)
+	}
+}
+
 func TestRunPacketRenderRejectsMalformedGraphWithoutPartialOutput(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "packet.md")
 	var stdout bytes.Buffer
