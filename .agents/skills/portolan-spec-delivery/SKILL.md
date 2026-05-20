@@ -31,9 +31,15 @@ only when the PR state and evidence are coherent.
 2. Check `git status --short --branch` and existing worktrees.
 3. If implementing a spec, choose the earliest ready backlog item that has
    concrete `spec.md`, `plan.md`, and `tasks.md`.
-4. Work in a dedicated worktree from current `origin/main` or the requested base.
+4. Reconstruct status consistency before coding: compare backlog status, spec
+   status, task checkboxes, review dispositions, recent git history, and the
+   current implementation files. If these surfaces disagree, record a
+   spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`,
+   fix stale status metadata, and only then choose the next implementation
+   target.
+5. Work in a dedicated worktree from current `origin/main` or the requested base.
    Do not use a dirty main checkout for implementation.
-5. State the decision gate:
+6. State the decision gate:
    - Simpler/Faster
    - Blocking Edge Cases
    - Existing Open Source

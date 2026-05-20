@@ -51,6 +51,12 @@ Portolan is:
 - Do not implement a non-trivial feature until its `spec.md`, `plan.md`, and
   `tasks.md` are concrete.
 - Backlog-only specs may start with `spec.md`; active work needs plan and tasks.
+- Keep backlog rows, spec status, task ledgers, review dispositions, and
+  implementation state consistent. Before treating a spec as ready, verify that
+  `docs/product-backlog.md`, `spec.md`, `tasks.md`, existing reviews, and the
+  current code agree. If they disagree, stop implementation, record a
+  spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`, and
+  fix the stale status before choosing the next task.
 - Generated Spec Kit skills under `.agents/skills/` are committed; do not store
   credentials or private runtime state under `.agents/`.
 
@@ -62,6 +68,10 @@ When asked to take the next ready spec into implementation:
   checkout.
 - Select the next spec from `docs/product-backlog.md` that is marked ready and
   has concrete `spec.md`, `plan.md`, and `tasks.md`.
+- Reconstruct consistency before coding: compare the backlog status, spec
+  status, task checkboxes, review dispositions, recent git history, and
+  implementation files. A stale `Ready for implementation` row is not permission
+  to reimplement completed work.
 - Start with review, not coding. Review the spec/plan/tasks against the
   constitution, backlog order, schemas, CLI contract, and product boundary.
 - Record review evidence under `specs/<NNN-short-name>/reviews/`; do not create
