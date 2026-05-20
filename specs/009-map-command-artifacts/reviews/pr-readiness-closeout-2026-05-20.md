@@ -7,10 +7,11 @@ Date: 2026-05-20
 | Surface | Status | Evidence |
 | --- | --- | --- |
 | PR | verified | GitHub PR #9: `https://github.com/fall-out-bug/portolan/pull/9`. |
-| Head | verified | `codex/009-map-command-artifacts` at `8bf0d88d39ab733211b185698e379faa1f428853`. |
+| Reviewed code-fix head | verified | Ancestor-output blocker fixed at `8bf0d88d39ab733211b185698e379faa1f428853`; later artifact-only commits refresh this closeout. |
+| Current PR head | verified | `codex/009-map-command-artifacts` includes this closeout refresh commit; re-check GitHub before merge. |
 | Base | verified | `main`. |
 | Draft state | verified | PR #9 is ready-for-review, not draft. |
-| Merge state | verified | GitHub reported `CLEAN` during refresh after the latest fix commit. |
+| Merge state | not_assessed | GitHub reported `UNKNOWN` after the latest artifact-only push. |
 | GitHub checks | not_assessed | `gh pr checks 9` reported no checks on the branch. |
 
 ## Local Verification
@@ -43,7 +44,7 @@ Date: 2026-05-20
 | Review evidence | verified with accepted fixes applied, including ancestor-output blocker |
 | PR state | ready-for-review |
 | GitHub checks | not_assessed |
-| Merge state | verified CLEAN |
+| Merge state | not_assessed after latest artifact-only push |
 | Merge readiness | not_assessed; no human approval and no GitHub checks |
 | Stop reason | Ready-for-review PR is the correct stop point; merge is not authorized. |
 
