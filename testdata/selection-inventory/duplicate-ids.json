@@ -1,0 +1,16 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "repo-main",
+      "kind": "repository",
+      "path": "repo"
+    }
+  ],
+  "metadata": [
+    {
+      "id": "repo-main",
+      "path": "catalog.json"
+    }
+  ]
+}

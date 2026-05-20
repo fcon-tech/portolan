@@ -1,0 +1,11 @@
+{
+  "claims": [
+    {
+      "id": "claim-api-db",
+      "subject": "api",
+      "predicate": "depends-on",
+      "object": "database",
+      "source": "architecture-interview"
+    }
+  ]
+}

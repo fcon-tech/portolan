@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "remote-repo",
+      "kind": "repository",
+      "path": "https://example.com/repo.git"
+    }
+  ]
+}
