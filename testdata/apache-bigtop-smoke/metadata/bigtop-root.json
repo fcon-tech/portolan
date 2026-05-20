@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1.0",
+  "service": {
+    "id": "apache-bigtop",
+    "label": "Apache Bigtop",
+    "owner": "apache-bigtop-community",
+    "declared_dependencies": [
+      "apache-hadoop",
+      "apache-hive",
+      "apache-spark"
+    ]
+  },
+  "source": "corpora/apache-bigtop/manifest.json"
+}

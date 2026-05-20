@@ -13,6 +13,8 @@ import (
 	"github.com/fall-out-bug/portolan/internal/scan"
 )
 
+const mapCommandFixtureRoot = "../../testdata/map-command/repo"
+
 func TestRunVersionWritesVersion(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -873,6 +875,313 @@ func TestRunDiffOutputSafety(t *testing.T) {
 			t.Fatalf("code = %d stderr = %q, want symlink error", code, stderr.String())
 		}
 	})
+}
+
+func TestRunMapWritesArtifactBundle(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote map bundle") {
+		t.Fatalf("stdout = %q, want bundle summary", stdout.String())
+	}
+	for _, name := range []string{"run.json", "graph.json", "findings.jsonl", "map.md"} {
+		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
+			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	assertSchemaShape(t, graph)
+	states := evidenceStates(t, graph)
+	if !states["source-visible"] {
+		t.Fatalf("states = %#v, want source-visible", states)
+	}
+	mapText, err := os.ReadFile(filepath.Join(out, "map.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(mapText), "Findings: 5") {
+		t.Fatalf("map.md = %q, want finding count", string(mapText))
+	}
+	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
+		t.Fatalf("map.md = %q, want skipped surfaces warning", string(mapText))
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunMapRejectsMissingRootWithoutPartialBundle(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", "../../testdata/map-command/missing", "--out", out}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want error")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "root path does not exist") {
+		t.Fatalf("stderr = %q, want missing root error", stderr.String())
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Fatalf("output exists after startup validation failure; err = %v", err)
+	}
+}
+
+func TestRunMapOutputSafety(t *testing.T) {
+	root := t.TempDir()
+	out := filepath.Join(root, "run")
+	if err := os.Mkdir(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(out, "old.txt"), "preserve me")
+
+	t.Run("existing output requires force", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out}, &stdout, &stderr)
+		if code == 0 || !strings.Contains(stderr.String(), "--force") {
+			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
+		}
+		if _, err := os.Stat(filepath.Join(out, "old.txt")); err != nil {
+			t.Fatalf("existing output changed: %v", err)
+		}
+	})
+
+	t.Run("force replaces existing output", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+		if code != 0 {
+			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
+		}
+		if _, err := os.Stat(filepath.Join(out, "old.txt")); !os.IsNotExist(err) {
+			t.Fatalf("old output still exists; err = %v", err)
+		}
+		readGraph(t, filepath.Join(out, "graph.json"))
+	})
+}
+
+func TestRunMapCreatesPortolanParentOnFirstUse(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	readGraph(t, filepath.Join(out, "graph.json"))
+}
+
+func TestRunMapRejectsMissingRequiredFlags(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "missing root",
+			args: []string{"map", "--out", filepath.Join(t.TempDir(), "run")},
+			want: "--root is required",
+		},
+		{
+			name: "missing output",
+			args: []string{"map", "--root", mapCommandFixtureRoot},
+			want: "--out is required",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+			code := Run(tt.args, &stdout, &stderr)
+			if code == 0 {
+				t.Fatalf("Run returned 0, want error")
+			}
+			if !strings.Contains(stderr.String(), tt.want) {
+				t.Fatalf("stderr = %q, want %q", stderr.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestRunMapRejectsDangerousForceOutput(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", root, "--force"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want dangerous output rejection")
+	}
+	if !strings.Contains(stderr.String(), "unsafe") && !strings.Contains(stderr.String(), "under .portolan") {
+		t.Fatalf("stderr = %q, want unsafe output error", stderr.String())
+	}
+}
+
+func TestRunMapRejectsOutputAncestorOfRoot(t *testing.T) {
+	parent := t.TempDir()
+	root := filepath.Join(parent, "project")
+	if err := os.Mkdir(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", parent, "--force"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want ancestor output rejection")
+	}
+	if !strings.Contains(stderr.String(), "must not contain mapped root") {
+		t.Fatalf("stderr = %q, want ancestor output error", stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, "README.md")); err != nil {
+		t.Fatalf("mapped root was modified: %v", err)
+	}
+}
+
+func TestRunMapFindingsJSONLHasRequiredFields(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(filepath.Join(out, "findings.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != 5 {
+		t.Fatalf("findings lines = %d, want 5:\n%s", len(lines), data)
+	}
+	kinds := map[string]bool{}
+	for _, line := range lines {
+		var finding map[string]any
+		if err := json.Unmarshal([]byte(line), &finding); err != nil {
+			t.Fatalf("parse finding %q: %v", line, err)
+		}
+		for _, field := range []string{"id", "kind", "summary", "severity", "evidence_state", "evidence_source", "status"} {
+			if finding[field] == "" {
+				t.Fatalf("finding missing %s: %#v", field, finding)
+			}
+		}
+		if _, ok := finding["confidence"].(float64); !ok {
+			t.Fatalf("finding missing numeric confidence: %#v", finding)
+		}
+		kinds[finding["kind"].(string)] = true
+	}
+	for _, want := range []string{"inventory", "relationships", "duplication", "configuration", "technical-debt"} {
+		if !kinds[want] {
+			t.Fatalf("finding kinds = %#v, want %q", kinds, want)
+		}
+	}
+}
+
+func TestRunMapRunJSONRecordsAuditMetadata(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	data, err := os.ReadFile(filepath.Join(out, "run.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var run map[string]any
+	if err := json.Unmarshal(data, &run); err != nil {
+		t.Fatal(err)
+	}
+	if run["command"] != "portolan map" || run["version"] != "dev" {
+		t.Fatalf("run metadata = %#v, want command and version", run)
+	}
+	for _, field := range []string{"root", "output_path"} {
+		if run[field] == "" {
+			t.Fatalf("run metadata missing %s: %#v", field, run)
+		}
+	}
+	artifacts := run["artifacts"].(map[string]any)
+	for _, name := range []string{"run", "graph", "findings", "packet"} {
+		if artifacts[name] == "" {
+			t.Fatalf("artifacts missing %s: %#v", name, artifacts)
+		}
+	}
+	if len(run["enabled_surfaces"].([]any)) == 0 || len(run["skipped_surfaces"].([]any)) == 0 {
+		t.Fatalf("surfaces missing: %#v", run)
+	}
+	if len(run["warnings"].([]any)) == 0 {
+		t.Fatalf("warnings missing: %#v", run)
+	}
+}
+
+func TestRunMapAllowsPortolanOutputInsideRootAndExcludesGeneratedArtifacts(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	if err := os.MkdirAll(filepath.Join(root, ".portolan", "run"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	mustWrite(t, filepath.Join(root, ".portolan", "run", "stale.txt"), "stale artifact")
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	for _, item := range graph["nodes"].([]any) {
+		node := item.(map[string]any)
+		if strings.Contains(node["id"].(string), ".portolan") {
+			t.Fatalf("graph included generated artifact node: %#v", node)
+		}
+	}
+}
+
+func TestRunMapRejectsOutputInsideRootThroughSymlinkOutsidePortolan(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "README.md"), "fixture")
+	parent := t.TempDir()
+	link := filepath.Join(parent, "linked-root")
+	if err := os.Symlink(root, link); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", filepath.Join(link, "run"), "--force"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want symlink-contained output rejection")
+	}
+	if !strings.Contains(stderr.String(), "under .portolan") {
+		t.Fatalf("stderr = %q, want .portolan containment error", stderr.String())
+	}
 }
 
 func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) {

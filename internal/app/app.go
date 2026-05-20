@@ -8,6 +8,7 @@ import (
 
 	graphdiff "github.com/fall-out-bug/portolan/internal/diff"
 	"github.com/fall-out-bug/portolan/internal/importer"
+	"github.com/fall-out-bug/portolan/internal/maprun"
 	"github.com/fall-out-bug/portolan/internal/packet"
 	"github.com/fall-out-bug/portolan/internal/scan"
 	"github.com/fall-out-bug/portolan/internal/selection"
@@ -38,11 +39,51 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runImport(args[1:], stdout, stderr)
 	case "diff":
 		return runDiff(args[1:], stdout, stderr)
+	case "map":
+		return runMap(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeMapUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("map", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	rootPath := flags.String("root", "", "local repository root path")
+	outputPath := flags.String("out", "", "output artifact bundle directory")
+	force := flags.Bool("force", false, "replace an existing output directory")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeMapUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected map argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	result, err := maprun.Run(maprun.Options{
+		RootPath:   *rootPath,
+		OutputPath: *outputPath,
+		Force:      *force,
+		Version:    Version,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "map: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote map bundle %s\n", result.OutputPath)
+	return 0
 }
 
 func runDiff(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -311,6 +352,7 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan import cyclonedx --in bom.cdx.json --out graph.json
+  portolan map --root . --out .portolan/run
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
@@ -318,6 +360,24 @@ Usage:
 
 Portolan is local-first and read-only by default. The bootstrap build documents
 the contract before it collects repository, metadata, runtime, or claim evidence.
+`)
+}
+
+func writeMapUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan map --root . --out .portolan/run [--force]
+
+Build a local, read-only artifact bundle for agent codebase mapping.
+
+Flags:
+  --root path   local repository root path
+  --out path    output bundle directory
+  --force       replace an existing output directory
+
+The bundle contains run.json, graph.json, findings.jsonl, and map.md. The first
+implementation records basic source inventory and not_assessed findings for
+detectors that are not implemented yet. It makes no network calls and writes
+only to the selected output directory.
 `)
 }
 

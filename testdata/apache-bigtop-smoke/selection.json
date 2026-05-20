@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "apache-bigtop-repo",
+      "kind": "repository",
+      "path": "testdata/apache-bigtop-smoke/repo"
+    },
+    {
+      "id": "apache-oozie-source",
+      "kind": "repository",
+      "path": "testdata/apache-bigtop-smoke/missing-oozie-repo"
+    }
+  ],
+  "claims": [
+    {
+      "id": "bigtop-smoke-claims",
+      "path": "testdata/apache-bigtop-smoke/claims/bigtop-gaps.json"
+    }
+  ],
+  "black_boxes": [
+    {
+      "id": "apache-bigtop",
+      "kind": "service",
+      "label": "Apache Bigtop",
+      "metadata": [
+        {
+          "id": "bigtop-root-metadata",
+          "path": "testdata/apache-bigtop-smoke/metadata/bigtop-root.json"
+        }
+      ],
+      "runtime": [
+        {
+          "id": "bigtop-root-runtime",
+          "path": "testdata/apache-bigtop-smoke/runtime/bigtop-root.json"
+        }
+      ],
+      "expected": [
+        "owner",
+        "dependencies",
+        "runtime-endpoints"
+      ]
+    },
+    {
+      "id": "apache-oozie",
+      "kind": "service",
+      "label": "Apache Oozie",
+      "metadata": [
+        {
+          "id": "oozie-retired-metadata",
+          "path": "testdata/apache-bigtop-smoke/metadata/missing-oozie.json"
+        }
+      ],
+      "expected": [
+        "owner",
+        "dependencies",
+        "runtime-endpoints"
+      ]
+    }
+  ]
+}

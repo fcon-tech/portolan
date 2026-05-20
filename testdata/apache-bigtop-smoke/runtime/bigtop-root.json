@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1.0",
+  "observations": [
+    {
+      "service": "apache-bigtop",
+      "endpoint": "local-fixture://bigtop-smoke",
+      "observed_at": "2026-05-20T00:00:00Z"
+    }
+  ],
+  "source": "prepared-local-fixture"
+}

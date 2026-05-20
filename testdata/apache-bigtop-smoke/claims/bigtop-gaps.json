@@ -1,0 +1,18 @@
+{
+  "claims": [
+    {
+      "id": "claim-bigtop-needs-map",
+      "subject": "apache-bigtop",
+      "predicate": "claims",
+      "object": "missing-one-command-map-bundle",
+      "source": "specs/007-apache-bigtop-corpus/acceptance-smoke.md"
+    },
+    {
+      "id": "claim-bigtop-needs-relationship-detection",
+      "subject": "apache-bigtop",
+      "predicate": "claims",
+      "object": "missing-relationship-detection",
+      "source": "specs/007-apache-bigtop-corpus/acceptance-smoke.md"
+    }
+  ]
+}
