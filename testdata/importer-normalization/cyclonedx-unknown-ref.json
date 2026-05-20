@@ -1,0 +1,27 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "components": [
+    {
+      "bom-ref": "pkg:maven/org.example/lib-a@1.2.3",
+      "type": "library",
+      "name": "lib-a",
+      "version": "1.2.3"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:maven/org.example/lib-a@1.2.3",
+      "dependsOn": [
+        "pkg:npm/missing@0.0.1"
+      ]
+    },
+    {
+      "ref": "pkg:npm/missing-source@0.0.1",
+      "dependsOn": [
+        "pkg:maven/org.example/lib-a@1.2.3"
+      ]
+    }
+  ]
+}

@@ -31,7 +31,7 @@ fixtures prove the product contract.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P1-004 | `specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Backlog spec |
+| P1-004 | `specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Implemented in branch |
 | P1-005 | `specs/005-black-box-profile/` | Portolan can represent black-box systems through metadata, runtime observations, and claims. | Backlog spec |
 | P1-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Backlog spec |
 

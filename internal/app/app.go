@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/governor/portolan/internal/importer"
 	"github.com/governor/portolan/internal/packet"
 	"github.com/governor/portolan/internal/scan"
 	"github.com/governor/portolan/internal/selection"
@@ -32,11 +33,73 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runSelection(args[1:], stdout, stderr)
 	case "packet":
 		return runPacket(args[1:], stdout, stderr)
+	case "import":
+		return runImport(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runImport(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeImportUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "cyclonedx":
+		return runImportCycloneDX(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown import command %q\nRun 'portolan import --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runImportCycloneDX(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeImportCycloneDXUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("import cyclonedx", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	inputPath := flags.String("in", "", "local CycloneDX JSON file")
+	outputPath := flags.String("out", "", "output evidence graph JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeImportCycloneDXUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected import cyclonedx argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	g, err := importer.RunCycloneDX(importer.Options{
+		InputPath:  *inputPath,
+		OutputPath: *outputPath,
+		Force:      *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "import cyclonedx: %v\n", err)
+		return 2
+	}
+	if err := importer.Write(*outputPath, g, *force); err != nil {
+		fmt.Fprintf(stderr, "import cyclonedx: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "import cyclonedx: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
 }
 
 func runSelection(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -198,12 +261,41 @@ func writeUsage(w io.Writer) {
 
 Usage:
   portolan --version
+  portolan import cyclonedx --in bom.cdx.json --out graph.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
   portolan scan --help
 
 Portolan is local-first and read-only by default. The bootstrap build documents
 the contract before it collects repository, metadata, runtime, or claim evidence.
+`)
+}
+
+func writeImportUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan import cyclonedx --in bom.cdx.json --out graph.json [--force]
+
+Import local tool output into a Portolan evidence graph.
+
+Default import behavior is local-first, makes no network calls, does not invoke
+external tools, and records imported facts as metadata-visible unless evidence
+cannot be verified from the input.
+`)
+}
+
+func writeImportCycloneDXUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan import cyclonedx --in bom.cdx.json --out graph.json [--force]
+
+Import a local CycloneDX JSON SBOM into package nodes and dependency edges.
+
+Flags:
+  --in path    local CycloneDX JSON input file
+  --out path   output evidence graph JSON path
+  --force      overwrite an existing output file
+
+The importer reads only the selected local file, makes no network calls, and
+records supported component and dependency facts as metadata-visible evidence.
 `)
 }
 

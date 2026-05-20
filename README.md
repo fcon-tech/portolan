@@ -20,6 +20,8 @@ Implemented:
 
 - Go module and `portolan scan --selection <file> --out <file>` for the first
   local evidence graph.
+- `portolan import cyclonedx --in <file> --out <file>` for local CycloneDX JSON
+  SBOM normalization.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -27,11 +29,10 @@ Implemented:
 
 Not implemented yet:
 
-- metadata importers;
 - runtime importers;
 - black-box inventory workflow;
 - corpus preparation or manifest-to-selection generation;
-- report rendering;
+- SPDX, Syft-native, or live tool importers;
 - integrations with external tools.
 
 ## Product Contract
@@ -111,6 +112,7 @@ Backlog features live under `specs/` and are indexed in
 ```bash
 go test ./...
 go run ./cmd/portolan --version
+go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
 go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force

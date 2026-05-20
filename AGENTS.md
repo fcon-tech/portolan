@@ -126,6 +126,11 @@ Merge rules:
   human/GitHub approval authorizes it.
 - Before merge, re-check PR state and report absent CI as `not_assessed`, not
   green.
+- Merge closeout must consolidate statuses before the work is considered done:
+  verify and align `docs/product-backlog.md`, the active `spec.md`, `tasks.md`,
+  review dispositions, PR state, check state, and implementation evidence. If
+  any surface is stale after merge, update it or record a spec-local blocker
+  before claiming completion.
 - After merge, confirm the merge commit and clean up the remote feature branch
   when requested or when the merge command was intended to delete it.
 

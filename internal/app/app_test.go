@@ -404,6 +404,260 @@ func TestRunPacketRenderOutputSafety(t *testing.T) {
 	})
 }
 
+func TestRunImportHelpDescribesLocalCycloneDXImport(t *testing.T) {
+	tests := [][]string{
+		{"import", "--help"},
+		{"import", "cyclonedx", "--help"},
+	}
+	for _, args := range tests {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run(args, &stdout, &stderr)
+
+			if code != 0 {
+				t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+			}
+			out := stdout.String()
+			for _, want := range []string{"cyclonedx", "--in", "--out", "local", "no network", "metadata-visible"} {
+				if !strings.Contains(out, want) {
+					t.Fatalf("stdout %q does not contain %q", out, want)
+				}
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	if !states["metadata-visible"] {
+		t.Fatalf("states = %#v, want metadata-visible", states)
+	}
+	nodes := result["nodes"].([]any)
+	edges := result["edges"].([]any)
+	if len(nodes) != 3 {
+		t.Fatalf("nodes = %#v, want source plus two packages", nodes)
+	}
+	if len(edges) != 1 {
+		t.Fatalf("edges = %#v, want one dependency edge", edges)
+	}
+	foundPackage := false
+	for _, item := range nodes {
+		node := item.(map[string]any)
+		if node["id"] != "cyclonedx:pkg:maven/org.example/lib-a@1.2.3" {
+			continue
+		}
+		foundPackage = true
+		if node["kind"] != "package" || !strings.Contains(node["label"].(string), "lib-a") {
+			t.Fatalf("node = %#v, want lib-a package", node)
+		}
+		evidence := node["evidence"].(map[string]any)
+		if evidence["source"] != "testdata/importer-normalization/cyclonedx.json" {
+			t.Fatalf("evidence = %#v, want input source", evidence)
+		}
+	}
+	if !foundPackage {
+		t.Fatalf("nodes = %#v, want lib-a package node", nodes)
+	}
+}
+
+func TestRunImportCycloneDXReportsMalformedInputAsCannotVerifyGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/malformed-cyclonedx.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	nodes := result["nodes"].([]any)
+	if len(nodes) != 1 {
+		t.Fatalf("nodes = %#v, want one cannot_verify source node", nodes)
+	}
+	evidence := nodes[0].(map[string]any)["evidence"].(map[string]any)
+	if evidence["state"] != "cannot_verify" || !strings.Contains(evidence["reason"].(string), "malformed CycloneDX JSON") {
+		t.Fatalf("evidence = %#v, want malformed cannot_verify", evidence)
+	}
+}
+
+func TestRunImportCycloneDXKeepsUnknownDependencyRefsCannotVerify(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx-unknown-ref.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	if !states["cannot_verify"] {
+		t.Fatalf("states = %#v, want cannot_verify", states)
+	}
+	foundMissing := false
+	foundMissingSourceEdge := false
+	for _, item := range result["nodes"].([]any) {
+		node := item.(map[string]any)
+		if node["id"] != "cyclonedx:pkg:npm/missing@0.0.1" {
+			continue
+		}
+		foundMissing = true
+		evidence := node["evidence"].(map[string]any)
+		if evidence["state"] != "cannot_verify" {
+			t.Fatalf("missing node evidence = %#v, want cannot_verify", evidence)
+		}
+	}
+	if !foundMissing {
+		t.Fatalf("nodes = %#v, want missing dependency placeholder", result["nodes"])
+	}
+	for _, item := range result["edges"].([]any) {
+		edge := item.(map[string]any)
+		if edge["from"] != "cyclonedx:pkg:npm/missing-source@0.0.1" {
+			continue
+		}
+		foundMissingSourceEdge = true
+		evidence := edge["evidence"].(map[string]any)
+		if evidence["state"] != "cannot_verify" {
+			t.Fatalf("missing source edge evidence = %#v, want cannot_verify", evidence)
+		}
+	}
+	if !foundMissingSourceEdge {
+		t.Fatalf("edges = %#v, want missing source dependency edge", result["edges"])
+	}
+}
+
+func TestRunImportCycloneDXReportsMissingInputAsCannotVerifyGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/missing.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	nodes := result["nodes"].([]any)
+	if len(nodes) != 1 {
+		t.Fatalf("nodes = %#v, want one cannot_verify source node", nodes)
+	}
+	evidence := nodes[0].(map[string]any)["evidence"].(map[string]any)
+	if evidence["state"] != "cannot_verify" || !strings.Contains(evidence["reason"].(string), "read CycloneDX JSON") {
+		t.Fatalf("evidence = %#v, want missing input cannot_verify", evidence)
+	}
+}
+
+func TestRunImportCycloneDXRejectsInvalidFlags(t *testing.T) {
+	root := t.TempDir()
+	tests := []struct {
+		name string
+		args []string
+		want string
+	}{
+		{
+			name: "missing input",
+			args: []string{"import", "cyclonedx", "--out", filepath.Join(root, "graph.json")},
+			want: "--in is required",
+		},
+		{
+			name: "missing output",
+			args: []string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json"},
+			want: "--out is required",
+		},
+		{
+			name: "unknown import command",
+			args: []string{"import", "spdx"},
+			want: "portolan import --help",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run(tt.args, &stdout, &stderr)
+
+			if code == 0 {
+				t.Fatalf("Run returned 0, want error")
+			}
+			if !strings.Contains(stderr.String(), tt.want) {
+				t.Fatalf("stderr = %q, want %q", stderr.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestRunImportCycloneDXOutputSafety(t *testing.T) {
+	root := t.TempDir()
+	existing := filepath.Join(root, "graph.json")
+	mustWrite(t, existing, "preserve me")
+
+	t.Run("existing output requires force", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", existing}, &stdout, &stderr)
+		if code == 0 || !strings.Contains(stderr.String(), "--force") {
+			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
+		}
+		data, err := os.ReadFile(existing)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(data) != "preserve me" {
+			t.Fatalf("existing file changed: %q", data)
+		}
+	})
+
+	t.Run("force overwrites existing output", func(t *testing.T) {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", existing, "--force"}, &stdout, &stderr)
+		if code != 0 {
+			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
+		}
+		readGraph(t, existing)
+	})
+
+	t.Run("refuses output symlink", func(t *testing.T) {
+		target := filepath.Join(root, "target.json")
+		link := filepath.Join(root, "link.json")
+		mustWrite(t, target, "{}")
+		if err := os.Symlink(target, link); err != nil {
+			t.Skipf("symlink unavailable: %v", err)
+		}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", link, "--force"}, &stdout, &stderr)
+		if code == 0 || !strings.Contains(stderr.String(), "symlink") {
+			t.Fatalf("code = %d stderr = %q, want symlink error", code, stderr.String())
+		}
+	})
+}
+
 func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "graph.json")
 	var stdout bytes.Buffer
