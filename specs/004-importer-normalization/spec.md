@@ -2,7 +2,7 @@
 
 **Feature Branch**: `004-importer-normalization`
 **Created**: 2026-05-20
-**Status**: Implemented in branch
+**Status**: Implemented
 **Input**: Product backlog P1-004: import existing OSS/tool outputs through reviewed adapters.
 
 ## User Scenarios & Testing
