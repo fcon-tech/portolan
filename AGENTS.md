@@ -43,6 +43,17 @@ Portolan is:
   documented.
 - Keep docs and schemas aligned with the CLI contract.
 
+## SpecKit Rules
+
+- Use `.specify/memory/constitution.md` as the governing SpecKit contract.
+- Use `docs/product-backlog.md` as the backlog index.
+- Use `specs/<NNN-short-name>/` for feature slices.
+- Do not implement a non-trivial feature until its `spec.md`, `plan.md`, and
+  `tasks.md` are concrete.
+- Backlog-only specs may start with `spec.md`; active work needs plan and tasks.
+- Generated Spec Kit skills under `.agents/skills/` are committed; do not store
+  credentials or private runtime state under `.agents/`.
+
 ## Baseline Checks
 
 Run:
@@ -58,3 +69,8 @@ For CLI changes, also run the affected command, for example:
 ```bash
 go run ./cmd/portolan scan --help
 ```
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
