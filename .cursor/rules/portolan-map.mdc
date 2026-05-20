@@ -8,11 +8,12 @@ alwaysApply: false
 When the user asks to map, audit, inspect, understand, or explain this
 codebase, first read `agent/AGENT_GUIDE.md` and follow that portable workflow.
 
-Run Portolan before broad manual architecture claims. Start with
-`portolan doctor`; use `portolan map --root . --out .portolan/run` once
-available, or the guide's current-command fallback until then.
+Run Portolan before broad manual architecture claims. Separate current commands
+from the future target contract: try `portolan doctor` and
+`portolan map --root . --out .portolan/run`, but if they are unavailable,
+record gaps and use only the guide's current-command fallback.
 
-Answer from Portolan artifacts only. Preserve `unknown`, `cannot_verify`, and
-`not_assessed` instead of guessing. Do not fetch network resources, mutate the
-repository, or collect credentials unless the user explicitly approves that
-boundary.
+Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
+`cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
+resources, mutate the repository, or collect credentials unless the user
+explicitly approves that boundary.

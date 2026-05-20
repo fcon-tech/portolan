@@ -5,47 +5,53 @@
 | Item | Value |
 | --- | --- |
 | Root | `.` |
-| Command | `portolan map --root . --out .portolan/run` |
-| Artifacts | `.portolan/run/run.json`, `.portolan/run/graph.json`, `.portolan/run/findings.jsonl`, `.portolan/run/map.md` |
-| Overall state | Partial evidence; unsupported surfaces are listed below. |
+| Current command used | `portolan scan --selection selection.json --out /tmp/portolan-run/graph.json --force` |
+| Current artifacts inspected | `/tmp/portolan-run/graph.json`, `/tmp/portolan-run/map.md` |
+| Target contract status | `portolan map --root . --out .portolan/run` not available in current toolbox |
+| Overall state | Partial evidence; missing product capabilities are recorded in the gap ledger. |
 
 ## Relationships
 
-| Finding | Evidence State | Source | Confidence | Next Check |
-| --- | --- | --- | --- | --- |
-| `service-a` reads `config/service-a.yaml`. | `source-visible` | `graph.json#/edges/12` | high | Confirm whether runtime uses the same path. |
-| `worker-b` depends on queue `jobs.ready`. | `metadata-visible` | `findings.jsonl:REL-001` | medium | Add runtime export if queue bindings are dynamic. |
+| Product Category | Finding | Evidence Reference | Evidence State | Confidence/Status | Source Type | Action / Likely Spec |
+| --- | --- | --- | --- | --- | --- | --- |
+| relationships | `service-a` reads `config/service-a.yaml`. | `graph.json#/edges/12` | `source-visible` | high | generated artifact | Confirm whether runtime uses the same path. |
+| relationships | Queue relationship inference is not available from current artifacts. | `GAP-002` | `unknown` | open gap | missing capability | `010` |
 
 ## Duplication
 
-| Finding | Evidence State | Source | Confidence | Next Check |
-| --- | --- | --- | --- | --- |
-| Two deployment manifests repeat the same resource limits. | `metadata-visible` | `findings.jsonl:DUP-001` | medium | Check whether the duplication is intentional per environment. |
+| Product Category | Finding | Evidence Reference | Evidence State | Confidence/Status | Source Type | Action / Likely Spec |
+| --- | --- | --- | --- | --- | --- | --- |
+| duplication | Repeated deployment resource limits could not be clustered by Portolan. | `GAP-003` | `not_assessed` | open gap | missing capability | `011` |
 
 ## Configuration Surfaces
 
-| Surface | Evidence State | Source | Confidence | Next Check |
-| --- | --- | --- | --- | --- |
-| `PORTOLAN_OUTPUT_DIR` controls output location. | `source-visible` | `graph.json#/nodes/3` | high | Verify default in CLI help. |
-| Runtime port for `service-a` is not visible in local metadata. | `unknown` | `run.json#/skipped/runtime` | low | Provide a local runtime export. |
+| Product Category | Finding | Evidence Reference | Evidence State | Confidence/Status | Source Type | Action / Likely Spec |
+| --- | --- | --- | --- | --- | --- | --- |
+| config | `PORTOLAN_OUTPUT_DIR` appears as a local configuration surface. | `graph.json#/nodes/3` | `source-visible` | medium | generated artifact | Verify whether it is user-facing CLI behavior. |
+| config | Runtime port for `service-a` is not visible in local metadata. | `GAP-004` | `unknown` | open gap | missing capability | `012` |
 
 ## Technical Debt
 
-| Finding | Evidence State | Source | Confidence | Next Check |
-| --- | --- | --- | --- | --- |
-| Import adapter emits graph nodes without a stable owner field. | `source-visible` | `findings.jsonl:DEBT-001` | medium | Decide whether owner belongs in schema or packet only. |
+| Product Category | Finding | Evidence Reference | Evidence State | Confidence/Status | Source Type | Action / Likely Spec |
+| --- | --- | --- | --- | --- | --- | --- |
+| tech debt | Current toolbox cannot generate technical-debt findings from graph evidence. | `GAP-005` | `not_assessed` | open gap | missing capability | `013` |
 
-## Unknown
+## Unknown And Cannot Verify
 
-| Question | Evidence State | Source | Reason |
-| --- | --- | --- | --- |
-| Which service owns production incident response? | `unknown` | `graph.json#/unknowns/oncall-owner` | No local metadata, runtime export, or claim file was provided. |
+| Product Category | Claim Or Question | Evidence Reference | Evidence State | Confidence/Status | Source Type | Action / Likely Spec |
+| --- | --- | --- | --- | --- | --- | --- |
+| evidence | Which service owns production incident response? | `graph.json#/nodes/3` | `unknown` | no local owner evidence | generated artifact | Provide metadata or claim file. |
+| evidence | `service-a` is deprecated. | `claims/deprecation.md#service-a` | `cannot_verify` | claim-only input lacks corroboration | file | Add source, metadata, or runtime evidence. |
 
-## Cannot Verify
+## Gap Ledger
 
-| Claim | Evidence State | Source | Reason |
-| --- | --- | --- | --- |
-| `service-a` is deprecated. | `cannot_verify` | `claims/deprecation.md#service-a` | The claim exists, but no source, metadata, or runtime evidence confirms it. |
+| Gap ID | Repo/Context | Attempted Task | Command/Artifact Used | Observed Limitation | Expected Capability | Affected Product Promise | Evidence State | User Impact | Priority | Likely Spec | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| GAP-001 | example repo | Run one-command map | `portolan map --root . --out .portolan/run` | Command unavailable | One command emits run metadata, graph, findings, and packet | UX | `cannot_verify` | Agent cannot run the target workflow directly. | P1 | `009` | open |
+| GAP-002 | example repo | Detect queue relationship | `/tmp/portolan-run/graph.json` | Current graph lacks relationship detector output for queues | Evidence-backed relationship finding | relationships | `unknown` | Agent cannot distinguish missing relation from missing detector. | P1 | `010` | open |
+| GAP-003 | example repo | Cluster duplicated manifests | `/tmp/portolan-run/graph.json` | No duplication finding artifact exists | Evidence-backed duplication clusters | duplication | `not_assessed` | User gets no backlog-ready duplication evidence. | P2 | `011` | open |
+| GAP-004 | example repo | Map runtime ports | local metadata only | No runtime export was supplied and no config detector exists | Config surface extraction with unknowns preserved | config | `unknown` | Runtime exposure remains unclear. | P2 | `012` | open |
+| GAP-005 | example repo | Produce technical-debt findings | current graph and packet | No technical-debt finding generator exists | Findings derived from relationships, duplication, config, and importer evidence | tech debt | `not_assessed` | Agent can only report absence of product support. | P2 | `013` | open |
 
 ## Not Assessed
 
