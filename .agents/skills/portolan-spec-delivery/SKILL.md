@@ -100,6 +100,9 @@ For each slice:
    documenting OSS fit, license/maintenance risk, privacy posture, and
    integration cost.
 6. Update docs, schema, fixtures, and task ledgers when behavior changes.
+7. Continue until every task in the selected spec's active `tasks.md` is done or
+   a blocker is explicitly recorded. A passing first slice is not a stopping
+   point when the task ledger still has open work.
 
 ## Review Cycle After Each Slice
 
@@ -139,6 +142,18 @@ Review findings must be dispositioned:
 - `not_assessed`.
 
 After fixes, rerun verification and a focused re-review for the changed risk.
+
+## Completion Before PR
+
+Before creating or updating the PR:
+
+1. Confirm every task in the active `tasks.md` is checked or explicitly marked
+   blocked with evidence.
+2. Update the spec/backlog status to match the implementation state.
+3. Record a final implementation or review disposition under the spec's
+   `reviews/` directory.
+4. Run the full local verification bundle.
+5. Only then push the branch and start the PR review workflow.
 
 ## PR Review And Shipping
 
