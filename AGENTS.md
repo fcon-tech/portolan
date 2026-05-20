@@ -108,10 +108,11 @@ When asked to review and improve an existing PR:
 - Use at least two independent review lanes when the PR touches evidence
   semantics, path/output safety, schemas, or CLI behavior. Default PR review
   lanes are `deepseek/deepseek-v4-pro`, `qwen/qwen3.6-plus`, and
-  Gemini Flash 3.5 through `pi`, plus a repo-grounded local review lane. Verify
-  exact enabled model IDs from `~/.pi/agent/settings.json` before launch; if
-  Gemini Flash 3.5 is not available, record the lane as `not_assessed` or use
-  the closest configured Gemini only with an explicit substitution note.
+  `openrouter/~google/gemini-pro-latest` through `pi`, plus a repo-grounded
+  local review lane. Verify exact enabled model IDs from
+  `~/.pi/agent/settings.json` before launch; if Gemini Pro Latest is not
+  available, record the lane as `not_assessed` rather than silently
+  substituting another Gemini model.
 - Verify every accepted finding locally before editing. Do not patch from model
   text alone.
 - Record degraded review lanes explicitly. A missing Claude/Gemini result is

@@ -20,9 +20,7 @@ PR: https://github.com/fall-out-bug/portolan/pull/3
   partly speculative and adjudicated locally before edits.
 - `openrouter/qwen/qwen3.6-plus`: `not_assessed`; output attempted repo
   exploration rather than returning findings.
-- Gemini Flash 3.5: `not_assessed`; exact configured model was absent.
-- `openrouter/~google/gemini-pro-latest`: assessed as explicit Gemini
-  substitute; returned `NO FINDINGS`.
+- `openrouter/~google/gemini-pro-latest`: assessed; returned `NO FINDINGS`.
 
 ## Accepted And Fixed
 

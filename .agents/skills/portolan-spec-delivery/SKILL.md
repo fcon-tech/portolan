@@ -165,12 +165,12 @@ Before marking a PR ready:
 3. Run independent review lanes. Default PR review model lanes are:
    - `openrouter/deepseek/deepseek-v4-pro`
    - `openrouter/qwen/qwen3.6-plus`
-   - Gemini Flash 3.5 through `pi`
+   - `openrouter/~google/gemini-pro-latest`
    - one repo-grounded local reviewer
 
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
-   Gemini Flash 3.5 is absent, record that lane as `not_assessed` or substitute
-   the closest configured Gemini with an explicit note in the disposition.
+   Gemini Pro Latest is absent, record that lane as `not_assessed`; do not
+   silently substitute another Gemini model.
 4. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
 5. Push, refresh PR state, and mark ready only when blockers are fixed.
