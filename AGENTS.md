@@ -66,6 +66,10 @@ When asked to take the next ready spec into implementation:
 
 - Work in a dedicated worktree and branch. Do not implement from a dirty main
   checkout.
+- Before committing or opening a PR, verify branch provenance and diff scope
+  with `git diff --name-status <base>...HEAD`. A branch created from a local
+  planning commit may accidentally include adjacent specs; remove unrelated
+  backlog/spec files before PR review.
 - Select the next spec from `docs/product-backlog.md` that is marked ready and
   has concrete `spec.md`, `plan.md`, and `tasks.md`.
 - Reconstruct consistency before coding: compare the backlog status, spec
@@ -104,6 +108,10 @@ When asked to take the next ready spec into implementation:
   PR readiness closeout that records implementation state, local verification,
   review evidence, PR draft/ready state, GitHub checks as `verified`, `failed`,
   or `not_assessed`, merge readiness, and the explicit stop reason.
+- Do not stop at draft PR when the task is to deliver the implementation unless
+  a blocker is recorded. Run the PR-level review workflow, fix accepted
+  findings, refresh PR state, and either mark the PR ready-for-review or record
+  the exact blocker that prevents it.
 - Do not use unqualified "ready" or "готов" for PR work. Say exactly which
   surface is ready: local implementation, draft PR, ready-for-review PR, or
   ready-to-merge PR.
@@ -136,6 +144,9 @@ Merge rules:
   human/GitHub approval authorizes it.
 - Before merge, re-check PR state and report absent CI as `not_assessed`, not
   green.
+- A ready-for-review PR is not ready-to-merge by itself. If GitHub checks are
+  absent or review approval is absent, record those as `not_assessed` and merge
+  only when the user explicitly accepts that state.
 - Merge closeout must consolidate statuses before the work is considered done:
   verify and align `docs/product-backlog.md`, the active `spec.md`, `tasks.md`,
   review dispositions, PR state, check state, and implementation evidence. If
