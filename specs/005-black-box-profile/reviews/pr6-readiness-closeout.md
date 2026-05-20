@@ -50,7 +50,7 @@ Branch: `codex/005-black-box-profile`
 - verified before closeout push: GitHub merge state reported `CLEAN`.
 - verified after closeout push: GitHub merge state reported `UNKNOWN`, likely
   while GitHub recalculates the new head.
-- pending refresh: final ready-for-review state after scope fix.
+- verified after scope fix: GitHub merge state reported `CLEAN`.
 
 ## GitHub Checks
 
@@ -59,7 +59,10 @@ Branch: `codex/005-black-box-profile`
 
 ## Merge Readiness
 
-- pending refresh: PR draft state after scope fix.
+- ready-for-review after scope fix: local verification passed, PR-level blocker
+  was fixed, GitHub merge state is `CLEAN`, and checks are absent rather than
+  failing.
 - not_assessed: human/GitHub approval.
-- stop reason: PR-level blocker was found and fixed; final ready-for-review
-  refresh must complete before this PR can be called ready-for-review.
+- stop reason: PR can be marked ready-for-review. Ready-to-merge still requires
+  explicit approval because GitHub checks and human review approval are
+  `not_assessed`.
