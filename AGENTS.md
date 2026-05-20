@@ -51,6 +51,12 @@ Portolan is:
 - Do not implement a non-trivial feature until its `spec.md`, `plan.md`, and
   `tasks.md` are concrete.
 - Backlog-only specs may start with `spec.md`; active work needs plan and tasks.
+- Keep backlog rows, spec status, task ledgers, review dispositions, and
+  implementation state consistent. Before treating a spec as ready, verify that
+  `docs/product-backlog.md`, `spec.md`, `tasks.md`, existing reviews, and the
+  current code agree. If they disagree, stop implementation, record a
+  spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`, and
+  fix the stale status before choosing the next task.
 - Generated Spec Kit skills under `.agents/skills/` are committed; do not store
   credentials or private runtime state under `.agents/`.
 
@@ -62,6 +68,10 @@ When asked to take the next ready spec into implementation:
   checkout.
 - Select the next spec from `docs/product-backlog.md` that is marked ready and
   has concrete `spec.md`, `plan.md`, and `tasks.md`.
+- Reconstruct consistency before coding: compare the backlog status, spec
+  status, task checkboxes, review dispositions, recent git history, and
+  implementation files. A stale `Ready for implementation` row is not permission
+  to reimplement completed work.
 - Start with review, not coding. Review the spec/plan/tasks against the
   constitution, backlog order, schemas, CLI contract, and product boundary.
 - Record review evidence under `specs/<NNN-short-name>/reviews/`; do not create
@@ -82,6 +92,12 @@ When asked to take the next ready spec into implementation:
 - Re-run focused reviewers after fixes when findings touch evidence state
   semantics, graph identity, path/output safety, schema compatibility, or CLI
   user behavior.
+- Continue through the complete active `tasks.md` for the selected spec unless
+  a blocker is recorded. Do not stop after the first green slice when remaining
+  tasks are still open.
+- After all tasks are complete, update the task ledger, spec/backlog status, and
+  review dispositions so they agree, then create or update a PR and run the PR
+  review workflow before claiming the spec is ready.
 - Do not mark a PR ready only because local tests passed. PR state, review
   artifacts, and any GitHub checks must agree.
 
@@ -92,10 +108,11 @@ When asked to review and improve an existing PR:
 - Use at least two independent review lanes when the PR touches evidence
   semantics, path/output safety, schemas, or CLI behavior. Default PR review
   lanes are `deepseek/deepseek-v4-pro`, `qwen/qwen3.6-plus`, and
-  Gemini Flash 3.5 through `pi`, plus a repo-grounded local review lane. Verify
-  exact enabled model IDs from `~/.pi/agent/settings.json` before launch; if
-  Gemini Flash 3.5 is not available, record the lane as `not_assessed` or use
-  the closest configured Gemini only with an explicit substitution note.
+  `openrouter/~google/gemini-pro-latest` through `pi`, plus a repo-grounded
+  local review lane. Verify exact enabled model IDs from
+  `~/.pi/agent/settings.json` before launch; if Gemini Pro Latest is not
+  available, record the lane as `not_assessed` rather than silently
+  substituting another Gemini model.
 - Verify every accepted finding locally before editing. Do not patch from model
   text alone.
 - Record degraded review lanes explicitly. A missing Claude/Gemini result is
@@ -130,5 +147,6 @@ go run ./cmd/portolan scan --help
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
+shell commands, and other important information, read the current plan:
+`specs/002-selection-inventory/plan.md`
 <!-- SPECKIT END -->

@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-local-evidence-graph`
 **Created**: 2026-05-20
-**Status**: Ready for implementation
+**Status**: Implemented
 **Input**: Product backlog P0-001: run a local read-only scan over a selection file and emit a JSON evidence graph.
 
 ## User Scenarios & Testing

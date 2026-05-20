@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "repo-main",
+      "kind": "repository",
+      "path": "repo"
+    }
+  ],
+  "metadata": [
+    {
+      "id": "metadata-main",
+      "path": "catalog.json"
+    }
+  ],
+  "runtime": [
+    {
+      "id": "runtime-main",
+      "path": "runtime.json"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claims-main",
+      "path": "claims.json"
+    }
+  ]
+}

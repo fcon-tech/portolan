@@ -96,8 +96,8 @@ Each graph node or relationship records how it is known:
 
 ## SpecKit Workflow
 
-Portolan uses GitHub Spec Kit for product planning. The current active
-implementation slice is:
+Portolan uses GitHub Spec Kit for product planning. The implemented bootstrap
+slice is:
 
 - [001 Local Evidence Graph](specs/001-local-evidence-graph/spec.md)
 - [001 Implementation Plan](specs/001-local-evidence-graph/plan.md)
@@ -111,6 +111,7 @@ Backlog features live under `specs/` and are indexed in
 ```bash
 go test ./...
 go run ./cmd/portolan --version
+go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
 go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
 jq empty /tmp/portolan-graph.json

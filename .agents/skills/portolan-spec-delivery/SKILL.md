@@ -31,9 +31,15 @@ only when the PR state and evidence are coherent.
 2. Check `git status --short --branch` and existing worktrees.
 3. If implementing a spec, choose the earliest ready backlog item that has
    concrete `spec.md`, `plan.md`, and `tasks.md`.
-4. Work in a dedicated worktree from current `origin/main` or the requested base.
+4. Reconstruct status consistency before coding: compare backlog status, spec
+   status, task checkboxes, review dispositions, recent git history, and the
+   current implementation files. If these surfaces disagree, record a
+   spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`,
+   fix stale status metadata, and only then choose the next implementation
+   target.
+5. Work in a dedicated worktree from current `origin/main` or the requested base.
    Do not use a dirty main checkout for implementation.
-5. State the decision gate:
+6. State the decision gate:
    - Simpler/Faster
    - Blocking Edge Cases
    - Existing Open Source
@@ -94,6 +100,9 @@ For each slice:
    documenting OSS fit, license/maintenance risk, privacy posture, and
    integration cost.
 6. Update docs, schema, fixtures, and task ledgers when behavior changes.
+7. Continue until every task in the selected spec's active `tasks.md` is done or
+   a blocker is explicitly recorded. A passing first slice is not a stopping
+   point when the task ledger still has open work.
 
 ## Review Cycle After Each Slice
 
@@ -134,6 +143,18 @@ Review findings must be dispositioned:
 
 After fixes, rerun verification and a focused re-review for the changed risk.
 
+## Completion Before PR
+
+Before creating or updating the PR:
+
+1. Confirm every task in the active `tasks.md` is checked or explicitly marked
+   blocked with evidence.
+2. Update the spec/backlog status to match the implementation state.
+3. Record a final implementation or review disposition under the spec's
+   `reviews/` directory.
+4. Run the full local verification bundle.
+5. Only then push the branch and start the PR review workflow.
+
 ## PR Review And Shipping
 
 Before marking a PR ready:
@@ -144,12 +165,12 @@ Before marking a PR ready:
 3. Run independent review lanes. Default PR review model lanes are:
    - `openrouter/deepseek/deepseek-v4-pro`
    - `openrouter/qwen/qwen3.6-plus`
-   - Gemini Flash 3.5 through `pi`
+   - `openrouter/~google/gemini-pro-latest`
    - one repo-grounded local reviewer
 
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
-   Gemini Flash 3.5 is absent, record that lane as `not_assessed` or substitute
-   the closest configured Gemini with an explicit note in the disposition.
+   Gemini Pro Latest is absent, record that lane as `not_assessed`; do not
+   silently substitute another Gemini model.
 4. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
 5. Push, refresh PR state, and mark ready only when blockers are fixed.

@@ -67,6 +67,148 @@ func TestRunScanHelpWithOtherFlagsReturnsHelp(t *testing.T) {
 	}
 }
 
+func TestRunSelectionHelpDescribesReadOnlyValidation(t *testing.T) {
+	tests := [][]string{
+		{"selection", "--help"},
+		{"selection", "validate", "--help"},
+	}
+	for _, args := range tests {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run(args, &stdout, &stderr)
+
+			if code != 0 {
+				t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+			}
+			out := stdout.String()
+			for _, want := range []string{"--selection", "local", "no network", "target contents"} {
+				if !strings.Contains(out, want) {
+					t.Fatalf("stdout %q does not contain %q", out, want)
+				}
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunSelectionValidateAcceptsInventoryInputs(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"selection", "validate", "--selection", "testdata/selection-inventory/valid-selection.json"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "selection valid") {
+		t.Fatalf("stdout = %q, want success message", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunSelectionValidateRejectsInvalidInventoryInputs(t *testing.T) {
+	tests := []struct {
+		name string
+		path string
+		want string
+	}{
+		{
+			name: "duplicate ids",
+			path: "testdata/selection-inventory/duplicate-ids.json",
+			want: "duplicate selection id",
+		},
+		{
+			name: "missing path",
+			path: "testdata/selection-inventory/missing-path.json",
+			want: "path is required",
+		},
+		{
+			name: "network url",
+			path: "testdata/selection-inventory/network-url.json",
+			want: "must be local",
+		},
+		{
+			name: "file url",
+			path: writeSelection(t, t.TempDir(), "file-url", `{"schema_version":"0.1.0","targets":[{"id":"file-url","kind":"repository","path":"file:///tmp/repo"}]}`),
+			want: "must be local",
+		},
+		{
+			name: "unsupported kind",
+			path: writeSelection(t, t.TempDir(), "unsupported-kind", `{"schema_version":"0.1.0","targets":[{"id":"bad","kind":"metadata","path":"catalog.json"}]}`),
+			want: "not supported",
+		},
+		{
+			name: "unknown field",
+			path: writeSelection(t, t.TempDir(), "unknown-field", `{"schema_version":"0.1.0","targets":[],"remote_url":"https://example.com"}`),
+			want: "unknown field",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run([]string{"selection", "validate", "--selection", tt.path}, &stdout, &stderr)
+
+			if code == 0 {
+				t.Fatalf("Run returned 0, want error")
+			}
+			if stdout.Len() != 0 {
+				t.Fatalf("stdout = %q, want empty", stdout.String())
+			}
+			if !strings.Contains(stderr.String(), tt.want) {
+				t.Fatalf("stderr = %q, want %q", stderr.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestRunSelectionValidateAllowsWindowsStyleLocalPath(t *testing.T) {
+	path := writeSelection(t, t.TempDir(), "windows-path", `{"schema_version":"0.1.0","targets":[{"id":"windows-repo","kind":"repository","path":"C:\\repo\\service"}]}`)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"selection", "validate", "--selection", path}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+}
+
+func TestRunSelectionValidateRequiresSelectionFlag(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"selection", "validate"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want error")
+	}
+	if !strings.Contains(stderr.String(), "--selection is required") {
+		t.Fatalf("stderr = %q, want missing selection error", stderr.String())
+	}
+}
+
+func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", "testdata/local-evidence-graph/selection.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	readGraph(t, out)
+}
+
 func TestRunScanWritesEvidenceGraph(t *testing.T) {
 	root := t.TempDir()
 	repo := filepath.Join(root, "repo")
