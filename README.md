@@ -1,16 +1,16 @@
 # Portolan
 
-Portolan is an open-source, local-first evidence graph builder for messy
-software landscapes.
+Portolan is an open-source, local-first codebase mapping toolbox for AI agents.
 
-It helps a team run a read-only scout inside its own environment, across source
-repos, metadata exports, runtime observations, and black-box systems. The output
-is an honest map of what is visible, what is only claimed, and what remains
-unknown.
+It lets an agent inspect large or messy software landscapes with tools instead
+of vibes. The output is an evidence-backed map of relationships, duplication,
+configuration surfaces, and technical debt, with every finding tied to local
+source, metadata, runtime, claim, unknown, or cannot-verify evidence.
 
 Portolan is not a replacement for Sourcegraph, CAST, Backstage, observability
-platforms, modernization tools, or coding agents. It is a complementary
-normalization layer that can compose their outputs into a common evidence model.
+platforms, modernization tools, or coding agents. It is the local discovery
+substrate an agent can run from Cursor, Claude, Codex, OpenCode, pi, or another
+harness.
 
 ## Status
 
@@ -29,10 +29,16 @@ Implemented:
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
-- Apache Bigtop test corpus profile for final acceptance planning.
+- Apache Bigtop test corpus profile for immediate post-skill acceptance
+  planning.
 
 Not implemented yet:
 
+- one-command `portolan map --root <dir> --out <dir>` artifact bundle;
+- agent skill/rule pack for Cursor and other harnesses;
+- relationship, duplication, configuration, and technical-debt finding
+  generators;
+- evidence graph diff;
 - platform-specific runtime importers;
 - corpus preparation or manifest-to-selection generation;
 - SPDX, Syft-native, or live tool importers;
@@ -47,28 +53,33 @@ Portolan should default to:
 - no daemon;
 - no network calls unless explicitly enabled;
 - machine-readable evidence graph output;
+- machine-readable findings output;
 - human-readable packet generated from the same graph;
 - explicit states for missing, weak, or unverifiable evidence.
 
 ## Roadmap Shape
 
-Portolan should be built from the smallest runnable loop outward:
+Portolan should be built from the cheapest useful agent loop outward:
 
-1. Local selection input, read-only scan, and JSON evidence graph.
-2. Human-readable packet generated from the same graph.
-3. Importer normalization, black-box profiles, evidence diffs, and adapter
-   contracts.
-4. Final ecosystem acceptance against Apache Bigtop.
+1. Agent skill/rule pack that tells any agent how to run Portolan.
+2. Immediate Bigtop acceptance smoke in Cursor + Composer 2.5 to expose real
+   product gaps.
+3. `portolan map --root . --out .portolan/run` producing graph, findings, run
+   metadata, and a readable packet, if the smoke proves the gap.
+4. Relationship, duplication, configuration, and technical-debt finding
+   generators backed by local evidence, prioritized from that smoke.
+5. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
 
-The final realistic acceptance loop is the full operator assembly:
+Cursor + Composer 2.5 is the first cheap acceptance client, not the product
+boundary. The first realistic acceptance smoke is:
 
 - Cursor as the interactive engineering surface;
-- Composer 2.5 / Kimi 2.6 as the agent/model pair under evaluation;
-- Portolan as the local evidence graph and packet substrate;
+- Composer 2.5 as the agent/model under evaluation;
+- Portolan as the local toolbox and artifact substrate;
 - Apache Bigtop as the large OSS ecosystem corpus.
 
-Bigtop is intentionally last. It is the stress corpus for an assembled product,
-not the next implementation target after bootstrap.
+Bigtop starts immediately after the skill pack. The first pass may be small and
+local, but it must produce concrete gaps before deeper detector work proceeds.
 
 Portolan should make that loop observable without becoming dependent on Cursor,
 Composer, Kimi, or any hosted model/runtime during a default scan.
@@ -90,6 +101,7 @@ Each graph node or relationship records how it is known:
 - [Product Boundary](docs/product-boundary.md)
 - [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
 - [Product Backlog](docs/product-backlog.md)
+- [Agent Toolbox](docs/agent-toolbox/README.md)
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
 - [OSS Composition](docs/oss-composition.md)

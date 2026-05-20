@@ -5,53 +5,81 @@ the planning view; detailed requirements live under `specs/`.
 
 ## Roadmap Order
 
-The roadmap is intentionally staged from a small runnable product to a realistic
-ecosystem acceptance run:
+The roadmap is intentionally staged from a cheap agent acceptance loop into an
+immediate Bigtop-driven product test:
 
-1. **Primary assembly**: local selection input, read-only scan, evidence graph,
-   and packet generation.
-2. **Evidence usefulness**: importer normalization, black-box profiles, diffs,
-   and optional export/adapter contracts.
-3. **Final acceptance corpus**: Apache Bigtop validates the assembled workflow
-   only after the primary product loop exists.
+1. **Runnable substrate**: local selection input, read-only scan, graph output,
+   packet rendering, importer normalization, and black-box evidence handling.
+2. **Agent toolbox**: a portable skill/rule pack that any agent can follow
+   before answering.
+3. **Bigtop smoke immediately after skills**: Cursor + Composer 2.5 runs the
+   skill pack against the Apache Bigtop corpus profile and exposes the first
+   real product gaps.
+4. **Useful map contents**: relationships, duplication, configuration surfaces,
+   and technical-debt findings implemented because the Bigtop smoke proves they
+   are needed.
+5. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
+   and LSP/index surfaces, and larger Bigtop runs.
 
-The Apache Bigtop corpus is not a mid-roadmap implementation target. It is the
-final stress test for Portolan and the operator assembly after the smaller local
-fixtures prove the product contract.
+Cursor + Composer 2.5 is the first cheap acceptance client because it is a
+popular agentic IDE where reports can be read and graphs can be inspected. It is
+not the product boundary. The same Portolan artifacts must remain usable from
+Claude, Codex, OpenCode, pi, and other agent harnesses.
 
-## P0: Make The Product Runnable
+Apache Bigtop is no longer deferred until the end. It starts immediately after
+the skill pack as an acceptance smoke, then returns later as a larger stress
+test. The point is to prevent development for development's sake.
+
+## P0: Runnable Evidence Substrate
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P0-001 | `specs/001-local-evidence-graph/` | A user can run a local read-only scan over a selection file and receive a JSON evidence graph. | Implemented |
 | P0-002 | `specs/002-selection-inventory/` | A user can declare repositories, metadata files, runtime exports, and claim files without editing code. | Implemented |
 | P0-003 | `specs/003-human-readable-packet/` | A user can generate a readable packet from the same evidence graph without creating a second truth source. | Implemented |
+| P0-004 | `specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Implemented |
+| P0-005 | `specs/005-black-box-profile/` | Portolan can represent black-box systems through metadata, runtime observations, and claims. | Implemented |
 
-## P1: Make The Evidence Useful
-
-| ID | Spec | Outcome | Status |
-| --- | --- | --- | --- |
-| P1-004 | `specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Implemented |
-| P1-005 | `specs/005-black-box-profile/` | Portolan can represent black-box systems through metadata, runtime observations, and claims. | Implemented |
-| P1-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
-
-## P2: Make The Ecosystem Work
+## P1: Agent Toolbox MVP
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P2-008 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
-| P2-009 | future | Published importer contract and fixture suite for third-party adapters. | Idea |
-| P2-010 | future | Signed or attestable evidence graph package for customer handoff. | Idea |
-| P2-007 | `specs/007-apache-bigtop-corpus/` | Apache Bigtop corpus profile defines the final realistic OSS ecosystem acceptance run for the assembled Portolan workflow. | Final acceptance backlog spec |
+| P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Ready for implementation |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the skill pack on Apache Bigtop immediately after skills to expose missing product capabilities. | Ready for acceptance-smoke planning |
+
+## P2: Build What The Bigtop Smoke Proves Is Missing
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P2-009 | `specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Prepared; gated by Bigtop smoke |
+| P2-010 | `specs/010-relationship-detection/` | Portolan detects source, metadata, runtime, and claim-backed relationships across a codebase. | Bigtop-gated backlog spec |
+| P2-011 | `specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Bigtop-gated backlog spec |
+| P2-012 | `specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Bigtop-gated backlog spec |
+| P2-013 | `specs/013-technical-debt-findings/` | Portolan turns relationship, duplication, config, importer, and black-box evidence into technical-debt findings without readiness verdicts. | Bigtop-gated backlog spec |
+
+## P3: Repeatability, Surfaces, And Scale
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
+| P3-014 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
+| P3-015 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
+| P3-016 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
+| P3-017 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 
 ## Backlog Rules
 
-- Every P0/P1 item must map to exactly one SpecKit feature directory before
+- Every P0/P1/P2 item must map to exactly one SpecKit feature directory before
   implementation.
 - A backlog row is not implementation approval by itself.
 - Each implementation slice must preserve local-first, read-only defaults.
+- Agent-facing work must remain harness-independent. Cursor-specific files are
+  allowed only as a cheap acceptance client wrapper over the portable guide.
+- Findings must cite local evidence and preserve `source-visible`,
+  `metadata-visible`, `runtime-visible`, `claim-only`, `unknown`, and
+  `cannot_verify`.
 - Importer work must include license, maintenance, and privacy review before
   dependencies are added.
-- Apache Bigtop work must stay behind the primary runnable product loop; use
-  small local fixtures until scan, packet, importer, and black-box behavior are
-  coherent enough for ecosystem-scale validation.
+- Apache Bigtop testing starts immediately after the skill pack. The first pass
+  may be a smoke over prepared local fixtures and current Portolan commands, but
+  it must record concrete product gaps before deeper detector work proceeds.

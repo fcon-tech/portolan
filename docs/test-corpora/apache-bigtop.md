@@ -1,19 +1,18 @@
 # Apache Bigtop Test Corpus
 
-Apache Bigtop is the proposed final large OSS corpus for Portolan acceptance
-work. It is useful because it is already an integration project for big-data
-components, not a synthetic list of repositories. The corpus should stress the
-parts of Portolan that matter most after the primary product loop works:
+Apache Bigtop is the proposed large OSS corpus for Portolan acceptance work. It
+is useful because it is already an integration project for big-data components,
+not a synthetic list of repositories. The corpus should stress the parts of
+Portolan that matter most:
 multi-repo source evidence, integration metadata, package/runtime surfaces,
 legacy projects, and honest unknowns.
 
-Bigtop is not a middle-of-roadmap task. Before using it, Portolan should already
-have a runnable local scan loop, packet generation, useful evidence handling,
-and small local fixtures. The final acceptance target is to test the whole
-working assembly: Cursor as the interactive surface, Composer 2.5 / Kimi 2.6 as
-the agent/model pair, Portolan as the evidence graph substrate, and Bigtop as
-the messy OSS ecosystem under test. Cursor, Composer, and Kimi are evaluation
-context; they are not default runtime dependencies for Portolan scans.
+Bigtop now starts immediately after the agent skill pack. The first pass is a
+cheap acceptance smoke, not a full corpus analysis: Cursor + Composer 2.5 reads
+the Portolan guide, uses current local Portolan commands and prepared fixtures,
+and records concrete product gaps. Larger Bigtop runs come later, after those
+gaps are addressed. Cursor and Composer are evaluation context; they are not
+default runtime dependencies for Portolan scans.
 
 ## Why This Corpus
 
@@ -49,8 +48,18 @@ The committed machine-readable profile is
 
 ## Test Strategy
 
-Use the corpus in layers after the primary Portolan build is already useful on
-small fixtures.
+Use the corpus in layers. Start with a smoke as soon as the skill pack exists;
+expand only when the previous layer has produced concrete product decisions.
+
+### Phase 0 - Agent Skill Smoke
+
+- Run Cursor + Composer 2.5 with the portable Portolan guide.
+- Use current Portolan commands and prepared local Bigtop fixture inputs.
+- Record what the agent could not do without extra prompting.
+- Record missing Portolan capabilities as product gaps, not as free-form agent
+  advice.
+- Follow the smoke runbook in
+  `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
 
 ### Phase 1 - Manifest Acceptance
 
@@ -81,6 +90,13 @@ small fixtures.
 - Represent runtime/package facts as `metadata-visible` or `runtime-visible`.
 - Keep unavailable or unobserved services as `unknown` or `cannot_verify`.
 
+### Phase 4 - Larger Corpus Stress
+
+- Expand beyond the minimal subset only after the smoke and local fixture phases
+  prove the agent workflow and map artifacts are useful.
+- Use Bigtop to prioritize relationship, duplication, configuration, debt, diff,
+  and adapter work.
+
 ## Initial Acceptance Checks
 
 - The Bigtop release BOM components and versions are represented.
@@ -90,7 +106,7 @@ small fixtures.
   everything into a pass/fail result.
 - Portolan does not clone repositories or query upstream services during a
   default scan.
-- A Cursor + Composer 2.5 / Kimi 2.6 operator run can use the corpus to produce
+- A Cursor + Composer 2.5 operator run can use the corpus to produce
   reviewable Portolan artifacts without treating the agent transcript as stronger
   evidence than source, metadata, or runtime observations.
 

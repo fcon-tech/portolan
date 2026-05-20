@@ -1,9 +1,12 @@
 # Product Boundary
 
-Portolan maps incomplete software landscapes into an evidence graph.
+Portolan gives AI agents a local, repeatable toolbox for mapping incomplete
+software landscapes.
 
-The first product job is not to judge whether a system is good. It is to show
-what is visible, what is claimed, what is missing, and what cannot be verified.
+The first product job is not to judge whether a system is good. It is to help an
+agent produce a verified map of relationships, duplication, configuration
+surfaces, and technical debt while showing what is visible, claimed, missing,
+or unverifiable.
 
 ## In Scope
 
@@ -12,7 +15,11 @@ what is visible, what is claimed, what is missing, and what cannot be verified.
 - Import and normalization of external tool outputs.
 - Black-box representation through metadata, runtime signals, or explicit
   claims.
+- Agent-facing CLI workflows and skill/rule packs.
+- Relationship, duplication, configuration, and technical-debt findings backed
+  by local evidence.
 - Machine-readable graph output.
+- Machine-readable findings output.
 - Human-readable packets generated from graph data.
 - Evidence states that preserve uncertainty.
 
@@ -23,6 +30,7 @@ what is visible, what is claimed, what is missing, and what cannot be verified.
 - Hidden network calls.
 - Always-on daemon collection.
 - Credential harvesting.
+- Requiring Cursor, Claude, Codex, OpenCode, pi, or any one harness.
 - Replacing enterprise tools such as Sourcegraph, CAST, Backstage, Port,
   Datadog, New Relic, Dynatrace, or Moderne.
 

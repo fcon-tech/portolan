@@ -2,21 +2,21 @@
 
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
-**Status**: Backlog spec
-**Input**: Product decision to reserve Apache Big Data / Bigtop as the final
-realistic OSS ecosystem corpus for the Cursor + Composer 2.5 / Kimi 2.6
-operator assembly after the primary Portolan loop is runnable.
+**Status**: Ready for acceptance-smoke planning
+**Input**: Product decision to start testing against Apache Big Data / Bigtop
+immediately after the agent skill pack, so real corpus friction drives the next
+Portolan capabilities.
 
 ## User Scenarios & Testing
 
 ### User Story 1 - Select A Realistic Ecosystem Corpus (Priority: P1)
 
-A Portolan maintainer can point final acceptance planning and fixture work at
+A Portolan maintainer can point early acceptance planning and fixture work at
 one documented OSS ecosystem instead of using disconnected toy repositories.
 
-**Why this priority**: Portolan's product value eventually depends on messy
-ecosystem evidence. Tiny fixtures are right for primary assembly, but they
-cannot prove final multi-repo, legacy, and black-box behavior.
+**Why this priority**: Portolan's product value depends on messy ecosystem
+evidence. Tiny fixtures are useful for implementation, but they must not become
+a substitute for early product pressure from a realistic corpus.
 
 **Independent Test**: Inspect the committed corpus manifest and verify that it
 contains a Bigtop root, current component repositories, retired legacy projects,
@@ -37,9 +37,8 @@ and runtime/package metadata targets.
 A reviewer can see retired Hadoop-era projects and weak evidence without
 Portolan presenting them as verified active source facts.
 
-**Why this priority**: The final corpus should test the evidence model after it
-works on smaller fixtures, not only the happy path where every repository is
-current and cloneable.
+**Why this priority**: The corpus should test the evidence model early enough to
+prevent building detectors that only work on toy fixtures.
 
 **Independent Test**: Generate a fixture graph that includes Oozie and Sqoop
 with retirement metadata and at least one `unknown` or `cannot_verify` fact.
@@ -71,15 +70,15 @@ fixture and verify it only reads local paths.
    edge references that component, **Then** Portolan records the missing source
    as `unknown` or `cannot_verify`.
 
-### User Story 4 - Test The Operator Assembly (Priority: P2)
+### User Story 4 - Test The Operator Assembly Immediately After Skills (Priority: P1)
 
-An evaluator can use Apache Bigtop to test the full workflow around Portolan:
-Cursor as the interactive engineering surface, Composer 2.5 / Kimi 2.6 as the
+An evaluator can use Apache Bigtop to test the first skill-pack workflow around
+Portolan: Cursor as the interactive engineering surface, Composer 2.5 as the
 agent/model pair, and Portolan as the evidence graph and packet substrate.
 
-**Why this priority**: The corpus should prove whether the whole assembled
-working loop is usable, not whether a static manifest can be parsed during the
-primary build.
+**Why this priority**: The skill pack is not proven until an agent can use it on
+a messy corpus. Bigtop should expose product gaps before deeper detector work
+continues.
 
 **Independent Test**: Run a documented operator session over a prepared Bigtop
 fixture and review whether Portolan artifacts separate machine-observed evidence
@@ -87,9 +86,9 @@ from agent claims.
 
 **Acceptance Scenarios**:
 
-1. **Given** an operator uses Cursor with Composer 2.5 / Kimi 2.6, **When** the
-   Bigtop fixture is analyzed, **Then** Portolan output remains grounded in
-   source, metadata, runtime, and claim evidence states.
+1. **Given** an operator uses Cursor with Composer 2.5, **When** the Bigtop
+   smoke is run after the skill pack, **Then** the output records what Portolan
+   can map now and what remains missing.
 2. **Given** the agent transcript contains a conclusion that is not backed by a
    local Portolan input, **When** the output is reviewed, **Then** that conclusion
    is represented as `claim-only`, `unknown`, or `cannot_verify`, not as observed
@@ -128,9 +127,11 @@ from agent claims.
 - **FR-008**: Retired projects MUST keep lifecycle evidence separate from source
   repository visibility.
 - **FR-009**: Corpus documentation MUST state that the first acceptance target
-  is the full Cursor + Composer 2.5 / Kimi 2.6 operator assembly.
+  is a Cursor + Composer 2.5 skill-pack smoke followed by larger Bigtop runs.
 - **FR-010**: Agent/model transcript content MUST remain lower-authority
   evidence unless supported by local Portolan inputs.
+- **FR-011**: The first Bigtop smoke MUST record missing product capabilities as
+  backlog gaps before deeper detector implementation proceeds.
 
 ### Key Entities
 
@@ -157,16 +158,20 @@ from agent claims.
 - **SC-005**: Documentation defines a local-first fixture plan that does not
   require upstream network access during default scan execution.
 - **SC-006**: Documentation states how the Bigtop corpus tests the Cursor +
-  Composer 2.5 / Kimi 2.6 workflow without making Portolan depend on that stack.
+  Composer 2.5 skill-pack workflow without making Portolan depend on that stack.
+- **SC-007**: The acceptance plan names concrete gap categories to collect:
+  agent workflow failures, missing relationships, missing duplication,
+  missing configuration surfaces, missing technical-debt findings, packet
+  usefulness gaps, and unsupported agent inferences.
 
 ## Assumptions
 
 - Apache Bigtop 3.5.0 is the first pinned release profile.
 - Current upstream links are attribution and preparation inputs, not runtime scan
   permissions.
-- Full corpus cloning is an optional final acceptance preparation step, not
-  part of the primary build or default MVP.
+- Full corpus cloning is optional later preparation, not part of the immediate
+  skill-pack smoke or default MVP.
 - Initial schema validation may be syntax-only until a JSON Schema validator is
   introduced.
-- Composer 2.5 / Kimi 2.6 are named as the current evaluation stack, not as
-  Portolan runtime dependencies.
+- Composer 2.5 is named as the first cheap evaluation stack, not as a Portolan
+  runtime dependency.

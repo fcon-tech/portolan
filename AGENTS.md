@@ -1,7 +1,7 @@
 # Agent Instructions
 
-Portolan is a local-first evidence graph builder for multi-repo and black-box
-software landscapes.
+Portolan is a local-first codebase mapping toolbox for AI agents working across
+large, multi-repo, and black-box software landscapes.
 
 ## Boundary
 
@@ -11,14 +11,19 @@ Portolan is not:
 - a manual consulting report generator;
 - a replacement for enterprise code intelligence, modernization, service
   catalog, or observability tools;
+- tied to Cursor, Claude, Codex, OpenCode, pi, or any specific agent harness;
 - a readiness gate;
 - a source of truth for claims it cannot verify.
 
 Portolan is:
 
-- a read-only local scout;
+- a read-only local discovery substrate an agent can run;
+- an agent-facing toolbox exposed through CLI first, then skills/MCP/LSP-style
+  surfaces when justified;
 - a normalizer for source, metadata, runtime, and claim evidence;
 - a machine-readable evidence graph;
+- a finding generator for relationships, duplication, configuration surfaces,
+  and technical debt;
 - a human-readable packet derived from that graph;
 - a complement to existing tools.
 
@@ -31,6 +36,7 @@ Portolan is:
   `runtime-visible`, `claim-only`, `unknown`, and `cannot_verify`.
 - Unknown is a valid result. Do not collapse unknown or unverifiable evidence
   into success.
+- Agent conclusions are claims until backed by local Portolan inputs.
 - Prefer importing and normalizing OSS/tool outputs over reimplementing mature
   scanners.
 
