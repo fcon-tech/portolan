@@ -66,10 +66,23 @@ Rejected:
 
 ### `kimi-coding/kimi-for-coding`
 
-Result: `not_assessed`.
+Result: assessed after delay.
 
-The lane produced no output within the working window. It is recorded as
-degraded evidence and is not counted as a clean review.
+Accepted:
+
+- Missing `--in`/`--out` behavior should be pinned. Fixed with explicit tests
+  for both missing flags.
+
+Rejected:
+
+- Mixed-argument `-h` concern. Rejected because `flag.Parse` returns
+  `flag.ErrHelp` for help flags and the command writes usage in that path;
+  this matches existing command style.
+- `Options` containing output fields is misleading. Rejected for this slice
+  because output preflight before parsing is intentional.
+- CLI tests are too coupled to importer IDs and counts. Rejected because these
+  are contract-level graph identifiers for this first adapter fixture, not
+  private implementation detail.
 
 ## Verification
 
