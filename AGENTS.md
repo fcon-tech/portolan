@@ -92,6 +92,12 @@ When asked to take the next ready spec into implementation:
 - Re-run focused reviewers after fixes when findings touch evidence state
   semantics, graph identity, path/output safety, schema compatibility, or CLI
   user behavior.
+- Continue through the complete active `tasks.md` for the selected spec unless
+  a blocker is recorded. Do not stop after the first green slice when remaining
+  tasks are still open.
+- After all tasks are complete, update the task ledger, spec/backlog status, and
+  review dispositions so they agree, then create or update a PR and run the PR
+  review workflow before claiming the spec is ready.
 - Do not mark a PR ready only because local tests passed. PR state, review
   artifacts, and any GitHub checks must agree.
 

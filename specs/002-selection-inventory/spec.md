@@ -2,7 +2,7 @@
 
 **Feature Branch**: `002-selection-inventory`
 **Created**: 2026-05-20
-**Status**: Ready for implementation
+**Status**: Implemented in branch
 **Input**: Product backlog P0-002: declare repositories, metadata files, runtime exports, and claim files without editing code.
 
 ## User Scenarios & Testing
