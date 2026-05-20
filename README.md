@@ -18,7 +18,8 @@ Bootstrap repository.
 
 Implemented:
 
-- Go module and minimal `portolan` CLI shell.
+- Go module and `portolan scan --selection <file> --out <file>` for the first
+  local evidence graph.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -26,7 +27,6 @@ Implemented:
 
 Not implemented yet:
 
-- repository scanning;
 - metadata importers;
 - runtime importers;
 - black-box inventory workflow;
@@ -101,6 +101,8 @@ Backlog features live under `specs/` and are indexed in
 go test ./...
 go run ./cmd/portolan --version
 go run ./cmd/portolan scan --help
+go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
+jq empty /tmp/portolan-graph.json
 jq empty schema/*.json
 git diff --check
 ```

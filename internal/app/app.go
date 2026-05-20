@@ -1,8 +1,12 @@
 package app
 
 import (
+	"flag"
 	"fmt"
 	"io"
+	"os"
+
+	"github.com/fall-out-bug/portolan/internal/scan"
 )
 
 const Version = "dev"
@@ -35,9 +39,44 @@ func runScan(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 0
 	}
 
-	fmt.Fprintln(stderr, "scan is not implemented in this bootstrap build")
-	fmt.Fprintln(stderr, "run `portolan scan --help` to inspect the planned contract")
-	return 2
+	flags := flag.NewFlagSet("scan", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	selectionPath := flags.String("selection", "", "local JSON selection file")
+	outputPath := flags.String("out", "", "output evidence graph JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeScanUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected scan argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	g, err := scan.Run(scan.Options{
+		SelectionPath: *selectionPath,
+		OutputPath:    *outputPath,
+		Force:         *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "scan: %v\n", err)
+		return 2
+	}
+	if err := scan.Write(*outputPath, g, *force); err != nil {
+		fmt.Fprintf(stderr, "scan: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "scan: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
 }
 
 func writeUsage(w io.Writer) {
@@ -54,11 +93,14 @@ the contract before it collects repository, metadata, runtime, or claim evidence
 
 func writeScanUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
-  portolan scan [targets...] [flags]
+  portolan scan --selection selection.json --out graph.json [--force]
 
-Planned contract:
-  Build a local, read-only evidence graph across repositories, metadata exports,
-  runtime observations, and explicit human claims.
+Build a local, read-only evidence graph from an explicit selection file.
+
+Flags:
+  --selection path   local JSON selection file
+  --out path         output evidence graph JSON path
+  --force            overwrite an existing output file
 
 Evidence states:
   source-visible     source code was inspected directly
@@ -68,6 +110,7 @@ Evidence states:
   unknown            no usable evidence was available
   cannot_verify      evidence was present but could not be validated
 
-The current bootstrap build does not collect data yet.
+Default scan behavior makes no network calls and does not modify selected
+repositories. Output paths inside selected repositories are refused.
 `)
 }

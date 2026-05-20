@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "demo-repo",
+      "kind": "repository",
+      "path": "testdata/local-evidence-graph/repo"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claims-main",
+      "path": "testdata/local-evidence-graph/claims.json"
+    },
+    {
+      "id": "claims-missing",
+      "path": "testdata/local-evidence-graph/missing-claims.json"
+    },
+    {
+      "id": "claims-malformed",
+      "path": "testdata/local-evidence-graph/malformed-claims.json"
+    }
+  ]
+}

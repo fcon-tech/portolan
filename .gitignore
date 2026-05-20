@@ -2,6 +2,7 @@
 /bin/
 /dist/
 /coverage.out
+.codex-subagents/
 .agents/*
 !.agents/skills/
 !.agents/skills/**
