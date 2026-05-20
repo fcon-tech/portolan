@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1.0",
+  "observations": [
+    {
+      "service": "payments-api",
+      "endpoint": "https://payments.internal/health",
+      "observed_at": "2026-05-20T10:00:00Z"
+    }
+  ],
+  "source": "runtime-export"
+}

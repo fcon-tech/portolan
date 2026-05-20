@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-black-box-profile`
 **Created**: 2026-05-20
-**Status**: Ready for implementation
+**Status**: Implemented
 **Input**: Product backlog P1-005: represent black-box systems through metadata, runtime observations, and claims.
 
 ## User Scenarios & Testing

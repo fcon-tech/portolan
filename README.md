@@ -22,6 +22,8 @@ Implemented:
   local evidence graph.
 - `portolan import cyclonedx --in <file> --out <file>` for local CycloneDX JSON
   SBOM normalization.
+- Black-box profile scanning from local metadata, runtime export, and claim
+  files without source-visible overclaiming.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -29,8 +31,7 @@ Implemented:
 
 Not implemented yet:
 
-- runtime importers;
-- black-box inventory workflow;
+- platform-specific runtime importers;
 - corpus preparation or manifest-to-selection generation;
 - SPDX, Syft-native, or live tool importers;
 - integrations with external tools.
@@ -116,8 +117,10 @@ go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cycl
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
 go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
+go run ./cmd/portolan scan --selection testdata/black-box-profile/selection.json --out /tmp/portolan-black-box-graph.json --force
 go run ./cmd/portolan packet render --graph /tmp/portolan-graph.json --out /tmp/portolan-packet.md --force
 jq empty /tmp/portolan-graph.json
+jq empty /tmp/portolan-black-box-graph.json
 jq empty schema/*.json
 git diff --check
 ```

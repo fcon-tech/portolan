@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/fall-out-bug/portolan/internal/blackbox"
 	"github.com/fall-out-bug/portolan/internal/graph"
 	"github.com/fall-out-bug/portolan/internal/selection"
 )
@@ -68,6 +69,14 @@ func Run(opts Options) (graph.Graph, error) {
 			nodeIDs[node.ID] = struct{}{}
 		}
 		g.Edges = append(g.Edges, edges...)
+	}
+	for _, target := range sel.BlackBoxes {
+		result := blackbox.Normalize(target, nodeIDs)
+		for _, node := range result.Nodes {
+			g.Nodes = append(g.Nodes, node)
+			nodeIDs[node.ID] = struct{}{}
+		}
+		g.Edges = append(g.Edges, result.Edges...)
 	}
 
 	sortGraph(&g)

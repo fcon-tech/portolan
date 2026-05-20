@@ -372,5 +372,8 @@ Evidence states:
 
 Default scan behavior makes no network calls and does not modify selected
 repositories. Output paths inside selected repositories are refused.
+
+Black-box systems can be represented from local metadata files, runtime exports,
+and claim files. Default scans do not query live telemetry or network endpoints.
 `)
 }

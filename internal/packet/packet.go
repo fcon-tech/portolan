@@ -95,6 +95,8 @@ func RenderMarkdown(g graph.Graph) []byte {
 	b.WriteString("\n")
 
 	writeNodeSection(&b, "## Visible Source Facts", g.Nodes, graph.SourceVisible, "visible source evidence")
+	writeNodeSection(&b, "## Metadata-Visible Facts", g.Nodes, graph.MetadataVisible, "metadata-visible evidence")
+	writeNodeSection(&b, "## Runtime-Visible Facts", g.Nodes, graph.RuntimeVisible, "runtime-visible evidence")
 	writeNodeSection(&b, "## Claim-Only Facts", g.Nodes, graph.ClaimOnly, "claimed, not observed")
 	writeNodeSection(&b, "## Unknown Areas", g.Nodes, graph.Unknown, "unknown")
 	writeNodeSection(&b, "## Cannot Verify Areas", g.Nodes, graph.CannotVerify, "cannot verify")

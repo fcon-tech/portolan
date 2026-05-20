@@ -16,6 +16,7 @@ type Selection struct {
 	Metadata      []InputSource `json:"metadata"`
 	Runtime       []InputSource `json:"runtime"`
 	Claims        []ClaimSource `json:"claims"`
+	BlackBoxes    []BlackBox    `json:"black_boxes"`
 }
 
 type Target struct {
@@ -32,6 +33,21 @@ type ClaimSource struct {
 type InputSource struct {
 	ID   string `json:"id"`
 	Path string `json:"path"`
+}
+
+type BlackBox struct {
+	ID       string        `json:"id"`
+	Kind     string        `json:"kind"`
+	Label    string        `json:"label"`
+	Metadata []InputSource `json:"metadata"`
+	Runtime  []InputSource `json:"runtime"`
+	Claims   []ClaimSource `json:"claims"`
+	Expected []string      `json:"expected"`
+
+	Repository string `json:"repository"`
+	Path       string `json:"path"`
+	SourceRoot string `json:"source_root"`
+	Telemetry  string `json:"telemetry"`
 }
 
 func Load(path string) (Selection, error) {
@@ -92,6 +108,44 @@ func (sel Selection) Validate() error {
 			return err
 		}
 	}
+	for _, target := range sel.BlackBoxes {
+		if target.ID == "" {
+			return fmt.Errorf("black-box id is required")
+		}
+		if !validBlackBoxKind(target.Kind) {
+			return fmt.Errorf("black-box %q kind %q is not supported", target.ID, target.Kind)
+		}
+		if target.Repository != "" || target.Path != "" || target.SourceRoot != "" {
+			return fmt.Errorf("black-box %q must not declare repository or source paths", target.ID)
+		}
+		if target.Telemetry != "" {
+			return fmt.Errorf("black-box %q live telemetry is not supported", target.ID)
+		}
+		if _, ok := seen[target.ID]; ok {
+			return fmt.Errorf("duplicate selection id %q", target.ID)
+		}
+		seen[target.ID] = struct{}{}
+		for _, source := range target.Metadata {
+			if err := validateInputSource("black-box metadata source", source, seen); err != nil {
+				return err
+			}
+		}
+		for _, source := range target.Runtime {
+			if err := validateInputSource("black-box runtime source", source, seen); err != nil {
+				return err
+			}
+		}
+		for _, claim := range target.Claims {
+			if err := validateClaimSource(claim, seen); err != nil {
+				return err
+			}
+		}
+		for _, expected := range target.Expected {
+			if !validExpectedField(expected) {
+				return fmt.Errorf("black-box %q expected field %q is not supported", target.ID, expected)
+			}
+		}
+	}
 
 	return nil
 }
@@ -143,6 +197,24 @@ func isURLLikePath(path string) bool {
 func validTargetKind(kind string) bool {
 	switch kind {
 	case "repository", "service", "package", "runtime", "team", "claim", "unknown":
+		return true
+	default:
+		return false
+	}
+}
+
+func validBlackBoxKind(kind string) bool {
+	switch kind {
+	case "service", "runtime":
+		return true
+	default:
+		return false
+	}
+}
+
+func validExpectedField(field string) bool {
+	switch field {
+	case "owner", "dependencies", "runtime-endpoints":
 		return true
 	default:
 		return false

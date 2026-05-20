@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1.0",
+  "black_boxes": [
+    {
+      "id": "payments-api",
+      "kind": "service",
+      "label": "Payments API",
+      "metadata": [
+        {
+          "id": "payments-catalog",
+          "path": "testdata/black-box-profile/metadata/payments-no-dependencies.json"
+        }
+      ],
+      "expected": ["dependencies"]
+    }
+  ]
+}
