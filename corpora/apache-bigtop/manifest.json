@@ -1,0 +1,474 @@
+{
+  "schema_version": "0.1.0",
+  "id": "apache-bigtop",
+  "label": "Apache Big Data / Bigtop Ecosystem",
+  "status": "active",
+  "last_reviewed": "2026-05-20",
+  "purpose": "First realistic OSS ecosystem corpus for testing Portolan across multi-repo source visibility, integration metadata, binary/runtime surfaces, overlapping big-data components, and retired legacy projects.",
+  "source_references": [
+    {
+      "id": "bigtop-homepage",
+      "label": "Apache Bigtop project overview",
+      "type": "official-doc",
+      "url": "https://bigtop.apache.org/index.html",
+      "evidence_state": "metadata-visible",
+      "note": "Defines Bigtop as packaging, testing, and configuration for open source big data components."
+    },
+    {
+      "id": "bigtop-release-350",
+      "label": "Bigtop 3.5.0 release BOM",
+      "type": "official-release",
+      "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+      "evidence_state": "metadata-visible",
+      "note": "Lists the component versions used by the initial corpus manifest."
+    },
+    {
+      "id": "bigtop-support-matrix-350",
+      "label": "Bigtop 3.5.0 support matrix",
+      "type": "official-doc",
+      "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Overview%2Bof%2BBigtop%2B3.5.0%2BSupport%2BMatrix",
+      "evidence_state": "metadata-visible",
+      "note": "Provides runtime dependency and CI/smoke-test surfaces for corpus expectations."
+    },
+    {
+      "id": "bigtop-github",
+      "label": "Apache Bigtop source repository",
+      "type": "official-repo",
+      "url": "https://github.com/apache/bigtop",
+      "evidence_state": "source-visible",
+      "note": "Contains packaging, deployment, test framework, smoke tests, Docker, and BOM source."
+    },
+    {
+      "id": "apache-attic-oozie",
+      "label": "Apache Attic entry for Oozie",
+      "type": "official-attic",
+      "url": "https://attic.apache.org/projects/oozie.html",
+      "evidence_state": "metadata-visible",
+      "note": "Marks Oozie as retired and preserves read-only resources."
+    },
+    {
+      "id": "apache-sqoop-retired",
+      "label": "Apache Sqoop retired project site",
+      "type": "official-attic",
+      "url": "https://sqoop.apache.org/",
+      "evidence_state": "metadata-visible",
+      "note": "Marks Sqoop as retired while retaining release and repository links."
+    }
+  ],
+  "layers": [
+    {
+      "id": "seed-root",
+      "label": "Bigtop root and release metadata",
+      "intent": "Anchor the corpus on Bigtop as the integration project rather than on a random list of big-data repositories.",
+      "default_evidence_state": "metadata-visible",
+      "target_ids": [
+        "apache-bigtop-repo",
+        "apache-bigtop-release-350",
+        "apache-bigtop-support-matrix-350"
+      ]
+    },
+    {
+      "id": "source-repos",
+      "label": "Bigtop 3.5.0 component source repositories",
+      "intent": "Exercise multi-repo source collection across storage, processing, orchestration, SQL, notebook, security, and messaging components.",
+      "default_evidence_state": "source-visible",
+      "target_ids": [
+        "apache-airflow",
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-kafka",
+        "apache-livy",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ]
+    },
+    {
+      "id": "internal-support-packages",
+      "label": "Bigtop internal support packages",
+      "intent": "Preserve Bigtop-owned BOM entries that are package metadata rather than independent ecosystem source repositories.",
+      "default_evidence_state": "metadata-visible",
+      "target_ids": [
+        "bigtop-groovy",
+        "bigtop-jsvc",
+        "bigtop-select",
+        "bigtop-utils"
+      ]
+    },
+    {
+      "id": "legacy-retired-expansion",
+      "label": "Retired Hadoop-era legacy projects",
+      "intent": "Check that Portolan can represent historically important but retired projects without treating them as healthy current surfaces.",
+      "default_evidence_state": "metadata-visible",
+      "target_ids": [
+        "apache-oozie",
+        "apache-sqoop"
+      ]
+    },
+    {
+      "id": "runtime-black-box",
+      "label": "Package and runtime surfaces",
+      "intent": "Prepare black-box testing against Bigtop binary repositories, Docker images, CI, and smoke-test outputs without making network access a default scan behavior.",
+      "default_evidence_state": "metadata-visible",
+      "target_ids": [
+        "bigtop-binary-repos",
+        "bigtop-docker-images",
+        "bigtop-ci"
+      ]
+    }
+  ],
+  "targets": [
+    {
+      "id": "apache-bigtop-repo",
+      "label": "Apache Bigtop",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "ecosystem-integrator",
+      "evidence_state": "source-visible",
+      "repository_url": "https://github.com/apache/bigtop",
+      "project_url": "https://bigtop.apache.org/",
+      "notes": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata."
+    },
+    {
+      "id": "apache-bigtop-release-350",
+      "label": "Apache Bigtop 3.5.0 release",
+      "kind": "release",
+      "lifecycle": "active",
+      "role": "release-bom",
+      "evidence_state": "metadata-visible",
+      "version": "3.5.0",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease"
+    },
+    {
+      "id": "bigtop-groovy",
+      "label": "Bigtop Groovy package",
+      "kind": "package",
+      "lifecycle": "internal-support",
+      "role": "build-runtime-support",
+      "evidence_state": "metadata-visible",
+      "version": "2.5.4",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+      "depends_on": ["apache-bigtop-repo"],
+      "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
+    },
+    {
+      "id": "bigtop-jsvc",
+      "label": "Bigtop JSVC package",
+      "kind": "package",
+      "lifecycle": "internal-support",
+      "role": "daemon-service-support",
+      "evidence_state": "metadata-visible",
+      "version": "1.4.0",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+      "depends_on": ["apache-bigtop-repo"],
+      "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
+    },
+    {
+      "id": "bigtop-select",
+      "label": "Bigtop Select package",
+      "kind": "package",
+      "lifecycle": "internal-support",
+      "role": "bigtop-version-selection",
+      "evidence_state": "metadata-visible",
+      "version": "3.5.0",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+      "depends_on": ["apache-bigtop-repo"],
+      "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
+    },
+    {
+      "id": "bigtop-utils",
+      "label": "Bigtop Utils package",
+      "kind": "package",
+      "lifecycle": "internal-support",
+      "role": "bigtop-runtime-support",
+      "evidence_state": "metadata-visible",
+      "version": "3.5.0",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+      "depends_on": ["apache-bigtop-repo"],
+      "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
+    },
+    {
+      "id": "apache-bigtop-support-matrix-350",
+      "label": "Apache Bigtop 3.5.0 support matrix",
+      "kind": "documentation",
+      "lifecycle": "active",
+      "role": "support-matrix",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Overview%2Bof%2BBigtop%2B3.5.0%2BSupport%2BMatrix"
+    },
+    {
+      "id": "apache-airflow",
+      "label": "Apache Airflow",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "workflow-orchestration",
+      "evidence_state": "source-visible",
+      "version": "2.10.5",
+      "repository_url": "https://github.com/apache/airflow",
+      "project_url": "https://airflow.apache.org/"
+    },
+    {
+      "id": "alluxio",
+      "label": "Alluxio",
+      "kind": "repository",
+      "lifecycle": "external",
+      "role": "distributed-cache-filesystem",
+      "evidence_state": "source-visible",
+      "version": "2.9.6",
+      "repository_url": "https://github.com/Alluxio/alluxio",
+      "project_url": "https://www.alluxio.io/",
+      "depends_on": ["apache-hadoop"],
+      "notes": "Included in the Bigtop release BOM but not an Apache project."
+    },
+    {
+      "id": "apache-flink",
+      "label": "Apache Flink",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "stream-batch-processing",
+      "evidence_state": "source-visible",
+      "version": "1.20.1",
+      "repository_url": "https://github.com/apache/flink",
+      "project_url": "https://flink.apache.org/",
+      "depends_on": ["apache-hadoop"]
+    },
+    {
+      "id": "apache-hadoop",
+      "label": "Apache Hadoop",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "filesystem-yarn-mapreduce-foundation",
+      "evidence_state": "source-visible",
+      "version": "3.3.6",
+      "repository_url": "https://github.com/apache/hadoop",
+      "project_url": "https://hadoop.apache.org/"
+    },
+    {
+      "id": "apache-hbase",
+      "label": "Apache HBase",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "distributed-nosql-store",
+      "evidence_state": "source-visible",
+      "version": "2.6.2",
+      "repository_url": "https://github.com/apache/hbase",
+      "project_url": "https://hbase.apache.org/",
+      "depends_on": ["apache-hadoop", "apache-zookeeper"]
+    },
+    {
+      "id": "apache-hive",
+      "label": "Apache Hive",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "sql-warehouse",
+      "evidence_state": "source-visible",
+      "version": "4.0.1",
+      "repository_url": "https://github.com/apache/hive",
+      "project_url": "https://hive.apache.org/",
+      "depends_on": ["apache-hadoop", "apache-tez"]
+    },
+    {
+      "id": "apache-kafka",
+      "label": "Apache Kafka",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "event-streaming",
+      "evidence_state": "source-visible",
+      "version": "3.4.1",
+      "repository_url": "https://github.com/apache/kafka",
+      "project_url": "https://kafka.apache.org/",
+      "depends_on": ["apache-zookeeper"]
+    },
+    {
+      "id": "apache-livy",
+      "label": "Apache Livy",
+      "kind": "repository",
+      "lifecycle": "incubating",
+      "role": "spark-rest-service",
+      "evidence_state": "source-visible",
+      "version": "0.8.0-incubating",
+      "repository_url": "https://github.com/apache/incubator-livy",
+      "project_url": "https://livy.apache.org/",
+      "depends_on": ["apache-spark", "apache-hadoop"]
+    },
+    {
+      "id": "apache-phoenix",
+      "label": "Apache Phoenix",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "sql-over-hbase",
+      "evidence_state": "source-visible",
+      "version": "5.2.1",
+      "repository_url": "https://github.com/apache/phoenix",
+      "project_url": "https://phoenix.apache.org/",
+      "depends_on": ["apache-hbase", "apache-hadoop", "apache-zookeeper"]
+    },
+    {
+      "id": "apache-ranger",
+      "label": "Apache Ranger",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "security-governance",
+      "evidence_state": "source-visible",
+      "version": "2.7.0",
+      "repository_url": "https://github.com/apache/ranger",
+      "project_url": "https://ranger.apache.org/"
+    },
+    {
+      "id": "apache-solr",
+      "label": "Apache Solr",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "search-index",
+      "evidence_state": "source-visible",
+      "version": "8.11.4",
+      "repository_url": "https://github.com/apache/solr",
+      "project_url": "https://solr.apache.org/"
+    },
+    {
+      "id": "apache-spark",
+      "label": "Apache Spark",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "distributed-compute",
+      "evidence_state": "source-visible",
+      "version": "3.5.6",
+      "repository_url": "https://github.com/apache/spark",
+      "project_url": "https://spark.apache.org/",
+      "depends_on": ["apache-hadoop"]
+    },
+    {
+      "id": "apache-tez",
+      "label": "Apache Tez",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "dag-execution-engine",
+      "evidence_state": "source-visible",
+      "version": "0.10.4",
+      "repository_url": "https://github.com/apache/tez",
+      "project_url": "https://tez.apache.org/",
+      "depends_on": ["apache-hadoop"]
+    },
+    {
+      "id": "apache-zeppelin",
+      "label": "Apache Zeppelin",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "notebook-analytics",
+      "evidence_state": "source-visible",
+      "version": "0.11.2",
+      "repository_url": "https://github.com/apache/zeppelin",
+      "project_url": "https://zeppelin.apache.org/",
+      "depends_on": ["apache-spark", "apache-hive", "apache-hadoop"]
+    },
+    {
+      "id": "apache-zookeeper",
+      "label": "Apache ZooKeeper",
+      "kind": "repository",
+      "lifecycle": "active",
+      "role": "coordination-service",
+      "evidence_state": "source-visible",
+      "version": "3.8.4",
+      "repository_url": "https://github.com/apache/zookeeper",
+      "project_url": "https://zookeeper.apache.org/"
+    },
+    {
+      "id": "apache-oozie",
+      "label": "Apache Oozie",
+      "kind": "retired-project",
+      "lifecycle": "retired",
+      "role": "legacy-hadoop-workflow-scheduler",
+      "evidence_state": "metadata-visible",
+      "repository_url": "https://github.com/apache/oozie",
+      "project_url": "https://attic.apache.org/projects/oozie.html",
+      "depends_on": ["apache-hadoop"],
+      "notes": "Retired project used as a legacy control for lifecycle and evidence-state handling."
+    },
+    {
+      "id": "apache-sqoop",
+      "label": "Apache Sqoop",
+      "kind": "retired-project",
+      "lifecycle": "retired",
+      "role": "legacy-rdbms-hadoop-transfer",
+      "evidence_state": "metadata-visible",
+      "repository_url": "https://github.com/apache/sqoop",
+      "project_url": "https://sqoop.apache.org/",
+      "depends_on": ["apache-hadoop", "apache-hive"],
+      "notes": "Retired project used as a legacy control for replacement and migration signals."
+    },
+    {
+      "id": "bigtop-binary-repos",
+      "label": "Bigtop installable binary repositories",
+      "kind": "binary-repository",
+      "lifecycle": "active",
+      "role": "package-surface",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://downloads.apache.org/bigtop/bigtop-3.5.0/repos/"
+    },
+    {
+      "id": "bigtop-docker-images",
+      "label": "Bigtop Docker images",
+      "kind": "docker-image",
+      "lifecycle": "active",
+      "role": "runtime-surface",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://hub.docker.com/u/bigtop",
+      "notes": "Later runtime tests may observe containers locally; the manifest itself remains metadata-only."
+    },
+    {
+      "id": "bigtop-ci",
+      "label": "Bigtop CI and smoke-test jobs",
+      "kind": "runtime",
+      "lifecycle": "active",
+      "role": "upstream-verification-surface",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://ci.bigtop.apache.org/",
+      "notes": "Upstream CI is context evidence, not a Portolan verification result."
+    }
+  ],
+  "acceptance_checks": [
+    {
+      "id": "AC-001",
+      "label": "Release BOM coverage",
+      "requirement": "The corpus must preserve the Bigtop 3.5.0 component set and versions from the official release BOM.",
+      "evidence_state": "metadata-visible"
+    },
+    {
+      "id": "AC-002",
+      "label": "Runtime dependency coverage",
+      "requirement": "The corpus must include dependency edges derived from the support matrix for Hadoop, HBase, Hive, Kafka, Livy, Phoenix, Spark, Tez, Zeppelin, and ZooKeeper.",
+      "evidence_state": "metadata-visible"
+    },
+    {
+      "id": "AC-003",
+      "label": "Legacy lifecycle coverage",
+      "requirement": "The corpus must include retired Hadoop-era projects and keep retirement status separate from source repository visibility.",
+      "evidence_state": "metadata-visible"
+    },
+    {
+      "id": "AC-004",
+      "label": "Evidence state coverage",
+      "requirement": "Fixture generation from this corpus must exercise source-visible, metadata-visible, claim-only, unknown, and cannot_verify states before it is used as an acceptance corpus.",
+      "evidence_state": "cannot_verify"
+    },
+    {
+      "id": "AC-005",
+      "label": "No default network scan",
+      "requirement": "A normal Portolan scan must consume a prepared local selection or fixture derived from the corpus and must not clone repositories or query upstream services by default.",
+      "evidence_state": "claim-only"
+    }
+  ],
+  "scope_exclusions": [
+    "Do not benchmark big-data runtime performance in Portolan.",
+    "Do not reimplement Bigtop packaging, smoke tests, Docker recipes, or CI.",
+    "Do not treat upstream CI status as proof that Portolan verified a fact.",
+    "Do not include proprietary Hadoop distributions in the initial corpus."
+  ]
+}

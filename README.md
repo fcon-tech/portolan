@@ -21,6 +21,8 @@ Implemented:
 - Go module and minimal `portolan` CLI shell.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
+- GitHub Spec Kit workflow and product backlog.
+- Apache Bigtop test corpus profile for fixture planning.
 
 Not implemented yet:
 
@@ -28,6 +30,7 @@ Not implemented yet:
 - metadata importers;
 - runtime importers;
 - black-box inventory workflow;
+- corpus preparation or manifest-to-selection generation;
 - report rendering;
 - integrations with external tools.
 
@@ -63,7 +66,10 @@ Each graph node or relationship records how it is known:
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
 - [OSS Composition](docs/oss-composition.md)
+- [Apache Bigtop Test Corpus](docs/test-corpora/apache-bigtop.md)
+- [Apache Bigtop Corpus Manifest](corpora/apache-bigtop/manifest.json)
 - [Evidence Graph Schema](schema/evidence-graph.schema.json)
+- [Corpus Manifest Schema](schema/corpus-manifest.schema.json)
 
 ## SpecKit Workflow
 
