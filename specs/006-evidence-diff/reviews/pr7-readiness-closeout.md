@@ -17,7 +17,7 @@
 
 ## Diff Scope
 
-Expected P1-006 implementation and SpecKit files only:
+Expected P3-006 implementation and SpecKit files only:
 
 - `README.md`
 - `docs/product-backlog.md`

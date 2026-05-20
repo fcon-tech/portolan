@@ -1,7 +1,7 @@
 # Implementation Plan: Evidence Graph Diff
 
 **Branch**: `006-evidence-diff` | **Date**: 2026-05-20 | **Spec**: [spec.md](spec.md)
-**Input**: Product backlog P1-006: compare two evidence graphs and show what
+**Input**: Product backlog P3-006: compare two evidence graphs and show what
 became visible, changed, or stayed unknown.
 
 ## Summary
@@ -50,7 +50,7 @@ graphs, no readiness verdicts, no rename detection in the first slice.
 | Local-first and read-only | Pass | Diff reads two local graph files and writes only the selected output. |
 | Evidence state honesty | Pass | Diff reports state transitions without upgrading unknown or claim-only facts. |
 | Complement existing tools | Pass | Generic diff tools stay external; Portolan adds graph/evidence normalization. |
-| SpecKit before implementation | Pass | This plan and tasks make P1-006 implementable before behavior changes. |
+| SpecKit before implementation | Pass | This plan and tasks make P3-006 implementable before behavior changes. |
 | Test-first behavior | Pass | Tasks start with fixtures and failing CLI/diff tests. |
 
 ## Project Structure

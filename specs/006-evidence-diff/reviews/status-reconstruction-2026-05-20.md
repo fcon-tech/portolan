@@ -6,7 +6,7 @@ The user asked to take the nearest ready spec into implementation.
 
 ## Reconstructed State
 
-- `docs/product-backlog.md` lists P1-006 as `future` with status `Idea`.
+- `docs/product-backlog.md` lists P3-006 as `future` with status `Idea`.
 - `specs/006-evidence-diff/spec.md` exists and is marked `Backlog spec`.
 - `specs/006-evidence-diff/plan.md` was absent at intake and has now been
   added to define the implementation contract.
@@ -16,7 +16,7 @@ The user asked to take the nearest ready spec into implementation.
 
 ## Decision
 
-P1-006 is the next roadmap slice after implemented P0/P1 work. It was not
+P3-006 is the next roadmap slice after implemented P0/P1 work. It was not
 implementation-ready at intake, but the missing plan and task ledger have now
 been created. Implementation still requires pre-implementation review
 disposition before code changes.

@@ -30,11 +30,11 @@ The repo root fixture supports README and manual CLI examples; the
 fixture practice in this repository.
 
 Disposition: rejected for this slice. Consolidating app fixture lookup is a
-repo-wide test harness cleanup, not a P1-006 behavior fix.
+repo-wide test harness cleanup, not a P3-006 behavior fix.
 
 ### minor: Diff output has no JSON Schema
 
-Disposition: rejected for this slice. P1-006 requires JSON output and syntax
+Disposition: rejected for this slice. P3-006 requires JSON output and syntax
 validation, not a committed diff schema. Adding a new schema contract should be
 a separate product decision after consumers exist.
 

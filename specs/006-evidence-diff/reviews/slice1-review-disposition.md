@@ -8,7 +8,7 @@
 - `testdata/evidence-diff/`
 - `internal/app/testdata/evidence-diff/`
 - `README.md`
-- P1-006 SpecKit status and task ledgers
+- P3-006 SpecKit status and task ledgers
 
 ## Local Verification
 
@@ -76,7 +76,7 @@ output paths for scan, import, packet, and diff commands. The boundary is no
 network, no credentials, no target repository mutation, parent existence,
 directory refusal, symlink refusal, and `--force` for overwrite. Restricting all
 absolute or relative output paths would be a product-wide behavior change, not a
-P1-006 fix.
+P3-006 fix.
 
 ### minor: Edge identity should include `kind`
 
@@ -88,6 +88,6 @@ the changed edge uses `depends-on`.
 
 ## Result
 
-Accepted findings were fixed and local verification passed after fixes. P1-006
+Accepted findings were fixed and local verification passed after fixes. P3-006
 can proceed to PR packaging and PR-level review; it is not ready-to-merge
 without explicit merge approval.

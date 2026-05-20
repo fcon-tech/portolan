@@ -2,8 +2,8 @@
 
 **Feature Branch**: `006-evidence-diff`
 **Created**: 2026-05-20
-**Status**: Implemented in branch
-**Input**: Product backlog P1-006: compare two evidence graphs and show what became visible, changed, or stayed unknown.
+**Status**: Implemented
+**Input**: Product backlog P3-006: compare two evidence graphs and show what became visible, changed, or stayed unknown.
 
 ## User Scenarios & Testing
 

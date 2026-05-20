@@ -11,7 +11,7 @@
 
 ## Status Reconstruction
 
-- Backlog row: P1-006 is the next roadmap gap after implemented P0/P1-005, but
+- Backlog row: P3-006 is the next roadmap gap after implemented P0/P1-005, but
   was still marked as `future` / `Idea`.
 - Spec status: `Backlog spec`.
 - Plan/tasks: created during this intake because they were missing.
@@ -19,7 +19,7 @@
 
 ## Findings
 
-### major: P1-006 was not ready at intake
+### major: P3-006 was not ready at intake
 
 The spec existed, but the required `plan.md` and `tasks.md` were absent.
 
@@ -55,7 +55,7 @@ reclassified as documentation-only. This slice is code-bearing.
 
 ## Ready For Implementation
 
-P1-006 is ready to enter the first implementation slice after this review
+P3-006 is ready to enter the first implementation slice after this review
 because:
 
 - spec, plan, and tasks now exist;
