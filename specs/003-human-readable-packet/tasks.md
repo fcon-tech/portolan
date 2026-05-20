@@ -36,7 +36,7 @@
 - [x] T018 Run `jq empty schema/*.json`.
 - [x] T019 Run `go run ./cmd/portolan packet render --graph testdata/human-readable-packet/graph.json --out /tmp/portolan-packet.md --force`.
 - [x] T020 Run `git diff --check`.
-- [ ] T021 Create or update PR and run PR review cycle.
+- [x] T021 Create or update PR and run PR review cycle.
 
 ## Dependencies
 
