@@ -23,7 +23,7 @@ Implemented:
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
-- Apache Bigtop test corpus profile for fixture planning.
+- Apache Bigtop test corpus profile for final acceptance planning.
 
 Not implemented yet:
 
@@ -46,14 +46,25 @@ Portolan should default to:
 - human-readable packet generated from the same graph;
 - explicit states for missing, weak, or unverifiable evidence.
 
-## Acceptance Target
+## Roadmap Shape
 
-The first realistic acceptance loop is the full operator assembly:
+Portolan should be built from the smallest runnable loop outward:
+
+1. Local selection input, read-only scan, and JSON evidence graph.
+2. Human-readable packet generated from the same graph.
+3. Importer normalization, black-box profiles, evidence diffs, and adapter
+   contracts.
+4. Final ecosystem acceptance against Apache Bigtop.
+
+The final realistic acceptance loop is the full operator assembly:
 
 - Cursor as the interactive engineering surface;
 - Composer 2.5 / Kimi 2.6 as the agent/model pair under evaluation;
 - Portolan as the local evidence graph and packet substrate;
 - Apache Bigtop as the large OSS ecosystem corpus.
+
+Bigtop is intentionally last. It is the stress corpus for an assembled product,
+not the next implementation target after bootstrap.
 
 Portolan should make that loop observable without becoming dependent on Cursor,
 Composer, Kimi, or any hosted model/runtime during a default scan.
