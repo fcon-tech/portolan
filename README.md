@@ -46,6 +46,18 @@ Portolan should default to:
 - human-readable packet generated from the same graph;
 - explicit states for missing, weak, or unverifiable evidence.
 
+## Acceptance Target
+
+The first realistic acceptance loop is the full operator assembly:
+
+- Cursor as the interactive engineering surface;
+- Composer 2.5 / Kimi 2.6 as the agent/model pair under evaluation;
+- Portolan as the local evidence graph and packet substrate;
+- Apache Bigtop as the large OSS ecosystem corpus.
+
+Portolan should make that loop observable without becoming dependent on Cursor,
+Composer, Kimi, or any hosted model/runtime during a default scan.
+
 ## Evidence States
 
 Portolan must not pretend that every system can be analyzed like source code.

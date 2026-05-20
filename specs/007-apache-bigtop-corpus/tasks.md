@@ -18,21 +18,23 @@
   is useful and how testing should be phased.
 - [x] T005 Document retired-project and runtime/package-surface handling without
   granting default network access.
+- [x] T006 Document Cursor + Composer 2.5 / Kimi 2.6 as the operator assembly
+  being tested by the Bigtop corpus.
 
 ## Phase 3: Backlog And Navigation
 
-- [x] T006 Add SpecKit artifacts for feature slice 007.
-- [x] T007 Update the product backlog to point P2-007 at the Bigtop corpus
+- [x] T007 Add SpecKit artifacts for feature slice 007.
+- [x] T008 Update the product backlog to point P2-007 at the Bigtop corpus
   slice.
-- [x] T008 Update repository navigation so the corpus and schema are easy to
+- [x] T009 Update repository navigation so the corpus and schema are easy to
   find.
 
 ## Phase 4: Verification
 
-- [x] T009 Run `jq empty` over JSON schemas and corpus manifest.
-- [x] T010 Run Go baseline tests.
-- [x] T011 Run whitespace and placeholder checks.
-- [x] T012 Commit the completed slice.
+- [x] T010 Run `jq empty` over JSON schemas and corpus manifest.
+- [x] T011 Run Go baseline tests.
+- [x] T012 Run whitespace and placeholder checks.
+- [x] T013 Commit the completed slice.
 
 ## Deferred Work
 

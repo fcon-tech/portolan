@@ -463,6 +463,12 @@
       "label": "No default network scan",
       "requirement": "A normal Portolan scan must consume a prepared local selection or fixture derived from the corpus and must not clone repositories or query upstream services by default.",
       "evidence_state": "claim-only"
+    },
+    {
+      "id": "AC-006",
+      "label": "Operator assembly acceptance",
+      "requirement": "The corpus must support an end-to-end evaluation of Cursor with Composer 2.5 / Kimi 2.6 using Portolan artifacts, while keeping agent/model conclusions lower-authority than source, metadata, runtime, or explicit claim inputs.",
+      "evidence_state": "claim-only"
     }
   ],
   "scope_exclusions": [

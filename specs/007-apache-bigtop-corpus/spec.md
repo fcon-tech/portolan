@@ -3,7 +3,7 @@
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
 **Status**: Backlog spec
-**Input**: Product decision to start test strategy with Apache Big Data / Bigtop as the first realistic OSS ecosystem corpus.
+**Input**: Product decision to start test strategy with Apache Big Data / Bigtop as the first realistic OSS ecosystem corpus for the Cursor + Composer 2.5 / Kimi 2.6 operator assembly.
 
 ## User Scenarios & Testing
 
@@ -67,6 +67,29 @@ fixture and verify it only reads local paths.
    edge references that component, **Then** Portolan records the missing source
    as `unknown` or `cannot_verify`.
 
+### User Story 4 - Test The Operator Assembly (Priority: P2)
+
+An evaluator can use Apache Bigtop to test the full workflow around Portolan:
+Cursor as the interactive engineering surface, Composer 2.5 / Kimi 2.6 as the
+agent/model pair, and Portolan as the evidence graph and packet substrate.
+
+**Why this priority**: The corpus should prove whether the whole working loop is
+usable, not only whether a static manifest can be parsed.
+
+**Independent Test**: Run a documented operator session over a prepared Bigtop
+fixture and review whether Portolan artifacts separate machine-observed evidence
+from agent claims.
+
+**Acceptance Scenarios**:
+
+1. **Given** an operator uses Cursor with Composer 2.5 / Kimi 2.6, **When** the
+   Bigtop fixture is analyzed, **Then** Portolan output remains grounded in
+   source, metadata, runtime, and claim evidence states.
+2. **Given** the agent transcript contains a conclusion that is not backed by a
+   local Portolan input, **When** the output is reviewed, **Then** that conclusion
+   is represented as `claim-only`, `unknown`, or `cannot_verify`, not as observed
+   evidence.
+
 ## Edge Cases
 
 - Bigtop release BOM version differs from component repository HEAD.
@@ -77,6 +100,9 @@ fixture and verify it only reads local paths.
 - Bigtop package, Docker, or CI surface is known from metadata but not observed
   locally.
 - A full clone set is too large for routine local tests.
+- Agent/model conclusions from Cursor, Composer, or Kimi may be useful review
+  context but are not evidence unless tied to a Portolan source, metadata,
+  runtime, or claim input.
 
 ## Requirements
 
@@ -96,6 +122,10 @@ fixture and verify it only reads local paths.
   metadata facts unless the exact local source checkout is observed.
 - **FR-008**: Retired projects MUST keep lifecycle evidence separate from source
   repository visibility.
+- **FR-009**: Corpus documentation MUST state that the first acceptance target
+  is the full Cursor + Composer 2.5 / Kimi 2.6 operator assembly.
+- **FR-010**: Agent/model transcript content MUST remain lower-authority
+  evidence unless supported by local Portolan inputs.
 
 ### Key Entities
 
@@ -121,6 +151,8 @@ fixture and verify it only reads local paths.
   `depends_on`.
 - **SC-005**: Documentation defines a local-first fixture plan that does not
   require upstream network access during default scan execution.
+- **SC-006**: Documentation states how the Bigtop corpus tests the Cursor +
+  Composer 2.5 / Kimi 2.6 workflow without making Portolan depend on that stack.
 
 ## Assumptions
 
@@ -131,3 +163,5 @@ fixture and verify it only reads local paths.
   default MVP.
 - Initial schema validation may be syntax-only until a JSON Schema validator is
   introduced.
+- Composer 2.5 / Kimi 2.6 are named as the current evaluation stack, not as
+  Portolan runtime dependencies.

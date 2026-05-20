@@ -23,7 +23,7 @@ the planning view; detailed requirements live under `specs/`.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P2-007 | `specs/007-apache-bigtop-corpus/` | Apache Bigtop corpus profile defines the first realistic OSS ecosystem for fixture and acceptance testing. | Backlog spec |
+| P2-007 | `specs/007-apache-bigtop-corpus/` | Apache Bigtop corpus profile defines the first realistic OSS ecosystem for testing the Cursor + Composer 2.5 / Kimi 2.6 operator assembly. | Backlog spec |
 | P2-008 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 | P2-009 | future | Signed or attestable evidence graph package for customer handoff. | Idea |
 | P2-010 | future | Published importer contract and fixture suite for third-party adapters. | Idea |
