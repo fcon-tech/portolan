@@ -26,6 +26,8 @@ Implemented:
   files without source-visible overclaiming.
 - `portolan diff --base <file> --head <file> --out <file>` for
   machine-readable evidence graph movement without readiness verdicts.
+- `portolan map --root <dir> --out <dir>` for a first one-command artifact
+  bundle with `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -36,7 +38,6 @@ Implemented:
 
 Not implemented yet:
 
-- one-command `portolan map --root <dir> --out <dir>` artifact bundle;
 - relationship, duplication, configuration, and technical-debt finding
   generators;
 - platform-specific runtime importers;
@@ -65,7 +66,7 @@ Portolan should be built from the cheapest useful agent loop outward:
 2. Immediate Bigtop acceptance smoke in Cursor + Composer 2.5 to expose real
    product gaps.
 3. `portolan map --root . --out .portolan/run` producing graph, findings, run
-   metadata, and a readable packet, if the smoke proves the gap.
+   metadata, and a readable packet.
 4. Relationship, duplication, configuration, and technical-debt finding
    generators backed by local evidence, prioritized from that smoke.
 5. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
@@ -131,6 +132,7 @@ Backlog features live under `specs/` and are indexed in
 go test ./...
 go run ./cmd/portolan --version
 go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
+go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force
 go run ./cmd/portolan diff --base testdata/evidence-diff/base.json --head testdata/evidence-diff/head.json --out /tmp/portolan-diff.json --force
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
@@ -140,6 +142,7 @@ go run ./cmd/portolan packet render --graph /tmp/portolan-graph.json --out /tmp/
 jq empty /tmp/portolan-graph.json
 jq empty /tmp/portolan-black-box-graph.json
 jq empty /tmp/portolan-diff.json
+jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json
 jq empty schema/*.json
 git diff --check
 ```

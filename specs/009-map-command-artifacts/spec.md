@@ -2,7 +2,7 @@
 
 **Feature Branch**: `009-map-command-artifacts`
 **Created**: 2026-05-20
-**Status**: Prepared; gated by Bigtop smoke
+**Status**: Implemented locally; review/PR closeout pending
 **Input**: Product decision to prepare the one-command map contract, but start
 implementation only after the immediate Bigtop smoke proves the gap.
 

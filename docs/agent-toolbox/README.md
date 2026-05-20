@@ -47,33 +47,31 @@ only a thin wrapper over that guide.
 Current reality:
 
 - `portolan --version`
+- `portolan map`
 - `portolan scan`
 - `portolan packet render`
 - `portolan import cyclonedx`
 - `portolan diff`
 
-Target contract after `portolan map` exists:
+Target workflow:
 
 1. Read the Portolan agent guide or harness-specific wrapper.
-2. Run `portolan doctor`.
-3. Run `portolan map --root . --out .portolan/run`.
-4. Inspect `.portolan/run/run.json`, `.portolan/run/graph.json`,
+2. Run `portolan map --root . --out .portolan/run`.
+3. Inspect `.portolan/run/run.json`, `.portolan/run/graph.json`,
    `.portolan/run/findings.jsonl`, and `.portolan/run/map.md`.
-5. Report relationships, duplication, configuration surfaces, technical debt,
+4. Report relationships, duplication, configuration surfaces, technical debt,
    unknowns, and cannot-verify inputs from the artifacts.
-6. Avoid conclusions that are not backed by local evidence.
+5. Avoid conclusions that are not backed by local evidence.
 
-Until `portolan map` exists, acceptance smoke should use current commands only
-when matching local inputs exist and record missing target artifacts as gap
-ledger entries.
+The first `portolan map` bundle records basic source inventory and explicit
+`not_assessed` findings for detector surfaces that are not implemented yet.
 
 See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
 expected evidence-backed report shape.
 
 ## Target Artifact Contract
 
-This is the target bundle for future `portolan map`, not the current fallback
-output contract:
+This is the current first-pass `portolan map` bundle:
 
 ```text
 .portolan/run/
@@ -81,7 +79,7 @@ output contract:
   graph.json        machine-readable evidence graph
   findings.jsonl    evidence-backed relationship/config/debt findings
   map.md            readable packet derived from graph and findings
-  evidence/         optional raw local tool outputs
+  evidence/         optional future raw local tool outputs
 ```
 
 ## Evidence Rule

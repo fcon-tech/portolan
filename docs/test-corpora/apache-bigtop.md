@@ -60,6 +60,10 @@ expand only when the previous layer has produced concrete product decisions.
   advice.
 - Follow the smoke runbook in
   `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
+- If the external Cursor + Composer 2.5 operator lane is unavailable, run the
+  local fallback smoke against
+  `testdata/apache-bigtop-smoke/selection.json` and mark the operator lane
+  `not_assessed`. Do not treat the fallback as proof of Cursor usability.
 
 ### Phase 1 - Manifest Acceptance
 
@@ -109,6 +113,11 @@ expand only when the previous layer has produced concrete product decisions.
 - A Cursor + Composer 2.5 operator run can use the corpus to produce
   reviewable Portolan artifacts without treating the agent transcript as stronger
   evidence than source, metadata, or runtime observations.
+- The local fallback smoke can generate a graph and packet from fixture inputs
+  while confirming that the target `portolan map` workflow is still a product
+  gap rather than a clean result. Findings, detector output, and richer
+  lifecycle semantics remain backlog gaps until the operator smoke or later
+  implementation slices exercise them directly.
 
 ## Source References
 

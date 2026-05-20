@@ -2,7 +2,7 @@
 
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
-**Status**: Ready for acceptance-smoke planning
+**Status**: Local fallback smoke complete; Cursor + Composer operator lane degraded
 **Input**: Product decision to start testing against Apache Big Data / Bigtop
 immediately after the agent skill pack, so real corpus friction drives the next
 Portolan capabilities.

@@ -18,6 +18,7 @@ explain a repository. Trigger phrases include:
 These are the real capabilities this guide may rely on today:
 
 - `portolan --version`
+- `portolan map --root <dir> --out <run-dir> [--force]`
 - `portolan scan --selection <selection.json> --out <graph.json> [--force]`
 - `portolan packet render --graph <graph.json> --out <packet.md> [--force]`
 - `portolan import cyclonedx --in <sbom.json> --out <graph.json> [--force]`
@@ -25,17 +26,16 @@ These are the real capabilities this guide may rely on today:
 - local selection files, local metadata, local runtime exports, local claim
   files, and local SBOM/tool exports when the repository provides them.
 
-Current commands can produce evidence graphs, packets, importer-normalized
-graphs, and graph diffs. They do not yet produce a complete one-command map
-bundle with run metadata and findings.
+Current commands can produce one-command map bundles, evidence graphs, packets,
+importer-normalized graphs, and graph diffs. The first map implementation emits
+basic source inventory and explicit `not_assessed` findings for detector
+surfaces that are not implemented yet.
 
 ## Target Contract
 
-This target contract is not implemented yet. Do not write as if it already
-exists.
+This target contract is now the preferred workflow.
 
 ```bash
-portolan doctor
 portolan map --root . --out .portolan/run
 ```
 
@@ -49,10 +49,10 @@ The future target bundle is:
   map.md
 ```
 
-Treat missing `portolan doctor`, missing `portolan map`, missing `run.json`,
-missing `findings.jsonl`, or missing detector coverage as product gaps, not as
-evidence that the repository has no relationships, duplication, configuration
-surfaces, or technical debt.
+Treat missing detector coverage or `not_assessed` findings as product gaps, not
+as evidence that the repository has no relationships, duplication,
+configuration surfaces, or technical debt. `portolan doctor` is still not part
+of the implemented CLI.
 
 ## Guardrails
 
@@ -90,35 +90,29 @@ Use `not_assessed` for a surface you did not check.
    - SBOMs or exported tool outputs;
    - existing Portolan artifacts.
 
-2. Try the target health check, but do not depend on it:
-
-   ```bash
-   portolan doctor
-   ```
-
-   If `portolan doctor` is unavailable, record a gap and continue with current
-   checks:
+2. Check available commands when needed:
 
    ```bash
    portolan --version
+   portolan map --help
    portolan scan --help
    portolan packet render --help
    portolan import cyclonedx --help
    ```
 
-   If these current commands are also missing or fail, stop and report the
-   blocker.
+   If current commands are missing or fail, stop and report the blocker.
 
-3. If the future map command exists, use it:
+3. Run the map command:
 
    ```bash
    portolan map --root . --out .portolan/run
    ```
 
-   If it does not exist, record a gap and use current commands only when you
-   have matching local inputs.
+   Read `run.json`, `graph.json`, `findings.jsonl`, and `map.md` before
+   reporting.
 
-4. Use a safe fallback output directory for current commands:
+4. Use lower-level commands only when the user or fixture provides matching
+   local inputs:
 
    ```bash
    mkdir -p /tmp/portolan-run
@@ -128,8 +122,8 @@ Use `not_assessed` for a surface you did not check.
    portolan diff --base <base-graph.json> --head <head-graph.json> --out /tmp/portolan-run/diff.json --force
    ```
 
-   Run only the commands that match real local inputs. Do not invent a
-   selection file, SBOM, base graph, or head graph.
+   Run only commands that match real local inputs. Do not invent a selection
+   file, SBOM, base graph, or head graph.
 
 5. Inspect freshness before trusting existing artifacts. Check whether each
    artifact corresponds to the current repository and command inputs.

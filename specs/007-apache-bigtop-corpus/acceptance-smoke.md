@@ -14,7 +14,38 @@ detectors, configuration scanners, or debt rules to be implemented first.
 - Cursor rule wrapper;
 - current Portolan CLI;
 - `corpora/apache-bigtop/manifest.json`;
-- prepared local fixture files only.
+- prepared local fixture files only:
+  `testdata/apache-bigtop-smoke/selection.json`.
+
+## Local Fallback Smoke
+
+Run this when the external Cursor + Composer 2.5 operator lane is unavailable.
+This does not replace the operator smoke; it only proves the current Portolan
+artifact path and records gaps without network access.
+
+```bash
+tmpdir="$(mktemp -d)"
+go run ./cmd/portolan scan \
+  --selection testdata/apache-bigtop-smoke/selection.json \
+  --out "$tmpdir/graph.json" \
+  --force
+go run ./cmd/portolan packet render \
+  --graph "$tmpdir/graph.json" \
+  --out "$tmpdir/map.md" \
+  --force
+go run ./cmd/portolan map --root testdata/apache-bigtop-smoke/repo --out "$tmpdir/run"
+jq empty "$tmpdir/graph.json"
+```
+
+Expected result today:
+
+- `scan` succeeds against local fixture inputs.
+- `packet render` succeeds from the generated graph.
+- `map` writes the target artifact bundle after spec 009.
+- `findings.jsonl` records detector surfaces that remain `not_assessed`.
+- missing Oozie local inputs remain `unknown` or `cannot_verify`.
+- Cursor + Composer usability remains `not_assessed` until the external
+  operator lane is run.
 
 ## Cursor Prompt
 
