@@ -19,7 +19,7 @@ Cursor + Composer 2.5 is the first cheap acceptance client because it gives us:
 - project rules for a thin Cursor-specific wrapper.
 
 Cursor is not the product boundary. Any Cursor rule must delegate to the
-portable Portolan guide and artifact contract.
+portable Portolan entrypoint and artifact contract.
 
 ## Acceptance Smoke Output
 
@@ -37,12 +37,16 @@ commands and record concrete gaps:
 The generic guide does not prescribe corpus-specific choreography. Concrete
 smoke steps belong in acceptance notes or test logs.
 
-## Target Agent Workflow
+## Bootstrap Contract
 
-The portable guide lives at [`agent/AGENT_GUIDE.md`](../../agent/AGENT_GUIDE.md).
+The root-discoverable entrypoint lives at
+[`agent/START_HERE.md`](../../agent/START_HERE.md). The detailed portable guide
+lives at [`agent/AGENT_GUIDE.md`](../../agent/AGENT_GUIDE.md). Harnesses that
+support skill import can use
+[`agent/skills/portolan-map/SKILL.md`](../../agent/skills/portolan-map/SKILL.md).
 Cursor's project rule lives at
 [`.cursor/rules/portolan-map.mdc`](../../.cursor/rules/portolan-map.mdc) and is
-only a thin wrapper over that guide.
+only a thin wrapper over the portable entrypoint.
 
 Current reality:
 
@@ -55,10 +59,13 @@ Current reality:
 
 Target workflow:
 
-1. Read the Portolan agent guide or harness-specific wrapper.
-2. Run `portolan map --root . --out .portolan/run`.
-3. Inspect `.portolan/run/run.json`, `.portolan/run/graph.json`,
-   `.portolan/run/findings.jsonl`, and `.portolan/run/map.md`.
+1. Read the Portolan agent entrypoint, guide, skill, or harness-specific
+   wrapper.
+2. Run `portolan map --root <target-root> --out <run-dir>`, or run
+   `go run ./cmd/portolan map --root <target-root> --out <run-dir>` from a
+   Portolan source checkout when no binary is installed.
+3. Inspect `<run-dir>/run.json`, `<run-dir>/graph.json`,
+   `<run-dir>/findings.jsonl`, and `<run-dir>/map.md`.
 4. Report relationships, duplication, configuration surfaces, technical debt,
    unknowns, and cannot-verify inputs from the artifacts.
 5. Avoid conclusions that are not backed by local evidence.
@@ -69,6 +76,11 @@ import relationships, local `go.mod` dependency relationships, and explicit
 
 See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
 expected evidence-backed report shape.
+
+Build, packaging, configuration, release, smoke-test, and integration
+repositories are valid targets. Agents must not clone or fetch upstream
+component source repositories just because a target references them. Missing
+local source evidence remains `unknown`, `cannot_verify`, or `not_assessed`.
 
 ## Target Artifact Contract
 

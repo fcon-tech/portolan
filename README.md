@@ -37,6 +37,7 @@ Implemented:
   planning.
 - Portable agent guide, example report, and Cursor project rule for the first
   agent toolbox acceptance loop.
+- Root-discoverable agent bootstrap entrypoint and portable map skill.
 
 Not implemented yet:
 
@@ -101,6 +102,8 @@ Each graph node or relationship records how it is known:
 
 ## Start Here
 
+- [Agent Bootstrap: Start Here](agent/START_HERE.md)
+- [Portable Portolan Map Skill](agent/skills/portolan-map/SKILL.md)
 - [Product Boundary](docs/product-boundary.md)
 - [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
 - [Product Backlog](docs/product-backlog.md)

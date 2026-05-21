@@ -1,7 +1,8 @@
 # Portolan Agent Guide
 
-Portolan is a local-first evidence substrate for mapping codebases before an
-agent makes architecture, dependency, or technical-debt claims.
+Portolan is a local-first evidence substrate for mapping local repositories or
+directories before an agent makes architecture, dependency, or technical-debt
+claims.
 
 Use this guide when the user asks you to map, audit, inspect, understand, or
 explain a repository. Trigger phrases include:
@@ -37,10 +38,16 @@ surfaces that are not implemented yet.
 This target contract is now the preferred workflow.
 
 ```bash
-portolan map --root . --out .portolan/run
+portolan map --root <target-root> --out <run-dir>
 ```
 
-The future target bundle is:
+If only a Portolan source checkout is available, run from that checkout:
+
+```bash
+go run ./cmd/portolan map --root <target-root> --out <run-dir>
+```
+
+The current map bundle is:
 
 ```text
 .portolan/run/
@@ -66,6 +73,10 @@ not part of the implemented CLI.
 - Do not mutate the target repository.
 - Use temporary output paths for current fallback commands unless the user
   explicitly selects another output location.
+- Treat build, packaging, configuration, release, smoke-test, and integration
+  repositories as valid targets.
+- Do not clone or fetch referenced component source repositories unless the
+  user explicitly approves that boundary.
 - Do not replace missing `portolan map` with unmarked manual analysis.
 - Treat agent conclusions as claims until backed by local evidence.
 - Preserve weak evidence instead of hiding it.
@@ -108,7 +119,7 @@ Use `not_assessed` for a surface you did not check.
 3. Run the map command:
 
    ```bash
-   portolan map --root . --out .portolan/run
+   portolan map --root <target-root> --out <run-dir>
    ```
 
    Read `run.json`, `graph.json`, `findings.jsonl`, and `map.md` before
@@ -133,6 +144,11 @@ Use `not_assessed` for a surface you did not check.
 
 6. Report product categories from exact local evidence and record gaps for
    missing capabilities.
+
+7. For non-source targets, treat observed build, package, configuration, release,
+   smoke-test, and integration files as the local evidence boundary. If a
+   referenced component source repository is not present locally, record the
+   missing source evidence as `unknown`, `cannot_verify`, or `not_assessed`.
 
 ## Report Shape
 
