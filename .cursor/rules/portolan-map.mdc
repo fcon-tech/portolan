@@ -6,14 +6,18 @@ alwaysApply: false
 ---
 
 When the user asks to map, audit, inspect, understand, or explain this
-codebase, first read `agent/AGENT_GUIDE.md` and follow that portable workflow.
+codebase, first read `agent/START_HERE.md` and follow that portable workflow.
 
-Run Portolan before broad manual architecture claims. Separate current commands
-from the future target contract: try `portolan doctor` and
-`portolan map --root . --out .portolan/run`, but if they are unavailable,
-record gaps and use only the guide's current-command fallback.
+Run Portolan before broad manual architecture claims. Use
+`portolan map --root <target-root> --out <run-dir>`, or run
+`go run ./cmd/portolan map --root <target-root> --out <run-dir>` from a
+Portolan source checkout when no binary is installed. Read `run.json`,
+`graph.json`, `findings.jsonl`, and `map.md` before reporting.
 
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
 resources, mutate the repository, or collect credentials unless the user
-explicitly approves that boundary.
+explicitly approves that boundary. Build, packaging, configuration, release,
+smoke-test, and integration repositories are valid targets; do not clone or
+fetch referenced component source repositories unless the user explicitly
+approves that boundary.
