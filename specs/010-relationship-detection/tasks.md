@@ -45,6 +45,7 @@
 - [x] T027 Run `git diff --check`.
 - [x] T028 Create or update PR and run PR review cycle.
 - [x] T029 Record PR readiness closeout and mark PR ready-for-review.
+- [x] T030 Merge PR #10 after explicit user approval and consolidate post-merge status.
 
 ## Dependencies
 
