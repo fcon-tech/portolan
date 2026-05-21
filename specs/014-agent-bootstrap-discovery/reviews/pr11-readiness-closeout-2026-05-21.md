@@ -7,7 +7,9 @@ PR: https://github.com/fall-out-bug/portolan/pull/11
 
 - Head branch: `codex/014-agent-bootstrap-discovery-clean`
 - Base branch: `main`
-- Head commit after status-fix push: `b3980c21cdacfd90f8c7cedfaee3550161dccd11`
+- Head commit: verify live with `gh pr view 11 --json headRefOid`; embedding
+  the final head SHA in this committed ledger is self-invalidating when the
+  ledger update itself is the final PR commit.
 - Draft state after closeout push: ready-for-review
 - Merge state: `CLEAN`
 - GitHub checks: `not_assessed`; `gh pr checks 11` reported no checks.
