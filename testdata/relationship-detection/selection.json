@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.1.0",
+  "black_boxes": [
+    {
+      "id": "payments-api",
+      "kind": "service",
+      "label": "Payments API",
+      "metadata": [
+        {
+          "id": "payments-metadata",
+          "path": "testdata/relationship-detection/metadata/payments.json"
+        }
+      ],
+      "claims": [
+        {
+          "id": "payments-claims",
+          "path": "testdata/relationship-detection/claims/payments.json"
+        }
+      ],
+      "expected": ["dependencies", "runtime-endpoints"]
+    }
+  ]
+}

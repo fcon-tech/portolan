@@ -13,6 +13,7 @@ import (
 
 	"github.com/governor/portolan/internal/graph"
 	"github.com/governor/portolan/internal/packet"
+	"github.com/governor/portolan/internal/relationships"
 )
 
 type Options struct {
@@ -90,7 +91,27 @@ func Run(opts Options) (Result, error) {
 		Packet:   filepath.Join(out, "map.md"),
 	}
 	g, walkWarnings := graphForRoot(root)
-	findings := findingsForRoot(root)
+	relationshipResult := relationships.Detect(root)
+	g.Nodes = append(g.Nodes, relationshipResult.Nodes...)
+	g.Edges = append(g.Edges, relationshipResult.Edges...)
+	sortGraph(&g)
+	findings := findingsForRoot(root, relationshipResult)
+	skippedSurfaces := []string{
+		"relationship-non-go-source",
+		"relationship-runtime-inference",
+		"relationship-lifecycle-modeling",
+		"relationship-service-topology-inference",
+		"duplication-detection",
+		"configuration-surfaces",
+		"technical-debt-findings",
+	}
+	warnings := append([]string{
+		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
+		"duplication, configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed",
+	}, walkWarnings...)
+	for _, issue := range relationshipResult.Issues {
+		warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
+	}
 	metadata := RunMetadata{
 		SchemaVersion:   SchemaVersion,
 		Command:         "portolan map",
@@ -99,11 +120,9 @@ func Run(opts Options) (Result, error) {
 		Root:            root,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory"},
-		SkippedSurfaces: []string{"relationship-detection", "duplication-detection", "configuration-surfaces", "technical-debt-findings"},
-		Warnings: append([]string{
-			"relationship, duplication, configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed",
-		}, walkWarnings...),
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection"},
+		SkippedSurfaces: skippedSurfaces,
+		Warnings:        warnings,
 	}
 
 	if err := writeGraph(filepath.Join(temp, "graph.json"), g); err != nil {
@@ -337,8 +356,8 @@ func pathHasHiddenPortolan(path string) bool {
 	return false
 }
 
-func findingsForRoot(root string) []Finding {
-	return []Finding{
+func findingsForRoot(root string, relationshipResult relationships.Result) []Finding {
+	findings := []Finding{
 		{
 			ID:             "finding-inventory-root",
 			Kind:           "inventory",
@@ -349,10 +368,69 @@ func findingsForRoot(root string) []Finding {
 			Confidence:     1.0,
 			Status:         "observed",
 		},
-		notAssessedFinding("finding-relationships-not-assessed", "relationships", "Relationship detection is not implemented in this map slice."),
+	}
+	findings = append(findings, relationshipFindings(root, relationshipResult)...)
+	findings = append(findings,
 		notAssessedFinding("finding-duplication-not-assessed", "duplication", "Duplication detection is not implemented in this map slice."),
 		notAssessedFinding("finding-configuration-not-assessed", "configuration", "Configuration surface detection is not implemented in this map slice."),
 		notAssessedFinding("finding-technical-debt-not-assessed", "technical-debt", "Technical-debt finding rules are not implemented in this map slice."),
+	)
+	return findings
+}
+
+func relationshipFindings(root string, result relationships.Result) []Finding {
+	var findings []Finding
+	total := result.SourceImportCount + result.ManifestRequireCount
+	if total > 0 {
+		if result.SourceImportCount > 0 {
+			findings = append(findings, Finding{
+				ID:             "finding-relationships-source-imports-observed",
+				Kind:           "relationships",
+				Summary:        fmt.Sprintf("Detected %d source import relationships from local Go source files.", result.SourceImportCount),
+				Severity:       "info",
+				EvidenceState:  string(graph.SourceVisible),
+				EvidenceSource: root,
+				Confidence:     1.0,
+				Status:         "observed",
+			})
+		}
+		if result.ManifestRequireCount > 0 {
+			findings = append(findings, Finding{
+				ID:             "finding-relationships-manifest-dependencies-observed",
+				Kind:           "relationships",
+				Summary:        fmt.Sprintf("Detected %d manifest dependency relationships from local go.mod files.", result.ManifestRequireCount),
+				Severity:       "info",
+				EvidenceState:  string(graph.MetadataVisible),
+				EvidenceSource: root,
+				Confidence:     1.0,
+				Status:         "observed",
+			})
+		}
+	} else {
+		findings = append(findings, notAssessedFinding("finding-relationships-not-assessed", "relationships", "Relationship detection currently supports Go imports and go.mod manifests; no supported relationship inputs were observed."))
+	}
+	findings = append(findings, unsupportedRelationshipFindings()...)
+	for i, issue := range result.Issues {
+		findings = append(findings, Finding{
+			ID:             fmt.Sprintf("finding-relationships-cannot-verify-%03d", i+1),
+			Kind:           "relationships",
+			Summary:        "Could not verify relationship input: " + issue.Reason,
+			Severity:       "info",
+			EvidenceState:  string(graph.CannotVerify),
+			EvidenceSource: issue.Path,
+			Confidence:     0,
+			Status:         "cannot_verify",
+		})
+	}
+	return findings
+}
+
+func unsupportedRelationshipFindings() []Finding {
+	return []Finding{
+		notAssessedFinding("finding-relationships-non-go-source-not-assessed", "relationships", "Non-Go source relationship detection is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-runtime-inference-not-assessed", "relationships", "Runtime relationship inference is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-lifecycle-modeling-not-assessed", "relationships", "Lifecycle relationship modeling is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-service-topology-not-assessed", "relationships", "Service-topology inference is not implemented in this map slice."),
 	}
 }
 

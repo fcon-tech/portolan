@@ -2,7 +2,7 @@
 
 **Feature Branch**: `010-relationship-detection`
 **Created**: 2026-05-20
-**Status**: Backlog spec
+**Status**: Ready-for-review PR; merge not authorized
 **Input**: Product backlog P2-010: detect source, metadata, runtime, and
 claim-backed relationships across a codebase, prioritized by the Bigtop smoke.
 
@@ -44,6 +44,16 @@ dependency, one source relationship, and one unknown relationship gap.
 - **FR-005**: System MUST document which relationship types are supported per
   language or input family.
 
+## V1 Implementation Scope
+
+- Add new relationship detection to `portolan map --root --out` for local Go
+  source imports and conservative `go.mod` dependencies.
+- Preserve existing `scan --selection` claim-only and black-box
+  metadata/unknown relationship behavior with regression coverage rather than
+  changing the selection contract in this slice.
+- Leave non-Go source languages, lifecycle modeling, runtime relationship
+  inference, and service-topology inference as `not_assessed` or later work.
+
 ## Existing Open Source
 
 - Prefer standard parsers and manifest readers before custom source analysis.
@@ -64,3 +74,6 @@ dependency, one source relationship, and one unknown relationship gap.
 
 - This spec should be planned after the first Bigtop skill-pack smoke records
   actual missing relationship cases.
+- The first implementation slice should prioritize relationships visible from
+  local Go source files and `go.mod` manifests, then preserve metadata and
+  claim-backed relationships already emitted by existing inputs.

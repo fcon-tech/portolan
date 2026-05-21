@@ -63,7 +63,8 @@ Target workflow:
    unknowns, and cannot-verify inputs from the artifacts.
 5. Avoid conclusions that are not backed by local evidence.
 
-The first `portolan map` bundle records basic source inventory and explicit
+The current `portolan map` bundle records basic source inventory, local Go
+import relationships, local `go.mod` dependency relationships, and explicit
 `not_assessed` findings for detector surfaces that are not implemented yet.
 
 See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
@@ -93,3 +94,6 @@ findings must preserve one of:
 - `claim-only`
 - `unknown`
 - `cannot_verify`
+
+See [`docs/relationship-detection.md`](../../docs/relationship-detection.md)
+for the currently supported relationship families.

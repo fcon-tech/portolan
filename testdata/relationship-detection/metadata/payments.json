@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1.0",
+  "service": {
+    "id": "payments-api",
+    "label": "Payments API",
+    "owner": "payments-team",
+    "declared_dependencies": ["ledger-api"]
+  },
+  "source": "relationship-metadata-fixture"
+}

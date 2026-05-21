@@ -14,6 +14,7 @@ import (
 )
 
 const mapCommandFixtureRoot = "../../testdata/map-command/repo"
+const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
 
 func TestRunVersionWritesVersion(t *testing.T) {
 	var stdout bytes.Buffer
@@ -905,7 +906,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(mapText), "Findings: 5") {
+	if !strings.Contains(string(mapText), "- Findings: ") {
 		t.Fatalf("map.md = %q, want finding count", string(mapText))
 	}
 	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
@@ -1072,8 +1073,8 @@ func TestRunMapFindingsJSONLHasRequiredFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-	if len(lines) != 5 {
-		t.Fatalf("findings lines = %d, want 5:\n%s", len(lines), data)
+	if len(lines) < 5 {
+		t.Fatalf("findings lines = %d, want at least 5:\n%s", len(lines), data)
 	}
 	kinds := map[string]bool{}
 	for _, line := range lines {
@@ -1095,6 +1096,242 @@ func TestRunMapFindingsJSONLHasRequiredFields(t *testing.T) {
 		if !kinds[want] {
 			t.Fatalf("finding kinds = %#v, want %q", kinds, want)
 		}
+	}
+}
+
+func TestRunMapDetectsGoSourceImportRelationships(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, filepath.Join(out, "graph.json"))
+	assertSchemaShape(t, result)
+	edge := findEdge(t, result, "source:cmd/example/main.go", "package:github.com/example/direct", "imports")
+	evidence := edge["evidence"].(map[string]any)
+	if evidence["state"] != "source-visible" {
+		t.Fatalf("edge evidence = %#v, want source-visible", evidence)
+	}
+	if !strings.Contains(evidence["source"].(string), "cmd/example/main.go") {
+		t.Fatalf("edge evidence = %#v, want source file", evidence)
+	}
+}
+
+func TestRunMapDetectsGoModDependencyRelationships(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, filepath.Join(out, "graph.json"))
+	for _, dep := range []string{"package:github.com/example/direct", "package:example.com/block/dependency"} {
+		edge := findEdge(t, result, "package:example.com/relationship-fixture", dep, "depends-on")
+		evidence := edge["evidence"].(map[string]any)
+		if evidence["state"] != "metadata-visible" {
+			t.Fatalf("edge %s evidence = %#v, want metadata-visible", dep, evidence)
+		}
+		if !strings.Contains(evidence["source"].(string), "go.mod") {
+			t.Fatalf("edge %s evidence = %#v, want go.mod source", dep, evidence)
+		}
+	}
+}
+
+func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	seenSourceObserved := false
+	seenManifestObserved := false
+	for _, finding := range findings {
+		if finding["id"] == "finding-relationships-not-assessed" {
+			t.Fatalf("relationship placeholder was not replaced: %#v", finding)
+		}
+		if finding["id"] == "finding-relationships-source-imports-observed" {
+			seenSourceObserved = true
+			if finding["status"] != "observed" || finding["evidence_state"] != "source-visible" {
+				t.Fatalf("source relationship finding = %#v, want observed source-visible", finding)
+			}
+		}
+		if finding["id"] == "finding-relationships-manifest-dependencies-observed" {
+			seenManifestObserved = true
+			if finding["status"] != "observed" || finding["evidence_state"] != "metadata-visible" {
+				t.Fatalf("manifest relationship finding = %#v, want observed metadata-visible", finding)
+			}
+		}
+	}
+	if !seenSourceObserved || !seenManifestObserved {
+		t.Fatalf("findings = %#v, want source and manifest relationship findings", findings)
+	}
+}
+
+func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	wantNotAssessed := map[string]bool{"duplication": true, "configuration": true, "technical-debt": true}
+	for _, finding := range findings {
+		kind, _ := finding["kind"].(string)
+		if !wantNotAssessed[kind] {
+			continue
+		}
+		if finding["status"] != "not_assessed" || finding["evidence_state"] != "not_assessed" {
+			t.Fatalf("finding = %#v, want not_assessed", finding)
+		}
+		delete(wantNotAssessed, kind)
+	}
+	if len(wantNotAssessed) != 0 {
+		t.Fatalf("missing not_assessed findings: %#v", wantNotAssessed)
+	}
+}
+
+func TestRunMapUnsupportedRelationshipSubsurfacesRemainNotAssessed(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	wantFindings := map[string]bool{
+		"finding-relationships-non-go-source-not-assessed":      true,
+		"finding-relationships-runtime-inference-not-assessed":  true,
+		"finding-relationships-lifecycle-modeling-not-assessed": true,
+		"finding-relationships-service-topology-not-assessed":   true,
+	}
+	for _, finding := range findings {
+		id, _ := finding["id"].(string)
+		if !wantFindings[id] {
+			continue
+		}
+		if finding["kind"] != "relationships" || finding["status"] != "not_assessed" || finding["evidence_state"] != "not_assessed" {
+			t.Fatalf("finding = %#v, want relationship not_assessed", finding)
+		}
+		delete(wantFindings, id)
+	}
+	if len(wantFindings) != 0 {
+		t.Fatalf("missing relationship not_assessed findings: %#v", wantFindings)
+	}
+
+	run := readRunMetadata(t, filepath.Join(out, "run.json"))
+	skipped := map[string]bool{}
+	for _, surface := range run["skipped_surfaces"].([]any) {
+		skipped[surface.(string)] = true
+	}
+	for _, want := range []string{
+		"relationship-non-go-source",
+		"relationship-runtime-inference",
+		"relationship-lifecycle-modeling",
+		"relationship-service-topology-inference",
+	} {
+		if !skipped[want] {
+			t.Fatalf("skipped surfaces = %#v, want %q", skipped, want)
+		}
+	}
+}
+
+func TestRunMapRelationshipEdgesHaveEvidenceStateAndSource(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, filepath.Join(out, "graph.json"))
+	for _, item := range result["edges"].([]any) {
+		edge := item.(map[string]any)
+		if edge["kind"] != "imports" && edge["kind"] != "depends-on" {
+			continue
+		}
+		if edge["from"] == "" || edge["to"] == "" {
+			t.Fatalf("relationship edge missing endpoint: %#v", edge)
+		}
+		evidence := edge["evidence"].(map[string]any)
+		if evidence["state"] == "" || evidence["source"] == "" {
+			t.Fatalf("relationship edge missing evidence state or source: %#v", edge)
+		}
+	}
+}
+
+func TestRunScanRelationshipFixturePreservesClaimMetadataAndUnknownEvidence(t *testing.T) {
+	root := t.TempDir()
+	metadataPath, err := filepath.Abs("../../testdata/relationship-detection/metadata/payments.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	claimsPath, err := filepath.Abs("../../testdata/relationship-detection/claims/payments.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection := filepath.Join(root, "selection.json")
+	mustWrite(t, selection, `{
+		"schema_version":"0.1.0",
+		"black_boxes":[{
+			"id":"payments-api",
+			"kind":"service",
+			"label":"Payments API",
+			"metadata":[{"id":"payments-metadata","path":`+quote(metadataPath)+`}],
+			"claims":[{"id":"payments-claims","path":`+quote(claimsPath)+`}],
+			"expected":["dependencies","runtime-endpoints"]
+		}]
+	}`)
+	out := filepath.Join(root, "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"scan", "--selection", selection, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	states := evidenceStates(t, result)
+	for _, want := range []string{"metadata-visible", "claim-only", "unknown"} {
+		if !states[want] {
+			t.Fatalf("states = %#v, want %q", states, want)
+		}
+	}
+	foundClaim := false
+	foundMetadata := false
+	for _, item := range result["edges"].([]any) {
+		edge := item.(map[string]any)
+		evidence := edge["evidence"].(map[string]any)
+		if edge["from"] == "payments-api" && edge["to"] == "ledger-api" && edge["kind"] == "depends-on" && evidence["state"] == "claim-only" {
+			foundClaim = true
+		}
+		if edge["from"] == "payments-api" && edge["to"] == "ledger-api" && edge["kind"] == "depends-on" && evidence["state"] == "metadata-visible" {
+			foundMetadata = true
+		}
+	}
+	if !foundClaim || !foundMetadata {
+		t.Fatalf("edges = %#v, want both claim-only and metadata-visible overlapping dependency", result["edges"])
 	}
 }
 
@@ -1931,6 +2168,51 @@ func readGraph(t *testing.T, path string) map[string]any {
 		t.Fatal(err)
 	}
 	return graph
+}
+
+func readRunMetadata(t *testing.T, path string) map[string]any {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var run map[string]any
+	if err := json.Unmarshal(data, &run); err != nil {
+		t.Fatal(err)
+	}
+	return run
+}
+
+func readFindings(t *testing.T, path string) []map[string]any {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var findings []map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+		if line == "" {
+			continue
+		}
+		var finding map[string]any
+		if err := json.Unmarshal([]byte(line), &finding); err != nil {
+			t.Fatalf("parse finding %q: %v", line, err)
+		}
+		findings = append(findings, finding)
+	}
+	return findings
+}
+
+func findEdge(t *testing.T, graph map[string]any, from, to, kind string) map[string]any {
+	t.Helper()
+	for _, item := range graph["edges"].([]any) {
+		edge := item.(map[string]any)
+		if edge["from"] == from && edge["to"] == to && edge["kind"] == kind {
+			return edge
+		}
+	}
+	t.Fatalf("edges = %#v, want %s %s -> %s", graph["edges"], kind, from, to)
+	return nil
 }
 
 func evidenceStates(t *testing.T, graph map[string]any) map[string]bool {

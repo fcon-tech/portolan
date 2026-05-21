@@ -28,6 +28,8 @@ Implemented:
   machine-readable evidence graph movement without readiness verdicts.
 - `portolan map --root <dir> --out <dir>` for a first one-command artifact
   bundle with `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+- Relationship detection for local Go imports and `go.mod` dependencies in
+  `portolan map`.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -38,8 +40,8 @@ Implemented:
 
 Not implemented yet:
 
-- relationship, duplication, configuration, and technical-debt finding
-  generators;
+- duplication, configuration, and technical-debt finding generators;
+- non-Go, runtime, and inferred service relationship detection;
 - platform-specific runtime importers;
 - corpus preparation or manifest-to-selection generation;
 - SPDX, Syft-native, or live tool importers;
@@ -108,6 +110,7 @@ Each graph node or relationship records how it is known:
 - [Cursor Portolan Rule](.cursor/rules/portolan-map.mdc)
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
+- [Relationship Detection](docs/relationship-detection.md)
 - [OSS Composition](docs/oss-composition.md)
 - [Apache Bigtop Test Corpus](docs/test-corpora/apache-bigtop.md)
 - [Apache Bigtop Corpus Manifest](corpora/apache-bigtop/manifest.json)
@@ -133,6 +136,7 @@ go test ./...
 go run ./cmd/portolan --version
 go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
 go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force
+go run ./cmd/portolan map --root testdata/relationship-detection/repo --out /tmp/portolan-relationships-run --force
 go run ./cmd/portolan diff --base testdata/evidence-diff/base.json --head testdata/evidence-diff/head.json --out /tmp/portolan-diff.json --force
 go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
 go run ./cmd/portolan scan --help
@@ -143,6 +147,7 @@ jq empty /tmp/portolan-graph.json
 jq empty /tmp/portolan-black-box-graph.json
 jq empty /tmp/portolan-diff.json
 jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json
+jq empty /tmp/portolan-relationships-run/run.json /tmp/portolan-relationships-run/graph.json
 jq empty schema/*.json
 git diff --check
 ```

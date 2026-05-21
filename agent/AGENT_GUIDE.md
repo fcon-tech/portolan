@@ -27,8 +27,9 @@ These are the real capabilities this guide may rely on today:
   files, and local SBOM/tool exports when the repository provides them.
 
 Current commands can produce one-command map bundles, evidence graphs, packets,
-importer-normalized graphs, and graph diffs. The first map implementation emits
-basic source inventory and explicit `not_assessed` findings for detector
+importer-normalized graphs, and graph diffs. The current map implementation
+emits basic source inventory, local Go import relationships, local `go.mod`
+dependency relationships, and explicit `not_assessed` findings for detector
 surfaces that are not implemented yet.
 
 ## Target Contract
@@ -51,8 +52,10 @@ The future target bundle is:
 
 Treat missing detector coverage or `not_assessed` findings as product gaps, not
 as evidence that the repository has no relationships, duplication,
-configuration surfaces, or technical debt. `portolan doctor` is still not part
-of the implemented CLI.
+configuration surfaces, or technical debt. Relationship detection currently
+covers Go source imports and `go.mod` dependencies only; non-Go, runtime, and
+inferred service relationships remain not assessed. `portolan doctor` is still
+not part of the implemented CLI.
 
 ## Guardrails
 
