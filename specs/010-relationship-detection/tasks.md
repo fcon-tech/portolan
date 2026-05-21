@@ -44,6 +44,7 @@
 - [x] T026 Run JSONL parse check over `/tmp/portolan-relationships-run/findings.jsonl`.
 - [x] T027 Run `git diff --check`.
 - [x] T028 Create or update PR and run PR review cycle.
+- [x] T029 Record PR readiness closeout and mark PR ready-for-review.
 
 ## Dependencies
 
