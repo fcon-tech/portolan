@@ -7,8 +7,8 @@ PR: https://github.com/fall-out-bug/portolan/pull/11
 
 - Head branch: `codex/014-agent-bootstrap-discovery-clean`
 - Base branch: `main`
-- Head commit: `279c59855021137797f3eaa85948886f9a15be3b`
-- Draft state at reconstruction: draft
+- Head commit after closeout push: `31da7e1f6c3885f99d6680ffa8a7e3f881d7186c`
+- Draft state after closeout push: ready-for-review
 - Merge state: `CLEAN`
 - GitHub checks: `not_assessed`; `gh pr checks 11` reported no checks.
 - Review decision: empty at reconstruction.
@@ -60,9 +60,8 @@ Out of scope and not present:
 - Local verification: verified.
 - Review evidence: verified with three PR-level lanes; one earlier slice lane
   degraded to `not_assessed`.
-- PR state: draft at the time this closeout was written.
+- PR state: ready-for-review.
 - GitHub checks: `not_assessed`; no checks reported.
 - Merge readiness: not ready-to-merge; no human approval and no explicit merge
   request.
-- Stop reason: ready to mark PR ready-for-review after this closeout is pushed;
-  stop before merge.
+- Stop reason: ready-for-review PR; stop before merge.
