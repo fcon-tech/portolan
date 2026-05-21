@@ -51,9 +51,9 @@
 
 ## Phase 6: Real Blind Operator Lane
 
-- [ ] T019 Wait for `specs/014-agent-bootstrap-discovery/` to make Portolan
+- [x] T019 Wait for `specs/014-agent-bootstrap-discovery/` to make Portolan
   self-discoverable from generic agent inputs.
-- [ ] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
+- [x] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
   target-agnostic prompt, run ledger, and status taxonomy.
 - [ ] T021 Run the blind protocol against a real local Apache Bigtop checkout.
 - [ ] T022 If the local Apache Bigtop checkout is absent, record the run as

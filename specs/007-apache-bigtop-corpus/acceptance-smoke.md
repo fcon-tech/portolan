@@ -22,16 +22,17 @@ agent a Bigtop-specific operator packet.
 - for command preflight only:
   `testdata/apache-bigtop-smoke/selection.json`.
 
-The real operator lane must use the blind acceptance protocol in
-`specs/015-blind-agent-acceptance/`. Do not give the agent a Bigtop-specific
-file list or custom runbook.
+The real operator lane must use
+`docs/agent-toolbox/blind-acceptance.md`. Do not give the agent a
+Bigtop-specific file list, package names, build choreography, or custom runbook.
 
-## Local Fallback Smoke
+## Local Fixture Preflight
 
 Run this when the external Cursor + Composer 2.5 operator lane or local Bigtop
-checkout is unavailable. This does not replace the operator smoke; it only
-proves the current Portolan artifact path and records gaps without network
-access.
+checkout is unavailable. This is preflight only. It does not replace the
+operator smoke, does not count as passed blind acceptance, and must not be used
+as proof that the Bigtop lane passed. It only proves the current Portolan
+artifact path and records gaps without network access.
 
 ```bash
 tmpdir="$(mktemp -d)"
@@ -76,6 +77,9 @@ Record every Portolan capability gap you hit.
 The prompt must not name Bigtop-specific files, packages, build scripts, or
 guide paths. If the local Bigtop checkout is absent, record the real operator
 lane as blocked or `not_assessed`; do not replace it with fixture success.
+
+The authoritative prompt contract, forbidden-hint list, evidence bundle, and
+status taxonomy live in `docs/agent-toolbox/blind-acceptance.md`.
 
 ## Required Gap Ledger
 

@@ -30,7 +30,7 @@ default mapping; fixtures cannot be counted as a passed real target run.
 | Rule | Status | Evidence |
 | --- | --- | --- |
 | Local-first and read-only | Pass | Protocol forbids network, mutation, and credentials during default target mapping. |
-| Evidence state honesty | Pass | Transcript claims remain lower authority than Portolan artifacts. |
+| Evidence state honesty | Pass | Transcript claims remain lower authority than Portolan artifacts, and unsupported report claims stay `unknown`, `cannot_verify`, or `not_assessed`. |
 | Complement existing tools | Pass | Protocol evaluates the toolbox and records gaps; it does not build scanners. |
 | SpecKit before implementation | Pass | Spec, plan, and tasks define the protocol before use. |
 | Test-first behavior | Pass | The first deliverable is the test protocol and ledger template before broad detector work. |

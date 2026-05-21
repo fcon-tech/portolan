@@ -52,8 +52,8 @@ operator packet.
 | --- | --- | --- | --- |
 | P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
 | P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
-| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Ready for implementation |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on Apache Bigtop after bootstrap discovery and blind acceptance expose missing product capabilities. | Blocked on P1-015 for a non-mocked operator lane |
+| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; blind runs not_assessed |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on Apache Bigtop after bootstrap discovery and blind acceptance expose missing product capabilities. | Blocked on recorded blind run against real local Bigtop checkout |
 
 ## P2: Build What The Bigtop Smoke Proves Is Missing
 

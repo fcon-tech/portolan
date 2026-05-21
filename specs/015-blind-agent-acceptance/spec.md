@@ -2,7 +2,7 @@
 
 **Feature Branch**: `015-blind-agent-acceptance`
 **Created**: 2026-05-21
-**Status**: Ready for implementation
+**Status**: Protocol implemented; blind operator runs not_assessed
 **Input**: Product correction: Bigtop must test Portolan's generic agent
 toolbox without receiving a Bigtop-specific operator packet or hidden prompt
 scaffolding.

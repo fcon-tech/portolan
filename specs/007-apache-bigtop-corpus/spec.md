@@ -2,8 +2,8 @@
 
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
-**Status**: Local fallback smoke complete; real operator lane blocked on generic
-agent bootstrap and blind acceptance protocol
+**Status**: Local fallback smoke complete; real operator lane blocked on a
+recorded blind run against a real local Bigtop checkout
 **Input**: Product decision to start testing against Apache Big Data / Bigtop
 immediately after the agent skill pack, so real corpus friction drives the next
 Portolan capabilities.
@@ -83,9 +83,9 @@ a messy corpus. Bigtop should expose product gaps before deeper detector work
 continues.
 
 **Independent Test**: Run the blind acceptance protocol from
-`specs/015-blind-agent-acceptance/` against a real local Apache Bigtop checkout.
-If the checkout is unavailable, record the operator lane as blocked or
-`not_assessed`; do not replace it with a fixture pass.
+`docs/agent-toolbox/blind-acceptance.md` against a real local Apache Bigtop
+checkout. If the checkout is unavailable, record the operator lane as blocked
+or `not_assessed`; do not replace it with a fixture pass.
 
 **Acceptance Scenarios**:
 

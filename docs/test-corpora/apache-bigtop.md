@@ -50,8 +50,9 @@ The committed machine-readable profile is
 
 ## Test Strategy
 
-Use the corpus in layers. Start with a smoke as soon as the skill pack exists;
-expand only when the previous layer has produced concrete product decisions.
+Use the corpus in layers. Start the real smoke after the generic agent
+bootstrap and blind acceptance protocol exist; expand only when the previous
+layer has produced concrete product decisions.
 
 ### Phase 0 - Agent Bootstrap And Blind Acceptance
 
@@ -62,12 +63,15 @@ expand only when the previous layer has produced concrete product decisions.
 - Run Cursor + Composer 2.5 with only the generic Portolan path, target path,
   output path, and mapping request.
 - Use a real local Apache Bigtop checkout for the real operator lane.
-- Use prepared local Bigtop fixture inputs only as command preflight.
+- Use prepared local Bigtop fixture inputs only as command preflight; fixture
+  success is not a passed Bigtop operator lane.
 - Record what the agent could not do without target-specific prompting.
 - Record missing Portolan capabilities as product gaps, not as free-form agent
   advice.
 - Follow the smoke runbook in
   `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
+  The authoritative blind prompt and ledger contract are defined in
+  `docs/agent-toolbox/blind-acceptance.md`.
 - If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
   is unavailable, run the local fallback smoke against
   `testdata/apache-bigtop-smoke/selection.json` only as preflight and mark the
@@ -123,10 +127,10 @@ expand only when the previous layer has produced concrete product decisions.
   treating the agent transcript as stronger evidence than source, metadata, or
   runtime observations.
 - The local fallback smoke can generate a graph and packet from fixture inputs
-  while confirming that the target `portolan map` workflow is still a product
-  gap rather than a clean result. Findings, detector output, and richer
-  lifecycle semantics remain backlog gaps until the operator smoke or later
-  implementation slices exercise them directly.
+  while confirming that the real Bigtop operator lane remains unproven until a
+  local Bigtop checkout is mapped through the blind protocol. Findings,
+  detector output, and richer lifecycle semantics remain backlog gaps until the
+  operator smoke or later implementation slices exercise them directly.
 
 ## Source References
 
