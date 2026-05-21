@@ -1,12 +1,15 @@
-# Acceptance Smoke: Bigtop After Skills
+# Acceptance Smoke: Bigtop After Generic Agent Path
 
-Run this only after `specs/008-agent-skill-pack/` is implemented.
+Run the real operator lane only after `specs/014-agent-bootstrap-discovery/`
+and `specs/015-blind-agent-acceptance/` are implemented. The local fixture
+smoke remains a command preflight only.
 
 ## Purpose
 
-Use Apache Bigtop immediately after the skill pack to discover real product
-gaps. Do not wait for `portolan map`, relationship detectors, duplication
-detectors, configuration scanners, or debt rules to be implemented first.
+Use Apache Bigtop immediately after the generic agent path is self-discoverable
+to discover real product gaps. Do not wait for duplication detectors,
+configuration scanners, or debt rules to be implemented first. Do not give the
+agent a Bigtop-specific operator packet.
 
 ## Inputs
 
@@ -14,13 +17,21 @@ detectors, configuration scanners, or debt rules to be implemented first.
 - Cursor rule wrapper;
 - current Portolan CLI;
 - `corpora/apache-bigtop/manifest.json`;
-- prepared local fixture files only:
+- for real operator acceptance: a local Apache Bigtop checkout selected by the
+  operator;
+- for command preflight only:
   `testdata/apache-bigtop-smoke/selection.json`.
 
-## Local Fallback Smoke
+The real operator lane must use
+`docs/agent-toolbox/blind-acceptance.md`. Do not give the agent a
+Bigtop-specific file list, package names, build choreography, or custom runbook.
 
-Run this when the external Cursor + Composer 2.5 operator lane is unavailable.
-This does not replace the operator smoke; it only proves the current Portolan
+## Local Fixture Preflight
+
+Run this when the external Cursor + Composer 2.5 operator lane or local Bigtop
+checkout is unavailable. This is preflight only. It does not replace the
+operator smoke, does not count as passed blind acceptance, and must not be used
+as proof that the Bigtop lane passed. It only proves the current Portolan
 artifact path and records gaps without network access.
 
 ```bash
@@ -41,24 +52,34 @@ Expected result today:
 
 - `scan` succeeds against local fixture inputs.
 - `packet render` succeeds from the generated graph.
-- `map` writes the target artifact bundle after spec 009.
+- `map` writes the target artifact bundle.
 - `findings.jsonl` records detector surfaces that remain `not_assessed`.
 - missing Oozie local inputs remain `unknown` or `cannot_verify`.
-- Cursor + Composer usability remains `not_assessed` until the external
-  operator lane is run.
+- Cursor + Composer usability remains `not_assessed` until the blind operator
+  lane is run against a real local target checkout.
 
-## Cursor Prompt
+## Blind Operator Prompt
 
 ```text
-Read the Portolan agent guide in this repository.
-Use it on the Apache Bigtop corpus fixture.
+Portolan: <absolute path to the Portolan checkout or installed binary>
+Target: <absolute path to the local target checkout>
+Output: <absolute path to a new run directory>
+
 map this shit.
 
 Do not fetch upstream repositories.
 Do not use network.
+Do not mutate the target repository.
 Do not infer facts outside Portolan artifacts.
 Record every Portolan capability gap you hit.
 ```
+
+The prompt must not name Bigtop-specific files, packages, build scripts, or
+guide paths. If the local Bigtop checkout is absent, record the real operator
+lane as blocked or `not_assessed`; do not replace it with fixture success.
+
+The authoritative prompt contract, forbidden-hint list, evidence bundle, and
+status taxonomy live in `docs/agent-toolbox/blind-acceptance.md`.
 
 ## Required Gap Ledger
 

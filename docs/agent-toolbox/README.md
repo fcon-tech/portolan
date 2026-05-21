@@ -77,6 +77,12 @@ import relationships, local `go.mod` dependency relationships, and explicit
 See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
 expected evidence-backed report shape.
 
+Use [`blind-acceptance.md`](blind-acceptance.md) when evaluating whether an
+agent can discover and run the generic workflow from only the Portolan path,
+target path, output path, and the mapping request. The blind protocol is the
+operator acceptance contract; target-specific corpus notes and local fixtures
+are preflight or follow-up evidence unless a run ledger records otherwise.
+
 Build, packaging, configuration, release, smoke-test, and integration
 repositories are valid targets. Agents must not clone or fetch upstream
 component source repositories just because a target references them. Missing
