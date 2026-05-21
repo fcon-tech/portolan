@@ -70,14 +70,21 @@ Relationship evidence states:
 Every relationship edge must include non-empty `evidence.state` and
 `evidence.source`.
 
-Observed relationship finding:
+Observed source relationship finding:
 
-- `id`: `finding-relationships-observed`
+- `id`: `finding-relationships-source-imports-observed`
 - `kind`: `relationships`
 - `severity`: `info`
-- `evidence_state`: strongest honest state for the finding source; use
-  `source-visible` when source import edges exist, otherwise
-  `metadata-visible` for manifest-only relationships.
+- `evidence_state`: `source-visible`
+- `status`: `observed`
+- `confidence`: `1.0` for parser-backed explicit relationships.
+
+Observed manifest relationship finding:
+
+- `id`: `finding-relationships-manifest-dependencies-observed`
+- `kind`: `relationships`
+- `severity`: `info`
+- `evidence_state`: `metadata-visible`
 - `status`: `observed`
 - `confidence`: `1.0` for parser-backed explicit relationships.
 
@@ -103,9 +110,10 @@ Current placeholder to replace when map finds observed relationships:
 ```
 
 When source or manifest relationships are observed, `findings.jsonl` uses
-`finding-relationships-observed` instead. Unsupported relationship families
-remain out of scope and must be described in the finding summary rather than
-presented as complete coverage.
+the observed source and/or manifest findings instead of the generic placeholder.
+Unsupported relationship families still produce explicit `not_assessed`
+relationship findings and skipped surfaces so downstream agents cannot mistake
+Go/go.mod support for complete relationship coverage.
 
 ## Existing Selection Relationships
 

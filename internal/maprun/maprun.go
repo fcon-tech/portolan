@@ -96,8 +96,17 @@ func Run(opts Options) (Result, error) {
 	g.Edges = append(g.Edges, relationshipResult.Edges...)
 	sortGraph(&g)
 	findings := findingsForRoot(root, relationshipResult)
-	skippedSurfaces := []string{"duplication-detection", "configuration-surfaces", "technical-debt-findings"}
+	skippedSurfaces := []string{
+		"relationship-non-go-source",
+		"relationship-runtime-inference",
+		"relationship-lifecycle-modeling",
+		"relationship-service-topology-inference",
+		"duplication-detection",
+		"configuration-surfaces",
+		"technical-debt-findings",
+	}
 	warnings := append([]string{
+		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
 		"duplication, configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed",
 	}, walkWarnings...)
 	for _, issue := range relationshipResult.Issues {
@@ -373,23 +382,34 @@ func relationshipFindings(root string, result relationships.Result) []Finding {
 	var findings []Finding
 	total := result.SourceImportCount + result.ManifestRequireCount
 	if total > 0 {
-		state := string(graph.MetadataVisible)
 		if result.SourceImportCount > 0 {
-			state = string(graph.SourceVisible)
+			findings = append(findings, Finding{
+				ID:             "finding-relationships-source-imports-observed",
+				Kind:           "relationships",
+				Summary:        fmt.Sprintf("Detected %d source import relationships from local Go source files.", result.SourceImportCount),
+				Severity:       "info",
+				EvidenceState:  string(graph.SourceVisible),
+				EvidenceSource: root,
+				Confidence:     1.0,
+				Status:         "observed",
+			})
 		}
-		findings = append(findings, Finding{
-			ID:             "finding-relationships-observed",
-			Kind:           "relationships",
-			Summary:        fmt.Sprintf("Detected %d source import and %d manifest dependency relationships from local Go inputs.", result.SourceImportCount, result.ManifestRequireCount),
-			Severity:       "info",
-			EvidenceState:  state,
-			EvidenceSource: root,
-			Confidence:     1.0,
-			Status:         "observed",
-		})
+		if result.ManifestRequireCount > 0 {
+			findings = append(findings, Finding{
+				ID:             "finding-relationships-manifest-dependencies-observed",
+				Kind:           "relationships",
+				Summary:        fmt.Sprintf("Detected %d manifest dependency relationships from local go.mod files.", result.ManifestRequireCount),
+				Severity:       "info",
+				EvidenceState:  string(graph.MetadataVisible),
+				EvidenceSource: root,
+				Confidence:     1.0,
+				Status:         "observed",
+			})
+		}
 	} else {
 		findings = append(findings, notAssessedFinding("finding-relationships-not-assessed", "relationships", "Relationship detection currently supports Go imports and go.mod manifests; no supported relationship inputs were observed."))
 	}
+	findings = append(findings, unsupportedRelationshipFindings()...)
 	for i, issue := range result.Issues {
 		findings = append(findings, Finding{
 			ID:             fmt.Sprintf("finding-relationships-cannot-verify-%03d", i+1),
@@ -403,6 +423,15 @@ func relationshipFindings(root string, result relationships.Result) []Finding {
 		})
 	}
 	return findings
+}
+
+func unsupportedRelationshipFindings() []Finding {
+	return []Finding{
+		notAssessedFinding("finding-relationships-non-go-source-not-assessed", "relationships", "Non-Go source relationship detection is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-runtime-inference-not-assessed", "relationships", "Runtime relationship inference is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-lifecycle-modeling-not-assessed", "relationships", "Lifecycle relationship modeling is not implemented in this map slice."),
+		notAssessedFinding("finding-relationships-service-topology-not-assessed", "relationships", "Service-topology inference is not implemented in this map slice."),
+	}
 }
 
 func notAssessedFinding(id, kind, summary string) Finding {

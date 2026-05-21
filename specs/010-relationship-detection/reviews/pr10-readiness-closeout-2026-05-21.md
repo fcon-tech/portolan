@@ -12,7 +12,7 @@ PR: https://github.com/fall-out-bug/portolan/pull/10
 | Reviewed implementation head | verified | `codex/010-relationship-detection` at `32198311402eb2857b94408221bc14b5913cc3ec` after the PR review-cycle disposition push. |
 | Final PR head | verified outside this artifact | Re-check with `gh pr view 10 --json headRefOid` after each artifact-only push; this file intentionally does not encode its own commit hash. |
 | Draft state | verified | PR was marked ready-for-review after closeout publication. |
-| Merge state | not_assessed | GitHub reported `UNKNOWN` after the latest artifact push. Re-check before merge. |
+| Merge state | not_assessed | GitHub reported `UNKNOWN` after the latest fix push. Re-check before merge. |
 | GitHub checks | not_assessed | `gh pr checks 10 --watch=false` reported no checks on the branch. |
 | Human/GitHub review approval | not_assessed | No approval recorded. |
 
@@ -45,14 +45,14 @@ PR: https://github.com/fall-out-bug/portolan/pull/10
 | Review evidence | verified with degraded lanes recorded as `not_assessed` |
 | PR state | ready-for-review |
 | GitHub checks | not_assessed; no checks reported |
-| Merge readiness | not_assessed; no GitHub checks and no human approval |
+| Merge readiness | not_assessed; merge state is unknown, no GitHub checks, and no human approval |
 | Stop reason | Ready-for-review PR is the correct stop point; merge is not authorized. |
 
 ## Residual Risks
 
 - GitHub checks are absent, not passing.
 - Merge state must be re-checked before any merge because GitHub reported
-  `UNKNOWN` after the latest artifact-only push.
+  `UNKNOWN` after the latest fix push.
 - DeepSeek PR review is degraded and is not counted as clean evidence.
 - Non-Go source languages, runtime inference, and service-topology inference
   remain out of scope or `not_assessed`.

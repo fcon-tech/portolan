@@ -906,7 +906,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(mapText), "Findings: 5") {
+	if !strings.Contains(string(mapText), "- Findings: ") {
 		t.Fatalf("map.md = %q, want finding count", string(mapText))
 	}
 	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
@@ -1073,8 +1073,8 @@ func TestRunMapFindingsJSONLHasRequiredFields(t *testing.T) {
 		t.Fatal(err)
 	}
 	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-	if len(lines) != 5 {
-		t.Fatalf("findings lines = %d, want 5:\n%s", len(lines), data)
+	if len(lines) < 5 {
+		t.Fatalf("findings lines = %d, want at least 5:\n%s", len(lines), data)
 	}
 	kinds := map[string]bool{}
 	for _, line := range lines {
@@ -1155,20 +1155,27 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	seenObserved := false
+	seenSourceObserved := false
+	seenManifestObserved := false
 	for _, finding := range findings {
 		if finding["id"] == "finding-relationships-not-assessed" {
 			t.Fatalf("relationship placeholder was not replaced: %#v", finding)
 		}
-		if finding["id"] == "finding-relationships-observed" {
-			seenObserved = true
+		if finding["id"] == "finding-relationships-source-imports-observed" {
+			seenSourceObserved = true
 			if finding["status"] != "observed" || finding["evidence_state"] != "source-visible" {
-				t.Fatalf("relationship finding = %#v, want observed source-visible", finding)
+				t.Fatalf("source relationship finding = %#v, want observed source-visible", finding)
+			}
+		}
+		if finding["id"] == "finding-relationships-manifest-dependencies-observed" {
+			seenManifestObserved = true
+			if finding["status"] != "observed" || finding["evidence_state"] != "metadata-visible" {
+				t.Fatalf("manifest relationship finding = %#v, want observed metadata-visible", finding)
 			}
 		}
 	}
-	if !seenObserved {
-		t.Fatalf("findings = %#v, want observed relationship finding", findings)
+	if !seenSourceObserved || !seenManifestObserved {
+		t.Fatalf("findings = %#v, want source and manifest relationship findings", findings)
 	}
 }
 
@@ -1196,6 +1203,54 @@ func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
 	}
 	if len(wantNotAssessed) != 0 {
 		t.Fatalf("missing not_assessed findings: %#v", wantNotAssessed)
+	}
+}
+
+func TestRunMapUnsupportedRelationshipSubsurfacesRemainNotAssessed(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	wantFindings := map[string]bool{
+		"finding-relationships-non-go-source-not-assessed":      true,
+		"finding-relationships-runtime-inference-not-assessed":  true,
+		"finding-relationships-lifecycle-modeling-not-assessed": true,
+		"finding-relationships-service-topology-not-assessed":   true,
+	}
+	for _, finding := range findings {
+		id, _ := finding["id"].(string)
+		if !wantFindings[id] {
+			continue
+		}
+		if finding["kind"] != "relationships" || finding["status"] != "not_assessed" || finding["evidence_state"] != "not_assessed" {
+			t.Fatalf("finding = %#v, want relationship not_assessed", finding)
+		}
+		delete(wantFindings, id)
+	}
+	if len(wantFindings) != 0 {
+		t.Fatalf("missing relationship not_assessed findings: %#v", wantFindings)
+	}
+
+	run := readRunMetadata(t, filepath.Join(out, "run.json"))
+	skipped := map[string]bool{}
+	for _, surface := range run["skipped_surfaces"].([]any) {
+		skipped[surface.(string)] = true
+	}
+	for _, want := range []string{
+		"relationship-non-go-source",
+		"relationship-runtime-inference",
+		"relationship-lifecycle-modeling",
+		"relationship-service-topology-inference",
+	} {
+		if !skipped[want] {
+			t.Fatalf("skipped surfaces = %#v, want %q", skipped, want)
+		}
 	}
 }
 
@@ -2113,6 +2168,19 @@ func readGraph(t *testing.T, path string) map[string]any {
 		t.Fatal(err)
 	}
 	return graph
+}
+
+func readRunMetadata(t *testing.T, path string) map[string]any {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var run map[string]any
+	if err := json.Unmarshal(data, &run); err != nil {
+		t.Fatal(err)
+	}
+	return run
 }
 
 func readFindings(t *testing.T, path string) []map[string]any {
