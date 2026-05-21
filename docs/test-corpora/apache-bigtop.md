@@ -7,12 +7,14 @@ Portolan that matter most:
 multi-repo source evidence, integration metadata, package/runtime surfaces,
 legacy projects, and honest unknowns.
 
-Bigtop now starts immediately after the agent skill pack. The first pass is a
-cheap acceptance smoke, not a full corpus analysis: Cursor + Composer 2.5 reads
-the Portolan guide, uses current local Portolan commands and prepared fixtures,
-and records concrete product gaps. Larger Bigtop runs come later, after those
-gaps are addressed. Cursor and Composer are evaluation context; they are not
-default runtime dependencies for Portolan scans.
+Bigtop now starts immediately after the generic agent path can be tested
+honestly. The first real operator pass is a cheap acceptance smoke, not a full
+corpus analysis: Cursor + Composer 2.5 receives only the target-agnostic
+Portolan bootstrap inputs and maps a local Bigtop checkout. Local fixtures may
+preflight Portolan commands, but they are not proof that the operator lane
+passed. Larger Bigtop runs come later, after proven gaps are addressed. Cursor
+and Composer are evaluation context; they are not default runtime dependencies
+for Portolan scans.
 
 ## Why This Corpus
 
@@ -51,19 +53,25 @@ The committed machine-readable profile is
 Use the corpus in layers. Start with a smoke as soon as the skill pack exists;
 expand only when the previous layer has produced concrete product decisions.
 
-### Phase 0 - Agent Skill Smoke
+### Phase 0 - Agent Bootstrap And Blind Acceptance
 
-- Run Cursor + Composer 2.5 with the portable Portolan guide.
-- Use current Portolan commands and prepared local Bigtop fixture inputs.
-- Record what the agent could not do without extra prompting.
+- Implement the generic agent bootstrap in
+  `specs/014-agent-bootstrap-discovery/`.
+- Implement the blind acceptance protocol in
+  `specs/015-blind-agent-acceptance/`.
+- Run Cursor + Composer 2.5 with only the generic Portolan path, target path,
+  output path, and mapping request.
+- Use a real local Apache Bigtop checkout for the real operator lane.
+- Use prepared local Bigtop fixture inputs only as command preflight.
+- Record what the agent could not do without target-specific prompting.
 - Record missing Portolan capabilities as product gaps, not as free-form agent
   advice.
 - Follow the smoke runbook in
   `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
-- If the external Cursor + Composer 2.5 operator lane is unavailable, run the
-  local fallback smoke against
-  `testdata/apache-bigtop-smoke/selection.json` and mark the operator lane
-  `not_assessed`. Do not treat the fallback as proof of Cursor usability.
+- If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
+  is unavailable, run the local fallback smoke against
+  `testdata/apache-bigtop-smoke/selection.json` only as preflight and mark the
+  real operator lane blocked or `not_assessed`.
 
 ### Phase 1 - Manifest Acceptance
 
@@ -110,9 +118,10 @@ expand only when the previous layer has produced concrete product decisions.
   everything into a pass/fail result.
 - Portolan does not clone repositories or query upstream services during a
   default scan.
-- A Cursor + Composer 2.5 operator run can use the corpus to produce
-  reviewable Portolan artifacts without treating the agent transcript as stronger
-  evidence than source, metadata, or runtime observations.
+- A Cursor + Composer 2.5 operator run can use the generic blind protocol on a
+  local Bigtop checkout to produce reviewable Portolan artifacts without
+  treating the agent transcript as stronger evidence than source, metadata, or
+  runtime observations.
 - The local fallback smoke can generate a graph and packet from fixture inputs
   while confirming that the target `portolan map` workflow is still a product
   gap rather than a clean result. Findings, detector output, and richer

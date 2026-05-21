@@ -72,8 +72,9 @@ dependency, one source relationship, and one unknown relationship gap.
 
 ## Assumptions
 
-- This spec should be planned after the first Bigtop skill-pack smoke records
-  actual missing relationship cases.
+- This spec was originally planned from the first Bigtop fallback smoke. Future
+  relationship priorities should be rechecked against the blind Bigtop operator
+  lane before adding broader detector families.
 - The first implementation slice should prioritize relationships visible from
   local Go source files and `go.mod` manifests, then preserve metadata and
   claim-backed relationships already emitted by existing inputs.

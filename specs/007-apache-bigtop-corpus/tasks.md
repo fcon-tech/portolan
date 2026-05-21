@@ -38,7 +38,7 @@
 
 ## Phase 5: Immediate Post-Skill Smoke
 
-- [x] T014 Add a Bigtop skill-smoke runbook under `docs/test-corpora/apache-bigtop.md` or `specs/007-apache-bigtop-corpus/`.
+- [x] T014 Add an initial Bigtop skill-smoke runbook under `docs/test-corpora/apache-bigtop.md` or `specs/007-apache-bigtop-corpus/`.
 - [x] T015 Prepare a minimal local Bigtop fixture selection that uses current Portolan commands and does not fetch upstream resources.
 - [x] T016 Run Cursor + Composer 2.5 against the portable Portolan agent guide and the minimal Bigtop fixture.
   - Status: degraded evidence.
@@ -48,6 +48,18 @@
     use the separate local CLI smoke for verified scan/packet evidence.
 - [x] T017 Record a gap ledger under `specs/007-apache-bigtop-corpus/reviews/` with agent workflow failures, missing relationships, missing duplication, missing configuration surfaces, missing technical-debt findings, packet usefulness gaps, and unsupported agent inferences.
 - [x] T018 Update `docs/product-backlog.md` to prioritize only the product gaps proven by the smoke.
+
+## Phase 6: Real Blind Operator Lane
+
+- [ ] T019 Wait for `specs/014-agent-bootstrap-discovery/` to make Portolan
+  self-discoverable from generic agent inputs.
+- [ ] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
+  target-agnostic prompt, run ledger, and status taxonomy.
+- [ ] T021 Run the blind protocol against a real local Apache Bigtop checkout.
+- [ ] T022 If the local Apache Bigtop checkout is absent, record the run as
+  blocked or `not_assessed`; do not substitute the fixture as acceptance proof.
+- [ ] T023 Update Bigtop gap ledger and product backlog only with generic
+  product gaps proven by the blind run.
 
 ## Deferred Work
 
