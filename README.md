@@ -66,13 +66,15 @@ Portolan should default to:
 Portolan should be built from the cheapest useful agent loop outward:
 
 1. Agent skill/rule pack that tells any agent how to run Portolan.
-2. Immediate Bigtop acceptance smoke in Cursor + Composer 2.5 to expose real
-   product gaps.
-3. `portolan map --root . --out .portolan/run` producing graph, findings, run
+2. Agent bootstrap and blind acceptance so an agent can discover the generic
+   workflow from Portolan itself, not from a target-specific chat prompt.
+3. Immediate Bigtop acceptance in Cursor + Composer 2.5 using the same blind
+   protocol to expose real product gaps.
+4. `portolan map --root . --out .portolan/run` producing graph, findings, run
    metadata, and a readable packet.
-4. Relationship, duplication, configuration, and technical-debt finding
+5. Relationship, duplication, configuration, and technical-debt finding
    generators backed by local evidence, prioritized from that smoke.
-5. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
+6. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
 
 Cursor + Composer 2.5 is the first cheap acceptance client, not the product
 boundary. The first realistic acceptance smoke is:
@@ -82,8 +84,10 @@ boundary. The first realistic acceptance smoke is:
 - Portolan as the local toolbox and artifact substrate;
 - Apache Bigtop as the large OSS ecosystem corpus.
 
-Bigtop starts immediately after the skill pack. The first pass may be small and
-local, but it must produce concrete gaps before deeper detector work proceeds.
+Bigtop starts immediately after the generic agent path can be tested honestly.
+Fixtures may preflight Portolan commands, but the real operator lane needs a
+local Bigtop checkout and the same target-agnostic protocol used for other
+targets.
 
 Portolan should make that loop observable without becoming dependent on Cursor,
 Composer, Kimi, or any hosted model/runtime during a default scan.
@@ -108,7 +112,10 @@ Each graph node or relationship records how it is known:
 - [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
 - [Product Backlog](docs/product-backlog.md)
 - [Agent Toolbox](docs/agent-toolbox/README.md)
+- [Blind Acceptance Protocol](docs/agent-toolbox/blind-acceptance.md)
 - [Portable Agent Guide](agent/AGENT_GUIDE.md)
+- [Agent Bootstrap Discovery](specs/014-agent-bootstrap-discovery/spec.md)
+- [Spec 015: Blind Agent Acceptance](specs/015-blind-agent-acceptance/spec.md)
 - [Example Map Report](agent/examples/map-report.md)
 - [Cursor Portolan Rule](.cursor/rules/portolan-map.mdc)
 - [MVP](docs/mvp.md)

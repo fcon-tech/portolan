@@ -17,7 +17,7 @@ immediate Bigtop-driven product test:
 4. **Blind agent acceptance**: an agent can run the same target-agnostic mapping
    protocol against arbitrary local targets without hidden scaffolding.
 5. **Bigtop smoke immediately after the generic agent path**: Cursor + Composer
-   2.5 runs the generic path against the Apache Bigtop corpus profile and
+   2.5 runs the blind protocol against a local Apache Bigtop checkout and
    exposes the first real product gaps.
 6. **Useful map contents**: relationships, duplication, configuration surfaces,
    and technical-debt findings implemented because the Bigtop smoke proves they
@@ -33,7 +33,8 @@ Claude, Codex, OpenCode, pi, and other agent harnesses.
 Apache Bigtop is no longer deferred until the end. It starts immediately after
 the generic agent path is self-discoverable enough to test honestly, then
 returns later as a larger stress test. The point is to prevent development for
-development's sake.
+development's sake without hiding product gaps behind a Bigtop-specific
+operator packet.
 
 ## P0: Runnable Evidence Substrate
 
@@ -51,8 +52,8 @@ development's sake.
 | --- | --- | --- | --- |
 | P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
 | P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
-| P1-015 | future | Blind agent acceptance protocol for arbitrary local targets after bootstrap discovery. | Blocked on P1-014 PR merge |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on Apache Bigtop after bootstrap discovery and blind acceptance expose missing product capabilities. | Blocked on P1-015 for a non-mocked operator lane |
+| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; blind runs not_assessed |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on Apache Bigtop after bootstrap discovery and blind acceptance expose missing product capabilities. | Blocked on recorded blind run against real local Bigtop checkout |
 
 ## P2: Build What The Bigtop Smoke Proves Is Missing
 
@@ -69,10 +70,10 @@ development's sake.
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
-| P3-014 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
-| P3-015 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
-| P3-016 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
-| P3-017 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
+| P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
+| P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
+| P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
+| P3-019 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 
 ## Backlog Rules
 
@@ -82,12 +83,15 @@ development's sake.
 - Each implementation slice must preserve local-first, read-only defaults.
 - Agent-facing work must remain harness-independent. Cursor-specific files are
   allowed only as a cheap acceptance client wrapper over the portable guide.
+- Agent bootstrap must be target-agnostic. Product surfaces must not include
+  Bigtop-specific operator choreography, handpicked file lists, or hidden prompt
+  scaffolding.
 - Findings must cite local evidence and preserve `source-visible`,
   `metadata-visible`, `runtime-visible`, `claim-only`, `unknown`, and
   `cannot_verify`.
 - Importer work must include license, maintenance, and privacy review before
   dependencies are added.
 - Apache Bigtop testing starts immediately after the generic agent path is
-  self-discoverable. The first pass may be a smoke over prepared local fixtures
-  and current Portolan commands, but it must record concrete product gaps before
-  deeper detector work proceeds.
+  self-discoverable and the blind acceptance protocol exists. Local fixtures may
+  preflight Portolan commands, but they must not be counted as a passed Bigtop
+  operator lane.

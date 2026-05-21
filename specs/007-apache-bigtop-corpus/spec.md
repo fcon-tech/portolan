@@ -2,7 +2,8 @@
 
 **Feature Branch**: `007-apache-bigtop-corpus`
 **Created**: 2026-05-20
-**Status**: Local fallback smoke complete; Cursor + Composer operator lane degraded
+**Status**: Local fallback smoke complete; real operator lane blocked on a
+recorded blind run against a real local Bigtop checkout
 **Input**: Product decision to start testing against Apache Big Data / Bigtop
 immediately after the agent skill pack, so real corpus friction drives the next
 Portolan capabilities.
@@ -70,25 +71,28 @@ fixture and verify it only reads local paths.
    edge references that component, **Then** Portolan records the missing source
    as `unknown` or `cannot_verify`.
 
-### User Story 4 - Test The Operator Assembly Immediately After Skills (Priority: P1)
+### User Story 4 - Test The Generic Agent Path On Bigtop (Priority: P1)
 
-An evaluator can use Apache Bigtop to test the first skill-pack workflow around
-Portolan: Cursor as the interactive engineering surface, Composer 2.5 as the
-agent/model pair, and Portolan as the evidence graph and packet substrate.
+An evaluator can use Apache Bigtop to test the generic Portolan agent path:
+Cursor as the first cheap interactive surface, Composer 2.5 as the first
+agent/model pair, and Portolan as the evidence graph and packet substrate. The
+agent must not receive Bigtop-specific operator scaffolding.
 
 **Why this priority**: The skill pack is not proven until an agent can use it on
 a messy corpus. Bigtop should expose product gaps before deeper detector work
 continues.
 
-**Independent Test**: Run a documented operator session over a prepared Bigtop
-fixture and review whether Portolan artifacts separate machine-observed evidence
-from agent claims.
+**Independent Test**: Run the blind acceptance protocol from
+`docs/agent-toolbox/blind-acceptance.md` against a real local Apache Bigtop
+checkout. If the checkout is unavailable, record the operator lane as blocked
+or `not_assessed`; do not replace it with a fixture pass.
 
 **Acceptance Scenarios**:
 
 1. **Given** an operator uses Cursor with Composer 2.5, **When** the Bigtop
-   smoke is run after the skill pack, **Then** the output records what Portolan
-   can map now and what remains missing.
+   smoke is run through the blind protocol, **Then** the output records what
+   Portolan can map now and what remains missing without target-specific
+   handholding.
 2. **Given** the agent transcript contains a conclusion that is not backed by a
    local Portolan input, **When** the output is reviewed, **Then** that conclusion
    is represented as `claim-only`, `unknown`, or `cannot_verify`, not as observed
@@ -104,6 +108,8 @@ from agent claims.
 - Bigtop package, Docker, or CI surface is known from metadata but not observed
   locally.
 - A full clone set is too large for routine local tests.
+- The local Bigtop checkout is absent; this blocks the real operator lane and
+  must not be replaced by a fixture success.
 - Agent/model conclusions from Cursor, Composer, or Kimi may be useful review
   context but are not evidence unless tied to a Portolan source, metadata,
   runtime, or claim input.
@@ -126,12 +132,15 @@ from agent claims.
   metadata facts unless the exact local source checkout is observed.
 - **FR-008**: Retired projects MUST keep lifecycle evidence separate from source
   repository visibility.
-- **FR-009**: Corpus documentation MUST state that the first acceptance target
-  is a Cursor + Composer 2.5 skill-pack smoke followed by larger Bigtop runs.
+- **FR-009**: Corpus documentation MUST state that the first real Bigtop
+  operator lane uses the generic agent bootstrap and blind acceptance protocol,
+  not a Bigtop-specific runbook.
 - **FR-010**: Agent/model transcript content MUST remain lower-authority
   evidence unless supported by local Portolan inputs.
 - **FR-011**: The first Bigtop smoke MUST record missing product capabilities as
   backlog gaps before deeper detector implementation proceeds.
+- **FR-012**: Local Bigtop fixtures MAY preflight Portolan commands, but MUST
+  NOT be counted as a passed real Bigtop operator lane.
 
 ### Key Entities
 
@@ -157,8 +166,9 @@ from agent claims.
   `depends_on`.
 - **SC-005**: Documentation defines a local-first fixture plan that does not
   require upstream network access during default scan execution.
-- **SC-006**: Documentation states how the Bigtop corpus tests the Cursor +
-  Composer 2.5 skill-pack workflow without making Portolan depend on that stack.
+- **SC-006**: Documentation states how the Bigtop corpus tests the generic agent
+  workflow through Cursor + Composer 2.5 without making Portolan depend on that
+  stack.
 - **SC-007**: The acceptance plan names concrete gap categories to collect:
   agent workflow failures, missing relationships, missing duplication,
   missing configuration surfaces, missing technical-debt findings, packet
@@ -169,8 +179,8 @@ from agent claims.
 - Apache Bigtop 3.5.0 is the first pinned release profile.
 - Current upstream links are attribution and preparation inputs, not runtime scan
   permissions.
-- Full corpus cloning is optional later preparation, not part of the immediate
-  skill-pack smoke or default MVP.
+- Full corpus cloning is optional later preparation, but a real Bigtop operator
+  lane requires at least the local Apache Bigtop checkout being mapped.
 - Initial schema validation may be syntax-only until a JSON Schema validator is
   introduced.
 - Composer 2.5 is named as the first cheap evaluation stack, not as a Portolan
