@@ -145,7 +145,8 @@ Use `not_assessed` for a surface you did not check.
 
    Read `agent-brief.md`, `query-plan.md`, `repos.json`,
    `tool-registry.json`, and `gaps.jsonl`. Treat tool-registry summaries and
-   metrics as local evidence candidates, not final architecture verdicts.
+   metrics for jscpd, CycloneDX/Syft, Backstage, OpenAPI, AsyncAPI, and
+   Structurizr as local evidence candidates, not final architecture verdicts.
 
 4. Run the map command when graph artifacts are needed. Prefer `--selection`
    only when a curated local selection exists:

@@ -980,6 +980,10 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	mustWrite(t, filepath.Join(root, "tool-outputs", "jscpd-report.json"), `{"duplicates":[]}`)
 	mustWrite(t, filepath.Join(root, "tool-outputs", "sbom-api.cyclonedx.json"), `{"bomFormat":"CycloneDX"}`)
 	mustWrite(t, filepath.Join(root, "catalog-info.yaml"), "apiVersion: backstage.io/v1alpha1\nkind: Component\n")
+	mustWrite(t, filepath.Join(root, "catalog-info.json"), `{"items":[{"kind":"Component"},{"kind":"API"}]}`)
+	mustWrite(t, filepath.Join(root, "openapi.json"), `{"openapi":"3.1.0","paths":{"/health":{},"/orders":{}}}`)
+	mustWrite(t, filepath.Join(root, "asyncapi.json"), `{"asyncapi":"3.0.0","channels":{"orders":{},"payments":{}}}`)
+	mustWrite(t, filepath.Join(root, "workspace.structurizr.json"), `{"workspace":{"model":{"softwareSystems":[{"name":"api","containers":[{"name":"worker"}]}]}}}`)
 	out := filepath.Join(root, ".portolan", "context")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -1027,9 +1031,32 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 			if metrics["components"] != float64(0) {
 				t.Fatalf("cyclonedx metrics = %#v, want components 0", metrics)
 			}
+		case "backstage":
+			if entry["kind"] != "service-catalog" || entry["status"] != "observed" || entry["evidence_state"] != "metadata-visible" {
+				t.Fatalf("backstage entry = %#v, want observed service catalog", entry)
+			}
+			metrics := entry["metrics"].(map[string]any)
+			if metrics["entities"] != float64(1) && metrics["entities"] != float64(2) {
+				t.Fatalf("backstage metrics = %#v, want entities 1 or 2", metrics)
+			}
+		case "openapi":
+			metrics := entry["metrics"].(map[string]any)
+			if entry["status"] != "observed" || entry["evidence_state"] != "metadata-visible" || metrics["paths"] != float64(2) {
+				t.Fatalf("openapi entry = %#v, want 2 paths", entry)
+			}
+		case "asyncapi":
+			metrics := entry["metrics"].(map[string]any)
+			if entry["status"] != "observed" || entry["evidence_state"] != "metadata-visible" || metrics["channels"] != float64(2) {
+				t.Fatalf("asyncapi entry = %#v, want 2 channels", entry)
+			}
+		case "structurizr":
+			metrics := entry["metrics"].(map[string]any)
+			if entry["status"] != "observed" || entry["evidence_state"] != "metadata-visible" || metrics["elements"] != float64(2) {
+				t.Fatalf("structurizr entry = %#v, want 2 elements", entry)
+			}
 		}
 	}
-	for _, want := range []string{"jscpd", "cyclonedx", "backstage"} {
+	for _, want := range []string{"jscpd", "cyclonedx", "backstage", "openapi", "asyncapi", "structurizr"} {
 		if !families[want] {
 			t.Fatalf("tool families = %#v, want %q", families, want)
 		}
@@ -1038,7 +1065,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"semgrep", "openapi", "external-completeness"} {
+	for _, want := range []string{"semgrep", "code-index", "external-completeness"} {
 		if !strings.Contains(string(gaps), want) {
 			t.Fatalf("gaps.jsonl = %q, want %q", gaps, want)
 		}
@@ -1082,6 +1109,96 @@ func TestRunContextPreparePreservesMalformedToolOutput(t *testing.T) {
 	}
 	if !strings.Contains(entry["reason"].(string), "malformed") {
 		t.Fatalf("entry = %#v, want malformed reason", entry)
+	}
+}
+
+func TestRunContextPreparePreservesMalformedRelationshipSurface(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, "openapi.json"), `{`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want one malformed openapi entry", tools)
+	}
+	entry := tools[0].(map[string]any)
+	if entry["family"] != "openapi" || entry["status"] != "cannot_verify" || entry["evidence_state"] != "cannot_verify" {
+		t.Fatalf("entry = %#v, want cannot_verify openapi", entry)
+	}
+	if !strings.Contains(entry["reason"].(string), "malformed") {
+		t.Fatalf("entry = %#v, want malformed reason", entry)
+	}
+}
+
+func TestRunContextPrepareCountsAsyncAPIYAMLDirectChannels(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, "asyncapi.yaml"), `asyncapi: 3.0.0
+channels:
+  orders:
+    address: orders
+    messages:
+      orderCreated:
+        payload:
+          type: object
+  payments:
+    address: payments
+operations:
+  publishOrder:
+    action: send
+`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want one asyncapi entry", tools)
+	}
+	entry := tools[0].(map[string]any)
+	metrics := entry["metrics"].(map[string]any)
+	if entry["family"] != "asyncapi" || entry["status"] != "observed" || metrics["channels"] != float64(2) {
+		t.Fatalf("entry = %#v, want 2 direct asyncapi channels", entry)
+	}
+}
+
+func TestRunContextPrepareKeepsEmptyStructurizrJSONCandidate(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, "structurizr.json"), `{"workspace":{"model":{}}}`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want one structurizr entry", tools)
+	}
+	entry := tools[0].(map[string]any)
+	metrics := entry["metrics"].(map[string]any)
+	if entry["family"] != "structurizr" || entry["status"] != "candidate" || metrics["elements"] != float64(0) {
+		t.Fatalf("entry = %#v, want structurizr candidate with 0 counted elements", entry)
 	}
 }
 
