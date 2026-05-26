@@ -23,7 +23,7 @@ Date: 2026-05-26
 
 | ID | Source | Decision | Evidence | Action |
 | --- | --- | --- | --- | --- |
-| L1 | local | accepted/fixed | `.specify/extensions/git/git-config.yml` and `config-template.yml` enabled auto-commit by default before review. | Disabled auto-commit by default in both config files, updated workflow docs, and changed orchestrator wording to explicit commit boundaries. |
+| L1/K6 | local + Kimi | accepted/fixed | `.specify/extensions/git/git-config.yml` and `.specify/extensions/git/config-template.yml` enabled auto-commit by default before review. Both files now set `auto_commit.default: false` and per-hook `enabled: false`. | Disabled auto-commit by default in both config files, updated workflow docs, and changed orchestrator wording to explicit commit boundaries. |
 | L2/R3 | local + Qwen | accepted/fixed | Assisted output preserves many `not_assessed` and `unknown` surfaces while the ledger scored zero unsupported assisted claims. | Added ledger coverage interpretation and an explicit limitation that zero unsupported claims includes bounded abstention, not complete coverage. |
 | R1 | Qwen | rejected | `summary.json` contains the duplication count and `graph-index.json` contains the duplicate examples and relationship samples cited by the strict assisted rerun. | No change beyond disposition; lane input remains bounded to context pack, `summary.json`, and `graph-index.json`. |
 | R2 | Qwen | rejected | `git diff --name-status origin/main...HEAD \| rg '^A\\s+\\.portolan\|^M\\s+\\.portolan'` returned no `.portolan` files in the PR diff. | No change. |
@@ -33,6 +33,7 @@ Date: 2026-05-26
 | K2 | Kimi | accepted/fixed | `verification-2026-05-26.md` used "Requirements checklist" wording for a spec-quality checklist. | Renamed the row to spec quality checklist and added a functional requirement trace row. |
 | K3 | Kimi | rejected | Backlog row is the product validation index, not PR review evidence storage. | Keep PR lane degradation in PR review disposition and readiness closeout. |
 | K4/G2 | Kimi + GLM | accepted/fixed | Scoring rubric lacked an explicit coverage-breadth dimension even though assisted zero unsupported claims includes bounded abstention. | Added `coverage_completeness` to the rubric and assisted score records. |
+| K5 | Kimi | accepted/fixed | Disposition verification text still described PR #14 as draft while readiness closeout and live PR state showed ready-for-review. | Updated disposition verification wording to ready-for-review. |
 | G1 | GLM | accepted/fixed | "Materially improves" was stronger than the measured rubric. | Reworded accepted claim to the measured result: unsupported claims 12 to 0 and equal-or-better next actions for all five questions. |
 | G3/G4 | GLM | rejected/narrowed | Closeout already says readers should reconstruct PR state with `gh pr view`; L1 before-state is auditable through branch commit history. | No artifact change beyond this disposition. |
 
@@ -41,8 +42,8 @@ Date: 2026-05-26
 - `verified`: `go test ./...`
 - `verified`: `jq empty schema/*.json`
 - `verified`: `git diff --check`
-- `verified`: PR state reconstructed as draft PR #14 with clean merge state and
-  no reported GitHub checks at the time of inspection.
+- `verified`: PR state reconstructed as ready-for-review PR #14 with clean
+  merge state and no reported GitHub checks at the time of inspection.
 - `not_assessed`: MiniMax review lane, GitHub CI checks, merge approval.
 - `superseded`: prior Qwen/DeepSeek/Gemini lane set replaced by the requested
   Kimi/GLM/MiniMax subscription lanes.
