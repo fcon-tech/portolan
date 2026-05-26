@@ -72,6 +72,7 @@ fixtures are preflight evidence only.
 | P2-011 | `specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Bigtop-gated backlog spec |
 | P2-012 | `specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Bigtop-gated backlog spec |
 | P2-013 | `specs/013-technical-debt-findings/` | Portolan turns relationship, duplication, config, importer, and black-box evidence into technical-debt findings without readiness verdicts. | Bigtop-gated backlog spec |
+| P2-024 | `specs/024-agent-scale-map-summary/` | Map runs emit compact `summary.json` and unique finding IDs so agents can triage large landscapes before loading full graphs. | Implemented |
 
 ## P3: Repeatability, Surfaces, And Scale
 

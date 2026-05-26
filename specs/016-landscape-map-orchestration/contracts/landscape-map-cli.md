@@ -23,8 +23,8 @@ a generated one-repository selection and is not the Bigtop acceptance path.
 - Validate selection shape before writing artifacts.
 - Validate Bigtop full-corpus gate before the Bigtop acceptance run writes
   artifacts.
-- Write `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and
-  `map.md`.
+- Write `run.json`, `coverage.json`, `summary.json`, `graph.json`,
+  `findings.jsonl`, and `map.md`.
 - Preserve `unknown`, `cannot_verify`, and `not_assessed` instead of inventing
   source facts.
 

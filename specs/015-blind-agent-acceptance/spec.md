@@ -100,8 +100,8 @@ and produces artifact-backed output.
 - **FR-004**: The protocol MUST classify each run as `passed`, `failed`,
   `degraded`, or `not_assessed`, with reasons.
 - **FR-005**: The protocol MUST require artifact review: `run.json`,
-  `graph.json`, `findings.jsonl`, and `map.md` must be inspected before report
-  claims are accepted.
+  `summary.json`, `graph.json`, `findings.jsonl`, and `map.md` must be
+  inspected before report claims are accepted.
 - **FR-006**: The protocol MUST distinguish agent transcript claims from
   Portolan evidence.
 - **FR-007**: The first target set MUST include Apache Bigtop and at least one

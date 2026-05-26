@@ -926,7 +926,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(stdout.String(), "wrote map bundle") {
 		t.Fatalf("stdout = %q, want bundle summary", stdout.String())
 	}
-	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -947,8 +947,66 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
 		t.Fatalf("map.md = %q, want skipped surfaces warning", string(mapText))
 	}
+	if !strings.Contains(string(mapText), "Inspect `summary.json` before loading full `graph.json`") {
+		t.Fatalf("map.md = %q, want summary-first next task", string(mapText))
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunMapWritesAgentScaleSummary(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, ".github", "workflows"))
+	mustMkdir(t, filepath.Join(root, "cmd"))
+	mustMkdir(t, filepath.Join(root, "tests"))
+	mustWrite(t, filepath.Join(root, "go.mod"), "module example.com/summary\n")
+	mustWrite(t, filepath.Join(root, "cmd", "main.go"), "package main\n")
+	mustWrite(t, filepath.Join(root, ".github", "workflows", "ci.yml"), "name: ci\n")
+	mustWrite(t, filepath.Join(root, "Dockerfile"), "FROM scratch\n")
+	mustWrite(t, filepath.Join(root, "config.yaml"), "service: demo\n")
+	mustWrite(t, filepath.Join(root, "README.md"), "# Demo\n")
+	mustWrite(t, filepath.Join(root, "tests", "app_test.py"), "def test_app(): pass\n")
+
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	summary := readJSONFile(t, filepath.Join(out, "summary.json"))
+	if summary["schema_version"] != "0.1.0" || summary["generated_by"] != "portolan" {
+		t.Fatalf("summary identity = %#v", summary)
+	}
+	graph := summary["graph"].(map[string]any)
+	if graph["nodes"].(float64) == 0 || graph["edges"].(float64) == 0 {
+		t.Fatalf("summary graph = %#v, want node and edge counts", graph)
+	}
+	evidenceStates := graph["evidence_states"].(map[string]any)
+	if evidenceStates["source-visible"].(float64) == 0 {
+		t.Fatalf("evidence states = %#v, want source-visible", evidenceStates)
+	}
+	findings := summary["findings"].(map[string]any)
+	if findings["total"].(float64) == 0 || findings["not_assessed_total"].(float64) == 0 {
+		t.Fatalf("finding summary = %#v, want total and not_assessed counts", findings)
+	}
+	coverage := summary["coverage"].(map[string]any)
+	if coverage["records"].(float64) == 0 {
+		t.Fatalf("coverage summary = %#v, want records", coverage)
+	}
+	weak := coverage["weak_records"].([]any)
+	if len(weak) == 0 {
+		t.Fatalf("coverage summary = %#v, want weak records", coverage)
+	}
+	surfaces := summary["file_surfaces"].(map[string]any)
+	for _, want := range []string{"manifest", "source", "workflow", "container", "config", "doc", "test"} {
+		if surfaces[want].(float64) == 0 {
+			t.Fatalf("file surfaces = %#v, want %q", surfaces, want)
+		}
 	}
 }
 
@@ -1245,7 +1303,7 @@ func TestRunMapSelectionWritesLandscapeArtifactBundle(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
-	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -1766,6 +1824,27 @@ func TestRunMapFindingsJSONLHasRequiredFields(t *testing.T) {
 		if !kinds[want] {
 			t.Fatalf("finding kinds = %#v, want %q", kinds, want)
 		}
+	}
+}
+
+func TestRunMapFindingsJSONLHasUniqueIDs(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	seen := map[string]bool{}
+	for _, finding := range findings {
+		id := finding["id"].(string)
+		if seen[id] {
+			t.Fatalf("duplicate finding id %q in %#v", id, findings)
+		}
+		seen[id] = true
 	}
 }
 

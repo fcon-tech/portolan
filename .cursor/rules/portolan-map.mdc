@@ -19,8 +19,8 @@ needed after context preparation. It performs bounded local discovery over the
 target root, direct child Git repositories, and `repos/*` Git repositories, but
 external ecosystem completeness remains `unknown` without a manifest. Use
 `portolan map --selection <selection.json> --out <run-dir>` only when a curated
-local selection exists. Read the generated context pack and map artifacts before
-reporting.
+local selection exists. Read `summary.json` before full `graph.json`; then read
+the generated context pack and map artifacts before reporting.
 
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network

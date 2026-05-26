@@ -14,7 +14,7 @@
 - [x] T003 [P] Add regression tests proving `portolan map --root` still writes the existing bundle in `internal/app/app_test.go`.
 - [x] T004 [P] Add fixture `testdata/landscape-map/selection.json` with at least four repositories, metadata, runtime, claims, black boxes, and local tool-output files.
 - [x] T005 [P] Add Bigtop incomplete-coverage fixture under `testdata/apache-bigtop-landscape/` that omits an active product repository and must block acceptance before scan execution.
-- [x] T006 [P] Add artifact validation tests for `coverage.json`, `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+- [x] T006 [P] Add artifact validation tests for `coverage.json`, `run.json`, `summary.json`, `graph.json`, `findings.jsonl`, and `map.md`.
 
 ## Phase 2: Selection And Coverage Model
 
@@ -32,7 +32,7 @@
 - [x] T015 Implement root shortcut as generated one-repository selection while preserving existing behavior.
 - [x] T016 Orchestrate multi-repository scan inputs without collapsing repository identities.
 - [x] T017 Ensure output path validation rejects unsafe paths and prevents generated artifacts from being mapped as source inputs.
-- [x] T018 Write `coverage.json` alongside `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+- [x] T018 Write `coverage.json` alongside `run.json`, `summary.json`, `graph.json`, `findings.jsonl`, and `map.md`.
 
 ## Phase 4: OSS Tool Output Composition
 
@@ -56,7 +56,7 @@
 ## Phase 6: CTO Packet And Agent Surfaces
 
 - [x] T032 Update packet rendering to include landscape inventory, repo/product matrix, relationships, contracts/surfaces, duplication, configuration, legacy/debt, unknowns, and next-agent tasks.
-- [x] T033 Ensure `map.md` is generated only from `graph.json`, `findings.jsonl`, `coverage.json`, and `run.json`.
+- [x] T033 Ensure `map.md` is generated only from `graph.json`, `findings.jsonl`, `coverage.json`, `summary.json`, and `run.json`.
 - [x] T034 Update `agent/AGENT_GUIDE.md`, `agent/START_HERE.md`, and portable skill content to prefer `map --selection` when a curated landscape selection exists.
 - [x] T035 Update `.cursor/rules/portolan-map.mdc` to delegate to the portable landscape workflow without copying Bigtop-specific instructions.
 - [x] T036 Update Bigtop preflight documentation to use the full landscape selection and full-corpus gate; blind acceptance without a selection is deferred to spec 017.

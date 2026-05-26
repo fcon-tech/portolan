@@ -84,9 +84,12 @@ slice proves otherwise.
 
 - `<run-dir>/run.json`
 - `<run-dir>/coverage.json`
+- `<run-dir>/summary.json`
 - `<run-dir>/graph.json`
 - `<run-dir>/findings.jsonl`
 - `<run-dir>/map.md`
+
+Inspect `summary.json` before full `graph.json` in large runs.
 
 Transcript claims are lower authority than Portolan artifacts. Findings that do
 not appear in local Portolan inputs must be recorded as `claim-only`, `unknown`,
@@ -105,8 +108,8 @@ Each evidence bundle must include:
 - transcript or concise transcript summary;
 - commands attempted and their outcomes;
 - Portolan artifact inventory;
-- artifact review notes for `run.json`, `coverage.json`, `graph.json`,
-  `findings.jsonl`, and `map.md`;
+- artifact review notes for `run.json`, `coverage.json`, `summary.json`,
+  `graph.json`, `findings.jsonl`, and `map.md`;
 - report produced by the agent or evaluator;
 - gap ledger with generic product gaps only;
 - status and stop reason.
@@ -151,7 +154,8 @@ operator lane is run.
 1. Verify the prompt contains no target-specific file names, package names,
    build instructions, or guide paths.
 2. Verify the run did not use network, credentials, or target mutation.
-3. Inspect `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+3. Inspect `run.json`, `summary.json`, `graph.json`, `findings.jsonl`, and
+   `map.md`.
 4. Compare the agent's report with the Portolan artifacts.
 5. Classify unsupported conclusions as `claim-only`, `unknown`,
    `cannot_verify`, or `not_assessed`.

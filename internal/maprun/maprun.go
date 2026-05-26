@@ -36,6 +36,7 @@ type Artifacts struct {
 	Coverage string `json:"coverage"`
 	Graph    string `json:"graph"`
 	Findings string `json:"findings"`
+	Summary  string `json:"summary"`
 	Packet   string `json:"packet"`
 }
 
@@ -65,6 +66,60 @@ type Finding struct {
 }
 
 const SchemaVersion = "0.1.0"
+
+const summaryRecordLimit = 100
+
+type Summary struct {
+	SchemaVersion string          `json:"schema_version"`
+	GeneratedBy   string          `json:"generated_by"`
+	GeneratedAt   time.Time       `json:"generated_at"`
+	Command       string          `json:"command"`
+	Root          string          `json:"root,omitempty"`
+	Selection     string          `json:"selection,omitempty"`
+	OutputPath    string          `json:"output_path"`
+	Artifacts     Artifacts       `json:"artifacts"`
+	Graph         graphSummary    `json:"graph"`
+	Findings      findingSummary  `json:"findings"`
+	Coverage      coverageSummary `json:"coverage"`
+	FileSurfaces  map[string]int  `json:"file_surfaces"`
+	Skipped       []string        `json:"skipped_surfaces"`
+	Warnings      []string        `json:"warnings"`
+}
+
+type graphSummary struct {
+	Nodes          int            `json:"nodes"`
+	Edges          int            `json:"edges"`
+	EvidenceStates map[string]int `json:"evidence_states"`
+	NodeKinds      map[string]int `json:"node_kinds"`
+}
+
+type findingSummary struct {
+	Total            int            `json:"total"`
+	ByKind           map[string]int `json:"by_kind"`
+	ByStatus         map[string]int `json:"by_status"`
+	ByEvidenceState  map[string]int `json:"by_evidence_state"`
+	NotAssessedTotal int            `json:"not_assessed_total"`
+}
+
+type coverageSummary struct {
+	Records               int                     `json:"records"`
+	ByKind                map[string]int          `json:"by_kind"`
+	ByStatus              map[string]int          `json:"by_status"`
+	ByEvidenceState       map[string]int          `json:"by_evidence_state"`
+	Repositories          []coverageSummaryRecord `json:"repositories"`
+	RepositoriesTruncated int                     `json:"repositories_truncated"`
+	WeakRecords           []coverageSummaryRecord `json:"weak_records"`
+	WeakRecordsTruncated  int                     `json:"weak_records_truncated"`
+}
+
+type coverageSummaryRecord struct {
+	ID            string `json:"id"`
+	Kind          string `json:"kind"`
+	Status        string `json:"status"`
+	EvidenceState string `json:"evidence_state"`
+	Source        string `json:"source,omitempty"`
+	Reason        string `json:"reason,omitempty"`
+}
 
 func Run(opts Options) (Result, error) {
 	if opts.RootPath == "" && opts.SelectionPath == "" {
@@ -100,6 +155,7 @@ func Run(opts Options) (Result, error) {
 		Coverage: filepath.Join(out, "coverage.json"),
 		Graph:    filepath.Join(out, "graph.json"),
 		Findings: filepath.Join(out, "findings.jsonl"),
+		Summary:  filepath.Join(out, "summary.json"),
 		Packet:   filepath.Join(out, "map.md"),
 	}
 	rootSelection, discoveryRecords, discoveryWarnings := selectionForRootDiscovery(root)
@@ -139,7 +195,9 @@ func Run(opts Options) (Result, error) {
 	sortCoverageRecords(ledger.Records)
 	ledger.Summary = summarizeCoverageRecords(ledger.Records)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
+	findings = dedupeFindings(findings)
 	sortFindings(findings)
+	summary := summarizeRun(metadata, g, findings, ledger)
 
 	if err := writeGraph(filepath.Join(temp, "graph.json"), g); err != nil {
 		return Result{}, err
@@ -148,6 +206,9 @@ func Run(opts Options) (Result, error) {
 		return Result{}, err
 	}
 	if err := WriteFindings(filepath.Join(temp, "findings.jsonl"), findings); err != nil {
+		return Result{}, err
+	}
+	if err := writeSummary(filepath.Join(temp, "summary.json"), summary); err != nil {
 		return Result{}, err
 	}
 	if err := writeRun(filepath.Join(temp, "run.json"), metadata); err != nil {
@@ -195,10 +256,12 @@ func runSelection(opts Options) (Result, error) {
 		Coverage: filepath.Join(out, "coverage.json"),
 		Graph:    filepath.Join(out, "graph.json"),
 		Findings: filepath.Join(out, "findings.jsonl"),
+		Summary:  filepath.Join(out, "summary.json"),
 		Packet:   filepath.Join(out, "map.md"),
 	}
 	g, findings, warnings := graphAndFindingsForSelection(sel)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
+	findings = dedupeFindings(findings)
 	sortFindings(findings)
 	skippedSurfaces := []string{
 		"relationship-non-go-source",
@@ -220,6 +283,7 @@ func runSelection(opts Options) (Result, error) {
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
+	summary := summarizeRun(metadata, g, findings, ledger)
 
 	if err := writeGraph(filepath.Join(temp, "graph.json"), g); err != nil {
 		return Result{}, err
@@ -228,6 +292,9 @@ func runSelection(opts Options) (Result, error) {
 		return Result{}, err
 	}
 	if err := WriteFindings(filepath.Join(temp, "findings.jsonl"), findings); err != nil {
+		return Result{}, err
+	}
+	if err := writeSummary(filepath.Join(temp, "summary.json"), summary); err != nil {
 		return Result{}, err
 	}
 	if err := writeRun(filepath.Join(temp, "run.json"), metadata); err != nil {
@@ -834,6 +901,19 @@ func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []F
 	return derived
 }
 
+func dedupeFindings(findings []Finding) []Finding {
+	seen := map[string]bool{}
+	deduped := make([]Finding, 0, len(findings))
+	for _, finding := range findings {
+		if seen[finding.ID] {
+			continue
+		}
+		seen[finding.ID] = true
+		deduped = append(deduped, finding)
+	}
+	return deduped
+}
+
 func graphForTarget(target selection.Target) (graph.Graph, []string) {
 	g := graph.New()
 	state := graph.SourceVisible
@@ -1426,6 +1506,164 @@ func writeRun(path string, metadata RunMetadata) error {
 	return os.WriteFile(path, append(data, '\n'), 0o644)
 }
 
+func writeSummary(path string, summary Summary) error {
+	data, err := json.MarshalIndent(summary, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode summary: %w", err)
+	}
+	return os.WriteFile(path, append(data, '\n'), 0o644)
+}
+
+func summarizeRun(run RunMetadata, g graph.Graph, findings []Finding, ledger coverage.Ledger) Summary {
+	return Summary{
+		SchemaVersion: SchemaVersion,
+		GeneratedBy:   "portolan",
+		GeneratedAt:   run.GeneratedAt,
+		Command:       run.Command,
+		Root:          run.Root,
+		Selection:     run.Selection,
+		OutputPath:    run.OutputPath,
+		Artifacts:     run.Artifacts,
+		Graph:         summarizeGraph(g),
+		Findings:      summarizeFindings(findings),
+		Coverage:      summarizeCoverage(ledger),
+		FileSurfaces:  summarizeFileSurfaces(g),
+		Skipped:       append([]string(nil), run.SkippedSurfaces...),
+		Warnings:      append([]string(nil), run.Warnings...),
+	}
+}
+
+func summarizeGraph(g graph.Graph) graphSummary {
+	summary := graphSummary{
+		Nodes:          len(g.Nodes),
+		Edges:          len(g.Edges),
+		EvidenceStates: map[string]int{},
+		NodeKinds:      map[string]int{},
+	}
+	for _, node := range g.Nodes {
+		summary.EvidenceStates[string(node.Evidence.State)]++
+		summary.NodeKinds[node.Kind]++
+	}
+	for _, edge := range g.Edges {
+		summary.EvidenceStates[string(edge.Evidence.State)]++
+	}
+	return summary
+}
+
+func summarizeFindings(findings []Finding) findingSummary {
+	summary := findingSummary{
+		Total:           len(findings),
+		ByKind:          map[string]int{},
+		ByStatus:        map[string]int{},
+		ByEvidenceState: map[string]int{},
+	}
+	for _, finding := range findings {
+		summary.ByKind[finding.Kind]++
+		summary.ByStatus[finding.Status]++
+		summary.ByEvidenceState[finding.EvidenceState]++
+		if finding.Status == "not_assessed" {
+			summary.NotAssessedTotal++
+		}
+	}
+	return summary
+}
+
+func summarizeCoverage(ledger coverage.Ledger) coverageSummary {
+	summary := coverageSummary{
+		Records:         len(ledger.Records),
+		ByKind:          map[string]int{},
+		ByStatus:        map[string]int{},
+		ByEvidenceState: map[string]int{},
+	}
+	for _, record := range ledger.Records {
+		summary.ByKind[record.Kind]++
+		summary.ByStatus[record.Status]++
+		summary.ByEvidenceState[record.EvidenceState]++
+		if record.Kind == "repository" || record.Kind == "manifest-repository" {
+			appendLimitedCoverageRecord(&summary.Repositories, &summary.RepositoriesTruncated, record)
+		}
+		if isWeakCoverageRecord(record) {
+			appendLimitedCoverageRecord(&summary.WeakRecords, &summary.WeakRecordsTruncated, record)
+		}
+	}
+	return summary
+}
+
+func appendLimitedCoverageRecord(records *[]coverageSummaryRecord, truncated *int, record coverage.Record) {
+	if len(*records) >= summaryRecordLimit {
+		*truncated = *truncated + 1
+		return
+	}
+	*records = append(*records, coverageSummaryRecord{
+		ID:            record.ID,
+		Kind:          record.Kind,
+		Status:        record.Status,
+		EvidenceState: record.EvidenceState,
+		Source:        record.Source,
+		Reason:        record.Reason,
+	})
+}
+
+func isWeakCoverageRecord(record coverage.Record) bool {
+	return record.Status == "unknown" ||
+		record.Status == "cannot_verify" ||
+		record.Status == "not_assessed" ||
+		record.Status == "blocked" ||
+		record.EvidenceState == string(graph.Unknown) ||
+		record.EvidenceState == string(graph.CannotVerify) ||
+		record.EvidenceState == "not_assessed"
+}
+
+func summarizeFileSurfaces(g graph.Graph) map[string]int {
+	counts := map[string]int{}
+	for _, node := range g.Nodes {
+		if node.Kind != "unknown" {
+			continue
+		}
+		label := node.Label
+		if label == "" {
+			label = node.ID
+		}
+		counts[classifyFileSurface(label)]++
+	}
+	return counts
+}
+
+func classifyFileSurface(path string) string {
+	lower := strings.ToLower(filepath.ToSlash(path))
+	base := filepath.Base(lower)
+	ext := filepath.Ext(base)
+	switch {
+	case strings.HasPrefix(lower, ".github/workflows/") || strings.Contains(lower, "/.github/workflows/") || strings.HasPrefix(lower, ".gitlab-ci") || strings.Contains(lower, "/.gitlab-ci") || base == "jenkinsfile" || base == "buildkite.yml" || base == "buildkite.yaml":
+		return "workflow"
+	case base == "dockerfile" || base == "containerfile" || strings.HasPrefix(base, "dockerfile.") || strings.Contains(base, "compose."):
+		return "container"
+	case base == "go.mod" || base == "go.sum" || base == "package.json" || base == "pom.xml" || base == "build.gradle" || base == "build.gradle.kts" || base == "requirements.txt" || base == "pyproject.toml" || base == "cargo.toml" || base == "cargo.lock" || base == "gemfile" || base == "mix.exs":
+		return "manifest"
+	case strings.HasSuffix(base, ".lock") || base == "package-lock.json" || base == "yarn.lock" || base == "pnpm-lock.yaml" || strings.Contains(lower, "/vendor/") || strings.Contains(lower, "/node_modules/"):
+		return "generated_or_lock"
+	case ext == ".yaml" || ext == ".yml" || ext == ".json" || ext == ".toml" || ext == ".ini" || ext == ".conf" || ext == ".cfg" || ext == ".properties" || ext == ".env":
+		return "config"
+	case strings.Contains(lower, "/test/") || strings.Contains(lower, "/tests/") || strings.Contains(lower, "/spec/") || strings.Contains(lower, "_test.") || strings.Contains(lower, ".test.") || strings.Contains(lower, ".spec."):
+		return "test"
+	case ext == ".md" || ext == ".rst" || ext == ".adoc" || ext == ".txt":
+		return "doc"
+	case isSourceExtension(ext):
+		return "source"
+	default:
+		return "unknown"
+	}
+}
+
+func isSourceExtension(ext string) bool {
+	switch ext {
+	case ".go", ".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".kt", ".kts", ".scala", ".rb", ".rs", ".c", ".h", ".cc", ".cpp", ".hpp", ".cs", ".php", ".swift", ".m", ".mm", ".sh", ".bash", ".zsh", ".fish", ".sql", ".lua", ".ex", ".exs", ".erl", ".hrl", ".clj", ".cljs":
+		return true
+	default:
+		return false
+	}
+}
+
 func writeMapFromArtifacts(dir string) error {
 	run, err := readRun(filepath.Join(dir, "run.json"))
 	if err != nil {
@@ -1554,6 +1792,7 @@ func writeMap(path string, run RunMetadata, g graph.Graph, findings []Finding, l
 	b.WriteString("\n")
 	writeMachineArtifactSummary(&b, g)
 	b.WriteString("## Next-Agent Tasks\n\n")
+	b.WriteString("- Inspect `summary.json` before loading full `graph.json` into an agent context.\n")
 	b.WriteString("- Inspect `coverage.json` before treating the map as complete.\n")
 	b.WriteString("- Resolve `unknown`, `cannot_verify`, and `not_assessed` records before making architecture claims.\n")
 	return os.WriteFile(path, []byte(b.String()), 0o644)

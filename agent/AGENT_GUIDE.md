@@ -78,10 +78,15 @@ The current map bundle is:
 .portolan/run/
   run.json
   coverage.json
+  summary.json
   graph.json
   findings.jsonl
   map.md
 ```
+
+Read `summary.json` before loading `graph.json` into an agent context. It
+contains compact graph, finding, coverage, weak-evidence, and file-surface
+counts for first-pass triage.
 
 Treat missing detector coverage or `not_assessed` findings as product gaps, not
 as evidence that the repository has no relationships, duplication,
@@ -166,8 +171,8 @@ Use `not_assessed` for a surface you did not check.
    portolan map --selection <selection.json> --out <run-dir>
    ```
 
-   Read `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and
-   `map.md` before reporting.
+   Read `run.json`, `coverage.json`, `summary.json`, `graph.json`,
+   `findings.jsonl`, and `map.md` before reporting.
 
 5. Use lower-level commands only when the user or fixture provides matching
    local inputs:

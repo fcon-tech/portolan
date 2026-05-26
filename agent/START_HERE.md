@@ -55,9 +55,13 @@ When you also run `portolan map`, read these files before reporting:
 
 - `run.json`
 - `coverage.json`
+- `summary.json`
 - `graph.json`
 - `findings.jsonl`
 - `map.md`
+
+Read `summary.json` before loading the full `graph.json`; on large landscapes
+the graph can be too large for a prompt-sized first pass.
 
 Do not replace missing Portolan evidence with unmarked manual analysis. If the
 command cannot run or the artifacts are missing, stop and report the blocker.

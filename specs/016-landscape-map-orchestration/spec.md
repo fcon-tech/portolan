@@ -26,8 +26,8 @@ acceptance path.
 **Independent Test**: Run `portolan map --selection <selection.json> --out
 <run-dir> --force` against a fixture containing at least four repositories with
 different stack markers, metadata, claims, black boxes, and imported tool output.
-The run writes `run.json`, `graph.json`, `findings.jsonl`, `map.md`, and
-`coverage.json` without network access or target mutation.
+The run writes `run.json`, `summary.json`, `graph.json`, `findings.jsonl`,
+`map.md`, and `coverage.json` without network access or target mutation.
 
 **Acceptance Scenarios**:
 
@@ -115,11 +115,12 @@ appear, and what remains unknown or unverifiable.
 **Why this priority**: The product is useful only if the artifact bundle can be
 handed to another agent or human decision-maker without a new manual dig.
 
-**Independent Test**: Review `map.md`, `coverage.json`, `graph.json`, and
-`findings.jsonl` from the full Bigtop landscape run. The packet contains
-landscape inventory, repo/product matrix, relationship map, contract/surface
-summary, duplication clusters, configuration surfaces, legacy/debt findings,
-unknown/cannot-verify ledger, and next-agent tasks, all backed by artifacts.
+**Independent Test**: Review `map.md`, `summary.json`, `coverage.json`,
+`graph.json`, and `findings.jsonl` from the full Bigtop landscape run. The
+packet contains landscape inventory, repo/product matrix, relationship map,
+contract/surface summary, duplication clusters, configuration surfaces,
+legacy/debt findings, unknown/cannot-verify ledger, and next-agent tasks, all
+backed by artifacts.
 
 **Acceptance Scenarios**:
 
@@ -169,7 +170,8 @@ unknown/cannot-verify ledger, and next-agent tasks, all backed by artifacts.
   repositories, call live APIs, read credentials, run daemons, or mutate selected
   targets.
 - **FR-004**: Landscape map MUST write a complete artifact bundle containing
-  `run.json`, `graph.json`, `findings.jsonl`, `map.md`, and `coverage.json`.
+  `run.json`, `summary.json`, `graph.json`, `findings.jsonl`, `map.md`, and
+  `coverage.json`.
 - **FR-005**: Startup validation MUST fail without partial output when the
   selection is malformed, the output path is unsafe, selected ids collide, or
   full-corpus gate checks fail.
@@ -228,8 +230,8 @@ unknown/cannot-verify ledger, and next-agent tasks, all backed by artifacts.
   blocked.
 - **Imported Tool Output**: Local file produced by an external OSS tool and
   normalized into graph facts or findings with attribution.
-- **Landscape Artifact Bundle**: `run.json`, `coverage.json`, `graph.json`,
-  `findings.jsonl`, and `map.md` generated from one map run.
+- **Landscape Artifact Bundle**: `run.json`, `coverage.json`, `summary.json`,
+  `graph.json`, `findings.jsonl`, and `map.md` generated from one map run.
 - **CTO Packet**: Human-readable `map.md` sections derived from machine
   artifacts for architecture, contracts, duplication, legacy, gaps, and
   next-agent work.

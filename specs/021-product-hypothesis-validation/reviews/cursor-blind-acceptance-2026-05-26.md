@@ -53,3 +53,9 @@ classified `degraded`, not `passed`.
 | GAP-GRAPH-TYPE | File inventory nodes need useful surface classification. | Control graph had 760 unknown file nodes. |
 | GAP-DUP-FINDINGS | Placeholder findings need deduplication. | Control map duplicated relationship placeholders. |
 
+## Follow-Up
+
+`specs/024-agent-scale-map-summary/` implements the accepted follow-up for
+`GAP-GRAPH-SCALE`, `GAP-GRAPH-TYPE`, and `GAP-DUP-FINDINGS`. It does not close
+the remaining install, OSS execution/import, non-Go relationship, duplication,
+configuration, or debt detector gaps.
