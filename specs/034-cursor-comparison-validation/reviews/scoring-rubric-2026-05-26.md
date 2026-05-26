@@ -9,6 +9,9 @@ Each lane receives one score for each of the five fixed CTO questions.
 - `scope_correct`: `yes`, `partial`, or `no`.
 - `evidence_use`: `yes`, `partial`, or `no`.
 - `unknown_handling`: `yes`, `partial`, or `no`.
+- `coverage_completeness`: `full`, `partial-bounded`, or `abstained`.
+  Use this to distinguish complete answered coverage from safe refusal to
+  claim beyond available evidence.
 - `next_action_quality`: `better`, `equal`, `worse`, or `not_applicable`
   relative to the other lane.
 - `notes`: short rationale with file, artifact, or output references.
@@ -23,6 +26,9 @@ Count as unsupported when the answer:
 - treats absent OSS/tool-output evidence as successful analysis;
 - infers duplicate/component risk without local source or tool-output support;
 - hides `unknown`, `cannot_verify`, or `not_assessed` where evidence is absent.
+
+Do not count bounded abstention as an unsupported claim. Record it separately
+as `coverage_completeness: partial-bounded` or `abstained`.
 
 ## Decision Rule
 

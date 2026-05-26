@@ -14,7 +14,8 @@ Date: 2026-05-26
 
 | Check | Status | Evidence |
 | --- | --- | --- |
-| Requirements checklist | `verified` | `requirements.md`: 16 total, 16 complete, 0 incomplete |
+| Spec quality checklist | `verified` | `checklists/requirements.md`: 16 total, 16 complete, 0 incomplete |
+| Functional requirement trace | `verified` | `comparison-ledger-2026-05-26.md`, `ledger-contract-check-2026-05-26.md`, and `implementation-disposition-2026-05-26.md` cover FR-001 through FR-010 |
 | Fixed target exists | `verified` | `/home/fall_out_bug/projects/bigtop-landscape` exists and contains 18 repos under `repos/` |
 | Context pack generation | `verified` | `/tmp/portolan-034-bigtop-context` written |
 | Map bundle generation | `verified` | `/tmp/portolan-034-bigtop-map` written |
