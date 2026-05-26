@@ -27,6 +27,9 @@ Candidate names from discovery include Graphify, GitNexus, CodeGraphContext,
 codebase-memory-mcp, Serena, and Repomix. Each needs a fresh license and
 maintenance review before integration.
 
+See `docs/research/2026-05-26-large-codebase-oss-landscape.md` for the current
+large-codebase OSS landscape and the recommended agent-context direction.
+
 ## Integration Rules
 
 - Import outputs; do not vendor large tools by default.
