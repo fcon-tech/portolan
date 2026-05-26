@@ -15,7 +15,14 @@ surface is:
 
 - `.specify/` for templates, scripts, workflow metadata, and constitution.
 - `.agents/skills/speckit-*` for Codex-compatible Spec Kit skills.
+- `.specify/extensions/git/` plus `speckit-git-*` skills for the bundled
+  Spec Kit git extension: branch creation, branch validation, remote detection,
+  repository initialization, and optional auto-commit hooks.
 - `specs/<NNN-short-name>/` for product slices.
+
+The git extension is installed, but auto-commit is disabled in
+`.specify/extensions/git/git-config.yml`. Portolan still uses explicit review,
+verification, and commit boundaries from `AGENTS.md`.
 
 ## Local Rules
 
