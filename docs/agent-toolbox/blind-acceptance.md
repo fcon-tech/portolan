@@ -6,7 +6,9 @@ any other local checkout, but the operator prompt must stay the same shape.
 
 ## Allowed Prompt
 
-Use this exact prompt shape, replacing only the paths:
+Use one of these prompt shapes, replacing only the paths. Prefer `Landscape`
+when a prepared selection exists. The full Bigtop operator run must use
+`Landscape`.
 
 ```text
 Portolan: <absolute path to the Portolan checkout or installed binary>
@@ -18,6 +20,20 @@ map this shit.
 Do not fetch upstream repositories.
 Do not use network.
 Do not mutate the target repository.
+Do not infer facts outside Portolan artifacts.
+Record every Portolan capability gap you hit.
+```
+
+```text
+Portolan: <absolute path to the Portolan checkout or installed binary>
+Landscape: <absolute path to the local landscape selection JSON>
+Output: <absolute path to a new run directory>
+
+map this shit.
+
+Do not fetch upstream repositories.
+Do not use network.
+Do not mutate the selected repositories.
 Do not infer facts outside Portolan artifacts.
 Record every Portolan capability gap you hit.
 ```
@@ -46,7 +62,12 @@ the acceptance question.
 ## Expected Agent Workflow
 
 The agent should discover Portolan's generic bootstrap surface from the
-Portolan path, then run the current map workflow against the target:
+Portolan path, then run the current map workflow against the supplied target or
+landscape selection:
+
+```bash
+portolan map --selection <selection-json> --out <run-dir>
+```
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
@@ -56,12 +77,14 @@ If no installed binary is available, the agent may run the command from the
 Portolan source checkout:
 
 ```bash
+go run ./cmd/portolan map --selection <selection-json> --out <run-dir>
 go run ./cmd/portolan map --root <target-root> --out <run-dir>
 ```
 
 The agent must inspect these artifacts before reporting:
 
 - `<run-dir>/run.json`
+- `<run-dir>/coverage.json`
 - `<run-dir>/graph.json`
 - `<run-dir>/findings.jsonl`
 - `<run-dir>/map.md`
@@ -79,12 +102,12 @@ Each evidence bundle must include:
 
 - agent harness and model, when known;
 - exact prompt shown to the agent;
-- target root and output directory;
+- target root and output directory, or landscape selection and output directory;
 - transcript or concise transcript summary;
 - commands attempted and their outcomes;
 - Portolan artifact inventory;
-- artifact review notes for `run.json`, `graph.json`, `findings.jsonl`, and
-  `map.md`;
+- artifact review notes for `run.json`, `coverage.json`, `graph.json`,
+  `findings.jsonl`, and `map.md`;
 - report produced by the agent or evaluator;
 - gap ledger with generic product gaps only;
 - status and stop reason.
@@ -113,8 +136,10 @@ target, harness, command execution, or Portolan build prevents the run.
 
 Apache Bigtop is the first realistic target because it stresses build,
 packaging, configuration, runtime, and smoke-test surfaces. A real Bigtop
-acceptance run requires a local Bigtop checkout. If that checkout is absent, the
-Bigtop run is `not_assessed`; do not replace it with fixture success.
+acceptance run requires a full landscape selection backed by local source
+checkouts for required active and external product repositories. If that target
+or selection is absent, the Bigtop run is `not_assessed`; do not replace it with
+fixture success.
 
 At least one non-Bigtop control target must use the same prompt shape. The
 default control for preflight is `testdata/map-command/repo`, because it is a

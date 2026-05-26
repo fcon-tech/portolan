@@ -57,9 +57,9 @@ behind a Bigtop-specific operator packet or a partial single-repository smoke.
 | --- | --- | --- | --- |
 | P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
 | P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
-| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; blind runs not_assessed |
-| P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Local implementation complete; full Bigtop corpus selection and map run verified locally; PR review not_assessed |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape orchestration can enforce 100% corpus representation. | Blocked on P1-016 for full-landscape `map --selection` and Bigtop coverage gate |
+| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; first full blind operator runs pending evidence |
+| P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape orchestration can enforce 100% corpus representation. | Unblocked from P1-016; next required evidence is a real Cursor + Composer 2.5 blind run using the full Bigtop landscape selection |
 
 ## P2: Build What The Bigtop Smoke Proves Is Missing
 

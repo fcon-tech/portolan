@@ -45,11 +45,11 @@
 
 - [ ] T014 After spec 014 is implemented, run Cursor + Composer 2.5 using only
   the blind prompt shape.
-  - Status: not_assessed in this Codex implementation turn; no Cursor +
-    Composer 2.5 operator transcript was available.
+  - Status 2026-05-26: pending evidence. Cursor + Composer 2.5 availability is
+    not the blocker; the run transcript has not been recorded in the repo.
 - [ ] T015 Record the Bigtop run as `passed`, `failed`, `degraded`, or
   `not_assessed` with exact evidence.
-  - Status: not_assessed; no real Bigtop operator transcript was produced.
+  - Status 2026-05-26: pending the real Bigtop landscape operator run.
 - [ ] T016 Run or schedule the same protocol against the non-Bigtop control
   target.
   - Status: not_assessed; no external blind operator control transcript was

@@ -14,7 +14,8 @@ harness.
 
 ## Status
 
-Bootstrap repository.
+Active local-first CLI. The current product-grade path is a landscape selection
+mapped into a five-artifact run directory.
 
 Implemented:
 
@@ -26,8 +27,10 @@ Implemented:
   files without source-visible overclaiming.
 - `portolan diff --base <file> --head <file> --out <file>` for
   machine-readable evidence graph movement without readiness verdicts.
-- `portolan map --root <dir> --out <dir>` for a first one-command artifact
-  bundle with `run.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+- `portolan map --selection <file> --out <dir>` for a product-grade landscape
+  artifact bundle with `run.json`, `coverage.json`, `graph.json`,
+  `findings.jsonl`, and `map.md`.
+- `portolan map --root <dir> --out <dir>` as a single-repository shortcut.
 - Relationship detection for local Go imports and `go.mod` dependencies in
   `portolan map`.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
@@ -38,13 +41,18 @@ Implemented:
 - Portable agent guide, example report, and Cursor project rule for the first
   agent toolbox acceptance loop.
 - Root-discoverable agent bootstrap entrypoint and portable map skill.
+- Bigtop manifest-to-selection generation with
+  `portolan selection generate-bigtop`.
+- Full Bigtop corpus local map verification through the landscape selection
+  path.
 
 Not implemented yet:
 
+- recorded real Cursor + Composer 2.5 blind operator run against the full Bigtop
+  landscape selection;
 - duplication, configuration, and technical-debt finding generators;
 - non-Go, runtime, and inferred service relationship detection;
 - platform-specific runtime importers;
-- corpus preparation or manifest-to-selection generation;
 - SPDX, Syft-native, or live tool importers;
 - integrations with external tools.
 
@@ -70,8 +78,8 @@ Portolan should be built from the cheapest useful agent loop outward:
    workflow from Portolan itself, not from a target-specific chat prompt.
 3. Immediate Bigtop acceptance in Cursor + Composer 2.5 using the same blind
    protocol to expose real product gaps.
-4. `portolan map --root . --out .portolan/run` producing graph, findings, run
-   metadata, and a readable packet.
+4. `portolan map --selection selection.json --out .portolan/run` producing
+   coverage, graph, findings, run metadata, and a readable packet.
 5. Relationship, duplication, configuration, and technical-debt finding
    generators backed by local evidence, prioritized from that smoke.
 6. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.

@@ -36,10 +36,12 @@ The MVP should prove one narrow product promise:
 
 ## Phase 4: Map Command And Evidence Useful To Users
 
-- Add `portolan map --root . --out .portolan/run` if the smoke proves the agent
-  needs a single artifact-producing command.
-- Emit a stable artifact bundle: `graph.json`, `findings.jsonl`, `run.json`,
-  and `map.md`.
+- Keep `portolan map --root . --out .portolan/run` as the single-repository
+  shortcut.
+- Use `portolan map --selection selection.json --out .portolan/run` as the
+  product-grade landscape command.
+- Emit a stable artifact bundle: `run.json`, `coverage.json`, `graph.json`,
+  `findings.jsonl`, and `map.md`.
 
 - Detect relationships across imports, dependency manifests, config references,
   metadata, runtime exports, and claims.

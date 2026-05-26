@@ -56,14 +56,22 @@
 - [x] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
   target-agnostic prompt, run ledger, and status taxonomy.
 - [ ] T021 Run the blind protocol against a real local Apache Bigtop checkout.
+  - Status 2026-05-26: unblocked from P1-016. Use the full landscape
+    `Landscape: <selection.json>` prompt shape and Cursor + Composer 2.5; do not
+    downgrade this to `not_assessed` solely because the earlier Codex review did
+    not operate the Cursor lane.
 - [ ] T022 If the local Apache Bigtop checkout is absent, record the run as
   blocked or `not_assessed`; do not substitute the fixture as acceptance proof.
+  - Status 2026-05-26: still open. The missing evidence is the operator
+    transcript and concrete local target/selection path, not Cursor + Composer
+    availability.
 - [ ] T023 Update Bigtop gap ledger and product backlog only with generic
   product gaps proven by the blind run.
 
 ## Deferred Work
 
-- [ ] D001 Add a manifest-to-selection generator.
+- [x] D001 Add a manifest-to-selection generator.
+  - Implemented by spec 016 as `portolan selection generate-bigtop`.
 - [ ] D002 Add a minimal local fixture derived from the Bigtop manifest.
 - [ ] D003 Add schema validation beyond JSON syntax.
 - [ ] D004 Add optional corpus preparation commands with explicit network
