@@ -10,7 +10,9 @@ technical-debt claims.
 ## Minimum Inputs
 
 - Portolan checkout or installed `portolan` binary.
-- Target root: the local repository or directory being mapped.
+- Landscape selection: a local `selection.json` naming repositories, metadata,
+  runtime exports, claims, black boxes, and tool outputs. If no selection exists,
+  use a target root as a single-repository shortcut.
 - Run directory: an explicit output directory for generated artifacts.
 
 If the user did not choose a run directory, use `<target-root>/.portolan/run`
@@ -22,13 +24,20 @@ local output path and report it.
 Use the installed binary when available:
 
 ```bash
-portolan map --root <target-root> --out <run-dir>
+portolan map --selection <selection.json> --out <run-dir>
 ```
 
 If only a Portolan source checkout is available, run from that checkout:
 
 ```bash
-go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+```
+
+Use `map --root` only as the single-repository shortcut when no landscape
+selection is available:
+
+```bash
+portolan map --root <target-root> --out <run-dir>
 ```
 
 Use `--force` only when the selected output directory already exists and the
@@ -39,6 +48,7 @@ user accepts replacing that Portolan run output.
 Read these files before reporting:
 
 - `run.json`
+- `coverage.json`
 - `graph.json`
 - `findings.jsonl`
 - `map.md`

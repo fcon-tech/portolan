@@ -1,0 +1,6 @@
+{
+  "duplicates": [
+    {"firstFile": "src/a.ts", "secondFile": "src/b.ts", "lines": 12}
+  ],
+  "confidence": 0.6
+}

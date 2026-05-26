@@ -16,7 +16,7 @@ mirrors that contract for harnesses that support reusable instructions.
 Require:
 
 - a Portolan checkout or installed `portolan` binary;
-- a local target root;
+- a local landscape selection, or a local target root when no selection exists;
 - an explicit run directory.
 
 If the user did not choose a run directory, use `<target-root>/.portolan/run`
@@ -28,13 +28,19 @@ local output path and report it.
 Prefer an installed binary:
 
 ```bash
-portolan map --root <target-root> --out <run-dir>
+portolan map --selection <selection.json> --out <run-dir>
 ```
 
 If only a source checkout is available, run from the Portolan checkout:
 
 ```bash
-go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+```
+
+Use the root shortcut only when no landscape selection is available:
+
+```bash
+portolan map --root <target-root> --out <run-dir>
 ```
 
 Use `--force` only when the selected output directory already exists and the
@@ -45,6 +51,7 @@ user accepts replacing that Portolan run output.
 Read all of these before reporting:
 
 - `run.json`
+- `coverage.json`
 - `graph.json`
 - `findings.jsonl`
 - `map.md`

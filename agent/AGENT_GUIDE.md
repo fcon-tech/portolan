@@ -19,6 +19,7 @@ explain a repository. Trigger phrases include:
 These are the real capabilities this guide may rely on today:
 
 - `portolan --version`
+- `portolan map --selection <selection.json> --out <run-dir> [--force]`
 - `portolan map --root <dir> --out <run-dir> [--force]`
 - `portolan scan --selection <selection.json> --out <graph.json> [--force]`
 - `portolan packet render --graph <graph.json> --out <packet.md> [--force]`
@@ -35,16 +36,23 @@ surfaces that are not implemented yet.
 
 ## Target Contract
 
-This target contract is now the preferred workflow.
+This target contract is now the preferred workflow when a landscape selection is
+available.
 
 ```bash
-portolan map --root <target-root> --out <run-dir>
+portolan map --selection <selection.json> --out <run-dir>
 ```
 
 If only a Portolan source checkout is available, run from that checkout:
 
 ```bash
-go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+```
+
+Use the single-repository shortcut only when there is no selection file:
+
+```bash
+portolan map --root <target-root> --out <run-dir>
 ```
 
 The current map bundle is:
@@ -52,6 +60,7 @@ The current map bundle is:
 ```text
 .portolan/run/
   run.json
+  coverage.json
   graph.json
   findings.jsonl
   map.md
@@ -116,14 +125,20 @@ Use `not_assessed` for a surface you did not check.
 
    If current commands are missing or fail, stop and report the blocker.
 
-3. Run the map command:
+3. Run the map command. Prefer `--selection` when a landscape selection exists:
+
+   ```bash
+   portolan map --selection <selection.json> --out <run-dir>
+   ```
+
+   Use `--root` only as a single-repository shortcut:
 
    ```bash
    portolan map --root <target-root> --out <run-dir>
    ```
 
-   Read `run.json`, `graph.json`, `findings.jsonl`, and `map.md` before
-   reporting.
+   Read `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and
+   `map.md` before reporting.
 
 4. Use lower-level commands only when the user or fixture provides matching
    local inputs:

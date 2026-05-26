@@ -1,0 +1,11 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {"bom-ref": "pkg:golang/example.com/landscape/api@0.0.0", "name": "api"},
+    {"bom-ref": "pkg:golang/example.com/landscape/worker@0.0.0", "name": "worker"}
+  ],
+  "dependencies": [
+    {"ref": "pkg:golang/example.com/landscape/api@0.0.0", "dependsOn": ["pkg:golang/example.com/landscape/worker@0.0.0"]}
+  ],
+  "confidence": 0.7
+}

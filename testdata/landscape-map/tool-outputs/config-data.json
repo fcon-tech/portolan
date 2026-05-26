@@ -1,0 +1,11 @@
+{
+  "Results": [
+    {
+      "Target": "deployment.yaml",
+      "Misconfigurations": [
+        {"ID": "CFG-001", "Title": "Fixture configuration surface"}
+      ]
+    }
+  ],
+  "confidence": 0.6
+}

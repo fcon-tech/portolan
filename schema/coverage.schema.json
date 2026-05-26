@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/schema/coverage.schema.json",
+  "title": "Portolan Coverage Ledger",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_by", "scope", "records", "summary"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "generated_by": {
+      "type": "string",
+      "const": "portolan"
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/record"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["require_full_corpus"],
+      "properties": {
+        "selection_path": {
+          "type": "string"
+        },
+        "corpus_manifest": {
+          "type": "string"
+        },
+        "require_full_corpus": {
+          "type": "boolean"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "status", "evidence_state", "source", "reason"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["visible", "represented", "missing", "cannot_verify", "unknown", "not_assessed", "blocked"]
+        },
+        "evidence_state": {
+          "type": "string",
+          "enum": ["source-visible", "metadata-visible", "runtime-visible", "claim-only", "unknown", "cannot_verify", "not_assessed"]
+        },
+        "source": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

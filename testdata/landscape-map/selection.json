@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "repo-api", "kind": "repository", "path": "repos/api"},
+    {"id": "repo-worker", "kind": "repository", "path": "repos/worker"},
+    {"id": "repo-web", "kind": "repository", "path": "repos/web"},
+    {"id": "repo-data", "kind": "repository", "path": "repos/data"}
+  ],
+  "metadata": [
+    {"id": "catalog-api", "path": "metadata/catalog-api.json"}
+  ],
+  "runtime": [
+    {"id": "runtime-compose", "path": "runtime/docker-compose.json"}
+  ],
+  "claims": [
+    {"id": "claims-landscape", "path": "claims/landscape.json"}
+  ],
+  "black_boxes": [
+    {
+      "id": "payments-gateway",
+      "kind": "service",
+      "label": "Payments Gateway",
+      "expected": ["dependencies", "runtime-endpoints"]
+    }
+  ],
+  "tool_outputs": [
+    {
+      "id": "sbom-api",
+      "kind": "sbom",
+      "tool": "syft",
+      "version": "1.0.0",
+      "path": "tool-outputs/sbom-api.json",
+      "repository": "repo-api",
+      "limitations": ["fixture contains package names only"]
+    },
+    {
+      "id": "size-worker",
+      "kind": "language-inventory",
+      "tool": "scc",
+      "version": "3.2.0",
+      "path": "tool-outputs/size-worker.json",
+      "repository": "repo-worker"
+    },
+    {
+      "id": "duplication-web",
+      "kind": "duplication",
+      "tool": "jscpd",
+      "version": "4.0.0",
+      "path": "tool-outputs/duplication-web.json",
+      "repository": "repo-web"
+    },
+    {
+      "id": "config-data",
+      "kind": "configuration",
+      "tool": "trivy-config",
+      "version": "0.50.0",
+      "path": "tool-outputs/config-data.json",
+      "repository": "repo-data"
+    }
+  ]
+}

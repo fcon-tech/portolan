@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "apache-bigtop-repo", "kind": "repository", "path": "repos/apache-bigtop-repo"},
+    {"id": "apache-hadoop", "kind": "repository", "path": "repos/apache-hadoop"}
+  ],
+  "metadata": [
+    {"id": "apache-bigtop-release-350", "path": "metadata/release-350.json"}
+  ],
+  "corpus_manifest": "../../corpora/apache-bigtop/manifest.json",
+  "require_full_corpus": true
+}

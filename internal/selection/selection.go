@@ -17,6 +17,10 @@ type Selection struct {
 	Runtime       []InputSource `json:"runtime"`
 	Claims        []ClaimSource `json:"claims"`
 	BlackBoxes    []BlackBox    `json:"black_boxes"`
+	ToolOutputs   []ToolOutput  `json:"tool_outputs"`
+
+	CorpusManifest    string `json:"corpus_manifest"`
+	RequireFullCorpus bool   `json:"require_full_corpus"`
 }
 
 type Target struct {
@@ -33,6 +37,16 @@ type ClaimSource struct {
 type InputSource struct {
 	ID   string `json:"id"`
 	Path string `json:"path"`
+}
+
+type ToolOutput struct {
+	ID          string   `json:"id"`
+	Kind        string   `json:"kind"`
+	Tool        string   `json:"tool"`
+	Version     string   `json:"version"`
+	Path        string   `json:"path"`
+	Repository  string   `json:"repository"`
+	Limitations []string `json:"limitations"`
 }
 
 type BlackBox struct {
@@ -146,6 +160,30 @@ func (sel Selection) Validate() error {
 			}
 		}
 	}
+	for _, source := range sel.ToolOutputs {
+		if source.ID == "" {
+			return fmt.Errorf("tool output id is required")
+		}
+		if !validToolOutputKind(source.Kind) {
+			return fmt.Errorf("tool output %q kind %q is not supported", source.ID, source.Kind)
+		}
+		if source.Tool == "" {
+			return fmt.Errorf("tool output %q tool is required", source.ID)
+		}
+		if source.Path == "" {
+			return fmt.Errorf("tool output %q path is required", source.ID)
+		}
+		if isURLLikePath(source.Path) {
+			return fmt.Errorf("tool output %q path must be local", source.ID)
+		}
+		if _, ok := seen[source.ID]; ok {
+			return fmt.Errorf("duplicate selection id %q", source.ID)
+		}
+		seen[source.ID] = struct{}{}
+	}
+	if sel.CorpusManifest != "" && isURLLikePath(sel.CorpusManifest) {
+		return fmt.Errorf("corpus manifest path must be local")
+	}
 
 	return nil
 }
@@ -215,6 +253,15 @@ func validBlackBoxKind(kind string) bool {
 func validExpectedField(field string) bool {
 	switch field {
 	case "owner", "dependencies", "runtime-endpoints":
+		return true
+	default:
+		return false
+	}
+}
+
+func validToolOutputKind(kind string) bool {
+	switch kind {
+	case "sbom", "dependency", "language-inventory", "code-size", "duplication", "configuration", "contract-surface":
 		return true
 	default:
 		return false

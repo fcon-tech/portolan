@@ -39,6 +39,19 @@
       "items": {
         "$ref": "#/$defs/black_box"
       }
+    },
+    "tool_outputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tool_output"
+      }
+    },
+    "corpus_manifest": {
+      "type": "string",
+      "minLength": 1
+    },
+    "require_full_corpus": {
+      "type": "boolean"
     }
   },
   "$defs": {
@@ -121,6 +134,41 @@
     },
     "claim_source": {
       "$ref": "#/$defs/input_source"
+    },
+    "tool_output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "tool", "path"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["sbom", "dependency", "language-inventory", "code-size", "duplication", "configuration", "contract-surface"]
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

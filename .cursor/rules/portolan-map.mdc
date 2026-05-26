@@ -8,10 +8,11 @@ alwaysApply: false
 When the user asks to map, audit, inspect, understand, or explain this
 codebase, first read `agent/START_HERE.md` and follow that portable workflow.
 
-Run Portolan before broad manual architecture claims. Use
-`portolan map --root <target-root> --out <run-dir>`, or run
-`go run ./cmd/portolan map --root <target-root> --out <run-dir>` from a
-Portolan source checkout when no binary is installed. Read `run.json`,
+Run Portolan before broad manual architecture claims. Prefer
+`portolan map --selection <selection.json> --out <run-dir>` when a landscape
+selection is available. Use `portolan map --root <target-root> --out <run-dir>`
+only as a single-repository shortcut. From a Portolan source checkout, use the
+same command after `go run ./cmd/portolan`. Read `run.json`, `coverage.json`,
 `graph.json`, `findings.jsonl`, and `map.md` before reporting.
 
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,

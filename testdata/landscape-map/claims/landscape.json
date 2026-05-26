@@ -1,0 +1,5 @@
+{
+  "claims": [
+    {"id":"c1","subject":"repo-api","predicate":"depends-on","object":"repo-worker","source":"fixture"}
+  ]
+}

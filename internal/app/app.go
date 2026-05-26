@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/governor/portolan/internal/corpus"
 	graphdiff "github.com/governor/portolan/internal/diff"
 	"github.com/governor/portolan/internal/importer"
 	"github.com/governor/portolan/internal/maprun"
@@ -58,6 +59,7 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 	flags.SetOutput(stderr)
 	flags.Usage = func() {}
 	rootPath := flags.String("root", "", "local repository root path")
+	selectionPath := flags.String("selection", "", "local landscape selection JSON path")
 	outputPath := flags.String("out", "", "output artifact bundle directory")
 	force := flags.Bool("force", false, "replace an existing output directory")
 	if err := flags.Parse(args); err != nil {
@@ -73,10 +75,11 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 	}
 
 	result, err := maprun.Run(maprun.Options{
-		RootPath:   *rootPath,
-		OutputPath: *outputPath,
-		Force:      *force,
-		Version:    Version,
+		RootPath:      *rootPath,
+		SelectionPath: *selectionPath,
+		OutputPath:    *outputPath,
+		Force:         *force,
+		Version:       Version,
 	})
 	if err != nil {
 		fmt.Fprintf(stderr, "map: %v\n", err)
@@ -200,10 +203,51 @@ func runSelection(args []string, stdout io.Writer, stderr io.Writer) int {
 	switch args[0] {
 	case "validate":
 		return runSelectionValidate(args[1:], stdout, stderr)
+	case "generate-bigtop":
+		return runSelectionGenerateBigtop(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown selection command %q\n", args[0])
 		return 2
 	}
+}
+
+func runSelectionGenerateBigtop(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeSelectionGenerateBigtopUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("selection generate-bigtop", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	manifestPath := flags.String("manifest", "", "local Bigtop corpus manifest JSON path")
+	repoDir := flags.String("repo-dir", "", "directory containing local repository checkouts by manifest id")
+	outputPath := flags.String("out", "", "output selection JSON path")
+	force := flags.Bool("force", false, "overwrite an existing selection file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeSelectionGenerateBigtopUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected selection generate-bigtop argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	sel, err := corpus.GenerateBigtopSelection(corpus.BigtopSelectionOptions{
+		ManifestPath: *manifestPath,
+		RepoDir:      *repoDir,
+		OutputPath:   *outputPath,
+		Force:        *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "selection generate-bigtop: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote Bigtop selection %s (%d repositories)\n", *outputPath, len(sel.Targets))
+	return 0
 }
 
 func runSelectionValidate(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -352,8 +396,10 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan import cyclonedx --in bom.cdx.json --out graph.json
+  portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
+  portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
   portolan scan --help
@@ -365,19 +411,22 @@ the contract before it collects repository, metadata, runtime, or claim evidence
 
 func writeMapUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
+  portolan map --selection selection.json --out .portolan/run [--force]
   portolan map --root . --out .portolan/run [--force]
 
-Build a local, read-only artifact bundle for agent codebase mapping.
+Build a local, read-only artifact bundle for agent landscape mapping.
 
 Flags:
-  --root path   local repository root path
-  --out path    output bundle directory
-  --force       replace an existing output directory
+  --selection path   local landscape selection JSON path
+  --root path        local repository root shortcut path
+  --out path         output bundle directory
+  --force            replace an existing output directory
 
-The bundle contains run.json, graph.json, findings.jsonl, and map.md. The first
-implementation records basic source inventory and not_assessed findings for
-detectors that are not implemented yet. It makes no network calls and writes
-only to the selected output directory.
+The bundle contains run.json, coverage.json, graph.json, findings.jsonl, and
+map.md. Use --selection for product-grade landscape runs. --root is a
+single-repository compatibility shortcut. The command makes no network calls,
+does not mutate selected repositories, and writes only to the selected output
+directory.
 `)
 }
 
@@ -430,11 +479,28 @@ records supported component and dependency facts as metadata-visible evidence.
 func writeSelectionUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
   portolan selection validate --selection selection.json
+  portolan selection generate-bigtop --manifest manifest.json --repo-dir repos --out selection.json [--force]
 
 Validate local selection inventory without reading target contents.
 
 Default selection behavior is local-first, makes no network calls, and does not
 modify selected paths.
+`)
+}
+
+func writeSelectionGenerateBigtopUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json [--force]
+
+Generate a full-corpus Bigtop landscape selection from the committed manifest
+and an explicit local checkout directory. The command does not clone, fetch, or
+mutate repositories; it only writes the selected output JSON.
+
+Flags:
+  --manifest path   local Bigtop corpus manifest JSON path
+  --repo-dir path   directory containing local repository checkouts named by manifest id
+  --out path        output selection JSON path
+  --force           overwrite an existing selection file
 `)
 }
 

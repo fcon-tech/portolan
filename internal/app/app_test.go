@@ -15,6 +15,7 @@ import (
 
 const mapCommandFixtureRoot = "../../testdata/map-command/repo"
 const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
+const landscapeMapSelection = "../../testdata/landscape-map/selection.json"
 
 func TestRunVersionWritesVersion(t *testing.T) {
 	var stdout bytes.Buffer
@@ -196,6 +197,40 @@ func TestRunSelectionValidateRequiresSelectionFlag(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "--selection is required") {
 		t.Fatalf("stderr = %q, want missing selection error", stderr.String())
+	}
+}
+
+func TestRunSelectionGenerateBigtopWritesFullCorpusSelection(t *testing.T) {
+	root := t.TempDir()
+	repoDir := filepath.Join(root, "repos")
+	mustMkdir(t, filepath.Join(repoDir, "apache-bigtop-repo"))
+	mustMkdir(t, filepath.Join(repoDir, "apache-hadoop"))
+	manifest := filepath.Join(root, "manifest.json")
+	mustWrite(t, manifest, `{
+		"schema_version":"0.1.0",
+		"id":"apache-bigtop",
+		"targets":[
+			{"id":"apache-bigtop-repo","label":"Bigtop","kind":"repository","lifecycle":"active","role":"integrator","evidence_state":"source-visible"},
+			{"id":"apache-hadoop","label":"Hadoop","kind":"repository","lifecycle":"active","role":"filesystem","evidence_state":"source-visible"},
+			{"id":"bigtop-utils","label":"Utils","kind":"package","lifecycle":"internal-support","role":"support","evidence_state":"metadata-visible"}
+		]
+	}`)
+	out := filepath.Join(root, "selection.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"selection", "generate-bigtop", "--manifest", manifest, "--repo-dir", repoDir, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	selection := readJSONFile(t, out)
+	if selection["corpus_manifest"] != manifest || selection["require_full_corpus"] != true {
+		t.Fatalf("selection = %#v, want full-corpus manifest fields", selection)
+	}
+	targets := selection["targets"].([]any)
+	if len(targets) != 2 {
+		t.Fatalf("targets = %#v, want only active repositories", targets)
 	}
 }
 
@@ -891,7 +926,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(stdout.String(), "wrote map bundle") {
 		t.Fatalf("stdout = %q, want bundle summary", stdout.String())
 	}
-	for _, name := range []string{"run.json", "graph.json", "findings.jsonl", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "map.md"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -915,6 +950,217 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
+}
+
+func TestRunMapSelectionWritesLandscapeArtifactBundle(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", landscapeMapSelection, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "map.md"} {
+		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
+			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+	result := readGraph(t, filepath.Join(out, "graph.json"))
+	for _, id := range []string{"repo-api", "repo-worker", "repo-web", "repo-data", "sbom-api", "duplication-web", "config-data"} {
+		findNode(t, result, id)
+	}
+	for _, prefix := range []string{"sbom-api:component:", "size-worker:language:", "duplication-web:duplicate:", "config-data:config:"} {
+		findNodeWithPrefix(t, result, prefix)
+	}
+	findEdge(t, result, "repo-api", "repo-api:source:go.mod", "observes")
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	scope := coverage["scope"].(map[string]any)
+	if scope["selection_path"] != landscapeMapSelection || scope["require_full_corpus"] != false {
+		t.Fatalf("coverage scope = %#v, want selection path and non-full-corpus scope", scope)
+	}
+	summary := coverage["summary"].(map[string]any)
+	if summary["status:visible"].(float64) < 8 {
+		t.Fatalf("coverage summary = %#v, want visible selected inputs", summary)
+	}
+	mapText, err := os.ReadFile(filepath.Join(out, "map.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"## Landscape Inventory", "## Repo/Product Matrix", "## Contracts And Surfaces", "## Duplication", "## Configuration", "## Legacy And Debt", "## Unknowns And Cannot Verify", "## Next-Agent Tasks"} {
+		if !strings.Contains(string(mapText), want) {
+			t.Fatalf("map.md missing %q:\n%s", want, mapText)
+		}
+	}
+}
+
+func TestRunMapRejectsRootAndSelectionTogether(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--selection", landscapeMapSelection, "--out", out}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want mutual exclusion error")
+	}
+	if !strings.Contains(stderr.String(), "mutually exclusive") {
+		t.Fatalf("stderr = %q, want mutual exclusion error", stderr.String())
+	}
+}
+
+func TestRunMapRootStillWritesExistingBundleWithCoverage(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	readGraph(t, filepath.Join(out, "graph.json"))
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	if coverage["schema_version"] != "0.1.0" {
+		t.Fatalf("coverage = %#v, want schema version", coverage)
+	}
+}
+
+func TestRunMapIncompleteBigtopCorpusBlocksBeforeArtifacts(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", "../../testdata/apache-bigtop-landscape/incomplete-selection.json", "--out", out}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want full corpus gate error")
+	}
+	if !strings.Contains(stderr.String(), "full corpus gate blocked") || !strings.Contains(stderr.String(), "apache-airflow") {
+		t.Fatalf("stderr = %q, want missing active product", stderr.String())
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Fatalf("output exists after full-corpus startup block; err = %v", err)
+	}
+}
+
+func TestRunMapFullCorpusRequiresManifest(t *testing.T) {
+	root := t.TempDir()
+	repo := filepath.Join(root, "repo")
+	mustMkdir(t, repo)
+	mustWrite(t, filepath.Join(repo, "README.md"), "fixture")
+	selection := filepath.Join(root, "selection.json")
+	mustWrite(t, selection, `{
+		"schema_version":"0.1.0",
+		"require_full_corpus":true,
+		"targets":[{"id":"repo","kind":"repository","path":`+quote(repo)+`}]
+	}`)
+	out := filepath.Join(root, "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selection, "--out", out}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want missing manifest gate error")
+	}
+	if !strings.Contains(stderr.String(), "require_full_corpus") {
+		t.Fatalf("stderr = %q, want full-corpus manifest error", stderr.String())
+	}
+	if _, err := os.Stat(out); !os.IsNotExist(err) {
+		t.Fatalf("output exists after full-corpus startup block; err = %v", err)
+	}
+}
+
+func TestRunMapSelectionMapAgreesWithCoverageSummary(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", landscapeMapSelection, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	summary := coverage["summary"].(map[string]any)
+	mapText, err := os.ReadFile(filepath.Join(out, "map.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := fmt.Sprintf("- Coverage records: %.0f", summary["total"].(float64))
+	if !strings.Contains(string(mapText), want) {
+		t.Fatalf("map.md missing coverage total %q:\n%s", want, mapText)
+	}
+}
+
+func TestRunMapSelectionStableCountsAcrossRuns(t *testing.T) {
+	root := t.TempDir()
+	first := filepath.Join(root, "first")
+	second := filepath.Join(root, "second")
+	for _, out := range []string{first, second} {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		code := Run([]string{"map", "--selection", landscapeMapSelection, "--out", out, "--force"}, &stdout, &stderr)
+		if code != 0 {
+			t.Fatalf("Run returned %d for %s, want 0; stderr = %q", code, out, stderr.String())
+		}
+	}
+	firstCoverage := readJSONFile(t, filepath.Join(first, "coverage.json"))
+	secondCoverage := readJSONFile(t, filepath.Join(second, "coverage.json"))
+	if fmt.Sprint(firstCoverage["summary"]) != fmt.Sprint(secondCoverage["summary"]) {
+		t.Fatalf("coverage summaries differ: %#v vs %#v", firstCoverage["summary"], secondCoverage["summary"])
+	}
+	firstFindings := readFindings(t, filepath.Join(first, "findings.jsonl"))
+	secondFindings := readFindings(t, filepath.Join(second, "findings.jsonl"))
+	if len(firstFindings) != len(secondFindings) {
+		t.Fatalf("finding counts differ: %d vs %d", len(firstFindings), len(secondFindings))
+	}
+}
+
+func TestRunMapSelectionRejectsRepositorySymlinkAsSourceVisible(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "target")
+	mustMkdir(t, target)
+	mustWrite(t, filepath.Join(target, "README.md"), "fixture")
+	link := filepath.Join(root, "repo-link")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
+	selection := filepath.Join(root, "selection.json")
+	mustWrite(t, selection, `{
+		"schema_version":"0.1.0",
+		"targets":[{"id":"repo-link","kind":"repository","path":`+quote(link)+`}]
+	}`)
+	out := filepath.Join(root, "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selection, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, filepath.Join(out, "graph.json"))
+	node := findNode(t, result, "repo-link")
+	evidence := node["evidence"].(map[string]any)
+	if evidence["state"] != "unknown" {
+		t.Fatalf("evidence = %#v, want symlink not source-visible", evidence)
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		if record["id"] != "repo-link" {
+			continue
+		}
+		if record["status"] != "cannot_verify" || record["evidence_state"] != "cannot_verify" {
+			t.Fatalf("coverage record = %#v, want cannot_verify for repository symlink", record)
+		}
+		return
+	}
+	t.Fatalf("coverage records = %#v, want repo-link record", records)
 }
 
 func TestRunMapRejectsMissingRootWithoutPartialBundle(t *testing.T) {
@@ -994,9 +1240,9 @@ func TestRunMapRejectsMissingRequiredFlags(t *testing.T) {
 		want string
 	}{
 		{
-			name: "missing root",
+			name: "missing root or selection",
 			args: []string{"map", "--out", filepath.Join(t.TempDir(), "run")},
-			want: "--root is required",
+			want: "--root or --selection is required",
 		},
 		{
 			name: "missing output",
@@ -1362,7 +1608,7 @@ func TestRunMapRunJSONRecordsAuditMetadata(t *testing.T) {
 		}
 	}
 	artifacts := run["artifacts"].(map[string]any)
-	for _, name := range []string{"run", "graph", "findings", "packet"} {
+	for _, name := range []string{"run", "coverage", "graph", "findings", "packet"} {
 		if artifacts[name] == "" {
 			t.Fatalf("artifacts missing %s: %#v", name, artifacts)
 		}
@@ -2183,6 +2429,19 @@ func readRunMetadata(t *testing.T, path string) map[string]any {
 	return run
 }
 
+func readJSONFile(t *testing.T, path string) map[string]any {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var value map[string]any
+	if err := json.Unmarshal(data, &value); err != nil {
+		t.Fatal(err)
+	}
+	return value
+}
+
 func readFindings(t *testing.T, path string) []map[string]any {
 	t.Helper()
 	data, err := os.ReadFile(path)
@@ -2212,6 +2471,31 @@ func findEdge(t *testing.T, graph map[string]any, from, to, kind string) map[str
 		}
 	}
 	t.Fatalf("edges = %#v, want %s %s -> %s", graph["edges"], kind, from, to)
+	return nil
+}
+
+func findNode(t *testing.T, graph map[string]any, id string) map[string]any {
+	t.Helper()
+	for _, item := range graph["nodes"].([]any) {
+		node := item.(map[string]any)
+		if node["id"] == id {
+			return node
+		}
+	}
+	t.Fatalf("nodes = %#v, want %s", graph["nodes"], id)
+	return nil
+}
+
+func findNodeWithPrefix(t *testing.T, graph map[string]any, prefix string) map[string]any {
+	t.Helper()
+	for _, item := range graph["nodes"].([]any) {
+		node := item.(map[string]any)
+		id, _ := node["id"].(string)
+		if strings.HasPrefix(id, prefix) {
+			return node
+		}
+	}
+	t.Fatalf("nodes = %#v, want prefix %s", graph["nodes"], prefix)
 	return nil
 }
 
