@@ -19,6 +19,7 @@ explain a repository. Trigger phrases include:
 These are the real capabilities this guide may rely on today:
 
 - `portolan --version`
+- `portolan context prepare --root <dir> --out <context-dir> --profile cursor [--force]`
 - `portolan map --selection <selection.json> --out <run-dir> [--force]`
 - `portolan map --root <dir> --out <run-dir> [--force]`
 - `portolan scan --selection <selection.json> --out <graph.json> [--force]`
@@ -36,20 +37,31 @@ surfaces that are not implemented yet.
 
 ## Target Contract
 
-This target contract is now the preferred workflow when a landscape selection is
-available.
+This target contract is now the preferred first step:
 
 ```bash
-portolan map --selection <selection.json> --out <run-dir>
+portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
 If only a Portolan source checkout is available, run from that checkout:
 
 ```bash
-go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-Use the single-repository shortcut only when there is no selection file:
+The context pack is:
+
+```text
+.portolan/context/
+  agent-brief.md
+  query-plan.md
+  repos.json
+  tool-registry.json
+  gaps.jsonl
+```
+
+Use the map command after context preparation when you need the evidence graph
+and readable map bundle:
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
@@ -125,7 +137,17 @@ Use `not_assessed` for a surface you did not check.
 
    If current commands are missing or fail, stop and report the blocker.
 
-3. Run the map command. Prefer `--selection` when a landscape selection exists:
+3. Run context preparation:
+
+   ```bash
+   portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+   ```
+
+   Read `agent-brief.md`, `query-plan.md`, `repos.json`,
+   `tool-registry.json`, and `gaps.jsonl`.
+
+4. Run the map command when graph artifacts are needed. Prefer `--selection`
+   only when a curated local selection exists:
 
    ```bash
    portolan map --selection <selection.json> --out <run-dir>
@@ -140,7 +162,7 @@ Use `not_assessed` for a surface you did not check.
    Read `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and
    `map.md` before reporting.
 
-4. Use lower-level commands only when the user or fixture provides matching
+5. Use lower-level commands only when the user or fixture provides matching
    local inputs:
 
    ```bash
@@ -154,13 +176,13 @@ Use `not_assessed` for a surface you did not check.
    Run only commands that match real local inputs. Do not invent a selection
    file, SBOM, base graph, or head graph.
 
-5. Inspect freshness before trusting existing artifacts. Check whether each
+6. Inspect freshness before trusting existing artifacts. Check whether each
    artifact corresponds to the current repository and command inputs.
 
-6. Report product categories from exact local evidence and record gaps for
+7. Report product categories from exact local evidence and record gaps for
    missing capabilities.
 
-7. For non-source targets, treat observed build, package, configuration, release,
+8. For non-source targets, treat observed build, package, configuration, release,
    smoke-test, and integration files as the local evidence boundary. If a
    referenced component source repository is not present locally, record the
    missing source evidence as `unknown`, `cannot_verify`, or `not_assessed`.

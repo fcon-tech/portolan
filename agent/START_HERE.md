@@ -10,9 +10,7 @@ technical-debt claims.
 ## Minimum Inputs
 
 - Portolan checkout or installed `portolan` binary.
-- Landscape selection: a local `selection.json` naming repositories, metadata,
-  runtime exports, claims, black boxes, and tool outputs. If no selection exists,
-  use a target root as a single-repository shortcut.
+- Target root: a local folder or repository to prepare for agent inspection.
 - Run directory: an explicit output directory for generated artifacts.
 
 If the user did not choose a run directory, use `<target-root>/.portolan/run`
@@ -24,17 +22,17 @@ local output path and report it.
 Use the installed binary when available:
 
 ```bash
-portolan map --selection <selection.json> --out <run-dir>
+portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
 If only a Portolan source checkout is available, run from that checkout:
 
 ```bash
-go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-Use `map --root` only as the single-repository shortcut when no landscape
-selection is available:
+Use `map` after context preparation when you need the evidence graph and map
+bundle:
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
@@ -45,7 +43,15 @@ user accepts replacing that Portolan run output.
 
 ## Required Artifacts
 
-Read these files before reporting:
+Read these context files before reporting broad claims:
+
+- `agent-brief.md`
+- `query-plan.md`
+- `repos.json`
+- `tool-registry.json`
+- `gaps.jsonl`
+
+When you also run `portolan map`, read these files before reporting:
 
 - `run.json`
 - `coverage.json`
