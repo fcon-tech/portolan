@@ -93,6 +93,9 @@ Read `summary.json` and `graph-index.json` before loading the full
 `graph.json`; on large landscapes the graph can be too large for a prompt-sized
 first pass.
 
+Use `portolan graph slice --bundle <run-dir>` for bounded follow-up by
+repository, edge kind, or finding kind before opening full `graph.json`.
+
 Do not replace missing Portolan evidence with unmarked manual analysis. If the
 command cannot run or the artifacts are missing, stop and report the blocker.
 

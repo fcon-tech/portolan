@@ -102,6 +102,9 @@ slice proves otherwise.
 Inspect `summary.json` and `graph-index.json` before full `graph.json` in
 large runs.
 
+Use `portolan graph slice --bundle <run-dir>` for bounded follow-up by
+repository, edge kind, or finding kind before opening full `graph.json`.
+
 Exact duplicate source/config findings are local evidence clusters only. The
 agent must not claim full duplicate-component or near-clone coverage unless a
 jscpd-style output is present and summarized in the context pack.
@@ -174,7 +177,8 @@ operator lane is run.
    build instructions, or guide paths.
 2. Verify the run did not use network, credentials, or target mutation.
 3. Inspect `run.json`, `summary.json`, `graph-index.json`, `findings.jsonl`,
-   and `map.md`; load `graph.json` only when needed.
+   and `map.md`; use `portolan graph slice` for bounded drill-down and load
+   `graph.json` only when needed.
 4. Compare the agent's report with the Portolan artifacts.
 5. Classify unsupported conclusions as `claim-only`, `unknown`,
    `cannot_verify`, or `not_assessed`.

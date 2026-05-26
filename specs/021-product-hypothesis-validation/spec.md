@@ -41,3 +41,6 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
 - H7: After `graph-index.json`, headless Cursor Agent can identify first graph
   drill-down entrypoints for a real multi-repo landscape without loading the
   full raw graph.
+- H8: After `portolan graph slice`, agents can perform a second bounded
+  drill-down from a real map bundle without putting full `graph.json` in the
+  prompt.

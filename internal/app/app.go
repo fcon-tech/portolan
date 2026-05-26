@@ -9,6 +9,7 @@ import (
 	"github.com/fall-out-bug/portolan/internal/contextprep"
 	"github.com/fall-out-bug/portolan/internal/corpus"
 	graphdiff "github.com/fall-out-bug/portolan/internal/diff"
+	"github.com/fall-out-bug/portolan/internal/graphslice"
 	"github.com/fall-out-bug/portolan/internal/importer"
 	"github.com/fall-out-bug/portolan/internal/maprun"
 	"github.com/fall-out-bug/portolan/internal/packet"
@@ -43,6 +44,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runDiff(args[1:], stdout, stderr)
 	case "map":
 		return runMap(args[1:], stdout, stderr)
+	case "graph":
+		return runGraph(args[1:], stdout, stderr)
 	case "context":
 		return runContext(args[1:], stdout, stderr)
 	default:
@@ -50,6 +53,73 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runGraph(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeGraphUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "slice":
+		return runGraphSlice(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown graph command %q\nRun 'portolan graph --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runGraphSlice(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeGraphSliceUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("graph slice", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	bundlePath := flags.String("bundle", "", "map bundle directory")
+	outputPath := flags.String("out", "", "output graph slice JSON path")
+	outputPathShort := flags.String("o", "", "output graph slice JSON path")
+	repoID := flags.String("repo", "", "repository node ID")
+	edgeKind := flags.String("edge-kind", "", "edge kind")
+	findingKind := flags.String("finding-kind", "", "finding kind")
+	limit := flags.Int("limit", 100, "maximum samples per section")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeGraphSliceUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected graph slice argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *outputPath != "" && *outputPathShort != "" && *outputPath != *outputPathShort {
+		fmt.Fprintf(stderr, "graph slice: --out and -o must match when both are provided\n")
+		return 2
+	}
+	if *outputPath == "" {
+		*outputPath = *outputPathShort
+	}
+
+	result, err := graphslice.Run(graphslice.Options{
+		BundlePath:  *bundlePath,
+		OutputPath:  *outputPath,
+		RepoID:      *repoID,
+		EdgeKind:    *edgeKind,
+		FindingKind: *findingKind,
+		Limit:       *limit,
+		Force:       *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "graph slice: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote graph slice %s\n", result.OutputPath)
+	return 0
 }
 
 func runContext(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -456,6 +526,7 @@ Usage:
   portolan context prepare --root . --out .portolan/context --profile cursor
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
+  portolan graph slice --bundle .portolan/run --repo repo-id --out slice.json
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
   portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json
   portolan selection validate --selection selection.json
@@ -464,6 +535,45 @@ Usage:
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
+`)
+}
+
+func writeGraphUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan graph slice --bundle <map-run-dir> --repo <id> --out slice.json [--limit 100] [--force]
+  portolan graph slice --bundle <map-run-dir> --edge-kind <kind> --out slice.json [--limit 100] [--force]
+  portolan graph slice --bundle <map-run-dir> --finding-kind <kind> --out slice.json [--limit 100] [--force]
+
+Extract bounded, read-only graph slices from an existing map bundle.
+
+Available subcommands:
+  slice   write a bounded JSON slice by repository, edge kind, or finding kind
+`)
+}
+
+func writeGraphSliceUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan graph slice --bundle <map-run-dir> --repo <id> --out slice.json [--limit 100] [--force]
+  portolan graph slice --bundle <map-run-dir> --edge-kind <kind> --out slice.json [--limit 100] [--force]
+  portolan graph slice --bundle <map-run-dir> --finding-kind <kind> --out slice.json [--limit 100] [--force]
+
+Extract a bounded JSON graph slice from an existing local map bundle. The
+command reads graph.json and findings.jsonl locally, writes only to --out, and
+does not mutate the target repositories or map bundle.
+
+Flags:
+  --bundle path       existing portolan map bundle directory
+  --repo id           repository node ID to slice around
+  --edge-kind kind    edge kind to sample
+  --finding-kind kind finding kind to sample
+  --out path          output graph slice JSON path
+  -o path             output graph slice JSON path
+  --limit n           maximum samples per section, 1..1000 (default 100)
+  --force             overwrite an existing output file
+
+Exactly one of --repo, --edge-kind, or --finding-kind is required. The slice is
+not the full graph; use it after summary.json and graph-index.json and before
+loading large graph.json into an agent prompt.
 `)
 }
 

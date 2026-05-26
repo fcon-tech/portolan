@@ -24,6 +24,9 @@ local selection exists. Read `summary.json` and `graph-index.json` before full
 `graph.json`; then read the generated context pack and map artifacts before
 reporting.
 
+Use `portolan graph slice --bundle <run-dir>` for bounded repo, edge-kind, or
+finding-kind drill-downs before opening full `graph.json`.
+
 `portolan map` can report exact duplicate source/config clusters. Do not treat
 that as full copy/paste or near-clone coverage; use jscpd-style local outputs
 from `tool-registry.json` when present, otherwise preserve that richer
