@@ -32,9 +32,7 @@ Date: 2026-05-26
   "input_artifacts": [
     "/tmp/portolan-034-bigtop-context/",
     "/tmp/portolan-034-bigtop-map/summary.json",
-    "/tmp/portolan-034-bigtop-map/graph-index.json",
-    "/tmp/portolan-034-bigtop-map/findings.jsonl",
-    "/tmp/portolan-034-bigtop-map/map.md"
+    "/tmp/portolan-034-bigtop-map/graph-index.json"
   ],
   "failure_reason": ""
 }
@@ -129,7 +127,7 @@ Date: 2026-05-26
   "evidence_use": "yes",
   "unknown_handling": "yes",
   "next_action_quality": "equal",
-  "notes": "Grounded claims in configuration findings, graph-index high-degree nodes, repos.json, and explicit gaps for missing catalog/API/tool outputs."
+  "notes": "Grounded claims in context-pack files, graph-index samples, summary.json, and explicit gaps for missing catalog/API/tool outputs."
 }
 ```
 
@@ -181,7 +179,7 @@ Date: 2026-05-26
   "evidence_use": "yes",
   "unknown_handling": "yes",
   "next_action_quality": "better",
-  "notes": "Produced bounded next local actions tied to selection/manifest, graph slice, findings filters, and OSS producer gaps."
+  "notes": "Produced bounded next local actions tied to selection/manifest, graph slice commands, and OSS producer gaps."
 }
 ```
 
