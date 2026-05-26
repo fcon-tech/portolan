@@ -27,6 +27,8 @@ stress tests:
    needed.
 9. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
    and LSP/index surfaces, and larger Bigtop runs.
+10. **Product validation closure**: separate product-proof gaps into independent
+    validation specs before claiming Portolan exists as a product.
 
 Cursor + Composer 2.5 is the first cheap acceptance client because it is a
 popular agentic IDE where reports can be read and graphs can be inspected. It is
@@ -93,6 +95,16 @@ fixtures are preflight evidence only.
 | P3-030 | `specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |
 | P3-032 | `specs/032-context-evidence-index/` | Context packs include bounded `evidence-index.jsonl` records linking repositories, OSS/tool outputs, and gaps before agents drill into specialized artifacts. | Implemented |
 | P3-033 | `specs/033-agent-command-guardrails/` | Generated answer contracts and Cursor/portable instructions prevent agents from inventing unsupported Portolan command shapes. | Implemented |
+
+## P4: Product Validation Closure
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P4-034 | `specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Specified |
+| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Specified |
+| P4-036 | `specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Specified |
+| P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Specified |
+| P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Specified |
 
 ## Backlog Rules
 
