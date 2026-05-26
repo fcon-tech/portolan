@@ -2,6 +2,14 @@
 /bin/
 /dist/
 /coverage.out
+*.out
+*.test
+*.exe
+vendor/
+*.tmp
+*.swp
+.vscode/
+.idea/
 .codex-subagents/
 .agents/*
 !.agents/skills/

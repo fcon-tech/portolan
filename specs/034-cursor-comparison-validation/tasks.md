@@ -25,9 +25,9 @@ validation increment.
 **Purpose**: Prepare the spec-local review workspace and confirm the fixed
 target and existing CLI surfaces before validation work starts.
 
-- [ ] T001 Create `specs/034-cursor-comparison-validation/reviews/` for prompts, raw outputs, ledgers, and closeout artifacts.
-- [ ] T002 Record fixed-target preconditions in `specs/034-cursor-comparison-validation/reviews/preconditions-2026-05-26.md` using `test -d /home/fall_out_bug/projects/bigtop-landscape` and readable-path checks.
-- [ ] T003 [P] Record CLI surface checks in `specs/034-cursor-comparison-validation/reviews/cli-surface-2026-05-26.md` from `go run ./cmd/portolan context prepare --help`, `go run ./cmd/portolan map --help`, and `go run ./cmd/portolan graph slice --help`.
+- [x] T001 Create `specs/034-cursor-comparison-validation/reviews/` for prompts, raw outputs, ledgers, and closeout artifacts.
+- [x] T002 Record fixed-target preconditions in `specs/034-cursor-comparison-validation/reviews/preconditions-2026-05-26.md` using `test -d /home/fall_out_bug/projects/bigtop-landscape` and readable-path checks.
+- [x] T003 [P] Record CLI surface checks in `specs/034-cursor-comparison-validation/reviews/cli-surface-2026-05-26.md` from `go run ./cmd/portolan context prepare --help`, `go run ./cmd/portolan map --help`, and `go run ./cmd/portolan graph slice --help`.
 
 ---
 
@@ -38,11 +38,11 @@ before either lane can run.
 
 **CRITICAL**: No lane execution should begin until this phase is complete.
 
-- [ ] T004 Create the shared five-question prompt in `specs/034-cursor-comparison-validation/reviews/shared-five-question-prompt.md`.
-- [ ] T005 [P] Create the Cursor-alone lane prompt in `specs/034-cursor-comparison-validation/reviews/cursor-alone-prompt.md` that forbids Portolan-generated artifacts.
-- [ ] T006 [P] Create the Cursor-plus-Portolan lane prompt in `specs/034-cursor-comparison-validation/reviews/cursor-plus-portolan-prompt.md` that requires the context pack, `summary.json`, `graph-index.json`, and targeted slices only when needed.
-- [ ] T007 Create the comparison ledger scaffold in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` using `specs/034-cursor-comparison-validation/contracts/comparison-ledger.md`.
-- [ ] T008 Create the scoring rubric in `specs/034-cursor-comparison-validation/reviews/scoring-rubric-2026-05-26.md` covering unsupported claims, scope correctness, evidence use, unknown handling, and next action quality.
+- [x] T004 Create the shared five-question prompt in `specs/034-cursor-comparison-validation/reviews/shared-five-question-prompt.md`.
+- [x] T005 [P] Create the Cursor-alone lane prompt in `specs/034-cursor-comparison-validation/reviews/cursor-alone-prompt.md` that forbids Portolan-generated artifacts.
+- [x] T006 [P] Create the Cursor-plus-Portolan lane prompt in `specs/034-cursor-comparison-validation/reviews/cursor-plus-portolan-prompt.md` that requires the context pack, `summary.json`, `graph-index.json`, and targeted slices only when needed.
+- [x] T007 Create the comparison ledger scaffold in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` using `specs/034-cursor-comparison-validation/contracts/comparison-ledger.md`.
+- [x] T008 Create the scoring rubric in `specs/034-cursor-comparison-validation/reviews/scoring-rubric-2026-05-26.md` covering unsupported claims, scope correctness, evidence use, unknown handling, and next action quality.
 
 **Checkpoint**: Prompts, ledger scaffold, and scoring rubric are ready; lane
 execution can start.
@@ -62,16 +62,16 @@ decision that follows `contracts/comparison-ledger.md`.
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Generate the Portolan context pack at `/tmp/portolan-034-bigtop-context` and record command output in `specs/034-cursor-comparison-validation/reviews/portolan-artifacts-2026-05-26.md`.
-- [ ] T010 [US1] Generate the Portolan map bundle at `/tmp/portolan-034-bigtop-map` and record `summary.json`, `graph-index.json`, `coverage.json`, and artifact sizes in `specs/034-cursor-comparison-validation/reviews/portolan-artifacts-2026-05-26.md`.
-- [ ] T011 [P] [US1] Run or explicitly block the Cursor-alone lane and save raw output to `specs/034-cursor-comparison-validation/reviews/cursor-alone-output.md`.
-- [ ] T012 [P] [US1] Run or explicitly block the Cursor-plus-Portolan lane and save raw output to `specs/034-cursor-comparison-validation/reviews/cursor-plus-portolan-output.md`.
-- [ ] T013 [US1] Add lane records with prompt paths, raw output paths, input artifacts, run states, and failure reasons to `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
-- [ ] T014 [US1] Score all five Cursor-alone answers in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` with unsupported-claim counts and evidence notes.
-- [ ] T015 [US1] Score all five Cursor-plus-Portolan answers in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` with unsupported-claim counts and evidence notes.
-- [ ] T016 [US1] Calculate unsupported-claim reduction and useful-next-action pass rate in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
-- [ ] T017 [US1] Classify the final product claim as accepted, narrowed, rejected, blocked, or inconclusive in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
-- [ ] T018 [US1] Update the product hypothesis result in `docs/product-backlog.md` and cross-reference `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
+- [x] T009 [US1] Generate the Portolan context pack at `/tmp/portolan-034-bigtop-context` and record command output in `specs/034-cursor-comparison-validation/reviews/portolan-artifacts-2026-05-26.md`.
+- [x] T010 [US1] Generate the Portolan map bundle at `/tmp/portolan-034-bigtop-map` and record `summary.json`, `graph-index.json`, `coverage.json`, and artifact sizes in `specs/034-cursor-comparison-validation/reviews/portolan-artifacts-2026-05-26.md`.
+- [x] T011 [P] [US1] Run or explicitly block the Cursor-alone lane and save raw output to `specs/034-cursor-comparison-validation/reviews/cursor-alone-output.md`.
+- [x] T012 [P] [US1] Run or explicitly block the Cursor-plus-Portolan lane and save raw output to `specs/034-cursor-comparison-validation/reviews/cursor-plus-portolan-output.md`.
+- [x] T013 [US1] Add lane records with prompt paths, raw output paths, input artifacts, run states, and failure reasons to `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
+- [x] T014 [US1] Score all five Cursor-alone answers in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` with unsupported-claim counts and evidence notes.
+- [x] T015 [US1] Score all five Cursor-plus-Portolan answers in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md` with unsupported-claim counts and evidence notes.
+- [x] T016 [US1] Calculate unsupported-claim reduction and useful-next-action pass rate in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
+- [x] T017 [US1] Classify the final product claim as accepted, narrowed, rejected, blocked, or inconclusive in `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
+- [x] T018 [US1] Update the product hypothesis result in `docs/product-backlog.md` and cross-reference `specs/034-cursor-comparison-validation/reviews/comparison-ledger-2026-05-26.md`.
 
 **Checkpoint**: User Story 1 is independently complete when the ledger applies
 the contract and the backlog points to the validation result.
@@ -83,10 +83,10 @@ the contract and the backlog points to the validation result.
 **Purpose**: Verify contracts, preserve evidence-state honesty, and prepare the
 spec for review without claiming merge readiness.
 
-- [ ] T019 [P] Validate ledger completeness against `specs/034-cursor-comparison-validation/contracts/comparison-ledger.md` and record the result in `specs/034-cursor-comparison-validation/reviews/ledger-contract-check-2026-05-26.md`.
-- [ ] T020 [P] Run baseline checks `go test ./...`, `jq empty schema/*.json`, and `git diff --check`, then record verified/failed/not_assessed results in `specs/034-cursor-comparison-validation/reviews/verification-2026-05-26.md`.
-- [ ] T021 Update `specs/034-cursor-comparison-validation/spec.md`, `specs/034-cursor-comparison-validation/tasks.md`, and `docs/product-backlog.md` so status, completed tasks, and validation outcome agree.
-- [ ] T022 Create final implementation closeout in `specs/034-cursor-comparison-validation/reviews/implementation-disposition-2026-05-26.md` with verified, failed, blocked, and not_assessed surfaces.
+- [x] T019 [P] Validate ledger completeness against `specs/034-cursor-comparison-validation/contracts/comparison-ledger.md` and record the result in `specs/034-cursor-comparison-validation/reviews/ledger-contract-check-2026-05-26.md`.
+- [x] T020 [P] Run baseline checks `go test ./...`, `jq empty schema/*.json`, and `git diff --check`, then record verified/failed/not_assessed results in `specs/034-cursor-comparison-validation/reviews/verification-2026-05-26.md`.
+- [x] T021 Update `specs/034-cursor-comparison-validation/spec.md`, `specs/034-cursor-comparison-validation/tasks.md`, and `docs/product-backlog.md` so status, completed tasks, and validation outcome agree.
+- [x] T022 Create final implementation closeout in `specs/034-cursor-comparison-validation/reviews/implementation-disposition-2026-05-26.md` with verified, failed, blocked, and not_assessed surfaces.
 
 ---
 

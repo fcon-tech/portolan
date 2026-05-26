@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Prove or falsify the core product claim: if a
 user already has Cursor, why do they need Portolan?"
