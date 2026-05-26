@@ -4,7 +4,8 @@
 
 **Created**: 2026-05-26
 
-**Status**: Implemented for initial and blind Cursor hypothesis ledgers; deeper OSS adapters pending
+**Status**: Implemented for initial, blind, and headless Cursor hypothesis
+ledgers; deeper OSS producers and bounded graph slices remain future work
 
 **Input**: Product correction: Portolan's market fit must be tested as agent
 augmentation, not as a standalone report tool or prepared-landscape demo.
@@ -34,3 +35,6 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
   is just another large dump.
 - H5: Cursor Agent can use Portolan as an augmentation layer from only Portolan
   path, target root, output directory, and local/no-mutation boundaries.
+- H6: After `answer-contract.md`, headless Cursor Agent can answer a real
+  multi-repo CTO question from Portolan summary/context artifacts without
+  loading the full raw graph.

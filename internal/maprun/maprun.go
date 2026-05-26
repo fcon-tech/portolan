@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -1980,20 +1981,23 @@ func readFindings(path string) ([]Finding, error) {
 	}
 	defer file.Close()
 	var findings []Finding
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		trimmed := strings.TrimSpace(line)
+		if trimmed != "" {
+			var finding Finding
+			if err := json.Unmarshal([]byte(trimmed), &finding); err != nil {
+				return nil, fmt.Errorf("parse finding: %w", err)
+			}
+			findings = append(findings, finding)
 		}
-		var finding Finding
-		if err := json.Unmarshal([]byte(line), &finding); err != nil {
-			return nil, fmt.Errorf("parse finding: %w", err)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return nil, fmt.Errorf("read findings: %w", err)
 		}
-		findings = append(findings, finding)
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("read findings: %w", err)
 	}
 	return findings, nil
 }
