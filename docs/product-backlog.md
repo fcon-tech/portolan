@@ -83,11 +83,13 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
 | P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Initial comparisons and degraded blind Cursor lanes recorded |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted answer contract on a 30-repo real local landscape after large-findings fix; raw graph size remains a scale gap |
+| P3-028 | `specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
 | P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
 | P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
+| P3-029 | future | Bounded graph and map artifact budgets so agents can request slices instead of handling hundreds of megabytes of raw graph output. | Idea from `/home/fall_out_bug/projects/vibe_coding` validation |
 
 ## Backlog Rules
 
