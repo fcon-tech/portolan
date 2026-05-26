@@ -67,13 +67,15 @@ Do not present them as modernization, rewrite, release, or readiness verdicts.
 Read these context files before reporting broad claims:
 
 - `agent-brief.md`
+- `answer-contract.md`
 - `query-plan.md`
 - `repos.json`
 - `tool-registry.json`
 - `oss-plan.json`
 - `gaps.jsonl`
 
-If `tool-registry.json` lacks the OSS evidence needed for the user's question,
+Use `answer-contract.md` before broad CTO-level answers. If
+`tool-registry.json` lacks the OSS evidence needed for the user's question,
 inspect `oss-plan.json` before concluding the evidence is unavailable. Do not
 run producer commands from the plan without approval.
 

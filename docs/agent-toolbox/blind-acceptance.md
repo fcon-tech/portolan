@@ -71,6 +71,7 @@ go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> -
 The agent must inspect these context artifacts before reporting broad claims:
 
 - `<context-dir>/agent-brief.md`
+- `<context-dir>/answer-contract.md`
 - `<context-dir>/query-plan.md`
 - `<context-dir>/repos.json`
 - `<context-dir>/tool-registry.json`

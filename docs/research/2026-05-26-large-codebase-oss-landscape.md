@@ -141,6 +141,8 @@ A useful Cursor-facing pack should contain:
 
 - `agent-brief.md`: what the agent should do first, what questions this pack can
   answer, and what must remain unknown;
+- `answer-contract.md`: how the agent must turn Portolan context, map, OSS
+  outputs, and gaps into a CTO answer;
 - `repos.json`: discovered repositories, roots, languages, package managers,
   and scan boundaries;
 - `evidence-index.jsonl`: normalized facts with evidence state and source
@@ -159,10 +161,11 @@ For Cursor, the key is not "read this artifact." It is:
 
 1. Load `agent-brief.md`.
 2. Use `repos.json` to understand landscape scope.
-3. Use `query-plan.md` to decide where to look first.
-4. Use `oss-plan.json` before claiming missing OSS evidence cannot be produced.
-5. Use `evidence-index.jsonl` before making claims.
-6. Use `gaps.jsonl` to report unknowns instead of fabricating coverage.
+3. Use `answer-contract.md` to structure the answer and preserve unknowns.
+4. Use `query-plan.md` to decide where to look first.
+5. Use `oss-plan.json` before claiming missing OSS evidence cannot be produced.
+6. Use `evidence-index.jsonl` before making claims.
+7. Use `gaps.jsonl` to report unknowns instead of fabricating coverage.
 
 ## Recommended Next Slice
 
@@ -177,7 +180,8 @@ Minimal useful scope:
    catalog files, OpenAPI/AsyncAPI specs, Structurizr files, and common deploy
    manifests.
 3. Normalize those inputs into evidence-typed records.
-4. Generate a compact Cursor-oriented `agent-brief.md` and `query-plan.md`.
+4. Generate a compact Cursor-oriented `agent-brief.md`,
+   `answer-contract.md`, and `query-plan.md`.
 5. Keep every unsupported or missing surface in `gaps.jsonl`.
 
 Adapter priority:

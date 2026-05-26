@@ -6,7 +6,7 @@
 | --- | --- |
 | Target root | `/local/landscape` |
 | Context command | `portolan context prepare --root /local/landscape --out /tmp/portolan-context --profile cursor` |
-| Context artifacts inspected | `agent-brief.md`, `query-plan.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `gaps.jsonl` |
+| Context artifacts inspected | `agent-brief.md`, `answer-contract.md`, `query-plan.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `gaps.jsonl` |
 | Map artifacts inspected | `not_assessed` |
 | External completeness | `unknown` |
 

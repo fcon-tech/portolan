@@ -1064,7 +1064,7 @@ func TestRunContextPrepareHelpDescribesCursorPack(t *testing.T) {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	out := stdout.String()
-	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "oss-plan.json", "no network"} {
+	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "answer-contract.md", "oss-plan.json", "no network"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("stdout %q does not contain %q", out, want)
 		}
@@ -1095,7 +1095,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
-	for _, name := range []string{"agent-brief.md", "query-plan.md", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
+	for _, name := range []string{"agent-brief.md", "answer-contract.md", "query-plan.md", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -1189,9 +1189,33 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Cursor", "oss-plan.json", "unknown", "cannot_verify", "Do not infer"} {
+	for _, want := range []string{"Cursor", "answer-contract.md", "oss-plan.json", "unknown", "cannot_verify", "Do not infer"} {
 		if !strings.Contains(string(brief), want) {
 			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
+		}
+	}
+	answerContract, err := os.ReadFile(filepath.Join(out, "answer-contract.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"Mandatory Answer Shape",
+		"findings.jsonl",
+		"graph.json",
+		"coverage.json",
+		"summary.json",
+		"tool-registry.json",
+		"oss-plan.json",
+		"gaps.jsonl",
+		"duplicate components",
+		"implicit knowledge",
+		"configuration matters",
+		"technical debt",
+		"not_assessed",
+		"cannot_verify",
+	} {
+		if !strings.Contains(string(answerContract), want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, answerContract)
 		}
 	}
 	if stderr.Len() != 0 {

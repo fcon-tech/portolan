@@ -55,12 +55,14 @@ user accepts replacing that Portolan context output.
 Read all of these before reporting broad claims:
 
 - `agent-brief.md`
+- `answer-contract.md`
 - `query-plan.md`
 - `repos.json`
 - `tool-registry.json`
 - `oss-plan.json`
 - `gaps.jsonl`
 
+Use `answer-contract.md` as the required answer shape for CTO-level questions.
 Treat `tool-registry.json` summaries and metrics as local evidence candidates,
 not final architecture verdicts. jscpd, CycloneDX/Syft, Backstage, OpenAPI,
 AsyncAPI, and Structurizr entries can guide the answer, but missing OSS

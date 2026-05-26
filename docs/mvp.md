@@ -17,8 +17,8 @@ The MVP should prove one narrow product promise:
 - Accept a local target root.
 - Discover bounded local repositories.
 - Detect existing local OSS/tool-output candidates.
-- Emit `agent-brief.md`, `query-plan.md`, `repos.json`,
-  `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`.
+- Emit `agent-brief.md`, `answer-contract.md`, `query-plan.md`,
+  `repos.json`, `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`.
 - Preserve `unknown`, `cannot_verify`, and `not_assessed`.
 
 ## Phase 2: Agent Toolbox Entry Point

@@ -10,7 +10,7 @@ codebase, first read `agent/START_HERE.md` and follow that portable workflow.
 
 Run Portolan before broad manual architecture claims. Start with
 `portolan context prepare --root <target-root> --out <context-dir> --profile cursor`
-to get `agent-brief.md`, `query-plan.md`, `repos.json`,
+to get `agent-brief.md`, `answer-contract.md`, `query-plan.md`, `repos.json`,
 `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`. From a Portolan source
 checkout, run `scripts/bootstrap-portolan` and use `.portolan/bin/portolan`
 before falling back to `go run ./cmd/portolan`.
@@ -37,6 +37,7 @@ IaC/config correctness without local OSS evidence such as Semgrep output.
 evidence. Do not turn them into modernization, rewrite, release, or readiness
 verdicts.
 
+Use `answer-contract.md` as the required answer shape for broad CTO questions.
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
 resources, mutate the repository, or collect credentials unless the user
