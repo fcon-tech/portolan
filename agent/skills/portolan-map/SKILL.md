@@ -92,6 +92,11 @@ or copy/paste similarity is assessed only when a jscpd-style local output is
 present in `tool-registry.json`; otherwise preserve duplication gaps as
 `not_assessed`.
 
+Use configuration findings as local surface inventory only. Portolan records
+env var names, ports, container/workflow/manifests, feature flags, and secret
+references, but not secret values. Semantic IaC/config correctness requires
+local OSS output such as Semgrep or remains `not_assessed`.
+
 Prefer an explicit curated selection only when one exists locally:
 
 ```bash

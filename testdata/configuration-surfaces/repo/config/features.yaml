@@ -1,0 +1,5 @@
+features:
+  fast_checkout:
+    enabled: true
+  beta_settlement:
+    enabled: false

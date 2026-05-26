@@ -103,6 +103,10 @@ Exact duplicate source/config findings are local evidence clusters only. The
 agent must not claim full duplicate-component or near-clone coverage unless a
 jscpd-style output is present and summarized in the context pack.
 
+Configuration findings are local surface inventory only. The agent must not
+claim secret values, live infrastructure state, or semantic IaC/config
+correctness unless separate local evidence exists.
+
 Transcript claims are lower authority than Portolan artifacts. Findings that do
 not appear in local Portolan inputs must be recorded as `claim-only`, `unknown`,
 `cannot_verify`, or `not_assessed`.

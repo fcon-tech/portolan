@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/governor/portolan/internal/configuration"
 	"github.com/governor/portolan/internal/coverage"
 	"github.com/governor/portolan/internal/duplication"
 	"github.com/governor/portolan/internal/graph"
@@ -167,12 +168,12 @@ func Run(opts Options) (Result, error) {
 		"relationship-lifecycle-modeling",
 		"relationship-service-topology-inference",
 		"duplication-near-clone-detection",
-		"configuration-surfaces",
+		"configuration-semantic-analysis",
 		"technical-debt-findings",
 	}
 	warnings := append([]string{
 		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
-		"near-clone duplication, configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed when no supported evidence is observed",
+		"near-clone duplication, semantic configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed when no supported evidence is observed",
 		"external ecosystem completeness is unknown without a manifest or explicit inventory",
 	}, append(discoveryWarnings, walkWarnings...)...)
 	metadata := RunMetadata{
@@ -183,7 +184,7 @@ func Run(opts Options) (Result, error) {
 		Root:            root,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -270,7 +271,7 @@ func runSelection(opts Options) (Result, error) {
 		"relationship-lifecycle-modeling",
 		"relationship-service-topology-inference",
 		"duplication-near-clone-detection",
-		"configuration-native-detection",
+		"configuration-semantic-analysis",
 	}
 	metadata := RunMetadata{
 		SchemaVersion:   SchemaVersion,
@@ -280,7 +281,7 @@ func runSelection(opts Options) (Result, error) {
 		Selection:       opts.SelectionPath,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "coverage", "tool-output-import"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "coverage", "tool-output-import"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -772,6 +773,17 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		for _, issue := range duplicationResult.Issues {
 			warnings = append(warnings, "duplication detection: "+issue.Path+": "+issue.Reason)
 		}
+		configurationResult := configuration.Detect(target.Path)
+		prefixConfiguration := shouldPrefixRelationshipGraph(sel, target)
+		g.Nodes = append(g.Nodes, configurationNodes(target.ID, prefixConfiguration, configurationResult)...)
+		if prefixConfiguration {
+			findings = append(findings, prefixedConfigurationFindings(target.ID, configurationResult)...)
+		} else {
+			findings = append(findings, configurationFindings(configurationResult)...)
+		}
+		for _, issue := range configurationResult.Issues {
+			warnings = append(warnings, "configuration detection: "+issue.Path+": "+issue.Reason)
+		}
 	}
 	for _, source := range sel.Metadata {
 		g.Nodes = append(g.Nodes, inputNode(source.ID, "metadata", graph.MetadataVisible, source.Path, ""))
@@ -1137,6 +1149,127 @@ func duplicationClusterSummary(cluster duplication.Cluster) string {
 	default:
 		return fmt.Sprintf("Detected exact duplicate content across %d files; review as evidence, not an automatic rewrite plan.", len(cluster.Files))
 	}
+}
+
+func configurationNodes(prefix string, prefixed bool, result configuration.Result) []graph.Node {
+	var nodes []graph.Node
+	for _, surface := range result.Surfaces {
+		id := configurationSurfaceID(surface.Kind, surface.Name)
+		if prefixed {
+			id = prefix + ":" + id
+		}
+		nodes = append(nodes, graph.Node{
+			ID:    id,
+			Kind:  "configuration",
+			Label: configurationSurfaceLabel(surface),
+			Evidence: graph.Evidence{
+				State:  surface.EvidenceState,
+				Source: strings.Join(surface.Sources, "; "),
+			},
+		})
+	}
+	return nodes
+}
+
+func prefixedConfigurationFindings(prefix string, result configuration.Result) []Finding {
+	findings := configurationFindings(result)
+	for i := range findings {
+		findings[i].ID = prefix + "-" + findings[i].ID
+		findings[i].EvidenceSource = prefix + ":" + findings[i].EvidenceSource
+	}
+	return findings
+}
+
+func configurationFindings(result configuration.Result) []Finding {
+	counts := map[string]int{}
+	sources := map[string]map[string]bool{}
+	for _, surface := range result.Surfaces {
+		counts[surface.Kind]++
+		if sources[surface.Kind] == nil {
+			sources[surface.Kind] = map[string]bool{}
+		}
+		for _, source := range surface.Sources {
+			sources[surface.Kind][source] = true
+		}
+	}
+	var findings []Finding
+	for _, kind := range sortedConfigKinds(counts) {
+		findings = append(findings, Finding{
+			ID:             "finding-configuration-" + stableID(kind) + "-observed",
+			Kind:           "configuration",
+			Summary:        configurationFindingSummary(kind, counts[kind]),
+			Severity:       "info",
+			EvidenceState:  string(graph.SourceVisible),
+			EvidenceSource: strings.Join(sortedMapKeys(sources[kind]), "; "),
+			Confidence:     0.8,
+			Status:         "observed",
+		})
+	}
+	for i, issue := range result.Issues {
+		findings = append(findings, Finding{
+			ID:             fmt.Sprintf("finding-configuration-%s-%03d", issue.Status, i+1),
+			Kind:           "configuration",
+			Summary:        "Could not assess configuration candidate: " + issue.Reason,
+			Severity:       "info",
+			EvidenceState:  string(issue.EvidenceState),
+			EvidenceSource: issue.Path,
+			Confidence:     0,
+			Status:         issue.Status,
+		})
+	}
+	return findings
+}
+
+func configurationSurfaceID(kind, name string) string {
+	return "configuration:" + stableID(kind) + ":" + stableID(name)
+}
+
+func configurationSurfaceLabel(surface configuration.Surface) string {
+	switch surface.Kind {
+	case "secret-reference":
+		return "secret reference " + surface.Name
+	default:
+		return surface.Kind + " " + surface.Name
+	}
+}
+
+func configurationFindingSummary(kind string, count int) string {
+	switch kind {
+	case "container":
+		return fmt.Sprintf("Detected %d container configuration surface(s) from local files.", count)
+	case "env-var":
+		return fmt.Sprintf("Detected %d environment variable reference(s) by name only.", count)
+	case "feature-flag":
+		return fmt.Sprintf("Detected %d feature flag reference(s) by name only.", count)
+	case "manifest":
+		return fmt.Sprintf("Detected %d package or dependency manifest surface(s).", count)
+	case "port":
+		return fmt.Sprintf("Detected %d port declaration surface(s) from local files.", count)
+	case "secret-reference":
+		return fmt.Sprintf("Detected %d secret reference(s) by name only; values are not recorded.", count)
+	case "workflow":
+		return fmt.Sprintf("Detected %d CI/CD workflow surface(s).", count)
+	default:
+		return fmt.Sprintf("Detected %d configuration surface(s) of type %s.", count, kind)
+	}
+}
+
+func sortedConfigKinds(counts map[string]int) []string {
+	var kinds []string
+	for kind := range counts {
+		kinds = append(kinds, kind)
+	}
+	sort.Strings(kinds)
+	return kinds
+}
+
+func sortedMapKeys(values map[string]bool) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func normalizeToolOutput(source selection.ToolOutput) ([]graph.Node, []graph.Edge, []Finding) {

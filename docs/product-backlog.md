@@ -72,7 +72,7 @@ fixtures are preflight evidence only.
 | P2-009 | `specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Implemented |
 | P2-010 | `specs/010-relationship-detection/` | Portolan detects source, metadata, runtime, and claim-backed relationships across a codebase. | Implemented |
 | P2-011 | `specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Implemented for native exact source/config duplicate clusters; near-clone detection remains OSS/jscpd-backed |
-| P2-012 | `specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Bigtop-gated backlog spec |
+| P2-012 | `specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Implemented for native file-based surface inventory; semantic config/IaC analysis remains OSS/Semgrep-backed |
 | P2-013 | `specs/013-technical-debt-findings/` | Portolan turns relationship, duplication, config, importer, and black-box evidence into technical-debt findings without readiness verdicts. | Bigtop-gated backlog spec |
 | P2-024 | `specs/024-agent-scale-map-summary/` | Map runs emit compact `summary.json` and unique finding IDs so agents can triage large landscapes before loading full graphs. | Implemented |
 

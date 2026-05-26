@@ -28,6 +28,11 @@ that as full copy/paste or near-clone coverage; use jscpd-style local outputs
 from `tool-registry.json` when present, otherwise preserve that richer
 duplication surface as `not_assessed`.
 
+`portolan map` can report file-based configuration surfaces: env var names,
+ports, container/workflow/manifests, feature flags, and secret references.
+Secret values are intentionally absent from artifacts. Do not claim semantic
+IaC/config correctness without local OSS evidence such as Semgrep output.
+
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
 resources, mutate the repository, or collect credentials unless the user

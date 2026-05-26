@@ -1,0 +1,8 @@
+services:
+  api:
+    image: example/api
+    ports:
+      - "8080:8080"
+    environment:
+      API_TOKEN: super-secret
+      DATABASE_URL: postgres://user:password-value@db/orders

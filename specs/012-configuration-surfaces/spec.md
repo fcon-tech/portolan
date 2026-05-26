@@ -2,7 +2,8 @@
 
 **Feature Branch**: `012-configuration-surfaces`
 **Created**: 2026-05-20
-**Status**: Backlog spec
+**Status**: Implemented for native file-based env, port, container, workflow,
+manifest, feature-flag, and secret-reference surface inventory.
 **Input**: Product backlog P2-012: map env vars, ports, manifests, CI/CD,
 feature flags, and secret references without exposing secret values.
 
@@ -34,27 +35,42 @@ environment mapping emits `unknown`.
 
 ## Requirements
 
-- **FR-001**: System MUST detect common local config surfaces such as env vars,
-  ports, Docker, Compose, Kubernetes, Helm, CI/CD, and feature flags.
+- **FR-001**: System MUST detect common local file-based config surfaces such
+  as env vars, ports, Docker/Compose/container manifests, CI/CD workflows,
+  package/dependency manifests, and feature-flag references.
 - **FR-002**: System MUST redact secret values and store references only.
 - **FR-003**: System MUST preserve source paths and evidence states.
-- **FR-004**: System MUST represent unsupported config families as
-  `not_assessed`.
+- **FR-004**: System MUST represent unsupported config families, skipped large
+  files, and unreadable candidate files as `not_assessed` or `cannot_verify`.
 - **FR-005**: System MUST not query cloud APIs or live infrastructure in this
   slice.
+- **FR-006**: System MUST NOT record secret values, connection strings, tokens,
+  passwords, or private payloads in graph labels, finding summaries, evidence
+  sources, fixtures, or committed outputs.
+- **FR-007**: Native configuration detection MUST skip Portolan output,
+  VCS/vendor/dependency/build directories, lockfiles, binary files, and
+  generated artifacts that would produce noisy or private-heavy signals.
 
 ## Existing Open Source
 
-- Prefer mature local parsers for YAML/JSON/TOML where useful.
-- Consider Semgrep-style local rules for pattern detection after fixture needs
-  prove simple parsing insufficient.
-- Do not add cloud-provider SDKs for this slice.
+- Semgrep and dedicated IaC/config scanners remain preferred OSS options for
+  semantic config checks. Portolan already exposes Semgrep-style local output
+  and safe local producer recipes through the OSS assembly path.
+- Native detection is intentionally lexical and file-based so agents get a
+  deterministic, dependency-free baseline without replacing mature scanners.
+- Do not add cloud-provider SDKs, live infrastructure clients, or network-backed
+  rules for this slice.
 
 ## Success Criteria
 
-- **SC-001**: Fixture output contains env var, port, container, and CI findings.
+- **SC-001**: Fixture output contains env var, port, container, workflow,
+  manifest, feature-flag, and secret-reference findings.
 - **SC-002**: No fixture or output exposes secret values.
-- **SC-003**: Bigtop package/runtime gaps can be mapped to config-surface tasks.
+- **SC-003**: A fixture with no supported config surfaces retains a
+  `configuration` `not_assessed` finding rather than claiming no configuration
+  risk.
+- **SC-004**: Bigtop package/runtime gaps can be mapped to config-surface
+  tasks.
 
 ## Assumptions
 

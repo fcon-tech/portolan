@@ -104,7 +104,10 @@ covers Go source imports and `go.mod` dependencies only; non-Go, runtime, and
 inferred service relationships remain not assessed. Duplication detection
 currently covers exact source/config file clusters; near-clone and copy/paste
 similarity require local jscpd-style evidence from `tool-registry.json` or
-remain not assessed. `portolan doctor` is still not part of the implemented CLI.
+remain not assessed. Configuration detection covers file-based env var names,
+ports, container/workflow/manifests, feature flags, and secret references; it
+does not record secret values and does not perform semantic IaC validation.
+`portolan doctor` is still not part of the implemented CLI.
 
 ## Guardrails
 
@@ -183,6 +186,11 @@ Use `not_assessed` for a surface you did not check.
    not as a refactoring order. If the run has no observed duplication finding,
    preserve the `duplication` `not_assessed` state for near-clone coverage
    unless jscpd-style output is present in the context pack.
+
+   Treat configuration findings as local surface inventory. Secret references
+   are names only; absence of a value in artifacts is intentional. For semantic
+   IaC/config validation, use local Semgrep-style evidence when present or keep
+   that surface `not_assessed`.
 
    Prefer `--selection` only when a curated local selection exists:
 

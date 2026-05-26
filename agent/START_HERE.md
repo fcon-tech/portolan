@@ -54,6 +54,11 @@ evidence, not a refactoring order or full near-clone assessment. For richer
 copy/paste similarity, use jscpd-style evidence from `tool-registry.json` when
 present or preserve the gap as `not_assessed`.
 
+`map` can also surface file-based configuration inventory: env var names,
+ports, container/workflow/manifests, feature flags, and secret references.
+Secret values are intentionally not recorded. Semantic IaC/config validation
+requires local OSS evidence such as Semgrep output or remains `not_assessed`.
+
 ## Required Artifacts
 
 Read these context files before reporting broad claims:

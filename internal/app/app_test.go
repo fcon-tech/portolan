@@ -17,6 +17,7 @@ import (
 const mapCommandFixtureRoot = "../../testdata/map-command/repo"
 const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
 const duplicationFixtureRoot = "../../testdata/duplication-detection/repo"
+const configurationFixtureRoot = "../../testdata/configuration-surfaces/repo"
 const landscapeMapSelection = "../../testdata/landscape-map/selection.json"
 
 func TestRunVersionWritesVersion(t *testing.T) {
@@ -2123,12 +2124,96 @@ func TestRunMapSelectionDetectsPrefixedDuplication(t *testing.T) {
 	findNode(t, graph, "dup:duplication-exact-source-001")
 }
 
-func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
+func TestRunMapDetectsConfigurationSurfacesWithoutSecretValues(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"map", "--root", relationshipFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"map", "--root", configurationFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	for _, id := range []string{
+		"finding-configuration-env-var-observed",
+		"finding-configuration-port-observed",
+		"finding-configuration-container-observed",
+		"finding-configuration-workflow-observed",
+		"finding-configuration-manifest-observed",
+		"finding-configuration-feature-flag-observed",
+		"finding-configuration-secret-reference-observed",
+	} {
+		finding := findFindingByID(findings, id)
+		if finding == nil {
+			t.Fatalf("findings = %#v, want %s", findings, id)
+		}
+		if finding["status"] != "observed" || finding["evidence_state"] != "source-visible" {
+			t.Fatalf("finding %s = %#v, want observed source-visible", id, finding)
+		}
+	}
+
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	findNode(t, graph, "configuration:env-var:payments-api-url")
+	findNode(t, graph, "configuration:port:8080")
+	findNode(t, graph, "configuration:secret-reference:payments-api-token")
+	findNode(t, graph, "configuration:feature-flag:feature-fast-checkout")
+
+	for _, artifact := range []string{"graph.json", "findings.jsonl", "summary.json", "map.md"} {
+		data, err := os.ReadFile(filepath.Join(out, artifact))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, forbidden := range []string{"super-secret", "postgres://", "password-value"} {
+			if strings.Contains(string(data), forbidden) {
+				t.Fatalf("%s leaked secret payload %q:\n%s", artifact, forbidden, data)
+			}
+		}
+	}
+}
+
+func TestRunMapSelectionDetectsPrefixedConfigurationSurfaces(t *testing.T) {
+	root, err := filepath.Abs(configurationFixtureRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectionPath := writeSelection(t, t.TempDir(), "configuration", `{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "cfg", "kind": "repository", "path": `+quote(root)+`}
+  ]
+}`)
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	finding := findFindingByID(findings, "cfg-finding-configuration-env-var-observed")
+	if finding == nil {
+		t.Fatalf("findings = %#v, want prefixed configuration finding", findings)
+	}
+	if finding["status"] != "observed" || !strings.Contains(finding["evidence_source"].(string), "cfg:cmd/server/main.go") {
+		t.Fatalf("prefixed configuration finding = %#v", finding)
+	}
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	findNode(t, graph, "cfg:configuration:env-var:payments-api-url")
+}
+
+func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("# no supported detector inputs\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3227,7 +3312,7 @@ func assertSchemaShape(t *testing.T, graph map[string]any) {
 	if graph["generated_by"] == "" {
 		t.Fatalf("generated_by is required")
 	}
-	validNodeKinds := map[string]bool{"repository": true, "service": true, "package": true, "runtime": true, "team": true, "claim": true, "unknown": true}
+	validNodeKinds := map[string]bool{"repository": true, "service": true, "package": true, "runtime": true, "team": true, "claim": true, "duplication": true, "configuration": true, "unknown": true}
 	validEdgeKinds := map[string]bool{"owns": true, "depends-on": true, "exposes": true, "imports": true, "observes": true, "claims": true, "unknown": true}
 	validStates := map[string]bool{"source-visible": true, "metadata-visible": true, "runtime-visible": true, "claim-only": true, "unknown": true, "cannot_verify": true}
 	for _, item := range graph["nodes"].([]any) {
