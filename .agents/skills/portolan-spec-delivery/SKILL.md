@@ -165,6 +165,15 @@ Before creating or updating the PR:
 After creating or updating a PR, do not stop immediately. Run a PR readiness
 closeout first, even when local verification already passed.
 
+Use the repo-local delivery skills for atomic stages:
+
+- `/speckit-review-disposition` for analyze/local/model review findings before
+  PR work;
+- `/speckit-pr-review-cycle` for independent PR review lanes and fix
+  disposition;
+- `/speckit-pr-readiness-closeout` before claiming any PR is ready for review;
+- `/speckit-merge-closeout` only after explicit merge approval.
+
 Before marking a PR ready:
 
 1. Reconstruct PR head, diff, draft state, merge state, checks, and review
