@@ -103,6 +103,11 @@ the blind acceptance docs use target-root discovery as the default path.
 - Existing generated Portolan artifacts are present from an earlier run.
 - A generated or hand-authored selection file exists in the directory but is not
   part of the blind prompt.
+- The target has repo-like child directories or a curated `selection.json`, but
+  the child directories are not Git checkouts. Portolan must not mark them
+  source-visible repositories, but the packet should explain the mismatch so
+  Cursor does not treat "0 discovered repositories" as a complete absence of
+  local project structure.
 - Multiple repositories have the same basename or ambiguous identity.
 - The agent cannot execute shell commands and can only inspect files.
 
@@ -139,6 +144,9 @@ the blind acceptance docs use target-root discovery as the default path.
   the agent `/home/fall_out_bug/projects/bigtop-landscape/selection.json`.
 - **FR-012**: Discovery MUST have a bounded search policy so users do not
   accidentally scan arbitrary large directory trees.
+- **FR-013**: If no Git repositories are discovered but local curated inputs or
+  repo-like child directories exist, discovery MUST record a gap that explains
+  the evidence mismatch instead of silently returning an empty landscape.
 
 ### Key Entities
 

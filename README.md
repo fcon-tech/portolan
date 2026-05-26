@@ -14,42 +14,45 @@ harness.
 
 ## Status
 
-Active local-first CLI. The current product-grade path is a landscape selection
-mapped into a five-artifact run directory.
+Active local-first CLI. The current agent-facing path is context preparation:
+`portolan context prepare --root <dir> --out <dir> --profile cursor`.
+Curated landscape selections remain supported as an advanced mapping input.
 
 Implemented:
 
 - Go module and `portolan scan --selection <file> --out <file>` for the first
   local evidence graph.
+- `portolan context prepare --root <dir> --out <dir> --profile cursor` for a
+  Cursor-readable context pack with repository discovery, OSS/tool-output
+  candidates, query plan, and honest gaps.
 - `portolan import cyclonedx --in <file> --out <file>` for local CycloneDX JSON
   SBOM normalization.
 - Black-box profile scanning from local metadata, runtime export, and claim
   files without source-visible overclaiming.
 - `portolan diff --base <file> --head <file> --out <file>` for
   machine-readable evidence graph movement without readiness verdicts.
-- `portolan map --selection <file> --out <dir>` for a product-grade landscape
-  artifact bundle with `run.json`, `coverage.json`, `graph.json`,
+- `portolan map --selection <file> --out <dir>` for curated local landscape
+  artifact bundles with `run.json`, `coverage.json`, `graph.json`,
   `findings.jsonl`, and `map.md`.
-- `portolan map --root <dir> --out <dir>` as a single-repository shortcut.
+- `portolan map --root <dir> --out <dir>` for direct local mapping.
 - Relationship detection for local Go imports and `go.mod` dependencies in
   `portolan map`.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
-- Apache Bigtop test corpus profile for immediate post-skill acceptance
-  planning.
+- Apache Bigtop test corpus profile for acceptance planning, not default
+  product flow.
 - Portable agent guide, example report, and Cursor project rule for the first
   agent toolbox acceptance loop.
 - Root-discoverable agent bootstrap entrypoint and portable map skill.
 - Bigtop manifest-to-selection generation with
   `portolan selection generate-bigtop`.
-- Full Bigtop corpus local map verification through the landscape selection
-  path.
+- Full Bigtop corpus local map verification through the curated selection path.
 
 Not implemented yet:
 
-- recorded real Cursor + Composer 2.5 blind operator run against the full Bigtop
-  landscape selection;
+- recorded real Cursor + Composer blind operator run comparing Cursor-alone
+  with Cursor-plus-Portolan context preparation;
 - duplication, configuration, and technical-debt finding generators;
 - non-Go, runtime, and inferred service relationship detection;
 - platform-specific runtime importers;
@@ -73,16 +76,20 @@ Portolan should default to:
 
 Portolan should be built from the cheapest useful agent loop outward:
 
-1. Agent skill/rule pack that tells any agent how to run Portolan.
+1. `context prepare` pack that tells any agent where to look first and what
+   remains unknown.
 2. Agent bootstrap and blind acceptance so an agent can discover the generic
    workflow from Portolan itself, not from a target-specific chat prompt.
-3. Immediate Bigtop acceptance in Cursor + Composer 2.5 using the same blind
-   protocol to expose real product gaps.
-4. `portolan map --selection selection.json --out .portolan/run` producing
-   coverage, graph, findings, run metadata, and a readable packet.
-5. Relationship, duplication, configuration, and technical-debt finding
+3. Agent skill/rule pack that teaches Cursor and other harnesses to use context
+   preparation before making landscape claims.
+4. Cursor-alone vs Cursor-plus-Portolan hypothesis checks on non-Bigtop and
+   Bigtop targets.
+5. `portolan map --selection selection.json --out .portolan/run` for curated
+   selections and `portolan map --root <dir> --out <dir>` for direct local map
+   artifacts.
+6. Relationship, duplication, configuration, and technical-debt finding
    generators backed by local evidence, prioritized from that smoke.
-6. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
+7. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
 
 Cursor + Composer 2.5 is the first cheap acceptance client, not the product
 boundary. The first realistic acceptance smoke is:
@@ -92,10 +99,9 @@ boundary. The first realistic acceptance smoke is:
 - Portolan as the local toolbox and artifact substrate;
 - Apache Bigtop as the large OSS ecosystem corpus.
 
-Bigtop starts immediately after the generic agent path can be tested honestly.
-Fixtures may preflight Portolan commands, but the real operator lane needs a
-local Bigtop checkout and the same target-agnostic protocol used for other
-targets.
+Bigtop is a realistic stress target, not the first-run workflow. Fixtures may
+preflight Portolan commands, but the real operator lane needs a local Bigtop
+checkout and the same target-agnostic protocol used for other targets.
 
 Portolan should make that loop observable without becoming dependent on Cursor,
 Composer, Kimi, or any hosted model/runtime during a default scan.
@@ -125,6 +131,7 @@ Each graph node or relationship records how it is known:
 - [Agent Bootstrap Discovery](specs/014-agent-bootstrap-discovery/spec.md)
 - [Spec 015: Blind Agent Acceptance](specs/015-blind-agent-acceptance/spec.md)
 - [Example Map Report](agent/examples/map-report.md)
+- [Example CTO Context Answer](agent/examples/cto-context-answer.md)
 - [Cursor Portolan Rule](.cursor/rules/portolan-map.mdc)
 - [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
@@ -152,6 +159,7 @@ Backlog features live under `specs/` and are indexed in
 ```bash
 go test ./...
 go run ./cmd/portolan --version
+go run ./cmd/portolan context prepare --root testdata/landscape-map --out /tmp/portolan-context --profile cursor --force
 go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
 go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force
 go run ./cmd/portolan map --root testdata/relationship-detection/repo --out /tmp/portolan-relationships-run --force

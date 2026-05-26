@@ -2,9 +2,9 @@
 
 The MVP should prove one narrow product promise:
 
-> An AI agent can run Portolan locally against a selected software landscape and
-> receive an evidence-backed map of relationships, duplication, configuration
-> surfaces, and technical debt without turning guesses into facts.
+> An AI agent can run Portolan locally against a repository or software
+> landscape and receive a context pack plus optional evidence-backed map before
+> answering CTO-level questions, without turning guesses into facts.
 
 ## Phase 0: Bootstrap
 
@@ -12,34 +12,32 @@ The MVP should prove one narrow product promise:
 - Product boundary documents.
 - Draft evidence graph schema.
 
-## Phase 1: Static Local Profile
+## Phase 1: Agent Context Preparation
 
-- Accept a local selection file that names repositories and optional metadata
-  files.
-- Inspect only local filesystem inputs.
-- Emit JSON evidence graph.
-- Render a compact text packet from the same graph.
+- Accept a local target root.
+- Discover bounded local repositories.
+- Detect existing local OSS/tool-output candidates.
+- Emit `agent-brief.md`, `query-plan.md`, `repos.json`,
+  `tool-registry.json`, and `gaps.jsonl`.
+- Preserve `unknown`, `cannot_verify`, and `not_assessed`.
 
 ## Phase 2: Agent Toolbox Entry Point
 
 - Add an agent skill/rule pack that works in Cursor first and remains portable
   to Claude, Codex, OpenCode, pi, and other harnesses.
 
-## Phase 3: Immediate Bigtop Acceptance Smoke
+## Phase 3: Product Hypothesis Checks
 
-- Run the skill pack in Cursor + Composer 2.5 against the Apache Bigtop corpus
-  profile as soon as the guide exists.
-- Use prepared local fixtures and current Portolan commands first; do not wait
-  for all detectors to be built.
-- Record concrete gaps in relationships, duplication, configuration surfaces,
-  technical debt, packet quality, and agent behavior.
+- Compare Cursor-alone with Cursor-plus-Portolan context preparation.
+- Start with a non-Bigtop local target, then use Apache Bigtop as the larger
+  stress target when local checkouts are available.
+- Record false claims, missing evidence, ignored gaps, and useful answers.
 
 ## Phase 4: Map Command And Evidence Useful To Users
 
-- Keep `portolan map --root . --out .portolan/run` as the single-repository
-  shortcut.
-- Use `portolan map --selection selection.json --out .portolan/run` as the
-  product-grade landscape command.
+- Keep `portolan map --root . --out .portolan/run` as a direct map command.
+- Use `portolan map --selection selection.json --out .portolan/run` for curated
+  local inventories.
 - Emit a stable artifact bundle: `run.json`, `coverage.json`, `graph.json`,
   `findings.jsonl`, and `map.md`.
 

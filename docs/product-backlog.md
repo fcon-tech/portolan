@@ -5,29 +5,26 @@ the planning view; detailed requirements live under `specs/`.
 
 ## Roadmap Order
 
-The roadmap is intentionally staged from a cheap agent acceptance loop into an
-immediate Bigtop-driven product test:
+The roadmap is staged around agent augmentation first, then larger corpus
+stress tests:
 
 1. **Runnable substrate**: local selection input, read-only scan, graph output,
    packet rendering, importer normalization, and black-box evidence handling.
-2. **Agent toolbox**: a portable skill/rule pack that any agent can follow
+2. **Agent context preparation**: a compact pack with discovered repositories,
+   OSS/tool-output candidates, query plan, and honest gaps.
+3. **Agent toolbox**: a portable skill/rule pack that any agent can follow
    before answering.
-3. **Agent bootstrap discovery**: an agent can discover Portolan from the
+4. **Agent bootstrap discovery**: an agent can discover Portolan from the
    repository root or portable skill without being told an internal guide path.
-4. **Blind agent acceptance**: an agent can run the same target-agnostic mapping
+5. **Blind agent acceptance**: an agent can run the same target-agnostic mapping
    protocol against arbitrary local targets without hidden scaffolding.
-5. **Landscape map orchestration**: the product-grade path can map a curated
-   local software landscape selection, not only one repository root.
-6. **Landscape root discovery**: the product-grade blind path maps a normal
-   local ecosystem directory without requiring a generated selection file.
-7. **Bigtop full-landscape acceptance immediately after the generic agent path**:
-   Cursor + Composer 2.5 runs the blind protocol against a full local Apache
-   Bigtop ecosystem root: the Bigtop meta-repo, every included product
-   repository, metadata, runtime/package surfaces, claims, black boxes, and
-   imported OSS tool outputs.
+6. **Landscape map orchestration**: curated local selections remain available as
+   advanced input, not the first-run Cursor workflow.
+7. **Product hypothesis validation**: compare Cursor-alone with
+   Cursor-plus-Portolan context preparation on non-Bigtop and Bigtop targets.
 8. **Useful map contents**: relationships, duplication, configuration surfaces,
-   and technical-debt findings implemented because the Bigtop full-landscape
-   run proves they are needed.
+   and technical-debt findings implemented because agent runs prove they are
+   needed.
 9. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
    and LSP/index surfaces, and larger Bigtop runs.
 
@@ -36,11 +33,10 @@ popular agentic IDE where reports can be read and graphs can be inspected. It is
 not the product boundary. The same Portolan artifacts must remain usable from
 Claude, Codex, OpenCode, pi, and other agent harnesses.
 
-Apache Bigtop is no longer deferred until the end. It starts immediately after
-the generic agent path and landscape map orchestration are self-discoverable
-enough to test honestly, then returns later as a larger stress test. The point
-is to prevent development for development's sake without hiding product gaps
-behind a Bigtop-specific operator packet or a partial single-repository smoke.
+Apache Bigtop is a stress target, not the default product path. It should be
+used through the same target-agnostic context preparation and blind acceptance
+protocol as any other local ecosystem directory. Prepared selections and local
+fixtures are preflight evidence only.
 
 ## P0: Runnable Evidence Substrate
 
@@ -62,10 +58,10 @@ behind a Bigtop-specific operator packet or a partial single-repository smoke.
 | P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
 | P1-017 | `specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Draft spec; required before real Bigtop blind acceptance |
 | P1-018 | `specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented |
-| P1-020 | `specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Draft |
+| P1-020 | `specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; assisted Cursor lane verified, blind rule-discovery not_assessed |
 | P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Blocked on P1-017; generated selection preflight is not blind acceptance |
 
-## P2: Build What The Bigtop Smoke Proves Is Missing
+## P2: Build What Agent Runs Prove Is Missing
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
@@ -80,12 +76,12 @@ behind a Bigtop-specific operator packet or a partial single-repository smoke.
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
-| P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Draft |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Draft |
+| P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Non-Bigtop Cursor comparison recorded; Bigtop Cursor comparison pending |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
 | P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
-| P3-019 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
+| P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 
 ## Backlog Rules
 

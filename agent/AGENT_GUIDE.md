@@ -153,7 +153,7 @@ Use `not_assessed` for a surface you did not check.
    portolan map --selection <selection.json> --out <run-dir>
    ```
 
-   Use `--root` only as a single-repository shortcut:
+   Use `--root` for direct local mapping when no curated selection exists:
 
    ```bash
    portolan map --root <target-root> --out <run-dir>

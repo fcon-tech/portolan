@@ -1,52 +1,77 @@
 ---
 name: portolan-map
-description: Use Portolan to map a local target repository or directory before making architecture, dependency, relationship, duplication, configuration, or technical-debt claims.
+description: Use Portolan to prepare agent context and map a local target repository or directory before making architecture, dependency, relationship, duplication, configuration, or technical-debt claims.
 ---
 
-# Portolan Map Skill
+# Portolan Context And Map Skill
 
 Use this skill when the user asks you to map, audit, inspect, understand, or
 explain a local repository or directory with Portolan.
 
 The canonical root-discoverable entrypoint is `agent/START_HERE.md`. This skill
-mirrors that contract for harnesses that support reusable instructions.
+mirrors that contract for harnesses that support reusable instructions. Cursor
+rules are only a wrapper over this portable workflow.
 
 ## Inputs
 
 Require:
 
 - a Portolan checkout or installed `portolan` binary;
-- a local landscape selection, or a local target root when no selection exists;
-- an explicit run directory.
+- a local target root;
+- an explicit context output directory.
 
-If the user did not choose a run directory, use `<target-root>/.portolan/run`
+If the user did not choose a context directory, use
+`<target-root>/.portolan/context`
 only when writing inside the target is acceptable. Otherwise use a temporary
 local output path and report it.
 
-## Command
+## Primary Command
 
 Prefer an installed binary:
 
 ```bash
-portolan map --selection <selection.json> --out <run-dir>
+portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
 If only a source checkout is available, run from the Portolan checkout:
 
 ```bash
-go run ./cmd/portolan map --selection <selection.json> --out <run-dir>
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-Use the root shortcut only when no landscape selection is available:
+Use `--force` only when the selected output directory already exists and the
+user accepts replacing that Portolan context output.
+
+## Context Artifact Contract
+
+Read all of these before reporting broad claims:
+
+- `agent-brief.md`
+- `query-plan.md`
+- `repos.json`
+- `tool-registry.json`
+- `gaps.jsonl`
+
+If the command cannot run or required artifacts are absent, stop with a blocker.
+Do not replace missing Portolan evidence with unmarked manual analysis.
+
+## Optional Map Command
+
+Run the map command after context preparation when the answer needs a Portolan
+evidence graph or readable map bundle. Prefer an explicit curated selection
+only when one exists locally:
+
+```bash
+portolan map --selection <selection.json> --out <run-dir>
+```
+
+Use the root map form when no curated selection exists:
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
 ```
 
-Use `--force` only when the selected output directory already exists and the
-user accepts replacing that Portolan run output.
-
-## Artifact Contract
+## Map Artifact Contract
 
 Read all of these before reporting:
 
@@ -55,9 +80,6 @@ Read all of these before reporting:
 - `graph.json`
 - `findings.jsonl`
 - `map.md`
-
-If the command cannot run or required artifacts are absent, stop with a blocker.
-Do not replace missing Portolan evidence with unmarked manual analysis.
 
 ## Boundaries
 
@@ -76,14 +98,16 @@ mark them as `unknown`, `cannot_verify`, or `not_assessed`.
 
 Cover:
 
-1. Run status and blockers
-2. Relationships
-3. Duplication
-4. Configuration surfaces
-5. Technical debt
-6. Unknown and `cannot_verify`
-7. Gap ledger
-8. Not assessed
+1. Context status and blockers
+2. Local repository scope
+3. OSS/tool-output candidates
+4. Relationships
+5. Duplication
+6. Configuration surfaces
+7. Technical debt
+8. Unknown and `cannot_verify`
+9. Gap ledger
+10. Not assessed
 
 Preserve evidence states:
 
@@ -99,4 +123,5 @@ Use `not_assessed` for surfaces not checked or detector coverage Portolan has
 not implemented.
 
 Every finding should cite a generated artifact, local file, command output, or
-explicit missing capability.
+explicit missing capability. Do not present the context pack as a CTO report;
+use it as a query plan and evidence boundary for the agent's answer.
