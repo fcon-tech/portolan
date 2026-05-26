@@ -18,6 +18,7 @@ const mapCommandFixtureRoot = "../../testdata/map-command/repo"
 const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
 const duplicationFixtureRoot = "../../testdata/duplication-detection/repo"
 const configurationFixtureRoot = "../../testdata/configuration-surfaces/repo"
+const technicalDebtFixtureRoot = "../../testdata/technical-debt-findings/repo"
 const landscapeMapSelection = "../../testdata/landscape-map/selection.json"
 
 func TestRunVersionWritesVersion(t *testing.T) {
@@ -2204,6 +2205,85 @@ func TestRunMapSelectionDetectsPrefixedConfigurationSurfaces(t *testing.T) {
 	findNode(t, graph, "cfg:configuration:env-var:payments-api-url")
 }
 
+func TestRunMapDerivesConcreteTechnicalDebtFindings(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", technicalDebtFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	for _, id := range []string{
+		"finding-technical-debt-relationship-follow-up",
+		"finding-technical-debt-duplication-follow-up",
+		"finding-technical-debt-configuration-follow-up",
+		"finding-technical-debt-unresolved-findings",
+	} {
+		finding := findFindingByID(findings, id)
+		if finding == nil {
+			t.Fatalf("findings = %#v, want %s", findings, id)
+		}
+		if finding["kind"] != "technical-debt" {
+			t.Fatalf("finding %s = %#v, want technical-debt", id, finding)
+		}
+	}
+	for _, finding := range findings {
+		if finding["kind"] != "technical-debt" {
+			continue
+		}
+		summary := strings.ToLower(finding["summary"].(string))
+		for _, forbidden := range []string{"ready", "readiness", "pass", "fail", "rewrite", "moderni"} {
+			if strings.Contains(summary, forbidden) {
+				t.Fatalf("technical-debt finding uses verdict language %q: %#v", forbidden, finding)
+			}
+		}
+	}
+	run := readRunMetadata(t, filepath.Join(out, "run.json"))
+	enabled := map[string]bool{}
+	for _, surface := range run["enabled_surfaces"].([]any) {
+		enabled[surface.(string)] = true
+	}
+	if !enabled["technical-debt-findings"] {
+		t.Fatalf("enabled surfaces = %#v, want technical-debt-findings", enabled)
+	}
+}
+
+func TestRunMapDerivesCoverageBackedUnresolvedDebtFinding(t *testing.T) {
+	root, err := filepath.Abs(technicalDebtFixtureRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectionPath := writeSelection(t, t.TempDir(), "debt-weak-coverage", `{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "debt", "kind": "repository", "path": `+quote(root)+`}
+  ],
+  "claims": [
+    {"id": "missing-claims", "path": "missing-claims.json"}
+  ]
+}`)
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	finding := findFindingByID(findings, "finding-technical-debt-unresolved-coverage")
+	if finding == nil {
+		t.Fatalf("findings = %#v, want coverage-backed unresolved debt finding", findings)
+	}
+	if finding["status"] != "unknown" || finding["evidence_state"] != "unknown" || finding["evidence_source"] != "coverage.json" {
+		t.Fatalf("finding = %#v, want unknown coverage-backed technical debt", finding)
+	}
+}
+
 func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
 	root := t.TempDir()
 	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("# no supported detector inputs\n"), 0o644); err != nil {
@@ -2219,7 +2299,7 @@ func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	wantNotAssessed := map[string]bool{"duplication": true, "configuration": true, "technical-debt": true}
+	wantNotAssessed := map[string]bool{"duplication": true, "configuration": true}
 	for _, finding := range findings {
 		kind, _ := finding["kind"].(string)
 		if !wantNotAssessed[kind] {
@@ -2232,6 +2312,13 @@ func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
 	}
 	if len(wantNotAssessed) != 0 {
 		t.Fatalf("missing not_assessed findings: %#v", wantNotAssessed)
+	}
+	debt := findFindingByID(findings, "finding-technical-debt-unresolved-findings")
+	if debt == nil {
+		t.Fatalf("findings = %#v, want unresolved technical debt finding", findings)
+	}
+	if debt["status"] != "unknown" || debt["evidence_state"] != "unknown" {
+		t.Fatalf("technical debt finding = %#v, want unknown unresolved evidence", debt)
 	}
 }
 

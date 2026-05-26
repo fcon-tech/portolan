@@ -59,6 +59,9 @@ ports, container/workflow/manifests, feature flags, and secret references.
 Secret values are intentionally not recorded. Semantic IaC/config validation
 requires local OSS evidence such as Semgrep output or remains `not_assessed`.
 
+Technical-debt findings are candidate follow-ups derived from local evidence.
+Do not present them as modernization, rewrite, release, or readiness verdicts.
+
 ## Required Artifacts
 
 Read these context files before reporting broad claims:

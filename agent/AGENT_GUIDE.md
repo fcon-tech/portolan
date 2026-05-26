@@ -107,6 +107,9 @@ similarity require local jscpd-style evidence from `tool-registry.json` or
 remain not assessed. Configuration detection covers file-based env var names,
 ports, container/workflow/manifests, feature flags, and secret references; it
 does not record secret values and does not perform semantic IaC validation.
+Technical-debt findings are candidate follow-ups derived from observed or
+unresolved local evidence, not modernization, rewrite, release, or readiness
+verdicts.
 `portolan doctor` is still not part of the implemented CLI.
 
 ## Guardrails

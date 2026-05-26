@@ -97,6 +97,9 @@ env var names, ports, container/workflow/manifests, feature flags, and secret
 references, but not secret values. Semantic IaC/config correctness requires
 local OSS output such as Semgrep or remains `not_assessed`.
 
+Use technical-debt findings as candidate follow-ups derived from local evidence.
+Do not turn them into modernization, rewrite, release, or readiness verdicts.
+
 Prefer an explicit curated selection only when one exists locally:
 
 ```bash

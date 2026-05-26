@@ -2,7 +2,8 @@
 
 **Feature Branch**: `013-technical-debt-findings`
 **Created**: 2026-05-20
-**Status**: Backlog spec
+**Status**: Implemented for rule-light debt candidates derived from observed
+relationship, duplication, configuration, and unresolved-evidence signals.
 **Input**: Product backlog P2-013: turn relationship, duplication,
 configuration, importer, and black-box evidence into technical-debt findings
 without readiness verdicts.
@@ -43,24 +44,30 @@ fields.
   readiness verdict.
 - **FR-004**: System MUST avoid automatic rewrite plans.
 - **FR-005**: System MUST make debt rule inputs transparent and testable.
+- **FR-006**: System MUST NOT use readiness, pass/fail, modernization, or
+  merge-gate language in technical-debt summaries.
+- **FR-007**: System MUST preserve `not_assessed`, `unknown`, and
+  `cannot_verify` as unresolved evidence states rather than hiding them behind
+  observed debt findings.
 
 ## Existing Open Source
 
-- Use existing scanner/importer outputs where possible, such as SBOM version
-  data or duplication tool results.
-- Consider Semgrep-style local rules for rule-based findings after Bigtop smoke
-  identifies concrete patterns.
+- Use existing scanner/importer/native outputs where possible: relationships,
+  duplication, configuration, SBOM, jscpd, Semgrep, and black-box evidence.
+- Keep richer rule packs and semantic modernization analysis outside this slice
+  until concrete OSS outputs justify them.
 - Avoid building a broad modernization engine.
 
 ## Success Criteria
 
 - **SC-001**: Fixture output contains relationship-backed, duplication-backed,
-  config-backed, and unknown/cannot-verify debt findings.
+  config-backed, and unresolved-evidence debt findings.
 - **SC-002**: Findings are useful to agents without requiring prose scraping.
-- **SC-003**: Bigtop smoke gaps drive the first debt rules.
+- **SC-003**: Generated debt summaries contain no readiness/pass/fail,
+  modernization verdict, or automatic rewrite recommendation.
+- **SC-004**: Bigtop smoke gaps drive the next debt rules.
 
 ## Assumptions
 
-- This spec should not be implemented until relationship, duplication, and
-  configuration surfaces provide enough evidence to avoid speculative debt
-  claims.
+- Relationship, duplication, and configuration surfaces now provide enough local
+  evidence for non-verdict debt candidate aggregation.

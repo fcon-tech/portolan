@@ -169,11 +169,10 @@ func Run(opts Options) (Result, error) {
 		"relationship-service-topology-inference",
 		"duplication-near-clone-detection",
 		"configuration-semantic-analysis",
-		"technical-debt-findings",
 	}
 	warnings := append([]string{
 		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
-		"near-clone duplication, semantic configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed when no supported evidence is observed",
+		"near-clone duplication and semantic configuration detectors are not implemented; placeholder findings are not_assessed when no supported evidence is observed",
 		"external ecosystem completeness is unknown without a manifest or explicit inventory",
 	}, append(discoveryWarnings, walkWarnings...)...)
 	metadata := RunMetadata{
@@ -184,7 +183,7 @@ func Run(opts Options) (Result, error) {
 		Root:            root,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "technical-debt-findings"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -281,7 +280,7 @@ func runSelection(opts Options) (Result, error) {
 		Selection:       opts.SelectionPath,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "coverage", "tool-output-import"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "technical-debt-findings", "coverage", "tool-output-import"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -872,9 +871,9 @@ func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []F
 	}
 	if weakCount > 0 {
 		derived = append(derived, Finding{
-			ID:             "finding-technical-debt-unresolved-evidence",
+			ID:             "finding-technical-debt-unresolved-coverage",
 			Kind:           "technical-debt",
-			Summary:        fmt.Sprintf("%d landscape coverage records remain unknown, cannot_verify, or not_assessed and require follow-up before architecture conclusions.", weakCount),
+			Summary:        fmt.Sprintf("%d coverage record(s) have unresolved evidence states and need follow-up before architecture conclusions.", weakCount),
 			Severity:       "medium",
 			EvidenceState:  string(graph.Unknown),
 			EvidenceSource: "coverage.json",
@@ -882,24 +881,45 @@ func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []F
 			Status:         "unknown",
 		})
 	}
+	relationshipCount := 0
 	duplicationCount := 0
 	configurationCount := 0
+	unresolvedFindingCount := 0
 	for _, finding := range findings {
-		if finding.Status == "not_assessed" {
+		if finding.Kind == "technical-debt" {
+			continue
+		}
+		if finding.Status == "not_assessed" || finding.Status == "unknown" || finding.Status == "cannot_verify" ||
+			finding.EvidenceState == "not_assessed" || finding.EvidenceState == string(graph.Unknown) || finding.EvidenceState == string(graph.CannotVerify) {
+			unresolvedFindingCount++
 			continue
 		}
 		switch finding.Kind {
+		case "relationships":
+			relationshipCount++
 		case "duplication":
 			duplicationCount++
 		case "configuration":
 			configurationCount++
 		}
 	}
+	if relationshipCount > 0 {
+		derived = append(derived, Finding{
+			ID:             "finding-technical-debt-relationship-follow-up",
+			Kind:           "technical-debt",
+			Summary:        fmt.Sprintf("%d observed relationship finding(s) should be reviewed as coupling and dependency debt candidates.", relationshipCount),
+			Severity:       "low",
+			EvidenceState:  string(graph.MetadataVisible),
+			EvidenceSource: "findings.jsonl",
+			Confidence:     0.6,
+			Status:         "observed",
+		})
+	}
 	if duplicationCount > 0 {
 		derived = append(derived, Finding{
 			ID:             "finding-technical-debt-duplication-follow-up",
 			Kind:           "technical-debt",
-			Summary:        fmt.Sprintf("%d observed duplication findings should be reviewed as maintainability debt candidates without treating them as readiness verdicts.", duplicationCount),
+			Summary:        fmt.Sprintf("%d observed duplication finding(s) should be reviewed as maintainability debt candidates.", duplicationCount),
 			Severity:       "low",
 			EvidenceState:  string(graph.MetadataVisible),
 			EvidenceSource: "findings.jsonl",
@@ -911,12 +931,24 @@ func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []F
 		derived = append(derived, Finding{
 			ID:             "finding-technical-debt-configuration-follow-up",
 			Kind:           "technical-debt",
-			Summary:        fmt.Sprintf("%d runtime or configuration surface findings should be reviewed as operational debt candidates without treating them as pass/fail verdicts.", configurationCount),
+			Summary:        fmt.Sprintf("%d runtime or configuration surface finding(s) should be reviewed as operational debt candidates.", configurationCount),
 			Severity:       "low",
 			EvidenceState:  string(graph.MetadataVisible),
 			EvidenceSource: "findings.jsonl",
 			Confidence:     0.6,
 			Status:         "observed",
+		})
+	}
+	if unresolvedFindingCount > 0 {
+		derived = append(derived, Finding{
+			ID:             "finding-technical-debt-unresolved-findings",
+			Kind:           "technical-debt",
+			Summary:        fmt.Sprintf("%d map finding(s) have unresolved evidence states and need follow-up before architecture conclusions.", unresolvedFindingCount),
+			Severity:       "medium",
+			EvidenceState:  string(graph.Unknown),
+			EvidenceSource: "findings.jsonl",
+			Confidence:     0.7,
+			Status:         "unknown",
 		})
 	}
 	if len(derived) == 0 {

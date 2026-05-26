@@ -56,6 +56,8 @@ Implemented:
 - File-based configuration surface detection in `portolan map` for env var
   names, ports, container/workflow/manifests, feature flags, and secret
   references without recording secret values.
+- Rule-light technical-debt candidate derivation in `portolan map` from
+  relationship, duplication, configuration, and unresolved-evidence findings.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -73,7 +75,7 @@ Not implemented yet:
 - recorded real Cursor + Composer blind operator run comparing Cursor-alone
   with Cursor-plus-Portolan context preparation;
 - near-clone duplication, semantic configuration/IaC analysis, and richer
-  technical-debt finding generators;
+  technical-debt rule packs;
 - non-Go, runtime, and inferred service relationship detection;
 - platform-specific runtime importers;
 - SPDX, Syft-native, or live tool importers;

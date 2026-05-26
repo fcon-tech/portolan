@@ -33,6 +33,10 @@ ports, container/workflow/manifests, feature flags, and secret references.
 Secret values are intentionally absent from artifacts. Do not claim semantic
 IaC/config correctness without local OSS evidence such as Semgrep output.
 
+`portolan map` can report technical-debt candidate findings derived from local
+evidence. Do not turn them into modernization, rewrite, release, or readiness
+verdicts.
+
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
 resources, mutate the repository, or collect credentials unless the user
