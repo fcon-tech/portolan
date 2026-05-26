@@ -65,8 +65,8 @@ Target workflow:
    --profile cursor`, or run the same command through `go run ./cmd/portolan`
    from a Portolan source checkout when no binary is installed.
 3. Inspect `<context-dir>/agent-brief.md`, `<context-dir>/query-plan.md`,
-   `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`, and
-   `<context-dir>/gaps.jsonl`.
+   `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`,
+   `<context-dir>/oss-plan.json`, and `<context-dir>/gaps.jsonl`.
 4. Run `portolan map` when graph artifacts are needed, then inspect
    `<run-dir>/run.json`, `<run-dir>/summary.json`, `<run-dir>/graph.json`,
    `<run-dir>/findings.jsonl`, and `<run-dir>/map.md`.

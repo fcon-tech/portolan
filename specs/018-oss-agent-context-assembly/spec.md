@@ -23,8 +23,8 @@ duplication, ownership, or service-relationship questions.
 
 **Independent Test**: Run `portolan context prepare --root <fixture> --out
 <dir> --profile cursor`. The command writes `agent-brief.md`,
-`query-plan.md`, `repos.json`, `tool-registry.json`, and `gaps.jsonl` without
-network access or target mutation.
+`query-plan.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, and
+`gaps.jsonl` without network access or target mutation.
 
 ### User Story 2 - Compose OSS Outputs Before Native Scanners (Priority: P1)
 

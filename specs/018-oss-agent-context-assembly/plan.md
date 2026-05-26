@@ -29,6 +29,7 @@
   - `query-plan.md`
   - `repos.json`
   - `tool-registry.json`
+  - `oss-plan.json`
   - `gaps.jsonl`
 
 ## Verification
@@ -52,4 +53,3 @@ For behavior, run a fixture command and verify the five output files exist.
   and portable skills to require the context pack as the first surface.
 - Large codebase search needs indexes, not JSON dumps. Mitigation: this slice
   records index handles but does not require index execution.
-

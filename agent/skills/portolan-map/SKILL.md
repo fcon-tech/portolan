@@ -50,12 +50,17 @@ Read all of these before reporting broad claims:
 - `query-plan.md`
 - `repos.json`
 - `tool-registry.json`
+- `oss-plan.json`
 - `gaps.jsonl`
 
 Treat `tool-registry.json` summaries and metrics as local evidence candidates,
 not final architecture verdicts. jscpd, CycloneDX/Syft, Backstage, OpenAPI,
 AsyncAPI, and Structurizr entries can guide the answer, but missing OSS
 families in `gaps.jsonl` remain `not_assessed`.
+
+When a needed OSS family is missing, inspect `oss-plan.json` for local producer
+availability and safe output paths. Do not run producer commands without user
+approval, and do not install or fetch tools unless explicitly approved.
 
 If the command cannot run or required artifacts are absent, stop with a blocker.
 Do not replace missing Portolan evidence with unmarked manual analysis.

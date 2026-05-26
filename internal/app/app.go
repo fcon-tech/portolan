@@ -474,7 +474,7 @@ func writeContextUsage(w io.Writer) {
 Prepare local, read-only agent context packs.
 
 Available subcommands:
-  prepare   write agent-brief.md, query-plan.md, repos.json, tool-registry.json, and gaps.jsonl
+  prepare   write agent-brief.md, query-plan.md, repos.json, tool-registry.json, oss-plan.json, and gaps.jsonl
 `)
 }
 
@@ -494,7 +494,8 @@ Flags:
   --force           replace an existing output directory
 
 The context pack contains agent-brief.md, query-plan.md, repos.json,
-tool-registry.json, and gaps.jsonl.
+tool-registry.json, oss-plan.json, and gaps.jsonl. The OSS plan records local
+producer availability and safe output paths; it does not run external scanners.
 `)
 }
 

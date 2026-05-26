@@ -49,7 +49,12 @@ Read these context files before reporting broad claims:
 - `query-plan.md`
 - `repos.json`
 - `tool-registry.json`
+- `oss-plan.json`
 - `gaps.jsonl`
+
+If `tool-registry.json` lacks the OSS evidence needed for the user's question,
+inspect `oss-plan.json` before concluding the evidence is unavailable. Do not
+run producer commands from the plan without approval.
 
 When you also run `portolan map`, read these files before reporting:
 

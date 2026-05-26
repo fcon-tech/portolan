@@ -11,8 +11,8 @@ codebase, first read `agent/START_HERE.md` and follow that portable workflow.
 Run Portolan before broad manual architecture claims. Start with
 `portolan context prepare --root <target-root> --out <context-dir> --profile cursor`
 to get `agent-brief.md`, `query-plan.md`, `repos.json`,
-`tool-registry.json`, and `gaps.jsonl`. From a Portolan source checkout, use
-the same command after `go run ./cmd/portolan`.
+`tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`. From a Portolan source
+checkout, use the same command after `go run ./cmd/portolan`.
 
 Use `portolan map --root <target-root> --out <run-dir>` when graph artifacts are
 needed after context preparation. It performs bounded local discovery over the
@@ -29,3 +29,7 @@ explicitly approves that boundary. Build, packaging, configuration, release,
 smoke-test, and integration repositories are valid targets; do not clone or
 fetch referenced component source repositories unless the user explicitly
 approves that boundary.
+
+If OSS/tool outputs are absent, inspect `oss-plan.json` before claiming the
+evidence cannot be produced. Run producer commands only with approval and only
+when they write under the selected Portolan output directory.

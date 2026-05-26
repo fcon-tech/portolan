@@ -56,6 +56,10 @@ classified `degraded`, not `passed`.
 ## Follow-Up
 
 `specs/024-agent-scale-map-summary/` implements the accepted follow-up for
-`GAP-GRAPH-SCALE`, `GAP-GRAPH-TYPE`, and `GAP-DUP-FINDINGS`. It does not close
-the remaining install, OSS execution/import, non-Go relationship, duplication,
+`GAP-GRAPH-SCALE`, `GAP-GRAPH-TYPE`, and `GAP-DUP-FINDINGS`.
+
+`specs/025-oss-execution-plan/` implements the first accepted follow-up for
+`GAP-OSS-EMPTY`: context packs now include `oss-plan.json` with local producer
+availability and safe output-path recipes. This does not run OSS tools by
+default and does not close the install, non-Go relationship, duplication,
 configuration, or debt detector gaps.

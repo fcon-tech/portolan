@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -32,6 +33,7 @@ type Artifacts struct {
 	QueryPlan    string `json:"query_plan"`
 	Repos        string `json:"repos"`
 	ToolRegistry string `json:"tool_registry"`
+	OSSPlan      string `json:"oss_plan"`
 	Gaps         string `json:"gaps"`
 }
 
@@ -79,6 +81,41 @@ type registryFile struct {
 	Tools         []ToolEntry `json:"tools"`
 }
 
+type ossPlanFile struct {
+	SchemaVersion string        `json:"schema_version"`
+	GeneratedAt   time.Time     `json:"generated_at"`
+	Root          string        `json:"root"`
+	Profile       string        `json:"profile"`
+	OutputPath    string        `json:"output_path"`
+	ToolOutputDir string        `json:"tool_output_dir"`
+	Rules         []string      `json:"rules"`
+	Tools         []OSSToolPlan `json:"tools"`
+}
+
+type OSSToolPlan struct {
+	ID            string       `json:"id"`
+	Family        string       `json:"family"`
+	Producer      string       `json:"producer"`
+	Purpose       string       `json:"purpose"`
+	Executable    string       `json:"executable"`
+	Status        string       `json:"status"`
+	EvidenceState string       `json:"evidence_state"`
+	Reason        string       `json:"reason"`
+	Commands      []OSSCommand `json:"commands,omitempty"`
+}
+
+type OSSCommand struct {
+	Label                string   `json:"label"`
+	Tool                 string   `json:"tool"`
+	Args                 []string `json:"args"`
+	Reads                []string `json:"reads"`
+	Writes               []string `json:"writes"`
+	MutatesTarget        bool     `json:"mutates_target"`
+	Network              string   `json:"network"`
+	RequiresUserApproval bool     `json:"requires_user_approval"`
+	AfterRun             string   `json:"after_run"`
+}
+
 var priorityFamilies = []string{
 	"jscpd",
 	"cyclonedx",
@@ -113,6 +150,7 @@ func Run(opts Options) (Result, error) {
 
 	repos, repoGaps := discoverRepositories(root)
 	tools := detectToolOutputs(root, repos)
+	ossPlan := buildOSSPlan(root, out, opts.Profile, tools)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
 		ID:            "gap-external-completeness",
@@ -137,6 +175,7 @@ func Run(opts Options) (Result, error) {
 		QueryPlan:    filepath.Join(out, "query-plan.md"),
 		Repos:        filepath.Join(out, "repos.json"),
 		ToolRegistry: filepath.Join(out, "tool-registry.json"),
+		OSSPlan:      filepath.Join(out, "oss-plan.json"),
 		Gaps:         filepath.Join(out, "gaps.jsonl"),
 	}
 	now := time.Now().UTC()
@@ -158,10 +197,14 @@ func Run(opts Options) (Result, error) {
 	}); err != nil {
 		return Result{}, err
 	}
+	ossPlan.GeneratedAt = now
+	if err := writeJSON(filepath.Join(temp, "oss-plan.json"), ossPlan); err != nil {
+		return Result{}, err
+	}
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
 		return Result{}, err
 	}
-	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, repos, tools, gaps)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, repos, tools, ossPlan, gaps)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "query-plan.md"), []byte(renderQueryPlan()), 0o644); err != nil {
@@ -712,7 +755,7 @@ func familiesForFile(name string) []string {
 	if strings.Contains(lower, "cyclonedx") || strings.Contains(lower, "syft") || strings.Contains(lower, "sbom") || lower == "bom.json" {
 		families = append(families, "cyclonedx")
 	}
-	if strings.Contains(lower, "semgrep") {
+	if strings.Contains(lower, "semgrep") && strings.EqualFold(filepath.Ext(lower), ".json") {
 		families = append(families, "semgrep")
 	}
 	if lower == "catalog-info.yaml" || lower == "catalog-info.yml" || lower == "catalog-info.json" {
@@ -754,16 +797,210 @@ func gapsForMissingFamilies(tools []ToolEntry) []Gap {
 	return gaps
 }
 
-func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, gaps []Gap) string {
+func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
+	toolOutputDir := filepath.Join(out, "tool-outputs")
+	plan := ossPlanFile{
+		SchemaVersion: SchemaVersion,
+		GeneratedAt:   time.Time{},
+		Root:          root,
+		Profile:       profile,
+		OutputPath:    out,
+		ToolOutputDir: toolOutputDir,
+		Rules: []string{
+			"do not run producer commands without user approval when they are slow, expensive, or outside the current task boundary",
+			"do not install, fetch, or update tools without explicit user approval",
+			"producer commands must write only under the context output directory",
+			"after producing outputs, rerun context preparation and inspect tool-registry.json",
+		},
+	}
+	present := toolFamiliesPresent(tools)
+	plan.Tools = []OSSToolPlan{
+		jscpdPlan(root, out, toolOutputDir, present["jscpd"]),
+		syftPlan(root, out, toolOutputDir, present["cyclonedx"]),
+		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
+	}
+	sort.Slice(plan.Tools, func(i, j int) bool {
+		return plan.Tools[i].ID < plan.Tools[j].ID
+	})
+	return plan
+}
+
+func toolFamiliesPresent(tools []ToolEntry) map[string]bool {
+	present := map[string]bool{}
+	for _, tool := range tools {
+		present[tool.Family] = true
+	}
+	return present
+}
+
+func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+	plan := baseOSSPlan("jscpd", "jscpd", "jscpd", "Detect duplicated source and text fragments as metadata-visible duplication evidence.")
+	if inputPresent {
+		return markInputPresent(plan, "local jscpd-style output is already present in tool-registry.json")
+	}
+	exe, ok := lookupExecutable("jscpd")
+	if !ok {
+		return markNotAvailable(plan, "jscpd executable was not found on PATH")
+	}
+	plan.Status = "available_not_run"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = "jscpd is available locally; Portolan did not run it"
+	plan.Commands = []OSSCommand{{
+		Label:                "produce jscpd JSON output",
+		Tool:                 exe,
+		Args:                 []string{"--reporters", "json", "--output", toolOutputDir, root},
+		Reads:                []string{root},
+		Writes:               []string{filepath.Join(toolOutputDir, "jscpd-report.json")},
+		MutatesTarget:        false,
+		Network:              "not_expected",
+		RequiresUserApproval: true,
+		AfterRun:             rerunContextCommand(root, out),
+	}}
+	return plan
+}
+
+func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+	plan := baseOSSPlan("cyclonedx", "cyclonedx", "syft", "Produce CycloneDX JSON SBOM evidence for component and dependency identity.")
+	if inputPresent {
+		return markInputPresent(plan, "CycloneDX/Syft-compatible output is already present in tool-registry.json")
+	}
+	exe, ok := lookupExecutable("syft")
+	if !ok {
+		return markNotAvailable(plan, "syft executable was not found on PATH")
+	}
+	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
+	plan.Status = "available_not_run"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = "Syft is available locally; Portolan did not run it"
+	plan.Commands = []OSSCommand{{
+		Label:                "produce CycloneDX JSON SBOM",
+		Tool:                 exe,
+		Args:                 []string{root, "-o", "cyclonedx-json=" + output},
+		Reads:                []string{root},
+		Writes:               []string{output},
+		MutatesTarget:        false,
+		Network:              "not_expected_for_local_filesystem_source",
+		RequiresUserApproval: true,
+		AfterRun:             rerunContextCommand(root, out),
+	}}
+	return plan
+}
+
+func semgrepPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+	plan := baseOSSPlan("semgrep", "semgrep", "semgrep", "Produce local structural findings when a repository-provided Semgrep config exists.")
+	if inputPresent {
+		return markInputPresent(plan, "local Semgrep-style output is already present in tool-registry.json")
+	}
+	config := localSemgrepConfig(root)
+	if config == "" {
+		plan.Status = "not_assessed"
+		plan.EvidenceState = "not_assessed"
+		plan.Reason = "no local Semgrep config was found; network-backed configs such as --config auto are not suggested by default"
+		return plan
+	}
+	exe, ok := lookupExecutable("semgrep")
+	if !ok {
+		return markNotAvailable(plan, "local Semgrep config exists, but semgrep executable was not found on PATH")
+	}
+	output := filepath.Join(toolOutputDir, "semgrep.json")
+	plan.Status = "available_not_run"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = "Semgrep is available with a local config; Portolan did not run it"
+	plan.Commands = []OSSCommand{{
+		Label:                "produce Semgrep JSON output with local config",
+		Tool:                 exe,
+		Args:                 []string{"scan", "--config", config, "--json", "--json-output", output, "--metrics=off", root},
+		Reads:                []string{root, config},
+		Writes:               []string{output},
+		MutatesTarget:        false,
+		Network:              "not_expected_with_local_config",
+		RequiresUserApproval: true,
+		AfterRun:             rerunContextCommand(root, out),
+	}}
+	return plan
+}
+
+func baseOSSPlan(id, family, producer, purpose string) OSSToolPlan {
+	return OSSToolPlan{
+		ID:            id,
+		Family:        family,
+		Producer:      producer,
+		Purpose:       purpose,
+		Status:        "not_available",
+		EvidenceState: "not_assessed",
+		Reason:        "not assessed",
+	}
+}
+
+func markInputPresent(plan OSSToolPlan, reason string) OSSToolPlan {
+	plan.Status = "input_present"
+	plan.EvidenceState = "metadata-visible"
+	plan.Reason = reason
+	plan.Commands = nil
+	return plan
+}
+
+func markNotAvailable(plan OSSToolPlan, reason string) OSSToolPlan {
+	plan.Status = "not_available"
+	plan.EvidenceState = "not_assessed"
+	plan.Reason = reason + "; do not install or fetch tools without explicit user approval"
+	plan.Commands = nil
+	return plan
+}
+
+func lookupExecutable(name string) (string, bool) {
+	path, err := exec.LookPath(name)
+	if err != nil {
+		return "", false
+	}
+	return path, true
+}
+
+func localSemgrepConfig(root string) string {
+	for _, name := range []string{".semgrep.yml", ".semgrep.yaml", "semgrep.yml", "semgrep.yaml"} {
+		path := filepath.Join(root, name)
+		if info, err := os.Stat(path); err == nil && info.Mode().IsRegular() {
+			return path
+		}
+	}
+	return ""
+}
+
+func rerunContextCommand(root, out string) string {
+	return "portolan context prepare --root " + shellQuote(root) + " --out " + shellQuote(out) + " --profile cursor --force"
+}
+
+func shellQuote(value string) string {
+	if value == "" {
+		return "''"
+	}
+	if strings.IndexFunc(value, func(r rune) bool {
+		return !(r == '/' || r == '.' || r == '-' || r == '_' || r == ':' || r == '+' || r == '=' || r == ',' || r == '@' || r >= '0' && r <= '9' || r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z')
+	}) == -1 {
+		return value
+	}
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+}
+
+func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap) string {
 	var b strings.Builder
 	observedTools := 0
 	cannotVerifyTools := 0
+	availablePlans := 0
 	for _, tool := range tools {
 		switch tool.Status {
 		case "observed":
 			observedTools++
 		case "cannot_verify":
 			cannotVerifyTools++
+		}
+	}
+	for _, tool := range ossPlan.Tools {
+		if tool.Status == "available_not_run" {
+			availablePlans++
 		}
 	}
 	fmt.Fprintf(&b, "# Portolan Agent Brief\n\n")
@@ -773,16 +1010,18 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, gaps [
 	fmt.Fprintf(&b, "## What To Read First\n\n")
 	fmt.Fprintf(&b, "1. `repos.json` for discovered local repositories.\n")
 	fmt.Fprintf(&b, "2. `tool-registry.json` for local OSS/tool-output candidates.\n")
-	fmt.Fprintf(&b, "3. `query-plan.md` for the inspection order.\n")
-	fmt.Fprintf(&b, "4. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
+	fmt.Fprintf(&b, "3. `oss-plan.json` for safe local producer commands when OSS outputs are missing.\n")
+	fmt.Fprintf(&b, "4. `query-plan.md` for the inspection order.\n")
+	fmt.Fprintf(&b, "5. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
 	fmt.Fprintf(&b, "## Current Coverage\n\n")
 	fmt.Fprintf(&b, "- Repositories discovered: %d\n", len(repos))
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
 	fmt.Fprintf(&b, "- Observed OSS/tool-output summaries: %d\n", observedTools)
 	fmt.Fprintf(&b, "- Cannot-verify tool outputs: %d\n", cannotVerifyTools)
+	fmt.Fprintf(&b, "- Available OSS producer recipes not run: %d\n", availablePlans)
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
-	fmt.Fprintf(&b, "Use `tool-registry.json` summaries and metrics as evidence candidates, not final architecture verdicts. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
+	fmt.Fprintf(&b, "Use `tool-registry.json` summaries and metrics as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running producer commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
 	return b.String()
 }
 
@@ -793,13 +1032,14 @@ func renderQueryPlan() string {
 
 1. Read ` + "`repos.json`" + ` and identify the local scope.
 2. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
-3. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
+3. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
+4. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
 
 ## CTO Questions
 
 - Duplicate components: start with jscpd and CycloneDX/Syft summaries in
   ` + "`tool-registry.json`" + `. If they are absent, report duplication as
-  not_assessed.
+  not_assessed and inspect ` + "`oss-plan.json`" + ` for safe local producer recipes.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

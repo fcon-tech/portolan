@@ -67,6 +67,7 @@ The agent must inspect these context artifacts before reporting broad claims:
 - `<context-dir>/query-plan.md`
 - `<context-dir>/repos.json`
 - `<context-dir>/tool-registry.json`
+- `<context-dir>/oss-plan.json`
 - `<context-dir>/gaps.jsonl`
 
 The agent may then run `portolan map` when graph artifacts are needed and must

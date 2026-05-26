@@ -8,7 +8,7 @@
   `repos/*`.
 - [x] T003 Add local OSS/tool-output candidate detection and gap records.
 - [x] T004 Generate `agent-brief.md`, `query-plan.md`, `repos.json`,
-  `tool-registry.json`, and `gaps.jsonl`.
+  `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`.
 - [x] T005 Wire the command through `internal/app` without moving behavior into
   `cmd/portolan`.
 - [x] T006 Update agent docs or Cursor rules only where they reference the old

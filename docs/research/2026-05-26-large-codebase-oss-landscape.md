@@ -149,6 +149,8 @@ A useful Cursor-facing pack should contain:
   and technical debt candidates;
 - `tool-outputs/`: imported jscpd, Syft/CycloneDX, Semgrep, Backstage, OpenAPI,
   AsyncAPI, Structurizr, and optional search/index metadata;
+- `oss-plan.json`: local producer availability and safe output-path recipes when
+  OSS outputs are missing;
 - `query-plan.md`: suggested inspection order for common CTO questions;
 - `gaps.jsonl`: missing catalogs, missing contracts, unindexed repos, ignored
   directories, unsupported languages, and cannot-verify surfaces.
@@ -158,8 +160,9 @@ For Cursor, the key is not "read this artifact." It is:
 1. Load `agent-brief.md`.
 2. Use `repos.json` to understand landscape scope.
 3. Use `query-plan.md` to decide where to look first.
-4. Use `evidence-index.jsonl` before making claims.
-5. Use `gaps.jsonl` to report unknowns instead of fabricating coverage.
+4. Use `oss-plan.json` before claiming missing OSS evidence cannot be produced.
+5. Use `evidence-index.jsonl` before making claims.
+6. Use `gaps.jsonl` to report unknowns instead of fabricating coverage.
 
 ## Recommended Next Slice
 

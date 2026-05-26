@@ -6,7 +6,7 @@
 | --- | --- |
 | Target root | `/local/landscape` |
 | Context command | `portolan context prepare --root /local/landscape --out /tmp/portolan-context --profile cursor` |
-| Context artifacts inspected | `agent-brief.md`, `query-plan.md`, `repos.json`, `tool-registry.json`, `gaps.jsonl` |
+| Context artifacts inspected | `agent-brief.md`, `query-plan.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `gaps.jsonl` |
 | Map artifacts inspected | `not_assessed` |
 | External completeness | `unknown` |
 
@@ -31,6 +31,7 @@ ecosystem coverage.
 | --- | --- | --- | --- |
 | jscpd output is present with `duplicate_groups` metric. | `tool-registry.json` | `metadata-visible` | Use the summary as a duplication evidence candidate, not a refactoring verdict. |
 | SBOM output is absent. | `gaps.jsonl` | `not_assessed` | Component duplication and dependency drift are not assessed from SBOM evidence. |
+| Syft producer recipe exists or is missing. | `oss-plan.json` | `not_assessed` | Run only with approval; output must stay under the Portolan context directory. |
 
 ## Implicit Knowledge
 

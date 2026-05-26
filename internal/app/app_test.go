@@ -1020,7 +1020,7 @@ func TestRunContextPrepareHelpDescribesCursorPack(t *testing.T) {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	out := stdout.String()
-	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "no network"} {
+	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "oss-plan.json", "no network"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("stdout %q does not contain %q", out, want)
 		}
@@ -1051,7 +1051,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
-	for _, name := range []string{"agent-brief.md", "query-plan.md", "repos.json", "tool-registry.json", "gaps.jsonl"} {
+	for _, name := range []string{"agent-brief.md", "query-plan.md", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -1128,17 +1128,93 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 			t.Fatalf("gaps.jsonl = %q, want %q", gaps, want)
 		}
 	}
+	ossPlan := readJSONFile(t, filepath.Join(out, "oss-plan.json"))
+	plans := ossPlan["tools"].([]any)
+	planByID := map[string]map[string]any{}
+	for _, raw := range plans {
+		plan := raw.(map[string]any)
+		planByID[plan["id"].(string)] = plan
+	}
+	if planByID["jscpd"]["status"] != "input_present" || planByID["cyclonedx"]["status"] != "input_present" {
+		t.Fatalf("oss plan = %#v, want existing jscpd and cyclonedx inputs preferred", planByID)
+	}
+	if planByID["semgrep"]["status"] != "not_assessed" {
+		t.Fatalf("semgrep plan = %#v, want not_assessed without local config", planByID["semgrep"])
+	}
 	brief, err := os.ReadFile(filepath.Join(out, "agent-brief.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Cursor", "unknown", "cannot_verify", "Do not infer"} {
+	for _, want := range []string{"Cursor", "oss-plan.json", "unknown", "cannot_verify", "Do not infer"} {
 		if !strings.Contains(string(brief), want) {
 			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
 		}
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, ".semgrep.yml"), "rules: []\n")
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdir(t, bin)
+	for _, name := range []string{"jscpd", "syft", "semgrep"} {
+		path := filepath.Join(bin, name)
+		mustWrite(t, path, "#!/bin/sh\nexit 0\n")
+		if err := os.Chmod(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Setenv("PATH", bin)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	ossPlan := readJSONFile(t, filepath.Join(out, "oss-plan.json"))
+	if ossPlan["schema_version"] != "0.1.0" || ossPlan["root"] != root {
+		t.Fatalf("oss plan identity = %#v", ossPlan)
+	}
+	toolOutputDir := ossPlan["tool_output_dir"].(string)
+	if toolOutputDir != filepath.Join(out, "tool-outputs") {
+		t.Fatalf("tool_output_dir = %q, want context tool-outputs dir", toolOutputDir)
+	}
+	plans := ossPlan["tools"].([]any)
+	planByID := map[string]map[string]any{}
+	for _, raw := range plans {
+		plan := raw.(map[string]any)
+		planByID[plan["id"].(string)] = plan
+	}
+	for _, id := range []string{"jscpd", "cyclonedx", "semgrep"} {
+		plan := planByID[id]
+		if plan["status"] != "available_not_run" || plan["evidence_state"] != "not_assessed" {
+			t.Fatalf("%s plan = %#v, want available_not_run/not_assessed", id, plan)
+		}
+		commands := plan["commands"].([]any)
+		if len(commands) != 1 {
+			t.Fatalf("%s commands = %#v, want one command", id, commands)
+		}
+		command := commands[0].(map[string]any)
+		if command["mutates_target"] != false || command["requires_user_approval"] != true {
+			t.Fatalf("%s command = %#v, want no target mutation and user approval", id, command)
+		}
+		for _, rawWrite := range command["writes"].([]any) {
+			writePath := rawWrite.(string)
+			if !strings.HasPrefix(writePath, toolOutputDir+string(filepath.Separator)) {
+				t.Fatalf("%s command writes %q outside %q", id, writePath, toolOutputDir)
+			}
+		}
+		args := fmt.Sprint(command["args"])
+		if strings.Contains(args, "--config auto") {
+			t.Fatalf("%s command args = %q, must not use network-backed config auto", id, args)
+		}
 	}
 }
 
