@@ -25,6 +25,7 @@ Status: market-fit hypothesis narrowed; broad Cursor-replacement thesis failed.
 | H3 | Cursor reviews H1/H2 plus current Portolan artifacts for product fit | `/tmp/portolan-agent-verification/composer25-market-fit-h3.txt` | The defensible thesis narrowed to a prepared inventory/gap-ledger envelope for agent pipelines, not a general Cursor competitor. |
 | H4 | Cursor alone maps `/home/governor/projects/vibe_coding` as a real non-Bigtop folder-of-repos with shallow inspection only | `/tmp/portolan-agent-verification/composer25-control-vibecoding-cursor-alone-h4.txt` | Cursor produced a useful cluster map across SDP, agent harnesses, orchestration tools, Faust workspaces, demos, and root harness overlays. It also left shell-checkable uncertainty and some wrong details. |
 | H5 | Cursor runs current Portolan against `/home/governor/projects/vibe_coding` with a 240-second command timeout and no selection | `/tmp/portolan-agent-verification/composer25-control-vibecoding-portolan-h5.txt` and `/tmp/portolan-agent-verification/composer25-control-vibecoding-portolan-h5-run/` | Portolan completed in the timeout, but collapsed the folder into one repository coverage record and emitted a 672 MB graph for one synthetic root. |
+| H6 | Cursor synthesizes market fit after H1-H5 evidence | `/tmp/portolan-agent-verification/composer25-market-fit-h6.txt` | The surviving current fit is prepared multi-repo inventory/gap ledger for agent pipelines. Messy-folder preflight is a future thesis until child-repo discovery and inventory-first UX ship. |
 
 ## Verified Local Checks
 
@@ -139,6 +140,14 @@ coverage boundaries as prose or uncertainty. Portolan can own that preflight
 surface only after it discovers child repositories and emits a small inventory
 artifact before deep graph generation.
 
+Final synthesis after H6:
+
+Current market fit is real only for **prepared** landscapes: users who already
+have, or can cheaply generate, a selection/manifest and need a machine-readable
+inventory/gap ledger before agent automation. The messy-folder story is more
+compelling as a customer problem, but it is **not current product fit** until
+P1-017 and an inventory-first path exist.
+
 Future thesis, contingent on implementation:
 
 If landscape root discovery and polyglot importers ship, Portolan can become a
@@ -164,6 +173,33 @@ This fit is intentionally narrower than adjacent tools:
 The viable lane is therefore local preflight for agents: discover or consume a
 bounded local landscape, emit a schema-stable inventory and gap ledger, and let
 the agent reason on top of it.
+
+## "Why Portolan If I Already Have Cursor?"
+
+Use Cursor to think, search, explain, and edit. Use Portolan when the workflow
+needs a fixed local inventory contract before automated or multi-step agent
+runs, especially across many repositories. Cursor can produce a strong first
+map, but its output is narrative and can contain shell-falsifiable errors.
+Portolan should make later steps gate on local artifacts such as coverage and
+gap records instead of trusting one model pass. Today that requires a prepared
+selection; tomorrow it should work from a normal parent folder.
+
+## Current Wedge ICP
+
+- Operators of agent or automation pipelines that run over a bounded local
+  multi-repo landscape.
+- Teams willing to maintain or generate a selection/manifest before running
+  agent workflows.
+- Users who value explicit `not_assessed` gaps more than a confident
+  architecture narrative.
+
+Not current ICP:
+
+- Single-repo exploratory users.
+- Users asking Cursor to explain a codebase interactively.
+- Teams needing enterprise code search or service catalog ownership.
+- Users pointing at a raw folder of clones and expecting Portolan to discover
+  the landscape today.
 
 ## Required Bets
 
