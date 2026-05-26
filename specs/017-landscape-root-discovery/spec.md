@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: Product correction: a generated `selection.json` is not a realistic
 blind-acceptance input. A user should be able to give an agent a Portolan path,

@@ -34,7 +34,8 @@ Implemented:
 - `portolan map --selection <file> --out <dir>` for curated local landscape
   artifact bundles with `run.json`, `coverage.json`, `graph.json`,
   `findings.jsonl`, and `map.md`.
-- `portolan map --root <dir> --out <dir>` for direct local mapping.
+- `portolan map --root <dir> --out <dir>` for bounded local mapping of the
+  target root, direct child Git repositories, and `repos/*` Git repositories.
 - Relationship detection for local Go imports and `go.mod` dependencies in
   `portolan map`.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
@@ -84,9 +85,9 @@ Portolan should be built from the cheapest useful agent loop outward:
    preparation before making landscape claims.
 4. Cursor-alone vs Cursor-plus-Portolan hypothesis checks on non-Bigtop and
    Bigtop targets.
-5. `portolan map --selection selection.json --out .portolan/run` for curated
-   selections and `portolan map --root <dir> --out <dir>` for direct local map
-   artifacts.
+5. `portolan map --root <dir> --out <dir>` for normal local map artifacts, with
+   `portolan map --selection selection.json --out .portolan/run` retained for
+   curated advanced inventories.
 6. Relationship, duplication, configuration, and technical-debt finding
    generators backed by local evidence, prioritized from that smoke.
 7. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.

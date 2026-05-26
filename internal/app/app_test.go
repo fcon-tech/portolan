@@ -1310,6 +1310,147 @@ func TestRunMapRootStillWritesExistingBundleWithCoverage(t *testing.T) {
 	}
 }
 
+func TestRunMapRootDiscoversLandscapeRepositories(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "api", ".git"))
+	mustMkdir(t, filepath.Join(root, "repos", "web", ".git"))
+	mustWrite(t, filepath.Join(root, "api", "go.mod"), "module example.com/api\n")
+	mustWrite(t, filepath.Join(root, "repos", "web", "README.md"), "fixture")
+	mustWrite(t, filepath.Join(root, "notes.txt"), "not a repository")
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	nodeIDs := map[string]bool{}
+	for _, raw := range graph["nodes"].([]any) {
+		node := raw.(map[string]any)
+		nodeIDs[node["id"].(string)] = true
+	}
+	for _, want := range []string{"api", "web"} {
+		if !nodeIDs[want] {
+			t.Fatalf("graph node ids = %#v, want discovered repo %q", nodeIDs, want)
+		}
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	seen := map[string]map[string]any{}
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		seen[record["id"].(string)] = record
+	}
+	for _, want := range []string{"api", "web"} {
+		record := seen[want]
+		if record == nil || record["kind"] != "repository" || record["status"] != "visible" || record["evidence_state"] != "source-visible" {
+			t.Fatalf("coverage[%s] = %#v, want visible source repository", want, record)
+		}
+	}
+	record := seen["external-completeness"]
+	if record == nil || record["status"] != "unknown" || record["evidence_state"] != "unknown" {
+		t.Fatalf("external completeness = %#v, want unknown", record)
+	}
+	record = seen["non-repository-children"]
+	if record == nil || record["status"] != "not_assessed" || record["evidence_state"] != "unknown" {
+		t.Fatalf("non-repository children = %#v, want not_assessed unknown", record)
+	}
+}
+
+func TestRunMapRootRecordsRepoLikeMismatchWithoutGit(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "repos", "api"))
+	mustWrite(t, filepath.Join(root, "selection.json"), `{"schema_version":"0.1.0","targets":[]}`)
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	foundMismatch := false
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		if record["id"] == "repo-like-structure-without-git" {
+			foundMismatch = true
+			if record["status"] != "unknown" || record["evidence_state"] != "unknown" {
+				t.Fatalf("record = %#v, want unknown repo-like mismatch", record)
+			}
+		}
+	}
+	if !foundMismatch {
+		t.Fatalf("coverage records = %#v, want repo-like mismatch record", records)
+	}
+}
+
+func TestRunMapRootRecordsDirectChildRepoLikeMismatchWithoutGit(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "api"))
+	mustMkdir(t, filepath.Join(root, "worker"))
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	seen := map[string]map[string]any{}
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		seen[record["id"].(string)] = record
+	}
+	record := seen["repo-like-structure-without-git"]
+	if record == nil || record["status"] != "unknown" || record["evidence_state"] != "unknown" {
+		t.Fatalf("repo-like mismatch = %#v, want unknown", record)
+	}
+	if seen["root"] != nil {
+		t.Fatalf("coverage records = %#v, did not expect legacy root repository when repo-like children have no git", records)
+	}
+}
+
+func TestRunMapRootRecordsSourceMarkedRepoLikeChildrenWithoutGit(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "go.mod"), "module example.com/root\n")
+	mustMkdir(t, filepath.Join(root, "api"))
+	mustMkdir(t, filepath.Join(root, "worker"))
+	mustMkdir(t, filepath.Join(root, "cmd"))
+	out := filepath.Join(root, ".portolan", "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	seen := map[string]map[string]any{}
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		seen[record["id"].(string)] = record
+	}
+	record := seen["repo-like-structure-without-git"]
+	if record == nil || record["status"] != "unknown" || record["evidence_state"] != "unknown" {
+		t.Fatalf("repo-like mismatch = %#v, want unknown", record)
+	}
+	record = seen["non-git-child-directories"]
+	if record == nil || !strings.Contains(record["reason"].(string), "2 child directories") {
+		t.Fatalf("non-git child dirs = %#v, want api/worker count only", record)
+	}
+}
+
 func TestRunMapIncompleteBigtopCorpusBlocksBeforeArtifacts(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer

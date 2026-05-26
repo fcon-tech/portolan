@@ -513,7 +513,8 @@ Flags:
 
 The bundle contains run.json, coverage.json, graph.json, findings.jsonl, and
 map.md. Use context prepare before broad agent answers. Use --selection for
-curated local inventories and --root for direct local mapping. The command makes
+curated local inventories and --root for bounded local discovery of the root,
+direct child Git repositories, and repos/* Git repositories. The command makes
 no network calls, does not mutate selected repositories, and writes only to the
 selected output directory.
 `)

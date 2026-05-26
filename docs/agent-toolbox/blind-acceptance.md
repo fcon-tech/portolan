@@ -72,6 +72,16 @@ The agent must inspect these context artifacts before reporting broad claims:
 The agent may then run `portolan map` when graph artifacts are needed and must
 inspect these artifacts before reporting map-backed claims:
 
+```bash
+portolan map --root <target-root> --out <run-dir>
+```
+
+`map --root` discovers the target root itself, direct child Git repositories,
+and `repos/*` Git repositories. It does not prove that the local checkout set is
+the complete external ecosystem; the run must preserve the
+`external-completeness` coverage record as `unknown` unless a manifest-backed
+slice proves otherwise.
+
 - `<run-dir>/run.json`
 - `<run-dir>/coverage.json`
 - `<run-dir>/graph.json`

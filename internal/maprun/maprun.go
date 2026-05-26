@@ -102,12 +102,8 @@ func Run(opts Options) (Result, error) {
 		Findings: filepath.Join(out, "findings.jsonl"),
 		Packet:   filepath.Join(out, "map.md"),
 	}
-	g, walkWarnings := graphForRoot(root)
-	relationshipResult := relationships.Detect(root)
-	g.Nodes = append(g.Nodes, relationshipResult.Nodes...)
-	g.Edges = append(g.Edges, relationshipResult.Edges...)
-	sortGraph(&g)
-	findings := findingsForRoot(root, relationshipResult)
+	rootSelection, discoveryRecords, discoveryWarnings := selectionForRootDiscovery(root)
+	g, findings, walkWarnings := graphAndFindingsForSelection(rootSelection)
 	skippedSurfaces := []string{
 		"relationship-non-go-source",
 		"relationship-runtime-inference",
@@ -120,10 +116,8 @@ func Run(opts Options) (Result, error) {
 	warnings := append([]string{
 		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
 		"duplication, configuration, and technical-debt detectors are not implemented; placeholder findings are not_assessed",
-	}, walkWarnings...)
-	for _, issue := range relationshipResult.Issues {
-		warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
-	}
+		"external ecosystem completeness is unknown without a manifest or explicit inventory",
+	}, append(discoveryWarnings, walkWarnings...)...)
 	metadata := RunMetadata{
 		SchemaVersion:   SchemaVersion,
 		Command:         "portolan map",
@@ -136,18 +130,14 @@ func Run(opts Options) (Result, error) {
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
-	rootSelection := selection.Selection{
-		SchemaVersion: selection.SchemaVersion,
-		Targets: []selection.Target{{
-			ID:   "root",
-			Kind: "repository",
-			Path: root,
-		}},
-	}
 	ledger, err := coverage.Build(rootSelection, "", "")
 	if err != nil {
 		return Result{}, err
 	}
+	ledger.Records = append(ledger.Records, discoveryRecords...)
+	ledger.Records = append(ledger.Records, externalCompletenessRecord())
+	sortCoverageRecords(ledger.Records)
+	ledger.Summary = summarizeCoverageRecords(ledger.Records)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
 	sortFindings(findings)
 
@@ -363,6 +353,247 @@ func validateSelectionOutput(opts Options, sel selection.Selection) (string, err
 	return out, nil
 }
 
+func selectionForRootDiscovery(root string) (selection.Selection, []coverage.Record, []string) {
+	discovery := discoverLandscapeRepositories(root)
+	if len(discovery.targets) > 0 {
+		return selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Targets:       discovery.targets,
+		}, discovery.records, discovery.warnings
+	}
+	if discovery.hasRepoLikeInputs {
+		discovery.records = append(discovery.records, coverage.Record{
+			ID:            "repo-like-structure-without-git",
+			Kind:          "repository-discovery",
+			Status:        "unknown",
+			EvidenceState: string(graph.Unknown),
+			Source:        root,
+			Reason:        "selection.json, repos/*, or repo-like child directories are present, but bounded discovery found no .git directories",
+		})
+		return selection.Selection{SchemaVersion: selection.SchemaVersion}, discovery.records, discovery.warnings
+	}
+	return selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Targets: []selection.Target{{
+				ID:   "root",
+				Kind: "repository",
+				Path: root,
+			}},
+		}, append(discovery.records, coverage.Record{
+			ID:            "root-git-not-found",
+			Kind:          "repository-discovery",
+			Status:        "unknown",
+			EvidenceState: string(graph.Unknown),
+			Source:        root,
+			Reason:        "legacy single-root mapping is source-visible, but no .git boundary was found; do not treat it as a verified Git repository",
+		}), discovery.warnings
+}
+
+type rootDiscoveryResult struct {
+	targets           []selection.Target
+	records           []coverage.Record
+	warnings          []string
+	hasRepoLikeInputs bool
+	hasSourceMarker   bool
+	nonRepoChildCount int
+	nonGitChildCount  int
+	seenPaths         map[string]bool
+	usedIDs           map[string]bool
+}
+
+func discoverLandscapeRepositories(root string) rootDiscoveryResult {
+	result := rootDiscoveryResult{
+		hasSourceMarker: hasSourceMarker(root),
+		seenPaths:       map[string]bool{},
+		usedIDs:         map[string]bool{},
+	}
+	if isGitRepository(root) {
+		result.addRepository("root", root)
+	}
+	if info, err := os.Stat(filepath.Join(root, "selection.json")); err == nil && info.Mode().IsRegular() {
+		result.hasRepoLikeInputs = true
+	}
+	result.scanChildren(root, "direct child repository")
+	result.scanChildren(filepath.Join(root, "repos"), "repos child repository")
+	result.addAggregateDiscoveryRecords(root)
+	sort.Slice(result.targets, func(i, j int) bool {
+		return result.targets[i].ID < result.targets[j].ID
+	})
+	sortCoverageRecords(result.records)
+	sort.Strings(result.warnings)
+	return result
+}
+
+func (result *rootDiscoveryResult) scanChildren(parent, discovery string) {
+	entries, err := os.ReadDir(parent)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		result.records = append(result.records, coverage.Record{
+			ID:            "read-" + stableID(parent),
+			Kind:          "repository-discovery",
+			Status:        "cannot_verify",
+			EvidenceState: string(graph.CannotVerify),
+			Source:        parent,
+			Reason:        "cannot read discovery directory: " + err.Error(),
+		})
+		result.warnings = append(result.warnings, "repository discovery: cannot read "+parent+": "+err.Error())
+		return
+	}
+	for _, entry := range entries {
+		path := filepath.Join(parent, entry.Name())
+		info, err := os.Lstat(path)
+		if err != nil {
+			result.records = append(result.records, coverage.Record{
+				ID:            "inspect-" + stableID(path),
+				Kind:          "repository-discovery",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        path,
+				Reason:        "cannot inspect candidate path: " + err.Error(),
+			})
+			continue
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			result.records = append(result.records, coverage.Record{
+				ID:            "symlink-" + stableID(path),
+				Kind:          "repository-discovery",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        path,
+				Reason:        "symlinked repository candidates are not followed by root discovery",
+			})
+			continue
+		}
+		if strings.HasPrefix(entry.Name(), ".") {
+			continue
+		}
+		if !info.IsDir() {
+			if filepath.Dir(parent) != parent && filepath.Base(parent) != "repos" && !strings.HasPrefix(entry.Name(), ".") {
+				result.nonRepoChildCount++
+			}
+			continue
+		}
+		if filepath.Base(parent) == "repos" {
+			result.hasRepoLikeInputs = true
+		}
+		if !isGitRepository(path) {
+			if filepath.Base(parent) != "repos" && entry.Name() == "repos" {
+				continue
+			}
+			if filepath.Base(parent) == "repos" || !result.hasSourceMarker || repoLikeChildName(entry.Name()) {
+				result.hasRepoLikeInputs = true
+				result.nonGitChildCount++
+			}
+			continue
+		}
+		result.addRepository(entry.Name(), path)
+		result.warnings = append(result.warnings, "repository discovery: "+discovery+" "+path)
+	}
+}
+
+func (result *rootDiscoveryResult) addAggregateDiscoveryRecords(root string) {
+	if result.nonRepoChildCount > 0 {
+		result.records = append(result.records, coverage.Record{
+			ID:            "non-repository-children",
+			Kind:          "repository-discovery",
+			Status:        "not_assessed",
+			EvidenceState: string(graph.Unknown),
+			Source:        root,
+			Reason:        fmt.Sprintf("%d direct child file(s) were not assessed as repository candidates", result.nonRepoChildCount),
+		})
+	}
+	if result.nonGitChildCount > 0 {
+		result.records = append(result.records, coverage.Record{
+			ID:            "non-git-child-directories",
+			Kind:          "repository-discovery",
+			Status:        "unknown",
+			EvidenceState: string(graph.Unknown),
+			Source:        root,
+			Reason:        fmt.Sprintf("%d child directories looked landscape-like but had no .git boundary", result.nonGitChildCount),
+		})
+	}
+}
+
+func hasSourceMarker(root string) bool {
+	for _, name := range []string{"go.mod", "package.json", "pyproject.toml", "Cargo.toml", "pom.xml", "build.gradle", "settings.gradle"} {
+		if info, err := os.Stat(filepath.Join(root, name)); err == nil && info.Mode().IsRegular() {
+			return true
+		}
+	}
+	return false
+}
+
+func repoLikeChildName(name string) bool {
+	switch strings.ToLower(name) {
+	case "api", "apis", "app", "apps", "backend", "frontend", "gateway", "service", "services", "web", "worker", "workers", "jobs":
+		return true
+	default:
+		return false
+	}
+}
+
+func (result *rootDiscoveryResult) addRepository(name, path string) {
+	if result.seenPaths[path] {
+		return
+	}
+	id := uniqueDiscoveryID(stableID(name), result.usedIDs)
+	result.targets = append(result.targets, selection.Target{
+		ID:   id,
+		Kind: "repository",
+		Path: path,
+	})
+	result.seenPaths[path] = true
+	result.usedIDs[id] = true
+}
+
+func uniqueDiscoveryID(base string, used map[string]bool) string {
+	if base == "" || base == "unknown" {
+		base = "repository"
+	}
+	id := base
+	for i := 2; used[id]; i++ {
+		id = fmt.Sprintf("%s-%d", base, i)
+	}
+	return id
+}
+
+func isGitRepository(path string) bool {
+	info, err := os.Lstat(filepath.Join(path, ".git"))
+	return err == nil && info.Mode()&os.ModeSymlink == 0
+}
+
+func externalCompletenessRecord() coverage.Record {
+	return coverage.Record{
+		ID:            "external-completeness",
+		Kind:          "external-completeness",
+		Status:        "unknown",
+		EvidenceState: string(graph.Unknown),
+		Source:        "",
+		Reason:        "no manifest or curated inventory was supplied; local repository discovery does not prove complete ecosystem coverage",
+	}
+}
+
+func sortCoverageRecords(records []coverage.Record) {
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].Kind != records[j].Kind {
+			return records[i].Kind < records[j].Kind
+		}
+		return records[i].ID < records[j].ID
+	})
+}
+
+func summarizeCoverageRecords(records []coverage.Record) map[string]int {
+	summary := map[string]int{}
+	for _, record := range records {
+		summary["total"]++
+		summary["status:"+record.Status]++
+		summary["evidence_state:"+record.EvidenceState]++
+	}
+	return summary
+}
+
 func resolveOutputPath(path string) (string, error) {
 	clean := filepath.Clean(path)
 	existing := clean
@@ -433,46 +664,6 @@ func replaceOutput(temp, out string, force bool) error {
 	return os.RemoveAll(backup)
 }
 
-func graphForRoot(root string) (graph.Graph, []string) {
-	g := graph.New()
-	label := filepath.Base(root)
-	if label == "." || label == string(filepath.Separator) {
-		label = root
-	}
-	g.Nodes = append(g.Nodes, graph.Node{
-		ID:    "root",
-		Kind:  "repository",
-		Label: label,
-		Evidence: graph.Evidence{
-			State:  graph.SourceVisible,
-			Source: root,
-		},
-	})
-	entries, warnings := visibleEntries(root)
-	for _, entry := range entries {
-		g.Nodes = append(g.Nodes, graph.Node{
-			ID:    "source:" + entry,
-			Kind:  "unknown",
-			Label: entry,
-			Evidence: graph.Evidence{
-				State:  graph.SourceVisible,
-				Source: filepath.Join(root, filepath.FromSlash(entry)),
-			},
-		})
-		g.Edges = append(g.Edges, graph.Edge{
-			From: "root",
-			To:   "source:" + entry,
-			Kind: "observes",
-			Evidence: graph.Evidence{
-				State:  graph.SourceVisible,
-				Source: root,
-			},
-		})
-	}
-	sortGraph(&g)
-	return g, warnings
-}
-
 func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Finding, []string) {
 	g := graph.New()
 	var findings []Finding
@@ -488,10 +679,17 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 			continue
 		}
 		relationshipResult := relationships.Detect(target.Path)
-		prefixRelationshipGraph(target.ID, &relationshipResult)
+		prefixRelationships := shouldPrefixRelationshipGraph(sel, target)
+		if prefixRelationships {
+			prefixRelationshipGraph(target.ID, &relationshipResult)
+		}
 		g.Nodes = append(g.Nodes, relationshipResult.Nodes...)
 		g.Edges = append(g.Edges, relationshipResult.Edges...)
-		findings = append(findings, prefixedRelationshipFindings(target.ID, target.Path, relationshipResult)...)
+		if prefixRelationships {
+			findings = append(findings, prefixedRelationshipFindings(target.ID, target.Path, relationshipResult)...)
+		} else {
+			findings = append(findings, relationshipFindings(target.Path, relationshipResult)...)
+		}
 		for _, issue := range relationshipResult.Issues {
 			warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
 		}
@@ -548,6 +746,10 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 	return g, findings, warnings
 }
 
+func shouldPrefixRelationshipGraph(sel selection.Selection, target selection.Target) bool {
+	return len(sel.Targets) != 1 || target.ID != "root"
+}
+
 func ensureSurfaceCoverageFindings(findings []Finding) []Finding {
 	covered := map[string]bool{}
 	for _, finding := range findings {
@@ -570,6 +772,9 @@ func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []F
 	var derived []Finding
 	weakCount := 0
 	for _, record := range ledger.Records {
+		if record.Kind == "external-completeness" || record.Kind == "repository-discovery" {
+			continue
+		}
 		if record.EvidenceState == string(graph.Unknown) || record.EvidenceState == string(graph.CannotVerify) || record.EvidenceState == "not_assessed" {
 			weakCount++
 		}
@@ -1077,27 +1282,6 @@ func pathHasSkippedInventoryDir(path string) bool {
 		}
 	}
 	return false
-}
-
-func findingsForRoot(root string, relationshipResult relationships.Result) []Finding {
-	findings := []Finding{
-		{
-			ID:             "finding-inventory-root",
-			Kind:           "inventory",
-			Summary:        "Repository root is locally visible.",
-			Severity:       "info",
-			EvidenceState:  string(graph.SourceVisible),
-			EvidenceSource: root,
-			Confidence:     1.0,
-			Status:         "observed",
-		},
-	}
-	findings = append(findings, relationshipFindings(root, relationshipResult)...)
-	findings = append(findings,
-		notAssessedFinding("finding-duplication-not-assessed", "duplication", "Duplication detection is not implemented in this map slice."),
-		notAssessedFinding("finding-configuration-not-assessed", "configuration", "Configuration surface detection is not implemented in this map slice."),
-	)
-	return findings
 }
 
 func relationshipFindings(root string, result relationships.Result) []Finding {

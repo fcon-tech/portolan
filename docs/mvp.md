@@ -35,7 +35,9 @@ The MVP should prove one narrow product promise:
 
 ## Phase 4: Map Command And Evidence Useful To Users
 
-- Keep `portolan map --root . --out .portolan/run` as a direct map command.
+- Keep `portolan map --root . --out .portolan/run` as the direct map command;
+  it discovers the root, direct child Git repositories, and `repos/*` Git
+  repositories under a bounded local policy.
 - Use `portolan map --selection selection.json --out .portolan/run` for curated
   local inventories.
 - Emit a stable artifact bundle: `run.json`, `coverage.json`, `graph.json`,

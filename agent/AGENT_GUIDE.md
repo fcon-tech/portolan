@@ -67,6 +67,11 @@ and readable map bundle:
 portolan map --root <target-root> --out <run-dir>
 ```
 
+`map --root` performs bounded local discovery over the target root itself,
+direct child Git repositories, and `repos/*` Git repositories. It does not
+prove the external ecosystem is complete; inspect `coverage.json` for
+`external-completeness: unknown`.
+
 The current map bundle is:
 
 ```text
@@ -148,17 +153,17 @@ Use `not_assessed` for a surface you did not check.
    metrics for jscpd, CycloneDX/Syft, Backstage, OpenAPI, AsyncAPI, and
    Structurizr as local evidence candidates, not final architecture verdicts.
 
-4. Run the map command when graph artifacts are needed. Prefer `--selection`
-   only when a curated local selection exists:
-
-   ```bash
-   portolan map --selection <selection.json> --out <run-dir>
-   ```
-
-   Use `--root` for direct local mapping when no curated selection exists:
+4. Run the map command when graph artifacts are needed. Use `--root` for the
+   normal blind/first-run workflow:
 
    ```bash
    portolan map --root <target-root> --out <run-dir>
+   ```
+
+   Prefer `--selection` only when a curated local selection exists:
+
+   ```bash
+   portolan map --selection <selection.json> --out <run-dir>
    ```
 
    Read `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and

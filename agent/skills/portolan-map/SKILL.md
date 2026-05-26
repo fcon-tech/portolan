@@ -63,17 +63,21 @@ Do not replace missing Portolan evidence with unmarked manual analysis.
 ## Optional Map Command
 
 Run the map command after context preparation when the answer needs a Portolan
-evidence graph or readable map bundle. Prefer an explicit curated selection
-only when one exists locally:
-
-```bash
-portolan map --selection <selection.json> --out <run-dir>
-```
-
-Use the root map form when no curated selection exists:
+evidence graph or readable map bundle. Use the root form for normal blind or
+first-run mapping:
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
+```
+
+`map --root` discovers the target root itself, direct child Git repositories,
+and `repos/*` Git repositories. It does not prove external ecosystem
+completeness; read `coverage.json` before making completeness claims.
+
+Prefer an explicit curated selection only when one exists locally:
+
+```bash
+portolan map --selection <selection.json> --out <run-dir>
 ```
 
 ## Map Artifact Contract

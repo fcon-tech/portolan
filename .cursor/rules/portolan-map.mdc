@@ -14,10 +14,12 @@ to get `agent-brief.md`, `query-plan.md`, `repos.json`,
 `tool-registry.json`, and `gaps.jsonl`. From a Portolan source checkout, use
 the same command after `go run ./cmd/portolan`.
 
-Use `portolan map --selection <selection.json> --out <run-dir>` only when a
-curated local selection exists. Use `portolan map --root <target-root> --out
-<run-dir>` as a lower-level map command after context preparation, not as the
-main Cursor workflow. Read the generated context pack and map artifacts before
+Use `portolan map --root <target-root> --out <run-dir>` when graph artifacts are
+needed after context preparation. It performs bounded local discovery over the
+target root, direct child Git repositories, and `repos/*` Git repositories, but
+external ecosystem completeness remains `unknown` without a manifest. Use
+`portolan map --selection <selection.json> --out <run-dir>` only when a curated
+local selection exists. Read the generated context pack and map artifacts before
 reporting.
 
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
