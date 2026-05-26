@@ -69,6 +69,7 @@ Read these context files before reporting broad claims:
 - `agent-brief.md`
 - `answer-contract.md`
 - `query-plan.md`
+- `evidence-index.jsonl`
 - `repos.json`
 - `tool-registry.json`
 - `oss-plan.json`
@@ -76,8 +77,9 @@ Read these context files before reporting broad claims:
 
 Use `answer-contract.md` before broad CTO-level answers. If
 `tool-registry.json` lacks the OSS evidence needed for the user's question,
-inspect `oss-plan.json` before concluding the evidence is unavailable. Do not
-run producer commands from the plan without approval.
+inspect `oss-plan.json` before concluding the evidence is unavailable. Use
+`evidence-index.jsonl` as the bounded first pass over local evidence records
+and gaps. Do not run producer commands from the plan without approval.
 
 When you also run `portolan map`, read these files before reporting:
 

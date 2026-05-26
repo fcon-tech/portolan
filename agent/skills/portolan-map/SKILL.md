@@ -57,16 +57,17 @@ Read all of these before reporting broad claims:
 - `agent-brief.md`
 - `answer-contract.md`
 - `query-plan.md`
+- `evidence-index.jsonl`
 - `repos.json`
 - `tool-registry.json`
 - `oss-plan.json`
 - `gaps.jsonl`
 
 Use `answer-contract.md` as the required answer shape for CTO-level questions.
-Treat `tool-registry.json` summaries and metrics as local evidence candidates,
-not final architecture verdicts. jscpd, CycloneDX/Syft, Backstage, OpenAPI,
-AsyncAPI, and Structurizr entries can guide the answer, but missing OSS
-families in `gaps.jsonl` remain `not_assessed`.
+Treat `evidence-index.jsonl` and `tool-registry.json` summaries as local
+evidence candidates, not final architecture verdicts. jscpd, CycloneDX/Syft,
+Backstage, OpenAPI, AsyncAPI, and Structurizr entries can guide the answer, but
+missing OSS families in `gaps.jsonl` remain `not_assessed`.
 
 When a needed OSS family is missing, inspect `oss-plan.json` for local producer
 availability and safe output paths. Do not run producer commands without user

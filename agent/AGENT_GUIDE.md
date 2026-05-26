@@ -65,6 +65,7 @@ The context pack is:
   agent-brief.md
   answer-contract.md
   query-plan.md
+  evidence-index.jsonl
   repos.json
   tool-registry.json
   oss-plan.json
@@ -180,12 +181,13 @@ Use `not_assessed` for a surface you did not check.
    ```
 
    Read `agent-brief.md`, `answer-contract.md`, `query-plan.md`,
-   `repos.json`, `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`.
-   Treat tool-registry summaries and metrics for jscpd, CycloneDX/Syft,
-   Backstage, OpenAPI, AsyncAPI, and Structurizr as local evidence candidates,
-   not final architecture verdicts. Use `answer-contract.md` as the required
-   answer shape. Use `oss-plan.json` to see safe local producer commands when
-   evidence is missing; do not run them without approval.
+   `evidence-index.jsonl`, `repos.json`, `tool-registry.json`,
+   `oss-plan.json`, and `gaps.jsonl`. Treat `evidence-index.jsonl` and
+   tool-registry summaries for jscpd, CycloneDX/Syft, Backstage, OpenAPI,
+   AsyncAPI, and Structurizr as local evidence candidates, not final
+   architecture verdicts. Use `answer-contract.md` as the required answer
+   shape. Use `oss-plan.json` to see safe local producer commands when evidence
+   is missing; do not run them without approval.
 
 4. Run the map command when graph artifacts are needed. Use `--root` for the
    normal blind/first-run workflow:
