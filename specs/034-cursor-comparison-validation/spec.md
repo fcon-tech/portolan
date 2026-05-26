@@ -9,6 +9,16 @@
 **Input**: User description: "Prove or falsify the core product claim: if a
 user already has Cursor, why do they need Portolan?"
 
+## Clarifications
+
+### Session 2026-05-26
+
+- Q: What fixed comparison target should spec 034 require for both Cursor-alone and Cursor-plus-Portolan lanes? → A: `/home/fall_out_bug/projects/bigtop-landscape`
+- Q: What should be the fixed question set for comparing Cursor-alone vs Cursor-plus-Portolan? → A: Five fixed CTO questions covering scope/completeness, duplicate/component risk, implicit knowledge, service relationships, and next actions.
+- Q: What rule should classify the final product claim after scoring? → A: Accept only if unsupported claims drop by >=50% and next actions are equal or better on >=75% of questions; narrow if only one passes; reject if neither passes; block if a lane cannot run.
+- Q: What should the Cursor-plus-Portolan lane receive before answering? → A: The context pack plus bounded map artifacts: `summary.json`, `graph-index.json`, and slices only when needed.
+- Q: What evidence must the comparison ledger retain for auditability? → A: Prompts, raw outputs, artifact paths/checksums, per-question scores, unsupported-claim counts, unknown/not_assessed notes, and final decision rationale.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Compare Cursor Alone Against Cursor With Portolan (Priority: P1)
@@ -43,15 +53,20 @@ comparison ledger that shows whether Portolan improved the result.
   instruction failure.
 - The target is too large for full-source reading; the comparison must evaluate
   bounded navigation rather than raw file loading.
+- Cursor-plus-Portolan loads the full `graph.json` before bounded artifacts;
+  the run records this as a workflow failure for agent usability.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: The validation MUST use one fixed local target for both lanes.
-- **FR-002**: The validation MUST use one fixed question set covering local
-  scope, duplicate/component risk, implicit knowledge, service relationships,
-  and next actions.
+- **FR-007**: The fixed comparison target MUST be
+  `/home/fall_out_bug/projects/bigtop-landscape`; results MUST distinguish
+  local checkout scope from complete Apache Bigtop ecosystem coverage.
+- **FR-002**: The validation MUST use five fixed CTO questions covering local
+  scope and completeness, duplicate or component risk, implicit knowledge,
+  service relationships, and next actions.
 - **FR-003**: The validation MUST record prompts, outputs, constraints, and
   scoring notes for both lanes.
 - **FR-004**: The validation MUST score both lanes for unsupported claims,
@@ -60,15 +75,34 @@ comparison ledger that shows whether Portolan improved the result.
   narrowed, rejected, blocked, or inconclusive.
 - **FR-006**: The validation MUST update the product hypothesis ledger with the
   comparison result.
+- **FR-008**: The validation MUST classify the claim as accepted only when
+  Cursor-plus-Portolan reduces unsupported claims by at least 50% and produces
+  equal or better useful next actions for at least 75% of questions; narrowed
+  when exactly one threshold passes; rejected when neither threshold passes;
+  and blocked when either lane cannot run.
+- **FR-009**: The Cursor-plus-Portolan lane MUST receive the generated context
+  pack plus bounded map artifacts, including `summary.json`,
+  `graph-index.json`, and targeted graph slices only when needed; the lane MUST
+  NOT be seeded with a human-curated brief or require first-pass loading of the
+  full `graph.json`.
+- **FR-010**: The comparison ledger MUST retain prompts, raw outputs, artifact
+  paths or checksums, per-question scores, unsupported-claim counts,
+  `unknown` and `not_assessed` notes, and the final decision rationale.
 
 ### Key Entities
 
 - **Comparison Target**: The local landscape used by both lanes.
 - **Evaluation Lane**: Cursor-alone or Cursor-plus-Portolan run with prompt,
-  output, constraints, and score.
-- **Question Set**: The stakeholder questions shared by both lanes.
+  output, constraints, score, and recorded input artifacts. The
+  Cursor-plus-Portolan lane starts from the context pack, `summary.json`,
+  `graph-index.json`, and targeted slices only when needed.
+- **Question Set**: The five stakeholder questions shared by both lanes:
+  local scope and completeness, duplicate or component risk, implicit
+  knowledge, service relationships, and next actions.
 - **Comparison Ledger**: The record that compares lane outputs and product
-  claim status.
+  claim status. It retains prompts, raw outputs, artifact paths or checksums,
+  per-question scores, unsupported-claim counts, `unknown` and `not_assessed`
+  notes, and the final decision rationale.
 
 ## Success Criteria *(mandatory)*
 
@@ -80,8 +114,8 @@ comparison ledger that shows whether Portolan improved the result.
   or the value claim is not accepted.
 - **SC-004**: Cursor-plus-Portolan produces equal or better useful next actions
   for at least 75% of questions, or the value claim is narrowed.
-- **SC-005**: The final comparison ledger gives a clear go/no-go or narrowed
-  claim for "Why Portolan if I have Cursor?"
+- **SC-005**: The final comparison ledger applies the explicit
+  accepted/narrowed/rejected/blocked rule for "Why Portolan if I have Cursor?"
 
 ## Assumptions
 
