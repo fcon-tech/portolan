@@ -388,9 +388,214 @@ func summarizeToolOutput(id, family, path string) ToolEntry {
 	switch family {
 	case "jscpd", "cyclonedx", "semgrep":
 		return summarizeJSONToolOutput(entry)
+	case "backstage", "openapi", "asyncapi", "structurizr":
+		return summarizeRelationshipSurface(entry)
 	default:
 		return entry
 	}
+}
+
+func summarizeRelationshipSurface(entry ToolEntry) ToolEntry {
+	data, err := os.ReadFile(entry.Path)
+	if err != nil {
+		entry.EvidenceState = "cannot_verify"
+		entry.Status = "cannot_verify"
+		entry.Summary = "Relationship surface could not be read."
+		entry.Reason = err.Error()
+		return entry
+	}
+	text := string(data)
+	if strings.EqualFold(filepath.Ext(entry.Path), ".json") {
+		var doc any
+		decoder := json.NewDecoder(strings.NewReader(text))
+		if err := decoder.Decode(&doc); err != nil {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "Relationship surface could not be parsed."
+			entry.Reason = "malformed JSON: " + err.Error()
+			return entry
+		}
+		if decoder.Decode(&struct{}{}) == nil {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "Relationship surface could not be parsed."
+			entry.Reason = "malformed JSON: trailing content"
+			return entry
+		}
+		return summarizeRelationshipJSON(entry, doc)
+	}
+	return summarizeRelationshipText(entry, text)
+}
+
+func summarizeRelationshipJSON(entry ToolEntry, doc any) ToolEntry {
+	entry.Status = "observed"
+	switch entry.Family {
+	case "backstage":
+		count := countBackstageEntities(doc)
+		entry.Metrics = map[string]int{"entities": count}
+		entry.Summary = "Local Backstage catalog evidence with " + formatCount(count, "entity") + "."
+	case "openapi":
+		count := countObjectField(doc, "paths")
+		entry.Metrics = map[string]int{"paths": count}
+		entry.Summary = "Local OpenAPI contract evidence with " + formatCount(count, "path") + "."
+	case "asyncapi":
+		count := countObjectField(doc, "channels")
+		entry.Metrics = map[string]int{"channels": count}
+		entry.Summary = "Local AsyncAPI contract evidence with " + formatCount(count, "channel") + "."
+	case "structurizr":
+		count := countStructurizrJSONElements(doc)
+		entry.Metrics = map[string]int{"elements": count}
+		if count == 0 {
+			entry.Status = "candidate"
+			entry.Summary = "Local Structurizr architecture model candidate detected; no shallow elements counted."
+			return entry
+		}
+		entry.Summary = "Local Structurizr architecture model evidence with " + formatCount(count, "architecture element") + "."
+	}
+	return entry
+}
+
+func summarizeRelationshipText(entry ToolEntry, text string) ToolEntry {
+	entry.Status = "observed"
+	switch entry.Family {
+	case "backstage":
+		count := countYAMLKey(text, "kind")
+		entry.Metrics = map[string]int{"entities": count}
+		entry.Summary = "Local Backstage catalog evidence with " + formatCount(count, "entity") + "."
+	case "openapi":
+		count := countYAMLPathLikeEntries(text)
+		entry.Metrics = map[string]int{"paths": count}
+		entry.Summary = "Local OpenAPI contract evidence with " + formatCount(count, "path") + "."
+	case "asyncapi":
+		count := countYAMLChannelLikeEntries(text)
+		entry.Metrics = map[string]int{"channels": count}
+		entry.Summary = "Local AsyncAPI contract evidence with " + formatCount(count, "channel") + "."
+	case "structurizr":
+		count := strings.Count(text, "softwareSystem") + strings.Count(text, "container ")
+		entry.Metrics = map[string]int{"elements": count}
+		entry.Summary = "Local Structurizr DSL evidence with " + formatCount(count, "architecture element") + "."
+	}
+	return entry
+}
+
+func countBackstageEntities(doc any) int {
+	switch value := doc.(type) {
+	case map[string]any:
+		if _, ok := value["kind"]; ok {
+			return 1
+		}
+		count := 0
+		for _, key := range []string{"items", "entities"} {
+			count += countBackstageEntities(value[key])
+		}
+		return count
+	case []any:
+		count := 0
+		for _, item := range value {
+			count += countBackstageEntities(item)
+		}
+		return count
+	}
+	return 0
+}
+
+func countObjectField(doc any, field string) int {
+	obj, ok := doc.(map[string]any)
+	if !ok {
+		return 0
+	}
+	fieldObj, ok := obj[field].(map[string]any)
+	if !ok {
+		return 0
+	}
+	return len(fieldObj)
+}
+
+func countStructurizrJSONElements(doc any) int {
+	switch value := doc.(type) {
+	case map[string]any:
+		count := 0
+		for key, child := range value {
+			switch key {
+			case "people", "softwareSystems", "containers", "components", "deploymentNodes", "infrastructureNodes", "softwareSystemInstances", "containerInstances":
+				count += countArrayItems(child)
+			}
+			count += countStructurizrJSONElements(child)
+		}
+		return count
+	case []any:
+		count := 0
+		for _, item := range value {
+			count += countStructurizrJSONElements(item)
+		}
+		return count
+	default:
+		return 0
+	}
+}
+
+func countArrayItems(value any) int {
+	items, ok := value.([]any)
+	if !ok {
+		return 0
+	}
+	return len(items)
+}
+
+func countYAMLKey(text, key string) int {
+	count := 0
+	prefix := key + ":"
+	for _, line := range strings.Split(text, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), prefix) {
+			count++
+		}
+	}
+	return count
+}
+
+func countYAMLPathLikeEntries(text string) int {
+	count := 0
+	for _, line := range strings.Split(text, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "/") && strings.HasSuffix(trimmed, ":") {
+			count++
+		}
+	}
+	return count
+}
+
+func countYAMLChannelLikeEntries(text string) int {
+	count := 0
+	inChannels := false
+	channelsIndent := -1
+	channelIndent := -1
+	for _, line := range strings.Split(text, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "channels:" {
+			inChannels = true
+			channelsIndent = leadingSpaces(line)
+			channelIndent = -1
+			continue
+		}
+		if !inChannels || trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		indent := leadingSpaces(line)
+		if indent <= channelsIndent {
+			break
+		}
+		if strings.HasSuffix(trimmed, ":") && channelIndent == -1 {
+			channelIndent = indent
+		}
+		if strings.HasSuffix(trimmed, ":") && indent == channelIndent {
+			count++
+		}
+	}
+	return count
+}
+
+func leadingSpaces(line string) int {
+	return len(line) - len(strings.TrimLeft(line, " "))
 }
 
 func summarizeJSONToolOutput(entry ToolEntry) ToolEntry {
@@ -453,6 +658,9 @@ func formatCount(count int, singular string) string {
 	if count == 1 {
 		return fmt.Sprintf("1 %s", singular)
 	}
+	if strings.HasSuffix(singular, "y") {
+		return fmt.Sprintf("%d %sies", count, strings.TrimSuffix(singular, "y"))
+	}
 	return fmt.Sprintf("%d %ss", count, singular)
 }
 
@@ -507,7 +715,7 @@ func familiesForFile(name string) []string {
 	if strings.Contains(lower, "semgrep") {
 		families = append(families, "semgrep")
 	}
-	if lower == "catalog-info.yaml" || lower == "catalog-info.yml" {
+	if lower == "catalog-info.yaml" || lower == "catalog-info.yml" || lower == "catalog-info.json" {
 		families = append(families, "backstage")
 	}
 	if strings.Contains(lower, "openapi") || strings.Contains(lower, "swagger") {
