@@ -44,3 +44,5 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
 - H8: After `portolan graph slice`, agents can perform a second bounded
   drill-down from a real map bundle without putting full `graph.json` in the
   prompt.
+- H9: A new OSS/tool-output family is not considered part of the Portolan
+  assembly until its adapter contract validates locally.

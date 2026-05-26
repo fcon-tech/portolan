@@ -71,6 +71,9 @@ families in `gaps.jsonl` remain `not_assessed`.
 When a needed OSS family is missing, inspect `oss-plan.json` for local producer
 availability and safe output paths. Do not run producer commands without user
 approval, and do not install or fetch tools unless explicitly approved.
+Validate new OSS/tool-output adapter contracts with
+`portolan adapter validate --in <adapter.json>` before adding them to the
+workflow.
 
 If the command cannot run or required artifacts are absent, stop with a blocker.
 Do not replace missing Portolan evidence with unmarked manual analysis.

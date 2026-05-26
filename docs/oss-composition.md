@@ -33,8 +33,15 @@ large-codebase OSS landscape and the recommended agent-context direction.
 ## Integration Rules
 
 - Import outputs; do not vendor large tools by default.
+- Validate a proposed tool-output adapter with
+  `portolan adapter validate --in <adapter.json>` before adding it to agent
+  workflows.
 - Record source attribution for every imported fact.
 - Preserve tool uncertainty instead of normalizing everything into a pass/fail
   shape.
 - Keep no-network and no-daemon defaults until a profile explicitly changes
   them.
+
+The current public adapter contract is documented in
+`docs/adapter-contracts/oss-adapter-contract.md`; fixtures live under
+`testdata/oss-adapter-contract/`.

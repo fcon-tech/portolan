@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/schema/oss-adapter.schema.json",
+  "title": "Portolan OSS Adapter Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "tool", "family", "output_kind", "license", "execution", "privacy", "evidence", "limitations"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1.0" },
+    "id": { "type": "string", "minLength": 1 },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string" },
+        "url": { "type": "string" }
+      }
+    },
+    "family": {
+      "type": "string",
+      "enum": ["duplication", "sbom", "configuration", "service-catalog", "api-contract", "architecture-model", "code-index", "dependency-metadata"]
+    },
+    "output_kind": {
+      "type": "string",
+      "enum": ["duplication", "sbom", "configuration", "contract-surface", "service-catalog", "architecture-model", "code-index", "dependency"]
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "url": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "needs_review", "unknown"] }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "network", "mutates_target"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["import-only", "local-command", "manual-export"] },
+        "network": { "type": "string", "enum": ["none", "optional"] },
+        "mutates_target": { "type": "boolean", "const": false },
+        "reads": { "type": "array", "items": { "type": "string" } },
+        "writes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contains_source_snippets", "contains_secret_values", "redaction_required"],
+      "properties": {
+        "contains_source_snippets": { "type": "boolean" },
+        "contains_secret_values": { "type": "boolean" },
+        "redaction_required": { "type": "boolean" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_state", "source", "limitations"],
+      "properties": {
+        "default_state": {
+          "type": "string",
+          "enum": ["source-visible", "metadata-visible", "runtime-visible", "claim-only", "unknown", "cannot_verify", "not_assessed"]
+        },
+        "source": { "type": "string", "minLength": 1 },
+        "limitations": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["label", "executable", "args", "output_path"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1 },
+          "executable": { "type": "string", "minLength": 1 },
+          "args": { "type": "array", "items": { "type": "string" } },
+          "output_path": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "notes": { "type": "string" }
+  }
+}

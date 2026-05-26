@@ -53,3 +53,5 @@ approves that boundary.
 If OSS/tool outputs are absent, inspect `oss-plan.json` before claiming the
 evidence cannot be produced. Run producer commands only with approval and only
 when they write under the selected Portolan output directory.
+Validate new OSS/tool-output adapter contracts with
+`portolan adapter validate --in <adapter.json>` before relying on them.

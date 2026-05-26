@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1.0",
+  "id": "semgrep-json",
+  "tool": {
+    "name": "Semgrep",
+    "url": "https://github.com/semgrep/semgrep"
+  },
+  "family": "configuration",
+  "output_kind": "configuration",
+  "license": {
+    "id": "LGPL-2.1",
+    "status": "needs_review"
+  },
+  "execution": {
+    "mode": "local-command",
+    "network": "none",
+    "mutates_target": false,
+    "reads": ["target source tree", "local semgrep config"],
+    "writes": ["tool-outputs/semgrep.json"]
+  },
+  "privacy": {
+    "contains_source_snippets": true,
+    "contains_secret_values": false,
+    "redaction_required": true
+  },
+  "evidence": {
+    "default_state": "source-visible",
+    "source": "local Semgrep JSON output",
+    "limitations": ["Rule coverage depends on selected local rules"]
+  },
+  "commands": [
+    {
+      "label": "semgrep json",
+      "executable": "semgrep",
+      "args": ["--json", "--config", "<semgrep-config>", "--output", "<tool-output-dir>/semgrep.json", "<target-root>"],
+      "output_path": "<tool-output-dir>/semgrep.json"
+    }
+  ],
+  "limitations": [
+    "Semantic findings are rule-dependent",
+    "Does not prove absence of configuration risk"
+  ]
+}

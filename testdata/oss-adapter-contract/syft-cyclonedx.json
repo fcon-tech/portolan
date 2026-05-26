@@ -1,0 +1,43 @@
+{
+  "schema_version": "0.1.0",
+  "id": "syft-cyclonedx-json",
+  "tool": {
+    "name": "Syft",
+    "url": "https://github.com/anchore/syft"
+  },
+  "family": "sbom",
+  "output_kind": "sbom",
+  "license": {
+    "id": "Apache-2.0",
+    "status": "needs_review"
+  },
+  "execution": {
+    "mode": "local-command",
+    "network": "none",
+    "mutates_target": false,
+    "reads": ["target source tree or image export"],
+    "writes": ["tool-outputs/sbom.cyclonedx.json"]
+  },
+  "privacy": {
+    "contains_source_snippets": false,
+    "contains_secret_values": false,
+    "redaction_required": false
+  },
+  "evidence": {
+    "default_state": "metadata-visible",
+    "source": "local CycloneDX JSON output",
+    "limitations": ["SBOM coverage depends on package ecosystem support"]
+  },
+  "commands": [
+    {
+      "label": "syft cyclonedx json",
+      "executable": "syft",
+      "args": ["<target-root>", "-o", "cyclonedx-json=<tool-output-dir>/sbom.cyclonedx.json"],
+      "output_path": "<tool-output-dir>/sbom.cyclonedx.json"
+    }
+  ],
+  "limitations": [
+    "Does not prove runtime dependency loading",
+    "Does not identify duplicated source code"
+  ]
+}
