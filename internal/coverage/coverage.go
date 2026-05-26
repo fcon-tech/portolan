@@ -173,6 +173,26 @@ func recordsForSelection(sel selection.Selection) []Record {
 
 func pathRecord(id, kind, state, path string, directory bool) Record {
 	record := Record{ID: id, Kind: kind, EvidenceState: state, Source: path}
+	if directory {
+		linkInfo, err := os.Lstat(path)
+		if err != nil {
+			record.Status = "missing"
+			record.EvidenceState = string(graph.Unknown)
+			record.Reason = "path does not exist"
+			if !os.IsNotExist(err) {
+				record.Status = "cannot_verify"
+				record.EvidenceState = string(graph.CannotVerify)
+				record.Reason = err.Error()
+			}
+			return record
+		}
+		if linkInfo.Mode()&os.ModeSymlink != 0 {
+			record.Status = "cannot_verify"
+			record.EvidenceState = string(graph.CannotVerify)
+			record.Reason = "path is a symlink"
+			return record
+		}
+	}
 	info, err := os.Stat(path)
 	if err != nil {
 		record.Status = "missing"
@@ -252,6 +272,10 @@ func requiresSourceRepository(target ManifestTarget) bool {
 }
 
 func sourceVisibleDirectory(path string) bool {
+	linkInfo, err := os.Lstat(path)
+	if err != nil || linkInfo.Mode()&os.ModeSymlink != 0 {
+		return false
+	}
 	info, err := os.Stat(path)
 	return err == nil && info.IsDir()
 }

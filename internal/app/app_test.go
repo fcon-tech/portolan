@@ -1148,6 +1148,19 @@ func TestRunMapSelectionRejectsRepositorySymlinkAsSourceVisible(t *testing.T) {
 	if evidence["state"] != "unknown" {
 		t.Fatalf("evidence = %#v, want symlink not source-visible", evidence)
 	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	records := coverage["records"].([]any)
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		if record["id"] != "repo-link" {
+			continue
+		}
+		if record["status"] != "cannot_verify" || record["evidence_state"] != "cannot_verify" {
+			t.Fatalf("coverage record = %#v, want cannot_verify for repository symlink", record)
+		}
+		return
+	}
+	t.Fatalf("coverage records = %#v, want repo-link record", records)
 }
 
 func TestRunMapRejectsMissingRootWithoutPartialBundle(t *testing.T) {
