@@ -215,8 +215,8 @@ func validateStartup(opts Options) (string, string, error) {
 }
 
 func discoverRepositories(root string) ([]Repository, []Gap) {
-	var repos []Repository
-	var gaps []Gap
+	repos := []Repository{}
+	gaps := []Gap{}
 	seen := map[string]bool{}
 	if isGitRepository(root) {
 		repos = append(repos, Repository{
@@ -291,8 +291,33 @@ func discoverRepositories(root string) ([]Repository, []Gap) {
 			EvidenceState: "unknown",
 			Reason:        "no Git repositories were discovered under the bounded root/direct-child/repos policy",
 		})
+		if hasCuratedOrRepoLikeInputs(root) {
+			gaps = append(gaps, Gap{
+				ID:            "gap-repo-like-structure-without-git",
+				Family:        "repository-discovery",
+				Status:        "unknown",
+				EvidenceState: "unknown",
+				Reason:        "selection.json or repo-like child directories are present, but bounded discovery found no .git directories; these paths are not Git repositories and were not marked source-visible",
+			})
+		}
 	}
 	return repos, gaps
+}
+
+func hasCuratedOrRepoLikeInputs(root string) bool {
+	if info, err := os.Stat(filepath.Join(root, "selection.json")); err == nil && info.Mode().IsRegular() {
+		return true
+	}
+	entries, err := os.ReadDir(filepath.Join(root, "repos"))
+	if err != nil {
+		return false
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			return true
+		}
+	}
+	return false
 }
 
 func detectToolOutputs(root string, repos []Repository) []ToolEntry {
@@ -312,7 +337,7 @@ func detectToolOutputs(root string, repos []Repository) []ToolEntry {
 	}
 	seen := map[string]bool{}
 	usedIDs := map[string]bool{}
-	var entries []ToolEntry
+	entries := []ToolEntry{}
 	for _, dir := range candidateDirs {
 		info, err := os.Stat(dir)
 		if err != nil || !info.IsDir() {

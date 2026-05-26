@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Partially implemented; Bigtop Cursor comparison pending
+**Status**: Implemented for initial hypothesis ledgers; deeper OSS adapters pending
 
 **Input**: Product correction: Portolan's market fit must be tested as agent
 augmentation, not as a standalone report tool or prepared-landscape demo.
