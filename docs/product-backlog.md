@@ -83,7 +83,7 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
 | P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted answer contract on a 30-repo real local landscape after large-findings fix; raw graph size remains a scale gap |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer and semantic search remain not_assessed |
 | P3-028 | `specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
@@ -92,6 +92,7 @@ fixtures are preflight evidence only.
 | P3-029 | `specs/029-bounded-graph-index/` | Map bundles include bounded `graph-index.json` entrypoints and artifact budgets so agents do not need to load hundreds of megabytes of raw graph output first. | Implemented |
 | P3-030 | `specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |
 | P3-032 | `specs/032-context-evidence-index/` | Context packs include bounded `evidence-index.jsonl` records linking repositories, OSS/tool outputs, and gaps before agents drill into specialized artifacts. | Implemented |
+| P3-033 | `specs/033-agent-command-guardrails/` | Generated answer contracts and Cursor/portable instructions prevent agents from inventing unsupported Portolan command shapes. | Implemented |
 
 ## Backlog Rules
 

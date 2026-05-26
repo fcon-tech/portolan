@@ -1115,7 +1115,15 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "- Evidence: artifact paths and record IDs from Portolan or local OSS outputs.\n")
 	fmt.Fprintf(&b, "- Unknowns: explicit `unknown`, `cannot_verify`, or `not_assessed` surfaces.\n")
 	fmt.Fprintf(&b, "- Next local command: the smallest read-only command that would reduce the most important unknown.\n\n")
-	fmt.Fprintf(&b, "Do not answer from vibes, naming conventions, or repository size alone. If an evidence family is missing, say `not_assessed` and point to `oss-plan.json` or the needed map command.\n\n")
+	fmt.Fprintf(&b, "Do not answer from vibes, naming conventions, or repository size alone. If an evidence family is missing, say `not_assessed` and point to `oss-plan.json` or the needed map command. Do not invent Portolan commands or flags; if no listed command reduces an unknown, say that user-supplied local evidence is required.\n\n")
+	fmt.Fprintf(&b, "## Allowed Next Commands\n\n")
+	fmt.Fprintf(&b, "- Refresh context: `portolan context prepare --root <target-root> --out <context-dir> --profile cursor --force`.\n")
+	fmt.Fprintf(&b, "- Build a map bundle: `portolan map --root <target-root> --out <run-dir> --force`.\n")
+	fmt.Fprintf(&b, "- Use a curated local inventory only when it already exists: `portolan selection validate --selection <selection.json>` then `portolan map --selection <selection.json> --out <run-dir> --force`.\n")
+	fmt.Fprintf(&b, "- Drill down from a map bundle: `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind` variants.\n")
+	fmt.Fprintf(&b, "- Validate a new adapter contract: `portolan adapter validate --in <adapter.json>`.\n")
+	fmt.Fprintf(&b, "- For missing OSS producers, use only the exact commands in `oss-plan.json` and only after approval.\n\n")
+	fmt.Fprintf(&b, "There is no generic `portolan context --manifest` command and no generic `context prepare --manifest` flag. External ecosystem completeness stays `unknown` until a local selection, corpus manifest, or other user-supplied inventory is provided and mapped.\n\n")
 	fmt.Fprintf(&b, "## Artifact Order\n\n")
 	fmt.Fprintf(&b, "1. Context pack: read `agent-brief.md`, `answer-contract.md`, `evidence-index.jsonl`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `query-plan.md`, and `gaps.jsonl`.\n")
 	fmt.Fprintf(&b, "2. Map bundle: when the question needs relationships, graph facts, duplication, configuration, technical debt, or coverage, run or inspect `portolan map --root <target-root> --out <run-dir>` and then read `summary.json`, `graph-index.json`, `coverage.json`, `findings.jsonl`, and `map.md` before full `graph.json`.\n")
@@ -1150,6 +1158,7 @@ func renderQueryPlan() string {
 4. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
 5. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
 6. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
+7. Suggest only commands named in ` + "`answer-contract.md`" + ` or ` + "`oss-plan.json`" + `. Do not invent Portolan subcommands or flags.
 
 ## CTO Questions
 
@@ -1162,6 +1171,10 @@ func renderQueryPlan() string {
   deployment manifests, and existing Portolan map artifacts.
 - Large codebases: prefer local index handles over loading raw source into the
   prompt. If no index exists, report the index surface as not_assessed.
+- External ecosystem completeness: if no local selection or corpus manifest was
+  supplied, keep completeness unknown. Do not suggest a generic context
+  manifest flag; ask for a local inventory or use ` + "`selection validate`" + ` and
+  ` + "`map --selection`" + ` only when a selection file exists.
 `
 }
 

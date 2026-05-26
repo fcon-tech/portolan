@@ -1465,6 +1465,11 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		"implicit knowledge",
 		"configuration matters",
 		"technical debt",
+		"Allowed Next Commands",
+		"Do not invent Portolan commands",
+		"portolan selection validate --selection <selection.json>",
+		"portolan map --selection <selection.json> --out <run-dir> --force",
+		"There is no generic `portolan context --manifest` command",
 		"not_assessed",
 		"cannot_verify",
 	} {

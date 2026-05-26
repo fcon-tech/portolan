@@ -56,3 +56,6 @@ evidence cannot be produced. Run producer commands only with approval and only
 when they write under the selected Portolan output directory.
 Validate new OSS/tool-output adapter contracts with
 `portolan adapter validate --in <adapter.json>` before relying on them.
+Suggest only commands listed in the Portolan guide or generated
+`answer-contract.md` / `oss-plan.json`; do not invent generic manifest flags or
+commands such as `portolan context --manifest`.

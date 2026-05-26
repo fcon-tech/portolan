@@ -98,6 +98,13 @@ first pass.
 Use `portolan graph slice --bundle <run-dir>` for bounded follow-up by
 repository, edge kind, or finding kind before opening full `graph.json`.
 
+Suggest only commands that exist in this guide or in `oss-plan.json`. Do not
+invent generic manifest flags or commands such as `portolan context
+--manifest`. If external ecosystem completeness is unknown, ask for a local
+selection or corpus manifest; use `portolan selection validate --selection
+<selection.json>` and `portolan map --selection <selection.json> --out
+<run-dir>` only when that selection file exists.
+
 Do not replace missing Portolan evidence with unmarked manual analysis. If the
 command cannot run or the artifacts are missing, stop and report the blocker.
 

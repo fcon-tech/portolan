@@ -4,8 +4,9 @@
 
 **Created**: 2026-05-26
 
-**Status**: Implemented for initial, blind, and headless Cursor hypothesis
-ledgers; deeper OSS producers and bounded graph slices remain future work
+**Status**: Implemented for the current H1-H10 hypothesis cycle; UI
+Cursor/Composer, semantic code search, and live/runtime topology remain
+`not_assessed`
 
 **Input**: Product correction: Portolan's market fit must be tested as agent
 augmentation, not as a standalone report tool or prepared-landscape demo.

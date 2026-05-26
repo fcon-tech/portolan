@@ -76,6 +76,13 @@ Validate new OSS/tool-output adapter contracts with
 `portolan adapter validate --in <adapter.json>` before adding them to the
 workflow.
 
+Suggest only Portolan commands that exist in the current guide or in
+`oss-plan.json`. Do not invent generic manifest flags or commands such as
+`portolan context --manifest`. If external ecosystem completeness is unknown,
+ask for a local selection or corpus manifest; use `portolan selection validate
+--selection <selection.json>` and `portolan map --selection <selection.json>
+--out <run-dir>` only when that selection file exists.
+
 If the command cannot run or required artifacts are absent, stop with a blocker.
 Do not replace missing Portolan evidence with unmarked manual analysis.
 
