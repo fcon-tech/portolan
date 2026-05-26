@@ -17,7 +17,7 @@ Date: 2026-05-26
 | --- | --- | --- |
 | Local implementation | `verified` | Spec 034 tasks are complete; implementation disposition and analyze disposition exist. |
 | Local verification | `verified` | `go test ./...`, `jq empty schema/*.json`, and `git diff --check` passed after PR review fixes. |
-| Review evidence | `verified` with degraded lanes | Local and Qwen review lanes produced evidence; DeepSeek hung/empty and Gemini Pro Latest was absent, both recorded as `not_assessed`. |
+| Review evidence | `verified` with degraded lanes | Local, Kimi, and GLM review lanes produced evidence; MiniMax returned 404 and is recorded as `not_assessed`. Prior Qwen/DeepSeek/Gemini lanes are superseded. |
 | PR state | `ready-for-review` | PR #14 exists, head is pushed, draft state is false, merge state is `CLEAN`, and PR review disposition has no unresolved blockers. |
 | GitHub checks | `not_assessed` | `gh pr checks 14 --watch=false` reported no checks on the branch. |
 | Merge approval | `not_assessed` | No human/GitHub approval was requested or verified. |
@@ -46,8 +46,7 @@ PR #14 is ready-for-review. It must not be described as ready-to-merge.
 - Runtime topology.
 - Near-clone/SBOM duplication.
 - OSS producer execution.
-- DeepSeek substantive review output.
-- Gemini Pro Latest PR review lane.
+- MiniMax PR review lane.
 
 ## Stop Reason
 

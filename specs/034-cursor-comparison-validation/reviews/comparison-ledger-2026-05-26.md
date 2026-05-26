@@ -74,6 +74,7 @@ Date: 2026-05-26
   "scope_correct": "yes",
   "evidence_use": "yes",
   "unknown_handling": "yes",
+  "coverage_completeness": "partial-bounded",
   "next_action_quality": "equal",
   "notes": "Used repos.json, evidence-index.jsonl, summary.json, and gaps.jsonl; kept local checkout scope and external completeness separate."
 }
@@ -100,6 +101,7 @@ Date: 2026-05-26
   "scope_correct": "yes",
   "evidence_use": "yes",
   "unknown_handling": "yes",
+  "coverage_completeness": "partial-bounded",
   "next_action_quality": "better",
   "notes": "Used observed exact duplicate findings and explicitly limited claims to byte-identical source/config clusters; marked near-clone and SBOM/component duplication as not_assessed."
 }
@@ -126,6 +128,7 @@ Date: 2026-05-26
   "scope_correct": "yes",
   "evidence_use": "yes",
   "unknown_handling": "yes",
+  "coverage_completeness": "partial-bounded",
   "next_action_quality": "equal",
   "notes": "Grounded claims in context-pack files, graph-index samples, summary.json, and explicit gaps for missing catalog/API/tool outputs."
 }
@@ -152,6 +155,7 @@ Date: 2026-05-26
   "scope_correct": "yes",
   "evidence_use": "yes",
   "unknown_handling": "yes",
+  "coverage_completeness": "partial-bounded",
   "next_action_quality": "better",
   "notes": "Limited observed relationship claims to Go import/go.mod edges and source-visible deployment groupings; marked non-Go relationships and runtime topology as not_assessed."
 }
@@ -178,6 +182,7 @@ Date: 2026-05-26
   "scope_correct": "yes",
   "evidence_use": "yes",
   "unknown_handling": "yes",
+  "coverage_completeness": "partial-bounded",
   "next_action_quality": "better",
   "notes": "Produced bounded next local actions tied to selection/manifest, graph slice commands, and OSS producer gaps."
 }
@@ -229,10 +234,11 @@ state, and full ecosystem completeness as incomplete coverage.
 Accepted product claim:
 
 > On the fixed local Bigtop landscape, Portolan gives Cursor a bounded evidence
-> context that materially improves evidence discipline and next-action quality:
-> it keeps local checkout scope separate from ecosystem completeness, prevents
-> unsupported relationship and duplication claims, and turns missing evidence
-> into explicit `unknown` or `not_assessed` follow-up work.
+> context that reduced unsupported claims from 12 to 0 and produced equal or
+> better next actions for all five questions. It keeps local checkout scope
+> separate from ecosystem completeness, prevents unsupported relationship and
+> duplication claims, and turns missing evidence into explicit `unknown` or
+> `not_assessed` follow-up work.
 
 ## Not Assessed / Unknown / Blocked Surfaces
 

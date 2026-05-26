@@ -46,10 +46,11 @@ unknowns, and grounding duplication/relationship claims in local artifacts.
 Accepted claim:
 
 > On the fixed local Bigtop landscape, Portolan gives Cursor a bounded evidence
-> context that materially improves evidence discipline and next-action quality:
-> it keeps local checkout scope separate from ecosystem completeness, prevents
-> unsupported relationship and duplication claims, and turns missing evidence
-> into explicit `unknown` or `not_assessed` follow-up work.
+> context that reduced unsupported claims from 12 to 0 and produced equal or
+> better next actions for all five questions. It keeps local checkout scope
+> separate from ecosystem completeness, prevents unsupported relationship and
+> duplication claims, and turns missing evidence into explicit `unknown` or
+> `not_assessed` follow-up work.
 
 ## Verification States
 
