@@ -14,6 +14,12 @@ Portolan adds a delivery closeout layer on top:
 implement -> review disposition -> PR review cycle -> PR readiness closeout -> merge closeout
 ```
 
+For end-to-end feature delivery, use the orchestrator:
+
+```text
+worktree -> specify/clarify -> plan -> tasks -> analyze -> implement -> review-fix -> PR review-fix -> PR readiness -> merge closeout
+```
+
 ## Installed Surface
 
 Spec Kit was initialized with the Codex skills integration. The local generated
@@ -25,6 +31,7 @@ surface is:
   Spec Kit git extension: branch creation, branch validation, remote detection,
   repository initialization, and optional auto-commit hooks.
 - Repo-local delivery skills:
+  - `.agents/skills/speckit-delivery-orchestrator/`
   - `.agents/skills/speckit-review-disposition/`
   - `.agents/skills/speckit-pr-review-cycle/`
   - `.agents/skills/speckit-pr-readiness-closeout/`
@@ -67,6 +74,13 @@ Backlog-only features may start with `spec.md` and graduate to plan/tasks when
 selected for implementation.
 
 ## Delivery Closeout Contract
+
+Use `/speckit-delivery-orchestrator` when the user wants a full lifecycle
+instead of a single SpecKit step. The orchestrator must create a dedicated
+worktree, choose or create the nearest open spec, run the user through
+specification and clarification, execute plan/tasks/analyze/implement, run
+review-fix and PR review-fix loops, create a PR readiness closeout, and merge
+only on explicit approval.
 
 Implementation is not closed at `/speckit-implement`. For a feature to be
 ready-for-review, the spec directory should contain:
