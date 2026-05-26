@@ -7,7 +7,9 @@ Date: 2026-05-26
 - PR: https://github.com/fall-out-bug/portolan/pull/14
 - Branch: `034-cursor-comparison-validation`
 - Base: `main`
-- Head at reconstruction: `e3960fd816bc074f1eacd24da50d5b14ea7a3e03`
+- Head state: reconstructed with `gh pr view`; use GitHub PR #14 for the
+  current head commit because this closeout file is itself committed on the
+  branch.
 
 ## Readiness Matrix
 
