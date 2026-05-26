@@ -40,13 +40,14 @@ comparison ledger that shows whether Portolan improved the result.
    same rubric.
 2. **Given** the scored outputs, **When** Portolan does not improve correctness,
    scope control, useful evidence, or next actions, **Then** the product claim
-   is marked failed or inconclusive.
+   is marked narrowed, rejected, blocked, or inconclusive according to the
+   explicit scoring rule.
 3. **Given** the scored outputs, **When** Portolan does improve the result,
    **Then** the accepted claim states exactly which user outcome improved.
 
 ### Edge Cases
 
-- Both lanes fail or time out; the result is failed or inconclusive.
+- Both lanes fail or time out; the result is blocked or inconclusive.
 - Cursor-plus-Portolan is safer but not more useful; the result distinguishes
   evidence discipline from product value.
 - The agent ignores Portolan artifacts; the run records this as a workflow or
