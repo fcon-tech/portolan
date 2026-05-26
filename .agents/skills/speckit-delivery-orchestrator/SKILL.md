@@ -78,8 +78,8 @@ Run the user through:
 1. `/speckit-specify` when the spec is absent, stale, or materially incomplete.
 2. `/speckit-clarify` for blocking ambiguity, especially around UX, evidence
    semantics, privacy, local-first boundaries, or product claims.
-3. `/speckit-git-commit` after specification/clarification if hooks did not
-   commit automatically.
+3. `/speckit-git-commit` after specification/clarification when an explicit
+   commit boundary is desired.
 
 Stop for user answers when the skill asks clarification questions. Do not fake
 answers to speed up the workflow.

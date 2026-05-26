@@ -211,10 +211,20 @@ Date: 2026-05-26
     "Full Apache Bigtop ecosystem completeness unknown",
     "Runtime service topology not_assessed",
     "Near-clone and SBOM/component duplication not_assessed",
-    "OSS producers not executed"
+    "OSS producers not executed",
+    "Zero unsupported claims in the assisted lane includes bounded abstention on unsupported surfaces; it does not mean complete relationship, runtime, SBOM, or ecosystem coverage"
   ]
 }
 ```
+
+## Coverage Interpretation
+
+The accepted claim is about evidence discipline and bounded next-action quality,
+not complete landscape understanding. The assisted lane reached zero unsupported
+claims partly by refusing to answer beyond observed or indexed evidence. That is
+the desired safety behavior for this validation, but it leaves service topology,
+non-Go relationships, near-clone duplication, SBOM/component identity, runtime
+state, and full ecosystem completeness as incomplete coverage.
 
 Accepted product claim:
 

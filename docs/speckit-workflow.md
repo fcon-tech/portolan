@@ -38,10 +38,11 @@ surface is:
   - `.agents/skills/speckit-merge-closeout/`
 - `specs/<NNN-short-name>/` for product slices.
 
-The git extension is installed and auto-commit hooks are enabled in
+The git extension is installed, but auto-commit hooks are disabled by default in
 `.specify/extensions/git/git-config.yml`. Portolan still requires explicit
-review, verification, and readiness boundaries from `AGENTS.md`; auto-commit is
-not a substitute for review or merge approval.
+review, verification, and readiness boundaries from `AGENTS.md`; any
+auto-commit behavior must be enabled deliberately and is not a substitute for
+review or merge approval.
 
 ## Local Rules
 
