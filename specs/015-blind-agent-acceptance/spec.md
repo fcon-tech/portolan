@@ -2,7 +2,7 @@
 
 **Feature Branch**: `015-blind-agent-acceptance`
 **Created**: 2026-05-21
-**Status**: Protocol implemented; blind operator runs not_assessed
+**Status**: Protocol implemented; Cursor Agent blind runs degraded
 **Input**: Product correction: Bigtop must test Portolan's generic agent
 toolbox without receiving a Bigtop-specific operator packet or hidden prompt
 scaffolding.
@@ -135,8 +135,11 @@ and produces artifact-backed output.
   blocked or `not_assessed`, not passed via fixture substitution.
 - **SC-003**: At least one blind run produces a complete evidence bundle or a
   clear degraded status with missing surfaces named.
+  - Status 2026-05-26: verified as degraded for Cursor Agent on Bigtop.
 - **SC-004**: A non-Bigtop control run uses the same prompt shape and records
   comparable evidence.
+  - Status 2026-05-26: verified as degraded for Cursor Agent on
+    `/home/governor/projects/consensus_tg_bot`.
 - **SC-005**: Backlog updates after blind runs cite generic gap IDs and do not
   introduce Bigtop-only product behavior.
 

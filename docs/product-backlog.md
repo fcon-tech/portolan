@@ -54,14 +54,14 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
 | P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
-| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; first full Cursor/Composer blind operator run pending evidence |
+| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Cursor Agent blind runs recorded as degraded for Bigtop and non-Bigtop control |
 | P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
 | P1-017 | `specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Implemented; local Bigtop root smoke verified without selection.json |
 | P1-018 | `specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented |
-| P1-020 | `specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; assisted Cursor lane verified, blind rule-discovery not_assessed |
+| P1-020 | `specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; blind Cursor Agent discovery degraded but verified |
 | P1-022 | `specs/022-oss-tool-output-assembly/` | Context preparation summarizes local jscpd and CycloneDX/Syft outputs so Cursor sees OSS evidence candidates, not just filenames. | Implemented |
 | P1-023 | `specs/023-relationship-surface-assembly/` | Context preparation summarizes local Backstage, OpenAPI, AsyncAPI, and Structurizr files as relationship surface evidence candidates. | Implemented |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Unblocked for blind operator run; Cursor/Composer lane not_assessed |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent blind lane degraded; gaps recorded |
 
 ## P2: Build What Agent Runs Prove Is Missing
 
@@ -79,7 +79,7 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
 | P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Initial non-Bigtop and Bigtop Cursor comparisons recorded |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Initial comparisons and degraded blind Cursor lanes recorded |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
 | P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |

@@ -43,18 +43,20 @@
 
 ## Phase 5: First Blind Runs
 
-- [ ] T014 After spec 014 is implemented, run Cursor + Composer 2.5 using only
+- [x] T014 After spec 014 is implemented, run Cursor + Composer 2.5 using only
   the blind prompt shape.
-  - Status 2026-05-26: pending evidence. Cursor + Composer 2.5 availability is
-    not the blocker; the run transcript has not been recorded in the repo.
-- [ ] T015 Record the Bigtop run as `passed`, `failed`, `degraded`, or
+  - Status 2026-05-26: Cursor Agent CLI / Composer run recorded as `degraded`
+    for Bigtop.
+- [x] T015 Record the Bigtop run as `passed`, `failed`, `degraded`, or
   `not_assessed` with exact evidence.
-  - Status 2026-05-26: pending the real Bigtop landscape operator run.
-- [ ] T016 Run or schedule the same protocol against the non-Bigtop control
+  - Status 2026-05-26: recorded as `degraded` in
+    `reviews/cursor-bigtop-blind-run-2026-05-26.md`.
+- [x] T016 Run or schedule the same protocol against the non-Bigtop control
   target.
-  - Status: not_assessed; no external blind operator control transcript was
-    produced.
+  - Status 2026-05-26: Cursor Agent CLI / Composer run recorded as `degraded`
+    in `reviews/cursor-control-blind-run-2026-05-26.md`.
 - [x] T017 Update `docs/product-backlog.md` only with generic product gaps
   proven by the blind runs.
-  - No new detector backlog items were added because no real blind run produced
-    generic product gaps in this implementation turn.
+  - Status 2026-05-26: generic gaps recorded in the blind-run ledgers and
+    product hypothesis ledger; detector backlog remains generic, not
+    Bigtop-specific.

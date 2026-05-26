@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Implemented; blind rule-discovery lane not_assessed
+**Status**: Implemented; Cursor Agent blind discovery degraded but verified
 
 **Input**: Product correction: Cursor will not infer how to use Portolan from a
 random JSON file. Portolan must ship explicit Cursor-facing rules and portable
@@ -28,3 +28,5 @@ answer with honest gaps.
 
 - Cursor can be given only Portolan path, target root, and output directory and
   can discover the workflow without a prepared selection file.
+  - Status 2026-05-26: verified in degraded Cursor Agent blind runs for Bigtop
+    and a non-Bigtop control target.
