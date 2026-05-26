@@ -23,8 +23,8 @@ duplication, ownership, or service-relationship questions.
 
 **Independent Test**: Run `portolan context prepare --root <fixture> --out
 <dir> --profile cursor`. The command writes `agent-brief.md`,
-`query-plan.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, and
-`gaps.jsonl` without network access or target mutation.
+`query-plan.md`, `evidence-index.jsonl`, `repos.json`, `tool-registry.json`,
+`oss-plan.json`, and `gaps.jsonl` without network access or target mutation.
 
 ### User Story 2 - Compose OSS Outputs Before Native Scanners (Priority: P1)
 
@@ -62,7 +62,9 @@ that external ecosystem completeness is `unknown`.
   instructs the agent to inspect local evidence before making claims.
 - **FR-007**: System MUST write a gap ledger for missing or unsupported
   families using `unknown`, `cannot_verify`, or `not_assessed`.
-- **FR-008**: System MUST keep raw private source snippets out of the generated
+- **FR-008**: System MUST write a bounded evidence index linking repository,
+  tool-output, and gap records back to their source artifacts.
+- **FR-009**: System MUST keep raw private source snippets out of the generated
   pack.
 
 ## Key Entities

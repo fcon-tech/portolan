@@ -68,8 +68,9 @@ Target workflow:
    cannot be used.
 3. Inspect `<context-dir>/agent-brief.md`,
    `<context-dir>/answer-contract.md`, `<context-dir>/query-plan.md`,
-   `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`,
-   `<context-dir>/oss-plan.json`, and `<context-dir>/gaps.jsonl`.
+   `<context-dir>/evidence-index.jsonl`, `<context-dir>/repos.json`,
+   `<context-dir>/tool-registry.json`, `<context-dir>/oss-plan.json`, and
+   `<context-dir>/gaps.jsonl`.
 4. Run `portolan map` when graph artifacts are needed, then inspect
    `<run-dir>/run.json`, `<run-dir>/summary.json`,
    `<run-dir>/graph-index.json`, `<run-dir>/findings.jsonl`, and

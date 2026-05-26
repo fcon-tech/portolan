@@ -34,6 +34,7 @@ type Artifacts struct {
 	QueryPlan      string `json:"query_plan"`
 	Repos          string `json:"repos"`
 	ToolRegistry   string `json:"tool_registry"`
+	EvidenceIndex  string `json:"evidence_index"`
 	OSSPlan        string `json:"oss_plan"`
 	Gaps           string `json:"gaps"`
 }
@@ -64,6 +65,19 @@ type Gap struct {
 	Status        string `json:"status"`
 	EvidenceState string `json:"evidence_state"`
 	Reason        string `json:"reason"`
+}
+
+type EvidenceRecord struct {
+	ID             string `json:"id"`
+	Kind           string `json:"kind"`
+	Family         string `json:"family"`
+	Status         string `json:"status"`
+	EvidenceState  string `json:"evidence_state"`
+	SourceArtifact string `json:"source_artifact"`
+	SourceID       string `json:"source_id"`
+	Path           string `json:"path,omitempty"`
+	Summary        string `json:"summary"`
+	Reason         string `json:"reason,omitempty"`
 }
 
 type repoFile struct {
@@ -177,6 +191,7 @@ func Run(opts Options) (Result, error) {
 		QueryPlan:      filepath.Join(out, "query-plan.md"),
 		Repos:          filepath.Join(out, "repos.json"),
 		ToolRegistry:   filepath.Join(out, "tool-registry.json"),
+		EvidenceIndex:  filepath.Join(out, "evidence-index.jsonl"),
 		OSSPlan:        filepath.Join(out, "oss-plan.json"),
 		Gaps:           filepath.Join(out, "gaps.jsonl"),
 	}
@@ -201,6 +216,9 @@ func Run(opts Options) (Result, error) {
 	}
 	ossPlan.GeneratedAt = now
 	if err := writeJSON(filepath.Join(temp, "oss-plan.json"), ossPlan); err != nil {
+		return Result{}, err
+	}
+	if err := writeEvidenceIndex(filepath.Join(temp, "evidence-index.jsonl"), buildEvidenceIndex(repos, tools, gaps)); err != nil {
 		return Result{}, err
 	}
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
@@ -802,6 +820,60 @@ func gapsForMissingFamilies(tools []ToolEntry) []Gap {
 	return gaps
 }
 
+func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap) []EvidenceRecord {
+	records := make([]EvidenceRecord, 0, len(repos)+len(tools)+len(gaps))
+	for _, repo := range repos {
+		records = append(records, EvidenceRecord{
+			ID:             "repo-" + repo.ID,
+			Kind:           "repository",
+			Family:         "repository-discovery",
+			Status:         "observed",
+			EvidenceState:  repo.EvidenceState,
+			SourceArtifact: "repos.json",
+			SourceID:       repo.ID,
+			Path:           repo.Path,
+			Summary:        "Discovered local repository: " + repo.Discovery + ".",
+		})
+	}
+	for _, tool := range tools {
+		records = append(records, EvidenceRecord{
+			ID:             "tool-" + tool.ID,
+			Kind:           "tool-output",
+			Family:         tool.Family,
+			Status:         tool.Status,
+			EvidenceState:  tool.EvidenceState,
+			SourceArtifact: "tool-registry.json",
+			SourceID:       tool.ID,
+			Path:           tool.Path,
+			Summary:        tool.Summary,
+			Reason:         tool.Reason,
+		})
+	}
+	for _, gap := range gaps {
+		records = append(records, EvidenceRecord{
+			ID:             gap.ID,
+			Kind:           "gap",
+			Family:         gap.Family,
+			Status:         gap.Status,
+			EvidenceState:  gap.EvidenceState,
+			SourceArtifact: "gaps.jsonl",
+			SourceID:       gap.ID,
+			Summary:        gap.Reason,
+			Reason:         gap.Reason,
+		})
+	}
+	sort.Slice(records, func(i, j int) bool {
+		if records[i].Kind != records[j].Kind {
+			return records[i].Kind < records[j].Kind
+		}
+		if records[i].Family != records[j].Family {
+			return records[i].Family < records[j].Family
+		}
+		return records[i].ID < records[j].ID
+	})
+	return records
+}
+
 func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
 	toolOutputDir := filepath.Join(out, "tool-outputs")
 	plan := ossPlanFile{
@@ -1013,12 +1085,13 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPla
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
 	fmt.Fprintf(&b, "Start here before answering CTO-level questions about this landscape.\n\n")
 	fmt.Fprintf(&b, "## What To Read First\n\n")
-	fmt.Fprintf(&b, "1. `repos.json` for discovered local repositories.\n")
-	fmt.Fprintf(&b, "2. `tool-registry.json` for local OSS/tool-output candidates.\n")
-	fmt.Fprintf(&b, "3. `oss-plan.json` for safe local producer commands when OSS outputs are missing.\n")
-	fmt.Fprintf(&b, "4. `answer-contract.md` for how to turn Portolan evidence into CTO answers.\n")
-	fmt.Fprintf(&b, "5. `query-plan.md` for the inspection order.\n")
-	fmt.Fprintf(&b, "6. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
+	fmt.Fprintf(&b, "1. `evidence-index.jsonl` for the bounded list of local evidence records and gaps.\n")
+	fmt.Fprintf(&b, "2. `repos.json` for discovered local repositories.\n")
+	fmt.Fprintf(&b, "3. `tool-registry.json` for local OSS/tool-output candidates.\n")
+	fmt.Fprintf(&b, "4. `oss-plan.json` for safe local producer commands when OSS outputs are missing.\n")
+	fmt.Fprintf(&b, "5. `answer-contract.md` for how to turn Portolan evidence into CTO answers.\n")
+	fmt.Fprintf(&b, "6. `query-plan.md` for the inspection order.\n")
+	fmt.Fprintf(&b, "7. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
 	fmt.Fprintf(&b, "## Current Coverage\n\n")
 	fmt.Fprintf(&b, "- Repositories discovered: %d\n", len(repos))
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
@@ -1027,7 +1100,7 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPla
 	fmt.Fprintf(&b, "- Available OSS producer recipes not run: %d\n", availablePlans)
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
-	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `tool-registry.json` summaries and metrics as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running producer commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
+	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `evidence-index.jsonl` and `tool-registry.json` summaries as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running producer commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
 	return b.String()
 }
 
@@ -1044,17 +1117,17 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "- Next local command: the smallest read-only command that would reduce the most important unknown.\n\n")
 	fmt.Fprintf(&b, "Do not answer from vibes, naming conventions, or repository size alone. If an evidence family is missing, say `not_assessed` and point to `oss-plan.json` or the needed map command.\n\n")
 	fmt.Fprintf(&b, "## Artifact Order\n\n")
-	fmt.Fprintf(&b, "1. Context pack: read `agent-brief.md`, `answer-contract.md`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `query-plan.md`, and `gaps.jsonl`.\n")
+	fmt.Fprintf(&b, "1. Context pack: read `agent-brief.md`, `answer-contract.md`, `evidence-index.jsonl`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `query-plan.md`, and `gaps.jsonl`.\n")
 	fmt.Fprintf(&b, "2. Map bundle: when the question needs relationships, graph facts, duplication, configuration, technical debt, or coverage, run or inspect `portolan map --root <target-root> --out <run-dir>` and then read `summary.json`, `graph-index.json`, `coverage.json`, `findings.jsonl`, and `map.md` before full `graph.json`.\n")
 	fmt.Fprintf(&b, "3. Graph slice: when `graph-index.json` points at a repo, edge kind, or finding kind that needs drill-down, run `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind` variants before opening full `graph.json`.\n")
 	fmt.Fprintf(&b, "4. OSS producers: when `tool-registry.json` lacks a needed family, inspect `oss-plan.json`. Run producer commands only after approval and only into the declared Portolan output paths.\n\n")
 	fmt.Fprintf(&b, "## CTO Question Families\n\n")
 	fmt.Fprintf(&b, "| Question | Start with | Use as evidence | Missing evidence means |\n")
 	fmt.Fprintf(&b, "| --- | --- | --- | --- |\n")
-	fmt.Fprintf(&b, "| What is the local scope? | `repos.json`, `coverage.json` | discovered repositories, ignored paths, coverage records | external ecosystem completeness is `unknown` |\n")
-	fmt.Fprintf(&b, "| What talks to what? | `summary.json`, `graph-index.json`, `findings.jsonl` | Portolan relationship findings plus Backstage/OpenAPI/AsyncAPI/Structurizr entries in `tool-registry.json` | runtime topology or undocumented relationships are `not_assessed` |\n")
-	fmt.Fprintf(&b, "| Where are duplicate components? | `findings.jsonl`, `tool-registry.json` | exact source/config duplicate findings; jscpd or CycloneDX/Syft summaries when present | near-clone and component duplication are `not_assessed` |\n")
-	fmt.Fprintf(&b, "| What implicit knowledge is visible? | `findings.jsonl`, `graph-index.json`, `tool-registry.json` | unowned relationships, repeated wrappers, undocumented config surfaces, local catalogs/contracts | intent, ownership, and production behavior stay `unknown` unless evidenced |\n")
+	fmt.Fprintf(&b, "| What is the local scope? | `evidence-index.jsonl`, `repos.json`, `coverage.json` | discovered repositories, ignored paths, coverage records | external ecosystem completeness is `unknown` |\n")
+	fmt.Fprintf(&b, "| What talks to what? | `evidence-index.jsonl`, `summary.json`, `graph-index.json`, `findings.jsonl` | Portolan relationship findings plus Backstage/OpenAPI/AsyncAPI/Structurizr entries in `tool-registry.json` | runtime topology or undocumented relationships are `not_assessed` |\n")
+	fmt.Fprintf(&b, "| Where are duplicate components? | `evidence-index.jsonl`, `findings.jsonl`, `tool-registry.json` | exact source/config duplicate findings; jscpd or CycloneDX/Syft summaries when present | near-clone and component duplication are `not_assessed` |\n")
+	fmt.Fprintf(&b, "| What implicit knowledge is visible? | `evidence-index.jsonl`, `findings.jsonl`, `graph-index.json`, `tool-registry.json` | unowned relationships, repeated wrappers, undocumented config surfaces, local catalogs/contracts | intent, ownership, and production behavior stay `unknown` unless evidenced |\n")
 	fmt.Fprintf(&b, "| What configuration matters? | `findings.jsonl`, `graph-index.json` | env var names, ports, manifests, workflows, feature flags, secret references without values | semantic IaC/config correctness is `not_assessed` without OSS output such as Semgrep |\n")
 	fmt.Fprintf(&b, "| What technical debt is visible? | `findings.jsonl`, `summary.json` | technical-debt candidate findings derived from local evidence | modernization, rewrite, release, or readiness verdicts are `not_assessed` |\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
@@ -1071,11 +1144,12 @@ func renderQueryPlan() string {
 
 ## Before Answering
 
-1. Read ` + "`repos.json`" + ` and identify the local scope.
-2. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
-3. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
-4. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
-5. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
+1. Read ` + "`evidence-index.jsonl`" + ` for the bounded list of evidence records and gaps.
+2. Read ` + "`repos.json`" + ` and identify the local scope.
+3. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
+4. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
+5. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
+6. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
 
 ## CTO Questions
 
@@ -1101,6 +1175,21 @@ func writeJSON(path string, value any) error {
 	encoder.SetIndent("", "  ")
 	if err := encoder.Encode(value); err != nil {
 		return fmt.Errorf("write %s: %w", path, err)
+	}
+	return nil
+}
+
+func writeEvidenceIndex(path string, records []EvidenceRecord) error {
+	file, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("create %s: %w", path, err)
+	}
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	for _, record := range records {
+		if err := encoder.Encode(record); err != nil {
+			return fmt.Errorf("write %s: %w", path, err)
+		}
 	}
 	return nil
 }

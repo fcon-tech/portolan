@@ -91,6 +91,7 @@ fixtures are preflight evidence only.
 | P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 | P3-029 | `specs/029-bounded-graph-index/` | Map bundles include bounded `graph-index.json` entrypoints and artifact budgets so agents do not need to load hundreds of megabytes of raw graph output first. | Implemented |
 | P3-030 | `specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |
+| P3-032 | `specs/032-context-evidence-index/` | Context packs include bounded `evidence-index.jsonl` records linking repositories, OSS/tool outputs, and gaps before agents drill into specialized artifacts. | Implemented |
 
 ## Backlog Rules
 

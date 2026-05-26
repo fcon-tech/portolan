@@ -46,3 +46,6 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
   prompt.
 - H9: A new OSS/tool-output family is not considered part of the Portolan
   assembly until its adapter contract validates locally.
+- H10: A bounded `evidence-index.jsonl` makes Cursor-plus-Portolan more usable
+  for CTO questions by giving agents one first-pass list of local evidence
+  records and gaps before deeper drill-down.

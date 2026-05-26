@@ -1299,7 +1299,7 @@ func TestRunContextPrepareHelpDescribesCursorPack(t *testing.T) {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	out := stdout.String()
-	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "answer-contract.md", "oss-plan.json", "no network"} {
+	for _, want := range []string{"--root", "--out", "--profile", "cursor", "agent-brief.md", "answer-contract.md", "evidence-index.jsonl", "oss-plan.json", "no network"} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("stdout %q does not contain %q", out, want)
 		}
@@ -1330,7 +1330,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
-	for _, name := range []string{"agent-brief.md", "answer-contract.md", "query-plan.md", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
+	for _, name := range []string{"agent-brief.md", "answer-contract.md", "query-plan.md", "evidence-index.jsonl", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -1407,6 +1407,24 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 			t.Fatalf("gaps.jsonl = %q, want %q", gaps, want)
 		}
 	}
+	evidenceIndex, err := os.ReadFile(filepath.Join(out, "evidence-index.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`"kind":"repository"`,
+		`"source_artifact":"repos.json"`,
+		`"kind":"tool-output"`,
+		`"family":"jscpd"`,
+		`"source_artifact":"tool-registry.json"`,
+		`"kind":"gap"`,
+		`"family":"external-completeness"`,
+		`"source_artifact":"gaps.jsonl"`,
+	} {
+		if !strings.Contains(string(evidenceIndex), want) {
+			t.Fatalf("evidence-index.jsonl = %q, want %q", evidenceIndex, want)
+		}
+	}
 	ossPlan := readJSONFile(t, filepath.Join(out, "oss-plan.json"))
 	plans := ossPlan["tools"].([]any)
 	planByID := map[string]map[string]any{}
@@ -1439,6 +1457,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		"graph.json",
 		"coverage.json",
 		"summary.json",
+		"evidence-index.jsonl",
 		"tool-registry.json",
 		"oss-plan.json",
 		"gaps.jsonl",
