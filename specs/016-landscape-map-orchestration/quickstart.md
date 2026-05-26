@@ -63,23 +63,21 @@ If product source coverage is incomplete, the run blocks before acceptance and
 reports missing product repository ids. Do not replace this with a fixture pass
 or metadata-only representation.
 
-## 3. Run The Blind Agent Case
+## 3. Run The Selection-Based Preflight
 
-Give the agent only:
+Selection-based Bigtop runs prove the full-corpus gate and map artifacts. They
+do not prove blind operator acceptance, because the operator receives a
+Portolan-specific inventory file.
+
+Run:
 
 ```text
-Portolan: /path/to/portolan
-Landscape: /path/to/bigtop-landscape/selection.json
-Output: /path/to/bigtop-landscape/agent-run
-
-map this shit.
-
-Do not fetch upstream repositories.
-Do not use network.
-Do not mutate selected repositories.
-Do not infer facts outside Portolan artifacts.
-Record every Portolan capability gap you hit.
+portolan map --selection /path/to/bigtop-landscape/selection.json \
+  --out /path/to/bigtop-landscape/run
 ```
+
+The blind operator case is deferred to spec 017, where the input is the normal
+target root rather than `selection.json`.
 
 ## 4. Review The CTO Packet
 

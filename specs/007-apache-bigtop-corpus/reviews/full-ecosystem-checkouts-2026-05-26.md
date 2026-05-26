@@ -108,7 +108,11 @@ Blocked records: 0.
 ## Remaining Acceptance Work
 
 This proves local checkouts, generated selection, full-corpus gate, and Portolan
-artifact generation. It does not complete the real blind operator lane. The next
-step is still Cursor + Composer 2.5 using the `Landscape:
-/home/governor/projects/bigtop-landscape/selection.json` prompt shape and
-recording the transcript or concise transcript summary.
+artifact generation. It does not complete the real blind operator lane.
+
+The generated selection is a preflight artifact, not a realistic operator input.
+Passing `/home/governor/projects/bigtop-landscape/selection.json` to Cursor
++ Composer 2.5 would make the run non-blind. The next product step is
+`specs/017-landscape-root-discovery/`: Portolan must map the normal target root
+`/home/governor/projects/bigtop-landscape` without requiring the operator to
+know or supply a selection file.

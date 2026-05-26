@@ -56,16 +56,16 @@
 - [x] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
   target-agnostic prompt, run ledger, and status taxonomy.
 - [ ] T021 Run the blind protocol against a real local Apache Bigtop checkout.
-  - Status 2026-05-26: unblocked from P1-016. Use the full landscape
-    `Landscape: <selection.json>` prompt shape and Cursor + Composer 2.5; do not
-    downgrade this to `not_assessed` solely because the earlier Codex review did
-    not operate the Cursor lane.
+  - Status 2026-05-26: blocked on `specs/017-landscape-root-discovery/`.
+    Cursor + Composer 2.5 is available, but handing it a generated
+    `selection.json` would make the run non-blind and product-invalid.
   - Prep 2026-05-26: full ecosystem checkouts were created under
     `/home/governor/projects/bigtop-landscape/repos`, selection was generated
     at `/home/governor/projects/bigtop-landscape/selection.json`, and local
     Portolan map preflight wrote the five artifacts under
     `/home/governor/projects/bigtop-landscape/run`. Operator transcript is
-    still pending, so T021 remains open.
+    still pending, and generated selection preflight is not acceptance, so T021
+    remains open.
 - [ ] T022 If the local Apache Bigtop checkout is absent, record the run as
   blocked or `not_assessed`; do not substitute the fixture as acceptance proof.
   - Status 2026-05-26: still open. The missing evidence is the operator

@@ -16,18 +16,19 @@ immediate Bigtop-driven product test:
    repository root or portable skill without being told an internal guide path.
 4. **Blind agent acceptance**: an agent can run the same target-agnostic mapping
    protocol against arbitrary local targets without hidden scaffolding.
-5. **Landscape map orchestration**: the product-grade path maps a local
-   software landscape selection, not only one repository root. This bridges
-   single-root smoke commands to CTO-scale multi-repo mapping.
-6. **Bigtop full-landscape acceptance immediately after the generic agent path**:
+5. **Landscape map orchestration**: the product-grade path can map a curated
+   local software landscape selection, not only one repository root.
+6. **Landscape root discovery**: the product-grade blind path maps a normal
+   local ecosystem directory without requiring a generated selection file.
+7. **Bigtop full-landscape acceptance immediately after the generic agent path**:
    Cursor + Composer 2.5 runs the blind protocol against a full local Apache
-   Bigtop landscape selection: the Bigtop meta-repo, every included product
-   repository or represented inventory entry, metadata, runtime/package
-   surfaces, claims, black boxes, and imported OSS tool outputs.
-7. **Useful map contents**: relationships, duplication, configuration surfaces,
+   Bigtop ecosystem root: the Bigtop meta-repo, every included product
+   repository, metadata, runtime/package surfaces, claims, black boxes, and
+   imported OSS tool outputs.
+8. **Useful map contents**: relationships, duplication, configuration surfaces,
    and technical-debt findings implemented because the Bigtop full-landscape
    run proves they are needed.
-8. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
+9. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
    and LSP/index surfaces, and larger Bigtop runs.
 
 Cursor + Composer 2.5 is the first cheap acceptance client because it is a
@@ -59,7 +60,8 @@ behind a Bigtop-specific operator packet or a partial single-repository smoke.
 | P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
 | P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Protocol implemented; first full blind operator runs pending evidence |
 | P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape orchestration can enforce 100% corpus representation. | Unblocked from P1-016; next required evidence is a real Cursor + Composer 2.5 blind run using the full Bigtop landscape selection |
+| P1-017 | `specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Draft spec; required before real Bigtop blind acceptance |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Blocked on P1-017; generated selection preflight is not blind acceptance |
 
 ## P2: Build What The Bigtop Smoke Proves Is Missing
 
@@ -98,8 +100,8 @@ behind a Bigtop-specific operator packet or a partial single-repository smoke.
 - Importer work must include license, maintenance, and privacy review before
   dependencies are added.
 - Apache Bigtop testing starts immediately after the generic agent path is
-  self-discoverable, the blind acceptance protocol exists, and landscape map
-  orchestration can run a complete local Bigtop selection. Local fixtures may
-  preflight Portolan commands, but they must not be counted as a passed Bigtop
-  operator lane. A Bigtop acceptance run with omitted inventory entries is
-  blocked, not degraded success.
+  self-discoverable, the blind acceptance protocol exists, and landscape root
+  discovery can run against a normal local Bigtop ecosystem directory. Local
+  fixtures and generated selections may preflight Portolan commands, but they
+  must not be counted as a passed Bigtop operator lane. A Bigtop acceptance run
+  with omitted inventory entries is blocked, not degraded success.

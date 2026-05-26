@@ -210,8 +210,8 @@ unknown/cannot-verify ledger, and next-agent tasks, all backed by artifacts.
   `map --selection` when a landscape selection is available and MUST describe
   `map --root` only as a single-repository shortcut.
 - **FR-017**: The Bigtop quickstart MUST include a full-corpus preparation
-  route, the exact blind prompt using `Landscape: <selection.json>`, and the
-  stop rule for incomplete corpus coverage.
+  route, a selection-based preflight path, and the stop rule for incomplete
+  corpus coverage. Blind target-root acceptance is deferred to spec 017.
 - **FR-018**: Baseline verification MUST include `go test ./...`,
   `jq empty schema/*.json`, JSON syntax checks for generated fixtures, and
   `git diff --check`.

@@ -98,8 +98,9 @@ because the acceptance contract depends on them.
    families: SBOM/dependency, code-size/language inventory, duplication, and
    configuration/contract surfaces.
 5. CTO packet sections derived from artifacts.
-6. Agent guide and Cursor rule updates that prefer `Landscape:
-   <selection.json>` when available.
+6. Agent guide and Cursor rule updates that document `map --selection` as the
+   curated landscape path. This is not sufficient for blind operator acceptance;
+   target-root discovery is deferred to spec 017.
 
 ## Complexity Tracking
 

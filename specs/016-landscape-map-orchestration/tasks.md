@@ -57,9 +57,9 @@
 
 - [x] T032 Update packet rendering to include landscape inventory, repo/product matrix, relationships, contracts/surfaces, duplication, configuration, legacy/debt, unknowns, and next-agent tasks.
 - [x] T033 Ensure `map.md` is generated only from `graph.json`, `findings.jsonl`, `coverage.json`, and `run.json`.
-- [x] T034 Update `agent/AGENT_GUIDE.md`, `agent/START_HERE.md`, and portable skill content to prefer `Landscape: <selection.json>` and `map --selection`.
+- [x] T034 Update `agent/AGENT_GUIDE.md`, `agent/START_HERE.md`, and portable skill content to prefer `map --selection` when a curated landscape selection exists.
 - [x] T035 Update `.cursor/rules/portolan-map.mdc` to delegate to the portable landscape workflow without copying Bigtop-specific instructions.
-- [x] T036 Update Bigtop acceptance documentation to use the full landscape selection and full-corpus gate.
+- [x] T036 Update Bigtop preflight documentation to use the full landscape selection and full-corpus gate; blind acceptance without a selection is deferred to spec 017.
 
 ## Phase 7: Full Bigtop Readiness Verification
 

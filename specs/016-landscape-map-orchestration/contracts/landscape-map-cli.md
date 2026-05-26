@@ -28,11 +28,14 @@ a generated one-repository selection and is not the Bigtop acceptance path.
 - Preserve `unknown`, `cannot_verify`, and `not_assessed` instead of inventing
   source facts.
 
-## Bigtop Blind Prompt
+## Bigtop Selection Preflight Prompt
+
+This prompt shape is a preflight convenience for validating a prepared
+selection. It is not blind operator acceptance.
 
 ```text
 Portolan: <absolute path to the Portolan checkout or installed binary>
-Landscape: <absolute path to the prepared Bigtop landscape selection.json>
+Selection: <absolute path to the prepared Bigtop landscape selection.json>
 Output: <absolute path to a new run directory>
 
 map this shit.
