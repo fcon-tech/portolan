@@ -48,20 +48,29 @@ the acceptance question.
 ## Expected Agent Workflow
 
 The agent should discover Portolan's generic bootstrap surface from the
-Portolan path, then run the current map workflow against the supplied target:
+Portolan path, then prepare context against the supplied target:
 
 ```bash
-portolan map --root <target-root> --out <run-dir>
+portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
 If no installed binary is available, the agent may run the command from the
 Portolan source checkout:
 
 ```bash
-go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-The agent must inspect these artifacts before reporting:
+The agent must inspect these context artifacts before reporting broad claims:
+
+- `<context-dir>/agent-brief.md`
+- `<context-dir>/query-plan.md`
+- `<context-dir>/repos.json`
+- `<context-dir>/tool-registry.json`
+- `<context-dir>/gaps.jsonl`
+
+The agent may then run `portolan map` when graph artifacts are needed and must
+inspect these artifacts before reporting map-backed claims:
 
 - `<run-dir>/run.json`
 - `<run-dir>/coverage.json`

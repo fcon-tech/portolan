@@ -61,14 +61,18 @@ Target workflow:
 
 1. Read the Portolan agent entrypoint, guide, skill, or harness-specific
    wrapper.
-2. Run `portolan map --root <target-root> --out <run-dir>`, or run
-   `go run ./cmd/portolan map --root <target-root> --out <run-dir>` from a
-   Portolan source checkout when no binary is installed.
-3. Inspect `<run-dir>/run.json`, `<run-dir>/graph.json`,
+2. Run `portolan context prepare --root <target-root> --out <context-dir>
+   --profile cursor`, or run the same command through `go run ./cmd/portolan`
+   from a Portolan source checkout when no binary is installed.
+3. Inspect `<context-dir>/agent-brief.md`, `<context-dir>/query-plan.md`,
+   `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`, and
+   `<context-dir>/gaps.jsonl`.
+4. Run `portolan map` when graph artifacts are needed, then inspect
+   `<run-dir>/run.json`, `<run-dir>/graph.json`,
    `<run-dir>/findings.jsonl`, and `<run-dir>/map.md`.
-4. Report relationships, duplication, configuration surfaces, technical debt,
+5. Report relationships, duplication, configuration surfaces, technical debt,
    unknowns, and cannot-verify inputs from the artifacts.
-5. Avoid conclusions that are not backed by local evidence.
+6. Avoid conclusions that are not backed by local evidence.
 
 The current `portolan map` bundle records basic source inventory, local Go
 import relationships, local `go.mod` dependency relationships, and explicit

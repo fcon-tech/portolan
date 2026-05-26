@@ -8,12 +8,17 @@ alwaysApply: false
 When the user asks to map, audit, inspect, understand, or explain this
 codebase, first read `agent/START_HERE.md` and follow that portable workflow.
 
-Run Portolan before broad manual architecture claims. Prefer
-`portolan map --selection <selection.json> --out <run-dir>` when a landscape
-selection is available. Use `portolan map --root <target-root> --out <run-dir>`
-only as a single-repository shortcut. From a Portolan source checkout, use the
-same command after `go run ./cmd/portolan`. Read `run.json`, `coverage.json`,
-`graph.json`, `findings.jsonl`, and `map.md` before reporting.
+Run Portolan before broad manual architecture claims. Start with
+`portolan context prepare --root <target-root> --out <context-dir> --profile cursor`
+to get `agent-brief.md`, `query-plan.md`, `repos.json`,
+`tool-registry.json`, and `gaps.jsonl`. From a Portolan source checkout, use
+the same command after `go run ./cmd/portolan`.
+
+Use `portolan map --selection <selection.json> --out <run-dir>` only when a
+curated local selection exists. Use `portolan map --root <target-root> --out
+<run-dir>` as a lower-level map command after context preparation, not as the
+main Cursor workflow. Read the generated context pack and map artifacts before
+reporting.
 
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network

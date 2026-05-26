@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/fall-out-bug/portolan/internal/contextprep"
 	"github.com/fall-out-bug/portolan/internal/corpus"
 	graphdiff "github.com/fall-out-bug/portolan/internal/diff"
 	"github.com/fall-out-bug/portolan/internal/importer"
@@ -42,11 +43,67 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runDiff(args[1:], stdout, stderr)
 	case "map":
 		return runMap(args[1:], stdout, stderr)
+	case "context":
+		return runContext(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runContext(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeContextUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "prepare":
+		return runContextPrepare(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown context command %q\nRun 'portolan context --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runContextPrepare(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeContextPrepareUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("context prepare", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	rootPath := flags.String("root", "", "local landscape root path")
+	outputPath := flags.String("out", "", "output context pack directory")
+	profile := flags.String("profile", "cursor", "agent profile")
+	force := flags.Bool("force", false, "replace an existing output directory")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeContextPrepareUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected context prepare argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	result, err := contextprep.Run(contextprep.Options{
+		RootPath:   *rootPath,
+		OutputPath: *outputPath,
+		Profile:    *profile,
+		Force:      *force,
+		Version:    Version,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "context prepare: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote context pack %s\n", result.OutputPath)
+	return 0
 }
 
 func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -396,6 +453,7 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan import cyclonedx --in bom.cdx.json --out graph.json
+  portolan context prepare --root . --out .portolan/context --profile cursor
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
@@ -406,6 +464,37 @@ Usage:
 
 Portolan is local-first and read-only by default. The bootstrap build documents
 the contract before it collects repository, metadata, runtime, or claim evidence.
+`)
+}
+
+func writeContextUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan context prepare --root <dir> --out <dir> --profile cursor [--force]
+
+Prepare local, read-only agent context packs.
+
+Available subcommands:
+  prepare   write agent-brief.md, query-plan.md, repos.json, tool-registry.json, and gaps.jsonl
+`)
+}
+
+func writeContextPrepareUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan context prepare --root <dir> --out <dir> --profile cursor [--force]
+
+Prepare a Cursor-readable local context pack before an agent answers broad
+codebase or architecture questions. The command discovers bounded local Git
+repositories and candidate OSS/tool-output files, uses no network calls, starts
+no daemons, writes only to --out, and does not mutate the target root.
+
+Flags:
+  --root path       local landscape root path
+  --out path        output context pack directory
+  --profile name    agent profile; currently only "cursor"
+  --force           replace an existing output directory
+
+The context pack contains agent-brief.md, query-plan.md, repos.json,
+tool-registry.json, and gaps.jsonl.
 `)
 }
 
