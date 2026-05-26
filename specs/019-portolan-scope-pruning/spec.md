@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Implemented for docs/help pruning
 
 **Input**: Product correction: Portolan drifted toward prepared landscapes,
 Bigtop-specific choreography, and raw inventory artifacts. The product must be
@@ -28,4 +28,3 @@ cut back to a reusable agent augmentation layer.
 First implementation should update docs/help and remove misleading guidance
 before deleting commands. Command removal requires a separate compatibility
 decision.
-

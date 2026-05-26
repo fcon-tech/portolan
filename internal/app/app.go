@@ -115,7 +115,7 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 	flags := flag.NewFlagSet("map", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	flags.Usage = func() {}
-	rootPath := flags.String("root", "", "local repository root path")
+	rootPath := flags.String("root", "", "local root path")
 	selectionPath := flags.String("selection", "", "local landscape selection JSON path")
 	outputPath := flags.String("out", "", "output artifact bundle directory")
 	force := flags.Bool("force", false, "replace an existing output directory")
@@ -507,15 +507,15 @@ Build a local, read-only artifact bundle for agent landscape mapping.
 
 Flags:
   --selection path   local landscape selection JSON path
-  --root path        local repository root shortcut path
+  --root path        local root path
   --out path         output bundle directory
   --force            replace an existing output directory
 
 The bundle contains run.json, coverage.json, graph.json, findings.jsonl, and
-map.md. Use --selection for product-grade landscape runs. --root is a
-single-repository compatibility shortcut. The command makes no network calls,
-does not mutate selected repositories, and writes only to the selected output
-directory.
+map.md. Use context prepare before broad agent answers. Use --selection for
+curated local inventories and --root for direct local mapping. The command makes
+no network calls, does not mutate selected repositories, and writes only to the
+selected output directory.
 `)
 }
 

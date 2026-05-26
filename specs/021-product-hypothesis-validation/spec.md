@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Partially implemented; Bigtop Cursor comparison pending
 
 **Input**: Product correction: Portolan's market fit must be tested as agent
 augmentation, not as a standalone report tool or prepared-landscape demo.
@@ -32,4 +32,3 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
   when Backstage/OpenAPI/AsyncAPI/Structurizr files are indexed.
 - H4: The value proposition fails if the agent brief is ignored or if the pack
   is just another large dump.
-
