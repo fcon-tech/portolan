@@ -23,6 +23,8 @@ Status: market-fit hypothesis narrowed; broad Cursor-replacement thesis failed.
 | H1 | Cursor alone maps `/home/fall_out_bug/projects/bigtop-landscape/repos` without Portolan or selection | `/tmp/portolan-agent-verification/composer25-cursor-alone-h1.txt` | Cursor produced a useful CTO-grade first-pass map. It identified the Bigtop integration repo, BOM, package specs, Puppet/deployment surfaces, smoke tests, component roles, BOM-vs-source version drift, and Oozie/Sqoop as legacy-adjacent. |
 | H2 | Cursor runs current Portolan with only `Portolan`, `Target`, and `Output`; no selection | `/tmp/portolan-agent-verification/composer25-portolan-h2.txt` and `/tmp/portolan-agent-verification/composer25-portolan-h2-run/` | Portolan completed, but `map --root` collapsed the 18 sibling checkouts into one repository coverage record named `root`. |
 | H3 | Cursor reviews H1/H2 plus current Portolan artifacts for product fit | `/tmp/portolan-agent-verification/composer25-market-fit-h3.txt` | The defensible thesis narrowed to a prepared inventory/gap-ledger envelope for agent pipelines, not a general Cursor competitor. |
+| H4 | Cursor alone maps `/home/fall_out_bug/projects/vibe_coding` as a real non-Bigtop folder-of-repos with shallow inspection only | `/tmp/portolan-agent-verification/composer25-control-vibecoding-cursor-alone-h4.txt` | Cursor produced a useful cluster map across SDP, agent harnesses, orchestration tools, Faust workspaces, demos, and root harness overlays. It also left shell-checkable uncertainty and some wrong details. |
+| H5 | Cursor runs current Portolan against `/home/fall_out_bug/projects/vibe_coding` with a 240-second command timeout and no selection | `/tmp/portolan-agent-verification/composer25-control-vibecoding-portolan-h5.txt` and `/tmp/portolan-agent-verification/composer25-control-vibecoding-portolan-h5-run/` | Portolan completed in the timeout, but collapsed the folder into one repository coverage record and emitted a 672 MB graph for one synthetic root. |
 
 ## Verified Local Checks
 
@@ -34,6 +36,13 @@ Status: market-fit hypothesis narrowed; broad Cursor-replacement thesis failed.
 - H2 `graph.json` contains one repository node, 232 package nodes, and 147813
   unknown nodes.
 - H2 `findings.jsonl` contains 10 findings.
+- `/home/fall_out_bug/projects/vibe_coding` contains 30 Git roots at max depth
+  two when both `.git` directories and `.git` files are counted.
+- H5 `coverage.json` contains one record:
+  `id: root`, `kind: repository`.
+- H5 `map.md` reports 756764 nodes, 828299 edges, 33 findings, and one coverage
+  record.
+- H5 `graph.json` is 672719833 bytes.
 
 ## Findings
 
@@ -89,6 +98,28 @@ The selection-backed Bigtop run provides a structured coverage matrix and
 manifest reconciliation that Cursor prose does not provide by default. That
 value depends on a prepared selection/manifest and is not blind-first UX.
 
+### F5: Non-Bigtop Control Repeats The Same Pattern
+
+Status: verified by H4/H5, with target-mutation status not assessed because no
+pre-run dirty-state snapshot was taken for every control repository.
+
+`/home/fall_out_bug/projects/vibe_coding` is a real local folder of projects,
+not a Bigtop-specific fixture. Cursor-alone produced a useful shallow
+orientation over SDP, agent-harness, orchestration, Faust, demo, and harness
+overlay clusters. It also made or preserved shell-checkable uncertainty:
+
+- local shell found 30 Git roots at max depth two when `.git` files are counted;
+- Cursor reported useful clusters but had uncertainty around worktree/gitfile
+  cases such as `faust-workspace-design` and `worktrees/*`;
+- direct shell checks resolved some of those cases more precisely than the
+  narrative.
+
+Current Portolan on the same root completed under a 240-second timeout, but
+collapsed the folder into one `root` coverage record and emitted a 672 MB graph.
+This confirms that P1-017 is not Bigtop-specific: normal local project folders
+also need bounded child-repository discovery before Portolan can be the default
+agent preflight.
+
 ## Market-Fit Thesis
 
 Current narrow thesis:
@@ -98,6 +129,15 @@ pre-curated multi-repo landscapes. It is useful when agent workflows need
 schema-stable coverage artifacts and explicit `not_assessed` gaps before making
 claims. It is not currently a better way than Cursor to understand a large
 polyglot ecosystem from a folder of clones.
+
+Revised after the non-Bigtop control:
+
+The narrow fit is stronger for **messy local project folders** than for a
+prepared enterprise catalog: Cursor can orient from names and shallow files, but
+it leaves repo/worktree identity, dirty state, ignored scratch dirs, and
+coverage boundaries as prose or uncertainty. Portolan can own that preflight
+surface only after it discovers child repositories and emits a small inventory
+artifact before deep graph generation.
 
 Future thesis, contingent on implementation:
 
@@ -129,15 +169,19 @@ the agent reason on top of it.
 
 1. Implement P1-017 so `map --root <ecosystem>` discovers child Git
    repositories and does not collapse a directory of checkouts into one root.
+   Include `.git` file worktrees, not only `.git` directories.
 2. Add or import polyglot relationship signals for Bigtop-class systems:
    Maven, Gradle, BOM, package specs, Puppet, Python packaging, and runtime
    manifests.
 3. Reduce or demote unknown-node graph noise; large graph size is not value if
    most nodes are semantically opaque.
-4. Score A/B agent runs with and without Portolan artifacts on false repo
+4. Add a fast `inventory` or pre-graph phase for messy local project folders:
+   child repo list, gitdir/gitfile/worktree classification, skip rules, dirty
+   state status, and target-boundary warnings.
+5. Score A/B agent runs with and without Portolan artifacts on false repo
    counts, false completeness, missed legacy components, and unsupported
    architecture claims.
-5. Keep positioning explicit: Portolan complements Cursor as a preflight and
+6. Keep positioning explicit: Portolan complements Cursor as a preflight and
    inventory/gap contract. It is not a coding harness, readiness gate, or
    general enterprise catalog replacement.
 
