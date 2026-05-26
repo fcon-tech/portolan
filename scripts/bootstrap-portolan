@@ -1,0 +1,80 @@
+#!/bin/sh
+set -eu
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  scripts/bootstrap-portolan [--out <file>]
+
+Build a local portolan binary from this source checkout.
+
+Defaults:
+  output: .portolan/bin/portolan
+  network: disabled for Go module fetching
+
+Set PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 only with explicit approval when the
+local Go module cache is missing required dependencies.
+USAGE
+}
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_root=$(CDPATH= cd -- "$script_dir/.." && pwd)
+out="$repo_root/.portolan/bin/portolan"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --out)
+      if [ "$#" -lt 2 ]; then
+        echo "bootstrap-portolan: --out requires a file path" >&2
+        exit 2
+      fi
+      out=$2
+      shift 2
+      ;;
+    *)
+      echo "bootstrap-portolan: unexpected argument $1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
+if ! command -v go >/dev/null 2>&1; then
+  echo "bootstrap-portolan: Go is required to build from source, but was not found on PATH" >&2
+  exit 2
+fi
+
+case "$out" in
+  /*) ;;
+  *) out="$(pwd)/$out" ;;
+esac
+
+out_dir=$(dirname -- "$out")
+mkdir -p -- "$out_dir"
+
+tmp="$out_dir/.portolan-bootstrap-$$"
+cleanup() {
+  rm -f -- "$tmp"
+}
+trap cleanup EXIT INT TERM
+
+if [ "${PORTOLAN_BOOTSTRAP_ALLOW_NETWORK:-0}" != "1" ]; then
+  export GOPROXY=off
+fi
+
+if ! (cd "$repo_root" && go build -trimpath -o "$tmp" ./cmd/portolan); then
+  echo "bootstrap-portolan: build failed" >&2
+  echo "bootstrap-portolan: default mode does not fetch modules from the network" >&2
+  echo "bootstrap-portolan: if network fetch is explicitly approved, retry with PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1" >&2
+  exit 1
+fi
+
+chmod 0755 "$tmp"
+mv -f -- "$tmp" "$out"
+trap - EXIT INT TERM
+
+echo "wrote $out"

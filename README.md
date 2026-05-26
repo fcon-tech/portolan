@@ -18,6 +18,17 @@ Active local-first CLI. The current agent-facing path is context preparation:
 `portolan context prepare --root <dir> --out <dir> --profile cursor`.
 Curated landscape selections remain supported as an advanced mapping input.
 
+For source checkouts without an installed binary, build a repo-local binary:
+
+```bash
+scripts/bootstrap-portolan
+.portolan/bin/portolan --version
+```
+
+The bootstrap writes under the Portolan checkout by default and does not fetch
+Go modules from the network unless `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is set
+with explicit approval.
+
 Implemented:
 
 - Go module and `portolan scan --selection <file> --out <file>` for the first
@@ -25,6 +36,8 @@ Implemented:
 - `portolan context prepare --root <dir> --out <dir> --profile cursor` for a
   Cursor-readable context pack with repository discovery, OSS/tool-output
   candidates, query plan, and honest gaps.
+- `scripts/bootstrap-portolan` for source-checkout local binary bootstrap into
+  `.portolan/bin/portolan`.
 - `portolan import cyclonedx --in <file> --out <file>` for local CycloneDX JSON
   SBOM normalization.
 - Black-box profile scanning from local metadata, runtime export, and claim
@@ -159,6 +172,8 @@ Backlog features live under `specs/` and are indexed in
 
 ```bash
 go test ./...
+scripts/bootstrap-portolan --out /tmp/portolan
+/tmp/portolan --version
 go run ./cmd/portolan --version
 go run ./cmd/portolan context prepare --root testdata/landscape-map --out /tmp/portolan-context --profile cursor --force
 go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force

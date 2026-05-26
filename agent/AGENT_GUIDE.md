@@ -43,7 +43,15 @@ This target contract is now the preferred first step:
 portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-If only a Portolan source checkout is available, run from that checkout:
+If only a Portolan source checkout is available, first build the repo-local
+binary from that checkout:
+
+```bash
+scripts/bootstrap-portolan
+.portolan/bin/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+```
+
+Use `go run` only as a fallback when the bootstrap script cannot be used:
 
 ```bash
 go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
@@ -140,6 +148,7 @@ Use `not_assessed` for a surface you did not check.
 
    ```bash
    portolan --version
+   scripts/bootstrap-portolan --help
    portolan map --help
    portolan scan --help
    portolan packet render --help

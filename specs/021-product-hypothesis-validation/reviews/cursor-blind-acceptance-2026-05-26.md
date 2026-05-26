@@ -63,3 +63,9 @@ classified `degraded`, not `passed`.
 availability and safe output-path recipes. This does not run OSS tools by
 default and does not close the install, non-Go relationship, duplication,
 configuration, or debt detector gaps.
+
+`specs/026-local-binary-bootstrap/` implements the source-checkout follow-up
+for `GAP-HARNESS-GO` and `GAP-NO-BINARY`: agents can build a repo-local
+`.portolan/bin/portolan` binary with `scripts/bootstrap-portolan` before
+falling back to `go run`. This still requires local Go availability and a local
+module cache unless network fetching is explicitly approved.

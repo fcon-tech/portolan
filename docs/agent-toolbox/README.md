@@ -62,8 +62,10 @@ Target workflow:
 1. Read the Portolan agent entrypoint, guide, skill, or harness-specific
    wrapper.
 2. Run `portolan context prepare --root <target-root> --out <context-dir>
-   --profile cursor`, or run the same command through `go run ./cmd/portolan`
-   from a Portolan source checkout when no binary is installed.
+   --profile cursor`, or build `.portolan/bin/portolan` with
+   `scripts/bootstrap-portolan` from a Portolan source checkout when no binary
+   is installed. Use `go run ./cmd/portolan` only as a fallback when bootstrap
+   cannot be used.
 3. Inspect `<context-dir>/agent-brief.md`, `<context-dir>/query-plan.md`,
    `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`,
    `<context-dir>/oss-plan.json`, and `<context-dir>/gaps.jsonl`.

@@ -33,7 +33,15 @@ Prefer an installed binary:
 portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 ```
 
-If only a source checkout is available, run from the Portolan checkout:
+If only a source checkout is available, first build the repo-local binary from
+the Portolan checkout:
+
+```bash
+scripts/bootstrap-portolan
+.portolan/bin/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+```
+
+Use `go run` only as a fallback when the bootstrap script cannot be used:
 
 ```bash
 go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor

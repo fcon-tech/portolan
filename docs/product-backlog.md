@@ -62,6 +62,7 @@ fixtures are preflight evidence only.
 | P1-022 | `specs/022-oss-tool-output-assembly/` | Context preparation summarizes local jscpd and CycloneDX/Syft outputs so Cursor sees OSS evidence candidates, not just filenames. | Implemented |
 | P1-023 | `specs/023-relationship-surface-assembly/` | Context preparation summarizes local Backstage, OpenAPI, AsyncAPI, and Structurizr files as relationship surface evidence candidates. | Implemented |
 | P1-025 | `specs/025-oss-execution-plan/` | Context preparation emits `oss-plan.json` with safe local producer recipes for jscpd, Syft/CycloneDX, and Semgrep when outputs are missing. | Implemented |
+| P1-026 | `specs/026-local-binary-bootstrap/` | Source checkouts can build a repo-local `.portolan/bin/portolan` binary so agents do not depend on fragile `go run` execution. | Implemented |
 | P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent blind lane degraded; gaps recorded |
 
 ## P2: Build What Agent Runs Prove Is Missing

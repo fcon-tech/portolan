@@ -12,7 +12,8 @@ Run Portolan before broad manual architecture claims. Start with
 `portolan context prepare --root <target-root> --out <context-dir> --profile cursor`
 to get `agent-brief.md`, `query-plan.md`, `repos.json`,
 `tool-registry.json`, `oss-plan.json`, and `gaps.jsonl`. From a Portolan source
-checkout, use the same command after `go run ./cmd/portolan`.
+checkout, run `scripts/bootstrap-portolan` and use `.portolan/bin/portolan`
+before falling back to `go run ./cmd/portolan`.
 
 Use `portolan map --root <target-root> --out <run-dir>` when graph artifacts are
 needed after context preparation. It performs bounded local discovery over the

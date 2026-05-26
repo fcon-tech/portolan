@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -31,6 +32,46 @@ func TestRunVersionWritesVersion(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestBootstrapPortolanScriptBuildsLocalBinary(t *testing.T) {
+	script, err := filepath.Abs("../../scripts/bootstrap-portolan")
+	if err != nil {
+		t.Fatalf("resolve bootstrap script: %v", err)
+	}
+	workDir := t.TempDir()
+	out := filepath.Join(workDir, "bin", "portolan")
+
+	help := exec.Command(script, "--help")
+	help.Dir = "."
+	helpOut, err := help.CombinedOutput()
+	if err != nil {
+		t.Fatalf("bootstrap help failed: %v\n%s", err, helpOut)
+	}
+	for _, want := range []string{".portolan/bin/portolan", "network: disabled", "PORTOLAN_BOOTSTRAP_ALLOW_NETWORK"} {
+		if !strings.Contains(string(helpOut), want) {
+			t.Fatalf("bootstrap help missing %q:\n%s", want, helpOut)
+		}
+	}
+
+	build := exec.Command(script, "--out", filepath.Join("bin", "portolan"))
+	build.Dir = workDir
+	buildOut, err := build.CombinedOutput()
+	if err != nil {
+		t.Fatalf("bootstrap build failed: %v\n%s", err, buildOut)
+	}
+	if !strings.Contains(string(buildOut), "wrote "+out) {
+		t.Fatalf("bootstrap output = %q, want written binary path", buildOut)
+	}
+
+	version := exec.Command(out, "--version")
+	versionOut, err := version.CombinedOutput()
+	if err != nil {
+		t.Fatalf("bootstrapped binary failed: %v\n%s", err, versionOut)
+	}
+	if got := strings.TrimSpace(string(versionOut)); got != "portolan dev" {
+		t.Fatalf("version output = %q, want portolan dev", got)
 	}
 }
 

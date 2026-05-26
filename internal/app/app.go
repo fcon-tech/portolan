@@ -462,8 +462,8 @@ Usage:
   portolan packet render --graph graph.json --out packet.md
   portolan scan --help
 
-Portolan is local-first and read-only by default. The bootstrap build documents
-the contract before it collects repository, metadata, runtime, or claim evidence.
+Portolan is local-first and read-only by default. For source checkouts without
+an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
 `)
 }
 

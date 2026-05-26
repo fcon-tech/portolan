@@ -55,7 +55,14 @@ portolan context prepare --root <target-root> --out <context-dir> --profile curs
 ```
 
 If no installed binary is available, the agent may run the command from the
-Portolan source checkout:
+repo-local binary built from the Portolan source checkout:
+
+```bash
+scripts/bootstrap-portolan
+.portolan/bin/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+```
+
+Use `go run` only as a fallback when the bootstrap script cannot be used:
 
 ```bash
 go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
