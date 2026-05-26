@@ -1039,6 +1039,39 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	}
 }
 
+func TestRunContextPrepareExplainsRepoLikeFixtureWithoutGit(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "repos", "api"))
+	mustMkdir(t, filepath.Join(root, "repos", "web"))
+	mustWrite(t, filepath.Join(root, "selection.json"), `{"schema_version":"0.1.0","targets":[]}`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	repos := readJSONFile(t, filepath.Join(out, "repos.json"))
+	if got := len(repos["repositories"].([]any)); got != 0 {
+		t.Fatalf("repositories = %d, want 0 source-visible git repositories", got)
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	if got := len(registry["tools"].([]any)); got != 0 {
+		t.Fatalf("tools = %d, want empty array", got)
+	}
+	gaps, err := os.ReadFile(filepath.Join(out, "gaps.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"gap-repo-like-structure-without-git", "selection.json", "repo-like child directories", "not Git repositories"} {
+		if !strings.Contains(string(gaps), want) {
+			t.Fatalf("gaps.jsonl = %q, want %q", gaps, want)
+		}
+	}
+}
+
 func TestRunMapSelectionWritesLandscapeArtifactBundle(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer

@@ -86,3 +86,11 @@ Cursor-plus-Portolan:
 - Next spec/task: evaluate Bigtop context preparation and then run Cursor lanes
   only if transcript size and privacy boundaries are acceptable.
 
+## Follow-Up Implementation
+
+Implemented after this lane:
+
+- `gap-repo-like-structure-without-git` is emitted when `selection.json` or
+  `repos/*` exists but no bounded Git repositories are discovered.
+- Empty repository and tool lists are encoded as `[]`, not `null`, for agent
+  readability.

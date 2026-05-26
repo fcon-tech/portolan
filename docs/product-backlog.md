@@ -77,7 +77,7 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
 | P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Non-Bigtop Cursor comparison recorded; Bigtop Cursor comparison pending |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Initial non-Bigtop and Bigtop Cursor comparisons recorded |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
 | P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
