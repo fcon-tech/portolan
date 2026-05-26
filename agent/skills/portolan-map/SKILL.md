@@ -52,6 +52,10 @@ Read all of these before reporting broad claims:
 - `tool-registry.json`
 - `gaps.jsonl`
 
+Treat `tool-registry.json` summaries and metrics as local evidence candidates,
+not final architecture verdicts. Missing OSS families in `gaps.jsonl` remain
+`not_assessed`.
+
 If the command cannot run or required artifacts are absent, stop with a blocker.
 Do not replace missing Portolan evidence with unmarked manual analysis.
 

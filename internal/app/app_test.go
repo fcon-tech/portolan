@@ -1010,6 +1010,24 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	for _, raw := range registry["tools"].([]any) {
 		entry := raw.(map[string]any)
 		families[entry["family"].(string)] = true
+		switch entry["family"] {
+		case "jscpd":
+			if entry["kind"] != "duplication" || entry["status"] != "observed" {
+				t.Fatalf("jscpd entry = %#v, want observed duplication", entry)
+			}
+			metrics := entry["metrics"].(map[string]any)
+			if metrics["duplicate_groups"] != float64(0) {
+				t.Fatalf("jscpd metrics = %#v, want duplicate_groups 0", metrics)
+			}
+		case "cyclonedx":
+			if entry["kind"] != "sbom" || entry["status"] != "observed" {
+				t.Fatalf("cyclonedx entry = %#v, want observed sbom", entry)
+			}
+			metrics := entry["metrics"].(map[string]any)
+			if metrics["components"] != float64(0) {
+				t.Fatalf("cyclonedx metrics = %#v, want components 0", metrics)
+			}
+		}
 	}
 	for _, want := range []string{"jscpd", "cyclonedx", "backstage"} {
 		if !families[want] {
@@ -1036,6 +1054,34 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunContextPreparePreservesMalformedToolOutput(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, "tool-outputs"))
+	mustWrite(t, filepath.Join(root, "tool-outputs", "jscpd-report.json"), `{`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want one malformed jscpd entry", tools)
+	}
+	entry := tools[0].(map[string]any)
+	if entry["family"] != "jscpd" || entry["status"] != "cannot_verify" || entry["evidence_state"] != "cannot_verify" {
+		t.Fatalf("entry = %#v, want cannot_verify jscpd", entry)
+	}
+	if !strings.Contains(entry["reason"].(string), "malformed") {
+		t.Fatalf("entry = %#v, want malformed reason", entry)
 	}
 }
 

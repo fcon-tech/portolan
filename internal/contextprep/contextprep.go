@@ -43,11 +43,16 @@ type Repository struct {
 }
 
 type ToolEntry struct {
-	ID            string `json:"id"`
-	Family        string `json:"family"`
-	Path          string `json:"path"`
-	EvidenceState string `json:"evidence_state"`
-	Reason        string `json:"reason"`
+	ID            string         `json:"id"`
+	Family        string         `json:"family"`
+	Kind          string         `json:"kind"`
+	Path          string         `json:"path"`
+	EvidenceState string         `json:"evidence_state"`
+	Status        string         `json:"status"`
+	Summary       string         `json:"summary"`
+	Confidence    *float64       `json:"confidence,omitempty"`
+	Metrics       map[string]int `json:"metrics,omitempty"`
+	Reason        string         `json:"reason"`
 }
 
 type Gap struct {
@@ -358,13 +363,8 @@ func detectToolOutputs(root string, repos []Repository) []ToolEntry {
 			families := familiesForFile(file.Name())
 			for _, family := range families {
 				id := uniqueID(family+"-"+safeID(path), usedIDs)
-				entries = append(entries, ToolEntry{
-					ID:            id,
-					Family:        family,
-					Path:          path,
-					EvidenceState: "metadata-visible",
-					Reason:        "local candidate output detected by filename convention",
-				})
+				entry := summarizeToolOutput(id, family, path)
+				entries = append(entries, entry)
 			}
 			if len(families) > 0 {
 				seen[path] = true
@@ -372,6 +372,127 @@ func detectToolOutputs(root string, repos []Repository) []ToolEntry {
 		}
 	}
 	return entries
+}
+
+func summarizeToolOutput(id, family, path string) ToolEntry {
+	entry := ToolEntry{
+		ID:            id,
+		Family:        family,
+		Kind:          kindForFamily(family),
+		Path:          path,
+		EvidenceState: "metadata-visible",
+		Status:        "candidate",
+		Summary:       "Local OSS/tool-output candidate detected by filename convention.",
+		Reason:        "local candidate output detected by filename convention",
+	}
+	switch family {
+	case "jscpd", "cyclonedx", "semgrep":
+		return summarizeJSONToolOutput(entry)
+	default:
+		return entry
+	}
+}
+
+func summarizeJSONToolOutput(entry ToolEntry) ToolEntry {
+	data, err := os.ReadFile(entry.Path)
+	if err != nil {
+		entry.EvidenceState = "cannot_verify"
+		entry.Status = "cannot_verify"
+		entry.Summary = "Tool output could not be read."
+		entry.Reason = err.Error()
+		return entry
+	}
+	var doc toolSummaryDocument
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	if err := decoder.Decode(&doc); err != nil {
+		entry.EvidenceState = "cannot_verify"
+		entry.Status = "cannot_verify"
+		entry.Summary = "Tool output could not be parsed."
+		entry.Reason = "malformed JSON: " + err.Error()
+		return entry
+	}
+	if decoder.Decode(&struct{}{}) == nil {
+		entry.EvidenceState = "cannot_verify"
+		entry.Status = "cannot_verify"
+		entry.Summary = "Tool output could not be parsed."
+		entry.Reason = "malformed JSON: trailing content"
+		return entry
+	}
+
+	entry.Status = "observed"
+	entry.Confidence = validConfidence(doc.Confidence)
+	switch entry.Family {
+	case "jscpd":
+		entry.Metrics = map[string]int{"duplicate_groups": len(doc.Duplicates)}
+		entry.Summary = "Local jscpd-style duplication evidence with " + formatCount(len(doc.Duplicates), "duplicate group") + "."
+	case "cyclonedx":
+		if doc.BOMFormat != "CycloneDX" {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "SBOM candidate is not CycloneDX JSON."
+			entry.Reason = "bomFormat is not CycloneDX"
+			return entry
+		}
+		entry.Metrics = map[string]int{
+			"components":         len(doc.Components),
+			"dependency_records": len(doc.Dependencies),
+		}
+		entry.Summary = "Local CycloneDX/Syft-compatible SBOM evidence with " + formatCount(len(doc.Components), "component") + " and " + formatCount(len(doc.Dependencies), "dependency record") + "."
+	case "semgrep":
+		results := len(doc.Results)
+		if results == 0 {
+			results = len(doc.LowercaseResults)
+		}
+		entry.Metrics = map[string]int{"results": results}
+		entry.Summary = "Local Semgrep-style structural finding evidence with " + formatCount(results, "result") + "."
+	}
+	return entry
+}
+
+func formatCount(count int, singular string) string {
+	if count == 1 {
+		return fmt.Sprintf("1 %s", singular)
+	}
+	return fmt.Sprintf("%d %ss", count, singular)
+}
+
+type toolSummaryDocument struct {
+	BOMFormat        string           `json:"bomFormat"`
+	Confidence       *float64         `json:"confidence"`
+	Components       []map[string]any `json:"components"`
+	Dependencies     []map[string]any `json:"dependencies"`
+	Duplicates       []map[string]any `json:"duplicates"`
+	Results          []map[string]any `json:"Results"`
+	LowercaseResults []map[string]any `json:"results"`
+}
+
+func validConfidence(value *float64) *float64 {
+	if value == nil || *value < 0 || *value > 1 {
+		return nil
+	}
+	confidence := *value
+	return &confidence
+}
+
+func kindForFamily(family string) string {
+	switch family {
+	case "jscpd":
+		return "duplication"
+	case "cyclonedx":
+		return "sbom"
+	case "semgrep":
+		return "configuration"
+	case "backstage":
+		return "service-catalog"
+	case "openapi", "asyncapi":
+		return "contract-surface"
+	case "structurizr":
+		return "architecture-model"
+	case "code-index":
+		return "code-index"
+	default:
+		return "unknown"
+	}
 }
 
 func familiesForFile(name string) []string {
@@ -427,6 +548,16 @@ func gapsForMissingFamilies(tools []ToolEntry) []Gap {
 
 func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, gaps []Gap) string {
 	var b strings.Builder
+	observedTools := 0
+	cannotVerifyTools := 0
+	for _, tool := range tools {
+		switch tool.Status {
+		case "observed":
+			observedTools++
+		case "cannot_verify":
+			cannotVerifyTools++
+		}
+	}
 	fmt.Fprintf(&b, "# Portolan Agent Brief\n\n")
 	fmt.Fprintf(&b, "Profile: Cursor\n\n")
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
@@ -439,9 +570,11 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, gaps [
 	fmt.Fprintf(&b, "## Current Coverage\n\n")
 	fmt.Fprintf(&b, "- Repositories discovered: %d\n", len(repos))
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
+	fmt.Fprintf(&b, "- Observed OSS/tool-output summaries: %d\n", observedTools)
+	fmt.Fprintf(&b, "- Cannot-verify tool outputs: %d\n", cannotVerifyTools)
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
-	fmt.Fprintf(&b, "Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
+	fmt.Fprintf(&b, "Use `tool-registry.json` summaries and metrics as evidence candidates, not final architecture verdicts. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
 	return b.String()
 }
 
@@ -456,8 +589,9 @@ func renderQueryPlan() string {
 
 ## CTO Questions
 
-- Duplicate components: start with jscpd and CycloneDX/Syft candidates. If they
-  are absent, report duplication as not_assessed.
+- Duplicate components: start with jscpd and CycloneDX/Syft summaries in
+  ` + "`tool-registry.json`" + `. If they are absent, report duplication as
+  not_assessed.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

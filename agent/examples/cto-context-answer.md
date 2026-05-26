@@ -29,7 +29,7 @@ ecosystem coverage.
 
 | Finding | Evidence | State | Answer |
 | --- | --- | --- | --- |
-| jscpd output is present. | `tool-registry.json` | `metadata-visible` | Inspect the jscpd report before claiming duplicate code. |
+| jscpd output is present with `duplicate_groups` metric. | `tool-registry.json` | `metadata-visible` | Use the summary as a duplication evidence candidate, not a refactoring verdict. |
 | SBOM output is absent. | `gaps.jsonl` | `not_assessed` | Component duplication and dependency drift are not assessed from SBOM evidence. |
 
 ## Implicit Knowledge
@@ -53,4 +53,3 @@ ecosystem coverage.
   missing.
 - I would not claim runtime topology without local runtime or telemetry export.
 - I would not turn an agent inference into `source-visible` evidence.
-
