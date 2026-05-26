@@ -60,6 +60,12 @@
     `Landscape: <selection.json>` prompt shape and Cursor + Composer 2.5; do not
     downgrade this to `not_assessed` solely because the earlier Codex review did
     not operate the Cursor lane.
+  - Prep 2026-05-26: full ecosystem checkouts were created under
+    `/home/fall_out_bug/projects/bigtop-landscape/repos`, selection was generated
+    at `/home/fall_out_bug/projects/bigtop-landscape/selection.json`, and local
+    Portolan map preflight wrote the five artifacts under
+    `/home/fall_out_bug/projects/bigtop-landscape/run`. Operator transcript is
+    still pending, so T021 remains open.
 - [ ] T022 If the local Apache Bigtop checkout is absent, record the run as
   blocked or `not_assessed`; do not substitute the fixture as acceptance proof.
   - Status 2026-05-26: still open. The missing evidence is the operator
