@@ -26,6 +26,7 @@ These are the real capabilities this guide may rely on today:
 - `portolan packet render --graph <graph.json> --out <packet.md> [--force]`
 - `portolan import cyclonedx --in <sbom.json> --out <graph.json> [--force]`
 - `portolan diff --base <base-graph.json> --head <head-graph.json> --out <diff.json> [--force]`
+- `portolan adapter validate --in <adapter.json>`
 - local selection files, local metadata, local runtime exports, local claim
   files, and local SBOM/tool exports when the repository provides them.
 
@@ -228,7 +229,11 @@ Use `not_assessed` for a surface you did not check.
    portolan packet render --graph /tmp/portolan-run/graph.json --out /tmp/portolan-run/map.md --force
    portolan import cyclonedx --in <sbom.json> --out /tmp/portolan-run/import-graph.json --force
    portolan diff --base <base-graph.json> --head <head-graph.json> --out /tmp/portolan-run/diff.json --force
+   portolan adapter validate --in <adapter.json>
    ```
+
+   Validate adapter contracts before treating a new OSS/tool-output family as a
+   safe local Portolan input.
 
    Run only commands that match real local inputs. Do not invent a selection
    file, SBOM, base graph, or head graph.

@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/fall-out-bug/portolan/internal/adapter"
 	"github.com/fall-out-bug/portolan/internal/contextprep"
 	"github.com/fall-out-bug/portolan/internal/corpus"
 	graphdiff "github.com/fall-out-bug/portolan/internal/diff"
@@ -48,11 +49,56 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runGraph(args[1:], stdout, stderr)
 	case "context":
 		return runContext(args[1:], stdout, stderr)
+	case "adapter":
+		return runAdapter(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command %q\n\n", args[0])
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runAdapter(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeAdapterUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "validate":
+		return runAdapterValidate(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown adapter command %q\nRun 'portolan adapter --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runAdapterValidate(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeAdapterValidateUsage(stdout)
+		return 0
+	}
+	flags := flag.NewFlagSet("adapter validate", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	inputPath := flags.String("in", "", "adapter contract JSON path")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeAdapterValidateUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected adapter validate argument %q\n", flags.Arg(0))
+		return 2
+	}
+	result, err := adapter.ValidateFile(*inputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "adapter validate: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "validated adapter %s (%s/%s)\n", result.Contract.ID, result.Contract.Family, result.Contract.OutputKind)
+	return 0
 }
 
 func runGraph(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -527,6 +573,7 @@ Usage:
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
   portolan graph slice --bundle .portolan/run --repo repo-id --out slice.json
+  portolan adapter validate --in adapter.json
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
   portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json
   portolan selection validate --selection selection.json
@@ -535,6 +582,29 @@ Usage:
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
+`)
+}
+
+func writeAdapterUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan adapter validate --in adapter.json
+
+Validate local OSS/tool-output adapter contracts.
+
+Available subcommands:
+  validate   validate one adapter contract JSON file
+`)
+}
+
+func writeAdapterValidateUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan adapter validate --in adapter.json
+
+Validate a local OSS/tool-output adapter contract. The command performs no
+network calls, starts no daemons, and does not run the adapter tool.
+
+Flags:
+  --in path   adapter contract JSON path
 `)
 }
 

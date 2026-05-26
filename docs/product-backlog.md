@@ -87,7 +87,7 @@ fixtures are preflight evidence only.
 | P3-028 | `specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
-| P3-018 | future | Published adapter contract and fixture suite for third-party scanners. | Idea |
+| P3-018 | `specs/031-oss-adapter-contract/` | Published adapter contract, validation command, and fixtures for third-party scanner outputs. | Implemented |
 | P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
 | P3-029 | `specs/029-bounded-graph-index/` | Map bundles include bounded `graph-index.json` entrypoints and artifact budgets so agents do not need to load hundreds of megabytes of raw graph output first. | Implemented |
 | P3-030 | `specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |

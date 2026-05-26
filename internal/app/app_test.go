@@ -1230,6 +1230,65 @@ func TestRunGraphSliceWritesBoundedSlices(t *testing.T) {
 	})
 }
 
+func TestRunAdapterValidateAcceptsKnownOSSContracts(t *testing.T) {
+	for _, fixture := range []string{"jscpd.json", "syft-cyclonedx.json", "semgrep.json"} {
+		t.Run(fixture, func(t *testing.T) {
+			var stdout bytes.Buffer
+			var stderr bytes.Buffer
+
+			code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "testdata", "oss-adapter-contract", fixture)}, &stdout, &stderr)
+
+			if code != 0 {
+				t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+			}
+			if !strings.Contains(stdout.String(), "validated adapter") {
+				t.Fatalf("stdout = %q, want validation output", stdout.String())
+			}
+			if stderr.Len() != 0 {
+				t.Fatalf("stderr = %q, want empty", stderr.String())
+			}
+		})
+	}
+}
+
+func TestRunAdapterValidateRejectsUnsafeContract(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "testdata", "oss-adapter-contract", "invalid-network-mutating.json")}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned %d, want validation failure", code)
+	}
+	for _, want := range []string{"execution.network", "execution.mutates_target", "redaction_required"} {
+		if !strings.Contains(stderr.String(), want) {
+			t.Fatalf("stderr = %q, want %q", stderr.String(), want)
+		}
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+}
+
+func TestRunAdapterValidateHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"adapter", "validate", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	for _, want := range []string{"adapter validate", "--in", "network calls"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("stdout = %q, want %q", stdout.String(), want)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
 func TestRunContextPrepareHelpDescribesCursorPack(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

@@ -1,0 +1,29 @@
+{
+  "schema_version": "0.1.0",
+  "id": "unsafe-remote-scanner",
+  "tool": {
+    "name": "Unsafe Remote Scanner"
+  },
+  "family": "configuration",
+  "output_kind": "configuration",
+  "license": {
+    "id": "unknown",
+    "status": "unknown"
+  },
+  "execution": {
+    "mode": "local-command",
+    "network": "required",
+    "mutates_target": true
+  },
+  "privacy": {
+    "contains_source_snippets": true,
+    "contains_secret_values": true,
+    "redaction_required": false
+  },
+  "evidence": {
+    "default_state": "metadata-visible",
+    "source": "remote scanner output",
+    "limitations": ["unsafe fixture"]
+  },
+  "limitations": ["unsafe fixture"]
+}
