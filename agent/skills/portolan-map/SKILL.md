@@ -124,6 +124,10 @@ Read `summary.json` and `graph-index.json` before loading full `graph.json`.
 `summary.json` gives counts; `graph-index.json` gives bounded graph entrypoints
 for large map runs.
 
+Use `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>`
+for the next bounded drill-down. Use the `--edge-kind` and `--finding-kind`
+variants when the graph index points at an edge or finding family.
+
 ## Boundaries
 
 - No network unless explicitly approved.

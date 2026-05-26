@@ -1944,6 +1944,7 @@ func buildGraphIndex(run RunMetadata, g graph.Graph, findings []Finding, artifac
 		HighDegree:    graphIndexHighDegreeNodes(g),
 		Rules: []string{
 			"Read summary.json and graph-index.json before loading graph.json.",
+			"Use portolan graph slice --bundle <run-dir> for the next bounded drill-down by repo, edge kind, or finding kind.",
 			"Use graph-index.json as bounded navigation; graph.json remains the canonical graph.",
 			"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
 		},
@@ -1952,7 +1953,7 @@ func buildGraphIndex(run RunMetadata, g graph.Graph, findings []Finding, artifac
 
 func artifactSizes(dir string) map[string]int64 {
 	sizes := map[string]int64{}
-	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "graph-index.json", "findings.jsonl", "summary.json", "map.md"} {
 		info, err := os.Stat(filepath.Join(dir, name))
 		if err == nil {
 			sizes[name] = info.Size()
@@ -2384,6 +2385,7 @@ func writeMap(path string, run RunMetadata, g graph.Graph, findings []Finding, l
 	writeMachineArtifactSummary(&b, g)
 	b.WriteString("## Next-Agent Tasks\n\n")
 	b.WriteString("- Inspect `summary.json` and `graph-index.json` before loading full `graph.json` into an agent context.\n")
+	b.WriteString("- Use `portolan graph slice --bundle <run-dir>` for bounded repo, edge-kind, or finding-kind drill-downs.\n")
 	b.WriteString("- Inspect `coverage.json` before treating the map as complete.\n")
 	b.WriteString("- Resolve `unknown`, `cannot_verify`, and `not_assessed` records before making architecture claims.\n")
 	return os.WriteFile(path, []byte(b.String()), 0o644)

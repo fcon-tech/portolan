@@ -99,6 +99,11 @@ Read `summary.json` and `graph-index.json` before loading `graph.json` into an
 agent context. `summary.json` contains compact graph, finding, coverage,
 weak-evidence, and file-surface counts for first-pass triage.
 
+Use `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>`
+for bounded follow-up before opening full `graph.json`. Use `--edge-kind` or
+`--finding-kind` when `graph-index.json` points at a graph family instead of a
+repository.
+
 Treat missing detector coverage or `not_assessed` findings as product gaps, not
 as evidence that the repository has no relationships, duplication,
 configuration surfaces, or technical debt. Relationship detection currently
@@ -207,6 +212,12 @@ Use `not_assessed` for a surface you did not check.
    Read `run.json`, `coverage.json`, `summary.json`, `graph-index.json`,
    `findings.jsonl`, and `map.md` before reporting. Load `graph.json` only
    when the bounded index is insufficient.
+
+   For a bounded second pass, run:
+
+   ```bash
+   portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>
+   ```
 
 5. Use lower-level commands only when the user or fixture provides matching
    local inputs:

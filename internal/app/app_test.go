@@ -1111,6 +1111,125 @@ func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
 	}
 }
 
+func TestRunGraphSliceHelpDescribesSliceModes(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"graph", "slice", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	out := stdout.String()
+	for _, want := range []string{"--bundle", "--repo", "--edge-kind", "--finding-kind", "--out", "-o", "--limit", "summary.json", "graph-index.json"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout %q does not contain %q", out, want)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunGraphSliceWritesBoundedSlices(t *testing.T) {
+	bundle := filepath.Join(t.TempDir(), "run")
+	var mapStdout bytes.Buffer
+	var mapStderr bytes.Buffer
+	if code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", bundle, "--force"}, &mapStdout, &mapStderr); code != 0 {
+		t.Fatalf("map returned %d, want 0; stderr = %q", code, mapStderr.String())
+	}
+
+	t.Run("repo", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "repo-slice.json")
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		code := Run([]string{"graph", "slice", "--bundle", bundle, "--repo", "root", "--limit", "2", "--out", out}, &stdout, &stderr)
+
+		if code != 0 {
+			t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+		}
+		slice := readJSONFile(t, out)
+		criteria := slice["criteria"].(map[string]any)
+		if criteria["mode"] != "repo" || criteria["value"] != "root" {
+			t.Fatalf("criteria = %#v, want repo root", criteria)
+		}
+		if got := len(slice["edges"].([]any)); got != 2 {
+			t.Fatalf("repo edges = %d, want limit 2", got)
+		}
+		truncated := slice["truncated"].(map[string]any)
+		if truncated["edges"].(float64) == 0 {
+			t.Fatalf("truncated = %#v, want edge truncation", truncated)
+		}
+		if !strings.Contains(stdout.String(), "wrote graph slice") {
+			t.Fatalf("stdout = %q, want graph slice output", stdout.String())
+		}
+		if stderr.Len() != 0 {
+			t.Fatalf("stderr = %q, want empty", stderr.String())
+		}
+	})
+
+	t.Run("edge kind", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "edge-slice.json")
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		code := Run([]string{"graph", "slice", "--bundle", bundle, "--edge-kind", "observes", "--limit", "2", "--out", out}, &stdout, &stderr)
+
+		if code != 0 {
+			t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+		}
+		slice := readJSONFile(t, out)
+		if got := len(slice["edges"].([]any)); got != 2 {
+			t.Fatalf("edge samples = %d, want limit 2", got)
+		}
+		for _, raw := range slice["edges"].([]any) {
+			edge := raw.(map[string]any)
+			if edge["kind"] != "observes" || edge["evidence_state"] == "" {
+				t.Fatalf("edge = %#v, want observes with evidence state", edge)
+			}
+		}
+	})
+
+	t.Run("finding kind", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "finding-slice.json")
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		code := Run([]string{"graph", "slice", "--bundle", bundle, "--finding-kind", "relationships", "--limit", "2", "--out", out}, &stdout, &stderr)
+
+		if code != 0 {
+			t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+		}
+		slice := readJSONFile(t, out)
+		if got := len(slice["findings"].([]any)); got != 2 {
+			t.Fatalf("finding samples = %d, want limit 2", got)
+		}
+		for _, raw := range slice["findings"].([]any) {
+			finding := raw.(map[string]any)
+			if finding["kind"] != "relationships" || finding["evidence_state"] == "" {
+				t.Fatalf("finding = %#v, want relationships with evidence state", finding)
+			}
+		}
+	})
+
+	t.Run("short output flag", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "short-output-slice.json")
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		code := Run([]string{"graph", "slice", "--bundle", bundle, "--edge-kind", "observes", "--limit", "1", "-o", out}, &stdout, &stderr)
+
+		if code != 0 {
+			t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+		}
+		slice := readJSONFile(t, out)
+		if got := len(slice["edges"].([]any)); got != 1 {
+			t.Fatalf("edge samples = %d, want limit 1", got)
+		}
+	})
+}
+
 func TestRunContextPrepareHelpDescribesCursorPack(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

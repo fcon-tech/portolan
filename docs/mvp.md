@@ -42,6 +42,8 @@ The MVP should prove one narrow product promise:
   local inventories.
 - Emit a stable artifact bundle: `run.json`, `coverage.json`, `summary.json`,
   `graph-index.json`, `graph.json`, `findings.jsonl`, and `map.md`.
+- Provide bounded graph drill-down with `portolan graph slice` before agents
+  need full `graph.json`.
 
 - Detect relationships across imports, dependency manifests, config references,
   metadata, runtime exports, and claims.

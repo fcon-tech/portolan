@@ -75,6 +75,9 @@ Target workflow:
    `<run-dir>/graph-index.json`, `<run-dir>/findings.jsonl`, and
    `<run-dir>/map.md`. Load `<run-dir>/graph.json` only when the bounded index
    is insufficient.
+4. For bounded drill-down, run `portolan graph slice --bundle <run-dir>
+   --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind`
+   variants before opening full `graph.json`.
 5. Report relationships, duplication, configuration surfaces, technical debt,
    unknowns, and cannot-verify inputs from the artifacts.
 6. Avoid conclusions that are not backed by local evidence.
@@ -110,6 +113,7 @@ This is the current first-pass `portolan map` bundle:
   run.json          commands, versions, limits, skipped surfaces
   summary.json      compact graph/finding/coverage/file-surface counts
   graph-index.json  bounded graph entrypoints and artifact sizes
+  slice.json        optional bounded graph drill-down from portolan graph slice
   graph.json        machine-readable evidence graph
   findings.jsonl    evidence-backed relationship/config/debt findings
   map.md            readable packet derived from graph and findings
