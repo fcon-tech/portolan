@@ -77,8 +77,10 @@ Target workflow:
 6. Avoid conclusions that are not backed by local evidence.
 
 The current `portolan map` bundle records basic source inventory, local Go
-import relationships, local `go.mod` dependency relationships, and explicit
-`not_assessed` findings for detector surfaces that are not implemented yet.
+import relationships, local `go.mod` dependency relationships, exact
+source/config duplicate clusters, and explicit `not_assessed` findings for
+detector surfaces that are not implemented yet. Near-clone duplication remains
+OSS/jscpd-backed evidence, not a native Portolan verdict.
 
 See [`agent/examples/map-report.md`](../../agent/examples/map-report.md) for the
 expected evidence-backed report shape.

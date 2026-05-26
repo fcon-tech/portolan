@@ -87,6 +87,11 @@ portolan map --root <target-root> --out <run-dir>
 and `repos/*` Git repositories. It does not prove external ecosystem
 completeness; read `coverage.json` before making completeness claims.
 
+Use exact duplicate source/config findings as local evidence only. Near-clone
+or copy/paste similarity is assessed only when a jscpd-style local output is
+present in `tool-registry.json`; otherwise preserve duplication gaps as
+`not_assessed`.
+
 Prefer an explicit curated selection only when one exists locally:
 
 ```bash

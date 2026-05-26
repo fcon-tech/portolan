@@ -51,6 +51,8 @@ Implemented:
   target root, direct child Git repositories, and `repos/*` Git repositories.
 - Relationship detection for local Go imports and `go.mod` dependencies in
   `portolan map`.
+- Exact duplicate source/config file cluster detection in `portolan map`;
+  near-clone/copy-paste similarity remains OSS/jscpd-backed evidence.
 - Documentation for product boundary, MVP, evidence states, and OSS composition.
 - Draft JSON schema for an evidence graph document.
 - GitHub Spec Kit workflow and product backlog.
@@ -67,7 +69,8 @@ Not implemented yet:
 
 - recorded real Cursor + Composer blind operator run comparing Cursor-alone
   with Cursor-plus-Portolan context preparation;
-- duplication, configuration, and technical-debt finding generators;
+- near-clone duplication, configuration, and richer technical-debt finding
+  generators;
 - non-Go, runtime, and inferred service relationship detection;
 - platform-specific runtime importers;
 - SPDX, Syft-native, or live tool importers;
@@ -101,8 +104,9 @@ Portolan should be built from the cheapest useful agent loop outward:
 5. `portolan map --root <dir> --out <dir>` for normal local map artifacts, with
    `portolan map --selection selection.json --out .portolan/run` retained for
    curated advanced inventories.
-6. Relationship, duplication, configuration, and technical-debt finding
-   generators backed by local evidence, prioritized from that smoke.
+6. Relationship, exact duplication, configuration, and technical-debt finding
+   generators backed by local evidence, with richer duplication delegated to
+   OSS/jscpd evidence where available.
 7. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
 
 Cursor + Composer 2.5 is the first cheap acceptance client, not the product

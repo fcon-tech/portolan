@@ -1,0 +1,5 @@
+{
+  "service": "orders",
+  "timeoutSeconds": 30,
+  "retryAttempts": 3
+}

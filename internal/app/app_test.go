@@ -16,6 +16,7 @@ import (
 
 const mapCommandFixtureRoot = "../../testdata/map-command/repo"
 const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
+const duplicationFixtureRoot = "../../testdata/duplication-detection/repo"
 const landscapeMapSelection = "../../testdata/landscape-map/selection.json"
 
 func TestRunVersionWritesVersion(t *testing.T) {
@@ -2045,6 +2046,83 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 	}
 }
 
+func TestRunMapDetectsExactSourceAndConfigDuplication(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", duplicationFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	source := findFindingByID(findings, "finding-duplication-exact-source-001")
+	if source == nil {
+		t.Fatalf("findings = %#v, want exact source duplication finding", findings)
+	}
+	if source["status"] != "observed" || source["evidence_state"] != "source-visible" {
+		t.Fatalf("source duplication finding = %#v, want observed source-visible", source)
+	}
+	for _, want := range []string{"src/retry_a.go", "src/retry_b.go"} {
+		if !strings.Contains(source["evidence_source"].(string), want) {
+			t.Fatalf("source duplication evidence = %#v, want %s", source, want)
+		}
+	}
+	if strings.Contains(source["summary"].(string), "attempts := 3") {
+		t.Fatalf("source duplication summary leaked source snippet: %#v", source)
+	}
+
+	config := findFindingByID(findings, "finding-duplication-exact-config-001")
+	if config == nil {
+		t.Fatalf("findings = %#v, want exact config duplication finding", findings)
+	}
+	if config["status"] != "observed" || config["evidence_state"] != "source-visible" {
+		t.Fatalf("config duplication finding = %#v, want observed source-visible", config)
+	}
+	for _, want := range []string{"config/prod.json", "config/staging.json"} {
+		if !strings.Contains(config["evidence_source"].(string), want) {
+			t.Fatalf("config duplication evidence = %#v, want %s", config, want)
+		}
+	}
+
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	findNode(t, graph, "duplication-exact-source-001")
+	findNode(t, graph, "duplication-exact-config-001")
+}
+
+func TestRunMapSelectionDetectsPrefixedDuplication(t *testing.T) {
+	root, err := filepath.Abs(duplicationFixtureRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectionPath := writeSelection(t, t.TempDir(), "duplication", `{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "dup", "kind": "repository", "path": `+quote(root)+`}
+  ]
+}`)
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	source := findFindingByID(findings, "dup-finding-duplication-exact-source-001")
+	if source == nil {
+		t.Fatalf("findings = %#v, want prefixed source duplication finding", findings)
+	}
+	if source["status"] != "observed" || !strings.Contains(source["evidence_source"].(string), "dup:src/retry_a.go") {
+		t.Fatalf("prefixed source duplication finding = %#v", source)
+	}
+	graph := readGraph(t, filepath.Join(out, "graph.json"))
+	findNode(t, graph, "dup:duplication-exact-source-001")
+}
+
 func TestRunMapUnsupportedDetectorFindingsRemainNotAssessed(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer
@@ -3080,6 +3158,15 @@ func readFindings(t *testing.T, path string) []map[string]any {
 		findings = append(findings, finding)
 	}
 	return findings
+}
+
+func findFindingByID(findings []map[string]any, id string) map[string]any {
+	for _, finding := range findings {
+		if finding["id"] == id {
+			return finding
+		}
+	}
+	return nil
 }
 
 func findEdge(t *testing.T, graph map[string]any, from, to, kind string) map[string]any {

@@ -49,6 +49,11 @@ portolan map --root <target-root> --out <run-dir>
 Use `--force` only when the selected output directory already exists and the
 user accepts replacing that Portolan run output.
 
+`map` can surface exact duplicate source/config clusters. Treat them as local
+evidence, not a refactoring order or full near-clone assessment. For richer
+copy/paste similarity, use jscpd-style evidence from `tool-registry.json` when
+present or preserve the gap as `not_assessed`.
+
 ## Required Artifacts
 
 Read these context files before reporting broad claims:

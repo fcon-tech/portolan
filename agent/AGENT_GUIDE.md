@@ -101,8 +101,10 @@ Treat missing detector coverage or `not_assessed` findings as product gaps, not
 as evidence that the repository has no relationships, duplication,
 configuration surfaces, or technical debt. Relationship detection currently
 covers Go source imports and `go.mod` dependencies only; non-Go, runtime, and
-inferred service relationships remain not assessed. `portolan doctor` is still
-not part of the implemented CLI.
+inferred service relationships remain not assessed. Duplication detection
+currently covers exact source/config file clusters; near-clone and copy/paste
+similarity require local jscpd-style evidence from `tool-registry.json` or
+remain not assessed. `portolan doctor` is still not part of the implemented CLI.
 
 ## Guardrails
 
@@ -176,6 +178,11 @@ Use `not_assessed` for a surface you did not check.
    ```bash
    portolan map --root <target-root> --out <run-dir>
    ```
+
+   Treat exact duplicate source/config findings as evidence-backed clusters,
+   not as a refactoring order. If the run has no observed duplication finding,
+   preserve the `duplication` `not_assessed` state for near-clone coverage
+   unless jscpd-style output is present in the context pack.
 
    Prefer `--selection` only when a curated local selection exists:
 

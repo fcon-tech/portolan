@@ -23,6 +23,11 @@ external ecosystem completeness remains `unknown` without a manifest. Use
 local selection exists. Read `summary.json` before full `graph.json`; then read
 the generated context pack and map artifacts before reporting.
 
+`portolan map` can report exact duplicate source/config clusters. Do not treat
+that as full copy/paste or near-clone coverage; use jscpd-style local outputs
+from `tool-registry.json` when present, otherwise preserve that richer
+duplication surface as `not_assessed`.
+
 Answer from exact local evidence and gap ledger entries. Preserve `unknown`,
 `cannot_verify`, and `not_assessed` instead of guessing. Do not fetch network
 resources, mutate the repository, or collect credentials unless the user
