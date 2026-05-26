@@ -35,12 +35,13 @@ type Result struct {
 }
 
 type Artifacts struct {
-	Run      string `json:"run"`
-	Coverage string `json:"coverage"`
-	Graph    string `json:"graph"`
-	Findings string `json:"findings"`
-	Summary  string `json:"summary"`
-	Packet   string `json:"packet"`
+	Run        string `json:"run"`
+	Coverage   string `json:"coverage"`
+	Graph      string `json:"graph"`
+	GraphIndex string `json:"graph_index"`
+	Findings   string `json:"findings"`
+	Summary    string `json:"summary"`
+	Packet     string `json:"packet"`
 }
 
 type RunMetadata struct {
@@ -71,6 +72,8 @@ type Finding struct {
 const SchemaVersion = "0.1.0"
 
 const summaryRecordLimit = 100
+const graphIndexSampleLimit = 20
+const graphIndexHighDegreeLimit = 25
 
 type Summary struct {
 	SchemaVersion string          `json:"schema_version"`
@@ -124,6 +127,87 @@ type coverageSummaryRecord struct {
 	Reason        string `json:"reason,omitempty"`
 }
 
+type GraphIndex struct {
+	SchemaVersion string                   `json:"schema_version"`
+	GeneratedBy   string                   `json:"generated_by"`
+	GeneratedAt   time.Time                `json:"generated_at"`
+	Command       string                   `json:"command"`
+	Root          string                   `json:"root,omitempty"`
+	Selection     string                   `json:"selection,omitempty"`
+	OutputPath    string                   `json:"output_path"`
+	Artifacts     Artifacts                `json:"artifacts"`
+	Budget        graphIndexBudget         `json:"budget"`
+	ArtifactSizes map[string]int64         `json:"artifact_sizes"`
+	Graph         graphSummary             `json:"graph"`
+	Findings      findingSummary           `json:"findings"`
+	NodeSlices    []graphIndexNodeSlice    `json:"node_slices"`
+	EdgeSlices    []graphIndexEdgeSlice    `json:"edge_slices"`
+	FindingSlices []graphIndexFindingSlice `json:"finding_slices"`
+	HighDegree    []graphIndexDegreeNode   `json:"high_degree_nodes"`
+	Rules         []string                 `json:"rules"`
+}
+
+type graphIndexBudget struct {
+	NodeSamplesPerKind    int `json:"node_samples_per_kind"`
+	EdgeSamplesPerKind    int `json:"edge_samples_per_kind"`
+	FindingSamplesPerKind int `json:"finding_samples_per_kind"`
+	HighDegreeNodes       int `json:"high_degree_nodes"`
+}
+
+type graphIndexNodeSlice struct {
+	Kind      string                 `json:"kind"`
+	Total     int                    `json:"total"`
+	Truncated int                    `json:"truncated"`
+	Samples   []graphIndexNodeSample `json:"samples"`
+}
+
+type graphIndexNodeSample struct {
+	ID             string `json:"id"`
+	Label          string `json:"label,omitempty"`
+	EvidenceState  string `json:"evidence_state"`
+	EvidenceSource string `json:"evidence_source"`
+}
+
+type graphIndexEdgeSlice struct {
+	Kind      string                 `json:"kind"`
+	Total     int                    `json:"total"`
+	Truncated int                    `json:"truncated"`
+	Samples   []graphIndexEdgeSample `json:"samples"`
+}
+
+type graphIndexEdgeSample struct {
+	From           string `json:"from"`
+	To             string `json:"to"`
+	EvidenceState  string `json:"evidence_state"`
+	EvidenceSource string `json:"evidence_source"`
+}
+
+type graphIndexFindingSlice struct {
+	Kind      string                    `json:"kind"`
+	Total     int                       `json:"total"`
+	Truncated int                       `json:"truncated"`
+	Samples   []graphIndexFindingSample `json:"samples"`
+}
+
+type graphIndexFindingSample struct {
+	ID             string  `json:"id"`
+	Status         string  `json:"status"`
+	EvidenceState  string  `json:"evidence_state"`
+	EvidenceSource string  `json:"evidence_source"`
+	Confidence     float64 `json:"confidence"`
+	Summary        string  `json:"summary"`
+}
+
+type graphIndexDegreeNode struct {
+	ID            string `json:"id"`
+	Kind          string `json:"kind"`
+	Label         string `json:"label,omitempty"`
+	EvidenceState string `json:"evidence_state"`
+	InEdges       int    `json:"in_edges"`
+	OutEdges      int    `json:"out_edges"`
+	TotalDegree   int    `json:"total_degree"`
+}
+
 func Run(opts Options) (Result, error) {
 	if opts.RootPath == "" && opts.SelectionPath == "" {
 		return Result{}, errors.New("--root or --selection is required")
@@ -154,12 +238,13 @@ func Run(opts Options) (Result, error) {
 	defer os.RemoveAll(temp)
 
 	artifacts := Artifacts{
-		Run:      filepath.Join(out, "run.json"),
-		Coverage: filepath.Join(out, "coverage.json"),
-		Graph:    filepath.Join(out, "graph.json"),
-		Findings: filepath.Join(out, "findings.jsonl"),
-		Summary:  filepath.Join(out, "summary.json"),
-		Packet:   filepath.Join(out, "map.md"),
+		Run:        filepath.Join(out, "run.json"),
+		Coverage:   filepath.Join(out, "coverage.json"),
+		Graph:      filepath.Join(out, "graph.json"),
+		GraphIndex: filepath.Join(out, "graph-index.json"),
+		Findings:   filepath.Join(out, "findings.jsonl"),
+		Summary:    filepath.Join(out, "summary.json"),
+		Packet:     filepath.Join(out, "map.md"),
 	}
 	rootSelection, discoveryRecords, discoveryWarnings := selectionForRootDiscovery(root)
 	g, findings, walkWarnings := graphAndFindingsForSelection(rootSelection)
@@ -219,6 +304,9 @@ func Run(opts Options) (Result, error) {
 	if err := writeMapFromArtifacts(temp); err != nil {
 		return Result{}, err
 	}
+	if err := writeGraphIndex(filepath.Join(temp, "graph-index.json"), buildGraphIndex(metadata, g, findings, temp)); err != nil {
+		return Result{}, err
+	}
 
 	if err := replaceOutput(temp, out, opts.Force); err != nil {
 		return Result{}, fmt.Errorf("replace output bundle: %w", err)
@@ -254,12 +342,13 @@ func runSelection(opts Options) (Result, error) {
 	defer os.RemoveAll(temp)
 
 	artifacts := Artifacts{
-		Run:      filepath.Join(out, "run.json"),
-		Coverage: filepath.Join(out, "coverage.json"),
-		Graph:    filepath.Join(out, "graph.json"),
-		Findings: filepath.Join(out, "findings.jsonl"),
-		Summary:  filepath.Join(out, "summary.json"),
-		Packet:   filepath.Join(out, "map.md"),
+		Run:        filepath.Join(out, "run.json"),
+		Coverage:   filepath.Join(out, "coverage.json"),
+		Graph:      filepath.Join(out, "graph.json"),
+		GraphIndex: filepath.Join(out, "graph-index.json"),
+		Findings:   filepath.Join(out, "findings.jsonl"),
+		Summary:    filepath.Join(out, "summary.json"),
+		Packet:     filepath.Join(out, "map.md"),
 	}
 	g, findings, warnings := graphAndFindingsForSelection(sel)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
@@ -303,6 +392,9 @@ func runSelection(opts Options) (Result, error) {
 		return Result{}, err
 	}
 	if err := writeMapFromArtifacts(temp); err != nil {
+		return Result{}, err
+	}
+	if err := writeGraphIndex(filepath.Join(temp, "graph-index.json"), buildGraphIndex(metadata, g, findings, temp)); err != nil {
 		return Result{}, err
 	}
 	if err := replaceOutput(temp, out, opts.Force); err != nil {
@@ -1780,6 +1872,34 @@ func writeSummary(path string, summary Summary) error {
 	return os.WriteFile(path, append(data, '\n'), 0o644)
 }
 
+func writeGraphIndex(path string, index GraphIndex) error {
+	if index.ArtifactSizes == nil {
+		index.ArtifactSizes = map[string]int64{}
+	}
+	for range 3 {
+		data, err := json.MarshalIndent(index, "", "  ")
+		if err != nil {
+			return fmt.Errorf("encode graph index: %w", err)
+		}
+		if err := os.WriteFile(path, append(data, '\n'), 0o644); err != nil {
+			return err
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return fmt.Errorf("size graph index: %w", err)
+		}
+		if index.ArtifactSizes["graph-index.json"] == info.Size() {
+			return nil
+		}
+		index.ArtifactSizes["graph-index.json"] = info.Size()
+	}
+	data, err := json.MarshalIndent(index, "", "  ")
+	if err != nil {
+		return fmt.Errorf("encode graph index: %w", err)
+	}
+	return os.WriteFile(path, append(data, '\n'), 0o644)
+}
+
 func summarizeRun(run RunMetadata, g graph.Graph, findings []Finding, ledger coverage.Ledger) Summary {
 	return Summary{
 		SchemaVersion: SchemaVersion,
@@ -1797,6 +1917,208 @@ func summarizeRun(run RunMetadata, g graph.Graph, findings []Finding, ledger cov
 		Skipped:       append([]string(nil), run.SkippedSurfaces...),
 		Warnings:      append([]string(nil), run.Warnings...),
 	}
+}
+
+func buildGraphIndex(run RunMetadata, g graph.Graph, findings []Finding, artifactDir string) GraphIndex {
+	return GraphIndex{
+		SchemaVersion: SchemaVersion,
+		GeneratedBy:   "portolan",
+		GeneratedAt:   run.GeneratedAt,
+		Command:       run.Command,
+		Root:          run.Root,
+		Selection:     run.Selection,
+		OutputPath:    run.OutputPath,
+		Artifacts:     run.Artifacts,
+		Budget: graphIndexBudget{
+			NodeSamplesPerKind:    graphIndexSampleLimit,
+			EdgeSamplesPerKind:    graphIndexSampleLimit,
+			FindingSamplesPerKind: graphIndexSampleLimit,
+			HighDegreeNodes:       graphIndexHighDegreeLimit,
+		},
+		ArtifactSizes: artifactSizes(artifactDir),
+		Graph:         summarizeGraph(g),
+		Findings:      summarizeFindings(findings),
+		NodeSlices:    graphIndexNodeSlices(g),
+		EdgeSlices:    graphIndexEdgeSlices(g),
+		FindingSlices: graphIndexFindingSlices(findings),
+		HighDegree:    graphIndexHighDegreeNodes(g),
+		Rules: []string{
+			"Read summary.json and graph-index.json before loading graph.json.",
+			"Use graph-index.json as bounded navigation; graph.json remains the canonical graph.",
+			"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
+		},
+	}
+}
+
+func artifactSizes(dir string) map[string]int64 {
+	sizes := map[string]int64{}
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
+		info, err := os.Stat(filepath.Join(dir, name))
+		if err == nil {
+			sizes[name] = info.Size()
+		}
+	}
+	return sizes
+}
+
+func graphIndexNodeSlices(g graph.Graph) []graphIndexNodeSlice {
+	type accumulator struct {
+		total   int
+		samples []graphIndexNodeSample
+	}
+	byKind := map[string]*accumulator{}
+	for _, node := range g.Nodes {
+		acc := byKind[node.Kind]
+		if acc == nil {
+			acc = &accumulator{}
+			byKind[node.Kind] = acc
+		}
+		acc.total++
+		if len(acc.samples) < graphIndexSampleLimit {
+			acc.samples = append(acc.samples, graphIndexNodeSample{
+				ID:             node.ID,
+				Label:          node.Label,
+				EvidenceState:  string(node.Evidence.State),
+				EvidenceSource: node.Evidence.Source,
+			})
+		}
+	}
+	kinds := sortedKeys(byKind)
+	slices := make([]graphIndexNodeSlice, 0, len(kinds))
+	for _, kind := range kinds {
+		acc := byKind[kind]
+		slices = append(slices, graphIndexNodeSlice{
+			Kind:      kind,
+			Total:     acc.total,
+			Truncated: max(0, acc.total-len(acc.samples)),
+			Samples:   acc.samples,
+		})
+	}
+	return slices
+}
+
+func graphIndexEdgeSlices(g graph.Graph) []graphIndexEdgeSlice {
+	type accumulator struct {
+		total   int
+		samples []graphIndexEdgeSample
+	}
+	byKind := map[string]*accumulator{}
+	for _, edge := range g.Edges {
+		acc := byKind[edge.Kind]
+		if acc == nil {
+			acc = &accumulator{}
+			byKind[edge.Kind] = acc
+		}
+		acc.total++
+		if len(acc.samples) < graphIndexSampleLimit {
+			acc.samples = append(acc.samples, graphIndexEdgeSample{
+				From:           edge.From,
+				To:             edge.To,
+				EvidenceState:  string(edge.Evidence.State),
+				EvidenceSource: edge.Evidence.Source,
+			})
+		}
+	}
+	kinds := sortedKeys(byKind)
+	slices := make([]graphIndexEdgeSlice, 0, len(kinds))
+	for _, kind := range kinds {
+		acc := byKind[kind]
+		slices = append(slices, graphIndexEdgeSlice{
+			Kind:      kind,
+			Total:     acc.total,
+			Truncated: max(0, acc.total-len(acc.samples)),
+			Samples:   acc.samples,
+		})
+	}
+	return slices
+}
+
+func graphIndexFindingSlices(findings []Finding) []graphIndexFindingSlice {
+	type accumulator struct {
+		total   int
+		samples []graphIndexFindingSample
+	}
+	byKind := map[string]*accumulator{}
+	for _, finding := range findings {
+		acc := byKind[finding.Kind]
+		if acc == nil {
+			acc = &accumulator{}
+			byKind[finding.Kind] = acc
+		}
+		acc.total++
+		if len(acc.samples) < graphIndexSampleLimit {
+			acc.samples = append(acc.samples, graphIndexFindingSample{
+				ID:             finding.ID,
+				Status:         finding.Status,
+				EvidenceState:  finding.EvidenceState,
+				EvidenceSource: finding.EvidenceSource,
+				Confidence:     finding.Confidence,
+				Summary:        finding.Summary,
+			})
+		}
+	}
+	kinds := sortedKeys(byKind)
+	slices := make([]graphIndexFindingSlice, 0, len(kinds))
+	for _, kind := range kinds {
+		acc := byKind[kind]
+		slices = append(slices, graphIndexFindingSlice{
+			Kind:      kind,
+			Total:     acc.total,
+			Truncated: max(0, acc.total-len(acc.samples)),
+			Samples:   acc.samples,
+		})
+	}
+	return slices
+}
+
+func graphIndexHighDegreeNodes(g graph.Graph) []graphIndexDegreeNode {
+	nodeByID := map[string]graph.Node{}
+	inEdges := map[string]int{}
+	outEdges := map[string]int{}
+	for _, node := range g.Nodes {
+		nodeByID[node.ID] = node
+	}
+	for _, edge := range g.Edges {
+		outEdges[edge.From]++
+		inEdges[edge.To]++
+	}
+	nodes := make([]graphIndexDegreeNode, 0, len(nodeByID))
+	for id, node := range nodeByID {
+		in := inEdges[id]
+		out := outEdges[id]
+		total := in + out
+		if total == 0 {
+			continue
+		}
+		nodes = append(nodes, graphIndexDegreeNode{
+			ID:            id,
+			Kind:          node.Kind,
+			Label:         node.Label,
+			EvidenceState: string(node.Evidence.State),
+			InEdges:       in,
+			OutEdges:      out,
+			TotalDegree:   total,
+		})
+	}
+	sort.Slice(nodes, func(i, j int) bool {
+		if nodes[i].TotalDegree != nodes[j].TotalDegree {
+			return nodes[i].TotalDegree > nodes[j].TotalDegree
+		}
+		return nodes[i].ID < nodes[j].ID
+	})
+	if len(nodes) > graphIndexHighDegreeLimit {
+		nodes = nodes[:graphIndexHighDegreeLimit]
+	}
+	return nodes
+}
+
+func sortedKeys[T any](values map[string]T) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 func summarizeGraph(g graph.Graph) graphSummary {
@@ -2061,7 +2383,7 @@ func writeMap(path string, run RunMetadata, g graph.Graph, findings []Finding, l
 	b.WriteString("\n")
 	writeMachineArtifactSummary(&b, g)
 	b.WriteString("## Next-Agent Tasks\n\n")
-	b.WriteString("- Inspect `summary.json` before loading full `graph.json` into an agent context.\n")
+	b.WriteString("- Inspect `summary.json` and `graph-index.json` before loading full `graph.json` into an agent context.\n")
 	b.WriteString("- Inspect `coverage.json` before treating the map as complete.\n")
 	b.WriteString("- Resolve `unknown`, `cannot_verify`, and `not_assessed` records before making architecture claims.\n")
 	return os.WriteFile(path, []byte(b.String()), 0o644)

@@ -513,13 +513,13 @@ Flags:
   --out path         output bundle directory
   --force            replace an existing output directory
 
-The bundle contains run.json, coverage.json, graph.json, findings.jsonl,
-summary.json, and map.md. Use context prepare before broad agent answers.
-Agents should read summary.json before loading full graph.json. Use --selection
-for curated local inventories and --root for bounded local discovery of the
-root, direct child Git repositories, and repos/* Git repositories. The command
-makes no network calls, does not mutate selected repositories, and writes only
-to the selected output directory.
+The bundle contains run.json, coverage.json, graph.json, graph-index.json,
+findings.jsonl, summary.json, and map.md. Use context prepare before broad
+agent answers. Agents should read summary.json and graph-index.json before
+loading full graph.json. Use --selection for curated local inventories and
+--root for bounded local discovery of the root, direct child Git repositories,
+and repos/* Git repositories. The command makes no network calls, does not
+mutate selected repositories, and writes only to the selected output directory.
 `)
 }
 

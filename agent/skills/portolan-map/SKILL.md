@@ -115,12 +115,14 @@ Read all of these before reporting:
 - `run.json`
 - `coverage.json`
 - `summary.json`
+- `graph-index.json`
 - `graph.json`
 - `findings.jsonl`
 - `map.md`
 
-Read `summary.json` before loading full `graph.json`; it is the compact
-agent-scale index for large map runs.
+Read `summary.json` and `graph-index.json` before loading full `graph.json`.
+`summary.json` gives counts; `graph-index.json` gives bounded graph entrypoints
+for large map runs.
 
 ## Boundaries
 

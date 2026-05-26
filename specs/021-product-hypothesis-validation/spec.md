@@ -38,3 +38,6 @@ augmentation, not as a standalone report tool or prepared-landscape demo.
 - H6: After `answer-contract.md`, headless Cursor Agent can answer a real
   multi-repo CTO question from Portolan summary/context artifacts without
   loading the full raw graph.
+- H7: After `graph-index.json`, headless Cursor Agent can identify first graph
+  drill-down entrypoints for a real multi-repo landscape without loading the
+  full raw graph.

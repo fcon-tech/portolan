@@ -20,8 +20,9 @@ needed after context preparation. It performs bounded local discovery over the
 target root, direct child Git repositories, and `repos/*` Git repositories, but
 external ecosystem completeness remains `unknown` without a manifest. Use
 `portolan map --selection <selection.json> --out <run-dir>` only when a curated
-local selection exists. Read `summary.json` before full `graph.json`; then read
-the generated context pack and map artifacts before reporting.
+local selection exists. Read `summary.json` and `graph-index.json` before full
+`graph.json`; then read the generated context pack and map artifacts before
+reporting.
 
 `portolan map` can report exact duplicate source/config clusters. Do not treat
 that as full copy/paste or near-clone coverage; use jscpd-style local outputs

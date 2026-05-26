@@ -970,7 +970,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(stdout.String(), "wrote map bundle") {
 		t.Fatalf("stdout = %q, want bundle summary", stdout.String())
 	}
-	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "graph-index.json", "findings.jsonl", "summary.json", "map.md"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -991,7 +991,7 @@ func TestRunMapWritesArtifactBundle(t *testing.T) {
 	if !strings.Contains(string(mapText), "## Skipped Surfaces") {
 		t.Fatalf("map.md = %q, want skipped surfaces warning", string(mapText))
 	}
-	if !strings.Contains(string(mapText), "Inspect `summary.json` before loading full `graph.json`") {
+	if !strings.Contains(string(mapText), "Inspect `summary.json` and `graph-index.json` before loading full `graph.json`") {
 		t.Fatalf("map.md = %q, want summary-first next task", string(mapText))
 	}
 	if stderr.Len() != 0 {
@@ -1051,6 +1051,63 @@ func TestRunMapWritesAgentScaleSummary(t *testing.T) {
 		if surfaces[want].(float64) == 0 {
 			t.Fatalf("file surfaces = %#v, want %q", surfaces, want)
 		}
+	}
+}
+
+func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, "cmd"))
+	mustWrite(t, filepath.Join(root, "go.mod"), "module example.com/index\n")
+	for i := 0; i < 25; i++ {
+		mustWrite(t, filepath.Join(root, "cmd", fmt.Sprintf("file%02d.go", i)), "package main\n")
+	}
+
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	index := readJSONFile(t, filepath.Join(out, "graph-index.json"))
+	if index["schema_version"] != "0.1.0" || index["generated_by"] != "portolan" {
+		t.Fatalf("graph index identity = %#v", index)
+	}
+	budget := index["budget"].(map[string]any)
+	if budget["node_samples_per_kind"] != float64(20) || budget["edge_samples_per_kind"] != float64(20) {
+		t.Fatalf("budget = %#v, want 20-sample limits", budget)
+	}
+	sizes := index["artifact_sizes"].(map[string]any)
+	for _, artifact := range []string{"graph.json", "graph-index.json", "summary.json", "map.md"} {
+		if sizes[artifact].(float64) <= 0 {
+			t.Fatalf("artifact sizes = %#v, want positive %s", sizes, artifact)
+		}
+	}
+	nodeSlices := index["node_slices"].([]any)
+	sourceSlice := findSliceByKind(t, nodeSlices, "unknown")
+	if sourceSlice["total"].(float64) <= float64(20) || sourceSlice["truncated"].(float64) == 0 {
+		t.Fatalf("source slice = %#v, want bounded truncated sample", sourceSlice)
+	}
+	if got := len(sourceSlice["samples"].([]any)); got != 20 {
+		t.Fatalf("sample count = %d, want 20", got)
+	}
+	edgeSlices := index["edge_slices"].([]any)
+	if len(edgeSlices) == 0 {
+		t.Fatalf("edge slices = %#v, want bounded edge refs", edgeSlices)
+	}
+	findingSlices := index["finding_slices"].([]any)
+	if len(findingSlices) == 0 {
+		t.Fatalf("finding slices = %#v, want finding refs", findingSlices)
+	}
+	highDegree := index["high_degree_nodes"].([]any)
+	if len(highDegree) == 0 {
+		t.Fatalf("high degree nodes = %#v, want graph entrypoints", highDegree)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
 }
 
@@ -1447,7 +1504,7 @@ func TestRunMapSelectionWritesLandscapeArtifactBundle(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
-	for _, name := range []string{"run.json", "coverage.json", "graph.json", "findings.jsonl", "summary.json", "map.md"} {
+	for _, name := range []string{"run.json", "coverage.json", "graph.json", "graph-index.json", "findings.jsonl", "summary.json", "map.md"} {
 		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
@@ -2184,7 +2241,7 @@ func TestRunMapDetectsConfigurationSurfacesWithoutSecretValues(t *testing.T) {
 	findNode(t, graph, "configuration:secret-reference:payments-api-token")
 	findNode(t, graph, "configuration:feature-flag:feature-fast-checkout")
 
-	for _, artifact := range []string{"graph.json", "findings.jsonl", "summary.json", "map.md"} {
+	for _, artifact := range []string{"graph.json", "graph-index.json", "findings.jsonl", "summary.json", "map.md"} {
 		data, err := os.ReadFile(filepath.Join(out, artifact))
 		if err != nil {
 			t.Fatal(err)
@@ -3362,6 +3419,18 @@ func findFindingByID(findings []map[string]any, id string) map[string]any {
 			return finding
 		}
 	}
+	return nil
+}
+
+func findSliceByKind(t *testing.T, slices []any, kind string) map[string]any {
+	t.Helper()
+	for _, item := range slices {
+		slice := item.(map[string]any)
+		if slice["kind"] == kind {
+			return slice
+		}
+	}
+	t.Fatalf("slices = %#v, want kind %q", slices, kind)
 	return nil
 }
 

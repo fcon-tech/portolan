@@ -94,11 +94,13 @@ slice proves otherwise.
 - `<run-dir>/run.json`
 - `<run-dir>/coverage.json`
 - `<run-dir>/summary.json`
+- `<run-dir>/graph-index.json`
 - `<run-dir>/graph.json`
 - `<run-dir>/findings.jsonl`
 - `<run-dir>/map.md`
 
-Inspect `summary.json` before full `graph.json` in large runs.
+Inspect `summary.json` and `graph-index.json` before full `graph.json` in
+large runs.
 
 Exact duplicate source/config findings are local evidence clusters only. The
 agent must not claim full duplicate-component or near-clone coverage unless a
@@ -126,7 +128,7 @@ Each evidence bundle must include:
 - commands attempted and their outcomes;
 - Portolan artifact inventory;
 - artifact review notes for `run.json`, `coverage.json`, `summary.json`,
-  `graph.json`, `findings.jsonl`, and `map.md`;
+  `graph-index.json`, `graph.json`, `findings.jsonl`, and `map.md`;
 - report produced by the agent or evaluator;
 - gap ledger with generic product gaps only;
 - status and stop reason.
@@ -171,8 +173,8 @@ operator lane is run.
 1. Verify the prompt contains no target-specific file names, package names,
    build instructions, or guide paths.
 2. Verify the run did not use network, credentials, or target mutation.
-3. Inspect `run.json`, `summary.json`, `graph.json`, `findings.jsonl`, and
-   `map.md`.
+3. Inspect `run.json`, `summary.json`, `graph-index.json`, `findings.jsonl`,
+   and `map.md`; load `graph.json` only when needed.
 4. Compare the agent's report with the Portolan artifacts.
 5. Classify unsupported conclusions as `claim-only`, `unknown`,
    `cannot_verify`, or `not_assessed`.

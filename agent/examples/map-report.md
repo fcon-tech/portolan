@@ -6,7 +6,7 @@
 | --- | --- |
 | Target root | `/local/target` |
 | Current command used | `portolan map --root /local/target --out /tmp/portolan-run --force` |
-| Current artifacts inspected | `/tmp/portolan-run/run.json`, `/tmp/portolan-run/summary.json`, `/tmp/portolan-run/graph.json`, `/tmp/portolan-run/findings.jsonl`, `/tmp/portolan-run/map.md` |
+| Current artifacts inspected | `/tmp/portolan-run/run.json`, `/tmp/portolan-run/summary.json`, `/tmp/portolan-run/graph-index.json`, `/tmp/portolan-run/findings.jsonl`, `/tmp/portolan-run/map.md` |
 | Target contract status | One-command map bundle produced. |
 | Overall state | Partial evidence; unsupported detector surfaces are recorded in findings and the gap ledger. |
 

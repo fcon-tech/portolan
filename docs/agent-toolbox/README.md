@@ -71,8 +71,10 @@ Target workflow:
    `<context-dir>/repos.json`, `<context-dir>/tool-registry.json`,
    `<context-dir>/oss-plan.json`, and `<context-dir>/gaps.jsonl`.
 4. Run `portolan map` when graph artifacts are needed, then inspect
-   `<run-dir>/run.json`, `<run-dir>/summary.json`, `<run-dir>/graph.json`,
-   `<run-dir>/findings.jsonl`, and `<run-dir>/map.md`.
+   `<run-dir>/run.json`, `<run-dir>/summary.json`,
+   `<run-dir>/graph-index.json`, `<run-dir>/findings.jsonl`, and
+   `<run-dir>/map.md`. Load `<run-dir>/graph.json` only when the bounded index
+   is insufficient.
 5. Report relationships, duplication, configuration surfaces, technical debt,
    unknowns, and cannot-verify inputs from the artifacts.
 6. Avoid conclusions that are not backed by local evidence.
@@ -107,6 +109,7 @@ This is the current first-pass `portolan map` bundle:
 .portolan/run/
   run.json          commands, versions, limits, skipped surfaces
   summary.json      compact graph/finding/coverage/file-surface counts
+  graph-index.json  bounded graph entrypoints and artifact sizes
   graph.json        machine-readable evidence graph
   findings.jsonl    evidence-backed relationship/config/debt findings
   map.md            readable packet derived from graph and findings

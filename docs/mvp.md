@@ -41,7 +41,7 @@ The MVP should prove one narrow product promise:
 - Use `portolan map --selection selection.json --out .portolan/run` for curated
   local inventories.
 - Emit a stable artifact bundle: `run.json`, `coverage.json`, `summary.json`,
-  `graph.json`, `findings.jsonl`, and `map.md`.
+  `graph-index.json`, `graph.json`, `findings.jsonl`, and `map.md`.
 
 - Detect relationships across imports, dependency manifests, config references,
   metadata, runtime exports, and claims.
