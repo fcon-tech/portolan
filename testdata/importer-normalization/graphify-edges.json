@@ -1,0 +1,33 @@
+{
+  "nodes": [
+    {
+      "id": "app_py",
+      "label": "app.py",
+      "file_type": "service",
+      "source_file": "app.py",
+      "source_location": "L1",
+      "confidence": "EXTRACTED",
+      "confidence_score": "0.99",
+      "community": "runtime"
+    },
+    {
+      "id": "hello_fn",
+      "label": "hello",
+      "type": "configuration",
+      "source_file": "app.py",
+      "source_location": "L1-L2",
+      "confidence": "EXTRACTED"
+    }
+  ],
+  "edges": [
+    {
+      "source": "app_py",
+      "target": "hello_fn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.py",
+      "source_location": "L1",
+      "weight": 0.75
+    }
+  ]
+}

@@ -79,10 +79,14 @@ func TestCIWorkflowRunsReleaseEnvelopeBaseline(t *testing.T) {
 func TestReleaseDocsPreserveCurrentProductClaimLimits(t *testing.T) {
 	data := mustReadRepoFile(t, "docs/release.md")
 	for _, want := range []string{
-		"UI Cursor/Composer behavior is `not_assessed`",
+		"UI Cursor/Composer behavior is outside the current required acceptance scope",
+		"OpenCode default-permission execution is verified only when `OUTPUT_PATH`",
 		"Complete inherited-estate coverage is not proven by repository count.",
-		"Runtime service topology remains `not_assessed`",
-		"Semgrep remains `not_assessed`",
+		"complete service topology remains `not_assessed`",
+		"local Semgrep producer",
+		"raw Graphify",
+		"source/redaction",
+		"semantics remain",
 		"sha256sum",
 		"PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1",
 	} {
@@ -95,6 +99,15 @@ func TestReleaseDocsPreserveCurrentProductClaimLimits(t *testing.T) {
 func mustReadRepoFile(t *testing.T, path string) string {
 	t.Helper()
 	data, err := os.ReadFile(filepath.Join("../..", path))
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	return string(data)
+}
+
+func mustReadFile(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read %s: %v", path, err)
 	}
@@ -553,6 +566,9 @@ func TestRunImportHelpDescribesLocalCycloneDXImport(t *testing.T) {
 	tests := [][]string{
 		{"import", "--help"},
 		{"import", "cyclonedx", "--help"},
+		{"import", "graphify", "--help"},
+		{"import", "repomix", "--help"},
+		{"import", "symbol-index", "--help"},
 	}
 	for _, args := range tests {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
@@ -565,15 +581,297 @@ func TestRunImportHelpDescribesLocalCycloneDXImport(t *testing.T) {
 				t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 			}
 			out := stdout.String()
-			for _, want := range []string{"cyclonedx", "--in", "--out", "local", "no network", "metadata-visible"} {
+			for _, want := range []string{"--in", "--out", "local", "no network", "metadata-visible"} {
 				if !strings.Contains(out, want) {
 					t.Fatalf("stdout %q does not contain %q", out, want)
 				}
+			}
+			if args[1] == "--help" && (!strings.Contains(out, "cyclonedx") || !strings.Contains(out, "graphify") || !strings.Contains(out, "repomix") || !strings.Contains(out, "symbol-index")) {
+				t.Fatalf("stdout %q should list cyclonedx, graphify, repomix, and symbol-index importers", out)
 			}
 			if stderr.Len() != 0 {
 				t.Fatalf("stderr = %q, want empty", stderr.String())
 			}
 		})
+	}
+}
+
+func TestRunImportGraphifyWritesEvidenceGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "graphify", "--in", "../../testdata/importer-normalization/graphify.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	if states["source-visible"] {
+		t.Fatalf("states = %#v, Graphify import must not claim source-visible evidence", states)
+	}
+	for _, want := range []string{"metadata-visible", "claim-only", "cannot_verify"} {
+		if !states[want] {
+			t.Fatalf("states = %#v, want %s", states, want)
+		}
+	}
+
+	assertEvidenceState(t, findNode(t, result, "graphify:app_py"), "metadata-visible")
+	assertEvidenceState(t, findNode(t, result, "graphify:hello_fn"), "claim-only")
+	assertEvidenceState(t, findNode(t, result, "graphify:ambiguous_call"), "cannot_verify")
+	assertEvidenceState(t, findNode(t, result, "graphify:missing_target"), "cannot_verify")
+	assertEvidenceState(t, findEdge(t, result, "graphify:app_py", "graphify:hello_fn", "owns"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "graphify:hello_fn", "graphify:ambiguous_call", "depends-on"), "claim-only")
+	assertEvidenceState(t, findEdge(t, result, "graphify:hello_fn", "graphify:missing_target", "depends-on"), "cannot_verify")
+}
+
+func TestRunImportGraphifyCanVerifyExtractedFactsAgainstSourceRoot(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{
+		"import", "graphify",
+		"--in", "../../testdata/importer-normalization/graphify-edges.json",
+		"--root", "../../testdata/importer-normalization/graphify-source",
+		"--out", out,
+	}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	if !states["source-visible"] {
+		t.Fatalf("states = %#v, want source-visible after --root source inspection", states)
+	}
+	if states["metadata-visible"] || states["claim-only"] || states["cannot_verify"] {
+		t.Fatalf("states = %#v, want all extracted fixture facts source-visible", states)
+	}
+
+	node := findNode(t, result, "graphify:app_py")
+	assertEvidenceState(t, node, "source-visible")
+	if reason := node["evidence"].(map[string]any)["reason"].(string); !strings.Contains(reason, "Portolan inspected local source path") || !strings.Contains(reason, "confidence_score 0.99") {
+		t.Fatalf("node evidence reason = %q, want source inspection and confidence score", reason)
+	}
+	edge := findEdge(t, result, "graphify:app_py", "graphify:hello_fn", "owns")
+	assertEvidenceState(t, edge, "source-visible")
+	if reason := edge["evidence"].(map[string]any)["reason"].(string); !strings.Contains(reason, "weight 0.75") {
+		t.Fatalf("edge evidence reason = %q, want weight", reason)
+	}
+}
+
+func TestRunImportRepomixWritesFileInventoryEvidenceGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "repomix", "--in", "../../testdata/importer-normalization/repomix-output.xml", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	if states["source-visible"] || states["runtime-visible"] || states["claim-only"] {
+		t.Fatalf("states = %#v, Repomix import must stay file-inventory metadata only", states)
+	}
+
+	assertEvidenceState(t, findNode(t, result, "repomix:source"), "cannot_verify")
+	assertEvidenceState(t, findNode(t, result, "repomix:file:main.go"), "metadata-visible")
+	assertEvidenceState(t, findNode(t, result, "repomix:file:internal/app/app.go"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "repomix:source", "repomix:file:main.go", "owns"), "metadata-visible")
+}
+
+func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "symbol-index", "--in", "../../testdata/importer-normalization/symbol-index.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+	states := evidenceStates(t, result)
+	for _, forbidden := range []string{"source-visible", "runtime-visible", "claim-only"} {
+		if states[forbidden] {
+			t.Fatalf("states = %#v, symbol-index import must stay metadata only", states)
+		}
+	}
+
+	assertEvidenceState(t, findNode(t, result, "symbol-index:source"), "metadata-visible")
+	assertEvidenceState(t, findNode(t, result, "symbol-index:document:cmd/app/main.go"), "metadata-visible")
+	assertEvidenceState(t, findNode(t, result, "symbol-index:symbol:scip-go gomod example.com/app cmd/app/main.go main()."), "metadata-visible")
+	assertEvidenceState(t, findNode(t, result, "symbol-index:symbol:serena://internal/app/App"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "symbol-index:source", "symbol-index:document:cmd/app/main.go", "owns"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:scip-go gomod fmt Println().", "owns"), "metadata-visible")
+}
+
+func TestRunProduceSemgrepInvokesInstalledOSSProducer(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	config := filepath.Join(root, ".semgrep.yml")
+	mustWrite(t, config, "rules: []\n")
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdir(t, bin)
+	logPath := filepath.Join(root, "semgrep-args.txt")
+	fakeSemgrep := filepath.Join(bin, "semgrep")
+	mustWrite(t, fakeSemgrep, fmt.Sprintf(`#!/bin/sh
+printf '%%s\n' "$@" > %q
+out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--json-output" ]; then
+    shift
+    out="$1"
+  fi
+  shift
+done
+printf '{"version":"fake-semgrep","results":[]}\n' > "$out"
+`, logPath))
+	if err := os.Chmod(fakeSemgrep, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	out := filepath.Join(root, ".portolan", "tool-outputs", "semgrep.json")
+	mustMkdir(t, filepath.Dir(out))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"produce", "semgrep", "--root", root, "--config", config, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	output := readJSONFile(t, out)
+	if output["version"] != "fake-semgrep" {
+		t.Fatalf("semgrep output = %#v, want fake output", output)
+	}
+	args := mustReadFile(t, logPath)
+	for _, want := range []string{"scan", "--config", config, "--json", "--json-output", out, "--metrics=off", root} {
+		if !strings.Contains(args, want) {
+			t.Fatalf("semgrep args missing %q:\n%s", want, args)
+		}
+	}
+}
+
+func TestRunProduceRepomixInvokesInstalledOSSProducer(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "main.go"), "package main\n")
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdir(t, bin)
+	logPath := filepath.Join(root, "repomix-args.txt")
+	fakeRepomix := filepath.Join(bin, "repomix")
+	mustWrite(t, fakeRepomix, fmt.Sprintf(`#!/bin/sh
+printf '%%s\n' "$@" > %q
+out=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--output" ]; then
+    shift
+    out="$1"
+  fi
+  shift
+done
+printf '%%s\n' '<files>' '<file path="main.go">' 'package main' '</file>' '</files>' > "$out"
+`, logPath))
+	if err := os.Chmod(fakeRepomix, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	out := filepath.Join(root, ".portolan", "tool-outputs", "repomix-output.xml")
+	mustMkdir(t, filepath.Dir(out))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"produce", "repomix", "--root", root, "--out", out, "--style", "xml"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote ") {
+		t.Fatalf("stdout = %q, want write summary", stdout.String())
+	}
+	if !strings.Contains(mustReadFile(t, out), `<file path="main.go">`) {
+		t.Fatalf("repomix output missing file entry:\n%s", mustReadFile(t, out))
+	}
+	args := mustReadFile(t, logPath)
+	for _, want := range []string{root, "--output", out, "--style", "xml"} {
+		if !strings.Contains(args, want) {
+			t.Fatalf("repomix args missing %q:\n%s", want, args)
+		}
+	}
+}
+
+func TestRunProduceGraphifyInvokesInstalledOSSProducerWithoutMutatingTarget(t *testing.T) {
+	root := t.TempDir()
+	mustWrite(t, filepath.Join(root, "main.go"), "package main\nfunc main() {}\n")
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, ".git", "config"), "[core]\n")
+	mustMkdir(t, filepath.Join(root, ".portolan", "old-run"))
+	mustWrite(t, filepath.Join(root, ".portolan", "old-run", "summary.json"), "{}\n")
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdir(t, bin)
+	logPath := filepath.Join(root, "graphify-args.txt")
+	fakeGraphify := filepath.Join(bin, "graphify")
+	mustWrite(t, fakeGraphify, fmt.Sprintf(`#!/bin/sh
+printf '%%s\n' "$@" > %q
+target="$2"
+mkdir -p "$target/graphify-out"
+printf '{"nodes":[{"id":"main","label":"main","type":"function","source_file":"main.go","extraction_status":"EXTRACTED"}],"links":[]}\n' > "$target/graphify-out/graph.json"
+`, logPath))
+	if err := os.Chmod(fakeGraphify, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
+	out := filepath.Join(root, ".portolan", "tool-outputs", "graphify-run")
+	mustMkdir(t, filepath.Dir(out))
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"produce", "graphify", "--root", root, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "graphify-out/graph.json") {
+		t.Fatalf("stdout = %q, want graphify output path", stdout.String())
+	}
+	graphPath := filepath.Join(out, "source-copy", "graphify-out", "graph.json")
+	if !strings.Contains(mustReadFile(t, graphPath), `"nodes"`) {
+		t.Fatalf("graphify output missing nodes:\n%s", mustReadFile(t, graphPath))
+	}
+	if _, err := os.Stat(filepath.Join(root, "graphify-out")); !os.IsNotExist(err) {
+		t.Fatalf("target root was mutated with graphify-out: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(out, "source-copy", ".git")); !os.IsNotExist(err) {
+		t.Fatalf(".git should not be copied into staging tree: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(out, "source-copy", ".portolan")); !os.IsNotExist(err) {
+		t.Fatalf(".portolan should not be copied into staging tree: %v", err)
+	}
+	args := mustReadFile(t, logPath)
+	for _, want := range []string{"update", filepath.Join(out, "source-copy"), "--force", "--no-cluster"} {
+		if !strings.Contains(args, want) {
+			t.Fatalf("graphify args missing %q:\n%s", want, args)
+		}
 	}
 }
 
@@ -4352,6 +4650,14 @@ func assertEvidenceShape(t *testing.T, evidence map[string]any, validStates map[
 	source, ok := evidence["source"].(string)
 	if !ok || source == "" {
 		t.Fatalf("invalid evidence source: %#v", evidence)
+	}
+}
+
+func assertEvidenceState(t *testing.T, item map[string]any, want string) {
+	t.Helper()
+	evidence := item["evidence"].(map[string]any)
+	if evidence["state"] != want {
+		t.Fatalf("evidence = %#v, want state %s", evidence, want)
 	}
 }
 

@@ -18,6 +18,7 @@ import (
 type Options struct {
 	InputPath  string
 	OutputPath string
+	RootPath   string
 	Force      bool
 }
 
