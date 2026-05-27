@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Implemented locally; PR review pending
 
 **Input**: User description: "The project needs a clear product-level taxonomy
 for relationships so phrases like runtime service topology are understandable
