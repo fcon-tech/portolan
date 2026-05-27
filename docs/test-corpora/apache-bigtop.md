@@ -70,8 +70,7 @@ layer has produced concrete product decisions.
   advice.
 - Follow the smoke runbook in
   `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
-  The authoritative blind prompt and ledger contract are defined in
-  `docs/agent-toolbox/blind-acceptance.md`.
+  The agent-facing workflow is defined in `docs/agent/QUICKSTART.md`.
 - If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
   is unavailable, run the local fallback smoke against
   `testdata/apache-bigtop-smoke/selection.json` only as preflight and mark the
