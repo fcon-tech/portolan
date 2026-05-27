@@ -48,7 +48,7 @@ metadata-declared service/API relationships, runtime-observed communication,
 ownership, lifecycle, and claim-only/unknown surfaces in generated Portolan
 guidance.
 
-**Independent Test**: `go test -count=1 ./internal/app -run TestRunContextPrepareDiscoversRepositoriesToolsAndGaps`
+**Independent Test**: `go test -count=1 ./internal/app -run TestRunContextPrepareWritesCursorPack`
 passes and verifies the generated `answer-contract.md` contains the taxonomy
 and runtime-topology boundary.
 

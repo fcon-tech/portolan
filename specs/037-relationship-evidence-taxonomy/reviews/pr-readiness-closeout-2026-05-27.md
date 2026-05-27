@@ -44,19 +44,40 @@
   before review output.
 - PR `openrouter/~google/gemini-pro-latest`: not_assessed; exact model ID
   absent.
+- PR `openrouter/qwen/qwen3.6-max-preview`: failed; provider returned invalid
+  request before review output.
+- PR `openrouter/moonshotai/kimi-k2.6`: assessed-late; output arrived after
+  bounded wait with minor wording/test/task/closeout findings accepted/fixed.
+- PR `minimax/MiniMax-M2.7`: failed; direct provider returned `404 page not
+  found`.
+- PR `zai/glm-5.1`: assessed; major task-ledger finding and minor
+  contract/wording findings accepted/fixed.
+- PR `openrouter/xiaomi/mimo-v2.5-pro`: assessed; minor generated-contract
+  question example and review-gate wording findings accepted/fixed.
+
+Assessed independent non-GPT model lanes for this iteration:
+`openrouter/deepseek/deepseek-v4-pro`, `zai/glm-5.1`,
+`openrouter/xiaomi/mimo-v2.5-pro`, and late
+`openrouter/moonshotai/kimi-k2.6`. Local repo-grounded review is additional
+evidence. Failed or not_assessed lanes are not counted as review coverage.
 
 ## Drift Checks
 
 - Requirements drift: verified aligned with FR-001 through FR-006.
 - Product vision drift: verified aligned with local-first/read-only defaults,
   evidence-state honesty, and OSS import-first posture.
+- Spec questions: verified in `spec-questions-review-2026-05-27.md`.
+- Spec drift: verified in `spec-drift-review-2026-05-27.md`.
+- Product vision drift: verified in `product-drift-review-2026-05-27.md`.
 - SpecKit drift: plan/tasks/reviews exist and are spec-local.
 
 ## Final Status Matrix
 
 - Implementation: complete.
 - Local verification: verified.
-- Review evidence: assessed with degraded Qwen/Gemini/MiniMax lanes recorded.
+- Review evidence: three assessed independent non-GPT model lanes achieved
+  across the iteration; degraded Qwen/Kimi/Gemini/MiniMax lanes recorded and
+  not counted.
 - Requirements drift: verified aligned.
 - Product vision drift: verified aligned.
 - PR state: ready-for-review PR #17.

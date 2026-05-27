@@ -29,7 +29,7 @@ and what local evidence supports it. Reports must keep both axes visible.
 
 | Relationship kind | Evidence type | Can say | Must not claim |
 | --- | --- | --- | --- |
-| Source dependency | `source-visible` or `metadata-visible` | Local source or manifest coupling exists. | Runtime traffic, service topology, or production behavior. |
+| Source dependency | `source-visible` or `metadata-visible` | Local source or manifest coupling exists. | Runtime communication, service topology, or production behavior. |
 | Declared service/API | `metadata-visible` | A local catalog, contract, diagram, manifest, or imported tool output declares intended architecture. | That the declaration is current production behavior. |
 | Runtime communication | `runtime-visible` | Local runtime evidence shows communication during the captured window. | Complete topology unless the supplied runtime evidence is complete. |
 | Ownership | `metadata-visible` or `claim-only` | A local source states team or system responsibility. | Operational accountability beyond the supplied source. |

@@ -1495,6 +1495,15 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		"Lifecycle",
 		"Evidence type",
 		"`runtime-visible`",
+		"evidence-index.jsonl",
+		"tool-registry.json",
+		"gaps.jsonl",
+		"summary.json",
+		"graph-index.json",
+		"what talks to what?",
+		"`claim-only`",
+		"`unknown`",
+		"`cannot_verify`",
 		"runtime topology is `not_assessed`",
 	} {
 		if !strings.Contains(taxonomySection, want) {

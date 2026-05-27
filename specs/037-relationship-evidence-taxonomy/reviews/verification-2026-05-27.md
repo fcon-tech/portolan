@@ -20,10 +20,13 @@
 - verified: reran the full baseline bundle after the review fix.
 - verified: reran focused and full baseline checks after PR review fixes for
   the evidence-type table and test anchoring.
+- verified: reran focused and full baseline checks after third/fourth assessed
+  review lane fixes for task-ledger reproducibility, generated taxonomy
+  artifact guidance, question examples, and negative-state assertions.
 
 ## Not Assessed
 
-- PR state: draft PR #17 exists during review closeout.
+- PR state: ready-for-review PR #17 exists during review closeout.
 - GitHub checks: not_assessed; `gh pr checks 17` reported no checks.
 - Human approval and merge readiness: not_assessed.
 - Runtime topology detection remains not_assessed by design unless local

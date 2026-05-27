@@ -42,9 +42,17 @@
 | `openrouter/deepseek/deepseek-v4-pro` | assessed | minor findings accepted/fixed where useful: generated table now includes evidence type, docs tables are aligned, data-model naming note added, taxonomy test reports all missing section keywords |
 | `openrouter/qwen/qwen3.6-plus` | failed | provider returned invalid request error before producing review output; not counted as clean evidence |
 | `openrouter/~google/gemini-pro-latest` | not_assessed | exact model ID absent from `~/.pi/agent/settings.json`; no silent substitution used |
+| `openrouter/qwen/qwen3.6-max-preview` | failed | provider returned the same invalid request error before producing review output; not counted as clean evidence |
+| `openrouter/moonshotai/kimi-k2.6` | assessed-late | output arrived after bounded wait; minor wording/test/task/closeout findings accepted/fixed |
+| `minimax/MiniMax-M2.7` | failed | direct provider returned `404 page not found`; not counted as clean evidence |
+| `zai/glm-5.1` | assessed | third assessed PR review lane; major task-ledger finding and minor contract wording/fidelity findings accepted/fixed |
+| `openrouter/xiaomi/mimo-v2.5-pro` | assessed | third independent model family review; minor generated-contract question example and review-gate wording findings accepted/fixed |
 
 ## Status
 
-Local implementation is complete. PR #17 exists as a draft during review. GitHub
-checks are absent/not_assessed. Merge readiness remains not_assessed until
-explicit merge approval.
+Local implementation is complete. PR #17 is ready-for-review after at least
+three assessed non-GPT model families were recorded: DeepSeek, GLM, Xiaomi
+Mimo, and late Kimi.
+GitHub checks are
+absent/not_assessed. Merge readiness remains not_assessed until explicit merge
+approval.
