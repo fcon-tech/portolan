@@ -49,14 +49,65 @@ only when the PR state and evidence are coherent.
    - Blocking Edge Cases
    - Existing Open Source
 
+## SpecKit Pipeline Gates
+
+Use the generated SpecKit skills as mandatory stage boundaries for non-trivial
+feature work:
+
+1. `/speckit-clarify`: run before planning when scope, UX, privacy, evidence
+   semantics, product boundary, acceptance criteria, or completion signals are
+   materially ambiguous. If skipped, record why the ambiguity is non-blocking.
+2. `/speckit-plan`: ensure `plan.md`, `research.md`, `data-model.md`,
+   `contracts/`, and `quickstart.md` exist when the slice changes behavior,
+   schemas, CLI contracts, evidence semantics, or manual validation.
+3. `/speckit-tasks`: ensure `tasks.md` is concrete and independently
+   verifiable before implementation.
+4. `/speckit-analyze`: run after `tasks.md` and before implementation. Treat
+   missing analyze as a delivery blocker unless the slice is truly trivial and
+   the reason is recorded in `reviews/`.
+5. `/speckit-review-disposition`: record analyze findings, requirements drift,
+   product-vision drift, local review findings, and model review findings under
+   the active spec's `reviews/` directory before coding or PR work proceeds.
+6. `/speckit-implement`: use only after the above gates are coherent, or
+   perform equivalent manual implementation while preserving the same review and
+   verification artifacts.
+7. `/speckit-pr-review-cycle`, `/speckit-pr-readiness-closeout`, and
+   `/speckit-merge-closeout`: use for PR review, ready-for-review closeout, and
+   merge closeout respectively. Merge closeout is only allowed after explicit
+   merge approval.
+
 ## Pre-Implementation Review
 
 Build a bounded review packet from:
 
 - repo rules and constitution;
+- product vision surfaces: `docs/product-backlog.md`, `docs/mvp.md`,
+  `docs/product-boundary.md`, `docs/speckit-workflow.md`, and any feature-local
+  product/research notes;
 - backlog row;
 - spec, plan, tasks, data-model, quickstart, contracts when present;
 - schemas and current implementation files relevant to the slice.
+
+Before implementation, explicitly review and record:
+
+- requirements drift: backlog row vs `spec.md` vs `plan.md` vs `tasks.md` vs
+  contracts/schemas/tests;
+- product-vision drift: feature direction vs Portolan boundary, roadmap order,
+  local-first/read-only defaults, agent-facing toolbox positioning, OSS
+  composition posture, and evidence-state honesty;
+- SpecKit pipeline drift: whether `/speckit-clarify`, `/speckit-plan`,
+  `/speckit-tasks`, `/speckit-analyze`, and `/speckit-review-disposition` have
+  run or have an explicit recorded reason for omission.
+
+Write this as a spec-local artifact, for example:
+
+```text
+specs/<NNN-short-name>/reviews/requirements-product-vision-drift-YYYY-MM-DD.md
+```
+
+If the drift review finds a mismatch that affects scope, safety, evidence
+semantics, user-facing behavior, or testability, stop implementation and fix the
+spec/task contract first.
 
 Run independent review lanes. Prefer:
 
@@ -159,11 +210,13 @@ Before creating or updating the PR:
 
 1. Confirm every task in the active `tasks.md` is checked or explicitly marked
    blocked with evidence.
-2. Update the spec/backlog status to match the implementation state.
-3. Record a final implementation or review disposition under the spec's
+2. Confirm `/speckit-analyze` and requirements/product-vision drift findings
+   are dispositioned, or record the exact blocker/omission.
+3. Update the spec/backlog status to match the implementation state.
+4. Record a final implementation or review disposition under the spec's
    `reviews/` directory.
-4. Run the full local verification bundle.
-5. Only then push the branch and start the PR review workflow.
+5. Run the full local verification bundle.
+6. Only then push the branch and start the PR review workflow.
 
 ## PR Review And Shipping
 
@@ -184,7 +237,10 @@ Before marking a PR ready:
 1. Reconstruct PR head, diff, draft state, merge state, checks, and review
    artifacts with `gh pr view`, `gh pr diff`, and `gh pr checks`.
 2. Run local verification.
-3. Run independent review lanes. Default PR review model lanes are:
+3. Re-check requirements drift and product-vision drift against the actual PR
+   diff. Record the result in the PR review disposition or readiness closeout;
+   do not rely only on pre-implementation review.
+4. Run independent review lanes. Default PR review model lanes are:
    - `openrouter/deepseek/deepseek-v4-pro`
    - `openrouter/qwen/qwen3.6-plus`
    - `openrouter/~google/gemini-pro-latest`
@@ -193,9 +249,9 @@ Before marking a PR ready:
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
    Gemini Pro Latest is absent, record that lane as `not_assessed`; do not
    silently substitute another Gemini model.
-4. Fix accepted findings and record a PR review-cycle disposition under the
+5. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
-5. Push, refresh PR state, and mark ready-for-review only when blockers are
+6. Push, refresh PR state, and mark ready-for-review only when blockers are
    fixed and the PR is no longer draft. If blockers remain, keep the PR draft
    and record the exact blocker.
 
@@ -206,6 +262,8 @@ Final status after PR work must use this matrix:
 - Implementation:
 - Local verification:
 - Review evidence:
+- Requirements drift:
+- Product vision drift:
 - PR state:
 - GitHub checks:
 - Merge readiness:

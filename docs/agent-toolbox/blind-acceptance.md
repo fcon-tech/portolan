@@ -91,6 +91,12 @@ the complete external ecosystem; the run must preserve the
 `external-completeness` coverage record as `unknown` unless a manifest-backed
 slice proves otherwise.
 
+When a map run uses `--selection` with a local `corpus_manifest`, agents must
+read `coverage.json` before making estate-scope claims. Expected repositories
+absent from local scope remain `missing` or `blocked`; local selected
+repositories absent from the inventory are `extra`, not proof that the inventory
+or inherited estate is complete.
+
 - `<run-dir>/run.json`
 - `<run-dir>/coverage.json`
 - `<run-dir>/summary.json`
