@@ -101,7 +101,7 @@ fixtures are preflight evidence only.
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P4-034 | `specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Accepted on fixed local Bigtop comparison for evidence discipline and next-action quality; UI Cursor/Composer, full ecosystem completeness, runtime topology, near-clone/SBOM duplication, and OSS producer execution remain not_assessed |
-| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep not_assessed |
+| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Merged via PR #15 with Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep not_assessed |
 | P4-036 | `specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Specified |
 | P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Specified |
 | P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Specified |

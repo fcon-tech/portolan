@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Implemented with partial producer acceptance
+**Status**: Merged with partial producer acceptance
 
 **Input**: User description: "The OSS track is not validated until real OSS
 producer outputs are generated and used on a large target."
