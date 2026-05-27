@@ -1576,6 +1576,32 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 			t.Fatalf("%s command args = %q, must not use network-backed config auto", id, args)
 		}
 	}
+	jscpdCommand := planByID["jscpd"]["commands"].([]any)[0].(map[string]any)
+	jscpdArgs := fmt.Sprint(jscpdCommand["args"])
+	for _, want := range []string{"--max-size 100kb", "--max-lines 1000", "--noSymlinks", "--silent", "**/node_modules/**", "**/.portolan/**"} {
+		if !strings.Contains(jscpdArgs, want) {
+			t.Fatalf("jscpd args = %s, want bounded argument %q", jscpdArgs, want)
+		}
+	}
+	if strings.Contains(jscpdArgs, "--exitCode") {
+		t.Fatalf("jscpd args = %s, must not force producer exit code", jscpdArgs)
+	}
+	jscpdLimits := jscpdCommand["limits"].([]any)
+	wantLimits := []string{
+		"max source file size: 100kb",
+		"max source file lines: 1000",
+		"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
+		"respect local .gitignore files",
+		"producer exit status remains visible to the operator",
+	}
+	if len(jscpdLimits) != len(wantLimits) {
+		t.Fatalf("jscpd limits = %#v, want %d limits", jscpdLimits, len(wantLimits))
+	}
+	for i, want := range wantLimits {
+		if jscpdLimits[i] != want {
+			t.Fatalf("jscpd limits[%d] = %q, want %q", i, jscpdLimits[i], want)
+		}
+	}
 }
 
 func TestRunContextPreparePreservesContextToolOutputs(t *testing.T) {

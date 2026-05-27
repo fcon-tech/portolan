@@ -125,6 +125,7 @@ type OSSCommand struct {
 	Args                 []string `json:"args"`
 	Reads                []string `json:"reads"`
 	Writes               []string `json:"writes"`
+	Limits               []string `json:"limits,omitempty"`
 	MutatesTarget        bool     `json:"mutates_target"`
 	Network              string   `json:"network"`
 	RequiresUserApproval bool     `json:"requires_user_approval"`
@@ -974,17 +975,38 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.Executable = exe
 	plan.Reason = "jscpd is available locally; Portolan did not run it"
 	plan.Commands = []OSSCommand{{
-		Label:                "produce jscpd JSON output",
-		Tool:                 exe,
-		Args:                 []string{"--reporters", "json", "--output", toolOutputDir, root},
-		Reads:                []string{root},
-		Writes:               []string{filepath.Join(toolOutputDir, "jscpd-report.json")},
+		Label:  "produce bounded jscpd JSON output",
+		Tool:   exe,
+		Args:   boundedJSCPDArgs(toolOutputDir, root),
+		Reads:  []string{root},
+		Writes: []string{filepath.Join(toolOutputDir, "jscpd-report.json")},
+		Limits: []string{
+			"max source file size: 100kb",
+			"max source file lines: 1000",
+			"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
+			"respect local .gitignore files",
+			"producer exit status remains visible to the operator",
+		},
 		MutatesTarget:        false,
 		Network:              "not_expected",
 		RequiresUserApproval: true,
 		AfterRun:             rerunContextCommand(root, out),
 	}}
 	return plan
+}
+
+func boundedJSCPDArgs(toolOutputDir, root string) []string {
+	return []string{
+		"--reporters", "json",
+		"--output", toolOutputDir,
+		"--max-size", "100kb",
+		"--max-lines", "1000",
+		"--ignore", "**/.git/**,**/.portolan/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/generated/**",
+		"--noSymlinks",
+		"--gitignore",
+		"--silent",
+		root,
+	}
 }
 
 func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {

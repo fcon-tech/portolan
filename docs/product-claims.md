@@ -37,8 +37,8 @@ not as their replacement.
 | Portolan provides a local, read-only context pack and optional evidence-backed map before agents answer. | `accepted` | Safe as a capability claim for the current CLI and artifact workflow. |
 | Portolan understands a complete inherited software estate from a local target. | `rejected` | Say local visible scope unless a supplied inventory verifies completeness. |
 | Portolan can provide full runtime service topology. | `not_assessed` | Runtime topology requires local runtime observations; otherwise it remains unassessed. |
-| Portolan composes existing OSS tool outputs instead of reimplementing mature scanners. | `narrowed` | Safe for Syft/CycloneDX component identity on the fixed Bigtop target. jscpd full run failed; Semgrep remains unassessed. |
-| Portolan detects duplication across a landscape. | `narrowed` | Safe for native exact source/config duplicate clusters. Near-clone and SBOM duplicate risk remain unproven. |
+| Portolan composes existing OSS tool outputs instead of reimplementing mature scanners. | `narrowed` | Safe for Syft/CycloneDX component identity on the fixed Bigtop target and bounded jscpd JSON ingestion on the Portolan repository smoke target. Semgrep remains unassessed. |
+| Portolan detects duplication across a landscape. | `narrowed` | Safe for native exact source/config duplicate clusters and bounded jscpd near-clone evidence only for the named target/profile that produced usable JSON. Bigtop near-clone and SBOM duplicate risk remain unproven. |
 | Portolan detects relationships across imports, manifests, metadata, runtime exports, and claims. | `narrowed` | Safe only when the relationship evidence type is named. Runtime-visible relationships require runtime evidence. |
 | Portolan replaces Cursor, coding harnesses, enterprise code intelligence, service catalogs, observability, modernization, or readiness tools. | `rejected` | Say Portolan is a local discovery and evidence-preparation complement. |
 | Portolan can safely support claims about UI Cursor/Composer behavior. | `not_assessed` | Use headless Cursor comparison wording until UI Cursor/Composer is validated. |
@@ -52,8 +52,9 @@ not as their replacement.
 - Complete inherited-estate coverage is not proven by repository count.
 - Runtime service topology remains `not_assessed` without runtime observations.
 - OSS producer validation is narrow: Syft/CycloneDX component identity is
-  verified for the fixed target, while jscpd near-clone evidence failed in the
-  full generated-file-heavy run and Semgrep remains `not_assessed`.
+  verified for the fixed target, bounded jscpd JSON ingestion is verified on
+  the Portolan repository smoke target, the full Bigtop near-clone run remains
+  unproven, and Semgrep remains `not_assessed`.
 - Output quality depends on the local evidence supplied to Portolan. Missing,
   stale, or incomplete inputs must stay visible as gaps, not be hidden as
   product success.
@@ -72,6 +73,8 @@ not as their replacement.
   `specs/036-scope-completeness-validation/reviews/pr16-merge-closeout-2026-05-27.md`
 - Relationship evidence taxonomy:
   `specs/037-relationship-evidence-taxonomy/reviews/merge-closeout-2026-05-27.md`
+- Bounded jscpd profile:
+  `specs/039-bounded-jscpd-profile/reviews/implementation-disposition-2026-05-27.md`
 
 ## How To Use This Page
 
