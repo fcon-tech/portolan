@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Implemented with partial producer acceptance
 
 **Input**: User description: "The OSS track is not validated until real OSS
 producer outputs are generated and used on a large target."
@@ -88,3 +88,21 @@ workflow, and compare the before/after conclusions.
   and component questions.
 - Producer execution requires explicit local safety review before use.
 - A blocked producer is acceptable evidence against readiness.
+
+## Validation Result
+
+Local producer setup and Bigtop acceptance were attempted on 2026-05-26.
+`syft` was installed and produced a CycloneDX 1.6 SBOM with 18,769 components
+and 5,357 dependency records under the selected context output directory.
+`portolan context prepare --force` now preserves those producer outputs and
+records the CycloneDX family as `input_present` / `metadata-visible`.
+
+`jscpd` was installed and started against the full Bigtop landscape, but the
+default generated-file-heavy invocation produced unbounded clone stdout and was
+interrupted before JSON output was written. Semgrep remains `not_assessed`
+because no local Semgrep config was present and network-backed configs are out
+of the default safety boundary.
+
+The OSS composition value claim is accepted for Syft/CycloneDX component
+identity evidence only. Near-clone duplication and Semgrep-backed semantic
+findings remain unproven.

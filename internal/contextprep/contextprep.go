@@ -164,7 +164,7 @@ func Run(opts Options) (Result, error) {
 	}
 
 	repos, repoGaps := discoverRepositories(root)
-	tools := detectToolOutputs(root, repos)
+	tools := detectToolOutputs(root, out, repos)
 	ossPlan := buildOSSPlan(root, out, opts.Profile, tools)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
@@ -232,6 +232,9 @@ func Run(opts Options) (Result, error) {
 	}
 	if err := os.WriteFile(filepath.Join(temp, "query-plan.md"), []byte(renderQueryPlan()), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write query plan: %w", err)
+	}
+	if err := preserveToolOutputs(out, temp); err != nil {
+		return Result{}, err
 	}
 	if err := replaceOutput(temp, out, opts.Force); err != nil {
 		return Result{}, fmt.Errorf("replace context pack: %w", err)
@@ -391,12 +394,13 @@ func hasCuratedOrRepoLikeInputs(root string) bool {
 	return false
 }
 
-func detectToolOutputs(root string, repos []Repository) []ToolEntry {
+func detectToolOutputs(root, out string, repos []Repository) []ToolEntry {
 	candidateDirs := []string{
 		root,
 		filepath.Join(root, "tool-outputs"),
 		filepath.Join(root, "reports"),
 		filepath.Join(root, ".portolan"),
+		filepath.Join(out, "tool-outputs"),
 	}
 	for _, repo := range repos {
 		candidateDirs = append(candidateDirs,
@@ -438,6 +442,52 @@ func detectToolOutputs(root string, repos []Repository) []ToolEntry {
 		}
 	}
 	return entries
+}
+
+func preserveToolOutputs(out, temp string) error {
+	src := filepath.Join(out, "tool-outputs")
+	info, err := os.Lstat(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("inspect existing tool outputs: %w", err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("existing tool output path must not be a symlink")
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("existing tool output path must be a directory")
+	}
+	dst := filepath.Join(temp, "tool-outputs")
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return fmt.Errorf("preserve tool outputs: %w", err)
+	}
+	files, err := os.ReadDir(src)
+	if err != nil {
+		return fmt.Errorf("read existing tool outputs: %w", err)
+	}
+	for _, file := range files {
+		if file.Type()&os.ModeSymlink != 0 || file.IsDir() {
+			continue
+		}
+		srcPath := filepath.Join(src, file.Name())
+		info, err := file.Info()
+		if err != nil {
+			return fmt.Errorf("inspect existing tool output %s: %w", file.Name(), err)
+		}
+		if !info.Mode().IsRegular() {
+			continue
+		}
+		data, err := os.ReadFile(srcPath)
+		if err != nil {
+			return fmt.Errorf("read existing tool output %s: %w", file.Name(), err)
+		}
+		if err := os.WriteFile(filepath.Join(dst, file.Name()), data, info.Mode().Perm()); err != nil {
+			return fmt.Errorf("copy existing tool output %s: %w", file.Name(), err)
+		}
+	}
+	return nil
 }
 
 func summarizeToolOutput(id, family, path string) ToolEntry {

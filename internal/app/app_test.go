@@ -1545,6 +1545,43 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	}
 }
 
+func TestRunContextPreparePreservesContextToolOutputs(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	out := filepath.Join(root, ".portolan", "context")
+	toolOutputs := filepath.Join(out, "tool-outputs")
+	mustMkdir(t, toolOutputs)
+	mustWrite(t, filepath.Join(toolOutputs, "syft.cyclonedx.json"), `{"bomFormat":"CycloneDX","components":[{"name":"api"}]}`)
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor", "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(toolOutputs, "syft.cyclonedx.json")); err != nil {
+		t.Fatalf("tool output was not preserved: %v", err)
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want preserved CycloneDX output", tools)
+	}
+	entry := tools[0].(map[string]any)
+	if entry["family"] != "cyclonedx" || entry["status"] != "observed" {
+		t.Fatalf("entry = %#v, want observed CycloneDX", entry)
+	}
+	ossPlan := readJSONFile(t, filepath.Join(out, "oss-plan.json"))
+	plans := ossPlan["tools"].([]any)
+	for _, raw := range plans {
+		plan := raw.(map[string]any)
+		if plan["id"] == "cyclonedx" && plan["status"] != "input_present" {
+			t.Fatalf("cyclonedx plan = %#v, want input_present", plan)
+		}
+	}
+}
+
 func TestRunContextPreparePreservesMalformedToolOutput(t *testing.T) {
 	root := t.TempDir()
 	mustMkdir(t, filepath.Join(root, ".git"))

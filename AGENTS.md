@@ -89,9 +89,13 @@ When asked to take the next ready spec into implementation:
 - Treat empty, hung, malformed, stale, or off-topic model output as
   `not_assessed`. Do not count it as review evidence.
 - Ordinary implementation slice reviews must use `pi` subscription lanes first:
-  `kimi-coding/kimi-for-coding`, `minimax/MiniMax-M2.7`, and `zai/glm-5.1`.
-  If one is unavailable, record that lane as `not_assessed` and explain the
-  substitution or omission in the review disposition.
+  `openrouter/deepseek/deepseek-v4-pro`,
+  `openrouter/minimax/minimax-m2.7`, and `zai/glm-5.1`. Use DeepSeek V4 Pro by
+  default because `kimi-coding/kimi-for-coding` timed out on bounded review
+  prompts. Use OpenRouter MiniMax by default because direct
+  `minimax/MiniMax-M2.7` returned `404 page not found` in smoke tests. If one is
+  unavailable, record that lane as `not_assessed` and explain the substitution
+  or omission in the review disposition.
 - Fix accepted review findings in the spec/task contract before implementation
   when they affect scope, safety, evidence semantics, or testability.
 - Implement in task slices. Each slice must have focused tests or an explicit
