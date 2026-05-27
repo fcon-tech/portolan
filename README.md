@@ -1,204 +1,156 @@
 # Portolan
 
-Portolan is an open-source, local-first codebase mapping toolbox for AI agents.
+Portolan helps AI agents inspect a local codebase before they answer questions
+about it.
 
-It lets an agent inspect large or messy software landscapes with tools instead
-of vibes. The output is an evidence-backed map of relationships, duplication,
-configuration surfaces, and technical debt, with every finding tied to local
-source, metadata, runtime, claim, unknown, or cannot-verify evidence.
+It runs on your machine, reads local files, and writes an evidence pack: what
+repositories were visible, what relationships and duplicate/configuration
+surfaces were found, what looks like technical debt, and what is still unknown.
 
-Portolan is not a replacement for Sourcegraph, CAST, Backstage, observability
-platforms, modernization tools, or coding agents. It is the local discovery
-substrate an agent can run from Cursor, Claude, Codex, OpenCode, pi, or another
-harness.
+Portolan is not a replacement for Cursor, Claude, Sourcegraph, Backstage,
+observability, modernization, or service-catalog tools. It is a local evidence
+layer an agent can use before making claims.
 
-## Status
+## When To Use It
 
-Active local-first CLI. The current agent-facing path is context preparation:
-`portolan context prepare --root <dir> --out <dir> --profile cursor`.
-Curated landscape selections remain supported as an advanced mapping input.
+Use Portolan when you want an agent to answer questions like:
 
-For source checkouts without an installed binary, build a repo-local binary:
+- What is in this repo or local software landscape?
+- What dependencies and relationships are visible from local evidence?
+- Where are duplicate source/config files?
+- What env vars, ports, manifests, workflows, feature flags, or secret
+  references are visible?
+- What technical-debt candidates can be backed by local evidence?
+- What is unknown, missing, or not assessed?
+
+Portolan is especially useful when the target is messy, multi-repo, legacy, or
+partly black-box.
+
+## What You Get
+
+The main workflow creates a context pack for an agent:
+
+```bash
+portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+```
+
+Typical output:
+
+```text
+<context-dir>/
+  agent-brief.md
+  answer-contract.md
+  query-plan.md
+  evidence-index.jsonl
+  repos.json
+  tool-registry.json
+  oss-plan.json
+  gaps.jsonl
+```
+
+When you need a fuller map, run:
+
+```bash
+portolan map --root <target-root> --out <run-dir>
+```
+
+Typical output:
+
+```text
+<run-dir>/
+  run.json
+  coverage.json
+  summary.json
+  graph-index.json
+  graph.json
+  findings.jsonl
+  map.md
+```
+
+Start with `summary.json`, `graph-index.json`, `findings.jsonl`, and `map.md`.
+Open the full `graph.json` only when you need detail.
+
+## Quick Start
+
+From a Portolan source checkout:
 
 ```bash
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
+.portolan/bin/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+.portolan/bin/portolan map --root <target-root> --out <run-dir>
 ```
 
-The bootstrap writes under the Portolan checkout by default and does not fetch
-Go modules from the network unless `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is set
-with explicit approval.
+If you are developing Portolan itself, you can also use:
 
-Implemented:
+```bash
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+go run ./cmd/portolan map --root <target-root> --out <run-dir>
+```
 
-- Go module and `portolan scan --selection <file> --out <file>` for the first
-  local evidence graph.
-- `portolan context prepare --root <dir> --out <dir> --profile cursor` for a
-  Cursor-readable context pack with repository discovery, OSS/tool-output
-  candidates, query plan, and honest gaps.
-- `scripts/bootstrap-portolan` for source-checkout local binary bootstrap into
-  `.portolan/bin/portolan`.
-- `portolan import cyclonedx --in <file> --out <file>` for local CycloneDX JSON
-  SBOM normalization.
-- Black-box profile scanning from local metadata, runtime export, and claim
-  files without source-visible overclaiming.
-- `portolan diff --base <file> --head <file> --out <file>` for
-  machine-readable evidence graph movement without readiness verdicts.
-- `portolan map --selection <file> --out <dir>` for curated local landscape
-  artifact bundles with `run.json`, `coverage.json`, `graph.json`,
-  `findings.jsonl`, and `map.md`.
-- `portolan map --root <dir> --out <dir>` for bounded local mapping of the
-  target root, direct child Git repositories, and `repos/*` Git repositories.
-- Relationship detection for local Go imports and `go.mod` dependencies in
-  `portolan map`.
-- Exact duplicate source/config file cluster detection in `portolan map`;
-  near-clone/copy-paste similarity remains OSS/jscpd-backed evidence.
-- File-based configuration surface detection in `portolan map` for env var
-  names, ports, container/workflow/manifests, feature flags, and secret
-  references without recording secret values.
-- Rule-light technical-debt candidate derivation in `portolan map` from
-  relationship, duplication, configuration, and unresolved-evidence findings.
-- Documentation for product boundary, MVP, evidence states, and OSS composition.
-- Draft JSON schema for an evidence graph document.
-- GitHub Spec Kit workflow and product backlog.
-- Apache Bigtop test corpus profile for acceptance planning, not default
-  product flow.
-- Portable agent guide, example report, and Cursor project rule for the first
-  agent toolbox acceptance loop.
-- Root-discoverable agent bootstrap entrypoint and portable map skill.
-- Bigtop manifest-to-selection generation with
-  `portolan selection generate-bigtop`.
-- Full Bigtop corpus local map verification through the curated selection path.
+Use `--force` only when you intentionally want to replace an existing Portolan
+output directory.
 
-Not implemented yet:
+## For Agents
 
-- recorded real Cursor + Composer blind operator run comparing Cursor-alone
-  with Cursor-plus-Portolan context preparation;
-- near-clone duplication, semantic configuration/IaC analysis, and richer
-  technical-debt rule packs;
-- non-Go, runtime, and inferred service relationship detection;
-- platform-specific runtime importers;
-- SPDX, Syft-native, or live tool importers;
-- integrations with external tools.
+If you are asking an AI agent to use Portolan, point it at the user-agent docs:
 
-## Product Contract
+- [Agent Quickstart](docs/agent/QUICKSTART.md)
+- [Install](docs/agent/INSTALL.md)
+- [Config](docs/agent/CONFIG.md)
+- [Examples](docs/agent/EXAMPLES.md)
+- [Troubleshooting](docs/agent/TROUBLESHOOTING.md)
 
-Portolan should default to:
+Developer agents working on this repository should follow [AGENTS.md](AGENTS.md).
 
-- local-first execution;
-- read-only collection;
-- no daemon;
-- no network calls unless explicitly enabled;
-- machine-readable evidence graph output;
-- machine-readable findings output;
-- human-readable packet generated from the same graph;
-- explicit states for missing, weak, or unverifiable evidence.
+## Evidence Rules
 
-## Roadmap Shape
+Portolan does not turn missing evidence into confidence. Results preserve
+evidence states:
 
-Portolan should be built from the cheapest useful agent loop outward:
+- `source-visible`: visible in source files.
+- `metadata-visible`: visible in local metadata, manifests, or exported tool
+  output.
+- `runtime-visible`: visible in supplied local runtime observations.
+- `claim-only`: stated by a human or tool, but not verified locally.
+- `unknown`: no usable evidence was available.
+- `cannot_verify`: evidence was present, but Portolan could not validate it.
 
-1. `context prepare` pack that tells any agent where to look first and what
-   remains unknown.
-2. Agent bootstrap and blind acceptance so an agent can discover the generic
-   workflow from Portolan itself, not from a target-specific chat prompt.
-3. Agent skill/rule pack that teaches Cursor and other harnesses to use context
-   preparation before making landscape claims.
-4. Cursor-alone vs Cursor-plus-Portolan hypothesis checks on non-Bigtop and
-   Bigtop targets.
-5. `portolan map --root <dir> --out <dir>` for normal local map artifacts, with
-   `portolan map --selection selection.json --out .portolan/run` retained for
-   curated advanced inventories.
-6. Relationship, exact duplication, configuration surface, and technical-debt
-   finding generators backed by local evidence, with richer duplication and
-   semantic config checks delegated to OSS evidence where available.
-7. Evidence diff, adapter contracts, and optional MCP/LSP-style surfaces.
+Reports may also use `not_assessed` when a surface was not checked or the
+detector is not implemented.
 
-Cursor + Composer 2.5 is the first cheap acceptance client, not the product
-boundary. The first realistic acceptance smoke is:
+## Current Boundaries
 
-- Cursor as the interactive engineering surface;
-- Composer 2.5 as the agent/model under evaluation;
-- Portolan as the local toolbox and artifact substrate;
-- Apache Bigtop as the large OSS ecosystem corpus.
+Current safe product wording lives in [Product Claims](docs/product-claims.md).
 
-Bigtop is a realistic stress target, not the first-run workflow. Fixtures may
-preflight Portolan commands, but the real operator lane needs a local Bigtop
-checkout and the same target-agnostic protocol used for other targets.
+Important limits:
 
-Portolan should make that loop observable without becoming dependent on Cursor,
-Composer, Kimi, or any hosted model/runtime during a default scan.
+- The validated Cursor comparison is headless Cursor on one fixed local Bigtop
+  target, not UI Cursor/Composer generally.
+- Local repository count does not prove complete inherited-estate coverage.
+- Runtime service topology is not assessed unless local runtime observations
+  are supplied.
+- Exact duplicate source/config clusters are supported; near-clone detection
+  needs local jscpd-style evidence.
+- Syft/CycloneDX component identity evidence has been validated for the fixed
+  Bigtop target; Semgrep and broad OSS producer value remain unassessed.
 
-## Evidence States
+## More Documentation
 
-Portolan must not pretend that every system can be analyzed like source code.
-Each graph node or relationship records how it is known:
-
-- `source-visible`
-- `metadata-visible`
-- `runtime-visible`
-- `claim-only`
-- `unknown`
-- `cannot_verify`
-
-## Start Here
-
-- [Agent Bootstrap: Start Here](agent/START_HERE.md)
-- [Portable Portolan Map Skill](agent/skills/portolan-map/SKILL.md)
+- [Product Claims](docs/product-claims.md)
 - [Product Boundary](docs/product-boundary.md)
-- [GitHub Spec Kit Workflow](docs/speckit-workflow.md)
-- [Product Backlog](docs/product-backlog.md)
-- [Agent Toolbox](docs/agent-toolbox/README.md)
-- [Blind Acceptance Protocol](docs/agent-toolbox/blind-acceptance.md)
-- [Portable Agent Guide](agent/AGENT_GUIDE.md)
-- [Agent Bootstrap Discovery](specs/014-agent-bootstrap-discovery/spec.md)
-- [Spec 015: Blind Agent Acceptance](specs/015-blind-agent-acceptance/spec.md)
-- [Example Map Report](agent/examples/map-report.md)
-- [Example CTO Context Answer](agent/examples/cto-context-answer.md)
-- [Cursor Portolan Rule](.cursor/rules/portolan-map.mdc)
-- [MVP](docs/mvp.md)
 - [Evidence Model](docs/evidence-model.md)
 - [Relationship Detection](docs/relationship-detection.md)
 - [OSS Composition](docs/oss-composition.md)
-- [Apache Bigtop Test Corpus](docs/test-corpora/apache-bigtop.md)
-- [Apache Bigtop Corpus Manifest](corpora/apache-bigtop/manifest.json)
-- [Evidence Graph Schema](schema/evidence-graph.schema.json)
-- [Corpus Manifest Schema](schema/corpus-manifest.schema.json)
+- [Product Backlog](docs/product-backlog.md)
+- [SpecKit Workflow](docs/speckit-workflow.md)
 
-## SpecKit Workflow
+## Developer Checks
 
-Portolan uses GitHub Spec Kit for product planning. The implemented bootstrap
-slice is:
-
-- [001 Local Evidence Graph](specs/001-local-evidence-graph/spec.md)
-- [001 Implementation Plan](specs/001-local-evidence-graph/plan.md)
-- [001 Tasks](specs/001-local-evidence-graph/tasks.md)
-
-Backlog features live under `specs/` and are indexed in
-[Product Backlog](docs/product-backlog.md).
-
-## Commands
+For repository development:
 
 ```bash
-go test ./...
-scripts/bootstrap-portolan --out /tmp/portolan
-/tmp/portolan --version
-go run ./cmd/portolan --version
-go run ./cmd/portolan context prepare --root testdata/landscape-map --out /tmp/portolan-context --profile cursor --force
-go run ./cmd/portolan import cyclonedx --in testdata/importer-normalization/cyclonedx.json --out /tmp/portolan-import-graph.json --force
-go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force
-go run ./cmd/portolan map --root testdata/relationship-detection/repo --out /tmp/portolan-relationships-run --force
-go run ./cmd/portolan diff --base testdata/evidence-diff/base.json --head testdata/evidence-diff/head.json --out /tmp/portolan-diff.json --force
-go run ./cmd/portolan selection validate --selection testdata/selection-inventory/valid-selection.json
-go run ./cmd/portolan scan --help
-go run ./cmd/portolan scan --selection testdata/local-evidence-graph/selection.json --out /tmp/portolan-graph.json --force
-go run ./cmd/portolan scan --selection testdata/black-box-profile/selection.json --out /tmp/portolan-black-box-graph.json --force
-go run ./cmd/portolan packet render --graph /tmp/portolan-graph.json --out /tmp/portolan-packet.md --force
-jq empty /tmp/portolan-graph.json
-jq empty /tmp/portolan-black-box-graph.json
-jq empty /tmp/portolan-diff.json
-jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json
-jq empty /tmp/portolan-relationships-run/run.json /tmp/portolan-relationships-run/graph.json
+go test -count=1 ./...
 jq empty schema/*.json
 git diff --check
 ```

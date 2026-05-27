@@ -6,7 +6,8 @@ alwaysApply: false
 ---
 
 When the user asks to map, audit, inspect, understand, or explain this
-codebase, first read `agent/START_HERE.md` and follow that portable workflow.
+codebase, first read `docs/agent/QUICKSTART.md` and follow that user-agent
+workflow.
 
 Run Portolan before broad manual architecture claims. Start with
 `portolan context prepare --root <target-root> --out <context-dir> --profile cursor`

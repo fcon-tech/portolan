@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Draft
+**Status**: Ready-for-review PR; GitHub checks not_assessed
 
 **Input**: User description: "Prevent the project from claiming product
 readiness before validation proves what Portolan does better than Cursor."
@@ -96,3 +96,21 @@ each sentence is backed by accepted evidence or marked as unproven.
 - Product claims can be narrowed without invalidating engineering work.
 - The correct outcome may be a no-go or a much smaller product claim.
 - Client-safe language must preserve uncertainty rather than hide it.
+
+## Validation Result
+
+Local implementation on 2026-05-27 produced a product claim ledger and
+client-safe answer under `specs/038-product-claim-gate/reviews/`.
+
+The current accepted/narrowed product claim is intentionally bounded:
+
+- accepted: local context/map capability as a capability claim;
+- narrowed: headless Cursor comparison on fixed local Bigtop, Syft/CycloneDX
+  component identity evidence, exact duplicate clusters, and relationship
+  claims only when evidence type is named;
+- rejected: complete inherited-estate and replacement/readiness claims;
+- not_assessed: UI Cursor/Composer behavior and runtime service topology.
+
+Local verification passed and three assessed independent non-GPT review lanes
+were dispositioned. PR #18 is ready-for-review after PR closeout; GitHub checks
+and merge readiness remain `not_assessed`.

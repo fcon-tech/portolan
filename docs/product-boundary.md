@@ -8,6 +8,10 @@ agent produce a verified map of relationships, duplication, configuration
 surfaces, and technical debt while showing what is visible, claimed, missing,
 or unverifiable.
 
+For current client-safe wording and claim status, use
+[Product Claims](product-claims.md). Product copy may use only accepted or
+narrowed claims from that page, and narrowed claims must carry their scope.
+
 ## In Scope
 
 - Local read-only collection.
@@ -33,6 +37,10 @@ or unverifiable.
 - Requiring Cursor, Claude, Codex, OpenCode, pi, or any one harness.
 - Replacing enterprise tools such as Sourcegraph, CAST, Backstage, Port,
   Datadog, New Relic, Dynatrace, or Moderne.
+- Claiming complete inherited-estate coverage from a local repository count.
+- Claiming runtime service topology without local runtime observations.
+- Claiming UI Cursor/Composer behavior from the current headless Cursor
+  comparison.
 
 ## Relationship To SDP
 
