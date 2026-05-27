@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Ready-for-review PR; GitHub checks not_assessed
+**Status**: Implemented and merged via PR #18; GitHub checks not_assessed
 
 **Input**: User description: "Prevent the project from claiming product
 readiness before validation proves what Portolan does better than Cursor."
@@ -112,5 +112,5 @@ The current accepted/narrowed product claim is intentionally bounded:
 - not_assessed: UI Cursor/Composer behavior and runtime service topology.
 
 Local verification passed and three assessed independent non-GPT review lanes
-were dispositioned. PR #18 is ready-for-review after PR closeout; GitHub checks
-and merge readiness remain `not_assessed`.
+were dispositioned. PR #18 was merged on 2026-05-27. GitHub checks were
+`not_assessed` because no checks were reported.
