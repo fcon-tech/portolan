@@ -23,6 +23,14 @@ scripts/bootstrap-portolan
 
 The bootstrap writes a repo-local binary to `.portolan/bin/portolan`.
 
+If you are in a subdirectory, run the script by path; the default output still
+lands in the Portolan checkout:
+
+```bash
+../scripts/bootstrap-portolan
+../.portolan/bin/portolan --version
+```
+
 By default it does not fetch Go modules from the network. If the user explicitly
 approves network access for dependency download, set:
 
@@ -32,7 +40,8 @@ PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 
 ## Go Run Fallback
 
-Use this only when a binary is not available and bootstrap cannot be used:
+Use this only for development when a binary is not available and bootstrap
+cannot be used:
 
 ```bash
 go run ./cmd/portolan --version

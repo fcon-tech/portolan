@@ -30,6 +30,25 @@ maintenance review before integration.
 See `docs/research/2026-05-26-large-codebase-oss-landscape.md` for the current
 large-codebase OSS landscape and the recommended agent-context direction.
 
+## First-Wave Adapter Profiles
+
+Spec `specs/042-agent-adapter-layer/` adds the first productization wave of
+adapter profiles:
+
+- `docs/adapter-contracts/graphify-profile.md`: Graphify is accepted for a
+  local adapter-contract validation profile. `EXTRACTED` producer confidence is
+  `metadata-visible`, `INFERRED` is `claim-only`, and `AMBIGUOUS` is
+  `cannot_verify`; full graph import is deferred.
+- `docs/adapter-contracts/symbol-index-profile.md`: SCIP and Serena-style
+  symbol exports are accepted as profile inputs for future local symbol-index
+  import, not as LSP/MCP daemon behavior.
+- `docs/adapter-contracts/repomix-profile.md`: Repomix is accepted as a context
+  pack profile. Packed source content is context, not architecture truth, and
+  requires redaction before sharing.
+
+The first-wave evaluation ledger is recorded in
+`specs/042-agent-adapter-layer/reviews/oss-candidate-ledger-2026-05-27.md`.
+
 ## Integration Rules
 
 - Import outputs; do not vendor large tools by default.

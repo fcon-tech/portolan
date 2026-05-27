@@ -339,6 +339,17 @@ func ResolveSelectionPaths(sel selection.Selection, selectionPath string) select
 	for i := range sel.ToolOutputs {
 		sel.ToolOutputs[i].Path = resolveRelative(base, sel.ToolOutputs[i].Path)
 	}
+	for i := range sel.BlackBoxes {
+		for j := range sel.BlackBoxes[i].Metadata {
+			sel.BlackBoxes[i].Metadata[j].Path = resolveRelative(base, sel.BlackBoxes[i].Metadata[j].Path)
+		}
+		for j := range sel.BlackBoxes[i].Runtime {
+			sel.BlackBoxes[i].Runtime[j].Path = resolveRelative(base, sel.BlackBoxes[i].Runtime[j].Path)
+		}
+		for j := range sel.BlackBoxes[i].Claims {
+			sel.BlackBoxes[i].Claims[j].Path = resolveRelative(base, sel.BlackBoxes[i].Claims[j].Path)
+		}
+	}
 	if sel.CorpusManifest != "" {
 		sel.CorpusManifest = resolveRelative(base, sel.CorpusManifest)
 	}

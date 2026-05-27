@@ -190,5 +190,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/039-bounded-jscpd-profile/plan.md`
+`specs/040-release-envelope/plan.md`
 <!-- SPECKIT END -->

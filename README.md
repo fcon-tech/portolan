@@ -70,6 +70,16 @@ Typical output:
 Start with `summary.json`, `graph-index.json`, `findings.jsonl`, and `map.md`.
 Open the full `graph.json` only when you need detail.
 
+For bounded agent questions against an existing map bundle, use:
+
+```bash
+portolan query findings --bundle <run-dir> --kind relationships --limit 20
+portolan query gaps --bundle <run-dir> --limit 20
+```
+
+Use these query commands before loading `graph.json` when you need finding
+records, weak evidence states, or stable `portolan://` references.
+
 ## Quick Start
 
 From a Portolan source checkout:
@@ -86,6 +96,7 @@ If you are developing Portolan itself, you can also use:
 ```bash
 go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan query gaps --bundle <run-dir> --limit 20
 ```
 
 Use `--force` only when you intentionally want to replace an existing Portolan
@@ -128,8 +139,11 @@ Important limits:
 - The validated Cursor comparison is headless Cursor on one fixed local Bigtop
   target, not UI Cursor/Composer generally.
 - Local repository count does not prove complete inherited-estate coverage.
-- Runtime service topology is not assessed unless local runtime observations
-  are supplied.
+- Runtime service topology is not assessed unless supported local runtime
+  observations are supplied, and partial observations do not prove complete
+  topology.
+- Portolan has a documented untrusted-artifact boundary and focused tests for
+  selected local CLI risks; this is not a broad security certification.
 - Exact duplicate source/config clusters are supported; near-clone detection
   needs local jscpd-style evidence.
 - Syft/CycloneDX component identity evidence has been validated for the fixed
@@ -138,9 +152,12 @@ Important limits:
 ## More Documentation
 
 - [Product Claims](docs/product-claims.md)
+- [Release Guide](docs/release.md)
 - [Product Boundary](docs/product-boundary.md)
 - [Evidence Model](docs/evidence-model.md)
 - [Relationship Detection](docs/relationship-detection.md)
+- [Runtime Observations](docs/runtime-observations.md)
+- [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
 - [Product Backlog](docs/product-backlog.md)
 - [SpecKit Workflow](docs/speckit-workflow.md)

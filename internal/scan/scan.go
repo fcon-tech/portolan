@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/governor/portolan/internal/blackbox"
+	"github.com/governor/portolan/internal/coverage"
 	"github.com/governor/portolan/internal/graph"
 	"github.com/governor/portolan/internal/selection"
 )
@@ -44,6 +45,7 @@ func Run(opts Options) (graph.Graph, error) {
 	if err != nil {
 		return graph.Graph{}, err
 	}
+	sel = coverage.ResolveSelectionPaths(sel, opts.SelectionPath)
 
 	roots, err := selectedRoots(sel.Targets)
 	if err != nil {

@@ -71,7 +71,23 @@ Read these files before reporting map-backed claims:
 - `findings.jsonl`
 - `map.md`
 
-Open `graph.json` only when the bounded files are insufficient.
+Before opening `graph.json`, ask bounded read-only questions against the map
+bundle:
+
+```bash
+portolan query findings --bundle <run-dir> --kind relationships --limit 20
+portolan query gaps --bundle <run-dir> --limit 20
+```
+
+Use `query findings` when you need matching records by kind, for example
+`relationships`, `duplication`, `configuration`, or `technical-debt`. Use
+`query gaps` when you need to explain `unknown`, `cannot_verify`, or
+`not_assessed` evidence before answering. `claim-only` records remain available
+through `query findings` by kind. Query output includes stable `portolan://`
+references for citation.
+
+Open `graph.json` only when the bounded files, query output, and graph slices
+are insufficient.
 
 ## 4. Answer From Evidence
 

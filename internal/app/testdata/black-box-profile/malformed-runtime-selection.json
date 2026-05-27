@@ -8,13 +8,13 @@
       "metadata": [
         {
           "id": "payments-catalog",
-          "path": "testdata/black-box-profile/metadata/payments.json"
+          "path": "metadata/payments.json"
         }
       ],
       "runtime": [
         {
           "id": "payments-runtime",
-          "path": "testdata/black-box-profile/runtime/malformed.json"
+          "path": "runtime/malformed.json"
         }
       ],
       "expected": ["runtime-endpoints"]

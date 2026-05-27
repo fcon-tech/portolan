@@ -68,7 +68,15 @@
           "enum": ["source-visible", "metadata-visible", "runtime-visible", "claim-only", "unknown", "cannot_verify", "not_assessed"]
         },
         "source": { "type": "string", "minLength": 1 },
-        "limitations": { "type": "array", "items": { "type": "string" } }
+        "limitations": { "type": "array", "items": { "type": "string" } },
+        "confidence_map": {
+          "type": "object",
+          "propertyNames": { "minLength": 1 },
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["metadata-visible", "claim-only", "unknown", "cannot_verify", "not_assessed"]
+          }
+        }
       }
     },
     "commands": {

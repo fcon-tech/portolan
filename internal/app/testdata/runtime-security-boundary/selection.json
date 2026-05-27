@@ -1,0 +1,16 @@
+{
+  "schema_version": "0.1.0",
+  "black_boxes": [
+    {
+      "id": "payments-api",
+      "kind": "service",
+      "runtime": [
+        {
+          "id": "payments-runtime-observations",
+          "path": "runtime-observations.json"
+        }
+      ],
+      "expected": ["runtime-endpoints"]
+    }
+  ]
+}

@@ -29,6 +29,9 @@ stress tests:
    and LSP/index surfaces, and larger Bigtop runs.
 10. **Product validation closure**: separate product-proof gaps into independent
     validation specs before claiming Portolan exists as a product.
+11. **Productization and adapters**: add release/CI proof, broader harness
+    acceptance, first-wave OSS adapter evaluation, bounded query surfaces, and
+    runtime/security contracts without turning Portolan into a harness.
 
 Cursor + Composer 2.5 is the first cheap acceptance client because it is a
 popular agentic IDE where reports can be read and graphs can be inspected. It is
@@ -106,6 +109,16 @@ fixtures are preflight evidence only.
 | P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Implemented and merged via PR #17; GitHub checks not_assessed |
 | P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Implemented and merged via PR #18; GitHub checks not_assessed |
 | P4-039 | `specs/039-bounded-jscpd-profile/` | Near-clone duplication claims are validated only through a bounded local jscpd profile, or kept failed, blocked, or not_assessed. | Implemented and merged via PR #19; GitHub checks not_assessed |
+
+## P5: Productization And Adapter Layer
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P5-040 | `specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Ready-for-review PR #20; local baseline/install smoke and GitHub CI verified; merge approval not_assessed |
+| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Ready-for-review PR #20; Codex single-repo self-target lane verified; other matrix cells remain not_assessed |
+| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Ready-for-review PR #20; Graphify adapter-contract fixture verified; full imports remain not_assessed |
+| P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Ready-for-review PR #20; query smoke and GitHub CI verified; merge approval not_assessed |
+| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Ready-for-review PR #20; runtime/security smoke and GitHub CI verified; merge approval not_assessed |
 
 ## Backlog Rules
 
