@@ -40,7 +40,9 @@ The MVP should prove one narrow product promise:
   it discovers the root, direct child Git repositories, and `repos/*` Git
   repositories under a bounded local policy.
 - Use `portolan map --selection selection.json --out .portolan/run` for curated
-  local inventories.
+  local inventories. A local inventory can validate represented, missing,
+  blocked, and extra scope records, but repository counts alone never prove
+  complete inherited-estate coverage.
 - Emit a stable artifact bundle: `run.json`, `coverage.json`, `summary.json`,
   `graph-index.json`, `graph.json`, `findings.jsonl`, and `map.md`.
 - Provide bounded graph drill-down with `portolan graph slice` before agents

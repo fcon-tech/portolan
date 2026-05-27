@@ -2195,8 +2195,10 @@ func appendLimitedCoverageRecord(records *[]coverageSummaryRecord, truncated *in
 
 func isWeakCoverageRecord(record coverage.Record) bool {
 	return record.Status == "unknown" ||
+		record.Status == "missing" ||
 		record.Status == "cannot_verify" ||
 		record.Status == "not_assessed" ||
+		record.Status == "extra" ||
 		record.Status == "blocked" ||
 		record.EvidenceState == string(graph.Unknown) ||
 		record.EvidenceState == string(graph.CannotVerify) ||
