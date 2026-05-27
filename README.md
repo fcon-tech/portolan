@@ -139,8 +139,11 @@ Important limits:
 - The validated Cursor comparison is headless Cursor on one fixed local Bigtop
   target, not UI Cursor/Composer generally.
 - Local repository count does not prove complete inherited-estate coverage.
-- Runtime service topology is not assessed unless local runtime observations
-  are supplied.
+- Runtime service topology is not assessed unless supported local runtime
+  observations are supplied, and partial observations do not prove complete
+  topology.
+- Portolan has a documented untrusted-artifact boundary and focused tests for
+  selected local CLI risks; this is not a broad security certification.
 - Exact duplicate source/config clusters are supported; near-clone detection
   needs local jscpd-style evidence.
 - Syft/CycloneDX component identity evidence has been validated for the fixed
@@ -153,6 +156,8 @@ Important limits:
 - [Product Boundary](docs/product-boundary.md)
 - [Evidence Model](docs/evidence-model.md)
 - [Relationship Detection](docs/relationship-detection.md)
+- [Runtime Observations](docs/runtime-observations.md)
+- [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
 - [Product Backlog](docs/product-backlog.md)
 - [SpecKit Workflow](docs/speckit-workflow.md)

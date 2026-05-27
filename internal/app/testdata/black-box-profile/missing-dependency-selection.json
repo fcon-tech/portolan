@@ -8,7 +8,7 @@
       "metadata": [
         {
           "id": "payments-catalog",
-          "path": "testdata/black-box-profile/metadata/payments-no-dependencies.json"
+          "path": "metadata/payments-no-dependencies.json"
         }
       ],
       "expected": ["dependencies"]

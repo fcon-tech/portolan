@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1.0",
+  "observations": [
+    {
+      "id": "obs-payments-ledger",
+      "observed_at": "2026-05-27T00:00:00Z",
+      "from": "payments-api",
+      "to": "ledger-api",
+      "kind": "http-call",
+      "coverage": "partial",
+      "source": "runtime/export.json"
+    }
+  ]
+}

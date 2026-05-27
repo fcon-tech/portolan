@@ -2,7 +2,7 @@
 
 ## Runtime Observation Input
 
-Supported local JSON shape:
+Supported local JSON shape for `black_boxes[].runtime[].path`:
 
 ```json
 {
@@ -21,7 +21,19 @@ Supported local JSON shape:
 }
 ```
 
-Partial coverage never proves complete topology.
+Contract rules:
+
+- `schema_version`, when present, must be `0.1.0`.
+- `from` and `to` are required for contract-shaped observations.
+- `from` must match the selected black-box `id` in this slice.
+- `coverage` may be `complete`, `partial`, `unknown`, or `not_assessed`; missing
+  coverage is treated as `unknown`.
+- The graph edge kind remains `observes`; producer-specific `kind` is retained
+  in the evidence reason.
+- Partial coverage never proves complete topology and must emit an `unknown`
+  topology record.
+- Older `service`/`endpoint` runtime observations are accepted only for backward
+  compatibility with existing fixtures.
 
 ## Threat Model Contract
 

@@ -118,7 +118,7 @@ fixtures are preflight evidence only.
 | P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Implemented locally on Codex single-repo self-target lane; Cursor UI/Composer, OpenCode, external single-repo, multi-repo, and black-box/metadata-heavy lanes remain not_assessed |
 | P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Implemented locally on `codex/042-agent-adapter-layer-delivery`; PR not created |
 | P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Implemented locally; local verification passed; PR not created; GitHub checks not_assessed |
-| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Ready for implementation |
+| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Implemented locally; local verification and review passed; PR/GitHub checks not_assessed |
 
 ## Backlog Rules
 

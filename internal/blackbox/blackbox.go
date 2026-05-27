@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+	"unicode"
 
 	"github.com/fall-out-bug/portolan/internal/graph"
 	"github.com/fall-out-bug/portolan/internal/selection"
@@ -27,13 +29,20 @@ type metadataService struct {
 }
 
 type runtimeDocument struct {
-	Observations []runtimeObservation `json:"observations"`
-	Source       string               `json:"source"`
+	SchemaVersion string               `json:"schema_version"`
+	Observations  []runtimeObservation `json:"observations"`
+	Source        string               `json:"source"`
 }
 
 type runtimeObservation struct {
 	Service    string `json:"service"`
 	Endpoint   string `json:"endpoint"`
+	ID         string `json:"id"`
+	From       string `json:"from"`
+	To         string `json:"to"`
+	Kind       string `json:"kind"`
+	Coverage   string `json:"coverage"`
+	Source     string `json:"source"`
 	ObservedAt string `json:"observed_at"`
 }
 
@@ -187,11 +196,28 @@ func runtimeFacts(target selection.BlackBox, source selection.InputSource) ([]gr
 	if err := json.Unmarshal(data, &doc); err != nil {
 		return []graph.Node{inputNode(source.ID, "runtime", source.Path, graph.CannotVerify, "malformed runtime JSON")}, nil, seen
 	}
+	if doc.SchemaVersion != "" && doc.SchemaVersion != selection.SchemaVersion {
+		return []graph.Node{inputNode(source.ID, "runtime", source.Path, graph.CannotVerify, fmt.Sprintf("runtime schema_version must be %q", selection.SchemaVersion))}, nil, seen
+	}
 
 	evidenceSource := evidenceSource(doc.Source, source.Path)
 	nodes := []graph.Node{inputNode(source.ID, "runtime", source.Path, graph.RuntimeVisible, "")}
 	var edges []graph.Edge
+	partialCoverageRecorded := false
 	for _, observation := range doc.Observations {
+		if isContractRuntimeObservation(observation) {
+			newNodes, newEdges, observed, partialCoverage := contractRuntimeFacts(target, source.ID, evidenceSource, observation)
+			nodes = append(nodes, newNodes...)
+			edges = append(edges, newEdges...)
+			seen.runtimeEndpoints = seen.runtimeEndpoints || observed
+			if partialCoverage && !partialCoverageRecorded {
+				coverageNodes, coverageEdges := partialRuntimeCoverageFacts(target, source.ID, evidenceSource, observation.Coverage)
+				nodes = append(nodes, coverageNodes...)
+				edges = append(edges, coverageEdges...)
+				partialCoverageRecorded = true
+			}
+			continue
+		}
 		if observation.Service == "" || observation.Endpoint == "" {
 			continue
 		}
@@ -230,6 +256,170 @@ func runtimeFacts(target selection.BlackBox, source selection.InputSource) ([]gr
 		})
 	}
 	return nodes, edges, seen
+}
+
+func isContractRuntimeObservation(observation runtimeObservation) bool {
+	return observation.ID != "" || observation.From != "" || observation.To != "" || observation.Kind != "" || observation.Coverage != "" || observation.Source != ""
+}
+
+func contractRuntimeFacts(target selection.BlackBox, sourceID, defaultSource string, observation runtimeObservation) ([]graph.Node, []graph.Edge, bool, bool) {
+	evidenceSource := evidenceSource(observation.Source, defaultSource)
+	coverage, coverageOK := normalizeRuntimeCoverage(observation.Coverage)
+	if !coverageOK {
+		return []graph.Node{{
+			ID:    sourceID + ":invalid-coverage:" + runtimeSubjectID(observation.ID),
+			Kind:  "unknown",
+			Label: runtimeObservationLabel(observation),
+			Evidence: graph.Evidence{
+				State:  graph.CannotVerify,
+				Source: evidenceSource,
+				Reason: fmt.Sprintf("runtime observation has unsupported coverage %q", observation.Coverage),
+			},
+		}}, nil, false, false
+	}
+	if observation.From == "" || observation.To == "" {
+		return []graph.Node{{
+			ID:    sourceID + ":invalid-observation:" + runtimeSubjectID(observation.ID),
+			Kind:  "unknown",
+			Label: runtimeObservationLabel(observation),
+			Evidence: graph.Evidence{
+				State:  graph.CannotVerify,
+				Source: evidenceSource,
+				Reason: "runtime observation requires from and to",
+			},
+		}}, nil, false, false
+	}
+	if observation.From != target.ID {
+		return []graph.Node{{
+			ID:    sourceID + ":orphan:" + runtimeSubjectID(observation.From),
+			Kind:  "unknown",
+			Label: observation.From,
+			Evidence: graph.Evidence{
+				State:  graph.CannotVerify,
+				Source: evidenceSource,
+				Reason: fmt.Sprintf("runtime observation references undeclared source %q", observation.From),
+			},
+		}}, nil, false, coverage != "complete"
+	}
+
+	targetID := runtimeSubjectID(observation.To)
+	reason := runtimeObservationReason(observation, coverage)
+	return []graph.Node{{
+			ID:    targetID,
+			Kind:  "runtime",
+			Label: observation.To,
+			Evidence: graph.Evidence{
+				State:  graph.RuntimeVisible,
+				Source: evidenceSource,
+				Reason: reason,
+			},
+		}}, []graph.Edge{{
+			From: target.ID,
+			To:   targetID,
+			Kind: "observes",
+			Evidence: graph.Evidence{
+				State:  graph.RuntimeVisible,
+				Source: evidenceSource,
+				Reason: reason,
+			},
+		}}, true, coverage != "complete"
+}
+
+func partialRuntimeCoverageFacts(target selection.BlackBox, sourceID, source, coverage string) ([]graph.Node, []graph.Edge) {
+	if coverage == "" {
+		coverage = "unknown"
+	}
+	id := target.ID + ":unknown:runtime-topology"
+	reason := fmt.Sprintf("%s runtime observation coverage does not prove complete topology", coverage)
+	return []graph.Node{{
+			ID:    id,
+			Kind:  "unknown",
+			Label: "runtime topology",
+			Evidence: graph.Evidence{
+				State:  graph.Unknown,
+				Source: source,
+				Reason: reason,
+			},
+		}}, []graph.Edge{{
+			From: target.ID,
+			To:   id,
+			Kind: "unknown",
+			Evidence: graph.Evidence{
+				State:  graph.Unknown,
+				Source: source,
+				Reason: reason,
+			},
+		}}
+}
+
+func runtimeObservationLabel(observation runtimeObservation) string {
+	if observation.ID != "" {
+		return observation.ID
+	}
+	if observation.From != "" || observation.To != "" {
+		return strings.TrimSpace(observation.From + " -> " + observation.To)
+	}
+	return "runtime observation"
+}
+
+func normalizeRuntimeCoverage(value string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "":
+		return "unknown", true
+	case "complete", "partial", "unknown", "not_assessed":
+		return strings.ToLower(strings.TrimSpace(value)), true
+	default:
+		return "", false
+	}
+}
+
+func runtimeObservationReason(observation runtimeObservation, coverage string) string {
+	parts := []string{}
+	if observation.ID != "" {
+		parts = append(parts, "id "+observation.ID)
+	}
+	if observation.Kind != "" {
+		parts = append(parts, "kind "+observation.Kind)
+	}
+	if coverage != "" {
+		parts = append(parts, "coverage "+coverage)
+	}
+	if observation.ObservedAt != "" {
+		parts = append(parts, "observed_at "+observation.ObservedAt)
+	}
+	if len(parts) == 0 {
+		return "runtime observation"
+	}
+	return "runtime observation " + strings.Join(parts, "; ")
+}
+
+func runtimeSubjectID(value string) string {
+	value = strings.TrimSpace(value)
+	var b strings.Builder
+	lastSeparator := false
+	for _, r := range value {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '.' || r == ':' {
+			b.WriteRune(r)
+			lastSeparator = false
+			continue
+		}
+		if !lastSeparator {
+			b.WriteByte('-')
+			lastSeparator = true
+		}
+	}
+	id := strings.Trim(b.String(), "-")
+	if id == "" {
+		return "runtime-subject"
+	}
+	runes := []rune(id)
+	if len(runes) > 128 {
+		id = strings.TrimRight(string(runes[:128]), "-")
+	}
+	if id == "" {
+		return "runtime-subject"
+	}
+	return id
 }
 
 func claimFacts(source selection.ClaimSource, existingNodeIDs map[string]struct{}) ([]graph.Node, []graph.Edge, observedFields) {

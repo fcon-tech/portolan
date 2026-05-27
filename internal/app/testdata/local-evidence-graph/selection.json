@@ -4,13 +4,13 @@
     {
       "id": "demo-repo",
       "kind": "repository",
-      "path": "testdata/local-evidence-graph/repo"
+      "path": "repo"
     }
   ],
   "claims": [
     {
       "id": "claims-main",
-      "path": "testdata/local-evidence-graph/claims.json"
+      "path": "claims.json"
     }
   ]
 }

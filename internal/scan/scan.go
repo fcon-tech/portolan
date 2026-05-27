@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/fall-out-bug/portolan/internal/blackbox"
+	"github.com/fall-out-bug/portolan/internal/coverage"
 	"github.com/fall-out-bug/portolan/internal/graph"
 	"github.com/fall-out-bug/portolan/internal/selection"
 )
@@ -44,6 +45,7 @@ func Run(opts Options) (graph.Graph, error) {
 	if err != nil {
 		return graph.Graph{}, err
 	}
+	sel = coverage.ResolveSelectionPaths(sel, opts.SelectionPath)
 
 	roots, err := selectedRoots(sel.Targets)
 	if err != nil {

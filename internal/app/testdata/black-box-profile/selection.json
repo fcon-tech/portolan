@@ -8,19 +8,19 @@
       "metadata": [
         {
           "id": "payments-catalog",
-          "path": "testdata/black-box-profile/metadata/payments.json"
+          "path": "metadata/payments.json"
         }
       ],
       "runtime": [
         {
           "id": "payments-runtime",
-          "path": "testdata/black-box-profile/runtime/payments.json"
+          "path": "runtime/payments.json"
         }
       ],
       "claims": [
         {
           "id": "payments-claims",
-          "path": "testdata/black-box-profile/claims/payments.json"
+          "path": "claims/payments.json"
         }
       ],
       "expected": ["owner", "dependencies", "runtime-endpoints"]

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fall-out-bug/portolan/internal/blackbox"
 	"github.com/fall-out-bug/portolan/internal/configuration"
 	"github.com/fall-out-bug/portolan/internal/coverage"
 	"github.com/fall-out-bug/portolan/internal/duplication"
@@ -889,21 +890,18 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		g.Nodes = append(g.Nodes, inputNode(source.ID, "claim", graph.ClaimOnly, source.Path, "claim source selected"))
 		findings = append(findings, observedFinding("finding-claim-"+source.ID, "inventory", "Claim input is represented as claim-only evidence.", graph.ClaimOnly, source.Path))
 	}
+	nodeIDs := graphNodeIDs(g)
 	for _, blackBox := range sel.BlackBoxes {
 		label := blackBox.Label
 		if label == "" {
 			label = blackBox.ID
 		}
-		g.Nodes = append(g.Nodes, graph.Node{
-			ID:    blackBox.ID,
-			Kind:  "black-box-" + blackBox.Kind,
-			Label: label,
-			Evidence: graph.Evidence{
-				State:  graph.Unknown,
-				Source: label,
-				Reason: "black-box target represented without direct source access",
-			},
-		})
+		result := blackbox.Normalize(blackBox, nodeIDs)
+		for _, node := range result.Nodes {
+			g.Nodes = append(g.Nodes, node)
+			nodeIDs[node.ID] = struct{}{}
+		}
+		g.Edges = append(g.Edges, result.Edges...)
 		findings = append(findings, Finding{
 			ID:             "finding-black-box-" + blackBox.ID,
 			Kind:           "inventory",
@@ -927,6 +925,14 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 	sortFindings(findings)
 	sort.Strings(warnings)
 	return g, findings, warnings
+}
+
+func graphNodeIDs(g graph.Graph) map[string]struct{} {
+	ids := map[string]struct{}{}
+	for _, node := range g.Nodes {
+		ids[node.ID] = struct{}{}
+	}
+	return ids
 }
 
 func shouldPrefixRelationshipGraph(sel selection.Selection, target selection.Target) bool {

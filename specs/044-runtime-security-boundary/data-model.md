@@ -8,12 +8,14 @@
 - `subjects`: services, processes, endpoints, or systems observed
 - `relationships`: observed communications or dependencies
 - `coverage`: complete, partial, unknown, or not_assessed
+- `schema_version`: optional schema marker; when present, must be `0.1.0`
 
 ## Runtime Relationship
 
 - `from`: observed source
 - `to`: observed target
-- `kind`: communication, dependency, or event
+- `kind`: producer-specific observation kind retained in evidence reason; graph
+  edge kind remains `observes`
 - `evidence_state`: `runtime-visible`
 - `reason`: why the observation supports the relationship
 
