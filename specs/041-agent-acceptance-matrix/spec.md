@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Implemented locally; PR not opened
+**Status**: Integrated locally on `codex/productization-delivery-integration`; PR/GitHub checks not_assessed
 
 **Input**: Product-readiness gap: Portolan's value is validated narrowly on fixed local Bigtop with headless Cursor; broader agent and target acceptance remains `not_assessed`.
 

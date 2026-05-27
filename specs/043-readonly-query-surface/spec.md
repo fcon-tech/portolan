@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Implemented locally; local verification passed; PR not created
+**Status**: Integrated locally on `codex/productization-delivery-integration`; PR/GitHub checks not_assessed
 
 **Input**: Agent scenario gap: Portolan emits useful bundles, but agents still read files manually instead of asking bounded questions such as "what evidence supports this claim?" or "why is this unknown?"
 
