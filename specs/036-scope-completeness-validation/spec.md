@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Ready-for-review PR
+**Status**: Implemented and merged via PR #16
 
 **Input**: User description: "Portolan cannot claim it understands an inherited
 estate if local repository scope and ecosystem completeness are unknown."
