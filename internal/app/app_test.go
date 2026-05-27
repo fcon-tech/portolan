@@ -1293,6 +1293,142 @@ func TestRunGraphSliceWritesBoundedSlices(t *testing.T) {
 	})
 }
 
+func TestRunQueryHelpDescribesReadonlyQuestions(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"query", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	out := stdout.String()
+	for _, want := range []string{"query findings", "query gaps", "--bundle", "--limit", "read-only", "not_assessed", "graph.json"} {
+		if !strings.Contains(out, want) {
+			t.Fatalf("stdout %q does not contain %q", out, want)
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunQueryFindingsWritesBoundedJSONToStdout(t *testing.T) {
+	bundle := filepath.Join(t.TempDir(), "run")
+	var mapStdout bytes.Buffer
+	var mapStderr bytes.Buffer
+	if code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", bundle, "--force"}, &mapStdout, &mapStderr); code != 0 {
+		t.Fatalf("map returned %d, want 0; stderr = %q", code, mapStderr.String())
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run([]string{"query", "findings", "--bundle", bundle, "--kind", "relationships", "--limit", "2"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	var result map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatalf("stdout is not JSON: %v\n%s", err, stdout.String())
+	}
+	query := result["query"].(map[string]any)
+	if query["family"] != "findings" || query["kind"] != "relationships" || query["limit"] != float64(2) {
+		t.Fatalf("query = %#v, want findings relationships limit 2", query)
+	}
+	records := result["records"].([]any)
+	if len(records) != 2 {
+		t.Fatalf("records = %d, want 2", len(records))
+	}
+	first := records[0].(map[string]any)
+	for _, want := range []string{"reference", "artifact", "evidence_state", "status"} {
+		if first[want] == "" {
+			t.Fatalf("record = %#v, missing %s", first, want)
+		}
+	}
+	if !strings.HasPrefix(first["reference"].(string), "portolan://bundle/findings/") {
+		t.Fatalf("reference = %q, want portolan findings reference", first["reference"])
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunQueryGapsPreservesWeakStates(t *testing.T) {
+	root, err := filepath.Abs(technicalDebtFixtureRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	selectionPath := writeSelection(t, t.TempDir(), "query-gaps", `{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id": "debt", "kind": "repository", "path": `+quote(root)+`}
+  ],
+  "claims": [
+    {"id": "missing-claims", "path": "missing-claims.json"}
+  ]
+}`)
+	bundle := filepath.Join(t.TempDir(), "run")
+	var mapStdout bytes.Buffer
+	var mapStderr bytes.Buffer
+	if code := Run([]string{"map", "--selection", selectionPath, "--out", bundle, "--force"}, &mapStdout, &mapStderr); code != 0 {
+		t.Fatalf("map returned %d, want 0; stderr = %q", code, mapStderr.String())
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run([]string{"query", "gaps", "--bundle", bundle, "--limit", "10"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	var result map[string]any
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		t.Fatalf("stdout is not JSON: %v\n%s", err, stdout.String())
+	}
+	records := result["records"].([]any)
+	if len(records) == 0 {
+		t.Fatalf("records = %#v, want weak records", records)
+	}
+	foundUnknown := false
+	for _, raw := range records {
+		record := raw.(map[string]any)
+		state := record["evidence_state"].(string)
+		if state == "unknown" || state == "cannot_verify" || state == "not_assessed" {
+			foundUnknown = true
+		}
+		if record["reason"] == "" {
+			t.Fatalf("record = %#v, want weak reason", record)
+		}
+		if !strings.HasPrefix(record["reference"].(string), "portolan://bundle/") {
+			t.Fatalf("record = %#v, want portolan reference", record)
+		}
+	}
+	if !foundUnknown {
+		t.Fatalf("records = %#v, want weak evidence state", records)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunQueryRejectsExplicitInvalidLimit(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"query", "gaps", "--bundle", "unused", "--limit", "0"}, &stdout, &stderr)
+
+	if code == 0 {
+		t.Fatalf("Run returned 0, want limit error")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout = %q, want empty", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "--limit must be between 1 and 200") {
+		t.Fatalf("stderr = %q, want limit error", stderr.String())
+	}
+}
+
 func TestRunAdapterValidateAcceptsKnownOSSContracts(t *testing.T) {
 	for _, fixture := range []string{"jscpd.json", "syft-cyclonedx.json", "semgrep.json", "graphify-minimal.json"} {
 		t.Run(fixture, func(t *testing.T) {

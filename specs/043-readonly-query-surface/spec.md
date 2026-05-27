@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready for implementation
+**Status**: Implemented locally; local verification passed; PR not created
 
 **Input**: Agent scenario gap: Portolan emits useful bundles, but agents still read files manually instead of asking bounded questions such as "what evidence supports this claim?" or "why is this unknown?"
 

@@ -12,3 +12,5 @@ Expected result:
 - records include evidence state and artifact reference;
 - weak records include reasons;
 - output is bounded and read-only.
+- query output includes `portolan://` references.
+- MCP remains a deferred contract; no daemon is started by the query command.

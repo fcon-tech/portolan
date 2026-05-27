@@ -70,6 +70,16 @@ Typical output:
 Start with `summary.json`, `graph-index.json`, `findings.jsonl`, and `map.md`.
 Open the full `graph.json` only when you need detail.
 
+For bounded agent questions against an existing map bundle, use:
+
+```bash
+portolan query findings --bundle <run-dir> --kind relationships --limit 20
+portolan query gaps --bundle <run-dir> --limit 20
+```
+
+Use these query commands before loading `graph.json` when you need finding
+records, weak evidence states, or stable `portolan://` references.
+
 ## Quick Start
 
 From a Portolan source checkout:
@@ -86,6 +96,7 @@ If you are developing Portolan itself, you can also use:
 ```bash
 go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
 go run ./cmd/portolan map --root <target-root> --out <run-dir>
+go run ./cmd/portolan query gaps --bundle <run-dir> --limit 20
 ```
 
 Use `--force` only when you intentionally want to replace an existing Portolan

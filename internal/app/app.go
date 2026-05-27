@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"github.com/fall-out-bug/portolan/internal/importer"
 	"github.com/fall-out-bug/portolan/internal/maprun"
 	"github.com/fall-out-bug/portolan/internal/packet"
+	"github.com/fall-out-bug/portolan/internal/query"
 	"github.com/fall-out-bug/portolan/internal/scan"
 	"github.com/fall-out-bug/portolan/internal/selection"
 )
@@ -47,6 +49,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runMap(args[1:], stdout, stderr)
 	case "graph":
 		return runGraph(args[1:], stdout, stderr)
+	case "query":
+		return runQuery(args[1:], stdout, stderr)
 	case "context":
 		return runContext(args[1:], stdout, stderr)
 	case "adapter":
@@ -56,6 +60,115 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runQuery(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeQueryUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "findings":
+		return runQueryFindings(args[1:], stdout, stderr)
+	case "gaps":
+		return runQueryGaps(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown query command %q\nRun 'portolan query --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runQueryFindings(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeQueryFindingsUsage(stdout)
+		return 0
+	}
+	flags := flag.NewFlagSet("query findings", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	bundlePath := flags.String("bundle", "", "map bundle directory")
+	kind := flags.String("kind", "", "finding kind")
+	limit := flags.Int("limit", query.DefaultLimit, "maximum records returned")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeQueryFindingsUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected query findings argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *limit < 1 || *limit > query.MaxLimit {
+		fmt.Fprintf(stderr, "query findings: --limit must be between 1 and %d\n", query.MaxLimit)
+		return 2
+	}
+	result, err := query.Run(query.Options{
+		BundlePath: *bundlePath,
+		Family:     query.FamilyFindings,
+		Kind:       *kind,
+		Limit:      *limit,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "query findings: %v\n", err)
+		return 2
+	}
+	if err := writeQueryResult(stdout, result); err != nil {
+		fmt.Fprintf(stderr, "query findings: %v\n", err)
+		return 2
+	}
+	return 0
+}
+
+func runQueryGaps(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeQueryGapsUsage(stdout)
+		return 0
+	}
+	flags := flag.NewFlagSet("query gaps", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	bundlePath := flags.String("bundle", "", "map bundle directory")
+	limit := flags.Int("limit", query.DefaultLimit, "maximum records returned")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeQueryGapsUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected query gaps argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *limit < 1 || *limit > query.MaxLimit {
+		fmt.Fprintf(stderr, "query gaps: --limit must be between 1 and %d\n", query.MaxLimit)
+		return 2
+	}
+	result, err := query.Run(query.Options{
+		BundlePath: *bundlePath,
+		Family:     query.FamilyGaps,
+		Limit:      *limit,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "query gaps: %v\n", err)
+		return 2
+	}
+	if err := writeQueryResult(stdout, result); err != nil {
+		fmt.Fprintf(stderr, "query gaps: %v\n", err)
+		return 2
+	}
+	return 0
+}
+
+func writeQueryResult(w io.Writer, result query.Result) error {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(result); err != nil {
+		return fmt.Errorf("encode result: %w", err)
+	}
+	return nil
 }
 
 func runAdapter(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -572,6 +685,8 @@ Usage:
   portolan context prepare --root . --out .portolan/context --profile cursor
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
+  portolan query findings --bundle .portolan/run --kind relationships --limit 20
+  portolan query gaps --bundle .portolan/run --limit 20
   portolan graph slice --bundle .portolan/run --repo repo-id --out slice.json
   portolan adapter validate --in adapter.json
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
@@ -582,6 +697,52 @@ Usage:
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
+`)
+}
+
+func writeQueryUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan query findings --bundle <map-run-dir> --kind <kind> [--limit 20]
+  portolan query gaps --bundle <map-run-dir> [--limit 20]
+
+Ask bounded, read-only questions against an existing map bundle without loading
+full graph.json into an agent context.
+
+Available subcommands:
+  findings   print bounded finding records by kind as JSON
+  gaps       print weak unknown, cannot_verify, and not_assessed records as JSON
+
+The query surface reads local bundle artifacts only, writes JSON to stdout, and
+starts no daemon. Future MCP compatibility is a deferred contract, not runtime
+behavior in this command.
+`)
+}
+
+func writeQueryFindingsUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan query findings --bundle <map-run-dir> --kind <kind> [--limit 20]
+
+Print bounded finding records from findings.jsonl. Each record includes its
+evidence state, status, source artifact, and stable portolan:// reference.
+
+Flags:
+  --bundle path   existing portolan map bundle directory
+  --kind kind     finding kind, for example relationships, duplication, configuration, or technical-debt
+  --limit n       maximum records, 1..200 (default 20)
+`)
+}
+
+func writeQueryGapsUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan query gaps --bundle <map-run-dir> [--limit 20]
+
+Print weak coverage and finding records from coverage.json and findings.jsonl.
+This includes unknown, cannot_verify, not_assessed, missing, and blocked records
+so agents can explain missing evidence instead of turning gaps into success.
+
+Flags:
+  --bundle path   existing portolan map bundle directory
+  --limit n       maximum records, 1..200 (default 20)
 `)
 }
 
