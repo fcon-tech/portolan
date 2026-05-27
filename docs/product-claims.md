@@ -44,7 +44,7 @@ black-box/metadata-heavy targets.
 | Portolan provides a local, read-only context pack and optional evidence-backed map before agents answer. | `accepted` | Safe as a capability claim for the current CLI and artifact workflow. |
 | Portolan understands a complete inherited software estate from a local target. | `rejected` | Say local visible scope unless a supplied inventory verifies completeness. |
 | Portolan can provide full runtime service topology. | `not_assessed` | Runtime topology requires local runtime observations; otherwise it remains unassessed. |
-| Portolan composes existing OSS tool outputs instead of reimplementing mature scanners. | `narrowed` | Safe for Syft/CycloneDX component identity on the fixed Bigtop target and bounded jscpd JSON ingestion on the Portolan repository smoke target. Semgrep remains unassessed. |
+| Portolan composes existing OSS tool outputs instead of reimplementing mature scanners. | `narrowed` | Safe for Syft/CycloneDX component identity on the fixed Bigtop target, bounded jscpd JSON ingestion on the Portolan repository smoke target, and Graphify adapter-contract confidence mapping on the local fixture. Full Graphify graph import, SCIP/Serena import, Repomix parsing, and Semgrep remain unassessed. |
 | Portolan detects duplication across a landscape. | `narrowed` | Safe for native exact source/config duplicate clusters and bounded jscpd near-clone evidence only for the named target/profile that produced usable JSON. Bigtop near-clone and SBOM duplicate risk remain unproven. |
 | Portolan detects relationships across imports, manifests, metadata, runtime exports, and claims. | `narrowed` | Safe only when the relationship evidence type is named. Runtime-visible relationships require runtime evidence. |
 | Portolan replaces Cursor, coding harnesses, enterprise code intelligence, service catalogs, observability, modernization, or readiness tools. | `rejected` | Say Portolan is a local discovery and evidence-preparation complement. |
@@ -64,8 +64,10 @@ black-box/metadata-heavy targets.
 - Runtime service topology remains `not_assessed` without runtime observations.
 - OSS producer validation is narrow: Syft/CycloneDX component identity is
   verified for the fixed target, bounded jscpd JSON ingestion is verified on
-  the Portolan repository smoke target, the full Bigtop near-clone run remains
-  unproven, and Semgrep remains `not_assessed`.
+  the Portolan repository smoke target, Graphify adapter-contract confidence
+  mapping is verified on a local fixture, the full Bigtop near-clone run remains
+  unproven, and full Graphify import, SCIP/Serena import, Repomix parsing, and
+  Semgrep remain `not_assessed`.
 - Output quality depends on the local evidence supplied to Portolan. Missing,
   stale, or incomplete inputs must stay visible as gaps, not be hidden as
   product success.
@@ -90,6 +92,8 @@ black-box/metadata-heavy targets.
   `specs/041-agent-acceptance-matrix/reviews/acceptance-matrix-2026-05-27.md`
 - Codex single-repo acceptance lane:
   `specs/041-agent-acceptance-matrix/reviews/codex-single-repo-lane-2026-05-27.md`
+- Agent adapter layer:
+  `specs/042-agent-adapter-layer/reviews/implementation-disposition-2026-05-27.md`
 
 ## How To Use This Page
 

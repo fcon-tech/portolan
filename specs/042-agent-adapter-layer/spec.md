@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready for implementation
+**Status**: Implemented locally; PR not created
 
 **Input**: Product direction: Portolan should avoid Not Invented Here and normalize outputs from tools such as Graphify, SCIP/Serena-style symbol indexes, and Repomix instead of rebuilding them.
 

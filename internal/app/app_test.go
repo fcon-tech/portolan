@@ -1294,7 +1294,7 @@ func TestRunGraphSliceWritesBoundedSlices(t *testing.T) {
 }
 
 func TestRunAdapterValidateAcceptsKnownOSSContracts(t *testing.T) {
-	for _, fixture := range []string{"jscpd.json", "syft-cyclonedx.json", "semgrep.json"} {
+	for _, fixture := range []string{"jscpd.json", "syft-cyclonedx.json", "semgrep.json", "graphify-minimal.json"} {
 		t.Run(fixture, func(t *testing.T) {
 			var stdout bytes.Buffer
 			var stderr bytes.Buffer

@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.1.0",
+  "id": "graphify-graph-json-minimal",
+  "tool": {
+    "name": "Graphify",
+    "url": "https://github.com/safishamsi/graphify"
+  },
+  "family": "code-index",
+  "output_kind": "code-index",
+  "license": {
+    "id": "MIT",
+    "url": "https://github.com/safishamsi/graphify/blob/main/LICENSE",
+    "status": "needs_review"
+  },
+  "execution": {
+    "mode": "import-only",
+    "network": "none",
+    "mutates_target": false,
+    "reads": ["graphify-out/graph.json"]
+  },
+  "privacy": {
+    "contains_source_snippets": false,
+    "contains_secret_values": false,
+    "redaction_required": false
+  },
+  "evidence": {
+    "default_state": "metadata-visible",
+    "source": "local Graphify graph.json output",
+    "limitations": [
+      "Graphify confidence is producer metadata until Portolan inspects source directly",
+      "Only the adapter contract and confidence mapping are validated in this slice"
+    ],
+    "confidence_map": {
+      "EXTRACTED": "metadata-visible",
+      "INFERRED": "claim-only",
+      "AMBIGUOUS": "cannot_verify"
+    }
+  },
+  "limitations": [
+    "Does not import or normalize full Graphify graph payloads",
+    "Does not run Graphify or start its MCP server",
+    "LLM-derived or ambiguous producer facts remain weak evidence"
+  ]
+}

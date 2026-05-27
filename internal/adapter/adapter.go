@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 const SchemaVersion = "0.1.0"
@@ -53,9 +54,10 @@ type Privacy struct {
 }
 
 type Evidence struct {
-	DefaultState string   `json:"default_state"`
-	Source       string   `json:"source"`
-	Limitations  []string `json:"limitations"`
+	DefaultState  string            `json:"default_state"`
+	Source        string            `json:"source"`
+	Limitations   []string          `json:"limitations"`
+	ConfidenceMap map[string]string `json:"confidence_map,omitempty"`
 }
 
 type Command struct {
@@ -180,6 +182,7 @@ func Validate(contract Contract) error {
 	if contract.Evidence.Source == "" {
 		problems = append(problems, "evidence.source is required")
 	}
+	validateConfidenceMap(contract.Evidence.ConfidenceMap, &problems)
 	if len(contract.Limitations) == 0 {
 		problems = append(problems, "limitations must not be empty")
 	}
@@ -192,6 +195,27 @@ func Validate(contract Contract) error {
 		return errors.New("invalid adapter contract: " + joinProblems(problems))
 	}
 	return nil
+}
+
+func validateConfidenceMap(confidenceMap map[string]string, problems *[]string) {
+	for producerState, portolanState := range confidenceMap {
+		normalizedProducerState := strings.ToUpper(strings.TrimSpace(producerState))
+		if normalizedProducerState == "" {
+			*problems = append(*problems, "evidence.confidence_map keys must not be empty")
+			continue
+		}
+		if !allowedEvidenceStates[portolanState] {
+			*problems = append(*problems, fmt.Sprintf("evidence.confidence_map.%s maps to unsupported evidence state", normalizedProducerState))
+			continue
+		}
+		if portolanState == "source-visible" || portolanState == "runtime-visible" {
+			*problems = append(*problems, fmt.Sprintf("evidence.confidence_map.%s must not map to source-visible or runtime-visible without Portolan source/runtime inspection", normalizedProducerState))
+			continue
+		}
+		if (normalizedProducerState == "INFERRED" || normalizedProducerState == "AMBIGUOUS") && portolanState == "metadata-visible" {
+			*problems = append(*problems, fmt.Sprintf("evidence.confidence_map.%s must remain weak evidence", normalizedProducerState))
+		}
+	}
 }
 
 func joinProblems(problems []string) string {
