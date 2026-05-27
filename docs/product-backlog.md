@@ -105,7 +105,7 @@ fixtures are preflight evidence only.
 | P4-036 | `specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Implemented and merged via PR #16; GitHub checks not_assessed |
 | P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Implemented and merged via PR #17; GitHub checks not_assessed |
 | P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Implemented and merged via PR #18; GitHub checks not_assessed |
-| P4-039 | `specs/039-bounded-jscpd-profile/` | Near-clone duplication claims are validated only through a bounded local jscpd profile, or kept failed, blocked, or not_assessed. | Ready-for-review PR #19; GitHub checks not_assessed |
+| P4-039 | `specs/039-bounded-jscpd-profile/` | Near-clone duplication claims are validated only through a bounded local jscpd profile, or kept failed, blocked, or not_assessed. | Implemented and merged via PR #19; GitHub checks not_assessed |
 
 ## Backlog Rules
 
