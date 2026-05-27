@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready-for-review PR #20; adapter-contract validation and GitHub CI verified; full OSS imports remain not_assessed
+**Status**: Merged via PR #20; adapter-contract validation and GitHub CI verified; full OSS imports remain not_assessed
 
 **Input**: Product direction: Portolan should avoid Not Invented Here and normalize outputs from tools such as Graphify, SCIP/Serena-style symbol indexes, and Repomix instead of rebuilding them.
 

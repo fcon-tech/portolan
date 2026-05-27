@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready-for-review PR #20; runtime/security smoke and GitHub CI verified; merge approval not_assessed
+**Status**: Merged via PR #20; runtime/security smoke and GitHub CI verified
 
 **Input**: Product-readiness gap: runtime topology remains `not_assessed`, and external product use needs a clear untrusted-artifact security boundary before adding richer agent/query surfaces.
 

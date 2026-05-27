@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready-for-review PR #20; local baseline/install smoke and GitHub CI verified; merge approval not_assessed
+**Status**: Merged via PR #20; local baseline/install smoke and GitHub CI verified
 
 **Input**: Product-readiness gap: Portolan has a working local product kernel, but external users still lack a versioned release, CI proof, and clean-checkout install smoke.
 
