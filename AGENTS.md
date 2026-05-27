@@ -88,22 +88,19 @@ When asked to take the next ready spec into implementation:
   root-level review clutter.
 - Treat empty, hung, malformed, stale, or off-topic model output as
   `not_assessed`. Do not count it as review evidence.
-- Ordinary implementation slice reviews must use `pi` subscription lanes first:
-  `openrouter/deepseek/deepseek-v4-pro`,
-  `openrouter/minimax/minimax-m2.7`, and `zai/glm-5.1`. Use DeepSeek V4 Pro by
-  default because `kimi-coding/kimi-for-coding` timed out on bounded review
-  prompts. Use OpenRouter MiniMax by default because direct
-  `minimax/MiniMax-M2.7` returned `404 page not found` in smoke tests. If one is
-  unavailable, record that lane as `not_assessed` and explain the substitution
-  or omission in the review disposition.
+- Ordinary implementation slice reviews should use `pi` as the default review
+  harness and choose independent lanes from the repo review roster in
+  `docs/review-harness-benchmark.md`. Start with subscription/provider-direct
+  lanes where they are live, then use the documented OpenRouter fallback for the
+  same model family before replacing the lane.
 - Every implementation or PR review iteration must end with three assessed
   independent review lanes plus any required repo-grounded local review.
   Failed, empty, hung, malformed, unavailable, stale, off-topic, or
-  `not_assessed` lanes do not count toward the three. If a default lane is not
-  usable, choose an explicit replacement from the enabled non-GPT model list,
-  record the original lane, failure reason, replacement lane, and why the
-  replacement is acceptable. Do not use GPT-family models as independent review
-  evidence because Codex itself is already GPT-family.
+  `not_assessed` lanes do not count toward the three. If a default or roster
+  lane is not usable, choose an explicit replacement from enabled non-GPT
+  models, record the original lane, failure reason, replacement lane, and why
+  the replacement is acceptable. Do not use GPT-family models as independent
+  review evidence because Codex itself is already GPT-family.
 - Fix accepted review findings in the spec/task contract before implementation
   when they affect scope, safety, evidence semantics, or testability.
 - Implement in task slices. Each slice must have focused tests or an explicit
@@ -139,16 +136,14 @@ When asked to review and improve an existing PR:
 - Reconstruct the current PR head, diff, draft state, merge state, check state,
   and review artifacts first.
 - Use at least two independent review lanes when the PR touches evidence
-  semantics, path/output safety, schemas, or CLI behavior. Default PR review
-  lanes are `openrouter/deepseek/deepseek-v4-pro`,
-  `openrouter/qwen/qwen3.6-plus`, and
-  `openrouter/~google/gemini-pro-latest` through `pi`, plus a repo-grounded
-  local review lane. Verify exact enabled model IDs from
-  `~/.pi/agent/settings.json` before launch; if any default lane is unavailable
-  or fails before producing review output, record it as `not_assessed` or
-  `failed` and run an explicit enabled non-GPT replacement lane until three
-  assessed independent review lanes are available. Do not silently substitute
-  another Gemini, Qwen, MiniMax, or GPT-family model.
+  semantics, path/output safety, schemas, or CLI behavior; serious or risky PRs
+  still need three assessed independent non-GPT lanes. Choose lanes from
+  `docs/review-harness-benchmark.md`, include a repo-grounded local review lane,
+  and verify exact enabled model IDs from `~/.pi/agent/settings.json` before
+  launch. If a requested model is unavailable or fails before producing review
+  output, record it as `not_assessed` or `failed` and run an explicit enabled
+  non-GPT replacement lane until the required assessed coverage is available.
+  Do not silently substitute another Gemini, Qwen, MiniMax, or GPT-family model.
 - Verify every accepted finding locally before editing. Do not patch from model
   text alone.
 - Record degraded review lanes explicitly. A missing Claude/Gemini result is
