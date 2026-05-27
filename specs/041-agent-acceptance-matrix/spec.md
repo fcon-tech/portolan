@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-27
 
-**Status**: Ready-for-review PR #20; Codex single-repo self-target lane and GitHub CI verified; non-Codex/external lanes remain not_assessed
+**Status**: Merged via PR #20; Codex single-repo self-target lane and GitHub CI verified; non-Codex/external lanes remain not_assessed
 
 **Input**: Product-readiness gap: Portolan's value is validated narrowly on fixed local Bigtop with headless Cursor; broader agent and target acceptance remains `not_assessed`.
 

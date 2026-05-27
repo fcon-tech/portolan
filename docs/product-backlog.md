@@ -114,11 +114,11 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P5-040 | `specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Ready-for-review PR #20; local baseline/install smoke and GitHub CI verified; merge approval not_assessed |
-| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Ready-for-review PR #20; Codex single-repo self-target lane verified; other matrix cells remain not_assessed |
-| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Ready-for-review PR #20; Graphify adapter-contract fixture verified; full imports remain not_assessed |
-| P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Ready-for-review PR #20; query smoke and GitHub CI verified; merge approval not_assessed |
-| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Ready-for-review PR #20; runtime/security smoke and GitHub CI verified; merge approval not_assessed |
+| P5-040 | `specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Merged via PR #20; local baseline/install smoke and GitHub CI verified |
+| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Merged via PR #20; Codex single-repo self-target lane verified; other matrix cells remain not_assessed |
+| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Merged via PR #20; Graphify adapter-contract fixture verified; full imports remain not_assessed |
+| P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Merged via PR #20; query smoke and GitHub CI verified |
+| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Merged via PR #20; runtime/security smoke and GitHub CI verified |
 
 ## Backlog Rules
 
