@@ -1995,6 +1995,60 @@ func TestRunMapFullCorpusRequiresManifest(t *testing.T) {
 	}
 }
 
+func TestRunMapSelectionReportsExtraLocalRepositoryScope(t *testing.T) {
+	root := t.TempDir()
+	api := filepath.Join(root, "api")
+	extra := filepath.Join(root, "extra-tooling")
+	mustMkdir(t, api)
+	mustMkdir(t, extra)
+	manifest := filepath.Join(root, "manifest.json")
+	mustWrite(t, manifest, `{
+		"schema_version":"0.1.0",
+		"id":"fixture-estate",
+		"targets":[
+			{"id":"api","label":"API","kind":"repository","lifecycle":"active","role":"service","evidence_state":"metadata-visible"},
+			{"id":"worker","label":"Worker","kind":"repository","lifecycle":"active","role":"service","evidence_state":"metadata-visible"}
+		]
+	}`)
+	selection := filepath.Join(root, "selection.json")
+	mustWrite(t, selection, `{
+		"schema_version":"0.1.0",
+		"corpus_manifest":"manifest.json",
+		"targets":[
+			{"id":"api","kind":"repository","path":"api"},
+			{"id":"extra-tooling","kind":"repository","path":"extra-tooling"}
+		]
+	}`)
+	out := filepath.Join(root, "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selection, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	coverage := readJSONFile(t, filepath.Join(out, "coverage.json"))
+	summary := coverage["summary"].(map[string]any)
+	if summary["status:extra"] != float64(1) || summary["status:missing"] != float64(1) {
+		t.Fatalf("coverage summary = %#v, want extra and missing scope counts", summary)
+	}
+	runSummary := readJSONFile(t, filepath.Join(out, "summary.json"))
+	coverageSummary := runSummary["coverage"].(map[string]any)
+	weakRecords := coverageSummary["weak_records"].([]any)
+	seen := map[string]bool{}
+	for _, raw := range weakRecords {
+		record := raw.(map[string]any)
+		seen[record["id"].(string)] = true
+		if record["id"] == "extra:extra-tooling" && (record["status"] != "extra" || record["evidence_state"] != "source-visible") {
+			t.Fatalf("extra weak record = %#v, want extra source-visible", record)
+		}
+	}
+	if !seen["extra:extra-tooling"] || !seen["manifest:worker"] {
+		t.Fatalf("weak coverage records = %#v, want extra and missing records", weakRecords)
+	}
+}
+
 func TestRunMapSelectionMapAgreesWithCoverageSummary(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer

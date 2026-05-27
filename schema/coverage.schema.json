@@ -60,7 +60,7 @@
         },
         "status": {
           "type": "string",
-          "enum": ["visible", "represented", "missing", "cannot_verify", "unknown", "not_assessed", "blocked"]
+          "enum": ["visible", "represented", "missing", "extra", "cannot_verify", "unknown", "not_assessed", "blocked"]
         },
         "evidence_state": {
           "type": "string",

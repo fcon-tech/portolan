@@ -227,6 +227,7 @@ func recordsForManifest(sel selection.Selection, manifest Manifest, manifestPath
 	for _, target := range sel.Targets {
 		selected[target.ID] = target
 	}
+	expected := map[string]struct{}{}
 	records := []Record{{
 		ID:            manifest.ID,
 		Kind:          "corpus-manifest",
@@ -236,6 +237,7 @@ func recordsForManifest(sel selection.Selection, manifest Manifest, manifestPath
 		Reason:        "corpus manifest visible",
 	}}
 	for _, target := range manifest.Targets {
+		expected[target.ID] = struct{}{}
 		record := Record{
 			ID:            "manifest:" + target.ID,
 			Kind:          "manifest-" + target.Kind,
@@ -247,7 +249,10 @@ func recordsForManifest(sel selection.Selection, manifest Manifest, manifestPath
 		selectedTarget, ok := selected[target.ID]
 		if requiresSourceRepository(target) {
 			if !ok {
-				record.Status = "blocked"
+				record.Status = "missing"
+				if sel.RequireFullCorpus {
+					record.Status = "blocked"
+				}
 				record.EvidenceState = string(graph.Unknown)
 				record.Reason = "required active or external source repository is absent from selection"
 			} else if !sourceVisibleDirectory(selectedTarget.Path) {
@@ -261,6 +266,24 @@ func recordsForManifest(sel selection.Selection, manifest Manifest, manifestPath
 				record.Source = selectedTarget.Path
 				record.Reason = "required source repository is local and visible"
 			}
+		}
+		records = append(records, record)
+	}
+	for _, target := range sel.Targets {
+		if _, ok := expected[target.ID]; ok {
+			continue
+		}
+		record := pathRecord("extra:"+target.ID, "selected-extra-"+target.Kind, string(graph.SourceVisible), target.Path, true)
+		switch record.Status {
+		case "visible":
+			record.Status = "extra"
+			record.Reason = "selected local target is visible but absent from corpus manifest"
+		case "missing":
+			record.Status = "cannot_verify"
+			record.Reason = "selected local target is absent from corpus manifest, but local path is missing"
+		default:
+			record.Status = "cannot_verify"
+			record.Reason = "selected local target is absent from corpus manifest, but local path cannot be verified"
 		}
 		records = append(records, record)
 	}
