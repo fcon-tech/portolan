@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-26
 
-**Status**: Implemented locally; PR review pending
+**Status**: Ready-for-review PR #17; merge approval not_assessed
 
 **Input**: User description: "The project needs a clear product-level taxonomy
 for relationships so phrases like runtime service topology are understandable
