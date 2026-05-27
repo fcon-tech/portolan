@@ -14,9 +14,8 @@ Base: `main`
 - `verified`: head branch is `codex/productization-delivery-integration`.
 - `verified`: base branch is `main`.
 - `verified`: merge state reported `CLEAN`.
-- `verified`: GitHub CI `Baseline` passed in 34s.
-- `verified`: CI job URL:
-  https://github.com/fcon-tech/portolan/actions/runs/26523944496/job/78122418993
+- `verified`: GitHub CI `Baseline` passed for the PR head as observed through
+  `gh run watch` / PR checks.
 - `not_assessed`: GitHub review approval; `reviewDecision` was empty.
 - `not_assessed`: ready-to-merge approval. No merge was requested.
 
