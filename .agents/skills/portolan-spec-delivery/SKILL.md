@@ -116,30 +116,20 @@ Run independent review lanes. Prefer:
 - model lanes through `pi` when useful, using enabled models from
   `~/.pi/agent/settings.json`.
 
-Default slice-review model lanes:
-
-- `openrouter/deepseek/deepseek-v4-pro`
-- `openrouter/minimax/minimax-m2.7`
-- `zai/glm-5.1`
-
-These are the normal subscription-backed slice reviewers. Use all three for
-ordinary implementation slices unless the slice is purely mechanical or
-documentation-only. `openrouter/deepseek/deepseek-v4-pro` replaced
-`kimi-coding/kimi-for-coding` after Kimi passed smoke tests but timed out on
-bounded review prompts. The direct `minimax/MiniMax-M2.7` provider lane is not
-the default because it returned `404 page not found` in smoke tests; use the
-OpenRouter MiniMax lane unless the direct provider is explicitly revalidated and
-approved. If a lane is unavailable, empty, stale, or off-task, mark it
+Choose slice-review model lanes from the repo review roster in
+`docs/review-harness-benchmark.md`. Use `pi` as the default review harness.
+Start with subscription/provider-direct lanes where they are live, then use the
+documented OpenRouter fallback for the same model family before replacing the
+lane. If a lane is unavailable, empty, stale, or off-task, mark it
 `not_assessed` and do not count it toward coverage.
 
 Each review iteration must produce three assessed independent review lanes.
 Failed, empty, hung, malformed, unavailable, stale, off-topic, or
-`not_assessed` lanes do not count toward the three. If a default lane cannot be
-used, choose an explicit replacement from enabled non-GPT models in
-`~/.pi/agent/settings.json`, record the original lane, failure reason,
-replacement lane, and why the replacement is acceptable. Do not count
-GPT-family models as independent review evidence because Codex itself is already
-GPT-family.
+`not_assessed` lanes do not count toward the three. If a roster lane cannot be
+used, choose an explicit replacement from enabled non-GPT models, record the
+original lane, failure reason, replacement lane, and why the replacement is
+acceptable. Do not count GPT-family models as independent review evidence
+because Codex itself is already GPT-family.
 
 Write review dispositions under:
 
@@ -249,18 +239,16 @@ Before marking a PR ready:
 3. Re-check requirements drift and product-vision drift against the actual PR
    diff. Record the result in the PR review disposition or readiness closeout;
    do not rely only on pre-implementation review.
-4. Run independent review lanes. Default PR review model lanes are:
-   - `openrouter/deepseek/deepseek-v4-pro`
-   - `openrouter/qwen/qwen3.6-plus`
-   - `openrouter/~google/gemini-pro-latest`
-   - one repo-grounded local reviewer
+4. Run independent review lanes from `docs/review-harness-benchmark.md`, plus
+   one repo-grounded local reviewer. Serious or risky PRs need three assessed
+   independent non-GPT model lanes.
 
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
-   Gemini Pro Latest is absent, record that lane as `not_assessed`; do not
-   silently substitute another Gemini model. If any default model lane fails or
-   is unavailable, run explicit enabled non-GPT replacement lanes until the PR
-   review has three assessed independent model lanes, or keep the PR draft and
-   record the blocker.
+   a requested model is absent, record that lane as `not_assessed`; do not
+   silently substitute another model. If any roster lane fails or is
+   unavailable, run explicit enabled non-GPT replacement lanes until the PR
+   review has the required assessed coverage, or keep the PR draft and record
+   the blocker.
 5. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
 6. Push, refresh PR state, and mark ready-for-review only when blockers are
