@@ -22,6 +22,23 @@ fact is present in the graph and how directly it was observed.
 - Derived summaries must preserve the weakest relevant evidence state.
 - Human-readable packets must be generated from the same graph as machine output.
 
+## Relationship Evidence Taxonomy
+
+Relationship claims have two separate axes: what relationship is being claimed,
+and what local evidence supports it. Reports must keep both axes visible.
+
+| Relationship kind | Evidence type | Can say | Must not claim |
+| --- | --- | --- | --- |
+| Source dependency | `source-visible` or `metadata-visible` | Local source or manifest coupling exists. | Runtime communication, service topology, or production behavior. |
+| Declared service/API | `metadata-visible` | A local catalog, contract, diagram, manifest, or imported tool output declares intended architecture. | That the declaration is current production behavior. |
+| Runtime communication | `runtime-visible` | Local runtime evidence shows communication during the captured window. | Complete topology unless the supplied runtime evidence is complete. |
+| Ownership | `metadata-visible` or `claim-only` | A local source states team or system responsibility. | Operational accountability beyond the supplied source. |
+| Lifecycle | `metadata-visible` or `claim-only` | A local source states active, retired, legacy, or migration status. | Current lifecycle for unobserved systems. |
+
+Runtime topology is `not_assessed` when no local runtime observations were
+supplied. A missing relationship surface is not a clean result; keep it as
+`unknown`, `cannot_verify`, or `not_assessed` with the reason.
+
 ## Initial Graph Shape
 
 The draft graph has:

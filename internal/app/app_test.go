@@ -1477,6 +1477,39 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 			t.Fatalf("answer-contract.md missing %q:\n%s", want, answerContract)
 		}
 	}
+	contractText := string(answerContract)
+	taxonomyStart := strings.Index(contractText, "## Relationship Evidence Taxonomy")
+	if taxonomyStart < 0 {
+		t.Fatalf("answer-contract.md missing relationship taxonomy section:\n%s", answerContract)
+	}
+	taxonomyEnd := strings.Index(contractText[taxonomyStart+1:], "\n## ")
+	taxonomySection := contractText[taxonomyStart:]
+	if taxonomyEnd >= 0 {
+		taxonomySection = contractText[taxonomyStart : taxonomyStart+1+taxonomyEnd]
+	}
+	for _, want := range []string{
+		"Source dependency",
+		"Declared service/API",
+		"Runtime communication",
+		"Ownership",
+		"Lifecycle",
+		"Evidence type",
+		"`runtime-visible`",
+		"evidence-index.jsonl",
+		"tool-registry.json",
+		"gaps.jsonl",
+		"summary.json",
+		"graph-index.json",
+		"what talks to what?",
+		"`claim-only`",
+		"`unknown`",
+		"`cannot_verify`",
+		"runtime topology is `not_assessed`",
+	} {
+		if !strings.Contains(taxonomySection, want) {
+			t.Errorf("answer-contract.md relationship taxonomy missing %q:\n%s", want, taxonomySection)
+		}
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}

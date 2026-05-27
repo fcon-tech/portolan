@@ -132,6 +132,15 @@ OpenRouter MiniMax lane unless the direct provider is explicitly revalidated and
 approved. If a lane is unavailable, empty, stale, or off-task, mark it
 `not_assessed` and do not count it toward coverage.
 
+Each review iteration must produce three assessed independent review lanes.
+Failed, empty, hung, malformed, unavailable, stale, off-topic, or
+`not_assessed` lanes do not count toward the three. If a default lane cannot be
+used, choose an explicit replacement from enabled non-GPT models in
+`~/.pi/agent/settings.json`, record the original lane, failure reason,
+replacement lane, and why the replacement is acceptable. Do not count
+GPT-family models as independent review evidence because Codex itself is already
+GPT-family.
+
 Write review dispositions under:
 
 ```text
@@ -248,7 +257,10 @@ Before marking a PR ready:
 
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
    Gemini Pro Latest is absent, record that lane as `not_assessed`; do not
-   silently substitute another Gemini model.
+   silently substitute another Gemini model. If any default model lane fails or
+   is unavailable, run explicit enabled non-GPT replacement lanes until the PR
+   review has three assessed independent model lanes, or keep the PR draft and
+   record the blocker.
 5. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
 6. Push, refresh PR state, and mark ready-for-review only when blockers are

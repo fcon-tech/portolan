@@ -96,6 +96,14 @@ When asked to take the next ready spec into implementation:
   `minimax/MiniMax-M2.7` returned `404 page not found` in smoke tests. If one is
   unavailable, record that lane as `not_assessed` and explain the substitution
   or omission in the review disposition.
+- Every implementation or PR review iteration must end with three assessed
+  independent review lanes plus any required repo-grounded local review.
+  Failed, empty, hung, malformed, unavailable, stale, off-topic, or
+  `not_assessed` lanes do not count toward the three. If a default lane is not
+  usable, choose an explicit replacement from the enabled non-GPT model list,
+  record the original lane, failure reason, replacement lane, and why the
+  replacement is acceptable. Do not use GPT-family models as independent review
+  evidence because Codex itself is already GPT-family.
 - Fix accepted review findings in the spec/task contract before implementation
   when they affect scope, safety, evidence semantics, or testability.
 - Implement in task slices. Each slice must have focused tests or an explicit
@@ -132,12 +140,15 @@ When asked to review and improve an existing PR:
   and review artifacts first.
 - Use at least two independent review lanes when the PR touches evidence
   semantics, path/output safety, schemas, or CLI behavior. Default PR review
-  lanes are `deepseek/deepseek-v4-pro`, `qwen/qwen3.6-plus`, and
+  lanes are `openrouter/deepseek/deepseek-v4-pro`,
+  `openrouter/qwen/qwen3.6-plus`, and
   `openrouter/~google/gemini-pro-latest` through `pi`, plus a repo-grounded
   local review lane. Verify exact enabled model IDs from
-  `~/.pi/agent/settings.json` before launch; if Gemini Pro Latest is not
-  available, record the lane as `not_assessed` rather than silently
-  substituting another Gemini model.
+  `~/.pi/agent/settings.json` before launch; if any default lane is unavailable
+  or fails before producing review output, record it as `not_assessed` or
+  `failed` and run an explicit enabled non-GPT replacement lane until three
+  assessed independent review lanes are available. Do not silently substitute
+  another Gemini, Qwen, MiniMax, or GPT-family model.
 - Verify every accepted finding locally before editing. Do not patch from model
   text alone.
 - Record degraded review lanes explicitly. A missing Claude/Gemini result is
@@ -184,5 +195,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/034-cursor-comparison-validation/plan.md`
+`specs/037-relationship-evidence-taxonomy/plan.md`
 <!-- SPECKIT END -->
