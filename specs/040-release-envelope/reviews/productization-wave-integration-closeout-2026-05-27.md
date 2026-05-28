@@ -61,8 +61,10 @@ cherry-picking and resolving shared-file conflicts.
 
 - GitHub review approval.
 - Merge approval and ready-to-merge state.
-- UI Cursor/Composer and OpenCode acceptance lanes.
-- Full Graphify import, SCIP/Serena import, Repomix parsing, and Semgrep.
+- UI Cursor/Composer acceptance lanes.
+- Full semantic Graphify integration, SCIP protobuf/real indexer output, real
+  Serena export/MCP behavior, Repomix source/redaction semantics, and broad
+  Semgrep rule value.
 - Complete runtime topology and broad security certification.
 
 ## Stop Reason

@@ -4,9 +4,9 @@
 
 **Created**: 2026-05-27
 
-**Status**: Merged via PR #20; Codex single-repo self-target lane and GitHub CI verified; non-Codex/external lanes remain not_assessed
+**Status**: Merged via PR #20; later reconciled with Codex single-repo control, Cursor Agent CLI / Composer 2.5 Bigtop, and OpenCode + `kimi-for-coding/k2p6` single-repo, multi-repo, black-box, install-prompt, and default-permission lane evidence
 
-**Input**: Product-readiness gap: Portolan's value is validated narrowly on fixed local Bigtop with headless Cursor; broader agent and target acceptance remains `not_assessed`.
+**Input**: Product-readiness gap: Portolan's value is validated narrowly on fixed local Bigtop with headless Cursor; broader agent and target acceptance must be recorded with explicit `verified`, `failed`, `blocked`, `unknown`, or `not_assessed` states instead of implied product success.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -51,7 +51,7 @@ A product owner can update `docs/product-claims.md` only when the matrix evidenc
 **Acceptance Scenarios**:
 
 1. **Given** only one harness lane passes, **When** product claims are updated, **Then** the claim names that harness and target.
-2. **Given** UI Cursor/Composer is not run, **When** claims are reviewed, **Then** UI Cursor/Composer remains `not_assessed`.
+2. **Given** UI Cursor/Composer is outside the current release scope, **When** claims are reviewed, **Then** product wording uses only Cursor Agent CLI / Composer 2.5 evidence until a UI-specific lane is run.
 
 ### Edge Cases
 
@@ -66,7 +66,7 @@ A product owner can update `docs/product-claims.md` only when the matrix evidenc
 ### Functional Requirements
 
 - **FR-001**: The feature MUST define a harness-by-target acceptance matrix.
-- **FR-002**: The matrix MUST include at least Codex, Cursor UI/Composer, and one non-Cursor harness lane as planned lanes.
+- **FR-002**: The matrix MUST include at least Codex control, Cursor Agent CLI / Composer, and one non-Cursor harness lane as planned lanes. Cursor UI is optional additional evidence, not a release-blocking lane.
 - **FR-003**: The matrix MUST include at least single-repo, multi-repo, and black-box/metadata-heavy target shapes.
 - **FR-004**: Acceptance records MUST preserve `verified`, `failed`, `blocked`, `unknown`, and `not_assessed` states.
 - **FR-005**: Acceptance scoring MUST count unsupported claims and useful next actions separately.
@@ -83,12 +83,12 @@ A product owner can update `docs/product-claims.md` only when the matrix evidenc
 
 ### Measurable Outcomes
 
-- **SC-001**: The matrix has at least nine planned cells across three harnesses and three target shapes.
+- **SC-001**: The matrix has assessed cells covering Codex control, Cursor Agent CLI / Composer, OpenCode, and single-repo, multi-repo, and black-box/metadata-heavy target shapes.
 - **SC-002**: At least one lane is executed or explicitly blocked with evidence.
-- **SC-003**: Every unexecuted matrix cell is `not_assessed`, not omitted.
+- **SC-003**: Every required matrix cell is either `verified`, `failed`, `blocked`, or `unknown`; optional lanes outside release scope are named as non-goals rather than counted as acceptance blockers.
 - **SC-004**: `docs/product-claims.md` agrees with the acceptance ledger after implementation.
 
 ## Assumptions
 
-- Headless Cursor validation from spec 034 remains prior evidence but does not cover UI Cursor/Composer.
-- Not every lane must pass in this slice; the product value is the matrix plus honest state accounting.
+- Headless Cursor validation from spec 034 remains prior evidence but does not cover UI Cursor.
+- Not every optional harness must pass in this slice; the product value is the matrix plus honest state accounting.

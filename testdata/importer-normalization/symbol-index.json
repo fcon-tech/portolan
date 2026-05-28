@@ -1,0 +1,38 @@
+{
+  "producer": "scip-json-export",
+  "documents": [
+    {
+      "path": "cmd/app/main.go",
+      "language": "go",
+      "symbols": [
+        {
+          "id": "scip-go gomod example.com/app cmd/app/main.go main().",
+          "name": "main",
+          "kind": "function",
+          "role": "definition",
+          "range": "3:1-5:2"
+        },
+        {
+          "id": "scip-go gomod fmt Println().",
+          "name": "fmt.Println",
+          "kind": "function",
+          "role": "reference",
+          "range": "4:2-4:13"
+        }
+      ]
+    },
+    {
+      "path": "internal/app/app.go",
+      "language": "go",
+      "symbols": [
+        {
+          "id": "serena://internal/app/App",
+          "name": "App",
+          "kind": "type",
+          "role": "definition",
+          "range": "10:1-14:2"
+        }
+      ]
+    }
+  ]
+}
