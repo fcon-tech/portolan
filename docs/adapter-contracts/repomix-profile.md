@@ -6,27 +6,27 @@ evidence and not as a Portolan scanner replacement.
 ## Decision
 
 - Source: https://github.com/yamadashy/repomix
-- State: accepted as context-pack profile only.
+- State: accepted as context-pack profile and bounded file-inventory import.
 - License posture: MIT observed, `needs_review` before dependency or
   distribution changes.
-- Current Portolan behavior: no parser, no invocation, no committed packed
-  source fixture.
+- Current Portolan behavior: invoke installed Repomix as a local producer,
+  import local packed-output file paths as inventory metadata, no remote
+  packing, no MCP behavior, and no source-content architecture parsing.
 
 ## Supported Evidence Shape
 
-Supported for a future import-only adapter:
+Supported for the current producer/import adapter:
 
-- local output path and format (`json`, `xml`, `markdown`, or plain text);
-- file inventory when available;
+- local packed output path;
+- `<file path="...">` inventory from Repomix XML-style packed output;
 - directory structure when available;
-- token counts and split-output metadata when available;
-- security scan summary when available;
-- pack configuration metadata.
+- disabled-security-check warning detection.
 
 Evidence state:
 
 - file inventory, token counts, and pack metadata: `metadata-visible`;
 - packed source snippets: context only, not architecture truth;
+- disabled security-check pack source: `cannot_verify`;
 - inferred summaries or AI instructions embedded in a pack: `claim-only` or
   `cannot_verify`;
 - absence of a file from a pack: not proof that the source tree lacks it unless
@@ -34,25 +34,31 @@ Evidence state:
 
 ## Unsupported In This Slice
 
-- Running Repomix.
 - Remote repository packing.
 - Repomix MCP server behavior.
 - Parsing packed source content into Portolan graph facts.
-- Committing private packed outputs as fixtures.
+- Token counts, split-output metadata, security scan summaries, and pack
+  configuration semantics.
 - Treating token-heavy files or file order as technical-debt findings.
 
 ## Privacy And Safety
 
 Repomix outputs commonly include source snippets and may include sensitive
-content if security checks are disabled or incomplete. A future adapter must:
+content if security checks are disabled or incomplete. The current importer
+does not parse source snippets into facts. Future broader adapters must:
 
 - require redaction for committed/shared fixtures;
 - preserve security scan failures as `cannot_verify` or `blocked`;
 - keep remote packing outside Portolan's default local-first path;
 - record pack configuration so agents can see what was included or excluded.
 
-## Profile-Gated Commands
+## Validation
 
-Spec 042 does not add a Repomix command recipe. Future recipes should prefer
-local-only, JSON output, security checks enabled, explicit include/exclude
-patterns, and bounded split output.
+```bash
+go test -count=1 ./internal/app ./internal/importer
+go run ./cmd/portolan produce repomix --root /tmp/portolan-repomix-local/target --out /tmp/portolan-repomix-local/out/repomix-output.xml --style xml --force
+go run ./cmd/portolan import repomix --in testdata/importer-normalization/repomix-output.xml --out /tmp/portolan-repomix-import.json --force
+```
+
+Future producer recipes should prefer local-only output, security checks
+enabled, explicit include/exclude patterns, and bounded split output.

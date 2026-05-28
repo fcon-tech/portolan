@@ -1,27 +1,27 @@
 # Symbol Index Adapter Profile
 
-This profile covers SCIP and Serena-style symbol surfaces as future local
-inputs. The current slice is profile-only.
+This profile covers SCIP and Serena-style symbol surfaces as local producer
+exports. The current importer supports a bounded JSON export contract, not SCIP
+protobuf parsing or Serena daemon integration.
 
 ## Decision
 
 - SCIP source: https://github.com/scip-code/scip
 - Serena source: https://github.com/oraios/serena
-- State: accepted as profile/reference inputs; no direct dependency or daemon
-  behavior in spec 042.
+- State: accepted as profile/reference inputs and bounded JSON symbol-index
+  import; no direct dependency or daemon behavior.
 - License posture: SCIP Apache-2.0 observed; Serena MIT observed. Both remain
   `needs_review` before dependency or distribution changes.
 
 ## Supported Evidence Shape
 
-Supported for a future import-only adapter:
+Supported for the current import-only adapter:
 
 - document or file URI/path;
 - language identifier;
 - symbol ID/name/kind when exported locally;
 - definition/reference ranges;
-- package/module metadata;
-- local index generation metadata when supplied by the producer.
+- producer name.
 
 Evidence state:
 
@@ -39,6 +39,8 @@ Evidence state:
 - Treating symbol references as complete call graphs.
 - Treating IDE/LSP availability as proof of architecture relationships.
 - Importing protobuf or MCP protocols directly.
+- Package/module metadata and local index generation metadata beyond preserving
+  producer name.
 
 ## Privacy And Safety
 
@@ -49,8 +51,13 @@ Evidence state:
 - Preserve missing language coverage as `not_assessed`; do not collapse it into
   success.
 
-## Profile-Gated Commands
+## Validation
 
-Portolan may document local producer recipes in a future spec, but spec 042
-does not add executable recipes. Agents may use external tools separately, then
-present local outputs to Portolan after a reviewed adapter contract exists.
+```bash
+go test -count=1 ./internal/app ./internal/importer
+go run ./cmd/portolan import symbol-index --in testdata/importer-normalization/symbol-index.json --out /tmp/portolan-symbol-index-import.json --force
+```
+
+Agents may use external SCIP or Serena tooling separately, then present local
+exports to Portolan. Portolan does not start indexers, language servers, MCP
+servers, or HTTP servers.

@@ -69,7 +69,7 @@ fixtures are preflight evidence only.
 | P1-025 | `specs/025-oss-execution-plan/` | Context preparation emits `oss-plan.json` with safe local producer recipes for jscpd, Syft/CycloneDX, and Semgrep when outputs are missing. | Implemented |
 | P1-026 | `specs/026-local-binary-bootstrap/` | Source checkouts can build a repo-local `.portolan/bin/portolan` binary so agents do not depend on fragile `go run` execution. | Implemented |
 | P1-027 | `specs/027-agent-answer-contract/` | Context packs include an `answer-contract.md` that tells Cursor and other agents how to turn Portolan artifacts into CTO answers with explicit unknowns. | Implemented |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent blind lane degraded; gaps recorded |
+| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent CLI / Composer 2.5 blind Bigtop lane verified on the local landscape root; Cursor UI is outside the current required acceptance scope; complete ecosystem coverage remains unknown |
 
 ## P2: Build What Agent Runs Prove Is Missing
 
@@ -88,7 +88,7 @@ fixtures are preflight evidence only.
 | --- | --- | --- | --- |
 | P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
 | P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer and semantic search remain not_assessed |
+| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer is outside the current required acceptance scope; semantic search remains not_assessed |
 | P3-028 | `specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
@@ -103,8 +103,8 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P4-034 | `specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Accepted on fixed local Bigtop comparison for evidence discipline and next-action quality; UI Cursor/Composer, full ecosystem completeness, runtime topology, near-clone/SBOM duplication, and OSS producer execution remain not_assessed |
-| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Merged via PR #15 with Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep not_assessed |
+| P4-034 | `specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Accepted on fixed local Bigtop comparison for evidence discipline and next-action quality; UI Cursor/Composer is outside the current required acceptance scope; global ecosystem completeness, complete runtime topology, near-clone/SBOM duplication, and broad OSS producer value remain not_assessed |
+| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Merged via PR #15 with Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep later narrowed with local-config producer smoke |
 | P4-036 | `specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Implemented and merged via PR #16; GitHub checks not_assessed |
 | P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Implemented and merged via PR #17; GitHub checks not_assessed |
 | P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Implemented and merged via PR #18; GitHub checks not_assessed |
@@ -115,10 +115,10 @@ fixtures are preflight evidence only.
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P5-040 | `specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Merged via PR #20; local baseline/install smoke and GitHub CI verified |
-| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Merged via PR #20; Codex single-repo self-target lane verified; other matrix cells remain not_assessed |
-| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Merged via PR #20; Graphify adapter-contract fixture verified; full imports remain not_assessed |
+| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Merged via PR #20; Codex single-repo control, OpenCode + `kimi-for-coding/k2p6` single-repo/multi-repo/black-box, OpenCode English and Russian install prompts on one external single-repo target, OpenCode English install prompt on Bigtop, OpenCode repo-local default-permission output, and Cursor Agent CLI / Composer 2.5 Bigtop lanes verified; Cursor UI is outside the current required acceptance scope; OpenCode external default-permission output failed |
+| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Merged via PR #20; first-class Semgrep and Repomix producer execution, Graphify adapter-contract fixture, raw Graphify node-link import with source-backed `EXTRACTED` verification, bounded SCIP/Serena-style JSON symbol-index import, bounded Repomix file-inventory import, and Graphify/Repomix producer smokes verified; Graphify MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena export/MCP behavior, and Repomix source/redaction semantics remain not_assessed |
 | P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Merged via PR #20; query smoke and GitHub CI verified |
-| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Merged via PR #20; runtime/security smoke and GitHub CI verified |
+| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Merged via PR #20; runtime/security smoke and GitHub CI verified; local runtime observations verified as `runtime-visible`, partial topology guardrail verified as `unknown`, complete runtime topology remains not_assessed |
 
 ## Backlog Rules
 

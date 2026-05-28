@@ -1,0 +1,24 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+The content has been processed where security check has been disabled.
+
+<file_summary>
+<notes>
+- Security check has been disabled - content may contain sensitive information
+</notes>
+</file_summary>
+
+<directory_structure>
+main.go
+internal/app/app.go
+</directory_structure>
+
+<files>
+<file path="main.go">
+package main
+func main(){}
+</file>
+
+<file path="internal/app/app.go">
+package app
+</file>
+</files>

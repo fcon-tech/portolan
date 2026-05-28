@@ -6,17 +6,25 @@ Contract: `docs/agent/ACCEPTANCE.md`
 
 ## Matrix Snapshot
 
+This snapshot has been reconciled by later 2026-05-28 lane ledgers. Cursor UI
+lanes are outside the current required acceptance scope, and Codex is treated as
+a single-repo control lane rather than a requirement to repeat every target
+shape.
+
 | Cell ID | Harness | Target shape | State | Reason |
 | --- | --- | --- | --- | --- |
-| `codex-single-repo` | Codex | single-repo | `verified` | Ran locally with the blind prompt contract against the Portolan repository as a self-target; scoring is self-scored and independently reviewed only through slice review lanes; see `codex-single-repo-lane-2026-05-27.md`. |
-| `codex-multi-repo` | Codex | multi-repo | `not_assessed` | Lane not run in this slice. |
-| `codex-black-box` | Codex | black-box/metadata-heavy | `not_assessed` | Lane not run in this slice. |
-| `cursor-ui-single-repo` | Cursor UI/Composer | single-repo | `not_assessed` | UI lane not run in this slice. |
-| `cursor-ui-multi-repo` | Cursor UI/Composer | multi-repo | `not_assessed` | UI lane not run in this slice. |
-| `cursor-ui-black-box` | Cursor UI/Composer | black-box/metadata-heavy | `not_assessed` | UI lane not run in this slice. |
-| `opencode-single-repo` | OpenCode | single-repo | `not_assessed` | OpenCode lane not run in this slice. |
-| `opencode-multi-repo` | OpenCode | multi-repo | `not_assessed` | OpenCode lane not run in this slice. |
-| `opencode-black-box` | OpenCode | black-box/metadata-heavy | `not_assessed` | OpenCode lane not run in this slice. |
+| `codex-single-repo-control` | Codex | control / single-repo | `verified` | Ran locally with the blind prompt contract against the Portolan repository as a self-target; scoring is self-scored and independently reviewed only through slice review lanes; see `codex-single-repo-lane-2026-05-27.md`. |
+| `cursor-agent-bigtop` | Cursor Agent CLI + Composer 2.5 | multi-repo | `verified` | Ran the blind Bigtop operator protocol locally against `/home/fall_out_bug/projects/bigtop-landscape`; produced context and map artifacts through the generic workflow and preserved weak evidence states. This is not UI Cursor evidence; see `specs/007-apache-bigtop-corpus/reviews/cursor-composer25-bigtop-lane-2026-05-27.md`. |
+| `opencode-single-repo` | OpenCode + `kimi-for-coding/k2p6` | single-repo | `verified` | Ran locally with the blind prompt contract against the Portolan repository as a self-target using `kimi-for-coding/k2p6`; required OpenCode permission bypass for external output path; see `opencode-kimi-single-repo-lane-2026-05-27.md`. |
+| `opencode-multi-repo` | OpenCode + `kimi-for-coding/k2p6` | multi-repo | `verified` | Ran locally with the blind prompt contract against `/home/fall_out_bug/projects/bigtop-landscape`; produced context and map artifacts through generic root discovery and preserved weak evidence states; see `opencode-k2p6-multi-repo-bigtop-lane-2026-05-27.md`. |
+| `opencode-black-box` | OpenCode + `kimi-for-coding/k2p6` | black-box/metadata-heavy | `verified` | Ran locally with a black-box selection target; produced a map bundle with `metadata-visible`, `runtime-visible`, `claim-only`, `unknown`, and `not_assessed` evidence while refusing runtime-topology claims; see `opencode-k2p6-black-box-lane-2026-05-27.md`. |
+| `opencode-install-prompt-self` | OpenCode + `kimi-for-coding/k2p6` | install prompt / single-repo | `verified` | See `opencode-k2p6-install-prompt-lane-2026-05-27.md`. |
+| `opencode-ru-install-prompt-self` | OpenCode + `kimi-for-coding/k2p6` | Russian install prompt / single-repo | `verified` | See `opencode-k2p6-ru-install-prompt-lane-2026-05-27.md`. |
+| `opencode-install-prompt-bigtop` | OpenCode + `kimi-for-coding/k2p6` | install prompt / multi-repo | `verified` | See `opencode-k2p6-install-prompt-bigtop-lane-2026-05-28.md`. |
+| `opencode-install-prompt-external-single-repo` | OpenCode + `kimi-for-coding/k2p6` | install prompt / external single-repo | `verified` | See `opencode-k2p6-install-prompt-external-single-repo-lane-2026-05-28.md`. |
+| `opencode-ru-install-prompt-external-single-repo` | OpenCode + `kimi-for-coding/k2p6` | Russian install prompt / external single-repo | `verified` | See `opencode-k2p6-ru-install-prompt-external-single-repo-lane-2026-05-28.md`. |
+| `opencode-default-permission-external-output` | OpenCode + `kimi-for-coding/k2p6` | install prompt / external output permissions | `failed` | See `opencode-k2p6-default-permission-external-output-lane-2026-05-28.md`. |
+| `opencode-default-permission-internal-output` | OpenCode + `kimi-for-coding/k2p6` | install prompt / repo-local output permissions | `verified` | See `opencode-k2p6-default-permission-internal-output-lane-2026-05-28.md`. |
 
 ## Ledger Template
 

@@ -55,7 +55,7 @@
   self-discoverable from generic agent inputs.
 - [x] T020 Wait for `specs/015-blind-agent-acceptance/` to define the allowed
   target-agnostic prompt, run ledger, and status taxonomy.
-- [ ] T021 Run the blind protocol against a real local Apache Bigtop checkout.
+- [x] T021 Run the blind protocol against a real local Apache Bigtop checkout.
   - Status 2026-05-26: blocked on `specs/017-landscape-root-discovery/`.
     Cursor + Composer 2.5 is available, but handing it a generated
     `selection.json` would make the run non-blind and product-invalid.
@@ -66,13 +66,31 @@
     `/home/fall_out_bug/projects/bigtop-landscape/run`. Operator transcript is
     still pending, and generated selection preflight is not acceptance, so T021
     remains open.
-- [ ] T022 If the local Apache Bigtop checkout is absent, record the run as
+  - CLI stress 2026-05-27: generic root workflow ran without `selection.json`
+    against `/home/fall_out_bug/projects/bigtop-landscape` and wrote context
+    plus map artifacts under `/tmp/portolan-bigtop-generic-20260527221217`.
+    It discovered 18 `source-visible` child repositories and preserved
+    `unknown`, `cannot_verify`, and `not_assessed` states. This verifies the
+    Portolan CLI/root-discovery stress path but does not complete the Cursor +
+    Composer 2.5 operator transcript, so T021 remains open.
+  - Operator lane 2026-05-27: Cursor Agent CLI / Composer 2.5 ran the blind
+    protocol against `/home/fall_out_bug/projects/bigtop-landscape`, wrote
+    context plus map artifacts under
+    `/tmp/portolan-cursor-composer25-bigtop-20260527222530/agent-output`, and
+    produced a scored answer with local artifact citations plus explicit
+    `unknown`, `cannot_verify`, and `not_assessed` states. See
+    `reviews/cursor-composer25-bigtop-lane-2026-05-27.md`.
+- [x] T022 If the local Apache Bigtop checkout is absent, record the run as
   blocked or `not_assessed`; do not substitute the fixture as acceptance proof.
-  - Status 2026-05-26: still open. The missing evidence is the operator
-    transcript and concrete local target/selection path, not Cursor + Composer
-    availability.
-- [ ] T023 Update Bigtop gap ledger and product backlog only with generic
+  - Status 2026-05-27: not applicable for the completed lane because the local
+    Apache Bigtop checkout was present at
+    `/home/fall_out_bug/projects/bigtop-landscape`.
+- [x] T023 Update Bigtop gap ledger and product backlog only with generic
   product gaps proven by the blind run.
+  - Status 2026-05-27: updated the Bigtop operator ledger and product claim
+    surface with the generic root-discovery limits, OSS producer gaps, and
+    weak evidence states proven by the blind run. No Bigtop-specific product
+    behavior was promoted.
 
 ## Deferred Work
 

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/fall-out-bug/portolan/internal/adapter"
 	"github.com/fall-out-bug/portolan/internal/contextprep"
@@ -43,6 +46,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runPacket(args[1:], stdout, stderr)
 	case "import":
 		return runImport(args[1:], stdout, stderr)
+	case "produce":
+		return runProduce(args[1:], stdout, stderr)
 	case "diff":
 		return runDiff(args[1:], stdout, stderr)
 	case "map":
@@ -60,6 +65,345 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runProduce(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
+		writeProduceUsage(stdout)
+		return 0
+	}
+	switch args[0] {
+	case "semgrep":
+		return runProduceSemgrep(args[1:], stdout, stderr)
+	case "repomix":
+		return runProduceRepomix(args[1:], stdout, stderr)
+	case "graphify":
+		return runProduceGraphify(args[1:], stdout, stderr)
+	default:
+		fmt.Fprintf(stderr, "unknown produce command %q\nRun 'portolan produce --help' for available subcommands.\n", args[0])
+		return 2
+	}
+}
+
+func runProduceGraphify(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeProduceGraphifyUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("produce graphify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	rootPath := flags.String("root", "", "local target root")
+	outputDir := flags.String("out", "", "output directory for graphify-out")
+	graphifyBin := flags.String("graphify", "graphify", "installed Graphify executable")
+	force := flags.Bool("force", false, "overwrite an existing output directory")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeProduceGraphifyUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected produce graphify argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *rootPath == "" || *outputDir == "" {
+		fmt.Fprintln(stderr, "produce graphify: --root and --out are required")
+		return 2
+	}
+	if err := validateProducerOutputDir(*outputDir, *force); err != nil {
+		fmt.Fprintf(stderr, "produce graphify: %v\n", err)
+		return 2
+	}
+	rootInfo, err := os.Stat(*rootPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "produce graphify: inspect root: %v\n", err)
+		return 2
+	}
+	if !rootInfo.IsDir() {
+		fmt.Fprintln(stderr, "produce graphify: root must be a directory")
+		return 2
+	}
+	if err := os.MkdirAll(*outputDir, 0o755); err != nil {
+		fmt.Fprintf(stderr, "produce graphify: create output directory: %v\n", err)
+		return 2
+	}
+
+	stagedRoot := filepath.Join(*outputDir, "source-copy")
+	if err := copyProducerTree(*rootPath, stagedRoot); err != nil {
+		fmt.Fprintf(stderr, "produce graphify: stage source copy: %v\n", err)
+		return 2
+	}
+
+	cmd := exec.Command(*graphifyBin, "update", stagedRoot, "--force", "--no-cluster")
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(stderr, "produce graphify: %v\n", err)
+		return 1
+	}
+	graphPath := filepath.Join(stagedRoot, "graphify-out", "graph.json")
+	info, err := os.Stat(graphPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "produce graphify: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", graphPath, info.Size())
+	return 0
+}
+
+func runProduceRepomix(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeProduceRepomixUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("produce repomix", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	rootPath := flags.String("root", "", "local target root")
+	outputPath := flags.String("out", "", "output Repomix file")
+	style := flags.String("style", "xml", "repomix output style")
+	noSecurityCheck := flags.Bool("no-security-check", false, "pass --no-security-check to Repomix")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeProduceRepomixUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected produce repomix argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *rootPath == "" || *outputPath == "" {
+		fmt.Fprintln(stderr, "produce repomix: --root and --out are required")
+		return 2
+	}
+	if *style != "xml" && *style != "markdown" && *style != "plain" {
+		fmt.Fprintln(stderr, "produce repomix: --style must be xml, markdown, or plain")
+		return 2
+	}
+	if err := validateProducerOutputPath(*outputPath, *force); err != nil {
+		fmt.Fprintf(stderr, "produce repomix: %v\n", err)
+		return 2
+	}
+	if _, err := os.Stat(*rootPath); err != nil {
+		fmt.Fprintf(stderr, "produce repomix: inspect root: %v\n", err)
+		return 2
+	}
+
+	cmdArgs := []string{*rootPath, "--output", *outputPath, "--style", *style}
+	if *noSecurityCheck {
+		cmdArgs = append(cmdArgs, "--no-security-check")
+	}
+	cmd := exec.Command("repomix", cmdArgs...)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(stderr, "produce repomix: %v\n", err)
+		return 1
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "produce repomix: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
+func runProduceSemgrep(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeProduceSemgrepUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("produce semgrep", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	rootPath := flags.String("root", "", "local target root")
+	configPath := flags.String("config", "", "local Semgrep config")
+	outputPath := flags.String("out", "", "output Semgrep JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeProduceSemgrepUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected produce semgrep argument %q\n", flags.Arg(0))
+		return 2
+	}
+	if *rootPath == "" || *configPath == "" || *outputPath == "" {
+		fmt.Fprintln(stderr, "produce semgrep: --root, --config, and --out are required")
+		return 2
+	}
+	if err := validateProducerOutputPath(*outputPath, *force); err != nil {
+		fmt.Fprintf(stderr, "produce semgrep: %v\n", err)
+		return 2
+	}
+	if _, err := os.Stat(*rootPath); err != nil {
+		fmt.Fprintf(stderr, "produce semgrep: inspect root: %v\n", err)
+		return 2
+	}
+	if _, err := os.Stat(*configPath); err != nil {
+		fmt.Fprintf(stderr, "produce semgrep: inspect config: %v\n", err)
+		return 2
+	}
+
+	cmd := exec.Command("semgrep", "scan", "--config", *configPath, "--json", "--json-output", *outputPath, "--metrics=off", *rootPath)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(stderr, "produce semgrep: %v\n", err)
+		return 1
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "produce semgrep: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
+func validateProducerOutputPath(path string, force bool) error {
+	parent := filepath.Dir(path)
+	info, err := os.Stat(parent)
+	if err != nil {
+		return fmt.Errorf("output parent must exist: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("output parent is not a directory")
+	}
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("output path must not be a symlink")
+		}
+		if info.IsDir() {
+			return fmt.Errorf("output path must not be a directory")
+		}
+		if !force {
+			return fmt.Errorf("output path already exists; use --force to overwrite")
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect output path: %w", err)
+	}
+	return nil
+}
+
+func validateProducerOutputDir(path string, force bool) error {
+	parent := filepath.Dir(path)
+	info, err := os.Stat(parent)
+	if err != nil {
+		return fmt.Errorf("output parent must exist: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("output parent is not a directory")
+	}
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("output directory must not be a symlink")
+		}
+		if !info.IsDir() {
+			return fmt.Errorf("output path already exists and is not a directory")
+		}
+		if !force {
+			return fmt.Errorf("output directory already exists; use --force to overwrite")
+		}
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("remove existing output directory: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("inspect output directory: %w", err)
+	}
+	return nil
+}
+
+func copyProducerTree(srcRoot string, dstRoot string) error {
+	srcRoot, err := filepath.Abs(srcRoot)
+	if err != nil {
+		return err
+	}
+	dstRoot, err = filepath.Abs(dstRoot)
+	if err != nil {
+		return err
+	}
+	return filepath.WalkDir(srcRoot, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		absPath, err := filepath.Abs(path)
+		if err != nil {
+			return err
+		}
+		if pathWithin(absPath, dstRoot) {
+			if entry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		rel, err := filepath.Rel(srcRoot, path)
+		if err != nil {
+			return err
+		}
+		name := entry.Name()
+		if entry.IsDir() && rel != "." && (name == ".git" || name == ".portolan" || name == "graphify-out") {
+			return filepath.SkipDir
+		}
+		if strings.HasPrefix(rel, "..") {
+			return fmt.Errorf("source path escaped root: %s", path)
+		}
+		dstPath := filepath.Join(dstRoot, rel)
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if info.Mode()&os.ModeSymlink != 0 {
+			return nil
+		}
+		if entry.IsDir() {
+			return os.MkdirAll(dstPath, info.Mode().Perm())
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		if err := os.MkdirAll(filepath.Dir(dstPath), 0o755); err != nil {
+			return err
+		}
+		return copyProducerFile(path, dstPath, info.Mode().Perm())
+	})
+}
+
+func pathWithin(path string, root string) bool {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
+}
+
+func copyProducerFile(srcPath string, dstPath string, perm os.FileMode) error {
+	src, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, perm)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(dst, src); err != nil {
+		_ = dst.Close()
+		return err
+	}
+	return dst.Close()
 }
 
 func runQuery(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -429,6 +773,12 @@ func runImport(args []string, stdout io.Writer, stderr io.Writer) int {
 	switch args[0] {
 	case "cyclonedx":
 		return runImportCycloneDX(args[1:], stdout, stderr)
+	case "graphify":
+		return runImportGraphify(args[1:], stdout, stderr)
+	case "repomix":
+		return runImportRepomix(args[1:], stdout, stderr)
+	case "symbol-index":
+		return runImportSymbolIndex(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown import command %q\nRun 'portolan import --help' for available subcommands.\n", args[0])
 		return 2
@@ -475,6 +825,146 @@ func runImportCycloneDX(args []string, stdout io.Writer, stderr io.Writer) int {
 	info, err := os.Stat(*outputPath)
 	if err != nil {
 		fmt.Fprintf(stderr, "import cyclonedx: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
+func runImportGraphify(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeImportGraphifyUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("import graphify", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	inputPath := flags.String("in", "", "local Graphify graph.json file")
+	outputPath := flags.String("out", "", "output evidence graph JSON path")
+	rootPath := flags.String("root", "", "optional local source root for source-backed EXTRACTED facts")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeImportGraphifyUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected import graphify argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	g, err := importer.RunGraphify(importer.Options{
+		InputPath:  *inputPath,
+		OutputPath: *outputPath,
+		RootPath:   *rootPath,
+		Force:      *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "import graphify: %v\n", err)
+		return 2
+	}
+	if err := importer.Write(*outputPath, g, *force); err != nil {
+		fmt.Fprintf(stderr, "import graphify: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "import graphify: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
+func runImportRepomix(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeImportRepomixUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("import repomix", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	inputPath := flags.String("in", "", "local Repomix packed output file")
+	outputPath := flags.String("out", "", "output evidence graph JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeImportRepomixUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected import repomix argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	g, err := importer.RunRepomix(importer.Options{
+		InputPath:  *inputPath,
+		OutputPath: *outputPath,
+		Force:      *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "import repomix: %v\n", err)
+		return 2
+	}
+	if err := importer.Write(*outputPath, g, *force); err != nil {
+		fmt.Fprintf(stderr, "import repomix: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "import repomix: inspect output: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
+	return 0
+}
+
+func runImportSymbolIndex(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
+		writeImportSymbolIndexUsage(stdout)
+		return 0
+	}
+
+	flags := flag.NewFlagSet("import symbol-index", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	inputPath := flags.String("in", "", "local symbol-index JSON export")
+	outputPath := flags.String("out", "", "output evidence graph JSON path")
+	force := flags.Bool("force", false, "overwrite an existing output file")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writeImportSymbolIndexUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected import symbol-index argument %q\n", flags.Arg(0))
+		return 2
+	}
+
+	g, err := importer.RunSymbolIndex(importer.Options{
+		InputPath:  *inputPath,
+		OutputPath: *outputPath,
+		Force:      *force,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "import symbol-index: %v\n", err)
+		return 2
+	}
+	if err := importer.Write(*outputPath, g, *force); err != nil {
+		fmt.Fprintf(stderr, "import symbol-index: %v\n", err)
+		return 2
+	}
+	info, err := os.Stat(*outputPath)
+	if err != nil {
+		fmt.Fprintf(stderr, "import symbol-index: inspect output: %v\n", err)
 		return 2
 	}
 	fmt.Fprintf(stdout, "wrote %s (%d bytes)\n", *outputPath, info.Size())
@@ -682,6 +1172,12 @@ func writeUsage(w io.Writer) {
 Usage:
   portolan --version
   portolan import cyclonedx --in bom.cdx.json --out graph.json
+  portolan import graphify --in graphify-out/graph.json --out graph.json
+  portolan import repomix --in repomix-output.xml --out graph.json
+  portolan import symbol-index --in symbols.json --out graph.json
+  portolan produce semgrep --root . --config .semgrep.yml --out semgrep.json
+  portolan produce repomix --root . --out repomix-output.xml
+  portolan produce graphify --root . --out graphify-run
   portolan context prepare --root . --out .portolan/context --profile cursor
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
@@ -697,6 +1193,90 @@ Usage:
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
+`)
+}
+
+func writeProduceUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan produce semgrep --root . --config .semgrep.yml --out semgrep.json [--force]
+  portolan produce repomix --root . --out repomix-output.xml [--style xml] [--force]
+  portolan produce graphify --root . --out graphify-run [--force]
+
+Run supported local OSS producers into explicit output files.
+
+Produce commands are local-first, make no network calls by themselves, and do
+not mutate the target root. They require the named OSS tool to be installed and
+write only to the selected output path.
+`)
+}
+
+func writeProduceSemgrepUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan produce semgrep --root . --config .semgrep.yml --out semgrep.json [--force]
+
+Run installed Semgrep locally and write Semgrep JSON output for later Portolan
+context preparation or evidence review.
+
+Flags:
+  --root path    local target root to scan
+  --config path  local Semgrep config file
+  --out path     output Semgrep JSON path
+  --force        overwrite an existing output file
+
+Portolan invokes:
+
+  semgrep scan --config <config> --json --json-output <out> --metrics=off <root>
+
+The command treats Semgrep as a first-class local OSS dependency. Portolan does
+not download rules, fetch registries, or pass credentials.
+`)
+}
+
+func writeProduceRepomixUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan produce repomix --root . --out repomix-output.xml [--style xml] [--force]
+
+Run installed Repomix locally and write a packed output file for later Portolan
+file-inventory import or agent context use.
+
+Flags:
+  --root path             local target root to pack
+  --out path              output Repomix packed file
+  --style xml|markdown|plain
+  --no-security-check     pass --no-security-check through to Repomix
+  --force                 overwrite an existing output file
+
+Portolan invokes:
+
+  repomix <root> --output <out> --style <style>
+
+The command treats Repomix as a first-class local OSS dependency. Portolan does
+not use remote packing or MCP behavior. Security checks are left enabled unless
+--no-security-check is explicitly supplied.
+`)
+}
+
+func writeProduceGraphifyUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan produce graphify --root . --out graphify-run [--graphify graphify] [--force]
+
+Run installed Graphify locally and write a Graphify graph under an explicit
+output directory for later Portolan graphify import.
+
+Flags:
+  --root path        local target root to analyze
+  --out dir          output directory; Portolan writes <dir>/source-copy/graphify-out/graph.json
+  --graphify path    installed Graphify executable (default: graphify)
+  --force            overwrite an existing output directory
+
+Portolan stages a source copy under the selected output directory and invokes:
+
+  graphify update <out>/source-copy --force --no-cluster
+
+This treats Graphify as a first-class local OSS dependency while preserving the
+Portolan target-root boundary. The target checkout is read-only; Graphify output
+is produced inside --out. Symlinks, .git, .portolan, and existing graphify-out
+directories are not copied into the staging tree.
 `)
 }
 
@@ -885,6 +1465,9 @@ and does not emit readiness, pass/fail, improvement, or degradation verdicts.
 func writeImportUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
   portolan import cyclonedx --in bom.cdx.json --out graph.json [--force]
+  portolan import graphify --in graphify-out/graph.json --out graph.json [--root source-root] [--force]
+  portolan import repomix --in repomix-output.xml --out graph.json [--force]
+  portolan import symbol-index --in symbols.json --out graph.json [--force]
 
 Import local tool output into a Portolan evidence graph.
 
@@ -907,6 +1490,64 @@ Flags:
 
 The importer reads only the selected local file, makes no network calls, and
 records supported component and dependency facts as metadata-visible evidence.
+`)
+}
+
+func writeImportGraphifyUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan import graphify --in graphify-out/graph.json --out graph.json [--force]
+
+Import a local Graphify node-link graph into Portolan node and edge records.
+
+Flags:
+  --in path    local Graphify graph.json input file
+  --out path   output evidence graph JSON path
+  --root path  optional local source root used to verify source_file paths
+  --force      overwrite an existing output file
+
+The importer reads only the selected local file, makes no network calls, and
+does not run Graphify. Graphify EXTRACTED facts become source-visible only
+when --root is supplied and the referenced source_file is readable inside that
+root; otherwise EXTRACTED remains metadata-visible. INFERRED facts become
+claim-only, and AMBIGUOUS or unknown confidence stays cannot_verify.
+`)
+}
+
+func writeImportRepomixUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan import repomix --in repomix-output.xml --out graph.json [--force]
+
+Import local Repomix packed output into file-inventory metadata records.
+
+Flags:
+  --in path    local Repomix packed output file
+  --out path   output evidence graph JSON path
+  --force      overwrite an existing output file
+
+The importer reads only the selected local file, makes no network calls, and
+does not run Repomix. File paths listed in the pack become metadata-visible
+inventory. Packed source snippets remain context only, not architecture facts.
+If the pack says the security check was disabled, the pack source is marked
+cannot_verify while file inventory remains metadata-visible.
+`)
+}
+
+func writeImportSymbolIndexUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan import symbol-index --in symbols.json --out graph.json [--force]
+
+Import a local SCIP/Serena-style symbol-index JSON export into metadata records.
+
+Flags:
+  --in path    local symbol-index JSON input file
+  --out path   output evidence graph JSON path
+  --force      overwrite an existing output file
+
+The importer reads only the selected local file, makes no network calls, and
+does not start SCIP indexers, language servers, or Serena MCP/HTTP servers.
+Document, symbol identity, and range records become metadata-visible. Semantic
+correctness, diagnostics, language coverage, and call graph completeness remain
+not_assessed unless backed by separate evidence.
 `)
 }
 

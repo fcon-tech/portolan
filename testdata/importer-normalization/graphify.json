@@ -1,0 +1,52 @@
+{
+  "nodes": [
+    {
+      "id": "app_py",
+      "label": "app.py",
+      "file_type": "code",
+      "source_file": "app.py",
+      "source_location": "L1",
+      "confidence": "EXTRACTED"
+    },
+    {
+      "id": "hello_fn",
+      "label": "hello",
+      "type": "symbol",
+      "source_file": "app.py",
+      "source_location": "L1-L2",
+      "confidence": "INFERRED"
+    },
+    {
+      "id": "ambiguous_call",
+      "label": "ambiguous call",
+      "type": "symbol",
+      "confidence": "AMBIGUOUS"
+    }
+  ],
+  "links": [
+    {
+      "source": "app_py",
+      "target": "hello_fn",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app.py",
+      "source_location": "L1"
+    },
+    {
+      "source": "hello_fn",
+      "target": "ambiguous_call",
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "source_file": "app.py",
+      "source_location": "L2"
+    },
+    {
+      "source": "hello_fn",
+      "target": "missing_target",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app.py",
+      "source_location": "L2"
+    }
+  ]
+}

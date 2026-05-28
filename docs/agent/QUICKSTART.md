@@ -3,6 +3,9 @@
 Use this when a user asks you to map, inspect, audit, or explain a local target
 with Portolan.
 
+If the user asks another agent to "install Portolan", use the copyable prompt
+in `docs/agent/INSTALL-PROMPT.md` or `docs/agent/INSTALL-PROMPT.ru.md`.
+
 ## Inputs You Need
 
 - Portolan checkout or installed `portolan` binary.
@@ -23,6 +26,7 @@ portolan --version
 From a Portolan source checkout, build the repo-local binary:
 
 ```bash
+cd <portolan-checkout>
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```
@@ -36,13 +40,13 @@ go run ./cmd/portolan --version
 ## 2. Prepare Agent Context
 
 ```bash
-portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
 ```
 
 If using the repo-local binary:
 
 ```bash
-.portolan/bin/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
 ```
 
 Read these files before answering broad questions:
@@ -59,8 +63,20 @@ Read these files before answering broad questions:
 ## 3. Create A Map When Needed
 
 ```bash
-portolan map --root <target-root> --out <run-dir>
+portolan map --root <target-root> --out <output-dir>/map
 ```
+
+If the target provides a local `selection.json`, validate it and use it for the
+map instead of inventing a new selection:
+
+```bash
+portolan selection validate --selection <target-root>/selection.json
+portolan map --selection <target-root>/selection.json --out <output-dir>/map
+```
+
+If selection validation fails, record the validation command as `failed`, then
+fall back to `map --root <target-root>` unless the user asked you to stop on
+invalid selections.
 
 Read these files before reporting map-backed claims:
 
@@ -75,8 +91,8 @@ Before opening `graph.json`, ask bounded read-only questions against the map
 bundle:
 
 ```bash
-portolan query findings --bundle <run-dir> --kind relationships --limit 20
-portolan query gaps --bundle <run-dir> --limit 20
+portolan query findings --bundle <output-dir>/map --kind relationships --limit 20
+portolan query gaps --bundle <output-dir>/map --limit 20
 ```
 
 Use `query findings` when you need matching records by kind, for example
@@ -109,5 +125,6 @@ Do not invent facts that are not in the Portolan artifacts.
 - Source/config duplicate clusters are evidence, not a refactoring order.
 - Local visible scope is not complete estate coverage.
 - Runtime topology needs runtime observations.
-- OSS producer plans are not evidence until outputs exist.
+- OSS producers are valid local dependencies when installed and explicitly
+  requested, but producer plans are not evidence until outputs exist.
 - `not_assessed` is a valid result.
