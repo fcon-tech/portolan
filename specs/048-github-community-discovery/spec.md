@@ -4,9 +4,10 @@
 
 **Created**: 2026-05-30
 
-**Status**: Local implementation ready; GitHub metadata and private
-vulnerability reporting verified; community profile completion blocked until
-this branch is merged to the default branch and rechecked
+**Status**: Ready-for-review PR #24; GitHub metadata, private vulnerability
+reporting, local verification, three non-GPT review lanes, and GitHub checks
+verified; not ready-to-merge until merge approval, review approval, and
+post-merge community profile recheck
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 

@@ -34,7 +34,7 @@ review artifacts.
 | Public-claim wording scan | `verified` | `rg -n "replace|observability|service catalog|security scanner|certification|SLA|complete estate|modernization|adoption|support commitments" README.md CONTRIBUTING.md SECURITY.md SUPPORT.md .github docs/product-claims.md -S` found limiting/negative wording only. |
 | GitHub metadata | `verified` | Description, empty homepage, topics, public repo state, and private vulnerability reporting were checked with `gh`. |
 | GitHub community profile | `blocked` | New files are in this branch; profile cannot show them until merge to default branch. |
-| GitHub PR checks | `not_assessed` | No PR existed at the time of this local closeout. |
+| GitHub PR checks | `verified` | PR #24 checks passed after opening: Baseline, CodeQL Analyze (actions), CodeQL Analyze (go), and CodeQL. |
 
 ## Review Evidence
 
@@ -42,6 +42,5 @@ See `specs/048-github-community-discovery/reviews/review-disposition-2026-05-30.
 
 ## Stop Reason
 
-Ready to commit, push, and open PR. Not ready-to-merge until PR state,
-GitHub checks, and post-merge community profile are assessed.
-
+Ready-for-review PR. Not ready-to-merge until merge approval, review approval,
+and post-merge community profile are assessed.
