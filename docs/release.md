@@ -25,6 +25,7 @@ rg -n "github.com/(fcon-tech|governor)/portolan|go install|git clone" README.md 
 
 ```bash
 go test -count=1 ./...
+go vet ./...
 jq empty schema/*.json testdata/oss-adapter-contract/*.json
 git diff --check
 go run ./cmd/portolan --help
