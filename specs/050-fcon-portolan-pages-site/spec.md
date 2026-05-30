@@ -4,9 +4,10 @@
 
 **Created**: 2026-05-30
 
-**Status**: Ready-for-review PR; local implementation, PR review, merge state,
-and GitHub checks verified; live GitHub Pages deployment, default Pages URL,
-DNS, HTTPS, GitHub review approval, and merge approval remain `not_assessed`
+**Status**: Implemented and merged via PR #26; local implementation, PR review,
+merge state, GitHub checks, and merge command verified; live GitHub Pages
+deployment, default Pages URL, DNS, HTTPS, and GitHub review approval remain
+`not_assessed`
 
 **Input**: User description: "A site / GitHub Pages for FCON and Portolan is a
 good idea."
