@@ -1,6 +1,6 @@
 # Implementation Plan: GitHub Community Discovery
 
-**Branch**: `codex/047-public-showcase-specs` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
+**Branch**: `codex/048-github-community-discovery` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/048-github-community-discovery/spec.md`
 

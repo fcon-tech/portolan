@@ -20,9 +20,9 @@ promises.
 - [x] T002 Record package self-review in `specs/048-github-community-discovery/reviews/spec-package-self-review-2026-05-30.md`
 - [x] T003 Record approved GitHub private vulnerability reporting path in `specs/048-github-community-discovery/reviews/security-contact-options-2026-05-30.md`
 - [x] T004 Decide fallback alias policy in `specs/048-github-community-discovery/reviews/security-contact-options-2026-05-30.md`
-- [ ] T005 Record repository description, topic set, and Pages homepage proposal in `specs/048-github-community-discovery/reviews/github-metadata-proposal-2026-05-30.md`
-- [ ] T006 Record conduct policy choice in `specs/048-github-community-discovery/reviews/conduct-policy-decision-2026-05-30.md`
-- [ ] T007 Record GitHub private vulnerability reporting setting state in `specs/048-github-community-discovery/reviews/github-security-settings-2026-05-30.md`
+- [x] T005 Record repository description, topic set, and Pages homepage proposal in `specs/048-github-community-discovery/reviews/github-metadata-proposal-2026-05-30.md`
+- [x] T006 Record conduct policy choice in `specs/048-github-community-discovery/reviews/conduct-policy-decision-2026-05-30.md`
+- [x] T007 Record GitHub private vulnerability reporting setting state in `specs/048-github-community-discovery/reviews/github-security-settings-2026-05-30.md`
 
 ---
 
@@ -31,13 +31,13 @@ promises.
 **Purpose**: Prepare shared public routes and templates before GitHub settings
 are applied.
 
-- [ ] T008 Add contribution scope and SpecKit workflow to `CONTRIBUTING.md`
-- [ ] T009 Add support boundary and no-SLA wording to `SUPPORT.md`
-- [ ] T010 Add shared issue-template config to `.github/ISSUE_TEMPLATE/config.yml`
-- [ ] T011 [P] Add bug report template to `.github/ISSUE_TEMPLATE/bug_report.yml`
-- [ ] T012 [P] Add feature request template to `.github/ISSUE_TEMPLATE/feature_request.yml`
-- [ ] T013 [P] Add evidence gap template to `.github/ISSUE_TEMPLATE/evidence_gap.yml`
-- [ ] T014 Add PR evidence and product-claim checklist to `.github/pull_request_template.md`
+- [x] T008 Add contribution scope and SpecKit workflow to `CONTRIBUTING.md`
+- [x] T009 Add support boundary and no-SLA wording to `SUPPORT.md`
+- [x] T010 Add shared issue-template config to `.github/ISSUE_TEMPLATE/config.yml`
+- [x] T011 [P] Add bug report template to `.github/ISSUE_TEMPLATE/bug_report.yml`
+- [x] T012 [P] Add feature request template to `.github/ISSUE_TEMPLATE/feature_request.yml`
+- [x] T013 [P] Add evidence gap template to `.github/ISSUE_TEMPLATE/evidence_gap.yml`
+- [x] T014 Add PR evidence and product-claim checklist to `.github/pull_request_template.md`
 
 **Checkpoint**: Contributors can file useful issues and PRs without private
 context, even if GitHub metadata settings are still pending.
@@ -52,10 +52,10 @@ context, even if GitHub metadata settings are still pending.
 find purpose, install, demo, claims, contribution, and security routes in under
 one minute.
 
-- [ ] T015 [US1] Update first-screen public route links in `README.md`
-- [ ] T016 [US1] Link community and security routes from `docs/onboarding.md`
-- [ ] T017 [US1] Add GitHub metadata application instructions to `specs/048-github-community-discovery/reviews/github-metadata-proposal-2026-05-30.md`
-- [ ] T018 [US1] Record applied GitHub description/topics/homepage state in `specs/048-github-community-discovery/reviews/github-metadata-closeout-2026-05-30.md`
+- [x] T015 [US1] Update first-screen public route links in `README.md`
+- [x] T016 [US1] Link community and security routes from `docs/onboarding.md`
+- [x] T017 [US1] Add GitHub metadata application instructions to `specs/048-github-community-discovery/reviews/github-metadata-proposal-2026-05-30.md`
+- [x] T018 [US1] Record applied GitHub description/topics/homepage state in `specs/048-github-community-discovery/reviews/github-metadata-closeout-2026-05-30.md`
 
 **Checkpoint**: User Story 1 is independently useful when public visitors can
 route themselves from README even if GitHub settings are not yet applied.
@@ -69,10 +69,10 @@ route themselves from README even if GitHub settings are not yet applied.
 **Independent Test**: Fill one bug report and one PR template; both request
 evidence states, verification, and product-claim impact.
 
-- [ ] T019 [US2] Add evidence-state examples to `CONTRIBUTING.md`
-- [ ] T020 [US2] Add baseline command expectations to `.github/pull_request_template.md`
-- [ ] T021 [US2] Add product-claim impact field to `.github/pull_request_template.md`
-- [ ] T022 [US2] Record template dry-run review in `specs/048-github-community-discovery/reviews/community-template-dry-run-2026-05-30.md`
+- [x] T019 [US2] Add evidence-state examples to `CONTRIBUTING.md`
+- [x] T020 [US2] Add baseline command expectations to `.github/pull_request_template.md`
+- [x] T021 [US2] Add product-claim impact field to `.github/pull_request_template.md`
+- [x] T022 [US2] Record template dry-run review in `specs/048-github-community-discovery/reviews/community-template-dry-run-2026-05-30.md`
 
 **Checkpoint**: User Story 2 is independently useful when a new contributor can
 open an issue or PR with enough evidence for maintainers to triage it.
@@ -87,10 +87,10 @@ open an issue or PR with enough evidence for maintainers to triage it.
 versions, GitHub private vulnerability reporting, response expectations, and
 conduct policy.
 
-- [ ] T023 [US3] Add GitHub private vulnerability reporting policy to `SECURITY.md`
-- [ ] T024 [US3] Add supported versions and best-effort response wording to `SECURITY.md`
-- [ ] T025 [US3] Add conduct guidance to `CODE_OF_CONDUCT.md`
-- [ ] T026 [US3] Record security wording review against `docs/product-claims.md` in `specs/048-github-community-discovery/reviews/security-claim-review-2026-05-30.md`
+- [x] T023 [US3] Add GitHub private vulnerability reporting policy to `SECURITY.md`
+- [x] T024 [US3] Add supported versions and best-effort response wording to `SECURITY.md`
+- [x] T025 [US3] Add conduct guidance to `CODE_OF_CONDUCT.md`
+- [x] T026 [US3] Record security wording review against `docs/product-claims.md` in `specs/048-github-community-discovery/reviews/security-claim-review-2026-05-30.md`
 
 ---
 
@@ -98,14 +98,14 @@ conduct policy.
 
 **Purpose**: Align public community state and evidence.
 
-- [ ] T027 Run `git diff --check` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
-- [ ] T028 Run `go test -count=1 ./...` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
-- [ ] T029 Run `jq empty .specify/feature.json schema/*.json` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
-- [ ] T030 Run public-claim wording scan over `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`, `.github/`, and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
-- [ ] T031 Record GitHub metadata, badge, Scorecard, and community profile states in `specs/048-github-community-discovery/reviews/github-metadata-closeout-2026-05-30.md`
-- [ ] T032 Update `specs/048-github-community-discovery/spec.md` status
-- [ ] T033 Update `specs/048-github-community-discovery/tasks.md` completion ledger
-- [ ] T034 Update `docs/product-backlog.md` status row for P5-048
+- [x] T027 Run `git diff --check` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
+- [x] T028 Run `go test -count=1 ./...` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
+- [x] T029 Run `jq empty .specify/feature.json schema/*.json` and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
+- [x] T030 Run public-claim wording scan over `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`, `.github/`, and record result in `specs/048-github-community-discovery/reviews/community-closeout-2026-05-30.md`
+- [x] T031 Record current GitHub metadata, badge, Scorecard, and community profile states, including `blocked` and `not_assessed`, in `specs/048-github-community-discovery/reviews/github-metadata-closeout-2026-05-30.md`
+- [x] T032 Update `specs/048-github-community-discovery/spec.md` status
+- [x] T033 Update `specs/048-github-community-discovery/tasks.md` completion ledger
+- [x] T034 Update `docs/product-backlog.md` status row for P5-048
 
 ## Dependencies & Execution Order
 
@@ -130,3 +130,12 @@ conduct policy.
 4. Add bounded security and conduct guidance.
 5. Record every external GitHub setting as `verified`, `blocked`, or
    `not_assessed`.
+
+## Post-Merge Follow-Up Boundary
+
+The default-branch community profile cannot be verified from this branch before
+merge. Recheck it during merge closeout with:
+
+```bash
+gh api repos/fcon-tech/portolan/community/profile
+```

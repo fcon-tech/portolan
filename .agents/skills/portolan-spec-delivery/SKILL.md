@@ -37,6 +37,8 @@ only when the PR state and evidence are coherent.
    spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`,
    fix stale status metadata, and only then choose the next implementation
    target.
+   Also verify branch metadata: `spec.md`, `plan.md`, the current git branch,
+   and PR head branch must agree. A stale `plan.md` branch field is spec drift.
 5. Work in a dedicated worktree from current `origin/main` or the requested base.
    Do not use a dirty main checkout for implementation.
 6. Before committing or opening a PR, verify provenance and scope with
@@ -239,7 +241,13 @@ Before marking a PR ready:
 3. Re-check requirements drift and product-vision drift against the actual PR
    diff. Record the result in the PR review disposition or readiness closeout;
    do not rely only on pre-implementation review.
-4. Run independent review lanes from `docs/review-harness-benchmark.md`, plus
+4. If the review request includes quality lenses such as CRAP,
+   Maintainability Index, CleanArch/hexagonal architecture, CleanCode, SOLID,
+   DRY, or YAGNI, classify changed file types before reviewing. For docs/config
+   only diffs, record CRAP/MI/code-architecture lenses as `not_applicable` with
+   `git diff --name-status <base>...HEAD` evidence; do not fabricate code
+   metrics for prose or YAML.
+5. Run independent review lanes from `docs/review-harness-benchmark.md`, plus
    one repo-grounded local reviewer. Serious or risky PRs need three assessed
    independent non-GPT model lanes.
 
@@ -256,11 +264,20 @@ Before marking a PR ready:
    unavailable, run explicit enabled non-GPT replacement lanes until the PR
    review has the required assessed coverage, or keep the PR draft and record
    the blocker.
-5. Fix accepted findings and record a PR review-cycle disposition under the
+6. Fix accepted findings and record a PR review-cycle disposition under the
    spec's `reviews/` directory.
-6. Push, refresh PR state, and mark ready-for-review only when blockers are
+7. Push, refresh PR state, and mark ready-for-review only when blockers are
    fixed and the PR is no longer draft. If blockers remain, keep the PR draft
    and record the exact blocker.
+
+After any rebase, amend, merge-base update, or force-push, treat previous PR
+checks, merge state, and readiness closeout as stale. Re-run or refresh:
+
+- `gh pr view`;
+- `gh pr checks`;
+- local verification affected by the changed head;
+- PR description if it names check or blocker states;
+- spec/backlog/readiness closeout if state changed.
 
 For public demo, public docs, screenshots, recordings, or public artifact
 excerpts, the PR review disposition must check:
@@ -294,6 +311,10 @@ as `not_assessed`, and SpecKit/backlog/task/review surfaces agree. Do not say
 ready-to-merge when GitHub checks or human review approval are absent; record
 those as `not_assessed` and merge only if the user explicitly accepts that
 state.
+
+When task completion means "record current state", the task may be checked only
+if the artifact explicitly preserves any `blocked` or `not_assessed` states. Do
+not let a checked task imply that blocked external state is verified.
 
 Merge only after explicit user approval. After merge, verify:
 

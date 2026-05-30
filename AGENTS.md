@@ -135,6 +135,14 @@ When asked to review and improve an existing PR:
 
 - Reconstruct the current PR head, diff, draft state, merge state, check state,
   and review artifacts first.
+- If the review request names quality lenses such as CRAP, Maintainability
+  Index, CleanArch/hexagonal architecture, CleanCode, SOLID, DRY, or YAGNI,
+  first classify the changed file set. For docs/config-only PRs, record code
+  metrics and code-architecture lenses as `not_applicable` with diff evidence
+  instead of inventing meaningless numbers.
+- Verify SpecKit branch metadata during PR review: `spec.md`, `plan.md`, the
+  actual git branch, and PR head branch must agree, or the mismatch is spec
+  drift that must be fixed before readiness.
 - Use at least two independent review lanes when the PR touches evidence
   semantics, path/output safety, schemas, or CLI behavior; serious or risky PRs
   still need three assessed independent non-GPT lanes. Choose lanes from
@@ -153,6 +161,9 @@ When asked to review and improve an existing PR:
 - If the PR remains draft, has absent checks, lacks review approval, or has
   stale SpecKit surfaces, report the blocker explicitly instead of stopping at
   implementation completion.
+- After any rebase, merge-base update, amend, or force-push, refresh PR state,
+  checks, merge state, PR description, and readiness closeout. Earlier green
+  checks or clean merge state are stale evidence after the head changes.
 
 Merge rules:
 
@@ -190,5 +201,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/047-canonical-public-install-release/plan.md`
+`specs/048-github-community-discovery/plan.md`
 <!-- SPECKIT END -->

@@ -1,0 +1,45 @@
+name: Feature request
+description: Propose a focused Portolan improvement without overclaiming scope.
+title: "Feature: "
+labels: ["enhancement", "needs-spec"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user, agent, or maintainer problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed Direction
+      description: Keep it small and reversible. Name any affected CLI, schema, docs, or evidence states.
+    validations:
+      required: true
+  - type: dropdown
+    id: boundary
+    attributes:
+      label: Product Boundary Impact
+      options:
+        - local-first read-only behavior preserved
+        - needs product-boundary review
+        - needs network, daemon, credentials, or mutation approval
+        - not_assessed
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Simpler Alternatives Or OSS Fit
+      description: Existing utility, open-source tool, or smaller change considered.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence Or Current Gap
+      description: Current evidence state, local examples, blocked checks, or unknowns.
+      render: text
+    validations:
+      required: true
