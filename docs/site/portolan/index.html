@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Portolan prepares local evidence maps so AI agents can answer architecture and estate questions with fewer unsupported claims.">
+    <title>Portolan | Local Evidence Maps For Agents</title>
+    <link rel="stylesheet" href="../assets/site.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="../">FCON / Portolan</a>
+        <div class="nav-links">
+          <a href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
+          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md">Demo</a>
+          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md">Claims</a>
+          <a href="https://github.com/fcon-tech/portolan">GitHub</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-inner hero-grid">
+          <div>
+            <p class="eyebrow">Local-first codebase mapping</p>
+            <h1>Portolan builds local evidence maps for agents.</h1>
+            <p class="lede">
+              It reads local source, metadata, runtime exports, and claim files,
+              then writes bounded artifacts that separate visible evidence from
+              unknown, cannot-verify, and not-assessed surfaces.
+            </p>
+            <div class="actions">
+              <a class="button primary" href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
+              <a class="button secondary" href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md">Run the Bigtop demo</a>
+            </div>
+          </div>
+
+          <div class="artifact" aria-label="Portolan command preview">
+            <div class="artifact-head">
+              <span class="artifact-title">bounded workflow</span>
+              <span class="artifact-state">read-only</span>
+            </div>
+            <pre><code>portolan context prepare \
+  --root &lt;target-root&gt; \
+  --out &lt;output-dir&gt;/context \
+  --profile cursor
+
+portolan map \
+  --root &lt;target-root&gt; \
+  --out &lt;output-dir&gt;/map</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="band white">
+        <div class="section-inner">
+          <div class="section-head">
+            <h2>Use it before broad codebase answers</h2>
+            <p>
+              Portolan is useful when an agent needs a bounded local evidence
+              pack before it answers architecture, dependency, duplication,
+              configuration, or technical-debt questions.
+            </p>
+          </div>
+          <div class="grid">
+            <article class="card">
+              <h3>Context pack</h3>
+              <p>Agent brief, answer contract, evidence index, repository inventory, tool registry, OSS plan, and explicit gaps.</p>
+            </article>
+            <article class="card">
+              <h3>Map bundle</h3>
+              <p>Run metadata, coverage, summary, graph index, graph JSON, findings JSONL, and a human-readable map.</p>
+            </article>
+            <article class="card">
+              <h3>Query surface</h3>
+              <p>Bounded commands for findings and gaps so agents do not need to load the full graph before every question.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="band">
+        <div class="section-inner">
+          <div class="section-head">
+            <h2>Routes</h2>
+            <p>Start from the maintained repository documents. This page is a wrapper, not a second source of truth.</p>
+          </div>
+          <div class="route-list">
+            <a class="route" href="https://github.com/fcon-tech/portolan#quick-start"><strong>Install<span>Go install after v0.1.0 tag, or source checkout bootstrap</span></strong>→</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/releases/v0.1.0.md"><strong>Release notes<span>First source-first public release boundary</span></strong>→</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md"><strong>Apache Bigtop demo<span>Fixed local demo route and redacted artifact excerpts</span></strong>→</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md"><strong>Product limits<span>Accepted, narrowed, rejected, and not-assessed claims</span></strong>→</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan"><strong>GitHub repository<span>Source, issues, pull requests, and community files</span></strong>→</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/SECURITY.md"><strong>Security<span>Vulnerability reporting boundary</span></strong>→</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="band white">
+        <div class="section-inner">
+          <div class="section-head">
+            <h2>Boundaries that stay visible</h2>
+            <p>
+              The validated claim is narrow: Portolan prepares local evidence
+              for agents and helps reduce unsupported claims in the fixed local
+              Bigtop comparison. It does not prove broad external coverage.
+            </p>
+          </div>
+          <div class="grid">
+            <article class="card limit">
+              <h3>Not a replacement</h3>
+              <p>Portolan complements Cursor, OpenCode, Codex, Sourcegraph, Backstage, service catalogs, observability, and modernization tools.</p>
+            </article>
+            <article class="card limit">
+              <h3>Not complete estate proof</h3>
+              <p>Repository counts and local runs show visible scope. Complete inherited-estate coverage remains unproven unless inventory evidence supports it.</p>
+            </article>
+            <article class="card limit">
+              <h3>Not broad security certification</h3>
+              <p>The current security boundary covers selected local CLI risks and untrusted-artifact handling, not a general security audit.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>Freshness: v0.1.0 launch-prep copy. Check `docs/product-claims.md` before reusing claims.</span>
+        <span><a href="https://github.com/fcon-tech/portolan/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="https://github.com/fcon-tech/portolan/blob/main/SUPPORT.md">Support</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

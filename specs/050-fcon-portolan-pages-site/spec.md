@@ -1,11 +1,12 @@
 # Feature Specification: FCON And Portolan GitHub Pages Site
 
-**Feature Branch**: `codex/047-public-showcase-specs`
+**Feature Branch**: `codex/050-fcon-portolan-pages-site`
 
 **Created**: 2026-05-30
 
-**Status**: Draft spec; implementation blocked on site information architecture,
-domain policy, and publishing source
+**Status**: Ready-for-review PR; local implementation, PR review, merge state,
+and GitHub checks verified; live GitHub Pages deployment, default Pages URL,
+DNS, HTTPS, GitHub review approval, and merge approval remain `not_assessed`
 
 **Input**: User description: "A site / GitHub Pages for FCON and Portolan is a
 good idea."
@@ -91,6 +92,8 @@ that no tracking, forms, or credentialed integrations were added.
 - Analytics, contact forms, or third-party embeds introduce privacy or
   credential risk.
 - The site falls out of sync with README, release notes, or product claims.
+- Mobile visitors need a readable first screen and navigation without requiring
+  a desktop-width viewport.
 
 ## Requirements *(mandatory)*
 
@@ -119,6 +122,8 @@ that no tracking, forms, or credentialed integrations were added.
   snippets, evidence graph previews, or carefully generated static imagery.
 - **FR-010**: The site MUST include a freshness note or release/version pointer
   so stale launch copy is not mistaken for current validation.
+- **FR-011**: The site SHOULD use a responsive static layout that keeps primary
+  navigation, install/demo links, and claim-boundary copy readable on mobile.
 
 ### Key Entities
 
@@ -151,5 +156,5 @@ that no tracking, forms, or credentialed integrations were added.
   close to the GitHub discovery surface.
 - The first version should prioritize a clear FCON/Portolan narrative over a
   complex docs site.
-- A custom domain is desirable, but default GitHub Pages URLs are acceptable
+- A custom domain is desirable later, but v1 uses the default GitHub Pages URL
   until domain verification and DNS are ready.

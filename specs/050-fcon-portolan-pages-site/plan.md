@@ -1,6 +1,6 @@
 # Implementation Plan: FCON And Portolan GitHub Pages Site
 
-**Branch**: `codex/047-public-showcase-specs` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
+**Branch**: `codex/050-fcon-portolan-pages-site` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/050-fcon-portolan-pages-site/spec.md`
 
@@ -16,8 +16,8 @@ documented publishing source, and explicit domain/HTTPS state.
 
 **Primary Dependencies**: Prefer none for v1; static files before a generator
 
-**Storage**: Candidate site files under `docs/site/`, `site/`, or a separate
-Pages repository after maintainer decision
+**Storage**: v1 site files under `docs/site/` in this repository. A separate
+organization Pages repository remains a future extraction option.
 
 **Testing**: Local static preview or link check; product-claim scan; `git diff
 --check`; baseline repo checks when changes land here
@@ -73,7 +73,8 @@ specs/050-fcon-portolan-pages-site/
 docs/
 |-- site/
 |   |-- index.html
-|   |-- portolan.html
+|   |-- portolan/
+|   |   `-- index.html
 |   `-- assets/
 README.md
 docs/demo.md
@@ -82,11 +83,13 @@ docs/product-claims.md
 ```
 
 **Structure Decision**: Treat the site as a wrapper over canonical repository
-docs, not a second documentation source of truth. If FCON uses a separate
-organization-site repository, record this spec as the Portolan-side contract and
-mirror only stable copy.
+docs, not a second documentation source of truth. For v1, publish from this
+repository so the Portolan claim boundary, release notes, demo, contribution,
+and security routes stay in one PR. If FCON later uses a separate organization
+site repository, extract only stable wrapper copy and keep this repository as
+the Portolan-side source.
 
 ## Complexity Tracking
 
-No constitution violations. Domain, repository ownership, and publishing source
-remain open decisions.
+No constitution violations. Domain, repository ownership, publishing source,
+and first-screen direction are recorded under `reviews/` before implementation.

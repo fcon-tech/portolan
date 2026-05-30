@@ -125,6 +125,14 @@ documented OpenRouter fallback for the same model family before replacing the
 lane. If a lane is unavailable, empty, stale, or off-task, mark it
 `not_assessed` and do not count it toward coverage.
 
+Run `pi` review lanes sequentially, not in parallel. In the current local
+environment, parallel `pi` launches can contend on extension startup state and
+return `database is locked`; that is harness failure, not review evidence. If
+the lane is intentionally a bounded no-tools text review, use flags such as
+`--no-tools --no-context-files --no-session` and optionally disable extensions
+for that lane. Do not make no-tools mode the default for repo-grounded reviews
+that need file inspection.
+
 Each review iteration must produce three assessed independent review lanes.
 Failed, empty, hung, malformed, unavailable, stale, off-topic, or
 `not_assessed` lanes do not count toward the three. If a roster lane cannot be

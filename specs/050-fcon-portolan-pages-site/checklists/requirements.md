@@ -4,6 +4,7 @@
 implementation.
 
 **Created**: 2026-05-30
+**Updated**: 2026-05-31
 
 **Feature**: `specs/050-fcon-portolan-pages-site/spec.md`
 
@@ -25,7 +26,7 @@ implementation.
 
 ## Blocking Questions
 
-- [ ] Maintainer has chosen the site repository or repositories
-- [ ] Maintainer has chosen default GitHub Pages URL versus custom domain
-- [ ] Maintainer has chosen branch/path publishing versus GitHub Actions
-- [ ] Maintainer has approved first-screen copy and visual direction
+- [x] Maintainer has chosen the site repository or repositories
+- [x] Maintainer has chosen default GitHub Pages URL versus custom domain
+- [x] Maintainer has chosen branch/path publishing versus GitHub Actions
+- [x] Maintainer has approved first-screen copy and visual direction

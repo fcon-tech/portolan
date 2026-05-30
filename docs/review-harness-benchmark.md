@@ -135,6 +135,13 @@ Suggested timeouts:
   despite a no-tools prompt, record it as `not_assessed` or `failed` and launch
   an explicit enabled non-GPT replacement lane. Do not count the requested lane
   as assessed just because a fallback was attempted.
+- Do not launch multiple `pi` lanes at the same time in this environment. If
+  `database is locked` appears, rerun the lane sequentially and record the first
+  attempt as harness failure.
+- Use `--no-tools --no-context-files --no-session` and optional
+  `--no-extensions --no-skills --no-prompt-templates` only for explicitly
+  bounded no-tools review packets. Do not turn those flags into the default for
+  repo-grounded reviews that need file inspection.
 - Require output fields: `findings`, `severity`, `evidence`, `recommendation`,
   `verdict`, and `not_assessed`.
 - Tell reviewers that `unknown`, `cannot_verify`, and `not_assessed` are valid
@@ -173,3 +180,8 @@ Suggested timeouts:
   18.78s and should not be counted as working until re-smoked.
 - `omp` was installed, but an OpenRouter smoke failed because no `omp`
   OpenRouter API key was available.
+- On 2026-05-31, parallel pre-implementation `pi` review launches for spec 050
+  caused `database is locked` extension startup failures. Sequential retries
+  produced usable Kimi and GLM output. A same-day Socratic review by Kimi and
+  GLM accepted the sequential-launch rule but rejected a blanket no-tools flag
+  policy as overbroad.
