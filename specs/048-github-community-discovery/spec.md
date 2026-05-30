@@ -4,10 +4,10 @@
 
 **Created**: 2026-05-30
 
-**Status**: Ready-for-review PR #24; GitHub metadata, private vulnerability
-reporting, local verification, three non-GPT review lanes, and GitHub checks
-verified; not ready-to-merge until merge approval, review approval, and
-post-merge community profile recheck
+**Status**: Implemented and merged via PR #24; GitHub metadata, private
+vulnerability reporting, local verification, three non-GPT review lanes, GitHub
+checks, branch cleanup, and post-merge community profile recheck verified;
+GitHub review approval remains not assessed
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 

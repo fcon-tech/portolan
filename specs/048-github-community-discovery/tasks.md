@@ -133,9 +133,12 @@ conduct policy.
 
 ## Post-Merge Follow-Up Boundary
 
-The default-branch community profile cannot be verified from this branch before
-merge. Recheck it during merge closeout with:
+The default-branch community profile could not be verified from the feature
+branch before merge. It was rechecked during merge closeout with:
 
 ```bash
 gh api repos/fcon-tech/portolan/community/profile
 ```
+
+Result recorded in
+`specs/048-github-community-discovery/reviews/merge-closeout-2026-05-30.md`.
