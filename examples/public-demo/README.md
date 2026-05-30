@@ -6,6 +6,8 @@ demo run. It does not contain full generated Bigtop outputs.
 Before committing excerpts, redact manually:
 
 - replace private machine paths with `<bigtop-root>` and `<demo-output>`;
+- keep Bigtop repository directory names only because they are public Apache
+  project/component names; for private targets, redact directory names too;
 - keep `unknown`, `cannot_verify`, `not_assessed`, `failed`, and `blocked`
   states visible;
 - do not include credentials, token-looking values, secret values, private

@@ -102,14 +102,14 @@ primary setup by cloning only `apache/bigtop` into `/tmp`. The second reuses a
 larger existing local Bigtop landscape to show the multi-repo excerpt shape.
 The committed excerpts redact private machine paths manually.
 
-Observed cold-start primary setup:
+### Cold-start primary setup
 
 - `git clone --depth 1 https://github.com/apache/bigtop.git apache-bigtop-repo`: passed in 0:04.01.
 - `portolan context prepare --root <bigtop-root> --out <out>/context --profile cursor`: passed in 0.07s.
 - `portolan map --root <bigtop-root> --out <out>/map`: passed in 0.40s.
 - `portolan query gaps --bundle <out>/map --limit 5`: passed.
 
-Observed larger existing-landscape smoke:
+### Larger existing-landscape smoke
 
 - `portolan context prepare --root <bigtop-root> --out <out>/context --profile cursor`: passed in 0.08s.
 - `portolan map --root <bigtop-root> --out <out>/map`: passed in 2:25.74.
@@ -118,9 +118,10 @@ Observed larger existing-landscape smoke:
 - Finding states included 430 observed, 118 `not_assessed`, 6
   `cannot_verify`, and 1 `unknown`.
 
-These timings are local machine observations and may benefit from local network,
-disk, and filesystem-cache conditions. They are not a promise that every
-machine or checkout will finish under the same time.
+These timings are local machine observations. Machine spec was not recorded;
+network, disk, and filesystem-cache conditions can change the result. They are
+order-of-magnitude evidence, not a promise that every machine or checkout will
+finish under the same time.
 
 ## Case Study Boundary
 

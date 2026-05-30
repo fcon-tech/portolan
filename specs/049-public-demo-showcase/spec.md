@@ -4,9 +4,9 @@
 
 **Created**: 2026-05-30
 
-**Status**: Implemented locally; public runbook, redacted excerpts, fresh local
-smoke evidence, claim scan, privacy/freshness review, and baseline checks are
-recorded; PR review pending
+**Status**: Implemented; ready for PR review. Public runbook, redacted
+excerpts, fresh local smoke evidence, claim scan, privacy/freshness review, and
+baseline checks are recorded.
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 

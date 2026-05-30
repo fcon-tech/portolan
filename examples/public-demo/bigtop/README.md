@@ -1,7 +1,8 @@
 # Apache Bigtop Demo Excerpts
 
 Freshness: generated from a local Apache Bigtop landscape on 2026-05-30 using
-the Portolan source checkout on branch `codex/049-public-demo-showcase`.
+`portolan dev` from commit `195d80d` on branch
+`codex/049-public-demo-showcase`.
 
 Generation commands:
 
