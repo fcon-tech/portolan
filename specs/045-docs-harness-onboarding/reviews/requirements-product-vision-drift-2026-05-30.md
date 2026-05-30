@@ -46,4 +46,10 @@ Date: 2026-05-30
 
 ## Decision
 
-The slice may remain `Implemented locally; PR review and GitHub checks not_assessed`. It should not be described as ready-to-merge until PR state, review evidence, and checks are explicitly assessed.
+At review time, the slice could remain `Implemented locally; PR review and
+GitHub checks not_assessed`. It should not be described as ready-to-merge until
+PR state, review evidence, and checks are explicitly assessed.
+
+Post-merge note: this pre-merge decision was superseded by
+`merge-closeout-2026-05-30.md`, which records PR #21 merged and GitHub CI
+verified.
