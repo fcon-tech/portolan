@@ -190,5 +190,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/040-release-envelope/plan.md`
+`specs/045-docs-harness-onboarding/plan.md`
 <!-- SPECKIT END -->

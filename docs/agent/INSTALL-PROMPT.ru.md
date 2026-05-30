@@ -15,6 +15,11 @@ TARGET_PATH=<absolute path to the local codebase or landscape to inspect>
 OUTPUT_PATH=<absolute path to an empty output directory>
 ```
 
+Для OpenCode default-permission runs предпочитай `OUTPUT_PATH` внутри checkout
+Portolan, например `<portolan-checkout>/.portolan/runs/<target-name>`.
+Зафиксированный OpenCode external-output default-permission lane failed, когда
+harness отклонил внешний output path.
+
 Потом отправь агенту:
 
 ```text
@@ -35,6 +40,9 @@ Inputs:
   repo-local `.portolan/runs/<target-name>` внутри checkout Portolan и запиши
   исходную запись в OUTPUT_PATH как `failed`. Используй эту fallback
   директорию как OUTPUT_PATH для остальных шагов.
+- Если используешь OpenCode с default permissions, предпочти этот repo-local
+  `.portolan/runs/<target-name>` output path до попытки писать во внешний
+  output path.
 - Если PORTOLAN_PATH указывает на бинарь, проверь его через `--version`.
 - Если PORTOLAN_PATH указывает на checkout Portolan, следуй
   `docs/agent/INSTALL.ru.md` и собери repo-local binary через

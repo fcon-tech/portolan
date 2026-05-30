@@ -15,6 +15,12 @@ TARGET_PATH=<absolute path to the local codebase or landscape to inspect>
 OUTPUT_PATH=<absolute path to an empty output directory>
 ```
 
+For OpenCode default-permission runs, prefer an `OUTPUT_PATH` inside the
+Portolan checkout, for example
+`<portolan-checkout>/.portolan/runs/<target-name>`. The recorded OpenCode
+external-output default-permission lane failed when the harness rejected the
+external output path.
+
 Then send:
 
 ```text
@@ -35,6 +41,9 @@ Rules:
   `.portolan/runs/<target-name>` directory under the Portolan checkout and
   record the original OUTPUT_PATH write as `failed`. Use that fallback
   directory as OUTPUT_PATH for the remaining steps.
+- If you are using OpenCode with default permissions, prefer that repo-local
+  `.portolan/runs/<target-name>` output path before attempting an external
+  output path.
 - If PORTOLAN_PATH is a binary, verify it with `--version`.
 - If PORTOLAN_PATH is a source checkout, follow `docs/agent/INSTALL.md` and
   build the repo-local binary with `scripts/bootstrap-portolan`.

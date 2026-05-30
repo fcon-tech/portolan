@@ -34,6 +34,12 @@ scripts/bootstrap-portolan
 запуска используй repo-local output directory, например `.portolan/runs/<name>`.
 Переноси или передавай artifacts дальше только после успешного запуска.
 
+Для OpenCode default-permission runs предпочитай `OUTPUT_PATH` внутри checkout
+Portolan, например `.portolan/runs/<target-name>`. Зафиксированный OpenCode
+external-output default-permission lane failed, когда harness отклонил запись
+вне разрешенного workspace; arbitrary external output paths считай
+unverified, если пользователь не меняет permission mode.
+
 `go run` допустим только как dev fallback из checkout Portolan:
 
 ```bash

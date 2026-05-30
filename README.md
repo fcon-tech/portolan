@@ -119,10 +119,18 @@ go run ./cmd/portolan query gaps --bundle <output-dir>/map --limit 20
 Use `--force` only when you intentionally want to replace an existing Portolan
 output directory.
 
+## Documentation Route
+
+If you are not sure which document to open first, start with the
+[Documentation Onboarding](docs/onboarding.md) route. It points humans,
+agents, Cursor operators, OpenCode operators, and release reviewers to the
+maintained surface for each workflow.
+
 ## For Agents
 
 If you are asking an AI agent to use Portolan, point it at the user-agent docs:
 
+- [Documentation Onboarding](docs/onboarding.md)
 - [Agent Quickstart](docs/agent/QUICKSTART.md)
 - [Agent Quickstart, Russian](docs/agent/QUICKSTART.ru.md)
 - [Install](docs/agent/INSTALL.md)
@@ -200,6 +208,7 @@ Important limits:
 
 English:
 
+- [Documentation Onboarding](docs/onboarding.md)
 - [Product Claims](docs/product-claims.md)
 - [Release Guide](docs/release.md)
 - [Product Boundary](docs/product-boundary.md)

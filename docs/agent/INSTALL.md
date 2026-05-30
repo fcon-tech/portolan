@@ -36,6 +36,12 @@ When the receiving harness restricts writes outside the current checkout, use a
 repo-local output directory such as `.portolan/runs/<name>` for the first run,
 then move or share the artifacts only after the run succeeds.
 
+For OpenCode default-permission runs, prefer an `OUTPUT_PATH` under the
+Portolan checkout, for example `.portolan/runs/<target-name>`. The recorded
+OpenCode external-output default-permission lane failed when the harness
+rejected writing outside the allowed workspace; treat arbitrary external output
+paths as unverified unless the user changes the permission mode.
+
 If you are in a subdirectory, run the script by path; the default output still
 lands in the Portolan checkout:
 

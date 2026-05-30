@@ -6,6 +6,12 @@ with Portolan.
 If the user asks another agent to "install Portolan", use the copyable prompt
 in `docs/agent/INSTALL-PROMPT.md` or `docs/agent/INSTALL-PROMPT.ru.md`.
 
+For Cursor, OpenCode, install/build, and human-facing documentation routing,
+read `docs/onboarding.md` before broad claims about harness support. Cursor UI
+behavior is not proven by headless Cursor Agent CLI evidence. OpenCode default
+permissions work with repo-local output paths under the Portolan checkout; the
+recorded external-output default-permission lane failed.
+
 ## Inputs You Need
 
 - Portolan checkout or installed `portolan` binary.

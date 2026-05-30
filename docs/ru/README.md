@@ -122,6 +122,23 @@ PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 <output-dir>/map/map.md
 ```
 
+## Навигация По Документации
+
+Если непонятно, какой документ открыть первым, начни с
+[Documentation Onboarding](../onboarding.md). Там есть маршрут для human
+overview, agent run, install/build, Cursor, OpenCode и release notes.
+Сейчас этот маршрут ведется на английском; русские agent prompts остаются в
+`../agent/`.
+
+Важные границы:
+
+- Cursor evidence сейчас относится к headless Cursor Agent CLI / Composer, а
+  не к Cursor UI вообще.
+- Для OpenCode default-permission runs предпочитай repo-local output path под
+  Portolan checkout, например `.portolan/runs/<target-name>`. Внешний output
+  path в зафиксированном default-permission lane failed.
+- `unknown`, `cannot_verify` и `not_assessed` нельзя превращать в успех.
+
 ## Инструкция Для Агента
 
 Если нужно попросить агента установить и запустить Portolan, дай ему:
