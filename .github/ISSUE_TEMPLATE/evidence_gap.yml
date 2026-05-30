@@ -1,0 +1,45 @@
+name: Evidence gap
+description: Record a missing, blocked, unknown, or cannot_verify evidence surface.
+title: "Evidence gap: "
+labels: ["evidence-gap"]
+body:
+  - type: textarea
+    id: surface
+    attributes:
+      label: Evidence Surface
+      description: What artifact, claim, CLI behavior, target shape, or external state is missing?
+    validations:
+      required: true
+  - type: dropdown
+    id: current_state
+    attributes:
+      label: Current State
+      options:
+        - blocked
+        - unknown
+        - cannot_verify
+        - not_assessed
+        - failed
+    validations:
+      required: true
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason
+      description: Why is this not verified?
+    validations:
+      required: true
+  - type: textarea
+    id: next_check
+    attributes:
+      label: Smallest Useful Next Check
+      description: Command, review, fixture, GitHub setting, or maintainer decision that would change the state.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary Check
+      options:
+        - label: This gap is not being counted as product success.
+          required: true

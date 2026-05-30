@@ -159,6 +159,14 @@ Suggested timeouts:
   no usable output before termination when retried with `--thinking low`.
   Treat MiniMax coverage as `not_assessed` in this environment until a fresh
   smoke succeeds; use an explicit enabled non-GPT replacement lane.
+- On 2026-05-30, spec 048 Socratic/full-diff review used
+  `openrouter/moonshotai/kimi-k2.6`, `zai/glm-5.1`, and
+  `openrouter/xiaomi/mimo-v2.5-pro` as assessed non-GPT lanes. All three
+  produced usable review output. `minimax/MiniMax-M2.7` again failed with
+  `404 page not found`; `openrouter/qwen/qwen3.6-plus` again returned a
+  provider role error; `openrouter/deepseek/deepseek-v4-pro` produced
+  tool-request/off-task output under a no-tools prompt. Treat these degraded
+  lanes as `failed` or `not_assessed` unless a fresh smoke succeeds.
 - Short `pi` smoke passed for `openrouter/deepseek/deepseek-v4-flash` in 9.20s.
 - Short `pi` smoke passed for `openrouter/auto` in 8.83s.
 - `openrouter/qwen/qwen3.6-plus` returned a provider role error through `pi` in

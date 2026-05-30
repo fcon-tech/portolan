@@ -81,6 +81,9 @@ external ecosystem coverage beyond that manifest.
 
 - Portolan is a local evidence-preparation tool, not a live service, SLA,
   observability system, modernization engine, or control plane.
+- Public community files, issue templates, and pull request templates are
+  contribution infrastructure. They do not prove public adoption, response
+  capacity, or support commitments.
 - UI Cursor/Composer behavior is outside the current required acceptance scope;
   the comparison and Bigtop operator evidence are for headless Cursor Agent CLI
   on the fixed local Bigtop target.

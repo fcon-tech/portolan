@@ -143,6 +143,21 @@ maintained surface for each workflow.
 For a public Apache Bigtop walkthrough with redacted example artifacts, see
 [Public Demo: Apache Bigtop](docs/demo.md).
 
+## Public Routes
+
+These routes are current and boundary-limited. Some public surfaces are initial
+community infrastructure rather than proof of broad adoption or support.
+
+- Install: use the [Quick Start](#quick-start) above.
+- Demo: see [Public Demo: Apache Bigtop](docs/demo.md).
+- Product claims: read [Product Claims](docs/product-claims.md) before reusing
+  public wording.
+- Contribute: read [Contributing](CONTRIBUTING.md) before opening issues or
+  pull requests.
+- Security: report sensitive vulnerabilities through [Security](SECURITY.md),
+  not public issues.
+- Support: see [Support](SUPPORT.md) for public support boundaries.
+
 ## For Agents
 
 If you are asking an AI agent to use Portolan, point it at the user-agent docs:
@@ -237,6 +252,10 @@ English:
 - [Runtime Observations](docs/runtime-observations.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
+- [Demo Status](docs/demo.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+- [Support](SUPPORT.md)
 - [Product Backlog](docs/product-backlog.md)
 - [SpecKit Workflow](docs/speckit-workflow.md)
 

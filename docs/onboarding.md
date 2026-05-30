@@ -14,6 +14,8 @@ first.
 | Use Cursor | [.cursor rule](../.cursor/rules/portolan-map.mdc) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | Current verified Cursor evidence is headless Cursor Agent CLI / Composer. Cursor UI behavior is outside the current required acceptance scope. |
 | Use OpenCode | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode default-permission runs are verified with repo-local output under the Portolan checkout. The recorded external-output default-permission lane failed. |
 | Prepare release notes or a demo claim | [Release Guide](release.md) | [Product Claims](product-claims.md) | Do not publish broader claims than the current claim boundary allows. |
+| Contribute a bug report, feature, evidence gap, or PR | [Contributing](../CONTRIBUTING.md) | [Support](../SUPPORT.md), [Product Claims](product-claims.md) | Keep issue and PR evidence states explicit; do not treat blocked or not_assessed surfaces as product success. |
+| Report a sensitive vulnerability | [Security Policy](../SECURITY.md) | [Security Threat Model](security-threat-model.md), [Product Claims](product-claims.md) | Use GitHub private vulnerability reporting. Do not publish sensitive vulnerability details in public issues or pull requests. |
 | Work on a SpecKit slice | [SpecKit Workflow](speckit-workflow.md) | [Product Backlog](product-backlog.md), [AGENTS.md](../AGENTS.md) | Keep backlog, spec, tasks, reviews, PR state, and evidence labels aligned. |
 
 ## What Is Already Strong
@@ -22,6 +24,9 @@ first.
   evidence model, release checks, OSS composition posture, and Russian overview.
 - Agent-facing docs already provide quickstart, install, copyable prompt,
   config, examples, troubleshooting, and acceptance matrix surfaces.
+- Initial public GitHub community routes now include contributing, support,
+  security, conduct, issue templates, and a pull request template. This does not
+  prove broad adoption or public support capacity.
 - Installation is intentionally simple: source checkout plus
   `scripts/bootstrap-portolan`, with network module fetching disabled unless
   `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly set.

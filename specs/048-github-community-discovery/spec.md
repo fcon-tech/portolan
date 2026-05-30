@@ -1,12 +1,13 @@
 # Feature Specification: GitHub Community Discovery
 
-**Feature Branch**: `codex/047-public-showcase-specs`
+**Feature Branch**: `codex/048-github-community-discovery`
 
 **Created**: 2026-05-30
 
-**Status**: Draft spec; GitHub private vulnerability reporting approved as the
-primary security contact path; implementation blocked on enabling/verifying the
-GitHub setting, conduct policy, and public metadata approval
+**Status**: Ready-for-review PR #24; GitHub metadata, private vulnerability
+reporting, local verification, three non-GPT review lanes, and GitHub checks
+verified; not ready-to-merge until merge approval, review approval, and
+post-merge community profile recheck
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 
@@ -32,7 +33,9 @@ without reading SpecKit internals.
    local-first evidence-preparation CLI for agents.
 2. **Given** a visitor searches GitHub by topic, **When** Portolan appears,
    **Then** topics reflect real capabilities and do not imply unsupported
-   service-catalog, security-scanner, or observability scope.
+   service-catalog, security-scanner, or observability scope. The approved topic
+   set is recorded in
+   `specs/048-github-community-discovery/reviews/github-metadata-proposal-2026-05-30.md`.
 
 ---
 
