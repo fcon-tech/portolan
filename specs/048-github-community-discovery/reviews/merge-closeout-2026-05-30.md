@@ -63,8 +63,9 @@ Result:
 | Code of conduct | `verified` | Community profile API shows `CODE_OF_CONDUCT.md` on `main`. |
 | Pull request template | `verified` | Community profile API shows `.github/pull_request_template.md` on `main`. |
 | Issue forms | `verified` for files; API gap recorded | YAML issue forms are present on `main`, but community profile API returned `issue_template: null`. |
-| Badges | `not_assessed` | No badge was added or verified in this slice. |
-| OpenSSF Scorecard / Best Practices | `not_assessed` | No Scorecard or Best Practices badge was configured or verified in this slice. |
+| Badges | `verified` | README/public-doc badge scan found no badge claims outside spec/review discussion. |
+| OpenSSF Scorecard | `verified` | Scorecard API checks returned `404` for `github.com/fcon-tech/portolan`; no public Scorecard entry is currently available to claim. |
+| OpenSSF Best Practices | `verified` | Best Practices project search returned `[]`; badge lookup returned `404`; no Best Practices project entry or badge is currently available to claim. |
 
 ## SpecKit Surface Consistency
 
@@ -78,6 +79,7 @@ Result:
 ## Remaining Surfaces
 
 - `not_assessed`: GitHub review approval.
-- `not_assessed`: badge, OpenSSF Scorecard, and Best Practices state.
+- `verified`: badge claims are absent, OpenSSF Scorecard has no public API
+  entry, and Best Practices has no project/badge entry for this repository.
 - `verified with API gap`: YAML issue forms are on `main`, but GitHub
   community profile API still returned `issue_template: null`.

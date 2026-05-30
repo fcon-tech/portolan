@@ -38,8 +38,9 @@ Current public default-branch state:
 | Code of conduct | `verified` | Post-merge community profile API shows `CODE_OF_CONDUCT.md` on `main`. |
 | Issue template | `verified` for files; API gap recorded | YAML issue forms exist on `main`; post-merge community profile API still returned `issue_template: null`. |
 | Pull request template | `verified` | Post-merge community profile API shows `.github/pull_request_template.md` on `main`. |
-| Badge state | `not_assessed` | No new badge was added in this slice. |
-| OpenSSF Scorecard / Best Practices | `not_assessed` | No Scorecard or Best Practices badge was configured in this slice. |
+| Badge state | `verified` | `rg -n "!\\[|badge|scorecard|bestpractices|best-practices|securityscorecards|scorecard.dev|shields.io|github/actions/workflows" README.md docs .github -S` returned no matches; README, docs, and `.github` do not expose badge claims. |
+| OpenSSF Scorecard | `verified` | `curl -sS -o /tmp/portolan-scorecard-new.json -w '%{http_code}\\n' 'https://api.scorecard.dev/projects/github.com/fcon-tech/portolan'` returned `404`; `https://api.securityscorecards.dev/projects/github.com/fcon-tech/portolan` also returned `404`. No public Scorecard entry is currently available to claim. |
+| OpenSSF Best Practices | `verified` | `curl -fsS 'https://www.bestpractices.dev/projects.json?url=https%3A%2F%2Fgithub.com%2Ffcon-tech%2Fportolan'` returned `[]`; badge lookup returned `404`. No Best Practices project entry or badge is currently available to claim. |
 
 ## Disposition
 
@@ -49,5 +50,6 @@ returns `issue_template: null` even though YAML issue forms are present on
 `main`; that API gap is recorded in merge closeout instead of being smoothed
 into a fully green community-profile claim.
 
-The badge, Scorecard, and Best Practices states are recorded as `not_assessed`.
-They are not positive OSS-health claims for this release.
+Badge, Scorecard, and Best Practices states are now externally checked. They
+are recorded as verified absent/unavailable signals, not as positive OSS-health
+claims for this release.
