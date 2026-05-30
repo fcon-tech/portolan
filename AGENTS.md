@@ -188,6 +188,7 @@ Run:
 
 ```bash
 go test ./...
+go vet ./...
 jq empty schema/*.json
 git diff --check
 ```

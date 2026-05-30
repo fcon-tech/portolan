@@ -11,7 +11,8 @@
 Record every relevant check as `verified`, `failed`, `blocked`, or
 `not_assessed`.
 
-- [ ] `go test -count=1 ./...`, if Go behavior or shared contracts changed:
+- [ ] `go test -count=1 ./...`, if Go files, behavior, or shared contracts changed:
+- [ ] `go vet ./...`, if Go files changed:
 - [ ] `jq empty schema/*.json`, if schemas or JSON feature metadata changed:
 - [ ] `git diff --check`
 - [ ] Issue template YAML parse, if `.github/ISSUE_TEMPLATE/*.yml` changed:

@@ -64,6 +64,7 @@ Run the baseline checks when they apply:
 
 ```bash
 go test -count=1 ./...
+go vet ./...
 jq empty schema/*.json
 git diff --check
 ```
