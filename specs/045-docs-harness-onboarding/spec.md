@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-29
 
-**Status**: Implemented locally; PR review and GitHub checks not_assessed
+**Status**: Merged via PR #21; GitHub CI verified
 
 **Input**: User description: "Analyze what is currently high quality in human documentation, agent documentation, install/build simplicity, Cursor support, and OpenCode support. Formulate a GitHub Spec Kit improvement specification and start improving it."
 
