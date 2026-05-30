@@ -4,11 +4,12 @@
 
 **Created**: 2026-05-30
 
-**Status**: Implemented and merged via PR #24; GitHub metadata, private
-vulnerability reporting, local verification, three non-GPT review lanes, GitHub
-checks, branch cleanup, post-merge community profile recheck, absent README
-badge claims, absent Scorecard API entry, and absent Best Practices entry
-verified; GitHub review approval remains not assessed
+**Status**: Implemented and merged via PR #24; OpenSSF Best Practices evidence
+follow-up merged via PR #25; GitHub metadata, private vulnerability reporting,
+local verification, three non-GPT review lanes, GitHub checks, branch cleanup,
+post-merge community profile recheck, absent README badge claims, absent
+Scorecard API entry, and absent Best Practices entry verified; GitHub review
+approval remains not assessed
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 
