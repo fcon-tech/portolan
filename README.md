@@ -140,6 +140,9 @@ If you are not sure which document to open first, start with the
 agents, Cursor operators, OpenCode operators, and release reviewers to the
 maintained surface for each workflow.
 
+For a public Apache Bigtop walkthrough with redacted example artifacts, see
+[Public Demo: Apache Bigtop](docs/demo.md).
+
 ## For Agents
 
 If you are asking an AI agent to use Portolan, point it at the user-agent docs:

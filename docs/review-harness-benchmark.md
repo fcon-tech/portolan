@@ -130,6 +130,11 @@ Suggested timeouts:
   evidence/tracing, security/privacy, tests/CI, or UX/DX.
 - For no-tools lanes, include all required context in the prompt or attached
   packet. Do not let the model pretend it inspected files it cannot access.
+- If a requested lane returns provider errors, requires unsupported reasoning
+  negotiation, hangs without output, returns empty output, or asks for tools
+  despite a no-tools prompt, record it as `not_assessed` or `failed` and launch
+  an explicit enabled non-GPT replacement lane. Do not count the requested lane
+  as assessed just because a fallback was attempted.
 - Require output fields: `findings`, `severity`, `evidence`, `recommendation`,
   `verdict`, and `not_assessed`.
 - Tell reviewers that `unknown`, `cannot_verify`, and `not_assessed` are valid
@@ -148,6 +153,12 @@ Suggested timeouts:
 - Short `pi` review smoke passed for `kimi-coding/kimi-for-coding` in 15.34s.
 - Direct `minimax/MiniMax-M2.7` returned `404 page not found` in 5.72s.
 - Short `pi` smoke passed for `openrouter/minimax/minimax-m2.7` in 7.58s.
+- On 2026-05-30, direct `minimax/MiniMax-M2.7` again returned
+  `404 page not found` during spec 049 review. `openrouter/minimax/minimax-m2.7`
+  first failed because reasoning was mandatory for the endpoint, then produced
+  no usable output before termination when retried with `--thinking low`.
+  Treat MiniMax coverage as `not_assessed` in this environment until a fresh
+  smoke succeeds; use an explicit enabled non-GPT replacement lane.
 - Short `pi` smoke passed for `openrouter/deepseek/deepseek-v4-flash` in 9.20s.
 - Short `pi` smoke passed for `openrouter/auto` in 8.83s.
 - `openrouter/qwen/qwen3.6-plus` returned a provider role error through `pi` in

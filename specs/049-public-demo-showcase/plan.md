@@ -1,6 +1,6 @@
 # Implementation Plan: Public Demo Showcase
 
-**Branch**: `codex/047-public-showcase-specs` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
+**Branch**: `codex/049-public-demo-showcase` | **Date**: 2026-05-30 | **Spec**: [spec.md](spec.md)
 
 **Input**: Feature specification from `specs/049-public-demo-showcase/spec.md`
 
@@ -18,8 +18,9 @@ and Markdown artifacts
 **Primary Dependencies**: None required; optional recording tools are deferred
 unless maintainers approve them
 
-**Storage**: Demo docs under `docs/`; optional small fixture/artifacts under
-`examples/` or `docs/demo/`
+**Storage**: Demo docs under `docs/`; small redacted excerpt artifacts under
+`examples/public-demo/bigtop/`; top-level redaction policy under
+`examples/public-demo/README.md`
 
 **Testing**: Demo command smoke; private-path/secret scan; `go test ./...`;
 `jq empty schema/*.json`; `git diff --check`
@@ -31,7 +32,9 @@ unless maintainers approve them
 **Performance Goals**: Demo runs in under five minutes from a clean checkout
 
 **Constraints**: Public-safe data only; read-only target behavior; no private
-paths; no claim broadening; no landing page before reproducible demo
+paths in committed artifacts; no claim broadening; no landing page before
+reproducible demo. Locally generated full Bigtop outputs may contain absolute
+local paths and must not be shared without a privacy review.
 
 **Scale/Scope**: One demo route, one case study, optional sample artifacts, and
 privacy review

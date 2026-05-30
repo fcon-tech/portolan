@@ -10,7 +10,7 @@ Use this checklist after implementation.
    ```bash
    scripts/bootstrap-portolan
    .portolan/bin/portolan --version
-   .portolan/bin/portolan context prepare --root <bigtop-root> --out .portolan/demo/context
+   .portolan/bin/portolan context prepare --root <bigtop-root> --out .portolan/demo/context --profile cursor
    .portolan/bin/portolan map --root <bigtop-root> --out .portolan/demo/map
    ```
 
@@ -27,7 +27,7 @@ Use this checklist after implementation.
 4. Run one bounded query or slice documented by the demo:
 
    ```bash
-   .portolan/bin/portolan query --bundle .portolan/demo/map --help
+   .portolan/bin/portolan query gaps --bundle .portolan/demo/map --limit 20
    .portolan/bin/portolan graph slice --bundle .portolan/demo/map --help
    ```
 

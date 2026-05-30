@@ -243,6 +243,13 @@ Before marking a PR ready:
    one repo-grounded local reviewer. Serious or risky PRs need three assessed
    independent non-GPT model lanes.
 
+   If the PR touches `specs/`, `.specify/`, `.agents/skills/`, backlog rows,
+   review workflow, or governance docs, include `.specify/memory/constitution.md`
+   in the review packet. Do not let constitution drift become `not_assessed`
+   merely because the prompt omitted the constitution. For docs/public-artifact
+   slices, also include the claim boundary, privacy/freshness evidence, and
+   any smoke evidence that supports public wording.
+
    Before launch, inspect `~/.pi/agent/settings.json` for exact enabled IDs. If
    a requested model is absent, record that lane as `not_assessed`; do not
    silently substitute another model. If any roster lane fails or is
@@ -254,6 +261,17 @@ Before marking a PR ready:
 6. Push, refresh PR state, and mark ready-for-review only when blockers are
    fixed and the PR is no longer draft. If blockers remain, keep the PR draft
    and record the exact blocker.
+
+For public demo, public docs, screenshots, recordings, or public artifact
+excerpts, the PR review disposition must check:
+
+- cold-start setup smoke is separated from reused existing-landscape smoke;
+- public artifacts have a freshness trace such as version, commit, or explicit
+  staleness note;
+- redaction verification covers paths, directory names for private targets,
+  hostnames/URLs, credentials, customer/private names, and weak evidence states;
+- full local outputs are not treated as public-safe without a separate privacy
+  review.
 
 If GitHub has no checks configured, report CI as `not_assessed`, not green.
 
