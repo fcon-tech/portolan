@@ -87,11 +87,24 @@ Portolan не является:
 
 ## Быстрый Старт
 
-Portolan пока не публикует prebuilt binaries. Склонируй source checkout и
-собери repo-local binary:
+После публикации тега `v0.1.0` установи первый public source-first release
+через Go:
 
 ```bash
-git clone https://github.com/governor/portolan.git
+# Требуется опубликованный тег v0.1.0. Если команда падает, используй
+# source-checkout route ниже, пока тег не доступен.
+go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
+portolan --version
+```
+
+Эта команда получает исходники публичного Go module и собирает CLI локально.
+Она не устанавливает prebuilt binary Portolan.
+
+Пока тега нет, либо если нельзя или не нужно получать modules через
+`go install`, склонируй source checkout и собери repo-local binary:
+
+```bash
+git clone https://github.com/fcon-tech/portolan.git
 cd portolan
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
@@ -100,7 +113,8 @@ scripts/bootstrap-portolan
 .portolan/bin/portolan map --root <target-root> --out <output-dir>/map
 ```
 
-Для source bootstrap нужна версия Go, указанная в `go.mod`.
+Portolan пока не публикует downloadable prebuilt binaries. Для source bootstrap
+нужна версия Go, указанная в `go.mod`.
 Если bootstrap падает из-за отсутствующего Go или cached modules, смотри
 [Troubleshooting](../agent/TROUBLESHOOTING.md). Разрешай network dependency
 download только явно:

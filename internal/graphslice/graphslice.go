@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/packet"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/packet"
 )
 
 const SchemaVersion = "0.1.0"

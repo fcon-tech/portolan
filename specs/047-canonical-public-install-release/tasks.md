@@ -5,8 +5,9 @@
 **Prerequisites**: `plan.md`, `spec.md`, `research.md`, `data-model.md`,
 `contracts/public-install-release.md`, `quickstart.md`
 
-**Tests**: Baseline checks, module identity scan, clean public install smoke,
-versioned source-first release smoke, and product-claim scan.
+**Tests**: Baseline checks, module identity regression check, module identity
+scan, clean public install smoke, versioned source-first release smoke, and
+product-claim scan.
 
 **Organization**: Tasks are grouped by independently reviewable user story.
 
@@ -28,14 +29,25 @@ versioned source-first release smoke, and product-claim scan.
 **Purpose**: Make public identity consistent before README or release copy is
 treated as usable.
 
-- [ ] T007 Replace module identity in `go.mod` with `github.com/fcon-tech/portolan`
-- [ ] T008 Update release ldflags package path in `docs/release.md`
-- [ ] T009 Update release/version injection expectations in `internal/app/app_test.go`
-- [ ] T010 Update canonical clone/install references in `README.md`
-- [ ] T011 [P] Update canonical clone/install references in `docs/ru/README.md`
-- [ ] T012 [P] Update agent install wording in `docs/agent/INSTALL.md`
-- [ ] T013 [P] Update Russian agent install wording in `docs/agent/INSTALL.ru.md`
-- [ ] T014 Record module identity scan result in `specs/047-canonical-public-install-release/reviews/identity-alignment-2026-05-30.md`
+- [x] T007 Replace module identity in `go.mod` with `github.com/fcon-tech/portolan`
+- [x] T008 Update Go internal import paths from `github.com/governor/portolan/...` to `github.com/fcon-tech/portolan/...`
+- [x] T009 Update release ldflags package path in `docs/release.md`
+- [x] T010 Update release/version injection expectations in `internal/app/app_test.go`
+- [x] T011 Add a canonical identity regression check covering `go.mod`, README install copy, release ldflags, and stale Go import paths
+- [x] T012 Update canonical clone/install references in `README.md`
+- [x] T013 [P] Update canonical clone/install references in `docs/ru/README.md`
+- [x] T014 [P] Update agent install wording in `docs/agent/INSTALL.md`
+- [x] T015 [P] Update Russian agent install wording in `docs/agent/INSTALL.ru.md`
+- [x] T016 Execute `go test -count=1 ./...` after identity migration and record result in `specs/047-canonical-public-install-release/reviews/identity-alignment-2026-05-30.md`
+- [x] T017 Run public identity scan with pass criteria and record result in `specs/047-canonical-public-install-release/reviews/identity-alignment-2026-05-30.md`
+
+**Identity scan pass criteria**:
+
+- `go.mod`, README install copy, source checkout copy, release ldflags, and
+  release test expectations use `github.com/fcon-tech/portolan`.
+- No `.go` file imports `github.com/governor/portolan/...`.
+- Any remaining `github.com/governor/portolan` references are absent or
+  explicitly marked as historical migration context, not public install copy.
 
 **Checkpoint**: The repository no longer exposes `github.com/governor/portolan`
 as the public install identity, except explicitly documented migration history
@@ -51,10 +63,14 @@ debugging module path history.
 **Independent Test**: Run the documented primary public install route and
 `portolan --version` in a clean environment.
 
-- [ ] T015 [US1] Add public install section with `go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0` to `README.md`
-- [ ] T016 [US1] Add source-checkout fallback using `git clone https://github.com/fcon-tech/portolan.git` to `README.md`
-- [ ] T017 [US1] Add clean install smoke instructions to `specs/047-canonical-public-install-release/quickstart.md`
-- [ ] T018 [US1] Record clean install smoke result or blocker in `specs/047-canonical-public-install-release/reviews/public-install-smoke-2026-05-30.md`
+- [x] T018 [US1] Add public install section with `go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0` to `README.md`
+- [x] T019 [US1] Add source-checkout fallback using `git clone https://github.com/fcon-tech/portolan.git` to `README.md`
+- [x] T020 [US1] Add clean install smoke instructions to `specs/047-canonical-public-install-release/quickstart.md`
+- [x] T021 [US1] Execute the documented install/source smoke or record an external blocker in `specs/047-canonical-public-install-release/reviews/public-install-smoke-2026-05-30.md`
+
+T021 handoff: source-checkout fallback is verified; versioned public
+`go install ...@v0.1.0` is blocked until merge and tag publication, with
+evidence recorded in `public-install-smoke-2026-05-30.md`.
 
 **Checkpoint**: User Story 1 is independently useful when README install and
 source fallback both point at `fcon-tech/portolan` and have verification status.
@@ -69,11 +85,12 @@ evidence.
 **Independent Test**: Follow release docs, verify `portolan v0.1.0`, inspect
 release notes against `docs/product-claims.md`, and record publication state.
 
-- [ ] T019 [US2] Update source-first `v0.1.0` checklist in `docs/release.md`
-- [ ] T020 [US2] Draft source-first release notes in `docs/releases/v0.1.0.md`
-- [ ] T021 [US2] Add claim-boundary review section to `docs/releases/v0.1.0.md`
-- [ ] T022 [US2] Record versioned build/checksum smoke in `specs/047-canonical-public-install-release/reviews/v0.1.0-build-smoke-2026-05-30.md`
-- [ ] T023 [US2] Record product-claim scan result in `specs/047-canonical-public-install-release/reviews/v0.1.0-claim-scan-2026-05-30.md`
+- [x] T022 [US2] Update source-first `v0.1.0` checklist in `docs/release.md`; prebuilt binaries remain out of scope unless a later spec adds platform smoke, checksums, and closeout coverage
+- [x] T023 [US2] Draft canonical source-first release notes in `docs/releases/v0.1.0.md` for later paste into GitHub Releases
+- [x] T024 [US2] Add claim-boundary review section to `docs/releases/v0.1.0.md`
+- [x] T025 [US2] Verify the Apache Bigtop demo route referenced by release notes exists and stays within `docs/product-claims.md`
+- [x] T026 [US2] Execute versioned build/checksum smoke and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-build-smoke-2026-05-30.md`
+- [x] T027 [US2] Execute product-claim and package-manager claim scans and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-claim-scan-2026-05-30.md`
 
 **Checkpoint**: User Story 2 is independently useful when release notes can be
 published without adding prebuilt-binary or adoption claims.
@@ -88,9 +105,9 @@ or merge approval.
 **Independent Test**: Inspect the closeout and confirm local readiness, GitHub
 checks, publication, and adoption are separate fields.
 
-- [ ] T024 [US3] Add release closeout template in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-template.md`
-- [ ] T025 [US3] Add README wording that avoids adoption claims in `README.md`
-- [ ] T026 [US3] Update backlog status after implementation in `docs/product-backlog.md`
+- [x] T028 [US3] Add release closeout template in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-template.md` with separate fields for local checks, GitHub checks, release publication, adoption/popularity, merge approval, and stop reason
+- [x] T029 [US3] Add README wording that avoids adoption claims in `README.md`
+- [x] T030 [US3] Update backlog status after implementation in `docs/product-backlog.md`
 
 ---
 
@@ -98,16 +115,17 @@ checks, publication, and adoption are separate fields.
 
 **Purpose**: Align status and record evidence.
 
-- [ ] T027 Run `go test -count=1 ./...` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
-- [ ] T028 Run `jq empty .specify/feature.json schema/*.json` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
-- [ ] T029 Run `git diff --check` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
-- [ ] T030 Run public identity scan and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
-- [ ] T031 Update `specs/047-canonical-public-install-release/spec.md` status
-- [ ] T032 Update `specs/047-canonical-public-install-release/tasks.md` completion ledger
+- [x] T031 Run `go test -count=1 ./...` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
+- [x] T032 Run `jq empty .specify/feature.json schema/*.json` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
+- [x] T033 Run `git diff --check` and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
+- [x] T034 Run public identity scan and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
+- [x] T035 Run release-note claim-contract scan and record result in `specs/047-canonical-public-install-release/reviews/v0.1.0-release-closeout-2026-05-30.md`
+- [x] T036 Update `specs/047-canonical-public-install-release/spec.md` status
+- [x] T037 Update `specs/047-canonical-public-install-release/tasks.md` completion ledger
 
 ## Dependencies & Execution Order
 
-- T007-T014 block all public install and release copy.
+- T007-T017 block all public install and release copy.
 - User Story 1 should complete before User Story 2.
 - User Story 2 should complete before GitHub release publication.
 - User Story 3 must complete before claiming public-release readiness.

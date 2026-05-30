@@ -4,9 +4,11 @@
 
 **Created**: 2026-05-30
 
-**Status**: Ready for implementation planning; canonical identity
-`github.com/fcon-tech/portolan`, first version `v0.1.0`, source-first artifact
-policy, and restrained release-copy style are chosen
+**Status**: Local implementation complete; canonical identity
+`github.com/fcon-tech/portolan` migrated locally, source-checkout fallback and
+local `v0.1.0` build/checksum smoke verified, versioned public `go install`
+blocked until branch merge and `v0.1.0` tag publication; PR #22 ready for
+review with GitHub CI verified
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 

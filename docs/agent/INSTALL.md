@@ -8,6 +8,15 @@ binary path, verify it with `--version` and use that binary directly.
 
 ## Installed Binary
 
+For the public `v0.1.0` source-first release, the primary install route is:
+
+```bash
+# Requires the published v0.1.0 tag. If this fails, use the source-checkout
+# route below until the tag is available.
+go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
+portolan --version
+```
+
 Check whether `portolan` is already available:
 
 ```bash

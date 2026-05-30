@@ -23,7 +23,28 @@ Use this checklist after implementation.
    ```
 
 3. Run the primary public install smoke in a clean environment or record the
-   blocker if the canonical path is not yet chosen.
+   blocker if the canonical path is not yet published. The first release is
+   source-first: `go install` builds the command locally from module source and
+   is distinct from downloadable prebuilt binaries.
+
+   ```bash
+   export GOBIN=/tmp/portolan-install-smoke/bin
+   export GOMODCACHE=/tmp/portolan-install-smoke/pkg/mod
+   rm -rf /tmp/portolan-install-smoke
+   mkdir -p "$GOBIN" "$GOMODCACHE"
+   go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
+   "$GOBIN/portolan" --version
+   ```
+
+   Before `v0.1.0` is tagged, record this as `blocked` for external
+   publication and run the source-checkout equivalent instead:
+
+   ```bash
+   git clone https://github.com/fcon-tech/portolan.git /tmp/portolan-source-smoke
+   cd /tmp/portolan-source-smoke
+   scripts/bootstrap-portolan
+   .portolan/bin/portolan --version
+   ```
 
 4. Build a versioned release artifact:
 
@@ -38,6 +59,7 @@ Use this checklist after implementation.
 
    ```bash
    rg -n "Cursor|OpenCode|Bigtop|security|runtime|complete|replace|enterprise|observability" README.md docs/release.md docs/product-claims.md
+   rg -n "Homebrew|brew install|Docker|docker pull|npm install|apt install|yum install" README.md docs
    ```
 
 6. Record release closeout with separate states for local checks, GitHub checks,

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/selection"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/selection"
 )
 
 const SchemaVersion = "0.1.0"

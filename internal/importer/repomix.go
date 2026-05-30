@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/governor/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/graph"
 )
 
 var repomixFilePathPattern = regexp.MustCompile(`(?m)^<file\s+path="([^"]+)">\s*$`)

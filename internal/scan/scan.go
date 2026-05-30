@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/governor/portolan/internal/blackbox"
-	"github.com/governor/portolan/internal/coverage"
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/selection"
+	"github.com/fcon-tech/portolan/internal/blackbox"
+	"github.com/fcon-tech/portolan/internal/coverage"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/selection"
 )
 
 type Options struct {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/governor/portolan/internal/selection"
+	"github.com/fcon-tech/portolan/internal/selection"
 )
 
 func TestBuildClassifiesManifestMissingAndExtraScope(t *testing.T) {

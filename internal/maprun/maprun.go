@@ -12,14 +12,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/governor/portolan/internal/blackbox"
-	"github.com/governor/portolan/internal/configuration"
-	"github.com/governor/portolan/internal/coverage"
-	"github.com/governor/portolan/internal/duplication"
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/packet"
-	"github.com/governor/portolan/internal/relationships"
-	"github.com/governor/portolan/internal/selection"
+	"github.com/fcon-tech/portolan/internal/blackbox"
+	"github.com/fcon-tech/portolan/internal/configuration"
+	"github.com/fcon-tech/portolan/internal/coverage"
+	"github.com/fcon-tech/portolan/internal/duplication"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/packet"
+	"github.com/fcon-tech/portolan/internal/relationships"
+	"github.com/fcon-tech/portolan/internal/selection"
 )
 
 type Options struct {

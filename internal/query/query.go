@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/governor/portolan/internal/coverage"
+	"github.com/fcon-tech/portolan/internal/coverage"
 )
 
 const (

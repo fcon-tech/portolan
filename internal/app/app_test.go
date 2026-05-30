@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/scan"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/scan"
 )
 
 const mapCommandFixtureRoot = "../../testdata/map-command/repo"
@@ -42,7 +42,7 @@ func TestReleaseBuildCanInjectVersion(t *testing.T) {
 	workDir := t.TempDir()
 	out := filepath.Join(workDir, "portolan")
 
-	build := exec.Command("go", "build", "-trimpath", "-ldflags", "-X github.com/governor/portolan/internal/app.Version=v-test", "-o", out, "./cmd/portolan")
+	build := exec.Command("go", "build", "-trimpath", "-ldflags", "-X github.com/fcon-tech/portolan/internal/app.Version=v-test", "-o", out, "./cmd/portolan")
 	build.Dir = "../.."
 	buildOut, err := build.CombinedOutput()
 	if err != nil {
@@ -56,6 +56,75 @@ func TestReleaseBuildCanInjectVersion(t *testing.T) {
 	}
 	if got := strings.TrimSpace(string(versionOut)); got != "portolan v-test" {
 		t.Fatalf("version output = %q, want portolan v-test", got)
+	}
+}
+
+func TestCanonicalPublicIdentityIsPresent(t *testing.T) {
+	checks := map[string][]string{
+		"go.mod": {
+			"module github.com/fcon-tech/portolan",
+		},
+		"README.md": {
+			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+			"git clone https://github.com/fcon-tech/portolan.git",
+		},
+		"docs/release.md": {
+			"github.com/fcon-tech/portolan/internal/app.Version",
+		},
+		"docs/ru/README.md": {
+			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+			"git clone https://github.com/fcon-tech/portolan.git",
+		},
+		"docs/agent/INSTALL.md": {
+			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+		},
+		"docs/agent/INSTALL.ru.md": {
+			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+		},
+	}
+	for path, wants := range checks {
+		data := mustReadRepoFile(t, path)
+		for _, want := range wants {
+			if !strings.Contains(data, want) {
+				t.Fatalf("%s missing %q", path, want)
+			}
+		}
+	}
+}
+
+func TestCanonicalPublicIdentityOldGoImportPathIsAbsent(t *testing.T) {
+	repoRoot := filepath.Clean("../..")
+	// Keep the banned path split so the regression test does not match itself.
+	oldPath := "github.com/" + "governor/portolan"
+	var matches []string
+	err := filepath.WalkDir(repoRoot, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			switch filepath.Base(path) {
+			case ".git", ".portolan":
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if filepath.Ext(path) != ".go" {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), oldPath) {
+			matches = append(matches, path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(matches) > 0 {
+		t.Fatalf("old Go import path found in %v", matches)
 	}
 }
 

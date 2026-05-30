@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 
-	"github.com/governor/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/graph"
 )
 
 type Result struct {

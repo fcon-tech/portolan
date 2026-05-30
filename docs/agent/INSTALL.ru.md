@@ -14,6 +14,15 @@
 
 ## 1. Найди Команду Portolan
 
+Для public `v0.1.0` source-first release основной install route:
+
+```bash
+# Требуется опубликованный тег v0.1.0. Если команда падает, используй
+# source-checkout route ниже, пока тег не доступен.
+go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
+portolan --version
+```
+
 Если `portolan` уже установлен:
 
 ```bash

@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/governor/portolan/internal/graph"
-	"github.com/governor/portolan/internal/scan"
+	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/scan"
 )
 
 type Options struct {

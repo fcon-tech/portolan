@@ -1,4 +1,4 @@
-module github.com/governor/portolan
+module github.com/fcon-tech/portolan
 
 go 1.26.3
 

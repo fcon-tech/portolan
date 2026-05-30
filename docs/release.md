@@ -8,7 +8,17 @@ release notes than `docs/product-claims.md` allows.
 
 Before publishing a tag or binary artifact:
 
-- Choose a version or tag, for example `v0.1.0`.
+- Choose the first public version: `v0.1.0`.
+- Before changing the release version, update README install copy, Russian
+  README install copy, agent install docs, release notes, release examples, and
+  `TestCanonicalPublicIdentityStaysAligned` in one changeset.
+- Confirm the canonical public identity:
+
+```bash
+go test -count=1 ./internal/app -run TestCanonicalPublicIdentityStaysAligned
+rg -n "github.com/(fcon-tech|governor)/portolan|go install|git clone" README.md docs go.mod internal -S
+```
+
 - Read `docs/product-claims.md` and copy current limitations into the release
   notes.
 - Run the local baseline:
@@ -36,27 +46,45 @@ scripts/bootstrap-portolan
 - Review the product boundary: confirm the release still preserves local-first
   and read-only operation, no daemon behavior, no credentials, no hidden runtime
   network behavior, and no target-repository mutation.
-- Produce checksums for every published binary or archive.
+- Produce checksums for every artifact explicitly built during release
+  closeout. For `v0.1.0`, this applies to maintainer-built verification
+  artifacts only unless a maintainer explicitly expands the release to publish
+  downloadable binaries or archives.
 - Record any `not_assessed`, `blocked`, or `failed` validation surface in the
   release notes.
 
 ## Build Artifacts
 
-Source bootstrap remains the default install path. If publishing a binary
-artifact, build it from a clean checkout and set the version through Go linker
-flags:
+The `v0.1.0` release is source-first:
+
+- Git tag and GitHub source archive;
+- `go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0`;
+- source-checkout bootstrap;
+- checksums only for artifacts explicitly built during release closeout.
+
+Prebuilt binaries remain out of scope until a later spec adds platform smoke,
+checksums, and closeout coverage. `go install` builds the command locally from
+module source; it is not a prebuilt binary route. If a maintainer still builds a
+local artifact for release verification, build it from a clean checkout and set
+the version through Go linker flags:
 
 ```bash
 VERSION=v0.1.0
 OUT=/tmp/portolan-release/$VERSION
 mkdir -p "$OUT"
-go build -trimpath -ldflags "-X github.com/governor/portolan/internal/app.Version=$VERSION" -o "$OUT/portolan-$(go env GOOS)-$(go env GOARCH)" ./cmd/portolan
+go build -trimpath -ldflags "-X github.com/fcon-tech/portolan/internal/app.Version=$VERSION" -o "$OUT/portolan-$(go env GOOS)-$(go env GOARCH)" ./cmd/portolan
 "$OUT/portolan-$(go env GOOS)-$(go env GOARCH)" --version
 (cd "$OUT" && sha256sum * > SHA256SUMS)
 ```
 
 Keep generated release artifacts outside the repository unless a future spec
 explicitly defines committed release metadata.
+
+## Release Notes Source
+
+Use `docs/releases/v0.1.0.md` as the canonical local source for the first
+GitHub release body. Paste that content into GitHub Releases only after local
+checks, product-claim scan, and GitHub check state are recorded.
 
 ## Product Claim Boundary
 

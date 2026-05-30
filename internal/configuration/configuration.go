@@ -10,7 +10,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/governor/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/graph"
 )
 
 const MaxCandidateBytes int64 = 1 << 20

@@ -86,11 +86,24 @@ records, weak evidence states, or stable `portolan://` references.
 
 ## Quick Start
 
-Portolan does not publish prebuilt binaries yet. Clone the source checkout and
-build the repo-local binary:
+After the `v0.1.0` tag is published, install the first public source-first
+release with Go:
 
 ```bash
-git clone https://github.com/governor/portolan.git
+# Requires the published v0.1.0 tag. If this fails, use the source-checkout
+# route below until the tag is available.
+go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
+portolan --version
+```
+
+This command fetches the public module source and builds the CLI locally. It
+does not install a prebuilt Portolan binary.
+
+Until that tag exists, or if you cannot or should not fetch modules through
+`go install`, clone the source checkout and build the repo-local binary:
+
+```bash
+git clone https://github.com/fcon-tech/portolan.git
 cd portolan
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
@@ -99,7 +112,8 @@ scripts/bootstrap-portolan
 .portolan/bin/portolan map --root <target-root> --out <output-dir>/map
 ```
 
-You need the Go version declared in `go.mod` for the source bootstrap.
+Portolan does not publish downloadable prebuilt binaries yet. You need the Go
+version declared in `go.mod` for the source bootstrap.
 If bootstrap fails because Go or cached modules are missing, see
 [Troubleshooting](docs/agent/TROUBLESHOOTING.md). Allow network dependency
 download only when you mean to:
@@ -181,6 +195,9 @@ detector is not implemented.
 ## Current Boundaries
 
 Current safe product wording lives in [Product Claims](docs/product-claims.md).
+The `v0.1.0` release surface is ready for public testing when local checks pass;
+it does not imply GitHub popularity, external adoption, merge approval, or broad
+ecosystem validation.
 
 Important limits:
 
