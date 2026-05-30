@@ -6,8 +6,9 @@
 
 **Status**: Implemented and merged via PR #24; GitHub metadata, private
 vulnerability reporting, local verification, three non-GPT review lanes, GitHub
-checks, branch cleanup, and post-merge community profile recheck verified;
-GitHub review approval remains not assessed
+checks, branch cleanup, post-merge community profile recheck, absent README
+badge claims, absent Scorecard API entry, and absent Best Practices entry
+verified; GitHub review approval remains not assessed
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 
