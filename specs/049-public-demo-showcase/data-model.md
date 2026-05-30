@@ -14,6 +14,8 @@ Chosen target:
 ```text
 kind: external-oss
 source: Apache Bigtop
+license_note: Apache Bigtop is Apache License 2.0; verify and cite the
+  repository license before publishing excerpts.
 artifact_policy: runbook plus redacted excerpts; full outputs deferred
 visual_policy: screenshots and terminal recordings deferred
 ```

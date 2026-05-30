@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1.0",
+  "query": {
+    "family": "gaps",
+    "limit": 5,
+    "bundle_path": "<demo-output>/map"
+  },
+  "records": [
+    {
+      "id": "external-completeness",
+      "reference": "portolan://bundle/coverage/external-completeness",
+      "bundle_path": "<demo-output>/map",
+      "artifact": "coverage.json",
+      "record_id": "external-completeness",
+      "kind": "external-completeness",
+      "evidence_state": "unknown",
+      "status": "unknown",
+      "reason": "no manifest or curated inventory was supplied; local repository discovery does not prove complete ecosystem coverage"
+    },
+    {
+      "id": "non-repository-children",
+      "reference": "portolan://bundle/coverage/non-repository-children",
+      "bundle_path": "<demo-output>/map",
+      "artifact": "coverage.json",
+      "record_id": "non-repository-children",
+      "kind": "repository-discovery",
+      "evidence_state": "unknown",
+      "status": "not_assessed",
+      "reason": "1 direct child file(s) were not assessed as repository candidates",
+      "evidence_source": "<bigtop-root>"
+    }
+  ],
+  "truncated": true,
+  "truncated_records": 123,
+  "warnings": []
+}

@@ -1,12 +1,12 @@
 # Feature Specification: Public Demo Showcase
 
-**Feature Branch**: `codex/047-public-showcase-specs`
+**Feature Branch**: `codex/049-public-demo-showcase`
 
 **Created**: 2026-05-30
 
-**Status**: Ready for implementation planning; Apache Bigtop target and
-runbook-plus-redacted-excerpts artifact policy are approved; implementation
-still needs fresh demo verification and privacy/freshness review
+**Status**: Implemented locally; public runbook, redacted excerpts, fresh local
+smoke evidence, claim scan, privacy/freshness review, and baseline checks are
+recorded; PR review pending
 
 **Input**: User description: "Specs for a public showcase/popularization path."
 
