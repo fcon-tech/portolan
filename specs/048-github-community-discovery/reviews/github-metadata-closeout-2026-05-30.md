@@ -34,18 +34,20 @@ Current public default-branch state:
 | --- | --- | --- |
 | README | `verified` | Present on default branch. |
 | License | `verified` | MIT license present on default branch. |
-| Contributing | `blocked` | Added in this branch; public community profile remains incomplete until merge. |
-| Code of conduct | `blocked` | Added in this branch; public community profile remains incomplete until merge. |
-| Issue template | `blocked` | Added in this branch; public community profile remains incomplete until merge. |
-| Pull request template | `blocked` | Added in this branch; public community profile remains incomplete until merge. |
+| Contributing | `verified` | Post-merge community profile API shows `CONTRIBUTING.md` on `main`. |
+| Code of conduct | `verified` | Post-merge community profile API shows `CODE_OF_CONDUCT.md` on `main`. |
+| Issue template | `verified` for files; API gap recorded | YAML issue forms exist on `main`; post-merge community profile API still returned `issue_template: null`. |
+| Pull request template | `verified` | Post-merge community profile API shows `.github/pull_request_template.md` on `main`. |
 | Badge state | `not_assessed` | No new badge was added in this slice. |
 | OpenSSF Scorecard / Best Practices | `not_assessed` | No Scorecard or Best Practices badge was configured in this slice. |
 
 ## Disposition
 
-GitHub metadata and private vulnerability reporting are externally verified.
-Community profile completion remains blocked on merging this branch to the
-default branch and rechecking the profile.
+GitHub metadata, private vulnerability reporting, and the post-merge community
+profile recheck are externally verified. GitHub's community profile API still
+returns `issue_template: null` even though YAML issue forms are present on
+`main`; that API gap is recorded in merge closeout instead of being smoothed
+into a fully green community-profile claim.
 
 The badge, Scorecard, and Best Practices states are recorded as `not_assessed`.
 They are not positive OSS-health claims for this release.
