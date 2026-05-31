@@ -1,7 +1,6 @@
-# FCON And Portolan Static Site
+# Portolan Static Site
 
-This directory contains the first static GitHub Pages site for FCON and
-Portolan.
+This directory contains the static GitHub Pages site for Portolan.
 
 ## Local Preview
 
