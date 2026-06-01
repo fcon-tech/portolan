@@ -128,6 +128,13 @@ fixtures are preflight evidence only.
 | P5-049 | `specs/049-public-demo-showcase/` | Public evaluators can run a reproducible Apache Bigtop demo and read a claim-bounded case study without leaking private context or hiding unknowns. | Implemented and merged via PR #23; public runbook, redacted excerpts, local cold-start and existing-landscape smoke evidence, claim scan, privacy/freshness review, PR review, GitHub checks, and merge closeout verified |
 | P5-050 | `specs/050-fcon-portolan-pages-site/` | FCON and Portolan can publish a static GitHub Pages site that routes visitors to install, demo, release, claims, and GitHub without overclaiming. | Implemented and merged via PR #26; local implementation, PR review, merge state, GitHub checks, and merge command verified; live GitHub Pages deployment, default Pages URL, DNS, HTTPS, and GitHub review approval not_assessed |
 
+## P6: First-Run Product UX Closure
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P6-051 | `specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Draft; split out from first-run UX work after customer feedback and SDP Lab distillation |
+| P6-052 | `specs/052-agent-scan-report-ux/` | A non-expert user can open a repository or local repository folder in a coding-agent harness, ask for a scan, and receive one useful first report covering visible stack, relationships, architecture diagram, duplication, technical-debt candidates, unknowns, and next actions. | Draft; depends on P6-051 quality boundary; current prototype verified lower-level artifacts but no single E2E report artifact |
+
 ## Backlog Rules
 
 - Every P0/P1/P2 item must map to exactly one SpecKit feature directory before
