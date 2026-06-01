@@ -18,14 +18,18 @@ harness role.
 | --- | --- | --- |
 | `20260601-190628` | verified | Current merged `main` after PR #30. Cursor + Composer 2.5 reported a qualified pass for anti-adapter routing and identified guidance gaps around Go-only map relationships, absent producer evaluations, context-vs-map gaps, and SBOM/unknown-node scale. |
 | `20260601-191803` | verified | Follow-up run after guidance corrections. Syft/CycloneDX was regenerated with `.portolan/**` and root `run/**` excluded; context was refreshed after Syft output; map and query artifacts were regenerated. |
+| `20260601-194753` | verified | Follow-up run after adding `summary.json.navigation` and `graph-index.json.navigation`. Syft/CycloneDX was regenerated with `.portolan/**` and root `run/**` excluded; context, map, and query artifacts were regenerated before Cursor review. |
 
 Root `/home/fall_out_bug/projects/bigtop-landscape/run` was absent before and
-after the corrected run.
+after the corrected runs.
 
 ## Verified Artifacts
 
-Corrected run directory:
+Guidance-corrected run directory:
 `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-191803/`
+
+Navigation-index run directory:
+`/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-194753/`
 
 Key artifacts:
 
@@ -41,6 +45,7 @@ Key artifacts:
 - `query-gaps.json`
 - `query-relationships.json`
 - `cursor-composer25-final-after-sbom-count-output.md`
+- `cursor-composer25-navigation-index-output.md`
 
 Corrected run metrics:
 
@@ -62,10 +67,40 @@ Corrected run metrics:
   - `unknown`: 12
   - `cannot_verify`: 6
 
+Navigation-index run metrics:
+
+- Repositories: 18
+- Syft/CycloneDX components: 18,769
+- Syft/CycloneDX dependency records: 5,357
+- Graph nodes: 190,748
+- Graph edges: 200,203
+- Findings by status:
+  - `observed`: 161
+  - `not_assessed`: 106
+  - `cannot_verify`: 6
+  - `unknown`: 1
+- Findings by evidence state:
+  - `source-visible`: 156
+  - `metadata-visible`: 5
+  - `not_assessed`: 95
+  - `unknown`: 12
+  - `cannot_verify`: 6
+- `summary.json.navigation` and `graph-index.json.navigation`: verified
+- `navigation.unknown_nodes.total`: 147,813
+- `navigation.unknown_nodes.majority`: `true`
+- Largest high-degree hubs:
+  - `apache-spark`: 26,556 outgoing edges
+  - `apache-flink`: 26,053 outgoing edges
+  - `apache-hive`: 22,263 outgoing edges
+  - `bigtop-syft-cyclonedx`: 18,769 outgoing package edges
+
 ## Cursor + Composer 2.5 Verdict
 
 Final output:
 `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-191803/cursor-composer25-final-after-sbom-count-output.md`
+
+Navigation-index output:
+`/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-194753/cursor-composer25-navigation-index-output.md`
 
 Assessment:
 
@@ -83,6 +118,12 @@ Assessment:
 - `verified`: Go/go.mod-only native map relationship extraction and skipped
   map surfaces are explicit.
 - `not_assessed`: live Cursor UI behavior outside headless Cursor Agent.
+- `verified`: the new post-map `navigation` object gives agents a bounded
+  read path before `graph.json`, exposes high-degree hubs, identifies the SBOM
+  package fan-out as metadata inventory rather than service topology, and
+  summarizes the majority `unknown` bucket by file surface.
+- `not_assessed`: Bigtop service architecture, runtime topology, and broad
+  symbol/API/catalog coverage without external producer outputs.
 
 Contamination:
 
@@ -91,6 +132,9 @@ Contamination:
 - A search for forbidden target-root run paths found no root `run/` usage. The
   output's contamination declaration mentions excluded categories, which is not
   evidence that they were read.
+- The navigation-index Cursor output contains no old run IDs, no root
+  `/home/fall_out_bug/projects/bigtop-landscape/run` usage, no
+  `consolidated-report`, and no baseline/no-Portolan comparison references.
 
 ## Accepted Corrections
 
@@ -109,6 +153,12 @@ Implemented in this branch:
   when observed, plus the SBOM package fan-out boundary.
 - `agent-brief.md` and `query gaps` warning now separate
   `context/gaps.jsonl`/`producer-*` acquisition gaps from weak map records.
+- `summary.json` and `graph-index.json` now include a `navigation` object with
+  bounded read order, `graph.json` first-read guardrail, graph-slice/query
+  drill-down commands, high-degree hubs, unknown-node surface buckets, and
+  SBOM fan-out warnings.
+- `map.md` now points agents to `summary.json.navigation` and
+  `graph-index.json.navigation` before full graph loading.
 
 ## Rejected Corrections
 
@@ -119,15 +169,16 @@ Implemented in this branch:
 
 ## Remaining Follow-Up
 
-Still product-relevant but out of scope for this narrow correction:
+No blocking correction remains for the post-map navigation harness slice.
+Optional hardening that should not block PR #31:
 
-- Improve post-map navigation for SBOM-scale graphs where a Syft node creates a
-  high-degree package fan-out.
-- Reduce the opacity of large `unknown` node buckets in `graph-index.json` with
-  stronger provenance grouping or drill-down guidance.
+- Add `coverage.json` or `map.md` to `navigation.read_order` if later stress
+  shows agents miss coverage or human packet context.
 - Consider a dedicated bounded index for relationship candidates so agents do
   not need to scan the full `evidence-index.jsonl` for common build/deploy
   hints.
+- Acquire real local producer outputs for symbol/API/catalog/model/runtime
+  surfaces. Until then, those claims remain `not_assessed`.
 
-These are navigation-harness improvements, not UX polish and not a reason to
-add PHP/JVM/Scala adapters.
+These are product-evidence improvements, not UX polish and not a reason to add
+PHP/JVM/Scala adapters.

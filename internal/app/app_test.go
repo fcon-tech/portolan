@@ -1378,6 +1378,29 @@ func TestRunMapWritesAgentScaleSummary(t *testing.T) {
 			t.Fatalf("file surfaces = %#v, want %q", surfaces, want)
 		}
 	}
+	navigation := summary["navigation"].(map[string]any)
+	if !strings.Contains(fmt.Sprint(navigation["read_order"]), "summary.json") ||
+		!strings.Contains(fmt.Sprint(navigation["do_not_open_first"]), "graph.json") {
+		t.Fatalf("navigation = %#v, want summary-first graph guardrail", navigation)
+	}
+	unknownNodes := navigation["unknown_nodes"].(map[string]any)
+	if unknownNodes["total"].(float64) == 0 ||
+		!strings.Contains(fmt.Sprint(unknownNodes["reason"]), "surface_buckets classify only nodes where kind == \"unknown\"") {
+		t.Fatalf("unknown_nodes = %#v, want unclassified inventory warning", unknownNodes)
+	}
+	buckets := unknownNodes["surface_buckets"].(map[string]any)
+	bucketTotal := 0.0
+	for _, want := range []string{"manifest", "source", "workflow", "container", "config", "doc", "test"} {
+		if buckets[want].(float64) == 0 {
+			t.Fatalf("unknown surface buckets = %#v, want %q", buckets, want)
+		}
+	}
+	for _, raw := range buckets {
+		bucketTotal += raw.(float64)
+	}
+	if bucketTotal != unknownNodes["total"].(float64) {
+		t.Fatalf("unknown surface buckets sum = %.0f, total = %.0f", bucketTotal, unknownNodes["total"].(float64))
+	}
 }
 
 func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
@@ -1432,6 +1455,17 @@ func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
 	if len(highDegree) == 0 {
 		t.Fatalf("high degree nodes = %#v, want graph entrypoints", highDegree)
 	}
+	navigation := index["navigation"].(map[string]any)
+	if !strings.Contains(fmt.Sprint(navigation["next_drill_down"]), "graph slice") {
+		t.Fatalf("navigation = %#v, want graph slice drill-down", navigation)
+	}
+	if hubs := navigation["high_degree_hubs"].([]any); len(hubs) == 0 {
+		t.Fatalf("navigation = %#v, want high-degree hubs", navigation)
+	}
+	unknownNodes := navigation["unknown_nodes"].(map[string]any)
+	if unknownNodes["total"].(float64) <= float64(20) || unknownNodes["majority"] != true {
+		t.Fatalf("unknown_nodes = %#v, want majority unknown navigation signal", unknownNodes)
+	}
 	rules := fmt.Sprint(index["rules"])
 	for _, want := range []string{"Node kind \"unknown\"", "not semantic coverage", "--repo <id>", "explicit --limit"} {
 		if !strings.Contains(rules, want) {
@@ -1447,6 +1481,61 @@ func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunMapNavigationIndexFlagsSBOMFanOut(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, "pom.xml"), `<project><artifactId>api</artifactId></project>`)
+	sbom := filepath.Join(root, "syft.cyclonedx.json")
+	mustWrite(t, sbom, `{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {"bom-ref":"pkg:maven/org.example/lib-a@1.0.0","name":"lib-a"},
+    {"bom-ref":"pkg:maven/org.example/lib-b@1.0.0","name":"lib-b"},
+    {"bom-ref":"pkg:maven/org.example/lib-c@1.0.0","name":"lib-c"}
+  ],
+  "dependencies": [
+    {"ref":"pkg:maven/org.example/lib-a@1.0.0","dependsOn":["pkg:maven/org.example/lib-b@1.0.0"]}
+  ]
+}`)
+	selectionPath := writeSelection(t, t.TempDir(), "navigation-sbom", `{
+  "schema_version": "0.1.0",
+  "targets": [
+    {"id":"api","kind":"repository","path":`+quote(root)+`}
+  ],
+  "tool_outputs": [
+    {"id":"api-sbom","kind":"sbom","tool":"syft","path":`+quote(sbom)+`,"repository":"api"}
+  ]
+}`)
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	summary := readJSONFile(t, filepath.Join(out, "summary.json"))
+	navigation := summary["navigation"].(map[string]any)
+	warnings := fmt.Sprint(navigation["warnings"])
+	for _, want := range []string{"SBOM tool-output node", "package inventory fan-out", "not service topology"} {
+		if !strings.Contains(warnings, want) {
+			t.Fatalf("navigation warnings = %s, want %q", warnings, want)
+		}
+	}
+	hubs := navigation["high_degree_hubs"].([]any)
+	foundSBOM := false
+	for _, raw := range hubs {
+		hub := raw.(map[string]any)
+		if hub["id"] == "api-sbom" && hub["kind"] == "tool-output-sbom" && hub["out_edges"].(float64) == 3 {
+			foundSBOM = true
+		}
+	}
+	if !foundSBOM {
+		t.Fatalf("high_degree_hubs = %#v, want api-sbom tool-output-sbom fan-out", hubs)
 	}
 }
 
