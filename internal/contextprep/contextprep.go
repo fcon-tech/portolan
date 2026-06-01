@@ -278,7 +278,7 @@ func Run(opts Options) (Result, error) {
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
 		return Result{}, err
 	}
-	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps, relationshipCandidates)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps, relationshipCandidates, producerRecommendations, producerCoverage, producerEvaluations)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root)), 0o644); err != nil {
@@ -1711,17 +1711,29 @@ func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
-func renderAgentBrief(root string, profile string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap, relationshipCandidates []RelationshipCandidate) string {
+func renderAgentBrief(root string, profile string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap, relationshipCandidates []RelationshipCandidate, producerRecommendations, producerCoverage, producerEvaluations []EvidenceRecord) string {
 	var b strings.Builder
 	observedTools := 0
 	cannotVerifyTools := 0
 	availablePlans := 0
+	observedCycloneDX := false
+	sbomComponents := 0
+	sbomDependencyRecords := 0
 	for _, tool := range tools {
 		switch tool.Status {
 		case "observed":
 			observedTools++
 		case "cannot_verify":
 			cannotVerifyTools++
+		}
+		if tool.Family == "cyclonedx" && tool.Status == "observed" {
+			observedCycloneDX = true
+			if tool.Metrics["components"] > sbomComponents {
+				sbomComponents = tool.Metrics["components"]
+			}
+			if tool.Metrics["dependency_records"] > sbomDependencyRecords {
+				sbomDependencyRecords = tool.Metrics["dependency_records"]
+			}
 		}
 	}
 	for _, tool := range ossPlan.Tools {
@@ -1740,17 +1752,26 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "4. `oss-plan.json` for native local OSS CLI, skill, or MCP recipes when OSS outputs are missing.\n")
 	fmt.Fprintf(&b, "5. `answer-contract.md` for how to turn Portolan evidence into CTO answers.\n")
 	fmt.Fprintf(&b, "6. `query-plan.md` for the inspection order.\n")
-	fmt.Fprintf(&b, "7. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
+	fmt.Fprintf(&b, "7. `gaps.jsonl` for context-preparation producer gaps and `unknown`, `cannot_verify`, and `not_assessed` surfaces; use `portolan query gaps` later for weak records in an existing map bundle.\n\n")
 	fmt.Fprintf(&b, "## Current Coverage\n\n")
 	fmt.Fprintf(&b, "- Repositories discovered: %d\n", len(repos))
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
 	fmt.Fprintf(&b, "- Build/deploy relationship candidate summaries: %d\n", len(relationshipCandidates))
 	fmt.Fprintf(&b, "- Observed OSS/tool-output summaries: %d\n", observedTools)
+	if observedCycloneDX {
+		fmt.Fprintf(&b, "- Observed CycloneDX components: %d; dependency records: %d\n", sbomComponents, sbomDependencyRecords)
+	}
 	fmt.Fprintf(&b, "- Cannot-verify tool outputs: %d\n", cannotVerifyTools)
 	fmt.Fprintf(&b, "- Available OSS output recipes not run: %d\n", availablePlans)
+	fmt.Fprintf(&b, "- Producer recommendation records: %d\n", len(producerRecommendations))
+	fmt.Fprintf(&b, "- Producer coverage records: %d\n", len(producerCoverage))
+	fmt.Fprintf(&b, "- Local producer evaluation records: %d (`not_assessed` until local evaluation input exists)\n", len(producerEvaluations))
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
 	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `evidence-index.jsonl` and `tool-registry.json` summaries as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running native OSS CLI, skill, or MCP commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
+	fmt.Fprintf(&b, "\nMap relationship limits to preserve after `portolan map`: current native relationship extraction is limited to Go imports and go.mod manifests. Read map `summary.json.skipped_surfaces` and keep non-Go, JVM, PHP, Scala, service topology, runtime inference, and lifecycle modeling claims as `not_assessed` unless local producer output supplies evidence.\n")
+	fmt.Fprintf(&b, "\nSBOM scale boundary: if CycloneDX/Syft output is present, a map can contain high-degree SBOM package fan-out. Use `summary.json`, `graph-index.json`, `portolan query`, and `portolan graph slice` before opening full `graph.json`; do not treat SBOM package fan-out as service topology or runtime coupling.\n")
+	fmt.Fprintf(&b, "\nGap boundary: `context/gaps.jsonl` and `producer-*` records guide missing producer-family acquisition. `portolan query gaps` reports weak coverage and findings from an existing map bundle. Neither supersedes the other.\n")
 	return b.String()
 }
 
@@ -1805,9 +1826,9 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "| Runtime communication | `runtime-visible` | Runtime-visible local observations show communication during the captured window. | Complete topology unless the runtime evidence is complete. |\n")
 	fmt.Fprintf(&b, "| Ownership | `metadata-visible` or `claim-only` | Local ownership files, catalogs, or claims state responsibility. | Operational accountability beyond the supplied source. |\n")
 	fmt.Fprintf(&b, "| Lifecycle | `metadata-visible` or `claim-only` | Local metadata or claims state active, retired, legacy, or migration status. | Current lifecycle for unobserved systems. |\n\n")
-	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
+	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. Native map relationship extraction is limited to Go imports and go.mod manifests; JVM, PHP, Scala, and other non-Go coupling stays `not_assessed` unless supplied through local producer output. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
 	fmt.Fprintf(&b, "## Producer Family Recommendations\n\n")
-	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
+	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Portolan does not synthesize producer evaluations from recommendation records; if no `producer-evaluation` record is present, candidate evaluation remains `not_assessed`. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
 	fmt.Fprintf(&b, "- Do not claim complete service inventory without coverage evidence.\n")
 	fmt.Fprintf(&b, "- Do not claim dependency or component duplication without SBOM or duplicate findings.\n")
@@ -1842,7 +1863,9 @@ func renderQueryPlan() string {
 - Producer family gaps: inspect ` + "`producer-coverage`" + ` and
   ` + "`producer-recommendation`" + ` records in ` + "`evidence-index.jsonl`" + ` before
   making mixed-language coverage claims. Recommendations are options, not
-  verified support.
+  verified support. If no ` + "`producer-evaluation`" + ` records are present,
+  candidate evaluation remains not_assessed; Portolan does not synthesize
+  evaluations from recommendations.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

@@ -97,6 +97,7 @@ type Summary struct {
 	Findings      findingSummary  `json:"findings"`
 	Coverage      coverageSummary `json:"coverage"`
 	FileSurfaces  map[string]int  `json:"file_surfaces"`
+	Navigation    navigationIndex `json:"navigation"`
 	Skipped       []string        `json:"skipped_surfaces"`
 	Warnings      []string        `json:"warnings"`
 }
@@ -153,6 +154,7 @@ type GraphIndex struct {
 	EdgeSlices    []graphIndexEdgeSlice    `json:"edge_slices"`
 	FindingSlices []graphIndexFindingSlice `json:"finding_slices"`
 	HighDegree    []graphIndexDegreeNode   `json:"high_degree_nodes"`
+	Navigation    navigationIndex          `json:"navigation"`
 	Rules         []string                 `json:"rules"`
 }
 
@@ -215,6 +217,22 @@ type graphIndexDegreeNode struct {
 	InEdges       int    `json:"in_edges"`
 	OutEdges      int    `json:"out_edges"`
 	TotalDegree   int    `json:"total_degree"`
+}
+
+type navigationIndex struct {
+	ReadOrder      []string                `json:"read_order"`
+	DoNotOpenFirst []string                `json:"do_not_open_first"`
+	NextDrillDown  []string                `json:"next_drill_down"`
+	HighDegreeHubs []graphIndexDegreeNode  `json:"high_degree_hubs,omitempty"`
+	UnknownNodes   unknownNavigationBucket `json:"unknown_nodes"`
+	Warnings       []string                `json:"warnings,omitempty"`
+}
+
+type unknownNavigationBucket struct {
+	Total          int            `json:"total"`
+	Majority       bool           `json:"majority"`
+	SurfaceBuckets map[string]int `json:"surface_buckets,omitempty"`
+	Reason         string         `json:"reason,omitempty"`
 }
 
 func Run(opts Options) (Result, error) {
@@ -2087,6 +2105,7 @@ func summarizeRun(run RunMetadata, g graph.Graph, findings []Finding, ledger cov
 		Findings:      summarizeFindings(findings),
 		Coverage:      summarizeCoverage(ledger),
 		FileSurfaces:  summarizeFileSurfaces(g),
+		Navigation:    buildNavigationIndex(g),
 		Skipped:       append([]string(nil), run.SkippedSurfaces...),
 		Warnings:      append([]string(nil), run.Warnings...),
 	}
@@ -2115,8 +2134,52 @@ func buildGraphIndex(run RunMetadata, g graph.Graph, findings []Finding, artifac
 		EdgeSlices:    graphIndexEdgeSlices(g),
 		FindingSlices: graphIndexFindingSlices(findings),
 		HighDegree:    graphIndexHighDegreeNodes(g),
+		Navigation:    buildNavigationIndex(g),
 		Rules:         graphIndexRules(g),
 	}
+}
+
+func buildNavigationIndex(g graph.Graph) navigationIndex {
+	unknownNodes := graphNodeKindCount(g, "unknown")
+	highDegree := graphIndexHighDegreeNodes(g)
+	nav := navigationIndex{
+		ReadOrder: []string{
+			"summary.json",
+			"graph-index.json",
+			"portolan query findings",
+			"portolan query gaps",
+			"portolan graph slice",
+		},
+		DoNotOpenFirst: []string{"graph.json"},
+		NextDrillDown: []string{
+			"portolan graph slice --bundle <run-dir> --repo <repo-id> --out <slice.json> --limit <n>",
+			"portolan graph slice --bundle <run-dir> --edge-kind <edge-kind> --out <slice.json> --limit <n>",
+			"portolan query gaps --bundle <run-dir> --limit 20",
+		},
+		HighDegreeHubs: append([]graphIndexDegreeNode(nil), highDegree...),
+		UnknownNodes: unknownNavigationBucket{
+			Total:          unknownNodes,
+			Majority:       unknownNodes > len(g.Nodes)/2,
+			SurfaceBuckets: summarizeFileSurfaces(g),
+		},
+		Warnings: []string{
+			"Use bounded navigation artifacts before graph.json; graph.json is canonical but not a first-read agent artifact.",
+		},
+	}
+	if unknownNodes > 0 {
+		nav.UnknownNodes.Reason = "Unknown nodes are unclassified inventory, not semantic architecture coverage; surface_buckets classify only nodes where kind == \"unknown\", not all graph nodes."
+		nav.Warnings = append(nav.Warnings, fmt.Sprintf("Node kind \"unknown\" appears %d times; use unknown_nodes.surface_buckets and graph slice before making architecture claims.", unknownNodes))
+	}
+	if nav.UnknownNodes.Majority {
+		nav.Warnings = append(nav.Warnings, "Unknown nodes are the majority of this graph; do not treat graph size as architecture coverage.")
+	}
+	for _, node := range highDegree {
+		if node.Kind == "tool-output-sbom" {
+			nav.Warnings = append(nav.Warnings, fmt.Sprintf("SBOM tool-output node %q has %d outgoing package edges; treat this as package inventory fan-out, not service topology or runtime coupling.", node.ID, node.OutEdges))
+			break
+		}
+	}
+	return nav
 }
 
 func graphIndexRules(g graph.Graph) []string {
@@ -2603,6 +2666,7 @@ func writeMap(path string, run RunMetadata, g graph.Graph, findings []Finding, l
 	writeMachineArtifactSummary(&b, g)
 	b.WriteString("## Next-Agent Tasks\n\n")
 	b.WriteString("- Inspect `summary.json` and `graph-index.json` before loading full `graph.json` into an agent context.\n")
+	b.WriteString("- Inspect `summary.json.navigation` and `graph-index.json.navigation` for high-degree hubs, unknown-node buckets, and safe drill-down order.\n")
 	b.WriteString("- Use `portolan graph slice --bundle <run-dir>` for bounded repo, edge-kind, or finding-kind drill-downs.\n")
 	b.WriteString("- Inspect `coverage.json` before treating the map as complete.\n")
 	b.WriteString("- Resolve `unknown`, `cannot_verify`, and `not_assessed` records before making architecture claims.\n")
