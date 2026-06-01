@@ -113,9 +113,9 @@ reviewed and the result is recorded without broadening architecture claims.
 
 **Purpose**: Bring the implementation to a reviewable PR state.
 
-- [ ] T025 Run full local verification: `go test -count=1 ./...`, `go vet ./...`, `jq empty schema/*.json`, `git diff --check`
-- [ ] T026 Run independent review lanes and record disposition under `docs/specs/054-real-producer-output-proof/reviews/`
-- [ ] T027 Update `docs/product-backlog.md`, `spec.md`, and `tasks.md` to match actual implementation state
+- [x] T025 Run full local verification: `go test -count=1 ./...`, `go vet ./...`, `jq empty schema/*.json`, `git diff --check`
+- [x] T026 Run independent review lanes and record disposition under `docs/specs/054-real-producer-output-proof/reviews/`
+- [x] T027 Update `docs/product-backlog.md`, `spec.md`, and `tasks.md` to match actual implementation state
 - [ ] T028 Create or update PR and record PR readiness closeout for spec 054
 
 ---

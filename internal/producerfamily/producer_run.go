@@ -96,6 +96,9 @@ func ValidateProducerRunJSON(data []byte) (ProducerRunRecord, error) {
 	return record, nil
 }
 
+// ValidateProducerRun validates operator-supplied metadata about an externally
+// generated producer output. A verified record is machine-scoped: the referenced
+// local output file must exist under target_root when validation runs.
 func ValidateProducerRun(record ProducerRunRecord) error {
 	var problems []string
 	if record.RecordType != "producer-run" {
@@ -182,6 +185,8 @@ func validateVerifiedProducerRun(record ProducerRunRecord, problems *[]string) {
 }
 
 func commandLooksUnsafe(command string) bool {
+	// This is a conservative metadata hygiene check, not a command sandbox or a
+	// security parser. Producer tools are not executed by Portolan in this path.
 	lower := strings.ToLower(command)
 	for _, token := range []string{
 		"http://",
@@ -212,6 +217,8 @@ func isWithinPath(path, root string) bool {
 }
 
 func decodeProducerRunStrict(data []byte, value any) error {
+	// Keep producer-run input strict so unexpected positive-claim fields cannot
+	// quietly enter agent context without an explicit contract update.
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(value); err != nil {
