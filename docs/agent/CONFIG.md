@@ -6,7 +6,7 @@ directory, and optional input files.
 ## Context Preparation
 
 ```bash
-portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
 Use this first when preparing an agent to answer questions.
@@ -40,7 +40,8 @@ Portolan can summarize local tool outputs when they already exist. Check:
 - `oss-plan.json`
 - `evidence-index.jsonl`
 
-Do not run producer commands from `oss-plan.json` without user approval.
+Do not run native OSS CLI, skill, or MCP recipes from `oss-plan.json` without
+user approval.
 
 ## Output Replacement
 

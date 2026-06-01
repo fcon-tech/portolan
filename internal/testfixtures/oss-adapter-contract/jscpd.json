@@ -1,0 +1,56 @@
+{
+  "schema_version": "0.1.0",
+  "id": "jscpd-json",
+  "tool": {
+    "name": "jscpd",
+    "url": "https://github.com/kucherenko/jscpd"
+  },
+  "family": "duplication",
+  "output_kind": "duplication",
+  "license": {
+    "id": "MIT",
+    "status": "needs_review"
+  },
+  "execution": {
+    "mode": "local-command",
+    "network": "none",
+    "mutates_target": false,
+    "reads": ["target source tree"],
+    "writes": ["tool-outputs/jscpd-report.json"]
+  },
+  "privacy": {
+    "contains_source_snippets": true,
+    "contains_secret_values": false,
+    "redaction_required": true
+  },
+  "evidence": {
+    "default_state": "metadata-visible",
+    "source": "local jscpd JSON output",
+    "limitations": ["near-clone thresholds depend on jscpd configuration"]
+  },
+  "commands": [
+    {
+      "label": "bounded jscpd json report via CLI, agent skill, or MCP",
+      "executable": "jscpd",
+      "args": [
+        "<target-root>",
+        "--reporters", "json",
+        "--output", "<tool-output-dir>",
+        "--min-lines", "50",
+        "--min-tokens", "100",
+        "--max-size", "100kb",
+        "--max-lines", "1000",
+        "--ignore", "**/.git/**,**/.portolan/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/generated/**",
+        "--noSymlinks",
+        "--gitignore",
+        "--silent"
+      ],
+      "output_path": "<tool-output-dir>/jscpd-report.json"
+    }
+  ],
+  "limitations": [
+    "May include source fragments depending on reporter configuration",
+    "Portolan does not wrap jscpd execution; agents should use the native CLI, installed skill, or MCP server and preserve the raw JSON output",
+    "Does not prove component-level duplication without SBOM evidence"
+  ]
+}

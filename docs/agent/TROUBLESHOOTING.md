@@ -49,9 +49,9 @@ report runtime topology as `not_assessed`.
 
 ## No Near-Clone Duplication Appears
 
-Native duplication detection covers exact source/config duplicate clusters.
-Near-clone or copy/paste similarity requires local jscpd-style evidence. If
-that evidence is absent, report near-clone coverage as `not_assessed`.
+Duplication findings require selected local duplication tool output, such as
+jscpd/CPD-style JSON. If that evidence is absent, report duplication coverage
+as `not_assessed`.
 
 ## No Semgrep Or Semantic Config Findings Appear
 

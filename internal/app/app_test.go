@@ -14,12 +14,11 @@ import (
 	"github.com/fcon-tech/portolan/internal/scan"
 )
 
-const mapCommandFixtureRoot = "../../testdata/map-command/repo"
-const relationshipFixtureRoot = "../../testdata/relationship-detection/repo"
-const duplicationFixtureRoot = "../../testdata/duplication-detection/repo"
-const configurationFixtureRoot = "../../testdata/configuration-surfaces/repo"
-const technicalDebtFixtureRoot = "../../testdata/technical-debt-findings/repo"
-const landscapeMapSelection = "../../testdata/landscape-map/selection.json"
+const mapCommandFixtureRoot = "../../internal/testfixtures/map-command/repo"
+const relationshipFixtureRoot = "../../internal/testfixtures/relationship-detection/repo"
+const configurationFixtureRoot = "../../internal/testfixtures/configuration-surfaces/repo"
+const technicalDebtFixtureRoot = "../../internal/testfixtures/technical-debt-findings/repo"
+const landscapeMapSelection = "../../internal/testfixtures/landscape-map/selection.json"
 
 func TestRunVersionWritesVersion(t *testing.T) {
 	var stdout bytes.Buffer
@@ -135,7 +134,7 @@ func TestCIWorkflowRunsReleaseEnvelopeBaseline(t *testing.T) {
 		"push:",
 		"go-version-file: go.mod",
 		"go test -count=1 ./...",
-		"jq empty schema/*.json testdata/oss-adapter-contract/*.json",
+		"jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json",
 		"git diff --check",
 		"go run ./cmd/portolan --help",
 	} {
@@ -152,7 +151,7 @@ func TestReleaseDocsPreserveCurrentProductClaimLimits(t *testing.T) {
 		"OpenCode default-permission execution is verified only when `OUTPUT_PATH`",
 		"Complete inherited-estate coverage is not proven by repository count.",
 		"complete service topology remains `not_assessed`",
-		"local Semgrep producer",
+		"local Semgrep output",
 		"raw Graphify",
 		"source/redaction",
 		"semantics remain",
@@ -243,6 +242,88 @@ func TestRunScanHelpDescribesReadOnlyEvidenceGraph(t *testing.T) {
 	}
 }
 
+func TestRunReportQualityPassesThinHonestReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--summary", "../../internal/testfixtures/report-quality/thin-honest.json"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"verdict": "pass"`) {
+		t.Fatalf("stdout = %q, want pass verdict", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunReportHelpAndUnknownCommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0", code)
+	}
+	if !strings.Contains(stdout.String(), "portolan report quality") {
+		t.Fatalf("stdout = %q, want report usage", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = Run([]string{"report", "unknown"}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("Run returned %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "unknown report command") {
+		t.Fatalf("stderr = %q, want unknown report command", stderr.String())
+	}
+}
+
+func TestRunReportQualityHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0", code)
+	}
+	if !strings.Contains(stdout.String(), "--summary") {
+		t.Fatalf("stdout = %q, want report quality usage", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunReportQualityFailsUnsupportedClaim(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--summary", "../../internal/testfixtures/report-quality/unsupported-positive-claim.json"}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("Run returned %d, want 1; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"verdict": "fail"`) {
+		t.Fatalf("stdout = %q, want fail verdict", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "unsupported") {
+		t.Fatalf("stdout = %q, want unsupported failure", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
 func TestRunScanHelpWithOtherFlagsReturnsHelp(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -292,7 +373,7 @@ func TestRunSelectionValidateAcceptsInventoryInputs(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"selection", "validate", "--selection", "testdata/selection-inventory/valid-selection.json"}, &stdout, &stderr)
+	code := Run([]string{"selection", "validate", "--selection", "testfixtures/selection-inventory/valid-selection.json"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -313,17 +394,17 @@ func TestRunSelectionValidateRejectsInvalidInventoryInputs(t *testing.T) {
 	}{
 		{
 			name: "duplicate ids",
-			path: "testdata/selection-inventory/duplicate-ids.json",
+			path: "testfixtures/selection-inventory/duplicate-ids.json",
 			want: "duplicate selection id",
 		},
 		{
 			name: "missing path",
-			path: "testdata/selection-inventory/missing-path.json",
+			path: "testfixtures/selection-inventory/missing-path.json",
 			want: "path is required",
 		},
 		{
 			name: "network url",
-			path: "testdata/selection-inventory/network-url.json",
+			path: "testfixtures/selection-inventory/network-url.json",
 			want: "must be local",
 		},
 		{
@@ -389,40 +470,6 @@ func TestRunSelectionValidateRequiresSelectionFlag(t *testing.T) {
 	}
 }
 
-func TestRunSelectionGenerateBigtopWritesFullCorpusSelection(t *testing.T) {
-	root := t.TempDir()
-	repoDir := filepath.Join(root, "repos")
-	mustMkdir(t, filepath.Join(repoDir, "apache-bigtop-repo"))
-	mustMkdir(t, filepath.Join(repoDir, "apache-hadoop"))
-	manifest := filepath.Join(root, "manifest.json")
-	mustWrite(t, manifest, `{
-		"schema_version":"0.1.0",
-		"id":"apache-bigtop",
-		"targets":[
-			{"id":"apache-bigtop-repo","label":"Bigtop","kind":"repository","lifecycle":"active","role":"integrator","evidence_state":"source-visible"},
-			{"id":"apache-hadoop","label":"Hadoop","kind":"repository","lifecycle":"active","role":"filesystem","evidence_state":"source-visible"},
-			{"id":"bigtop-utils","label":"Utils","kind":"package","lifecycle":"internal-support","role":"support","evidence_state":"metadata-visible"}
-		]
-	}`)
-	out := filepath.Join(root, "selection.json")
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"selection", "generate-bigtop", "--manifest", manifest, "--repo-dir", repoDir, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	selection := readJSONFile(t, out)
-	if selection["corpus_manifest"] != manifest || selection["require_full_corpus"] != true {
-		t.Fatalf("selection = %#v, want full-corpus manifest fields", selection)
-	}
-	targets := selection["targets"].([]any)
-	if len(targets) != 2 {
-		t.Fatalf("targets = %#v, want only active repositories", targets)
-	}
-}
-
 func TestRunPacketHelpDescribesGraphOnlyMarkdown(t *testing.T) {
 	tests := [][]string{
 		{"packet", "--help"},
@@ -456,7 +503,7 @@ func TestRunPacketRenderWritesMarkdownPacket(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"packet", "render", "--graph", "testdata/human-readable-packet/graph.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"packet", "render", "--graph", "testfixtures/human-readable-packet/graph.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -496,7 +543,7 @@ func TestRunPacketRenderDoesNotDescribeClaimOnlyAsObserved(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"packet", "render", "--graph", "testdata/human-readable-packet/claim-only-graph.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"packet", "render", "--graph", "testfixtures/human-readable-packet/claim-only-graph.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -591,7 +638,7 @@ func TestRunPacketRenderRejectsMalformedGraphWithoutPartialOutput(t *testing.T) 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"packet", "render", "--graph", "testdata/human-readable-packet/malformed-graph.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"packet", "render", "--graph", "testfixtures/human-readable-packet/malformed-graph.json", "--out", out}, &stdout, &stderr)
 
 	if code == 0 {
 		t.Fatalf("Run returned 0, want error")
@@ -615,7 +662,7 @@ func TestRunPacketRenderOutputSafety(t *testing.T) {
 	t.Run("existing output requires force", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"packet", "render", "--graph", "testdata/human-readable-packet/graph.json", "--out", existing}, &stdout, &stderr)
+		code := Run([]string{"packet", "render", "--graph", "testfixtures/human-readable-packet/graph.json", "--out", existing}, &stdout, &stderr)
 		if code == 0 || !strings.Contains(stderr.String(), "--force") {
 			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
 		}
@@ -624,7 +671,7 @@ func TestRunPacketRenderOutputSafety(t *testing.T) {
 	t.Run("force overwrites existing output", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"packet", "render", "--graph", "testdata/human-readable-packet/graph.json", "--out", existing, "--force"}, &stdout, &stderr)
+		code := Run([]string{"packet", "render", "--graph", "testfixtures/human-readable-packet/graph.json", "--out", existing, "--force"}, &stdout, &stderr)
 		if code != 0 {
 			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
 		}
@@ -670,7 +717,7 @@ func TestRunImportGraphifyWritesEvidenceGraph(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "graphify", "--in", "../../testdata/importer-normalization/graphify.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "graphify", "--in", "../../internal/testfixtures/importer-normalization/graphify.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -706,8 +753,8 @@ func TestRunImportGraphifyCanVerifyExtractedFactsAgainstSourceRoot(t *testing.T)
 
 	code := Run([]string{
 		"import", "graphify",
-		"--in", "../../testdata/importer-normalization/graphify-edges.json",
-		"--root", "../../testdata/importer-normalization/graphify-source",
+		"--in", "../../internal/testfixtures/importer-normalization/graphify-edges.json",
+		"--root", "../../internal/testfixtures/importer-normalization/graphify-source",
 		"--out", out,
 	}, &stdout, &stderr)
 
@@ -741,7 +788,7 @@ func TestRunImportRepomixWritesFileInventoryEvidenceGraph(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "repomix", "--in", "../../testdata/importer-normalization/repomix-output.xml", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "repomix", "--in", "../../internal/testfixtures/importer-normalization/repomix-output.xml", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -767,7 +814,7 @@ func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "symbol-index", "--in", "../../testdata/importer-normalization/symbol-index.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "symbol-index", "--in", "../../internal/testfixtures/importer-normalization/symbol-index.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -792,164 +839,12 @@ func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
 	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:scip-go gomod fmt Println().", "owns"), "metadata-visible")
 }
 
-func TestRunProduceSemgrepInvokesInstalledOSSProducer(t *testing.T) {
-	root := t.TempDir()
-	mustMkdir(t, filepath.Join(root, ".git"))
-	config := filepath.Join(root, ".semgrep.yml")
-	mustWrite(t, config, "rules: []\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "semgrep-args.txt")
-	fakeSemgrep := filepath.Join(bin, "semgrep")
-	mustWrite(t, fakeSemgrep, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-out=""
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = "--json-output" ]; then
-    shift
-    out="$1"
-  fi
-  shift
-done
-printf '{"version":"fake-semgrep","results":[]}\n' > "$out"
-`, logPath))
-	if err := os.Chmod(fakeSemgrep, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "semgrep.json")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "semgrep", "--root", root, "--config", config, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "wrote ") {
-		t.Fatalf("stdout = %q, want write summary", stdout.String())
-	}
-	output := readJSONFile(t, out)
-	if output["version"] != "fake-semgrep" {
-		t.Fatalf("semgrep output = %#v, want fake output", output)
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{"scan", "--config", config, "--json", "--json-output", out, "--metrics=off", root} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("semgrep args missing %q:\n%s", want, args)
-		}
-	}
-}
-
-func TestRunProduceRepomixInvokesInstalledOSSProducer(t *testing.T) {
-	root := t.TempDir()
-	mustWrite(t, filepath.Join(root, "main.go"), "package main\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "repomix-args.txt")
-	fakeRepomix := filepath.Join(bin, "repomix")
-	mustWrite(t, fakeRepomix, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-out=""
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = "--output" ]; then
-    shift
-    out="$1"
-  fi
-  shift
-done
-printf '%%s\n' '<files>' '<file path="main.go">' 'package main' '</file>' '</files>' > "$out"
-`, logPath))
-	if err := os.Chmod(fakeRepomix, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "repomix-output.xml")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "repomix", "--root", root, "--out", out, "--style", "xml"}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "wrote ") {
-		t.Fatalf("stdout = %q, want write summary", stdout.String())
-	}
-	if !strings.Contains(mustReadFile(t, out), `<file path="main.go">`) {
-		t.Fatalf("repomix output missing file entry:\n%s", mustReadFile(t, out))
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{root, "--output", out, "--style", "xml"} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("repomix args missing %q:\n%s", want, args)
-		}
-	}
-}
-
-func TestRunProduceGraphifyInvokesInstalledOSSProducerWithoutMutatingTarget(t *testing.T) {
-	root := t.TempDir()
-	mustWrite(t, filepath.Join(root, "main.go"), "package main\nfunc main() {}\n")
-	mustMkdir(t, filepath.Join(root, ".git"))
-	mustWrite(t, filepath.Join(root, ".git", "config"), "[core]\n")
-	mustMkdir(t, filepath.Join(root, ".portolan", "old-run"))
-	mustWrite(t, filepath.Join(root, ".portolan", "old-run", "summary.json"), "{}\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "graphify-args.txt")
-	fakeGraphify := filepath.Join(bin, "graphify")
-	mustWrite(t, fakeGraphify, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-target="$2"
-mkdir -p "$target/graphify-out"
-printf '{"nodes":[{"id":"main","label":"main","type":"function","source_file":"main.go","extraction_status":"EXTRACTED"}],"links":[]}\n' > "$target/graphify-out/graph.json"
-`, logPath))
-	if err := os.Chmod(fakeGraphify, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "graphify-run")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "graphify", "--root", root, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "graphify-out/graph.json") {
-		t.Fatalf("stdout = %q, want graphify output path", stdout.String())
-	}
-	graphPath := filepath.Join(out, "source-copy", "graphify-out", "graph.json")
-	if !strings.Contains(mustReadFile(t, graphPath), `"nodes"`) {
-		t.Fatalf("graphify output missing nodes:\n%s", mustReadFile(t, graphPath))
-	}
-	if _, err := os.Stat(filepath.Join(root, "graphify-out")); !os.IsNotExist(err) {
-		t.Fatalf("target root was mutated with graphify-out: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(out, "source-copy", ".git")); !os.IsNotExist(err) {
-		t.Fatalf(".git should not be copied into staging tree: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(out, "source-copy", ".portolan")); !os.IsNotExist(err) {
-		t.Fatalf(".portolan should not be copied into staging tree: %v", err)
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{"update", filepath.Join(out, "source-copy"), "--force", "--no-cluster"} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("graphify args missing %q:\n%s", want, args)
-		}
-	}
-}
-
 func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "graph.json")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -982,7 +877,7 @@ func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
 			t.Fatalf("node = %#v, want lib-a package", node)
 		}
 		evidence := node["evidence"].(map[string]any)
-		if evidence["source"] != "testdata/importer-normalization/cyclonedx.json" {
+		if evidence["source"] != "testfixtures/importer-normalization/cyclonedx.json" {
 			t.Fatalf("evidence = %#v, want input source", evidence)
 		}
 	}
@@ -996,7 +891,7 @@ func TestRunImportCycloneDXReportsMalformedInputAsCannotVerifyGraph(t *testing.T
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/malformed-cyclonedx.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/malformed-cyclonedx.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1018,7 +913,7 @@ func TestRunImportCycloneDXKeepsUnknownDependencyRefsCannotVerify(t *testing.T) 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx-unknown-ref.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx-unknown-ref.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1066,7 +961,7 @@ func TestRunImportCycloneDXReportsMissingInputAsCannotVerifyGraph(t *testing.T) 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/missing.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/missing.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1097,7 +992,7 @@ func TestRunImportCycloneDXRejectsInvalidFlags(t *testing.T) {
 		},
 		{
 			name: "missing output",
-			args: []string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json"},
+			args: []string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx.json"},
 			want: "--out is required",
 		},
 		{
@@ -1131,7 +1026,7 @@ func TestRunImportCycloneDXOutputSafety(t *testing.T) {
 	t.Run("existing output requires force", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", existing}, &stdout, &stderr)
+		code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx.json", "--out", existing}, &stdout, &stderr)
 		if code == 0 || !strings.Contains(stderr.String(), "--force") {
 			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
 		}
@@ -1147,7 +1042,7 @@ func TestRunImportCycloneDXOutputSafety(t *testing.T) {
 	t.Run("force overwrites existing output", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", existing, "--force"}, &stdout, &stderr)
+		code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx.json", "--out", existing, "--force"}, &stdout, &stderr)
 		if code != 0 {
 			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
 		}
@@ -1163,7 +1058,7 @@ func TestRunImportCycloneDXOutputSafety(t *testing.T) {
 		}
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"import", "cyclonedx", "--in", "testdata/importer-normalization/cyclonedx.json", "--out", link, "--force"}, &stdout, &stderr)
+		code := Run([]string{"import", "cyclonedx", "--in", "testfixtures/importer-normalization/cyclonedx.json", "--out", link, "--force"}, &stdout, &stderr)
 		if code == 0 || !strings.Contains(stderr.String(), "symlink") {
 			t.Fatalf("code = %d stderr = %q, want symlink error", code, stderr.String())
 		}
@@ -1195,7 +1090,7 @@ func TestRunDiffWritesMachineReadableEvidenceDiff(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1234,7 +1129,7 @@ func TestRunDiffDoesNotEmitReadinessVerdicts(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1256,7 +1151,7 @@ func TestRunDiffIdenticalInputsAreUnchanged(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/base.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/base.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1294,32 +1189,32 @@ func TestRunDiffRejectsInvalidInputs(t *testing.T) {
 		},
 		{
 			name: "missing base",
-			args: []string{"diff", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "diff.json")},
+			args: []string{"diff", "--head", "testfixtures/evidence-diff/head.json", "--out", filepath.Join(root, "diff.json")},
 			want: "--base is required",
 		},
 		{
 			name: "missing head",
-			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--out", filepath.Join(root, "diff.json")},
+			args: []string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--out", filepath.Join(root, "diff.json")},
 			want: "--head is required",
 		},
 		{
 			name: "missing output",
-			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json"},
+			args: []string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json"},
 			want: "--out is required",
 		},
 		{
 			name: "malformed graph",
-			args: []string{"diff", "--base", "testdata/human-readable-packet/malformed-graph.json", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "malformed.json")},
+			args: []string{"diff", "--base", "testfixtures/human-readable-packet/malformed-graph.json", "--head", "testfixtures/evidence-diff/head.json", "--out", filepath.Join(root, "malformed.json")},
 			want: "parse graph",
 		},
 		{
 			name: "missing base file",
-			args: []string{"diff", "--base", "testdata/evidence-diff/missing.json", "--head", "testdata/evidence-diff/head.json", "--out", filepath.Join(root, "missing-base.json")},
+			args: []string{"diff", "--base", "testfixtures/evidence-diff/missing.json", "--head", "testfixtures/evidence-diff/head.json", "--out", filepath.Join(root, "missing-base.json")},
 			want: "read base graph",
 		},
 		{
 			name: "missing head file",
-			args: []string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/missing.json", "--out", filepath.Join(root, "missing-head.json")},
+			args: []string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/missing.json", "--out", filepath.Join(root, "missing-head.json")},
 			want: "read head graph",
 		},
 	}
@@ -1348,7 +1243,7 @@ func TestRunDiffOutputSafety(t *testing.T) {
 	t.Run("existing output requires force", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", existing}, &stdout, &stderr)
+		code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json", "--out", existing}, &stdout, &stderr)
 		if code == 0 || !strings.Contains(stderr.String(), "--force") {
 			t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
 		}
@@ -1364,7 +1259,7 @@ func TestRunDiffOutputSafety(t *testing.T) {
 	t.Run("force overwrites existing output", func(t *testing.T) {
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", existing, "--force"}, &stdout, &stderr)
+		code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json", "--out", existing, "--force"}, &stdout, &stderr)
 		if code != 0 {
 			t.Fatalf("code = %d stderr = %q, want success", code, stderr.String())
 		}
@@ -1380,7 +1275,7 @@ func TestRunDiffOutputSafety(t *testing.T) {
 		}
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
-		code := Run([]string{"diff", "--base", "testdata/evidence-diff/base.json", "--head", "testdata/evidence-diff/head.json", "--out", link, "--force"}, &stdout, &stderr)
+		code := Run([]string{"diff", "--base", "testfixtures/evidence-diff/base.json", "--head", "testfixtures/evidence-diff/head.json", "--out", link, "--force"}, &stdout, &stderr)
 		if code == 0 || !strings.Contains(stderr.String(), "symlink") {
 			t.Fatalf("code = %d stderr = %q, want symlink error", code, stderr.String())
 		}
@@ -1802,7 +1697,7 @@ func TestRunAdapterValidateAcceptsKnownOSSContracts(t *testing.T) {
 			var stdout bytes.Buffer
 			var stderr bytes.Buffer
 
-			code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "testdata", "oss-adapter-contract", fixture)}, &stdout, &stderr)
+			code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "internal", "testfixtures", "oss-adapter-contract", fixture)}, &stdout, &stderr)
 
 			if code != 0 {
 				t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -1821,7 +1716,7 @@ func TestRunAdapterValidateRejectsUnsafeContract(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "testdata", "oss-adapter-contract", "invalid-network-mutating.json")}, &stdout, &stderr)
+	code := Run([]string{"adapter", "validate", "--in", filepath.Join("..", "..", "internal", "testfixtures", "oss-adapter-contract", "invalid-network-mutating.json")}, &stdout, &stderr)
 
 	if code == 0 {
 		t.Fatalf("Run returned %d, want validation failure", code)
@@ -2144,13 +2039,13 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	}
 	jscpdCommand := planByID["jscpd"]["commands"].([]any)[0].(map[string]any)
 	jscpdArgs := fmt.Sprint(jscpdCommand["args"])
-	for _, want := range []string{"--max-size 100kb", "--max-lines 1000", "--noSymlinks", "--silent", "**/node_modules/**", "**/.portolan/**"} {
+	for _, want := range []string{"--min-lines 50", "--min-tokens 100", "--max-size 100kb", "--max-lines 1000", "--noSymlinks", "--silent", "**/node_modules/**", "**/.portolan/**"} {
 		if !strings.Contains(jscpdArgs, want) {
 			t.Fatalf("jscpd args = %s, want bounded argument %q", jscpdArgs, want)
 		}
 	}
 	if strings.Contains(jscpdArgs, "--exitCode") {
-		t.Fatalf("jscpd args = %s, must not force producer exit code", jscpdArgs)
+		t.Fatalf("jscpd args = %s, must not force native tool exit code", jscpdArgs)
 	}
 	jscpdLimits := jscpdCommand["limits"].([]any)
 	wantLimits := []string{
@@ -2158,7 +2053,7 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 		"max source file lines: 1000",
 		"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
 		"respect local .gitignore files",
-		"producer exit status remains visible to the operator",
+		"native tool exit status remains visible to the operator",
 	}
 	if len(jscpdLimits) != len(wantLimits) {
 		t.Fatalf("jscpd limits = %#v, want %d limits", jscpdLimits, len(wantLimits))
@@ -2166,6 +2061,12 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	for i, want := range wantLimits {
 		if jscpdLimits[i] != want {
 			t.Fatalf("jscpd limits[%d] = %q, want %q", i, jscpdLimits[i], want)
+		}
+	}
+	capabilities := fmt.Sprint(planByID["jscpd"]["agent_capabilities"])
+	for _, want := range []string{"jscpd CLI JSON reporter", "jscpd agent skill", "jscpd MCP server"} {
+		if !strings.Contains(capabilities, want) {
+			t.Fatalf("jscpd capabilities = %s, want %q", capabilities, want)
 		}
 	}
 }
@@ -2579,7 +2480,7 @@ func TestRunMapIncompleteBigtopCorpusBlocksBeforeArtifacts(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"map", "--selection", "../../testdata/apache-bigtop-landscape/incomplete-selection.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"map", "--selection", "../../internal/testfixtures/apache-bigtop-landscape/incomplete-selection.json", "--out", out}, &stdout, &stderr)
 
 	if code == 0 {
 		t.Fatalf("Run returned 0, want full corpus gate error")
@@ -2769,7 +2670,7 @@ func TestRunMapRejectsMissingRootWithoutPartialBundle(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"map", "--root", "../../testdata/map-command/missing", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"map", "--root", "../../internal/testfixtures/map-command/missing", "--out", out}, &stdout, &stderr)
 
 	if code == 0 {
 		t.Fatalf("Run returned 0, want error")
@@ -3047,81 +2948,27 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 	}
 }
 
-func TestRunMapDetectsExactSourceAndConfigDuplication(t *testing.T) {
+func TestRunMapKeepsDuplicationNotAssessedWithoutToolOutput(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"map", "--root", duplicationFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	source := findFindingByID(findings, "finding-duplication-exact-source-001")
-	if source == nil {
-		t.Fatalf("findings = %#v, want exact source duplication finding", findings)
+	duplication := findFindingByID(findings, "finding-duplication-not-assessed")
+	if duplication == nil {
+		t.Fatalf("findings = %#v, want not_assessed duplication finding", findings)
 	}
-	if source["status"] != "observed" || source["evidence_state"] != "source-visible" {
-		t.Fatalf("source duplication finding = %#v, want observed source-visible", source)
+	if duplication["status"] != "not_assessed" || duplication["evidence_state"] != "not_assessed" {
+		t.Fatalf("duplication finding = %#v, want not_assessed", duplication)
 	}
-	for _, want := range []string{"src/retry_a.go", "src/retry_b.go"} {
-		if !strings.Contains(source["evidence_source"].(string), want) {
-			t.Fatalf("source duplication evidence = %#v, want %s", source, want)
-		}
+	if !strings.Contains(duplication["summary"].(string), "local duplication tool output") {
+		t.Fatalf("duplication finding = %#v, want OSS/tool-output wording", duplication)
 	}
-	if strings.Contains(source["summary"].(string), "attempts := 3") {
-		t.Fatalf("source duplication summary leaked source snippet: %#v", source)
-	}
-
-	config := findFindingByID(findings, "finding-duplication-exact-config-001")
-	if config == nil {
-		t.Fatalf("findings = %#v, want exact config duplication finding", findings)
-	}
-	if config["status"] != "observed" || config["evidence_state"] != "source-visible" {
-		t.Fatalf("config duplication finding = %#v, want observed source-visible", config)
-	}
-	for _, want := range []string{"config/prod.json", "config/staging.json"} {
-		if !strings.Contains(config["evidence_source"].(string), want) {
-			t.Fatalf("config duplication evidence = %#v, want %s", config, want)
-		}
-	}
-
-	graph := readGraph(t, filepath.Join(out, "graph.json"))
-	findNode(t, graph, "duplication-exact-source-001")
-	findNode(t, graph, "duplication-exact-config-001")
-}
-
-func TestRunMapSelectionDetectsPrefixedDuplication(t *testing.T) {
-	root, err := filepath.Abs(duplicationFixtureRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	selectionPath := writeSelection(t, t.TempDir(), "duplication", `{
-  "schema_version": "0.1.0",
-  "targets": [
-    {"id": "dup", "kind": "repository", "path": `+quote(root)+`}
-  ]
-}`)
-	out := filepath.Join(t.TempDir(), "run")
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	source := findFindingByID(findings, "dup-finding-duplication-exact-source-001")
-	if source == nil {
-		t.Fatalf("findings = %#v, want prefixed source duplication finding", findings)
-	}
-	if source["status"] != "observed" || !strings.Contains(source["evidence_source"].(string), "dup:src/retry_a.go") {
-		t.Fatalf("prefixed source duplication finding = %#v", source)
-	}
-	graph := readGraph(t, filepath.Join(out, "graph.json"))
-	findNode(t, graph, "dup:duplication-exact-source-001")
 }
 
 func TestRunMapDetectsConfigurationSurfacesWithoutSecretValues(t *testing.T) {
@@ -3217,7 +3064,6 @@ func TestRunMapDerivesConcreteTechnicalDebtFindings(t *testing.T) {
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
 	for _, id := range []string{
 		"finding-technical-debt-relationship-follow-up",
-		"finding-technical-debt-duplication-follow-up",
 		"finding-technical-debt-configuration-follow-up",
 		"finding-technical-debt-unresolved-findings",
 	} {
@@ -3397,11 +3243,11 @@ func TestRunMapRelationshipEdgesHaveEvidenceStateAndSource(t *testing.T) {
 
 func TestRunScanRelationshipFixturePreservesClaimMetadataAndUnknownEvidence(t *testing.T) {
 	root := t.TempDir()
-	metadataPath, err := filepath.Abs("../../testdata/relationship-detection/metadata/payments.json")
+	metadataPath, err := filepath.Abs("../../internal/testfixtures/relationship-detection/metadata/payments.json")
 	if err != nil {
 		t.Fatal(err)
 	}
-	claimsPath, err := filepath.Abs("../../testdata/relationship-detection/claims/payments.json")
+	claimsPath, err := filepath.Abs("../../internal/testfixtures/relationship-detection/claims/payments.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3541,7 +3387,7 @@ func TestRunScanFixtureStillWorksAfterSelectionInventoryExpansion(t *testing.T) 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/local-evidence-graph/selection.json", "--out", out}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/local-evidence-graph/selection.json", "--out", out}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3554,7 +3400,7 @@ func TestRunScanWritesBlackBoxProfileEvidence(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/selection.json", "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/black-box-profile/selection.json", "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3598,7 +3444,7 @@ func TestRunScanBlackBoxMissingExpectedDependencyIsUnknown(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/missing-dependency-selection.json", "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/black-box-profile/missing-dependency-selection.json", "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3619,7 +3465,7 @@ func TestRunScanBlackBoxMalformedRuntimeIsCannotVerify(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/malformed-runtime-selection.json", "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/black-box-profile/malformed-runtime-selection.json", "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3644,7 +3490,7 @@ func TestRunScanRuntimeObservationContractProducesRuntimeVisiblePartialEvidence(
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/runtime-security-boundary/selection.json", "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/runtime-security-boundary/selection.json", "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
@@ -3958,7 +3804,7 @@ func TestRunPacketBlackBoxWordingDoesNotImplySourceAnalysis(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"scan", "--selection", "testdata/black-box-profile/selection.json", "--out", graphPath, "--force"}, &stdout, &stderr)
+	code := Run([]string{"scan", "--selection", "testfixtures/black-box-profile/selection.json", "--out", graphPath, "--force"}, &stdout, &stderr)
 	if code != 0 {
 		t.Fatalf("scan returned %d, want 0; stderr = %q", code, stderr.String())
 	}

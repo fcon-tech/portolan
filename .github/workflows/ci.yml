@@ -33,7 +33,7 @@ jobs:
         run: go test -count=1 ./...
 
       - name: Validate schemas
-        run: jq empty schema/*.json testdata/oss-adapter-contract/*.json
+        run: jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
 
       - name: Diff whitespace check
         run: git diff --check

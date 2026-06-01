@@ -46,13 +46,13 @@ go run ./cmd/portolan --version
 ## 2. Подготовь Context Для Агента
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Если используешь repo-local binary:
 
 ```bash
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Перед broad answer прочитай:
@@ -129,6 +129,6 @@ records остаются доступны через `query findings` by kind. Q
 - Source/config duplicate clusters являются evidence, а не refactoring order.
 - Локально видимый scope не доказывает complete estate coverage.
 - Runtime topology требует runtime observations.
-- OSS producers являются valid local dependencies, когда установлены и явно
-  requested, но producer plans не evidence, пока outputs не существуют.
+- OSS tools являются valid local dependencies, когда установлены и явно
+  requested, но output recipes не evidence, пока outputs не существуют.
 - `not_assessed` - нормальный результат.

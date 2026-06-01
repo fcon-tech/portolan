@@ -65,7 +65,7 @@ After merge:
 5. Write:
 
    ```text
-   specs/<NNN-short-name>/reviews/merge-closeout-YYYY-MM-DD.md
+   docs/specs/<NNN-short-name>/reviews/merge-closeout-YYYY-MM-DD.md
    ```
 
 ## Closeout Requirements

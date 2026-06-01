@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "report_id": "unsupported-positive-claim",
+  "required_sections": [
+    {
+      "name": "visible_scope",
+      "present": true
+    }
+  ],
+  "positive_claims": [
+    {
+      "claim": "The report proves complete runtime topology.",
+      "evidence_ref": "",
+      "supported": false
+    }
+  ],
+  "weak_states": [
+    {
+      "state": "not_assessed",
+      "visible": true,
+      "evidence_ref": "portolan://coverage/runtime-topology"
+    }
+  ]
+}

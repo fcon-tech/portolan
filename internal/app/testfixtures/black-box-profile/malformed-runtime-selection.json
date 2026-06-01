@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.1.0",
+  "black_boxes": [
+    {
+      "id": "payments-api",
+      "kind": "service",
+      "label": "Payments API",
+      "metadata": [
+        {
+          "id": "payments-catalog",
+          "path": "metadata/payments.json"
+        }
+      ],
+      "runtime": [
+        {
+          "id": "payments-runtime",
+          "path": "runtime/malformed.json"
+        }
+      ],
+      "expected": ["runtime-endpoints"]
+    }
+  ]
+}

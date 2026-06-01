@@ -139,7 +139,7 @@ resolve arbitrary runtime subjects across a landscape.
 The sample fixture lives under:
 
 ```text
-internal/app/testdata/runtime-security-boundary/
+internal/app/testfixtures/runtime-security-boundary/
 ```
 
 Focused tests:

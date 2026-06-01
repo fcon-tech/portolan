@@ -10,10 +10,11 @@ artifacts before an agent answers questions: what repositories were visible,
 what relationships and duplicate/configuration surfaces were found, what looks
 like technical debt, and what is still unknown.
 
-Portolan is not a coding harness, readiness gate, service catalog,
-observability platform, modernization engine, or replacement for Cursor,
-Claude, Sourcegraph, Backstage, or enterprise code-intelligence tools. It is a
-local evidence layer an agent can use before making claims.
+Portolan is an agent harness for landscape navigation: it gives the agent a
+bounded route through local evidence, explicit gaps, and imported OSS outputs.
+It is not a coding harness, readiness gate, service catalog, observability
+platform, modernization engine, or replacement for Cursor, Claude, Sourcegraph,
+Backstage, or enterprise code-intelligence tools.
 
 ## When To Use It
 
@@ -35,7 +36,7 @@ partly black-box.
 The main workflow creates a context pack for an agent:
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Typical output:
@@ -108,7 +109,7 @@ cd portolan
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 .portolan/bin/portolan --help
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 .portolan/bin/portolan map --root <target-root> --out <output-dir>/map
 ```
 
@@ -125,7 +126,7 @@ PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 If you are developing Portolan itself, you can also use:
 
 ```bash
-go run ./cmd/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+go run ./cmd/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 go run ./cmd/portolan map --root <target-root> --out <output-dir>/map
 go run ./cmd/portolan query gaps --bundle <output-dir>/map --limit 20
 ```
@@ -140,8 +141,9 @@ If you are not sure which document to open first, start with the
 agents, Cursor operators, OpenCode operators, and release reviewers to the
 maintained surface for each workflow.
 
-For a public Apache Bigtop walkthrough with redacted example artifacts, see
-[Public Demo: Apache Bigtop](docs/demo.md).
+For a larger named stress example, see
+[Apache Bigtop Stress Example](docs/demo.md). It is evidence for one local
+target shape, not the main product path.
 
 ## Public Routes
 
@@ -149,9 +151,15 @@ These routes are current and boundary-limited. Some public surfaces are initial
 community infrastructure rather than proof of broad adoption or support.
 
 - Install: use the [Quick Start](#quick-start) above.
-- Demo: see [Public Demo: Apache Bigtop](docs/demo.md).
+- Demo: run the [Quick Start](#quick-start) against any local target you can
+  inspect. For a larger named example, see
+  [Apache Bigtop Stress Example](docs/demo.md).
 - Product claims: read [Product Claims](docs/product-claims.md) before reusing
   public wording.
+- Product quality: read
+  [Product Quality Boundary](docs/product-quality-boundary.md) and
+  [Product Maturity Matrix](docs/product-maturity.md) before treating a report
+  or surface as product-ready.
 - Contribute: read [Contributing](CONTRIBUTING.md) before opening issues or
   pull requests.
 - Security: report sensitive vulnerabilities through [Security](SECURITY.md),
@@ -219,7 +227,8 @@ ecosystem validation.
 
 Important limits:
 
-- The validated Cursor comparison is headless Cursor on one fixed local Bigtop
+- Named acceptance examples are target-specific evidence, not the main product
+  story. The validated Cursor comparison is headless Cursor on one fixed local
   target, not UI Cursor/Composer generally.
 - Local repository count does not prove complete inherited-estate coverage.
 - Runtime service topology is not assessed unless supported local runtime
@@ -227,17 +236,14 @@ Important limits:
   topology.
 - Portolan has a documented untrusted-artifact boundary and focused tests for
   selected local CLI risks; this is not a broad security certification.
-- Exact duplicate source/config clusters are supported; near-clone detection
-  needs local jscpd-style evidence.
-- Syft/CycloneDX component identity evidence has been validated for the fixed
-  Bigtop target; Semgrep is a first-class local producer path with a local
-  config and explicit output; Repomix is a first-class local producer path;
-  Graphify is a first-class local producer path through a read-only staging
-  copy; Graphify node-link import with source-backed `EXTRACTED` verification,
-  SCIP/Serena-style JSON symbol-index import, and Repomix file-inventory import
-  are validated. These OSS tools are accepted local dependencies in the
-  workflow when installed and explicitly requested; broad OSS producer value
-  remains evidence-specific.
+- Duplication findings require selected local tool output, such as
+  jscpd/CPD-style JSON. Without that output, duplication remains
+  `not_assessed`.
+- OSS validation is evidence-specific. Syft/CycloneDX, Semgrep, Repomix,
+  Graphify, jscpd-style JSON, and symbol-index JSON surfaces are bounded local
+  inputs produced through their native CLI, skill, or MCP surfaces when
+  installed and requested; Portolan imports and normalizes the outputs instead
+  of wrapping or replacing the scanners.
 
 ## More Documentation
 
@@ -252,7 +258,7 @@ English:
 - [Runtime Observations](docs/runtime-observations.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
-- [Demo Status](docs/demo.md)
+- [Apache Bigtop Stress Example](docs/demo.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
 - [Support](SUPPORT.md)

@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/schema/report-quality-summary.schema.json",
+  "title": "Portolan Report Quality Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_id", "required_sections", "positive_claims", "weak_states"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/section"
+      }
+    },
+    "positive_claims": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/positive_claim"
+      }
+    },
+    "weak_states": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/weak_state"
+      }
+    },
+    "optional_producers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/optional_producer"
+      }
+    }
+  },
+  "$defs": {
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "present"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "present": {
+          "type": "boolean"
+        }
+      }
+    },
+    "positive_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "evidence_ref", "supported"],
+      "properties": {
+        "claim": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_ref": {
+          "type": "string"
+        },
+        "supported": {
+          "type": "boolean"
+        }
+      }
+    },
+    "weak_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "visible", "evidence_ref"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["unknown", "cannot_verify", "not_assessed"]
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "evidence_ref": {
+          "type": "string"
+        }
+      }
+    },
+    "optional_producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "visible"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visible": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

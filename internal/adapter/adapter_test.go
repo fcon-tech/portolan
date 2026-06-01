@@ -6,7 +6,7 @@ import (
 )
 
 func TestValidateGraphifyConfidenceMap(t *testing.T) {
-	result, err := ValidateFile("../../testdata/oss-adapter-contract/graphify-minimal.json")
+	result, err := ValidateFile("../../internal/testfixtures/oss-adapter-contract/graphify-minimal.json")
 	if err != nil {
 		t.Fatalf("ValidateFile returned error: %v", err)
 	}
