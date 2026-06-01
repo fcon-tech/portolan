@@ -96,13 +96,13 @@ and compare against the Syft/CycloneDX-only baseline from prior stress runs.
 
 ### Tests for User Story 3
 
-- [ ] T021 [P] [US3] Add review packet for Cursor stress prompt and expected evidence boundaries in `docs/specs/054-real-producer-output-proof/reviews/`
+- [x] T021 [P] [US3] Add review packet for Cursor stress prompt and expected evidence boundaries in `docs/specs/054-real-producer-output-proof/reviews/`
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Run headless Cursor + Composer 2.5 on the fresh 054 bundle and save prompt/output under the Bigtop stress directory
-- [ ] T023 [US3] Review Cursor output for supported claims, overclaims, and remaining gaps in `docs/specs/054-real-producer-output-proof/reviews/`
-- [ ] T024 [US3] Update spec/backlog status to reflect verified, failed, blocked, and `not_assessed` evidence states
+- [x] T022 [US3] Run headless Cursor + Composer 2.5 on the fresh 054 bundle and save prompt/output under the Bigtop stress directory
+- [x] T023 [US3] Review Cursor output for supported claims, overclaims, and remaining gaps in `docs/specs/054-real-producer-output-proof/reviews/`
+- [x] T024 [US3] Update spec/backlog status to reflect verified, failed, blocked, and `not_assessed` evidence states
 
 **Checkpoint**: User Story 3 is complete when Cursor stress evidence is
 reviewed and the result is recorded without broadening architecture claims.

@@ -4,11 +4,12 @@
 
 **Created**: 2026-06-01
 
-**Status**: US1/US2 verified for producer-run metadata ingestion and bounded
-context/map surfacing; fresh Bigtop context pack surfaces Docker Compose, Helm,
-and protoc outputs as bounded `metadata-visible` evidence; symbol/reference,
-full API/catalog/model coverage, runtime topology, and Cursor answer
-improvement remain `not_assessed`
+**Status**: US1/US2/US3 verified as a narrowed proof; fresh Bigtop context/map
+artifacts surface Docker Compose, Helm, and protoc outputs as bounded
+`metadata-visible` evidence, and Cursor Composer 2.5 uses those producer-run
+IDs without runtime overclaiming; symbol/reference, full API/catalog/model
+coverage, runtime topology, and human/enterprise-intelligence parity remain
+`not_assessed`
 
 **Input**: User description: "After merging PR #31, slice specs and continue
 stress tests until Portolan verifies real symbol/API/catalog/model/runtime
