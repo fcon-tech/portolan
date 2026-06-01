@@ -1774,6 +1774,12 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	root := t.TempDir()
 	mustMkdir(t, filepath.Join(root, "repos", "api", ".git"))
 	mustMkdir(t, filepath.Join(root, "repos", "web", ".git"))
+	mustWrite(t, filepath.Join(root, "repos", "api", "pom.xml"), `<project><artifactId>api</artifactId></project>`)
+	mustWrite(t, filepath.Join(root, "repos", "api", "bigtop.bom"), `bigtop { dependencies = [ hadoop:['hive'] ] }`)
+	mustMkdir(t, filepath.Join(root, "repos", "api", "bigtop-packages", "src", "rpm", "api", "SPECS"))
+	mustWrite(t, filepath.Join(root, "repos", "api", "bigtop-packages", "src", "rpm", "api", "SPECS", "api.spec"), `Requires: hadoop-client`)
+	mustMkdir(t, filepath.Join(root, "repos", "api", "bigtop-deploy", "puppet", "modules", "api", "manifests"))
+	mustWrite(t, filepath.Join(root, "repos", "api", "bigtop-deploy", "puppet", "modules", "api", "manifests", "init.pp"), `include hadoop::init_hdfs`)
 	mustMkdir(t, filepath.Join(root, "tool-outputs"))
 	mustWrite(t, filepath.Join(root, "tool-outputs", "jscpd-report.json"), `{"duplicates":[]}`)
 	mustWrite(t, filepath.Join(root, "tool-outputs", "sbom-api.cyclonedx.json"), `{"bomFormat":"CycloneDX"}`)
@@ -1863,7 +1869,7 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"semgrep", "code-index", "external-completeness"} {
+	for _, want := range []string{"semgrep", "symbol-index", "code-index", "external-completeness"} {
 		if !strings.Contains(string(gaps), want) {
 			t.Fatalf("gaps.jsonl = %q, want %q", gaps, want)
 		}
@@ -1875,6 +1881,12 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	for _, want := range []string{
 		`"kind":"repository"`,
 		`"source_artifact":"repos.json"`,
+		`"kind":"relationship-candidate"`,
+		`"family":"build-manifest"`,
+		`"family":"distribution-manifest"`,
+		`"family":"rpm-spec"`,
+		`"family":"deployment-manifest"`,
+		`bigtop.bom`,
 		`"kind":"tool-output"`,
 		`"family":"jscpd"`,
 		`"source_artifact":"tool-registry.json"`,
@@ -1885,6 +1897,18 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		if !strings.Contains(string(evidenceIndex), want) {
 			t.Fatalf("evidence-index.jsonl = %q, want %q", evidenceIndex, want)
 		}
+	}
+	evidenceRecords := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	buildCandidate := findFindingByID(evidenceRecords, "relationship-candidate-api-build-manifest")
+	if buildCandidate == nil {
+		t.Fatalf("missing build relationship candidate in %#v", evidenceRecords)
+	}
+	if buildCandidate["status"] != "observed" ||
+		buildCandidate["evidence_state"] != "source-visible" ||
+		buildCandidate["source_artifact"] != "source-tree" ||
+		buildCandidate["count"] != float64(1) ||
+		!strings.Contains(buildCandidate["reason"].(string), "semantic parsing remains not_assessed") {
+		t.Fatalf("build relationship candidate = %#v, want observed source-visible candidate with count and not_assessed reason", buildCandidate)
 	}
 	ossPlan := readJSONFile(t, filepath.Join(out, "oss-plan.json"))
 	plans := ossPlan["tools"].([]any)
@@ -1966,6 +1990,9 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		"`unknown`",
 		"`cannot_verify`",
 		"runtime topology is `not_assessed`",
+		"native PHP, JVM, Scala",
+		"producer evidence",
+		"build/deploy relationship candidates",
 	} {
 		if !strings.Contains(taxonomySection, want) {
 			t.Errorf("answer-contract.md relationship taxonomy missing %q:\n%s", want, taxonomySection)
@@ -2047,6 +2074,27 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	if strings.Contains(jscpdArgs, "--exitCode") {
 		t.Fatalf("jscpd args = %s, must not force native tool exit code", jscpdArgs)
 	}
+	syftCommand := planByID["cyclonedx"]["commands"].([]any)[0].(map[string]any)
+	syftArgs := fmt.Sprint(syftCommand["args"])
+	syftArgsRaw := syftCommand["args"].([]any)
+	wantSyftArgs := []string{root, "--exclude", "./.portolan/**", "--exclude", "./run/**", "-o", "cyclonedx-json=" + filepath.Join(toolOutputDir, "syft.cyclonedx.json")}
+	if len(syftArgsRaw) != len(wantSyftArgs) {
+		t.Fatalf("syft args = %#v, want %d args", syftArgsRaw, len(wantSyftArgs))
+	}
+	for i, want := range wantSyftArgs {
+		if syftArgsRaw[i] != want {
+			t.Fatalf("syft args[%d] = %q, want %q in %#v", i, syftArgsRaw[i], want, syftArgsRaw)
+		}
+	}
+	for _, want := range []string{"--exclude", "./.portolan/**", "./run/**"} {
+		if !strings.Contains(syftArgs, want) {
+			t.Fatalf("syft args = %s, want clean-start exclusion %q", syftArgs, want)
+		}
+	}
+	syftLimits := fmt.Sprint(syftCommand["limits"])
+	if !strings.Contains(syftLimits, "exclude .portolan outputs and root-level run artifacts") {
+		t.Fatalf("syft limits = %s, want clean-start exclusion limit", syftLimits)
+	}
 	jscpdLimits := jscpdCommand["limits"].([]any)
 	wantLimits := []string{
 		"max source file size: 100kb",
@@ -2105,6 +2153,60 @@ func TestRunContextPreparePreservesContextToolOutputs(t *testing.T) {
 		if plan["id"] == "cyclonedx" && plan["status"] != "input_present" {
 			t.Fatalf("cyclonedx plan = %#v, want input_present", plan)
 		}
+	}
+}
+
+func TestRunContextPrepareSummarizesSymbolIndexToolOutput(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, "tool-outputs"))
+	mustWrite(t, filepath.Join(root, "tool-outputs", "symbol-index.json"), `{
+		"producer":"fixture-symbol-index",
+		"documents":[
+			{"path":"src/Controller.php","language":"php","symbols":[{"id":"php:App\\Controller","name":"App\\Controller"}]},
+			{"path":"src/main/scala/App.scala","language":"scala","symbols":[{"id":"jvm:com.acme.App","name":"com.acme.App"}]}
+		]
+	}`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	registry := readJSONFile(t, filepath.Join(out, "tool-registry.json"))
+	tools := registry["tools"].([]any)
+	if len(tools) != 1 {
+		t.Fatalf("tools = %#v, want one symbol-index entry", tools)
+	}
+	entry := tools[0].(map[string]any)
+	if entry["family"] != "symbol-index" || entry["kind"] != "symbol-index" || entry["status"] != "observed" {
+		t.Fatalf("entry = %#v, want observed symbol-index", entry)
+	}
+	metrics := entry["metrics"].(map[string]any)
+	if metrics["documents"] != float64(2) || metrics["symbols"] != float64(2) {
+		t.Fatalf("metrics = %#v, want 2 documents and 2 symbols", metrics)
+	}
+	for _, want := range []string{"symbol-index evidence", "2 documents", "2 symbols", "not a complete call graph"} {
+		if !strings.Contains(entry["summary"].(string), want) {
+			t.Fatalf("summary = %q, want %q", entry["summary"], want)
+		}
+	}
+	gaps, err := os.ReadFile(filepath.Join(out, "gaps.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(gaps), "gap-symbol-index-not-assessed") {
+		t.Fatalf("gaps.jsonl = %q, did not expect symbol-index gap", gaps)
+	}
+	evidenceIndex, err := os.ReadFile(filepath.Join(out, "evidence-index.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(evidenceIndex), `"family":"symbol-index"`) {
+		t.Fatalf("evidence-index.jsonl = %q, want symbol-index record", evidenceIndex)
 	}
 }
 

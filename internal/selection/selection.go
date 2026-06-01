@@ -261,7 +261,7 @@ func validExpectedField(field string) bool {
 
 func validToolOutputKind(kind string) bool {
 	switch kind {
-	case "sbom", "dependency", "language-inventory", "code-size", "duplication", "configuration", "contract-surface":
+	case "sbom", "dependency", "symbol-index", "language-inventory", "code-size", "duplication", "configuration", "contract-surface":
 		return true
 	default:
 		return false

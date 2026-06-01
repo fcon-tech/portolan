@@ -15,6 +15,12 @@ import (
 
 const SchemaVersion = "0.1.0"
 
+// Context packs are first-pass agent inputs; symbol summaries stay bounded and
+// degraded rather than letting large code indexes dominate the pack.
+const maxContextSymbolDocuments = 5000
+const maxContextSymbols = 50000
+const relationshipCandidateScanLimitPerRepo = 20000
+
 type Options struct {
 	RootPath   string
 	OutputPath string
@@ -76,8 +82,20 @@ type EvidenceRecord struct {
 	SourceArtifact string `json:"source_artifact"`
 	SourceID       string `json:"source_id"`
 	Path           string `json:"path,omitempty"`
+	Count          int    `json:"count,omitempty"`
 	Summary        string `json:"summary"`
 	Reason         string `json:"reason,omitempty"`
+}
+
+type RelationshipCandidate struct {
+	ID            string
+	Family        string
+	RepositoryID  string
+	Path          string
+	Count         int
+	EvidenceState string
+	Summary       string
+	Reason        string
 }
 
 type repoFile struct {
@@ -141,7 +159,7 @@ var priorityFamilies = []string{
 	"openapi",
 	"asyncapi",
 	"structurizr",
-	"code-index",
+	"symbol-index",
 }
 
 func Run(opts Options) (Result, error) {
@@ -167,6 +185,7 @@ func Run(opts Options) (Result, error) {
 
 	repos, repoGaps := discoverRepositories(root)
 	tools := detectToolOutputs(root, out, repos)
+	relationshipCandidates := detectRelationshipCandidates(repos)
 	ossPlan := buildOSSPlan(root, out, opts.Profile, tools)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
@@ -220,13 +239,13 @@ func Run(opts Options) (Result, error) {
 	if err := writeJSON(filepath.Join(temp, "oss-plan.json"), ossPlan); err != nil {
 		return Result{}, err
 	}
-	if err := writeEvidenceIndex(filepath.Join(temp, "evidence-index.jsonl"), buildEvidenceIndex(repos, tools, gaps)); err != nil {
+	if err := writeEvidenceIndex(filepath.Join(temp, "evidence-index.jsonl"), buildEvidenceIndex(repos, tools, gaps, relationshipCandidates)); err != nil {
 		return Result{}, err
 	}
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
 		return Result{}, err
 	}
-	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps, relationshipCandidates)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root)), 0o644); err != nil {
@@ -446,6 +465,102 @@ func detectToolOutputs(root, out string, repos []Repository) []ToolEntry {
 	return entries
 }
 
+func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
+	var candidates []RelationshipCandidate
+	for _, repo := range repos {
+		counts := map[string]int{}
+		samples := map[string]string{}
+		scanned := 0
+		err := filepath.WalkDir(repo.Path, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if path == repo.Path {
+				return nil
+			}
+			if entry.IsDir() {
+				if shouldSkipRelationshipCandidateDir(entry.Name()) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			scanned++
+			if scanned > relationshipCandidateScanLimitPerRepo {
+				return errStopRelationshipCandidateScan
+			}
+			family := relationshipCandidateFamily(path)
+			if family == "" {
+				return nil
+			}
+			counts[family]++
+			if samples[family] == "" {
+				samples[family] = path
+			}
+			return nil
+		})
+		if err != nil && !errors.Is(err, errStopRelationshipCandidateScan) {
+			continue
+		}
+		for _, family := range sortedRelationshipCandidateFamilies(counts) {
+			candidates = append(candidates, RelationshipCandidate{
+				ID:            "relationship-candidate-" + repo.ID + "-" + family,
+				Family:        family,
+				RepositoryID:  repo.ID,
+				Path:          samples[family],
+				Count:         counts[family],
+				EvidenceState: "source-visible",
+				Summary:       relationshipCandidateSummary(repo.ID, family, counts[family]),
+				Reason:        "local source file names indicate build/deploy relationship evidence candidates; semantic parsing remains not_assessed",
+			})
+		}
+	}
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].ID < candidates[j].ID
+	})
+	return candidates
+}
+
+var errStopRelationshipCandidateScan = errors.New("stop relationship candidate scan")
+
+func shouldSkipRelationshipCandidateDir(name string) bool {
+	switch strings.ToLower(name) {
+	case ".git", ".portolan", "node_modules", "vendor", "target", "build", "dist", "generated", ".gradle", ".idea":
+		return true
+	default:
+		return false
+	}
+}
+
+func relationshipCandidateFamily(path string) string {
+	base := strings.ToLower(filepath.Base(path))
+	clean := filepath.ToSlash(strings.ToLower(path))
+	switch {
+	case base == "bigtop.bom":
+		return "distribution-manifest"
+	case base == "pom.xml" || base == "build.gradle" || base == "build.gradle.kts" || base == "settings.gradle" || base == "settings.gradle.kts" || base == "gradle.properties" || base == "ivy.xml" || base == "build.xml":
+		return "build-manifest"
+	case strings.HasSuffix(base, ".spec") && (strings.Contains(clean, "/specs/") || strings.Contains(clean, "/src/rpm/")):
+		return "rpm-spec"
+	case base == "docker-compose.yml" || base == "docker-compose.yaml" || strings.HasSuffix(base, ".pp") && strings.Contains(clean, "/puppet/"):
+		return "deployment-manifest"
+	default:
+		return ""
+	}
+}
+
+func sortedRelationshipCandidateFamilies(counts map[string]int) []string {
+	families := make([]string, 0, len(counts))
+	for family := range counts {
+		families = append(families, family)
+	}
+	sort.Strings(families)
+	return families
+}
+
+func relationshipCandidateSummary(repoID, family string, count int) string {
+	return fmt.Sprintf("Repository %s has %s; inspect these before architecture or topology claims.", repoID, formatCount(count, "local "+family+" relationship candidate file"))
+}
+
 func preserveToolOutputs(out, temp string) error {
 	src := filepath.Join(out, "tool-outputs")
 	info, err := os.Lstat(src)
@@ -504,7 +619,7 @@ func summarizeToolOutput(id, family, path string) ToolEntry {
 		Reason:        "local candidate output detected by filename convention",
 	}
 	switch family {
-	case "jscpd", "cyclonedx", "semgrep":
+	case "jscpd", "cyclonedx", "semgrep", "symbol-index":
 		return summarizeJSONToolOutput(entry)
 	case "backstage", "openapi", "asyncapi", "structurizr":
 		return summarizeRelationshipSurface(entry)
@@ -768,6 +883,32 @@ func summarizeJSONToolOutput(entry ToolEntry) ToolEntry {
 		}
 		entry.Metrics = map[string]int{"results": results}
 		entry.Summary = "Local Semgrep-style structural finding evidence with " + formatCount(results, "result") + "."
+	case "symbol-index":
+		documents := len(doc.Documents)
+		symbols := countSummarySymbols(doc.Documents)
+		if documents == 0 {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "Symbol-index candidate contains no documents."
+			entry.Reason = "symbol-index output contains no documents"
+			return entry
+		}
+		if documents > maxContextSymbolDocuments {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "Symbol-index candidate exceeds the bounded context summary document limit."
+			entry.Reason = fmt.Sprintf("symbol-index document count %d exceeds selected-output limit %d", documents, maxContextSymbolDocuments)
+			return entry
+		}
+		if symbols > maxContextSymbols {
+			entry.EvidenceState = "cannot_verify"
+			entry.Status = "cannot_verify"
+			entry.Summary = "Symbol-index candidate exceeds the bounded context summary symbol limit."
+			entry.Reason = fmt.Sprintf("symbol-index symbol count %d exceeds selected-output limit %d", symbols, maxContextSymbols)
+			return entry
+		}
+		entry.Metrics = map[string]int{"documents": documents, "symbols": symbols}
+		entry.Summary = "Local symbol-index evidence with " + formatCount(documents, "document") + " and " + formatCount(symbols, "symbol") + "; not a complete call graph."
 	}
 	return entry
 }
@@ -787,9 +928,21 @@ type toolSummaryDocument struct {
 	Confidence       *float64         `json:"confidence"`
 	Components       []map[string]any `json:"components"`
 	Dependencies     []map[string]any `json:"dependencies"`
+	Documents        []map[string]any `json:"documents"`
 	Duplicates       []map[string]any `json:"duplicates"`
 	Results          []map[string]any `json:"Results"`
 	LowercaseResults []map[string]any `json:"results"`
+}
+
+func countSummarySymbols(documents []map[string]any) int {
+	count := 0
+	for _, document := range documents {
+		raw, ok := document["symbols"].([]any)
+		if ok {
+			count += len(raw)
+		}
+	}
+	return count
 }
 
 func validConfidence(value *float64) *float64 {
@@ -814,8 +967,8 @@ func kindForFamily(family string) string {
 		return "contract-surface"
 	case "structurizr":
 		return "architecture-model"
-	case "code-index":
-		return "code-index"
+	case "symbol-index":
+		return "symbol-index"
 	default:
 		return "unknown"
 	}
@@ -845,8 +998,8 @@ func familiesForFile(name string) []string {
 	if strings.Contains(lower, "structurizr") || lower == "workspace.dsl" {
 		families = append(families, "structurizr")
 	}
-	if strings.Contains(lower, "scip") || strings.Contains(lower, "lsif") || strings.Contains(lower, "zoekt") || strings.Contains(lower, "opengrok") || strings.Contains(lower, "sourcebot") {
-		families = append(families, "code-index")
+	if strings.Contains(lower, "symbol-index") || strings.Contains(lower, "code-index") || strings.Contains(lower, "symbols") || strings.Contains(lower, "scip") || strings.Contains(lower, "lsif") || strings.Contains(lower, "zoekt") || strings.Contains(lower, "opengrok") || strings.Contains(lower, "sourcebot") {
+		families = append(families, "symbol-index")
 	}
 	return families
 }
@@ -869,11 +1022,20 @@ func gapsForMissingFamilies(tools []ToolEntry) []Gap {
 			Reason:        "no local candidate output was detected for this OSS/tool family",
 		})
 	}
+	if !present["symbol-index"] {
+		gaps = append(gaps, Gap{
+			ID:            "gap-code-index-not-assessed",
+			Family:        "code-index",
+			Status:        "not_assessed",
+			EvidenceState: "not_assessed",
+			Reason:        "legacy code-index gap alias; prefer symbol-index for local symbol/reference producer evidence",
+		})
+	}
 	return gaps
 }
 
-func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap) []EvidenceRecord {
-	records := make([]EvidenceRecord, 0, len(repos)+len(tools)+len(gaps))
+func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap, candidates []RelationshipCandidate) []EvidenceRecord {
+	records := make([]EvidenceRecord, 0, len(repos)+len(tools)+len(gaps)+len(candidates))
 	for _, repo := range repos {
 		records = append(records, EvidenceRecord{
 			ID:             "repo-" + repo.ID,
@@ -899,6 +1061,21 @@ func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap) []Evi
 			Path:           tool.Path,
 			Summary:        tool.Summary,
 			Reason:         tool.Reason,
+		})
+	}
+	for _, candidate := range candidates {
+		records = append(records, EvidenceRecord{
+			ID:             candidate.ID,
+			Kind:           "relationship-candidate",
+			Family:         candidate.Family,
+			Status:         "observed",
+			EvidenceState:  candidate.EvidenceState,
+			SourceArtifact: "source-tree",
+			SourceID:       candidate.RepositoryID,
+			Path:           candidate.Path,
+			Count:          candidate.Count,
+			Summary:        candidate.Summary,
+			Reason:         candidate.Reason,
 		})
 	}
 	for _, gap := range gaps {
@@ -1027,6 +1204,12 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 		return markNotAvailable(plan, "syft executable was not found on PATH")
 	}
 	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
+	// Syft requires exclude patterns to be source-relative; absolute patterns
+	// are rejected by the CLI.
+	excludes := []string{
+		"./.portolan/**",
+		"./run/**",
+	}
 	plan.Status = "available_not_run"
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
@@ -1034,9 +1217,10 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.Commands = []OSSCommand{{
 		Label:                "produce CycloneDX JSON SBOM",
 		Tool:                 exe,
-		Args:                 []string{root, "-o", "cyclonedx-json=" + output},
+		Args:                 []string{root, "--exclude", excludes[0], "--exclude", excludes[1], "-o", "cyclonedx-json=" + output},
 		Reads:                []string{root},
 		Writes:               []string{output},
+		Limits:               []string{"exclude .portolan outputs and root-level run artifacts from the SBOM source"},
 		MutatesTarget:        false,
 		Network:              "not_expected_for_local_filesystem_source",
 		RequiresUserApproval: true,
@@ -1142,7 +1326,7 @@ func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
-func renderAgentBrief(root string, profile string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap) string {
+func renderAgentBrief(root string, profile string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap, relationshipCandidates []RelationshipCandidate) string {
 	var b strings.Builder
 	observedTools := 0
 	cannotVerifyTools := 0
@@ -1175,6 +1359,7 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "## Current Coverage\n\n")
 	fmt.Fprintf(&b, "- Repositories discovered: %d\n", len(repos))
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
+	fmt.Fprintf(&b, "- Build/deploy relationship candidate summaries: %d\n", len(relationshipCandidates))
 	fmt.Fprintf(&b, "- Observed OSS/tool-output summaries: %d\n", observedTools)
 	fmt.Fprintf(&b, "- Cannot-verify tool outputs: %d\n", cannotVerifyTools)
 	fmt.Fprintf(&b, "- Available OSS output recipes not run: %d\n", availablePlans)
@@ -1235,7 +1420,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "| Runtime communication | `runtime-visible` | Runtime-visible local observations show communication during the captured window. | Complete topology unless the runtime evidence is complete. |\n")
 	fmt.Fprintf(&b, "| Ownership | `metadata-visible` or `claim-only` | Local ownership files, catalogs, or claims state responsibility. | Operational accountability beyond the supplied source. |\n")
 	fmt.Fprintf(&b, "| Lifecycle | `metadata-visible` or `claim-only` | Local metadata or claims state active, retired, legacy, or migration status. | Current lifecycle for unobserved systems. |\n\n")
-	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
+	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
 	fmt.Fprintf(&b, "- Do not claim complete service inventory without coverage evidence.\n")
 	fmt.Fprintf(&b, "- Do not claim dependency or component duplication without SBOM or duplicate findings.\n")
@@ -1263,6 +1448,10 @@ func renderQueryPlan() string {
 - Duplicate components: start with jscpd and CycloneDX/Syft summaries in
   ` + "`tool-registry.json`" + `. If they are absent, report duplication as
   not_assessed and inspect ` + "`oss-plan.json`" + ` for native local OSS output recipes.
+- Build/deploy relationship candidates: inspect ` + "`evidence-index.jsonl`" + `
+  records with kind ` + "`relationship-candidate`" + ` before opening raw source.
+  They point at build manifests, distribution manifests, RPM specs, and
+  deployment manifests; they are candidate evidence, not parsed topology.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

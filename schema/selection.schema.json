@@ -146,7 +146,7 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["sbom", "dependency", "language-inventory", "code-size", "duplication", "configuration", "contract-surface"]
+            "enum": ["sbom", "dependency", "symbol-index", "language-inventory", "code-size", "duplication", "configuration", "contract-surface"]
         },
         "tool": {
           "type": "string",

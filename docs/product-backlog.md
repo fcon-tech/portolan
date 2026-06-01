@@ -128,11 +128,12 @@ fixtures are preflight evidence only.
 | P5-049 | `docs/specs/049-public-demo-showcase/` | Public evaluators can run a reproducible Apache Bigtop demo and read a claim-bounded case study without leaking private context or hiding unknowns. | Implemented and merged via PR #23; public runbook, redacted excerpts, local cold-start and existing-landscape smoke evidence, claim scan, privacy/freshness review, PR review, GitHub checks, and merge closeout verified |
 | P5-050 | `docs/specs/050-fcon-portolan-pages-site/` | FCON and Portolan can publish a static GitHub Pages site that routes visitors to install, demo, release, claims, and GitHub without overclaiming. | Implemented and merged via PR #26; local implementation, PR review, merge state, GitHub checks, and merge command verified; live GitHub Pages deployment, default Pages URL, DNS, HTTPS, and GitHub review approval not_assessed |
 
-## P6: First-Run Product UX Closure
+## P6: Evidence And First-Run UX Closure
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P6-051 | `docs/specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Merged via PR #28; local baseline verified, GitHub Baseline and underlying CodeQL jobs verified, Bigtop Cursor Composer 2.5/OpenCode harness stress recorded, native OSS boundary cleanup merged; aggregate GitHub CodeQL status remained queued, GitHub review approval not_assessed |
+| P6-052 | `docs/specs/052-dependency-symbol-evidence-import/` | Portolan can import standard dependency and symbol evidence outputs so PHP, JVM-heavy, and mixed-language landscapes get evidence-backed relationship coverage without Portolan owning per-language scanners. | Local implementation, post-correction review, and final Cursor + Composer 2.5 Syft/Bigtop stress run `20260601-154329` verified; PR not_started; symbol/API/catalog/runtime producer evidence remains not_assessed |
 
 ## Backlog Rules
 

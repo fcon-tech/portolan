@@ -75,6 +75,13 @@ const summaryRecordLimit = 100
 const graphIndexSampleLimit = 20
 const graphIndexHighDegreeLimit = 25
 
+// Selected tool-output normalization is intentionally in-memory and bounded.
+// Larger producer outputs should use a streaming/importer path or remain
+// cannot_verify until a later spec approves a larger graph budget.
+var maxSelectedToolOutputBytes int64 = 64 * 1024 * 1024
+var maxSelectedSymbolDocuments = 5000
+var maxSelectedSymbols = 50000
+
 type Summary struct {
 	SchemaVersion string          `json:"schema_version"`
 	GeneratedBy   string          `json:"generated_by"`
@@ -907,6 +914,7 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		g.Edges = append(g.Edges, edges...)
 		findings = append(findings, toolFindings...)
 	}
+	findings = append(findings, relationshipProducerGapFindings(sel.ToolOutputs)...)
 	findings = append(findings, unsupportedRelationshipFindings()...)
 	findings = append(findings, ensureSurfaceCoverageFindings(findings)...)
 	sortGraph(&g)
@@ -943,6 +951,35 @@ func ensureSurfaceCoverageFindings(findings []Finding) []Finding {
 	}
 	additions = append(additions, notAssessedFinding("finding-unsupported-languages-not-assessed", "relationships", "Unsupported language relationship detectors remain not_assessed."))
 	return additions
+}
+
+func relationshipProducerGapFindings(outputs []selection.ToolOutput) []Finding {
+	hasDependency := false
+	hasSymbol := false
+	for _, output := range outputs {
+		switch output.Kind {
+		case "sbom", "dependency":
+			hasDependency = true
+		case "symbol-index":
+			hasSymbol = true
+		}
+	}
+	var findings []Finding
+	if !hasDependency {
+		findings = append(findings, notAssessedFinding(
+			"finding-relationships-dependency-evidence-not-assessed",
+			"relationships",
+			"No selected local dependency or SBOM producer output was available; dependency relationships beyond native detectors remain not_assessed.",
+		))
+	}
+	if !hasSymbol {
+		findings = append(findings, notAssessedFinding(
+			"finding-relationships-symbol-evidence-not-assessed",
+			"relationships",
+			"No selected local symbol-index producer output was available; symbol/reference relationships remain not_assessed.",
+		))
+	}
+	return findings
 }
 
 func deriveTechnicalDebtFindings(findings []Finding, ledger coverage.Ledger) []Finding {
@@ -1313,45 +1350,104 @@ func normalizeToolOutput(source selection.ToolOutput) ([]graph.Node, []graph.Edg
 			Source: source.Path,
 		},
 	}}
-	data, err := os.ReadFile(source.Path)
+	data, err := readSelectedToolOutput(source.Path)
 	if err != nil {
 		nodes[0].Evidence.State = graph.CannotVerify
 		nodes[0].Evidence.Reason = err.Error()
-		return nodes, nil, []Finding{{
-			ID:             "finding-tool-output-" + source.ID,
-			Kind:           findingKindForToolOutput(source.Kind),
-			Summary:        "Tool output could not be read: " + source.Tool,
-			Severity:       "info",
-			EvidenceState:  string(graph.CannotVerify),
-			EvidenceSource: source.Path,
-			Confidence:     0,
-			Status:         "cannot_verify",
-		}}
+		return nodes, nil, []Finding{toolOutputFinding(source, nodes[0].Evidence.State, "Tool output could not be read: "+err.Error(), 0)}
 	}
 	var doc toolOutputDocument
-	if err := json.Unmarshal(data, &doc); err != nil {
+	if err := decodeToolOutputDocument(data, &doc); err != nil {
 		nodes[0].Evidence.State = graph.CannotVerify
-		nodes[0].Evidence.Reason = "malformed tool output JSON"
+		nodes[0].Evidence.Reason = err.Error()
 	}
-	factNodes, factEdges := toolOutputFacts(source, doc)
+	if nodes[0].Evidence.State != graph.CannotVerify {
+		if err := validateToolOutputDocument(source, doc); err != nil {
+			nodes[0].Evidence.State = graph.CannotVerify
+			nodes[0].Evidence.Reason = err.Error()
+		}
+	}
+	var factNodes []graph.Node
+	var factEdges []graph.Edge
+	if nodes[0].Evidence.State != graph.CannotVerify {
+		factNodes, factEdges = toolOutputFacts(source, doc)
+	}
 	nodes = append(nodes, factNodes...)
 	nodes = append(nodes, edgeEndpointNodes(source, nodes, factEdges)...)
 	summary := toolOutputSummary(source, doc)
+	if nodes[0].Evidence.State == graph.CannotVerify {
+		summary = "Malformed or unsupported local " + source.Kind + " output from " + source.Tool + ": " + nodes[0].Evidence.Reason
+	}
 	if len(source.Limitations) > 0 {
-		nodes[0].Evidence.Reason = strings.Join(source.Limitations, "; ")
+		limitationReason := strings.Join(source.Limitations, "; ")
+		if nodes[0].Evidence.Reason == "" {
+			nodes[0].Evidence.Reason = limitationReason
+		} else {
+			nodes[0].Evidence.Reason += "; " + limitationReason
+		}
 	}
 	confidence := toolOutputConfidence(source, doc.Confidence)
-	findings := []Finding{{
+	if nodes[0].Evidence.State == graph.CannotVerify {
+		confidence = 0
+	}
+	findings := []Finding{toolOutputFinding(source, nodes[0].Evidence.State, summary, confidence)}
+	return nodes, factEdges, findings
+}
+
+func readSelectedToolOutput(path string) ([]byte, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("tool output path must be a regular file")
+	}
+	if maxSelectedToolOutputBytes > 0 && info.Size() > maxSelectedToolOutputBytes {
+		return nil, fmt.Errorf("tool output size %d exceeds selected-output limit %d", info.Size(), maxSelectedToolOutputBytes)
+	}
+	return os.ReadFile(path)
+}
+
+func decodeToolOutputDocument(data []byte, doc *toolOutputDocument) error {
+	decoder := json.NewDecoder(strings.NewReader(string(data)))
+	if err := decoder.Decode(doc); err != nil {
+		return fmt.Errorf("malformed tool output JSON: %w", err)
+	}
+	if decoder.Decode(&struct{}{}) != io.EOF {
+		return fmt.Errorf("malformed tool output JSON: trailing JSON content")
+	}
+	return nil
+}
+
+func toolOutputFinding(source selection.ToolOutput, state graph.EvidenceState, summary string, confidence float64) Finding {
+	return Finding{
 		ID:             "finding-tool-output-" + source.ID,
 		Kind:           findingKindForToolOutput(source.Kind),
 		Summary:        summary,
 		Severity:       "info",
-		EvidenceState:  string(nodes[0].Evidence.State),
+		EvidenceState:  string(state),
 		EvidenceSource: source.Path,
 		Confidence:     confidence,
-		Status:         statusForEvidence(nodes[0].Evidence.State),
-	}}
-	return nodes, factEdges, findings
+		Status:         statusForEvidence(state),
+	}
+}
+
+func validateToolOutputDocument(source selection.ToolOutput, doc toolOutputDocument) error {
+	if source.Kind != "symbol-index" {
+		return nil
+	}
+	documents := len(doc.Documents)
+	if documents == 0 {
+		return fmt.Errorf("symbol-index output contains no documents")
+	}
+	if documents > maxSelectedSymbolDocuments {
+		return fmt.Errorf("symbol-index document count %d exceeds selected-output limit %d", documents, maxSelectedSymbolDocuments)
+	}
+	symbols := countToolOutputSymbols(doc.Documents)
+	if symbols > maxSelectedSymbols {
+		return fmt.Errorf("symbol-index symbol count %d exceeds selected-output limit %d", symbols, maxSelectedSymbols)
+	}
+	return nil
 }
 
 type toolOutputDocument struct {
@@ -1360,6 +1456,8 @@ type toolOutputDocument struct {
 	BOMFormat        string           `json:"bomFormat"`
 	Components       []map[string]any `json:"components"`
 	Dependencies     []map[string]any `json:"dependencies"`
+	Producer         string           `json:"producer"`
+	Documents        []map[string]any `json:"documents"`
 	Languages        []map[string]any `json:"languages"`
 	Duplicates       []map[string]any `json:"duplicates"`
 	Results          []map[string]any `json:"Results"`
@@ -1371,6 +1469,7 @@ func toolOutputFacts(source selection.ToolOutput, doc toolOutputDocument) ([]gra
 	var edges []graph.Edge
 	switch source.Kind {
 	case "sbom", "dependency":
+		knownComponents := map[string]bool{}
 		for _, component := range doc.Components {
 			ref := stringField(component, "bom-ref")
 			if ref == "" {
@@ -1380,6 +1479,7 @@ func toolOutputFacts(source selection.ToolOutput, doc toolOutputDocument) ([]gra
 				continue
 			}
 			nodeID := source.ID + ":component:" + stableID(ref)
+			knownComponents[nodeID] = true
 			nodes = append(nodes, graph.Node{
 				ID:    nodeID,
 				Kind:  "package",
@@ -1393,14 +1493,90 @@ func toolOutputFacts(source selection.ToolOutput, doc toolOutputDocument) ([]gra
 		}
 		for _, dep := range doc.Dependencies {
 			from := stringField(dep, "ref")
+			if from == "" {
+				continue
+			}
+			fromID := source.ID + ":component:" + stableID(from)
+			if !knownComponents[fromID] {
+				nodes = append(nodes, missingToolComponentNode(fromID, from, source.Path))
+				knownComponents[fromID] = true
+			}
 			for _, to := range stringSliceField(dep, "dependsOn") {
+				toID := source.ID + ":component:" + stableID(to)
+				state := graph.MetadataVisible
+				reason := ""
+				if !knownComponents[toID] {
+					nodes = append(nodes, missingToolComponentNode(toID, to, source.Path))
+					knownComponents[toID] = true
+					state = graph.CannotVerify
+					reason = "dependency ref was not present in producer components"
+				}
 				edges = append(edges, graph.Edge{
-					From: source.ID + ":component:" + stableID(from),
-					To:   source.ID + ":component:" + stableID(to),
+					From: fromID,
+					To:   toID,
 					Kind: "depends-on",
 					Evidence: graph.Evidence{
-						State:  graph.MetadataVisible,
+						State:  state,
 						Source: source.Path,
+						Reason: reason,
+					},
+				})
+			}
+		}
+	case "symbol-index":
+		for _, document := range doc.Documents {
+			docPath := documentPath(document)
+			if docPath == "" {
+				continue
+			}
+			docID := source.ID + ":document:" + stableID(docPath)
+			nodes = append(nodes, graph.Node{
+				ID:    docID,
+				Kind:  "unknown",
+				Label: docPath,
+				Evidence: graph.Evidence{
+					State:  graph.MetadataVisible,
+					Source: source.Path,
+					Reason: reasonWithValue(stringField(document, "language"), "document listed by local symbol-index export"),
+				},
+			})
+			edges = append(edges, graph.Edge{
+				From: source.ID,
+				To:   docID,
+				Kind: "owns",
+				Evidence: graph.Evidence{
+					State:  graph.MetadataVisible,
+					Source: source.Path,
+					Reason: "symbol-index document ownership; not a complete call graph",
+				},
+			})
+			for _, symbol := range mapSliceField(document, "symbols") {
+				symbolIDValue := stringField(symbol, "id")
+				if symbolIDValue == "" {
+					symbolIDValue = stringField(symbol, "name")
+				}
+				if symbolIDValue == "" {
+					continue
+				}
+				symbolID := source.ID + ":symbol:" + stableID(symbolIDValue)
+				nodes = append(nodes, graph.Node{
+					ID:    symbolID,
+					Kind:  "unknown",
+					Label: symbolLabel(symbol),
+					Evidence: graph.Evidence{
+						State:  graph.MetadataVisible,
+						Source: symbolSource(source.Path, docPath, stringField(symbol, "range")),
+						Reason: reasonWithValue(stringField(symbol, "kind"), "symbol identity/range listed by local export; semantic correctness not assessed"),
+					},
+				})
+				edges = append(edges, graph.Edge{
+					From: docID,
+					To:   symbolID,
+					Kind: "owns",
+					Evidence: graph.Evidence{
+						State:  graph.MetadataVisible,
+						Source: symbolSource(source.Path, docPath, stringField(symbol, "range")),
+						Reason: reasonWithValue(stringField(symbol, "role"), "symbol occurrence listed by local export; not a complete call graph"),
 					},
 				})
 			}
@@ -1467,7 +1643,11 @@ func toolOutputSummary(source selection.ToolOutput, doc toolOutputDocument) stri
 	switch source.Kind {
 	case "sbom", "dependency":
 		if doc.BOMFormat == "CycloneDX" {
-			return fmt.Sprintf("Imported CycloneDX evidence with %d components and %d dependency records.", len(doc.Components), len(doc.Dependencies))
+			return fmt.Sprintf("Imported CycloneDX dependency evidence%s with %d components and %d dependency records.", toolOutputScope(source), len(doc.Components), len(doc.Dependencies))
+		}
+	case "symbol-index":
+		if len(doc.Documents) > 0 {
+			return fmt.Sprintf("Imported symbol-index evidence%s with %d documents and %d symbols; not a complete call graph.", toolOutputScope(source), len(doc.Documents), countToolOutputSymbols(doc.Documents))
 		}
 	case "language-inventory", "code-size":
 		if len(doc.Languages) > 0 {
@@ -1489,9 +1669,94 @@ func toolOutputSummary(source selection.ToolOutput, doc toolOutputDocument) stri
 	return "Imported local " + source.Kind + " output from " + source.Tool + " with unsupported detailed shape; retained as attributed metadata evidence."
 }
 
+func toolOutputScope(source selection.ToolOutput) string {
+	if strings.TrimSpace(source.Repository) == "" {
+		return ""
+	}
+	return " for repository " + strings.TrimSpace(source.Repository)
+}
+
+func countToolOutputSymbols(documents []map[string]any) int {
+	count := 0
+	for _, document := range documents {
+		count += len(mapSliceField(document, "symbols"))
+	}
+	return count
+}
+
+func missingToolComponentNode(id string, label string, source string) graph.Node {
+	return graph.Node{
+		ID:    id,
+		Kind:  "package",
+		Label: label,
+		Evidence: graph.Evidence{
+			State:  graph.CannotVerify,
+			Source: source,
+			Reason: "dependency ref was not present in producer components",
+		},
+	}
+}
+
+func documentPath(document map[string]any) string {
+	if path := stringField(document, "path"); path != "" {
+		return boundedMetadataValue(path)
+	}
+	return boundedMetadataValue(stringField(document, "uri"))
+}
+
+func symbolLabel(symbol map[string]any) string {
+	if name := stringField(symbol, "name"); name != "" {
+		return boundedMetadataValue(name)
+	}
+	return boundedMetadataValue(stringField(symbol, "id"))
+}
+
+func symbolSource(inputPath string, documentPath string, symbolRange string) string {
+	parts := []string{inputPath}
+	if documentPath = strings.TrimSpace(documentPath); documentPath != "" {
+		parts = append(parts, documentPath)
+	}
+	if symbolRange = strings.TrimSpace(symbolRange); symbolRange != "" {
+		parts = append(parts, symbolRange)
+	}
+	return strings.Join(parts, ":")
+}
+
+func boundedMetadataValue(value string) string {
+	value = strings.TrimSpace(value)
+	const maxMetadataValueLength = 240
+	if len(value) <= maxMetadataValueLength {
+		return value
+	}
+	return value[:maxMetadataValueLength] + "...truncated"
+}
+
+func reasonWithValue(value string, reason string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return reason
+	}
+	return reason + " (" + value + ")"
+}
+
 func stringField(value map[string]any, key string) string {
 	raw, _ := value[key].(string)
 	return raw
+}
+
+func mapSliceField(value map[string]any, key string) []map[string]any {
+	raw, ok := value[key].([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(raw))
+	for _, item := range raw {
+		mapped, ok := item.(map[string]any)
+		if ok {
+			out = append(out, mapped)
+		}
+	}
+	return out
 }
 
 func stringSliceField(value map[string]any, key string) []string {
@@ -1568,7 +1833,7 @@ func findingKindForToolOutput(kind string) string {
 		return "duplication"
 	case "configuration", "contract-surface":
 		return "configuration"
-	case "sbom", "dependency":
+	case "sbom", "dependency", "symbol-index":
 		return "relationships"
 	default:
 		return "inventory"
