@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"os"
 	"path/filepath"
@@ -898,8 +899,10 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		findings = append(findings, observedFinding("finding-metadata-"+source.ID, "inventory", "Metadata input is locally visible.", graph.MetadataVisible, source.Path))
 	}
 	for _, source := range sel.Runtime {
-		g.Nodes = append(g.Nodes, inputNode(source.ID, "runtime", graph.RuntimeVisible, source.Path, ""))
-		findings = append(findings, observedFinding("finding-runtime-"+source.ID, "configuration", "Runtime export input is locally visible.", graph.RuntimeVisible, source.Path))
+		nodes, edges, runtimeFinding := normalizeRuntimeInput(source)
+		g.Nodes = append(g.Nodes, nodes...)
+		g.Edges = append(g.Edges, edges...)
+		findings = append(findings, runtimeFinding)
 	}
 	for _, source := range sel.Claims {
 		g.Nodes = append(g.Nodes, inputNode(source.ID, "claim", graph.ClaimOnly, source.Path, "claim source selected"))
@@ -1187,6 +1190,264 @@ func inputNode(id, kind string, state graph.EvidenceState, source, reason string
 			Reason: reason,
 		},
 	}
+}
+
+type runtimeInputDocument struct {
+	SchemaVersion string                    `json:"schema_version"`
+	Observations  []runtimeInputObservation `json:"observations"`
+	Source        string                    `json:"source"`
+}
+
+type runtimeInputObservation struct {
+	ID         string `json:"id"`
+	ObservedAt string `json:"observed_at"`
+	From       string `json:"from"`
+	To         string `json:"to"`
+	Kind       string `json:"kind"`
+	Coverage   string `json:"coverage"`
+	Source     string `json:"source"`
+}
+
+func normalizeRuntimeInput(source selection.InputSource) ([]graph.Node, []graph.Edge, Finding) {
+	data, err := os.ReadFile(source.Path)
+	if err != nil {
+		reason := runtimeReadErrorReason(err)
+		return []graph.Node{inputNode(source.ID, "runtime", graph.CannotVerify, source.Path, reason)}, nil, Finding{
+			ID:             "finding-runtime-" + source.ID,
+			Kind:           "configuration",
+			Summary:        "Runtime export input could not be read.",
+			Severity:       "info",
+			EvidenceState:  string(graph.CannotVerify),
+			EvidenceSource: source.Path,
+			Confidence:     0,
+			Status:         "cannot_verify",
+		}
+	}
+
+	var doc runtimeInputDocument
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return []graph.Node{inputNode(source.ID, "runtime", graph.CannotVerify, source.Path, "malformed runtime JSON")}, nil, runtimeInputCannotVerifyFinding(source, "Runtime export input is malformed and cannot be verified.")
+	}
+	if doc.SchemaVersion != "" && doc.SchemaVersion != selection.SchemaVersion {
+		return []graph.Node{inputNode(source.ID, "runtime", graph.CannotVerify, source.Path, fmt.Sprintf("runtime schema_version must be %q", selection.SchemaVersion))}, nil, runtimeInputCannotVerifyFinding(source, fmt.Sprintf("Runtime export input schema_version must be %q.", selection.SchemaVersion))
+	}
+	defaultSource := source.Path
+	if doc.Source != "" {
+		if unsafeRuntimeSource(doc.Source) {
+			return []graph.Node{inputNode(source.ID, "runtime", graph.CannotVerify, source.Path, "runtime source label must be local and redacted")}, nil, runtimeInputCannotVerifyFinding(source, "Runtime export input source label looks unsafe or unredacted.")
+		}
+		defaultSource = doc.Source
+	}
+
+	nodesByID := map[string]graph.Node{
+		source.ID: inputNode(source.ID, "runtime", graph.RuntimeVisible, source.Path, ""),
+	}
+	var edges []graph.Edge
+	invalid := false
+	partialCoverageRecorded := false
+	for _, observation := range doc.Observations {
+		observationSource := defaultSource
+		if observation.Source != "" {
+			if unsafeRuntimeSource(observation.Source) {
+				invalid = true
+				node := runtimeInvalidObservationNode(source.ID, "unsafe-observation", runtimeObservationID(observation), observation.Source, "runtime observation source label must be local and redacted")
+				nodesByID[node.ID] = node
+				continue
+			}
+			observationSource = observation.Source
+		}
+		coverage, ok := normalizeRuntimeInputCoverage(observation.Coverage)
+		if !ok {
+			invalid = true
+			node := runtimeInvalidObservationNode(source.ID, "invalid-coverage", runtimeObservationID(observation), observationSource, fmt.Sprintf("runtime observation has unsupported coverage %q", observation.Coverage))
+			nodesByID[node.ID] = node
+			continue
+		}
+		if strings.TrimSpace(observation.From) == "" || strings.TrimSpace(observation.To) == "" {
+			invalid = true
+			node := runtimeInvalidObservationNode(source.ID, "invalid-observation", runtimeObservationID(observation), observationSource, "runtime observation requires from and to")
+			nodesByID[node.ID] = node
+			continue
+		}
+
+		fromID := runtimeSubjectID(observation.From)
+		toID := runtimeSubjectID(observation.To)
+		reason := runtimeInputObservationReason(observation, coverage)
+		nodesByID[fromID] = graph.Node{
+			ID:    fromID,
+			Kind:  "runtime",
+			Label: strings.TrimSpace(observation.From),
+			Evidence: graph.Evidence{
+				State:  graph.RuntimeVisible,
+				Source: observationSource,
+				Reason: reason,
+			},
+		}
+		nodesByID[toID] = graph.Node{
+			ID:    toID,
+			Kind:  "runtime",
+			Label: strings.TrimSpace(observation.To),
+			Evidence: graph.Evidence{
+				State:  graph.RuntimeVisible,
+				Source: observationSource,
+				Reason: reason,
+			},
+		}
+		edges = append(edges, graph.Edge{
+			From: fromID,
+			To:   toID,
+			Kind: "observes",
+			Evidence: graph.Evidence{
+				State:  graph.RuntimeVisible,
+				Source: observationSource,
+				Reason: reason,
+			},
+		})
+		if coverage != "complete" && !partialCoverageRecorded {
+			unknownID := source.ID + ":unknown:runtime-topology"
+			unknownReason := fmt.Sprintf("%s runtime observation coverage does not prove complete topology", coverage)
+			nodesByID[unknownID] = graph.Node{
+				ID:    unknownID,
+				Kind:  "unknown",
+				Label: "runtime topology",
+				Evidence: graph.Evidence{
+					State:  graph.Unknown,
+					Source: observationSource,
+					Reason: unknownReason,
+				},
+			}
+			edges = append(edges, graph.Edge{
+				From: source.ID,
+				To:   unknownID,
+				Kind: "unknown",
+				Evidence: graph.Evidence{
+					State:  graph.Unknown,
+					Source: observationSource,
+					Reason: unknownReason,
+				},
+			})
+			partialCoverageRecorded = true
+		}
+	}
+
+	nodes := make([]graph.Node, 0, len(nodesByID))
+	for _, node := range nodesByID {
+		nodes = append(nodes, node)
+	}
+	finding := observedFinding("finding-runtime-"+source.ID, "configuration", "Runtime export input is locally visible and runtime observations were imported.", graph.RuntimeVisible, source.Path)
+	if invalid {
+		finding.Status = "cannot_verify"
+		finding.EvidenceState = string(graph.CannotVerify)
+		finding.Confidence = 0
+		finding.Summary = "Runtime export input includes observations that cannot be verified."
+	}
+	return nodes, edges, finding
+}
+
+func runtimeReadErrorReason(err error) string {
+	if os.IsNotExist(err) {
+		return "path does not exist"
+	}
+	return err.Error()
+}
+
+func runtimeInputCannotVerifyFinding(source selection.InputSource, summary string) Finding {
+	return Finding{
+		ID:             "finding-runtime-" + source.ID,
+		Kind:           "configuration",
+		Summary:        summary,
+		Severity:       "info",
+		EvidenceState:  string(graph.CannotVerify),
+		EvidenceSource: source.Path,
+		Confidence:     0,
+		Status:         "cannot_verify",
+	}
+}
+
+func runtimeInvalidObservationNode(sourceID, prefix, label, evidenceSource, reason string) graph.Node {
+	return graph.Node{
+		ID:    sourceID + ":" + prefix + ":" + runtimeSubjectID(label),
+		Kind:  "unknown",
+		Label: label,
+		Evidence: graph.Evidence{
+			State:  graph.CannotVerify,
+			Source: evidenceSource,
+			Reason: reason,
+		},
+	}
+}
+
+func runtimeObservationID(observation runtimeInputObservation) string {
+	if observation.ID != "" {
+		return observation.ID
+	}
+	if observation.From != "" || observation.To != "" {
+		return strings.TrimSpace(observation.From + " -> " + observation.To)
+	}
+	return "runtime observation"
+}
+
+func normalizeRuntimeInputCoverage(value string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "":
+		return "unknown", true
+	case "complete", "partial", "unknown", "not_assessed":
+		return strings.ToLower(strings.TrimSpace(value)), true
+	default:
+		return "", false
+	}
+}
+
+func runtimeInputObservationReason(observation runtimeInputObservation, coverage string) string {
+	parts := []string{}
+	if observation.ID != "" {
+		parts = append(parts, "id "+observation.ID)
+	}
+	if observation.Kind != "" {
+		parts = append(parts, "kind "+observation.Kind)
+	}
+	if coverage != "" {
+		parts = append(parts, "coverage "+coverage)
+	}
+	if observation.ObservedAt != "" {
+		parts = append(parts, "observed_at "+observation.ObservedAt)
+	}
+	if len(parts) == 0 {
+		return "runtime observation"
+	}
+	return "runtime observation " + strings.Join(parts, "; ")
+}
+
+func runtimeSubjectID(value string) string {
+	id := stableID(value)
+	if id == "unknown" {
+		return "runtime-subject-" + shortRuntimeHash(value)
+	}
+	return id
+}
+
+func shortRuntimeHash(value string) string {
+	hash := fnv.New32a()
+	_, _ = hash.Write([]byte(value))
+	return fmt.Sprintf("%08x", hash.Sum32())
+}
+
+func unsafeRuntimeSource(source string) bool {
+	lower := strings.ToLower(strings.TrimSpace(source))
+	if strings.Contains(lower, "://") {
+		return true
+	}
+	for _, prefix := range []string{"data:", "javascript:"} {
+		if strings.HasPrefix(lower, prefix) {
+			return true
+		}
+	}
+	for _, marker := range []string{"token=", "password", "credential", "authorization", "bearer ", "secret"} {
+		if strings.Contains(lower, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 func inventoryFinding(target selection.Target) Finding {
