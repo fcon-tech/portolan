@@ -1924,7 +1924,7 @@ func relationshipFindings(root string, result relationships.Result) []Finding {
 			})
 		}
 	} else {
-		findings = append(findings, notAssessedFinding("finding-relationships-not-assessed", "relationships", "Relationship detection currently supports Go imports and go.mod manifests; no supported relationship inputs were observed."))
+		findings = append(findings, notAssessedFinding("finding-relationships-not-assessed", "relationships", "Relationship detection currently supports Go imports and go.mod manifests; no supported Go/go.mod relationship inputs were observed, and primary-language coupling remains not_assessed unless local producer evidence is supplied."))
 	}
 	findings = append(findings, unsupportedRelationshipFindings()...)
 	for i, issue := range result.Issues {

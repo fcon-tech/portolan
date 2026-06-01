@@ -35,6 +35,7 @@ type Result struct {
 	SchemaVersion    string   `json:"schema_version"`
 	Query            Query    `json:"query"`
 	Records          []Record `json:"records"`
+	TotalRecords     int      `json:"total_records"`
 	Truncated        bool     `json:"truncated"`
 	TruncatedRecords int      `json:"truncated_records"`
 	Warnings         []string `json:"warnings"`
@@ -147,6 +148,7 @@ func Run(opts Options) (Result, error) {
 			BundlePath: bundle,
 		},
 		Records:          records,
+		TotalRecords:     total,
 		Truncated:        total > limit,
 		TruncatedRecords: max(0, total-limit),
 		Warnings:         warnings,

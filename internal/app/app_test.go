@@ -1602,6 +1602,9 @@ func TestRunQueryFindingsWritesBoundedJSONToStdout(t *testing.T) {
 	if len(records) != 2 {
 		t.Fatalf("records = %d, want 2", len(records))
 	}
+	if result["total_records"].(float64) < float64(len(records)) {
+		t.Fatalf("total_records = %#v, want at least returned record count", result["total_records"])
+	}
 	first := records[0].(map[string]any)
 	for _, want := range []string{"reference", "artifact", "evidence_state", "status"} {
 		if first[want] == "" {
@@ -3048,6 +3051,36 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 	if !seenSourceObserved || !seenManifestObserved {
 		t.Fatalf("findings = %#v, want source and manifest relationship findings", findings)
 	}
+}
+
+func TestRunMapRelationshipNotAssessedNamesGoScope(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "README.md"), []byte("# fixture\n"), 0o644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	out := filepath.Join(t.TempDir(), "run")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"map", "--root", root, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
+	for _, finding := range findings {
+		if finding["id"] != "finding-relationships-not-assessed" {
+			continue
+		}
+		summary := finding["summary"].(string)
+		for _, want := range []string{"Go/go.mod", "primary-language coupling remains not_assessed"} {
+			if !strings.Contains(summary, want) {
+				t.Fatalf("summary = %q, want %q", summary, want)
+			}
+		}
+		return
+	}
+	t.Fatalf("findings = %#v, want finding-relationships-not-assessed", findings)
 }
 
 func TestRunMapKeepsDuplicationNotAssessedWithoutToolOutput(t *testing.T) {
