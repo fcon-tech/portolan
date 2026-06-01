@@ -36,7 +36,7 @@ evidence semantics.
 
 - [x] T014 Run full local verification: `go test -count=1 ./...`, `go vet ./...`, `jq empty schema/*.json`, `git diff --check`
 - [x] T015 Run independent review lanes and record disposition
-- [ ] T016 Create or update PR and record PR readiness closeout
+- [x] T016 Create or update PR and record PR readiness closeout
 
 ## Implementation Strategy
 
