@@ -2493,6 +2493,87 @@ func TestRunContextPrepareSurfacesProducerEvaluations(t *testing.T) {
 	}
 }
 
+func TestRunContextPrepareSurfacesProducerRunRecords(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, ".portolan", "stress", "tool-outputs"))
+	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "compose.json"), `{"services":{"bigtop":{}}}`)
+	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "monitor.yaml"), "kind: Deployment\n")
+	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "grpc.pb"), "descriptor")
+	mustWrite(t, filepath.Join(root, ".portolan", "producer-runs.jsonl"), strings.ReplaceAll(`{"record_type":"producer-run","id":"producer-run-bigtop-compose","producer_family":"deployment-model","producer_tool":"docker-compose","command":"DOCKER_IMAGE=placeholder MEM_LIMIT=1g docker compose -f repos/apache-bigtop-repo/provisioner/docker/docker-compose.yml config --format json","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/compose.json","output_format":"json","scope":{"repository":"apache-bigtop-repo","directory":"provisioner/docker","covered_units":["service:bigtop","network:default"]},"freshness":"2026-06-01T20:25:23Z","status":"verified","evidence_state":"metadata-visible","limitations":["static deployment model only","not runtime topology"],"privacy_review":"not_assessed"}
+{"record_type":"producer-run","id":"producer-run-alluxio-helm-monitor","producer_family":"deployment-model","producer_tool":"helm","command":"helm template alluxio-monitor repos/alluxio/integration/kubernetes/helm-chart/monitor","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/monitor.yaml","output_format":"yaml","scope":{"repository":"alluxio","directory":"integration/kubernetes/helm-chart/monitor","covered_units":["kind:Deployment","kind:Service"]},"freshness":"2026-06-01T20:26:00Z","status":"verified","evidence_state":"metadata-visible","limitations":["static Kubernetes manifests only","not runtime topology"],"privacy_review":"not_assessed"}
+{"record_type":"producer-run","id":"producer-run-alluxio-grpc-descriptor","producer_family":"api-catalog","producer_tool":"protoc","command":"protoc --include_imports --descriptor_set_out=.portolan/stress/tool-outputs/grpc.pb repos/alluxio/core/transport/src/main/proto/grpc/common.proto","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/grpc.pb","output_format":"protobuf-descriptor","scope":{"repository":"alluxio","directory":"core/transport/src/main/proto","covered_units":["grpc/common.proto"]},"freshness":"2026-06-01T20:27:00Z","status":"verified","evidence_state":"metadata-visible","limitations":["bounded protobuf descriptor only","not full API catalog"],"privacy_review":"not_assessed"}
+{"record_type":"producer-run","id":"producer-run-bigtop-runtime-not-assessed","producer_family":"runtime-observation","producer_tool":"runtime-observation-export","command":"operator did not provide a runtime observation export","target_root":"$ROOT","scope":{"repository":"apache-bigtop-repo"},"status":"not_assessed","evidence_state":"not_assessed","limitations":["no runtime-visible local observation supplied"],"privacy_review":"not_assessed"}`, "$ROOT", root))
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	records := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	compose := findFindingByID(records, "producer-run-bigtop-compose")
+	if compose == nil {
+		t.Fatalf("missing producer run in %#v", records)
+	}
+	if compose["kind"] != "producer-run" ||
+		compose["family"] != "deployment-model" ||
+		compose["status"] != "verified" ||
+		compose["evidence_state"] != "metadata-visible" ||
+		compose["producer_tool"] != "docker-compose" {
+		t.Fatalf("compose producer run = %#v, want verified metadata-visible docker-compose run", compose)
+	}
+	if !strings.Contains(compose["output_path"].(string), ".portolan/stress/tool-outputs/compose.json") {
+		t.Fatalf("compose output_path = %#v, want preserved local output path", compose["output_path"])
+	}
+	runtime := findFindingByID(records, "producer-run-bigtop-runtime-not-assessed")
+	if runtime == nil || runtime["status"] != "not_assessed" || runtime["evidence_state"] != "not_assessed" {
+		t.Fatalf("runtime producer run = %#v, want explicit not_assessed runtime record", runtime)
+	}
+	for _, record := range records {
+		if record["kind"] == "producer-run" && record["family"] != "runtime-observation" && record["evidence_state"] == "runtime-visible" {
+			t.Fatalf("static producer run overclaimed runtime-visible: %#v", record)
+		}
+	}
+	gaps := mustReadFile(t, filepath.Join(out, "gaps.jsonl"))
+	for _, want := range []string{`"family":"symbol-index"`, `"family":"runtime-observation"`, `"status":"not_assessed"`, `"evidence_state":"not_assessed"`} {
+		if !strings.Contains(gaps, want) {
+			t.Fatalf("gaps.jsonl missing %q:\n%s", want, gaps)
+		}
+	}
+	brief := mustReadFile(t, filepath.Join(out, "agent-brief.md"))
+	for _, want := range []string{
+		"Local producer run records: 4",
+		"Portolan did not execute them",
+		"## Producer Run Coverage",
+		"api-catalog / verified / metadata-visible: 1",
+		"deployment-model / verified / metadata-visible: 2",
+		"runtime-observation / not_assessed / not_assessed: 1",
+		"`metadata-visible` producer-run records, including Docker Compose, Helm, and protobuf descriptors, do not prove runtime topology",
+	} {
+		if !strings.Contains(brief, want) {
+			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
+		}
+	}
+	contract := mustReadFile(t, filepath.Join(out, "answer-contract.md"))
+	for _, want := range []string{
+		"## Producer Run Records",
+		"externally generated local outputs",
+		"they do not imply a `portolan produce` command exists",
+		"Static `deployment-model` and `api-catalog` records stay `metadata-visible`",
+		"Runtime topology stays `not_assessed` unless a runtime producer family supplies `runtime-visible` local observations",
+	} {
+		if !strings.Contains(contract, want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
+		}
+	}
+	if strings.Contains(contract, "portolan produce --") {
+		t.Fatalf("answer-contract.md invented producer command:\n%s", contract)
+	}
+}
+
 func TestRunContextPrepareSkipsSymlinkedProducerEvaluationFiles(t *testing.T) {
 	root := t.TempDir()
 	mustMkdir(t, filepath.Join(root, ".git"))

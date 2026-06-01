@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/053-language-agnostic-producers/plan.md`
+`docs/specs/054-real-producer-output-proof/plan.md`
 <!-- SPECKIT END -->
