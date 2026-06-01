@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/058-bigtop-runtime-symbol-parity-proof/plan.md`
+`docs/specs/059-bigtop-symbol-reference-producer-acquisition/plan.md`
 <!-- SPECKIT END -->
