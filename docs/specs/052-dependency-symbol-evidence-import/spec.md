@@ -4,9 +4,10 @@
 
 **Created**: 2026-06-01
 
-**Status**: Local implementation, PR-level review, GitHub checks on the
-post-review-fix head, and ready-for-review closeout recorded for PR #29; merge
-approval `not_assessed`
+**Status**: PR #29 ready-for-review; local implementation, PR-level review,
+current-head Cursor + Composer 2.5 navigation stress, GitHub checks, and
+ready-for-review closeout verified; GitHub review approval and merge approval
+`not_assessed`
 
 **Input**: User description: "Create the next Portolan spec as a
 format-oriented dependency and symbol evidence import slice. Do not build

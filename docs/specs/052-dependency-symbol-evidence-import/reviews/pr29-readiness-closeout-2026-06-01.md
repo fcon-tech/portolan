@@ -8,8 +8,9 @@ Branch: `codex/052-dependency-symbol-evidence-import`
 
 Base: `main`
 
-Implementation/review head checked before this closeout commit:
-`ddd4b4fecacd5a213a6eb924a0be36e41b2500d6`
+Navigation implementation and stress head verified before this status-only
+closeout refresh:
+`8dc34627c506b4b9ec3ac386620ae07205974f3d`
 
 ## Implementation
 
@@ -33,7 +34,10 @@ Implementation/review head checked before this closeout commit:
 verified:
 
 - `go test -count=1 ./internal/maprun ./internal/selection ./internal/app`
+- `go test ./internal/graphslice ./internal/query ./internal/maprun ./internal/app`
+- `go test ./internal/query ./internal/maprun ./internal/app`
 - `go test -count=1 ./...`
+- `go test ./...`
 - `go vet ./...`
 - `jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json .specify/feature.json`
 - `git diff --check`
@@ -45,20 +49,35 @@ verified:
 
 verified:
 
-- Final clean stress run:
+- Earlier clean stress run:
   `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-154329`
-- Cursor + Composer 2.5 used the final clean run only.
+- Post-readiness clean stress run:
+  `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-163735`
+- Current-head clean stress run:
+  `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-171336`
+- After-navigation-fix clean stress run:
+  `/home/fall_out_bug/projects/bigtop-landscape/.portolan/stress/20260601-172124`
+- Cursor + Composer 2.5 used only the fresh run named in each lane.
 - Syft/CycloneDX producer evidence used source-relative exclusions for
   `./.portolan/**` and `./run/**`.
-- Final map contained 190,748 nodes, 200,203 edges, and 274 findings.
+- Final current-head map contained 190,748 nodes, 200,203 edges, and 274
+  findings.
 - Final finding states preserved `source-visible`, `metadata-visible`,
   `not_assessed`, `unknown`, and `cannot_verify`.
+- `graph-index.json` and `map.md` now warn that 147,813 `unknown` node-kind
+  records are unclassified inventory, not semantic architecture coverage.
+- `query-gaps.json` now distinguishes weak map records from
+  context-preparation producer gaps in `context/gaps.jsonl`.
+- Cursor + Composer 2.5 verdict on `20260601-172124`: PR #29 is reviewable as
+  a navigation-harness slice when scoped to bounded local evidence plus
+  explicit gaps; it is not a Bigtop architecture oracle.
 
 not_assessed:
 
 - Real local symbol-index output for Bigtop Java/Scala.
 - API/catalog/model/runtime producer outputs beyond existing context surfaces.
 - Complete runtime topology.
+- Cursor UI behavior outside headless Cursor Agent.
 
 ## Review Evidence
 
@@ -89,6 +108,8 @@ verified:
   dispositions, schema changes, and implementation files agree that this slice
   imports standard local dependency and symbol producer outputs rather than
   adding per-language scanners.
+- Current-head navigation stress is recorded in
+  `current-head-navigation-stress-2026-06-01.md`.
 - `docs/specs/051-portolan-quality-boundary/tasks.md` intentionally records
   that UX/report polish depends on this evidence-import slice.
 
@@ -112,23 +133,26 @@ verified:
 
 ## PR State
 
-verified before this closeout commit:
+verified before this status-only closeout refresh:
 
 - PR #29 open.
-- Draft: true.
+- Draft: false.
 - Merge state: `CLEAN`.
-- Head: `ddd4b4fecacd5a213a6eb924a0be36e41b2500d6`.
+- Head:
+  `8dc34627c506b4b9ec3ac386620ae07205974f3d`.
+- Review decision: empty.
+- Reviews: none.
 
-required after this closeout commit:
+required after this status-only closeout refresh:
 
 - Push the closeout/status update.
 - Refresh `gh pr view 29` and `gh pr checks 29` on the new head.
-- Mark PR #29 non-draft only if refreshed checks pass and merge state remains
+- Keep PR #29 non-draft only if refreshed checks pass and merge state remains
   clean or otherwise non-blocking for review.
 
 ## GitHub Checks
 
-verified on `ddd4b4fecacd5a213a6eb924a0be36e41b2500d6`:
+verified on `8dc34627c506b4b9ec3ac386620ae07205974f3d`:
 
 - CI / Baseline: pass
 - CodeQL / Analyze (actions): pass
@@ -136,20 +160,14 @@ verified on `ddd4b4fecacd5a213a6eb924a0be36e41b2500d6`:
 - CodeQL / Analyze (python): pass
 - aggregate CodeQL status: pass
 
-not_assessed until refreshed after this closeout commit:
-
-- GitHub checks on the closeout/status commit itself.
-
 ## Merge Readiness
 
-- Ready-for-review PR: pending refreshed checks on the closeout/status commit
-  and non-draft PR state.
+- Ready-for-review PR: yes.
 - Ready-to-merge PR: no.
 - GitHub review approval: `not_assessed`.
 - Merge approval: `not_assessed`.
 
 ## Stop Reason
 
-Proceed to push this closeout/status commit, refresh GitHub checks on the new
-head, and mark PR #29 ready-for-review if the refreshed state is coherent. Stop
-before merge because merge approval is `not_assessed`.
+PR #29 is ready for review as a navigation-harness slice. Stop before merge
+because GitHub review approval and merge approval are `not_assessed`.
