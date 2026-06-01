@@ -132,7 +132,7 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P6-051 | `docs/specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Ready-for-review PR #28; GitHub checks verified; merge approval not_assessed |
+| P6-051 | `docs/specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Merged via PR #28; local baseline verified, GitHub Baseline and underlying CodeQL jobs verified, Bigtop Cursor Composer 2.5/OpenCode harness stress recorded, native OSS boundary cleanup merged; aggregate GitHub CodeQL status remained queued, GitHub review approval not_assessed |
 
 ## Backlog Rules
 
