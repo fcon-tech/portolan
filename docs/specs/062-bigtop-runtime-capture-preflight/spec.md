@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR; runtime capture approval remains pending
+**Status**: Merged via PR #40; runtime capture approval remains pending
 
 **Input**: Spec 061 defined the approval/runbook boundary for Bigtop runtime
 capture. The next step is to verify non-mutating prerequisites and make the
