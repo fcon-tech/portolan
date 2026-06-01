@@ -27,8 +27,8 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 | Hidden weak-state fixture fail verdict | verified |
 | OpenCode agent runtime smoke against this worktree | diagnostic_pass; not accepted as agent acceptance evidence |
 | Cursor Agent CLI runtime smoke against this worktree | diagnostic_pass with explicit `--yolo`; not accepted as agent acceptance evidence |
-| Full blind OpenCode acceptance lane | not_assessed |
-| Full blind Cursor Agent CLI acceptance lane | not_assessed |
+| Full blind OpenCode acceptance lane | verified on external single-repo target |
+| Full blind Cursor Agent CLI acceptance lane | verified on external single-repo target with explicit `--yolo` permission mode |
 | Cursor UI / Composer UI runtime behavior | not_assessed |
 
 ## Review Evidence
@@ -40,8 +40,11 @@ PR: https://github.com/fcon-tech/portolan/pull/28
   DeepSeek attempt `not_assessed` due off-task output.
 - Agent runtime smoke: OpenCode and Cursor Agent CLI diagnostic smokes recorded
   in `agent-runtime-smoke-2026-06-01.md`; the user rejected these as acceptance
-  evidence because they are not full blind acceptance runs. Full Cursor/OpenCode
-  acceptance remains `not_assessed`.
+  evidence because they are not full blind acceptance runs.
+- Full blind agent acceptance: OpenCode and Cursor Agent CLI lanes recorded in
+  `full-blind-agent-acceptance-2026-06-01.md`; raw transcripts recorded in
+  `full-blind-opencode-spec-kit-2026-06-01.raw.md` and
+  `full-blind-cursor-spec-kit-2026-06-01.raw.md`.
 
 ## GitHub State
 
@@ -55,15 +58,16 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 
 - Local implementation: ready.
 - Draft PR: ready.
-- Ready-for-review PR: not accepted; PR returned to draft pending full
-  Cursor/OpenCode blind acceptance.
+- Ready-for-review PR: verified after full Cursor/OpenCode blind acceptance
+  and final checks.
 - Ready-to-merge PR: not_assessed; merge requires separate user approval and
   any required GitHub review approval.
-- Agent runtime acceptance for this slice: `not_assessed` for full blind
-  Cursor/OpenCode acceptance; diagnostic smokes are insufficient.
+- Agent runtime acceptance for this slice: OpenCode and Cursor Agent CLI
+  verified on an external single-repo blind acceptance target. Cursor UI
+  remains `not_assessed`.
 
 ## Stop Reason
 
-Stop before ready-for-review and merge. The user rejected the smoke evidence as
-insufficient for acceptance. The PR is draft until full blind Cursor/OpenCode
-acceptance evidence is recorded and dispositioned.
+Stop before merge. Full blind Cursor/OpenCode acceptance has been recorded and
+dispositioned. The user explicitly requested that the PR be merged only by
+separate command.
