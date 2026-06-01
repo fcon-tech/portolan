@@ -1,10 +1,10 @@
 # Feature Specification: Runtime Topology Evidence
 
-**Feature Branch**: `codex/054-bigtop-architecture-proof`
+**Feature Branch**: `codex/055-runtime-topology-evidence`
 
 **Created**: 2026-06-01
 
-**Status**: Draft; depends on real local evidence boundaries from spec 054
+**Status**: Locally implemented; fixture runtime import verified; Bigtop runtime topology remains blocked/not_assessed without a safe local runtime observation export
 
 **Input**: User description: "Continue after PR #31 until runtime topology is
 verified, not inferred from dependency, catalog, or static producer outputs."

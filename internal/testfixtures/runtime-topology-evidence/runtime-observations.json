@@ -1,0 +1,15 @@
+{
+  "schema_version": "0.1.0",
+  "source": "runtime/redacted-export.json",
+  "observations": [
+    {
+      "id": "obs-api-worker",
+      "observed_at": "2026-06-02T00:00:00Z",
+      "from": "api",
+      "to": "worker",
+      "kind": "http-call",
+      "coverage": "partial",
+      "source": "runtime/redacted-export.json"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0",
+  "runtime": [
+    {
+      "id": "fixture-runtime",
+      "path": "runtime-observations.json"
+    }
+  ],
+  "tool_outputs": [
+    {
+      "id": "fixture-deps",
+      "kind": "dependency",
+      "tool": "cyclonedx-fixture",
+      "path": "dependencies.cdx.json",
+      "repository": "fixture-estate"
+    }
+  ]
+}

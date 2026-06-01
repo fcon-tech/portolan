@@ -10,8 +10,24 @@ runtime inventory and wants Portolan to represent only what that file supports.
 
 ## Current Command Surface
 
-The supported input path is a local selection file with a black-box runtime
-source:
+The supported input path is a local selection file with either top-level
+runtime sources or a black-box runtime source. Use top-level `runtime` when the
+runtime export already names both sides of each observed relationship:
+
+```json
+{
+  "schema_version": "0.1.0",
+  "runtime": [
+    {
+      "id": "runtime-export",
+      "path": "runtime-observations.json"
+    }
+  ]
+}
+```
+
+Use a black-box runtime source when the runtime export is scoped to one
+selected opaque service:
 
 ```json
 {
@@ -48,6 +64,9 @@ portolan map --selection selection.json --out .portolan/run --force
 
 The map bundle expands supported black-box runtime observations into
 `runtime-visible` graph edges and keeps partial runtime topology as `unknown`.
+Top-level runtime observations use the same evidence semantics and never infer
+runtime-visible relationships from dependency, catalog, deployment, symbol, or
+other static metadata inputs.
 
 ## Observation File Contract
 
@@ -78,7 +97,7 @@ Supported fields:
 | `observations` | yes | Array of observed local runtime relationships. |
 | `id` | recommended | Stable observation identifier for review. |
 | `observed_at` | optional | Timestamp from the source export. |
-| `from` | yes for contract-shaped observations | Observed source subject. Must match the selected black-box `id` in this slice. |
+| `from` | yes for contract-shaped observations | Observed source subject. For black-box runtime sources it must match the selected black-box `id`; for top-level runtime sources it is represented as the observed source node. |
 | `to` | yes for contract-shaped observations | Observed target subject. |
 | `kind` | optional | Producer-specific observation type, retained in evidence reason. Graph edges stay within the stable Portolan edge kind vocabulary and use `observes`. |
 | `coverage` | optional | One of `complete`, `partial`, `unknown`, or `not_assessed`. Missing coverage is treated as `unknown`. |
@@ -115,14 +134,19 @@ runtime topology. Portolan emits an `unknown` runtime-topology edge for any
 contract-shaped observation whose coverage is not `complete` so agents do not
 treat one observed relationship as a complete service map.
 
+For top-level `selection.runtime` inputs, that partial-coverage marker is a
+wrapper edge from the runtime input node to an `unknown` runtime-topology node.
+It is a coverage caveat, not an observed service relationship.
+
 `coverage: "complete"` means the supplied runtime file claims complete coverage
 for its captured scope. It does not prove complete inherited-estate topology,
 UI behavior, production behavior outside the captured window, or correctness of
 the producer.
 
-Runtime observations that name a `from` subject different from the selected
-black-box `id` are represented as `cannot_verify` because this slice does not
-resolve arbitrary runtime subjects across a landscape.
+Runtime observations under a black-box source that name a `from` subject
+different from the selected black-box `id` are represented as `cannot_verify`.
+Top-level runtime observations are intended for arbitrary observed subjects and
+represent both `from` and `to` as runtime nodes.
 
 ## Safety Notes
 
@@ -140,6 +164,7 @@ The sample fixture lives under:
 
 ```text
 internal/app/testfixtures/runtime-security-boundary/
+internal/testfixtures/runtime-topology-evidence/
 ```
 
 Focused tests:
@@ -149,6 +174,8 @@ Focused tests:
 - `TestRunScanRuntimeObservationRejectsUnsupportedSchemaVersion`
 - `TestRunScanRuntimeObservationInvalidContractFieldsAreCannotVerify`
 - `TestRunPacketEscapesPromptLikeRuntimeObservationText`
+- `TestGraphAndFindingsForSelectionImportsTopLevelRuntimeObservation`
+- `TestGraphAndFindingsForSelectionRejectsInvalidTopLevelRuntimeObservation`
 
 These tests verify contract-shaped runtime observations, unsupported schema
 handling, prompt-like text escaping in the packet, and partial coverage staying
