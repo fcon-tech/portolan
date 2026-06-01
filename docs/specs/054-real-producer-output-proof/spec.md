@@ -4,10 +4,10 @@
 
 **Created**: 2026-06-01
 
-**Status**: Draft; initial Bigtop producer gap reconstruction recorded Docker
-Compose, Helm, and protoc outputs as verified bounded producer evidence; symbol/
-reference, full API/catalog/model coverage, runtime topology, and Cursor answer
-improvement remain `not_assessed`
+**Status**: US1 verified for producer-run metadata ingestion; fresh Bigtop
+context pack surfaces Docker Compose, Helm, and protoc outputs as bounded
+`metadata-visible` evidence; symbol/reference, full API/catalog/model coverage,
+runtime topology, and Cursor answer improvement remain `not_assessed`
 
 **Input**: User description: "After merging PR #31, slice specs and continue
 stress tests until Portolan verifies real symbol/API/catalog/model/runtime
