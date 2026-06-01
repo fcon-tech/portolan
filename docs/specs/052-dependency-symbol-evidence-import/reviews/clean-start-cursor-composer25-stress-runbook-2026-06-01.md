@@ -28,6 +28,18 @@ For the no-Portolan baseline, the prompt must forbid reading:
 If a baseline lane reads any forbidden artifact, record it as contaminated and
 do not count it as clean comparison evidence.
 
+## Producer Output Refresh Guard
+
+When the Portolan-enabled lane follows `oss-plan.json` and runs a native
+producer such as Syft into `<context-dir>/tool-outputs/`, rerun
+`portolan context prepare` into the same context directory before giving the
+bundle to Cursor + Composer 2.5.
+
+The refreshed context must show the producer output in `tool-registry.json`.
+If the producer file exists but `tool-registry.json` still lacks the matching
+family, the lane is using stale context metadata and must be refreshed before
+it counts as clean Portolan-enabled evidence.
+
 ## Portolan-Enabled Prompt Shape
 
 Ask Cursor + Composer 2.5 to answer the same landscape question after first

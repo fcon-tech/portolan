@@ -16,10 +16,16 @@ Use a fresh output directory for every stress pass:
 RUN_ID=$(date -u +%Y%m%d-%H%M%S)
 OUT=/tmp/portolan-052-$RUN_ID
 rm -rf "$OUT"
+go run ./cmd/portolan selection validate --selection <selection-with-local-producer-outputs.json>
 go run ./cmd/portolan map --selection <selection-with-local-producer-outputs.json> --out "$OUT/map" --force
 go run ./cmd/portolan query findings --bundle "$OUT/map" --kind relationships --limit 20
 go run ./cmd/portolan query gaps --bundle "$OUT/map" --limit 20
 ```
+
+If an existing target-root `selection.json` points at a missing
+`corpus_manifest`, treat that as a blocked stale selection and regenerate or
+repair the selection. Do not disable the full-corpus gate to make the stress
+run pass.
 
 Expected result:
 
@@ -63,3 +69,22 @@ syft <target-root> \
   --exclude './run/**' \
   -o cyclonedx-json=<context-dir>/tool-outputs/syft.cyclonedx.json
 ```
+
+After a native producer writes any file under `<context-dir>/tool-outputs/`,
+rerun context preparation into the same context directory before handing the
+bundle to Cursor or another agent:
+
+```bash
+go run ./cmd/portolan context prepare \
+  --root <target-root> \
+  --out <context-dir> \
+  --profile agent \
+  --force
+
+jq '.tools[] | select(.family=="cyclonedx")' \
+  <context-dir>/tool-registry.json
+```
+
+Without this refresh, `tool-registry.json`, `evidence-index.jsonl`, and
+`gaps.jsonl` may still describe the pre-producer state even though the selected
+map run can ingest the fresh `tool_outputs` file.
