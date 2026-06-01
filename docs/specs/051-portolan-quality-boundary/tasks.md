@@ -47,6 +47,6 @@ Phase 2 depends on the quality boundary and maturity matrix from T001-T002.
 
 ## Dependencies
 
-- 051 is a prerequisite for treating 052 scan-report UX as product-ready.
+- 051 is a prerequisite for treating later scan-report UX as product-ready.
 - The CLI quality gate is included in this slice; UX/report work must use it
   or explicitly mark report quality as `not_assessed`.
