@@ -16,6 +16,8 @@
   `docs/specs/053-language-agnostic-producers/reviews/`.
 - [x] T003 Verify stacked branch/base status against PR #29 and record whether
   implementation may proceed before PR #29 merges.
+- [x] T003A Refresh stacked implementation gate after PR #29 current-head
+  navigation stress and status-only readiness closeout update.
 
 ## Phase 2: Foundational Contract
 

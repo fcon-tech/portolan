@@ -5,9 +5,10 @@
 **Created**: 2026-06-01
 
 **Status**: Draft specification, plan, and tasks prepared on a stacked branch
-after PR #29 became ready-for-review; pre-implementation review disposition
-recorded; implementation blocked until PR #29 merges and this branch is rebased
-onto the merge commit
+after PR #29 became ready-for-review; pre-implementation review disposition and
+stacked-gate refresh recorded; implementation blocked until PR #29 merges and
+this branch is rebased onto the merge commit, unless the user explicitly
+accepts stacked implementation
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the
