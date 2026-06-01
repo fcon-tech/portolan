@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #41
 
 **Input**: Spec 057 left Semgrep local-safe output as `cannot_verify` because
 auto-config required registry/telemetry. The current objective still requires
