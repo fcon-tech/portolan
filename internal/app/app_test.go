@@ -1431,6 +1431,19 @@ func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
 	if len(highDegree) == 0 {
 		t.Fatalf("high degree nodes = %#v, want graph entrypoints", highDegree)
 	}
+	rules := fmt.Sprint(index["rules"])
+	for _, want := range []string{"Node kind \"unknown\"", "not semantic coverage", "--repo <id>", "explicit --limit"} {
+		if !strings.Contains(rules, want) {
+			t.Fatalf("graph index rules = %s, want %q", rules, want)
+		}
+	}
+	mapText, err := os.ReadFile(filepath.Join(out, "map.md"))
+	if err != nil {
+		t.Fatalf("read map.md: %v", err)
+	}
+	if !strings.Contains(string(mapText), "Unknown node kinds") || !strings.Contains(string(mapText), "not semantic architecture coverage") {
+		t.Fatalf("map.md missing unknown-node coverage warning:\n%s", mapText)
+	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
 	}
@@ -1654,6 +1667,12 @@ func TestRunQueryGapsPreservesWeakStates(t *testing.T) {
 	records := result["records"].([]any)
 	if len(records) == 0 {
 		t.Fatalf("records = %#v, want weak records", records)
+	}
+	warnings := fmt.Sprint(result["warnings"])
+	for _, want := range []string{"weak map coverage and finding records", "context/gaps.jsonl"} {
+		if !strings.Contains(warnings, want) {
+			t.Fatalf("warnings = %s, want %q", warnings, want)
+		}
 	}
 	foundUnknown := false
 	for _, raw := range records {

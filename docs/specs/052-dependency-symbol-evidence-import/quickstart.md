@@ -22,6 +22,11 @@ go run ./cmd/portolan query findings --bundle "$OUT/map" --kind relationships --
 go run ./cmd/portolan query gaps --bundle "$OUT/map" --limit 20
 ```
 
+`query gaps` reports weak records from the map bundle's `coverage.json` and
+`findings.jsonl`. It is not a replacement for context-preparation
+`gaps.jsonl`, which records missing producer families before a map bundle
+exists.
+
 If an existing target-root `selection.json` points at a missing
 `corpus_manifest`, treat that as a blocked stale selection and regenerate or
 repair the selection. Do not disable the full-corpus gate to make the stress
@@ -37,6 +42,11 @@ Expected result:
 - absent producer families remain `not_assessed`;
 - malformed producer outputs become `cannot_verify`;
 - output remains local and bounded.
+- large graph counts are not semantic coverage by themselves; `unknown` node
+  kind counts mean unclassified inventory that still needs narrower evidence;
+- heavily truncated `graph-index.json` samples should be followed with
+  `portolan graph slice --repo <id>`, a narrower `--edge-kind` or
+  `--finding-kind`, and an explicit `--limit` before making precise claims.
 
 ## Clean Cursor + Composer 2.5 Stress Protocol
 

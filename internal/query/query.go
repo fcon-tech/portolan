@@ -139,6 +139,9 @@ func Run(opts Options) (Result, error) {
 	if total == 0 {
 		warnings = append(warnings, "no records matched the query")
 	}
+	if opts.Family == FamilyGaps {
+		warnings = append(warnings, "query gaps returns weak map coverage and finding records; context/gaps.jsonl contains context-preparation producer gaps when context prepare was run")
+	}
 	return Result{
 		SchemaVersion: SchemaVersion,
 		Query: Query{

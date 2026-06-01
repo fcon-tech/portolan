@@ -2115,13 +2115,56 @@ func buildGraphIndex(run RunMetadata, g graph.Graph, findings []Finding, artifac
 		EdgeSlices:    graphIndexEdgeSlices(g),
 		FindingSlices: graphIndexFindingSlices(findings),
 		HighDegree:    graphIndexHighDegreeNodes(g),
-		Rules: []string{
-			"Read summary.json and graph-index.json before loading graph.json.",
-			"Use portolan graph slice --bundle <run-dir> for the next bounded drill-down by repo, edge kind, or finding kind.",
-			"Use graph-index.json as bounded navigation; graph.json remains the canonical graph.",
-			"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
-		},
+		Rules:         graphIndexRules(g),
 	}
+}
+
+func graphIndexRules(g graph.Graph) []string {
+	rules := []string{
+		"Read summary.json and graph-index.json before loading graph.json.",
+		"Use portolan graph slice --bundle <run-dir> for the next bounded drill-down by repo, edge kind, or finding kind.",
+		"Use graph-index.json as bounded navigation; graph.json remains the canonical graph.",
+		"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
+	}
+	unknownNodes := graphNodeKindCount(g, "unknown")
+	if unknownNodes > 0 {
+		rules = append(rules, fmt.Sprintf("Node kind \"unknown\" appears %d times; treat these as unclassified inventory, not semantic coverage.", unknownNodes))
+	}
+	if unknownNodes > len(g.Nodes)/2 {
+		rules = append(rules, "Unknown nodes are the majority of this graph; do not treat graph size as architecture coverage.")
+	}
+	if hasTruncatedGraphIndexSlice(g) {
+		rules = append(rules, "When graph-index samples are truncated, rerun graph slice with --repo <id>, a narrower --edge-kind or --finding-kind, and an explicit --limit before making precise claims.")
+	}
+	return rules
+}
+
+func graphNodeKindCount(g graph.Graph, kind string) int {
+	count := 0
+	for _, node := range g.Nodes {
+		if node.Kind == kind {
+			count++
+		}
+	}
+	return count
+}
+
+func hasTruncatedGraphIndexSlice(g graph.Graph) bool {
+	nodeKinds := map[string]int{}
+	for _, node := range g.Nodes {
+		nodeKinds[node.Kind]++
+		if nodeKinds[node.Kind] > graphIndexSampleLimit {
+			return true
+		}
+	}
+	edgeKinds := map[string]int{}
+	for _, edge := range g.Edges {
+		edgeKinds[edge.Kind]++
+		if edgeKinds[edge.Kind] > graphIndexSampleLimit {
+			return true
+		}
+	}
+	return false
 }
 
 func artifactSizes(dir string) map[string]int64 {
@@ -2585,6 +2628,9 @@ func writeMachineArtifactSummary(b *strings.Builder, g graph.Graph) {
 	}
 	for _, kind := range orderedStringCounts(kindCounts) {
 		fmt.Fprintf(b, "- node kind `%s`: %d\n", kind, kindCounts[kind])
+	}
+	if unknownNodes := kindCounts["unknown"]; unknownNodes > 0 {
+		fmt.Fprintf(b, "- Unknown node kinds: %d unclassified inventory records. Treat them as navigation coverage gaps, not semantic architecture coverage.\n", unknownNodes)
 	}
 	b.WriteString("\n")
 }
