@@ -4,11 +4,9 @@
 
 **Created**: 2026-06-01
 
-**Status**: Draft specification, plan, and tasks prepared on a stacked branch
-after PR #29 became ready-for-review; pre-implementation review disposition and
-stacked-gate refresh recorded; implementation blocked until PR #29 merges and
-this branch is rebased onto the merge commit, unless the user explicitly
-accepts stacked implementation
+**Status**: Specification, plan, tasks, and pre-implementation review prepared;
+post-merge gate cleared after PR #29 merged and this branch was rebased onto
+`main`; implementation not_started, next task T004
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the
@@ -207,7 +205,7 @@ preserves those states separately.
 
 ## Assumptions
 
-- PR #29/spec 052 provides the immediate dependency and symbol-output import
+- PR #29/spec 052 provides the merged dependency and symbol-output import
   baseline this slice builds on.
 - This slice may create recommendation and evaluation artifacts before adding
   any new producer normalizer.
@@ -217,6 +215,5 @@ preserves those states separately.
   recorded local exports; absence of such evidence is `not_assessed`.
 - UX/report polish remains downstream of evidence-family coverage and should
   not convert recommendations into verified support claims.
-- Implementation must wait until PR #29/spec 052 merges and this branch is
-  rebased onto the merge commit, unless a later explicit approval authorizes a
-  stacked implementation branch.
+- Implementation proceeds from T004 after the post-merge gate refresh recorded
+  that PR #29 merged and this branch was rebased onto `main`.

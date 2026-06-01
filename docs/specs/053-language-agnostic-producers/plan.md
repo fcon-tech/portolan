@@ -90,9 +90,10 @@ No constitution violations are approved. If implementation requires a new
 dependency, producer execution wrapper, network access, daemon behavior, or
 credential handling, stop and record a design review before continuing.
 
-Implementation is also gated on PR #29/spec 052 merging and this branch being
-rebased onto the merge commit. Until then, only spec, review, and contract
-planning work is approved on this stacked branch.
+Implementation was gated on PR #29/spec 052 merging and this branch being
+rebased onto `main`. That gate is cleared by the post-merge gate refresh; code
+work may start at T004 while preserving the local-first, read-only, no-scanner
+ownership constraints.
 
 ## Phase 0: Research
 

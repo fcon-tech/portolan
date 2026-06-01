@@ -6,8 +6,11 @@ Spec: `docs/specs/053-language-agnostic-producers/`
 
 Branch: `codex/053-language-agnostic-producers`
 
-Base: stacked on `codex/052-dependency-symbol-evidence-import` head
-`27ccbb95199b7fc021d85f55098f1df40fd41537`
+Base at original review: stacked on `codex/052-dependency-symbol-evidence-import`
+head `27ccbb95199b7fc021d85f55098f1df40fd41537`
+
+Post-merge refresh: 053 was later rebased onto `main` at
+`06ae7de297bffd4368c89cb5e5f7a500e7fdeba5` after PR #29 merged.
 
 ## Decision Gate
 
@@ -56,12 +59,11 @@ risks:
 
 - A future implementation could accidentally turn candidate tools into support
   claims. Tasks require tests and answer-contract wording to prevent that.
-- A stacked branch includes 052 changes until PR #29 merges. Implementation
-  should either wait for 052 merge/rebase or keep all future PRs explicitly
-  stacked.
+- The original stacked-branch risk is resolved by PR #29 merge and 053 rebase;
+  future implementation still must keep 053 scope separate from PR #29.
 
 ## Recommendation
 
-Proceed with specification and planning only. Do not implement until PR #29
-merge/approval status is resolved or the user explicitly accepts a stacked
-implementation branch.
+Proceed with implementation from T004 after the post-merge gate refresh. Keep
+recommendations separate from verified producer support and preserve
+`not_assessed` until local producer output or local evaluation evidence exists.

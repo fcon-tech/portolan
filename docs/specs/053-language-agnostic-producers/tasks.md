@@ -18,6 +18,8 @@
   implementation may proceed before PR #29 merges.
 - [x] T003A Refresh stacked implementation gate after PR #29 current-head
   navigation stress and status-only readiness closeout update.
+- [x] T003B Refresh post-merge implementation gate after PR #29 merged and 053
+  was rebased onto `main`.
 
 ## Phase 2: Foundational Contract
 
@@ -106,11 +108,10 @@ symbol, API/catalog/model, and runtime evidence states remain separate.
 
 ## Dependencies
 
-- This spec is stacked after PR #29/spec 052 until 052 merges.
+- This spec was stacked after PR #29/spec 052 during planning. PR #29 is now
+  merged and this branch has been rebased onto `main`.
 - Implementation should not update PR #29.
-- Implementation must wait until PR #29 merges and this branch is rebased onto
-  the merge commit, unless the user explicitly accepts a stacked implementation
-  branch.
+- Implementation may proceed from T004 after the post-merge gate refresh.
 - UX/report polish remains downstream of evidence-family coverage and should
   not begin until this producer-family contract is either implemented or
   explicitly deferred.

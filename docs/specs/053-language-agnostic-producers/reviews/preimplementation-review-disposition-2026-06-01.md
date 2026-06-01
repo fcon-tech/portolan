@@ -44,13 +44,13 @@ malformed, stale, or off-topic lane was counted.
 
 ## Branch Policy
 
-Current state:
+Original reviewed state:
 
 - PR #29/spec 052 is open, non-draft, merge-clean, and checks pass.
 - PR #29 has no GitHub review approval and no merge approval.
 - 053 is stacked directly on PR #29 head.
 
-Policy:
+Original policy:
 
 - Do not start implementation tasks for 053 until PR #29 merges and this branch
   is rebased onto the merge commit.
@@ -59,9 +59,15 @@ Policy:
 - Until then, allowed work is spec, review, contract planning, and non-runtime
   status cleanup only.
 
+Post-merge update:
+
+- PR #29 merged via squash merge and 052 merge closeout was pushed to `main`.
+- 053 was rebased onto `main` at `06ae7de297bffd4368c89cb5e5f7a500e7fdeba5`.
+- The stacked-branch blocker from this disposition is cleared; implementation
+  may proceed from T004.
+
 ## Verdict
 
 `pass_with_changes` for the spec direction. Accepted findings have been folded
-into the spec, contract, data model, quickstart, and task ledger. The feature is
-ready to wait at the implementation gate, not ready for implementation while PR
-#29 remains unmerged.
+into the spec, contract, data model, quickstart, and task ledger. The feature
+may proceed to implementation after the post-merge gate refresh.
