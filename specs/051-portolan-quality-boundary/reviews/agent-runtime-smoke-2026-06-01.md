@@ -1,8 +1,30 @@
-# Agent Runtime Smoke
+# Agent Runtime Smoke - Diagnostic Only
 
 Date: 2026-06-01
 Spec: `051-portolan-quality-boundary`
 PR: https://github.com/fcon-tech/portolan/pull/28
+
+## Acceptance Status
+
+State: `not_accepted`.
+
+This smoke is diagnostic evidence only. It proves that OpenCode and Cursor
+Agent CLI can execute a minimal documented workflow in this local worktree, but
+it does not prove the Portolan agent acceptance goal. It is insufficient because
+the harnesses were prompted directly with explicit paths and a reduced task,
+and the run did not use the full blind acceptance protocol from
+`docs/agent/ACCEPTANCE.md`.
+
+Required replacement evidence before acceptance:
+
+- a full blind acceptance run using only `PORTOLAN_PATH`, `TARGET_PATH`, and
+  `OUTPUT_PATH`;
+- at least Cursor Agent CLI and OpenCode lanes;
+- a non-self target or explicitly justified target shape;
+- recorded prompts, commands, artifacts, agent answers, unsupported-claim
+  scoring, useful-next-action scoring, weak-state preservation, and final lane
+  state;
+- independent disposition under the spec review directory.
 
 ## Decision Gate
 
@@ -20,7 +42,7 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 - Harness: OpenCode with `kimi-for-coding/k2p6`.
 - Target: `/home/fall_out_bug/projects/sdp/portolan-051-portolan-quality-boundary`.
 - Output: `.portolan/acceptance/051-opencode-smoke/`.
-- State: `verified`.
+- State: `diagnostic_pass`; acceptance remains `not_accepted`.
 
 Observed behavior:
 
@@ -51,7 +73,8 @@ Evidence from `map/summary.json`:
 - Harness: Cursor Agent CLI, Composer 2.5.
 - Target: `/home/fall_out_bug/projects/sdp/portolan-051-portolan-quality-boundary`.
 - Output: `.portolan/acceptance/051-cursor-yolo-smoke/`.
-- State: `verified` with explicit permission mode.
+- State: `diagnostic_pass` with explicit permission mode; acceptance remains
+  `not_accepted`.
 
 First attempt:
 
