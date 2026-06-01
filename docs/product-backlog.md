@@ -133,7 +133,7 @@ fixtures are preflight evidence only.
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
 | P6-051 | `docs/specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Merged via PR #28; local baseline verified, GitHub Baseline and underlying CodeQL jobs verified, Bigtop Cursor Composer 2.5/OpenCode harness stress recorded, native OSS boundary cleanup merged; aggregate GitHub CodeQL status remained queued, GitHub review approval not_assessed |
-| P6-052 | `docs/specs/052-dependency-symbol-evidence-import/` | Portolan can import standard dependency and symbol evidence outputs so PHP, JVM-heavy, and mixed-language landscapes get evidence-backed relationship coverage without Portolan owning per-language scanners. | Local implementation, post-correction review, and final Cursor + Composer 2.5 Syft/Bigtop stress run `20260601-154329` verified; PR not_started; symbol/API/catalog/runtime producer evidence remains not_assessed |
+| P6-052 | `docs/specs/052-dependency-symbol-evidence-import/` | Portolan can import standard dependency and symbol evidence outputs so PHP, JVM-heavy, and mixed-language landscapes get evidence-backed relationship coverage without Portolan owning per-language scanners. | PR #29 local implementation, PR-level review, review-driven test fixes, GitHub checks on the post-review-fix head, and ready-for-review closeout recorded; merge approval, real symbol/API/catalog/model/runtime producer evidence remain not_assessed |
 
 ## Backlog Rules
 
