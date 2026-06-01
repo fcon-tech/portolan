@@ -4,7 +4,8 @@
 
 **Created**: 2026-06-02
 
-**Status**: Planning
+**Status**: Merged via PR #38; inspected local runtime surfaces complete,
+Bigtop runtime topology `cannot_verify`
 
 **Input**: User objective requires runtime topology to become verified as part
 of proving Portolan with Cursor on Bigtop.
