@@ -4,9 +4,10 @@
 
 **Created**: 2026-06-01
 
-**Status**: Specification, plan, tasks, and pre-implementation review prepared;
-post-merge gate cleared after PR #29 merged and this branch was rebased onto
-`main`; implementation not_started, next task T004
+**Status**: Local implementation complete; producer-family schema/fixtures,
+context recommendations, evaluation loading, coverage matrix, review-driven
+fixes, and full local baseline verified; PR not created yet; real producer
+outputs beyond 052 and GitHub checks remain `not_assessed`
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the

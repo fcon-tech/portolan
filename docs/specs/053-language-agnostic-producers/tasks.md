@@ -23,14 +23,14 @@
 
 ## Phase 2: Foundational Contract
 
-- [ ] T004 [P] Add producer recommendation/evaluation fixture files under
+- [x] T004 [P] Add producer recommendation/evaluation fixture files under
   `internal/testfixtures/language-agnostic-producers/`.
-- [ ] T005 [P] Add `schema/producer-family.schema.json` or equivalent
+- [x] T005 [P] Add `schema/producer-family.schema.json` or equivalent
   allow-listed contract validation for producer-recommendation,
   producer-evaluation, and producer-coverage records.
-- [ ] T006 Add answer-contract wording expectations that recommendations are
+- [x] T006 Add answer-contract wording expectations that recommendations are
   not evidence and per-language scanner ownership is not implied.
-- [ ] T006A Add contract tests that reject plain-string `candidate_tools`,
+- [x] T006A Add contract tests that reject plain-string `candidate_tools`,
   undeclared runtime-topology/native-language-semantics fields, and accepted or
   narrowed candidates without local evaluation evidence.
 
@@ -42,16 +42,16 @@ per-language adapter recommendations.
 **Independent Test**: A mixed fixture context pack names missing producer
 families and blocked claims while preserving `not_assessed`.
 
-- [ ] T007 [P] [US1] Add failing context-preparation test for producer-family
+- [x] T007 [P] [US1] Add failing context-preparation test for producer-family
   recommendation records in `internal/app/app_test.go`.
-- [ ] T007A [P] [US1] Add fixture coverage proving weak states survive
+- [x] T007A [P] [US1] Add fixture coverage proving weak states survive
   recommendation generation without upgrade to observed evidence.
-- [ ] T008 [US1] Implement bounded producer recommendation records in
+- [x] T008 [US1] Implement bounded producer recommendation records in
   `internal/contextprep/`.
-- [ ] T009 [US1] Ensure recommendation records map blocked claims to evidence
+- [x] T009 [US1] Ensure recommendation records map blocked claims to evidence
   families rather than PHP/JVM/Scala adapter names, and represent candidates as
   objects with `verification_state` and `support_state`.
-- [ ] T010 [US1] Update `answer-contract.md` generation to state that producer
+- [x] T010 [US1] Update `answer-contract.md` generation to state that producer
   recommendations are options, not observed evidence.
 
 ## Phase 4: User Story 2 - Compare OSS Producers Before Adoption (P2)
@@ -63,14 +63,14 @@ supported or default.
 with fit, output contract, local execution, license, maintenance, privacy, and
 integration-cost decisions.
 
-- [ ] T011 [P] [US2] Add failing fixture or unit test for accepted, narrowed,
+- [x] T011 [P] [US2] Add failing fixture or unit test for accepted, narrowed,
   rejected, blocked, and `not_assessed` producer-evaluation states.
-- [ ] T012 [US2] Implement producer evaluation normalization or fixture loading
+- [x] T012 [US2] Implement producer evaluation normalization or fixture loading
   in the smallest existing artifact path; do not score, rank, probe, install,
   or run producer tools.
-- [ ] T013 [US2] Ensure risky defaults with network, credentials, daemon,
+- [x] T013 [US2] Ensure risky defaults with network, credentials, daemon,
   mutation, or source export are rejected, blocked, or narrowed.
-- [ ] T014 [US2] Record candidate evaluation examples for at least two
+- [x] T014 [US2] Record candidate evaluation examples for at least two
   producer families under the spec reviews or fixtures.
 
 ## Phase 5: User Story 3 - Keep Mixed-Language Coverage Honest (P3)
@@ -81,30 +81,31 @@ integration-cost decisions.
 **Independent Test**: A mixed fixture emits a coverage matrix where dependency,
 symbol, API/catalog/model, and runtime evidence states remain separate.
 
-- [ ] T015 [P] [US3] Add failing test for producer-family coverage matrix
+- [x] T015 [P] [US3] Add failing test for producer-family coverage matrix
   records by repository in `internal/app/app_test.go`.
-- [ ] T015A [P] [US3] Add mixed-language partial coverage fixture with
+- [x] T015A [P] [US3] Add mixed-language partial coverage fixture with
   repository, subdirectory/component, and `languages_in_scope` expectations.
-- [ ] T016 [US3] Implement coverage matrix record generation in the selected
+- [x] T016 [US3] Implement coverage matrix record generation in the selected
   context or evidence-index artifact.
-- [ ] T017 [US3] Ensure partial subdirectory or single-family evidence does not
+- [x] T017 [US3] Ensure partial subdirectory or single-family evidence does not
   become repository-wide or landscape-wide coverage.
-- [ ] T018 [US3] Update gaps/query guidance so agents inspect the coverage
+- [x] T018 [US3] Update gaps/query guidance so agents inspect the coverage
   matrix before making mixed-language architecture claims.
 
 ## Final Phase: Verification And Closeout
 
-- [ ] T019 Run focused Go tests for changed packages.
-- [ ] T020 Run `go test -count=1 ./...`.
-- [ ] T021 Run `go vet ./...`.
-- [ ] T022 Run `jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json .specify/feature.json`.
-- [ ] T023 Run `git diff --check`.
-- [ ] T024 Run `go run ./cmd/portolan context prepare --help`.
-- [ ] T025 If a Cursor + Composer 2.5 stress lane is run, record clean-start
-  artifact boundaries and remove contaminated run outputs.
-- [ ] T026 Update `docs/product-backlog.md`, `spec.md`, and this task ledger to
+- [x] T019 Run focused Go tests for changed packages.
+- [x] T020 Run `go test -count=1 ./...`.
+- [x] T021 Run `go vet ./...`.
+- [x] T022 Run `jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json internal/testfixtures/language-agnostic-producers/*.jsonl .specify/feature.json`.
+- [x] T023 Run `git diff --check`.
+- [x] T024 Run `go run ./cmd/portolan context prepare --help`.
+- [x] T025 If a Cursor + Composer 2.5 stress lane is run, record clean-start
+  artifact boundaries and remove contaminated run outputs. Not run for this
+  local implementation slice; no Cursor stress artifacts were created.
+- [x] T026 Update `docs/product-backlog.md`, `spec.md`, and this task ledger to
   match implementation state.
-- [ ] T027 Record implementation/review disposition before PR readiness.
+- [x] T027 Record implementation/review disposition before PR readiness.
 
 ## Dependencies
 
