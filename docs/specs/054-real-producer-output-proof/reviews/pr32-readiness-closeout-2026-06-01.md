@@ -3,7 +3,9 @@
 Date: 2026-06-01
 Branch: `codex/054-bigtop-architecture-proof`
 PR: https://github.com/fcon-tech/portolan/pull/32
-Head: `b4e2878c77eee5f73707f6fe2169b166a33e3371`
+Head: refreshed through the current PR head during closeout; use GitHub PR
+state for the exact latest SHA because this closeout file is itself committed
+to the branch.
 
 ## PR State
 
@@ -82,7 +84,8 @@ Disposition:
 
 ## GitHub Checks
 
-Refreshed on PR head `b4e2878c77eee5f73707f6fe2169b166a33e3371`.
+Refreshed through the current PR head during closeout; the exact latest SHA is
+available from PR #32.
 
 | Check | Status |
 | --- | --- |
