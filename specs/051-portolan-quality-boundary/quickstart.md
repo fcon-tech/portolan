@@ -18,17 +18,13 @@ jq empty schema/*.json
 
 ## Validate Report Quality Fixtures
 
-Expected final implementation shape:
-
 ```bash
 portolan report quality \
-  --summary <output-dir>/report/report-summary.json \
-  --bundle <output-dir>/map
+  --summary <output-dir>/report/report-summary.json
 ```
 
-The command name may change during implementation, but the contract must still
-validate required sections, evidence references, weak states, and unsupported
-claims.
+The command validates required sections, evidence references, weak states, and
+unsupported positive claims from a local summary file.
 
 ## Expected Failure Fixtures
 

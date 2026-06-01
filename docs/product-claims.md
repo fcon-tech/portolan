@@ -4,6 +4,10 @@ This page is the repo-level claim boundary for Portolan. Start here before
 writing README copy, a client answer, a proposal, a demo script, or an agent
 instruction that says what Portolan can do.
 
+Use [Product Quality Boundary](product-quality-boundary.md) for guarantees,
+non-guarantees, maturity controls, and report-quality gating. Use this page for
+individual claim wording.
+
 Detailed evidence and review records live under
 `specs/038-product-claim-gate/reviews/`. This page is the maintained product
 surface derived from that evidence.

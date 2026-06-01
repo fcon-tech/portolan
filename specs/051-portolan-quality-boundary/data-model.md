@@ -36,6 +36,11 @@
 - `evidence_ref`: Local artifact or doc reference.
 - `reason`: Why the classification was assigned.
 
+Claim verdicts classify product statements. They do not replace evidence
+states. When a claim depends only on `unknown` or `cannot_verify` evidence, the
+claim verdict is normally `blocked` or `not_assessed` unless a narrower
+supported claim is available.
+
 ## Maturity Matrix
 
 - `surfaces`: Surface records.

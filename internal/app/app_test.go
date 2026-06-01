@@ -243,6 +243,88 @@ func TestRunScanHelpDescribesReadOnlyEvidenceGraph(t *testing.T) {
 	}
 }
 
+func TestRunReportQualityPassesThinHonestReport(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--summary", "../../testdata/report-quality/thin-honest.json"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"verdict": "pass"`) {
+		t.Fatalf("stdout = %q, want pass verdict", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunReportHelpAndUnknownCommand(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0", code)
+	}
+	if !strings.Contains(stdout.String(), "portolan report quality") {
+		t.Fatalf("stdout = %q, want report usage", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = Run([]string{"report", "unknown"}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("Run returned %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "unknown report command") {
+		t.Fatalf("stderr = %q, want unknown report command", stderr.String())
+	}
+}
+
+func TestRunReportQualityHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0", code)
+	}
+	if !strings.Contains(stdout.String(), "--summary") {
+		t.Fatalf("stdout = %q, want report quality usage", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunReportQualityFailsUnsupportedClaim(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"report", "quality", "--summary", "../../testdata/report-quality/unsupported-positive-claim.json"}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("Run returned %d, want 1; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"verdict": "fail"`) {
+		t.Fatalf("stdout = %q, want fail verdict", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "unsupported") {
+		t.Fatalf("stdout = %q, want unsupported failure", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
 func TestRunScanHelpWithOtherFlagsReturnsHelp(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

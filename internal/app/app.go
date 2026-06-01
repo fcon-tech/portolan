@@ -19,6 +19,7 @@ import (
 	"github.com/fcon-tech/portolan/internal/maprun"
 	"github.com/fcon-tech/portolan/internal/packet"
 	"github.com/fcon-tech/portolan/internal/query"
+	"github.com/fcon-tech/portolan/internal/reportquality"
 	"github.com/fcon-tech/portolan/internal/scan"
 	"github.com/fcon-tech/portolan/internal/selection"
 )
@@ -56,6 +57,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runGraph(args[1:], stdout, stderr)
 	case "query":
 		return runQuery(args[1:], stdout, stderr)
+	case "report":
+		return runReport(args[1:], stdout, stderr)
 	case "context":
 		return runContext(args[1:], stdout, stderr)
 	case "adapter":
@@ -65,6 +68,84 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runReport(args []string, stdout io.Writer, stderr io.Writer) int {
+	if len(args) == 0 || isHelpArg(args[0]) {
+		writeReportUsage(stdout)
+		return 0
+	}
+	if args[0] == "quality" {
+		return runReportQuality(args[1:], stdout, stderr)
+	}
+	fmt.Fprintf(stderr, "unknown report command %q\nRun 'portolan report --help' for available subcommands.\n", args[0])
+	return 2
+}
+
+func runReportQuality(args []string, stdout io.Writer, stderr io.Writer) int {
+	if isSingleHelpArg(args) {
+		writeReportQualityUsage(stdout)
+		return 0
+	}
+
+	summaryPath, code := parseReportQualityArgs(args, stdout, stderr)
+	if code != 0 {
+		return code
+	}
+	result, err := reportquality.Run(reportquality.Options{SummaryPath: summaryPath})
+	if err != nil {
+		fmt.Fprintf(stderr, "report quality: %v\n", err)
+		return 2
+	}
+	return writeReportQualityResult(result, stdout, stderr)
+}
+
+func isSingleHelpArg(args []string) bool {
+	return len(args) == 1 && isHelpArg(args[0])
+}
+
+func isHelpArg(arg string) bool {
+	return map[string]bool{
+		"-h":     true,
+		"--help": true,
+		"help":   true,
+	}[arg]
+}
+
+func parseReportQualityArgs(args []string, stdout io.Writer, stderr io.Writer) (string, int) {
+	flags := flag.NewFlagSet("report quality", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	summaryPath := flags.String("summary", "", "report-quality summary JSON")
+	if err := flags.Parse(args); err != nil {
+		return "", reportQualityFlagErrorCode(err, stdout)
+	}
+	if flags.NArg() == 0 {
+		return *summaryPath, 0
+	}
+	fmt.Fprintf(stderr, "unexpected report quality argument %q\n", flags.Arg(0))
+	return "", 2
+}
+
+func reportQualityFlagErrorCode(err error, stdout io.Writer) int {
+	if err == flag.ErrHelp {
+		writeReportQualityUsage(stdout)
+		return 0
+	}
+	return 2
+}
+
+func writeReportQualityResult(result reportquality.Result, stdout io.Writer, stderr io.Writer) int {
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(result); err != nil {
+		fmt.Fprintf(stderr, "report quality: write result: %v\n", err)
+		return 2
+	}
+	if result.Verdict != "pass" {
+		return 1
+	}
+	return 0
 }
 
 func runProduce(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -1183,6 +1264,7 @@ Usage:
   portolan map --root . --out .portolan/run
   portolan query findings --bundle .portolan/run --kind relationships --limit 20
   portolan query gaps --bundle .portolan/run --limit 20
+  portolan report quality --summary report-summary.json
   portolan graph slice --bundle .portolan/run --repo repo-id --out slice.json
   portolan adapter validate --in adapter.json
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
@@ -1323,6 +1405,30 @@ so agents can explain missing evidence instead of turning gaps into success.
 Flags:
   --bundle path   existing portolan map bundle directory
   --limit n       maximum records, 1..200 (default 20)
+`)
+}
+
+func writeReportUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan report quality --summary report-summary.json
+
+Validate generated report-quality summaries.
+
+Available subcommands:
+  quality   validate required sections, evidence refs, weak states, and unsupported claims
+`)
+}
+
+func writeReportQualityUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan report quality --summary report-summary.json
+
+Validate a local report-quality summary before treating a generated report as
+product-ready. The command reads one local JSON file, writes a JSON verdict to
+stdout, makes no network calls, and does not inspect target repositories.
+
+Flags:
+  --summary path   report-quality summary JSON path
 `)
 }
 

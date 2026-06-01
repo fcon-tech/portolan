@@ -11,6 +11,9 @@ or unverifiable.
 For current client-safe wording and claim status, use
 [Product Claims](product-claims.md). Product copy may use only accepted or
 narrowed claims from that page, and narrowed claims must carry their scope.
+For product guarantees, non-guarantees, maturity labels, and report-quality
+gates, use [Product Quality Boundary](product-quality-boundary.md) and
+[Product Maturity Matrix](product-maturity.md).
 
 ## In Scope
 

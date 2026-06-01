@@ -152,6 +152,10 @@ community infrastructure rather than proof of broad adoption or support.
 - Demo: see [Public Demo: Apache Bigtop](docs/demo.md).
 - Product claims: read [Product Claims](docs/product-claims.md) before reusing
   public wording.
+- Product quality: read
+  [Product Quality Boundary](docs/product-quality-boundary.md) and
+  [Product Maturity Matrix](docs/product-maturity.md) before treating a report
+  or surface as product-ready.
 - Contribute: read [Contributing](CONTRIBUTING.md) before opening issues or
   pull requests.
 - Security: report sensitive vulnerabilities through [Security](SECURITY.md),

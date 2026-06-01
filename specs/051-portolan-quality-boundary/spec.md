@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-01
 
-**Status**: Draft
+**Status**: Ready-for-review PR #28; merge requires explicit approval
 
 **Input**: User description: "Split the Portolan work into two specs: first,
 quality of Portolan itself; second, quality of the user experience."
@@ -142,6 +142,10 @@ separates stable, tooling, local-only, experimental, and future surfaces.
   reports.
 - **Claim Verdict**: Accepted, narrowed, rejected, blocked, or `not_assessed`
   classification of a product/report claim.
+- **Evidence State Mapping**: Report quality uses evidence states `unknown`,
+  `cannot_verify`, and `not_assessed` as weak states that must stay visible;
+  claim verdicts classify product statements as accepted, narrowed, rejected,
+  blocked, or `not_assessed`.
 
 ## Success Criteria *(mandatory)*
 

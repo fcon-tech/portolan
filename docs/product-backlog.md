@@ -132,8 +132,7 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P6-051 | `specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Draft; split out from first-run UX work after customer feedback and SDP Lab distillation |
-| P6-052 | `specs/052-agent-scan-report-ux/` | A non-expert user can open a repository or local repository folder in a coding-agent harness, ask for a scan, and receive one useful first report covering visible stack, relationships, architecture diagram, duplication, technical-debt candidates, unknowns, and next actions. | Draft; depends on P6-051 quality boundary; current prototype verified lower-level artifacts but no single E2E report artifact |
+| P6-051 | `specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Ready-for-review PR #28; GitHub checks verified; merge approval not_assessed |
 
 ## Backlog Rules
 

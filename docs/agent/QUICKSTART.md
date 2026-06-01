@@ -12,6 +12,10 @@ behavior is not proven by headless Cursor Agent CLI evidence. OpenCode default
 permissions work with repo-local output paths under the Portolan checkout; the
 recorded external-output default-permission lane failed.
 
+For generated reports, use `docs/product-quality-boundary.md`,
+`docs/product-maturity.md`, and `docs/report-quality.md` before treating a
+report as product-ready.
+
 ## Inputs You Need
 
 - Portolan checkout or installed `portolan` binary.
