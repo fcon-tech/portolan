@@ -11,6 +11,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/fcon-tech/portolan/internal/producerfamily"
 )
 
 const SchemaVersion = "0.1.0"
@@ -80,11 +82,39 @@ type EvidenceRecord struct {
 	Status         string `json:"status"`
 	EvidenceState  string `json:"evidence_state"`
 	SourceArtifact string `json:"source_artifact"`
-	SourceID       string `json:"source_id"`
+	SourceID       string `json:"source_id,omitempty"`
 	Path           string `json:"path,omitempty"`
 	Count          int    `json:"count,omitempty"`
 	Summary        string `json:"summary"`
 	Reason         string `json:"reason,omitempty"`
+
+	Repositories   []string                       `json:"repositories,omitempty"`
+	BlockedClaims  []string                       `json:"blocked_claims,omitempty"`
+	RequiredOutput string                         `json:"required_output,omitempty"`
+	CandidateTools []producerfamily.CandidateTool `json:"candidate_tools,omitempty"`
+
+	RepositoryID     string    `json:"repository_id,omitempty"`
+	Scope            string    `json:"scope,omitempty"`
+	ScopeDetail      string    `json:"scope_detail,omitempty"`
+	LanguagesInScope *[]string `json:"languages_in_scope,omitempty"`
+
+	CandidateID             string `json:"candidate_id,omitempty"`
+	Decision                string `json:"decision,omitempty"`
+	Fit                     string `json:"fit,omitempty"`
+	OutputContractStability string `json:"output_contract_stability,omitempty"`
+	LocalExecution          string `json:"local_execution,omitempty"`
+	License                 string `json:"license,omitempty"`
+	Maintenance             string `json:"maintenance,omitempty"`
+	Privacy                 string `json:"privacy,omitempty"`
+	IntegrationCost         string `json:"integration_cost,omitempty"`
+	EvidenceSource          string `json:"evidence_source,omitempty"`
+	Notes                   string `json:"notes,omitempty"`
+}
+
+type producerRecordDir struct {
+	Path        string
+	Scope       string
+	ScopeDetail string
 }
 
 type RelationshipCandidate struct {
@@ -198,6 +228,9 @@ func Run(opts Options) (Result, error) {
 	sortRepositories(repos)
 	sortToolEntries(tools)
 	sortGaps(gaps)
+	producerRecommendations := buildProducerRecommendations(repos, gaps)
+	producerCoverage := buildProducerCoverage(repos, gaps)
+	producerEvaluations := detectProducerEvaluations(root, repos)
 
 	parent := filepath.Dir(out)
 	temp, err := os.MkdirTemp(parent, "."+filepath.Base(out)+".tmp-*")
@@ -239,7 +272,7 @@ func Run(opts Options) (Result, error) {
 	if err := writeJSON(filepath.Join(temp, "oss-plan.json"), ossPlan); err != nil {
 		return Result{}, err
 	}
-	if err := writeEvidenceIndex(filepath.Join(temp, "evidence-index.jsonl"), buildEvidenceIndex(repos, tools, gaps, relationshipCandidates)); err != nil {
+	if err := writeEvidenceIndex(filepath.Join(temp, "evidence-index.jsonl"), buildEvidenceIndex(repos, tools, gaps, relationshipCandidates, producerRecommendations, producerCoverage, producerEvaluations)); err != nil {
 		return Result{}, err
 	}
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
@@ -463,6 +496,130 @@ func detectToolOutputs(root, out string, repos []Repository) []ToolEntry {
 		}
 	}
 	return entries
+}
+
+func detectProducerEvaluations(root string, repos []Repository) []EvidenceRecord {
+	candidateDirs := []producerRecordDir{
+		{Path: root, Scope: "landscape", ScopeDetail: "root"},
+		{Path: filepath.Join(root, ".portolan"), Scope: "landscape", ScopeDetail: "root"},
+		{Path: filepath.Join(root, "reports"), Scope: "landscape", ScopeDetail: "root"},
+	}
+	for _, repo := range repos {
+		candidateDirs = append(candidateDirs,
+			producerRecordDir{Path: repo.Path, Scope: "repository", ScopeDetail: repo.ID},
+			producerRecordDir{Path: filepath.Join(repo.Path, ".portolan"), Scope: "repository", ScopeDetail: repo.ID},
+			producerRecordDir{Path: filepath.Join(repo.Path, "reports"), Scope: "repository", ScopeDetail: repo.ID},
+		)
+	}
+	seen := map[string]bool{}
+	var records []EvidenceRecord
+	for _, dir := range candidateDirs {
+		if !isSafeProducerRecordDir(dir.Path) {
+			continue
+		}
+		for _, name := range []string{"producer-family-records.jsonl", "producer-evaluations.jsonl"} {
+			path := filepath.Join(dir.Path, name)
+			if seen[path] {
+				continue
+			}
+			if !isSafeProducerRecordFile(path) {
+				continue
+			}
+			seen[path] = true
+			validated, err := producerfamily.ValidateJSONLFile(path)
+			if err != nil {
+				records = append(records, invalidProducerEvaluation(path, err))
+				continue
+			}
+			ignored := 0
+			for _, record := range validated {
+				if record.Evaluation == nil {
+					ignored++
+					continue
+				}
+				records = append(records, producerEvaluationRecord(path, dir.Scope, dir.ScopeDetail, *record.Evaluation))
+			}
+			if ignored > 0 {
+				records = append(records, ignoredProducerFamilyRecords(path, dir.Scope, dir.ScopeDetail, ignored))
+			}
+		}
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].ID < records[j].ID
+	})
+	return records
+}
+
+func isSafeProducerRecordDir(path string) bool {
+	info, err := os.Lstat(path)
+	if err != nil || !info.IsDir() {
+		return false
+	}
+	return info.Mode()&os.ModeSymlink == 0
+}
+
+func isSafeProducerRecordFile(path string) bool {
+	info, err := os.Lstat(path)
+	if err != nil || !info.Mode().IsRegular() {
+		return false
+	}
+	return info.Mode()&os.ModeSymlink == 0
+}
+
+func producerEvaluationRecord(path, scope, scopeDetail string, evaluation producerfamily.EvaluationRecord) EvidenceRecord {
+	return EvidenceRecord{
+		ID:                      evaluation.ID,
+		Kind:                    "producer-evaluation",
+		Family:                  evaluation.Family,
+		Status:                  evaluation.Decision,
+		EvidenceState:           "metadata-visible",
+		SourceArtifact:          path,
+		SourceID:                evaluation.CandidateID,
+		Summary:                 evaluation.Notes,
+		Reason:                  evaluation.Notes,
+		CandidateID:             evaluation.CandidateID,
+		Decision:                evaluation.Decision,
+		Fit:                     evaluation.Fit,
+		OutputContractStability: evaluation.OutputContractStability,
+		LocalExecution:          evaluation.LocalExecution,
+		License:                 evaluation.License,
+		Maintenance:             evaluation.Maintenance,
+		Privacy:                 evaluation.Privacy,
+		IntegrationCost:         evaluation.IntegrationCost,
+		EvidenceSource:          evaluation.EvidenceSource,
+		Notes:                   evaluation.Notes,
+		Scope:                   scope,
+		ScopeDetail:             scopeDetail,
+	}
+}
+
+func invalidProducerEvaluation(path string, err error) EvidenceRecord {
+	return EvidenceRecord{
+		ID:             "producer-evaluation-invalid-" + safeID(path),
+		Kind:           "producer-evaluation",
+		Family:         "producer-family",
+		Status:         "cannot_verify",
+		EvidenceState:  "cannot_verify",
+		SourceArtifact: path,
+		Summary:        "Producer evaluation records could not be validated.",
+		Reason:         err.Error(),
+	}
+}
+
+func ignoredProducerFamilyRecords(path, scope, scopeDetail string, count int) EvidenceRecord {
+	return EvidenceRecord{
+		ID:             "gap-producer-family-non-evaluation-" + safeID(path),
+		Kind:           "gap",
+		Family:         "producer-family-input",
+		Status:         "not_assessed",
+		EvidenceState:  "not_assessed",
+		SourceArtifact: path,
+		SourceID:       safeID(path),
+		Summary:        "Producer-family input contained records that this slice does not promote from local files.",
+		Reason:         fmt.Sprintf("%d non-evaluation producer-family record(s) were valid but ignored; this slice only promotes local producer-evaluation records from input files", count),
+		Scope:          scope,
+		ScopeDetail:    scopeDetail,
+	}
 }
 
 func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
@@ -1037,8 +1194,8 @@ func gapsForMissingFamilies(tools []ToolEntry) []Gap {
 	return gaps
 }
 
-func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap, candidates []RelationshipCandidate) []EvidenceRecord {
-	records := make([]EvidenceRecord, 0, len(repos)+len(tools)+len(gaps)+len(candidates))
+func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap, candidates []RelationshipCandidate, producerRecommendations []EvidenceRecord, producerCoverage []EvidenceRecord, producerEvaluations []EvidenceRecord) []EvidenceRecord {
+	records := make([]EvidenceRecord, 0, len(repos)+len(tools)+len(gaps)+len(candidates)+len(producerRecommendations)+len(producerCoverage)+len(producerEvaluations))
 	for _, repo := range repos {
 		records = append(records, EvidenceRecord{
 			ID:             "repo-" + repo.ID,
@@ -1081,6 +1238,9 @@ func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap, candi
 			Reason:         candidate.Reason,
 		})
 	}
+	records = append(records, producerRecommendations...)
+	records = append(records, producerCoverage...)
+	records = append(records, producerEvaluations...)
 	for _, gap := range gaps {
 		records = append(records, EvidenceRecord{
 			ID:             gap.ID,
@@ -1104,6 +1264,228 @@ func buildEvidenceIndex(repos []Repository, tools []ToolEntry, gaps []Gap, candi
 		return records[i].ID < records[j].ID
 	})
 	return records
+}
+
+func buildProducerCoverage(repos []Repository, gaps []Gap) []EvidenceRecord {
+	gapIDs := map[string]string{}
+	for _, gap := range gaps {
+		gapIDs[gap.Family] = gap.ID
+	}
+	families := []struct {
+		ID       string
+		GapID    string
+		Reason   string
+		SourceID string
+	}{
+		{
+			ID:       "dependency",
+			GapID:    gapIDs["cyclonedx"],
+			Reason:   "No local dependency/component producer output covers this repository.",
+			SourceID: gapIDs["cyclonedx"],
+		},
+		{
+			ID:       "symbol-index",
+			GapID:    gapIDs["symbol-index"],
+			Reason:   "No local symbol-index output covers this repository.",
+			SourceID: gapIDs["symbol-index"],
+		},
+		{
+			ID:       "api-catalog",
+			GapID:    firstGapIDValue(gapIDs, "backstage", "openapi", "asyncapi", "structurizr"),
+			Reason:   "No local API/catalog/model producer output covers this repository.",
+			SourceID: firstGapIDValue(gapIDs, "backstage", "openapi", "asyncapi", "structurizr"),
+		},
+		{
+			ID:       "runtime-observation",
+			GapID:    "gap-runtime-observation-not-assessed",
+			Reason:   "No runtime-visible local observation covers this repository.",
+			SourceID: "gap-runtime-observation-not-assessed",
+		},
+	}
+	var records []EvidenceRecord
+	for _, repo := range repos {
+		for _, family := range families {
+			if family.GapID == "" {
+				continue
+			}
+			records = append(records, producerCoverageRecord(repo.ID, family.ID, family.SourceID, family.Reason))
+		}
+	}
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].ID < records[j].ID
+	})
+	return records
+}
+
+func firstGapIDValue(gaps map[string]string, families ...string) string {
+	id, _ := firstGapID(gaps, families...)
+	return id
+}
+
+func buildProducerRecommendations(repos []Repository, gaps []Gap) []EvidenceRecord {
+	gapIDs := map[string]string{}
+	for _, gap := range gaps {
+		if gap.EvidenceState == "not_assessed" || gap.EvidenceState == "unknown" || gap.EvidenceState == "cannot_verify" {
+			gapIDs[gap.Family] = gap.ID
+		}
+	}
+	repositories := repositoryIDs(repos)
+	var records []EvidenceRecord
+	if gapID, ok := gapIDs["cyclonedx"]; ok {
+		records = append(records, producerRecommendation(
+			"dependency",
+			gapID,
+			repositories,
+			[]string{"dependency/component relationships", "component inventory"},
+			"local CycloneDX/SBOM output",
+			[]producerfamily.CandidateTool{
+				candidateOnly("syft-cyclonedx", "Listed as an option only; run only with approval and write output under the context tool-output directory."),
+				candidateOnly("cyclonedx", "Listed as an output format option only; no local producer execution is implied."),
+			},
+			"Dependency producer output is missing; candidate tools are options, not verified support.",
+		))
+	}
+	if gapID, ok := gapIDs["symbol-index"]; ok {
+		records = append(records, producerRecommendation(
+			"symbol-index",
+			gapID,
+			repositories,
+			[]string{"symbol/reference relationships", "complete call graph"},
+			"local symbol-index export",
+			[]producerfamily.CandidateTool{
+				candidateOnly("scip", "Listed as an option only; no local SCIP output was reviewed."),
+				candidateOnly("lsif", "Listed as an option only; no local LSIF output was reviewed."),
+				candidateOnly("serena", "Listed as an option only; no local export or MCP behavior was reviewed."),
+				candidateOnly("sourcebot", "Listed as an option only; service or daemon behavior is not approved by this slice."),
+				candidateOnly("zoekt", "Listed as an option only; index generation and source export boundaries are not assessed."),
+			},
+			"No selected local symbol/reference producer output is present; candidates are options, not verified support.",
+		))
+	}
+	if gapID, ok := firstGapID(gapIDs, "backstage", "openapi", "asyncapi", "structurizr"); ok {
+		records = append(records, producerRecommendation(
+			"api-catalog",
+			gapID,
+			repositories,
+			[]string{"declared service/API relationships", "architecture model relationships"},
+			"local catalog, API contract, or architecture model export",
+			[]producerfamily.CandidateTool{
+				candidateOnly("backstage", "Listed as an option only; local catalog files are required before support is claimed."),
+				candidateOnly("openapi", "Listed as an option only; local OpenAPI files are required before support is claimed."),
+				candidateOnly("asyncapi", "Listed as an option only; local AsyncAPI files are required before support is claimed."),
+				candidateOnly("structurizr", "Listed as an option only; local Structurizr files are required before support is claimed."),
+			},
+			"API/catalog/model producer evidence is missing or partial; candidate tools are options, not verified support.",
+		))
+	}
+	if gapID, ok := gapIDs["semgrep"]; ok {
+		records = append(records, producerRecommendation(
+			"static-finding",
+			gapID,
+			repositories,
+			[]string{"static finding coverage", "security or structural code findings"},
+			"local Semgrep JSON output generated from a local config",
+			[]producerfamily.CandidateTool{
+				candidateOnly("semgrep", "Listed as an option only; network-backed configs are not suggested by default."),
+			},
+			"Static finding producer output is missing; candidate tools are options, not verified support.",
+		))
+	}
+	if gapID, ok := gapIDs["jscpd"]; ok {
+		records = append(records, producerRecommendation(
+			"duplication",
+			gapID,
+			repositories,
+			[]string{"near-clone duplication coverage", "duplicated component candidates"},
+			"local bounded jscpd JSON output",
+			[]producerfamily.CandidateTool{
+				candidateOnly("jscpd", "Listed as an option only; bounded local execution requires approval."),
+			},
+			"Duplication producer output is missing; candidate tools are options, not verified support.",
+		))
+	}
+	records = append(records, producerRecommendation(
+		"runtime-observation",
+		"gap-runtime-observation-not-assessed",
+		repositories,
+		[]string{"runtime communication", "complete runtime topology"},
+		"local runtime observation export",
+		[]producerfamily.CandidateTool{
+			candidateOnly("runtime-observation-export", "Listed as an evidence-family placeholder only; no runtime observation format is selected by this slice."),
+		},
+		"Context preparation does not observe runtime behavior; runtime topology remains not_assessed without runtime-visible local input.",
+	))
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].ID < records[j].ID
+	})
+	return records
+}
+
+func repositoryIDs(repos []Repository) []string {
+	if len(repos) == 0 {
+		return []string{"landscape"}
+	}
+	ids := make([]string, 0, len(repos))
+	for _, repo := range repos {
+		ids = append(ids, repo.ID)
+	}
+	sort.Strings(ids)
+	return ids
+}
+
+func firstGapID(gaps map[string]string, families ...string) (string, bool) {
+	for _, family := range families {
+		if id, ok := gaps[family]; ok {
+			return id, true
+		}
+	}
+	return "", false
+}
+
+func candidateOnly(id, reason string) producerfamily.CandidateTool {
+	return producerfamily.CandidateTool{
+		ID:                id,
+		VerificationState: "not_assessed",
+		SupportState:      "candidate_only",
+		Reason:            reason,
+	}
+}
+
+func producerRecommendation(family, sourceID string, repositories, blockedClaims []string, requiredOutput string, candidateTools []producerfamily.CandidateTool, reason string) EvidenceRecord {
+	return EvidenceRecord{
+		ID:             "producer-recommendation-landscape-" + family,
+		Kind:           "producer-recommendation",
+		Family:         family,
+		Status:         "not_assessed",
+		EvidenceState:  "not_assessed",
+		SourceArtifact: "gaps.jsonl",
+		SourceID:       sourceID,
+		Summary:        "Producer-family recommendation for missing " + family + " evidence.",
+		Reason:         reason,
+		Repositories:   repositories,
+		BlockedClaims:  blockedClaims,
+		RequiredOutput: requiredOutput,
+		CandidateTools: candidateTools,
+	}
+}
+
+func producerCoverageRecord(repositoryID, family, sourceID, reason string) EvidenceRecord {
+	languagesInScope := []string{}
+	return EvidenceRecord{
+		ID:               "producer-coverage-" + repositoryID + "-" + family,
+		Kind:             "producer-coverage",
+		Family:           family,
+		Status:           "not_assessed",
+		EvidenceState:    "not_assessed",
+		SourceArtifact:   "gaps.jsonl",
+		SourceID:         sourceID,
+		Summary:          "Producer-family coverage for " + repositoryID + " remains not_assessed for " + family + ".",
+		Reason:           reason,
+		RepositoryID:     repositoryID,
+		Scope:            "repository",
+		ScopeDetail:      repositoryID,
+		LanguagesInScope: &languagesInScope,
+	}
 }
 
 func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
@@ -1424,6 +1806,8 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "| Ownership | `metadata-visible` or `claim-only` | Local ownership files, catalogs, or claims state responsibility. | Operational accountability beyond the supplied source. |\n")
 	fmt.Fprintf(&b, "| Lifecycle | `metadata-visible` or `claim-only` | Local metadata or claims state active, retired, legacy, or migration status. | Current lifecycle for unobserved systems. |\n\n")
 	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
+	fmt.Fprintf(&b, "## Producer Family Recommendations\n\n")
+	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
 	fmt.Fprintf(&b, "- Do not claim complete service inventory without coverage evidence.\n")
 	fmt.Fprintf(&b, "- Do not claim dependency or component duplication without SBOM or duplicate findings.\n")
@@ -1455,6 +1839,10 @@ func renderQueryPlan() string {
   records with kind ` + "`relationship-candidate`" + ` before opening raw source.
   They point at build manifests, distribution manifests, RPM specs, and
   deployment manifests; they are candidate evidence, not parsed topology.
+- Producer family gaps: inspect ` + "`producer-coverage`" + ` and
+  ` + "`producer-recommendation`" + ` records in ` + "`evidence-index.jsonl`" + ` before
+  making mixed-language coverage claims. Recommendations are options, not
+  verified support.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

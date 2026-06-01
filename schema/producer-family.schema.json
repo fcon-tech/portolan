@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/schema/producer-family.schema.json",
+  "title": "Portolan Producer Family Record",
+  "oneOf": [
+    { "$ref": "#/$defs/recommendation" },
+    { "$ref": "#/$defs/evaluation" },
+    { "$ref": "#/$defs/coverage" }
+  ],
+  "$defs": {
+    "evidence_state": {
+      "type": "string",
+      "enum": ["source-visible", "metadata-visible", "runtime-visible", "claim-only", "unknown", "cannot_verify", "not_assessed"]
+    },
+    "recommendation_status": {
+      "type": "string",
+      "enum": ["not_assessed", "unknown", "cannot_verify", "blocked", "partial"]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "verification_state", "support_state", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "verification_state": {
+          "type": "string",
+          "enum": ["not_assessed", "cannot_verify", "verified_local_output", "blocked"]
+        },
+        "support_state": {
+          "type": "string",
+          "enum": ["candidate_only", "accepted", "narrowed", "rejected", "blocked"]
+        },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "family", "status", "evidence_state", "repositories", "blocked_claims", "required_output", "candidate_tools", "source_artifact", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "producer-recommendation" },
+        "family": { "type": "string", "minLength": 1 },
+        "status": { "$ref": "#/$defs/recommendation_status" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "repositories": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "blocked_claims": { "type": "array", "items": { "type": "string", "minLength": 1 }, "minItems": 1 },
+        "required_output": { "type": "string", "minLength": 1 },
+        "candidate_tools": { "type": "array", "items": { "$ref": "#/$defs/candidate" }, "minItems": 1 },
+        "source_artifact": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string" },
+        "summary": { "type": "string" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "candidate_id", "family", "decision", "fit", "output_contract_stability", "local_execution", "license", "maintenance", "privacy", "integration_cost", "evidence_source", "notes"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "producer-evaluation" },
+        "candidate_id": { "type": "string", "minLength": 1 },
+        "family": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["accepted", "narrowed", "rejected", "blocked", "not_assessed", "cannot_verify"]
+        },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "source_artifact": { "type": "string" },
+        "source_id": { "type": "string" },
+        "scope": {
+          "type": "string",
+          "enum": ["repository", "subdirectory", "landscape", "unknown"]
+        },
+        "scope_detail": { "type": "string" },
+        "decision": {
+          "type": "string",
+          "enum": ["accepted", "narrowed", "rejected", "blocked", "not_assessed"]
+        },
+        "fit": { "type": "string", "minLength": 1 },
+        "output_contract_stability": {
+          "type": "string",
+          "enum": ["stable", "partial", "unstable", "unknown", "cannot_verify", "not_assessed"]
+        },
+        "local_execution": {
+          "type": "string",
+          "enum": ["verified", "assumed", "blocked", "not_assessed"]
+        },
+        "license": {
+          "type": "string",
+          "enum": ["accepted", "review_required", "blocked", "not_assessed"]
+        },
+        "maintenance": {
+          "type": "string",
+          "enum": ["active", "stale", "unknown", "not_assessed"]
+        },
+        "privacy": {
+          "type": "string",
+          "enum": ["local_safe", "narrowed", "blocked", "not_assessed"]
+        },
+        "integration_cost": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "unknown", "not_assessed"]
+        },
+        "evidence_source": { "type": "string", "minLength": 1 },
+        "summary": { "type": "string" },
+        "reason": { "type": "string" },
+        "notes": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "decision": { "enum": ["accepted", "narrowed"] } } },
+          "then": { "not": { "properties": { "evidence_source": { "const": "not_assessed" } } } }
+        }
+      ]
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "repository_id", "family", "status", "evidence_state", "source_artifact", "scope", "scope_detail", "languages_in_scope", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": { "const": "producer-coverage" },
+        "repository_id": { "type": "string", "minLength": 1 },
+        "family": { "type": "string", "minLength": 1 },
+        "status": {
+          "type": "string",
+          "enum": ["observed", "partial", "blocked", "unknown", "cannot_verify", "not_assessed"]
+        },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "source_artifact": { "type": "string", "minLength": 1 },
+        "source_id": { "type": "string" },
+        "scope": {
+          "type": "string",
+          "enum": ["repository", "subdirectory", "landscape", "unknown"]
+        },
+        "scope_detail": { "type": "string", "minLength": 1 },
+        "languages_in_scope": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "summary": { "type": "string" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
