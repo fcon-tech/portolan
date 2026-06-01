@@ -9,7 +9,7 @@ Use an adapter contract before adding a new OSS input family.
 ## Validate
 
 ```bash
-portolan adapter validate --in testdata/oss-adapter-contract/jscpd.json
+portolan adapter validate --in internal/testfixtures/oss-adapter-contract/jscpd.json
 ```
 
 ## Required Decisions

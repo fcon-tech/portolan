@@ -1,7 +1,7 @@
 # Product Backlog
 
 Portolan's backlog is organized as SpecKit feature slices. The index below is
-the planning view; detailed requirements live under `specs/`.
+the planning view; detailed requirements live under `docs/specs/`.
 
 ## Roadmap Order
 
@@ -50,89 +50,89 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P0-001 | `specs/001-local-evidence-graph/` | A user can run a local read-only scan over a selection file and receive a JSON evidence graph. | Implemented |
-| P0-002 | `specs/002-selection-inventory/` | A user can declare repositories, metadata files, runtime exports, and claim files without editing code. | Implemented |
-| P0-003 | `specs/003-human-readable-packet/` | A user can generate a readable packet from the same evidence graph without creating a second truth source. | Implemented |
-| P0-004 | `specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Implemented |
-| P0-005 | `specs/005-black-box-profile/` | Portolan can represent black-box systems through metadata, runtime observations, and claims. | Implemented |
+| P0-001 | `docs/specs/001-local-evidence-graph/` | A user can run a local read-only scan over a selection file and receive a JSON evidence graph. | Implemented |
+| P0-002 | `docs/specs/002-selection-inventory/` | A user can declare repositories, metadata files, runtime exports, and claim files without editing code. | Implemented |
+| P0-003 | `docs/specs/003-human-readable-packet/` | A user can generate a readable packet from the same evidence graph without creating a second truth source. | Implemented |
+| P0-004 | `docs/specs/004-importer-normalization/` | Portolan can import existing OSS/tool outputs through reviewed adapters. | Implemented |
+| P0-005 | `docs/specs/005-black-box-profile/` | Portolan can represent black-box systems through metadata, runtime observations, and claims. | Implemented |
 
 ## P1: Agent Toolbox MVP
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P1-008 | `specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
-| P1-014 | `specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
-| P1-015 | `specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Cursor Agent blind runs recorded as degraded for Bigtop and non-Bigtop control |
-| P1-016 | `specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
-| P1-017 | `specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Implemented; local Bigtop root smoke verified without selection.json |
-| P1-018 | `specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented |
-| P1-020 | `specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; blind Cursor Agent discovery degraded but verified |
-| P1-022 | `specs/022-oss-tool-output-assembly/` | Context preparation summarizes local jscpd and CycloneDX/Syft outputs so Cursor sees OSS evidence candidates, not just filenames. | Implemented |
-| P1-023 | `specs/023-relationship-surface-assembly/` | Context preparation summarizes local Backstage, OpenAPI, AsyncAPI, and Structurizr files as relationship surface evidence candidates. | Implemented |
-| P1-025 | `specs/025-oss-execution-plan/` | Context preparation emits `oss-plan.json` with safe local producer recipes for jscpd, Syft/CycloneDX, and Semgrep when outputs are missing. | Implemented |
-| P1-026 | `specs/026-local-binary-bootstrap/` | Source checkouts can build a repo-local `.portolan/bin/portolan` binary so agents do not depend on fragile `go run` execution. | Implemented |
-| P1-027 | `specs/027-agent-answer-contract/` | Context packs include an `answer-contract.md` that tells Cursor and other agents how to turn Portolan artifacts into CTO answers with explicit unknowns. | Implemented |
-| P1-007 | `specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent CLI / Composer 2.5 blind Bigtop lane verified on the local landscape root; Cursor UI is outside the current required acceptance scope; complete ecosystem coverage remains unknown |
+| P1-008 | `docs/specs/008-agent-skill-pack/` | Any coding agent can read a portable Portolan guide or Cursor rule and run the expected mapping workflow without prompt-by-prompt handholding. | Implemented |
+| P1-014 | `docs/specs/014-agent-bootstrap-discovery/` | An agent can discover Portolan's mapping workflow from the Portolan root or portable skill without being told an internal guide path. | Implemented |
+| P1-015 | `docs/specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Cursor Agent blind runs recorded as degraded for Bigtop and non-Bigtop control |
+| P1-016 | `docs/specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
+| P1-017 | `docs/specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Implemented; local Bigtop root smoke verified without selection.json |
+| P1-018 | `docs/specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented |
+| P1-020 | `docs/specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; blind Cursor Agent discovery degraded but verified |
+| P1-022 | `docs/specs/022-oss-tool-output-assembly/` | Context preparation summarizes local jscpd and CycloneDX/Syft outputs so Cursor sees OSS evidence candidates, not just filenames. | Implemented |
+| P1-023 | `docs/specs/023-relationship-surface-assembly/` | Context preparation summarizes local Backstage, OpenAPI, AsyncAPI, and Structurizr files as relationship surface evidence candidates. | Implemented |
+| P1-025 | `docs/specs/025-oss-execution-plan/` | Context preparation emits `oss-plan.json` with safe local producer recipes for jscpd, Syft/CycloneDX, and Semgrep when outputs are missing. | Implemented |
+| P1-026 | `docs/specs/026-local-binary-bootstrap/` | Source checkouts can build a repo-local `.portolan/bin/portolan` binary so agents do not depend on fragile `go run` execution. | Implemented |
+| P1-027 | `docs/specs/027-agent-answer-contract/` | Context packs include an `answer-contract.md` that tells Cursor and other agents how to turn Portolan artifacts into CTO answers with explicit unknowns. | Implemented |
+| P1-007 | `docs/specs/007-apache-bigtop-corpus/` | Cursor + Composer 2.5 uses the generic agent path on the full Apache Bigtop landscape after landscape root discovery can map a normal ecosystem directory. | Cursor Agent CLI / Composer 2.5 blind Bigtop lane verified on the local landscape root; Cursor UI is outside the current required acceptance scope; complete ecosystem coverage remains unknown |
 
 ## P2: Build What Agent Runs Prove Is Missing
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P2-009 | `specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Implemented |
-| P2-010 | `specs/010-relationship-detection/` | Portolan detects source, metadata, runtime, and claim-backed relationships across a codebase. | Implemented |
-| P2-011 | `specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Implemented for native exact source/config duplicate clusters; near-clone detection remains OSS/jscpd-backed |
-| P2-012 | `specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Implemented for native file-based surface inventory; semantic config/IaC analysis remains OSS/Semgrep-backed |
-| P2-013 | `specs/013-technical-debt-findings/` | Portolan turns relationship, duplication, config, importer, and black-box evidence into technical-debt findings without readiness verdicts. | Implemented for rule-light debt candidates from observed and unresolved map evidence |
-| P2-024 | `specs/024-agent-scale-map-summary/` | Map runs emit compact `summary.json` and unique finding IDs so agents can triage large landscapes before loading full graphs. | Implemented |
+| P2-009 | `docs/specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Implemented |
+| P2-010 | `docs/specs/010-relationship-detection/` | Portolan detects source, metadata, runtime, and claim-backed relationships across a codebase. | Implemented |
+| P2-011 | `docs/specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Implemented for native exact source/config duplicate clusters; near-clone detection remains OSS/jscpd-backed |
+| P2-012 | `docs/specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Implemented for native file-based surface inventory; semantic config/IaC analysis remains OSS/Semgrep-backed |
+| P2-013 | `docs/specs/013-technical-debt-findings/` | Portolan turns relationship, duplication, config, importer, and black-box evidence into technical-debt findings without readiness verdicts. | Implemented for rule-light debt candidates from observed and unresolved map evidence |
+| P2-024 | `docs/specs/024-agent-scale-map-summary/` | Map runs emit compact `summary.json` and unique finding IDs so agents can triage large landscapes before loading full graphs. | Implemented |
 
 ## P3: Repeatability, Surfaces, And Scale
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P3-006 | `specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
-| P3-019 | `specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
-| P3-021 | `specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer is outside the current required acceptance scope; semantic search remains not_assessed |
-| P3-028 | `specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
+| P3-006 | `docs/specs/006-evidence-diff/` | Portolan can compare two evidence graphs and show what became visible, changed, or stayed unknown. | Implemented |
+| P3-019 | `docs/specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
+| P3-021 | `docs/specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer is outside the current required acceptance scope; semantic search remains not_assessed |
+| P3-028 | `docs/specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
 | P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
-| P3-018 | `specs/031-oss-adapter-contract/` | Published adapter contract, validation command, and fixtures for third-party scanner outputs. | Implemented |
+| P3-018 | `docs/specs/031-oss-adapter-contract/` | Published adapter contract, validation command, and fixtures for third-party scanner outputs. | Implemented |
 | P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
-| P3-029 | `specs/029-bounded-graph-index/` | Map bundles include bounded `graph-index.json` entrypoints and artifact budgets so agents do not need to load hundreds of megabytes of raw graph output first. | Implemented |
-| P3-030 | `specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |
-| P3-032 | `specs/032-context-evidence-index/` | Context packs include bounded `evidence-index.jsonl` records linking repositories, OSS/tool outputs, and gaps before agents drill into specialized artifacts. | Implemented |
-| P3-033 | `specs/033-agent-command-guardrails/` | Generated answer contracts and Cursor/portable instructions prevent agents from inventing unsupported Portolan command shapes. | Implemented |
+| P3-029 | `docs/specs/029-bounded-graph-index/` | Map bundles include bounded `graph-index.json` entrypoints and artifact budgets so agents do not need to load hundreds of megabytes of raw graph output first. | Implemented |
+| P3-030 | `docs/specs/030-graph-slice-command/` | Agents can extract bounded repo, edge-kind, or finding-kind JSON slices from an existing map bundle before opening full `graph.json`. | Implemented |
+| P3-032 | `docs/specs/032-context-evidence-index/` | Context packs include bounded `evidence-index.jsonl` records linking repositories, OSS/tool outputs, and gaps before agents drill into specialized artifacts. | Implemented |
+| P3-033 | `docs/specs/033-agent-command-guardrails/` | Generated answer contracts and Cursor/portable instructions prevent agents from inventing unsupported Portolan command shapes. | Implemented |
 
 ## P4: Product Validation Closure
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P4-034 | `specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Accepted on fixed local Bigtop comparison for evidence discipline and next-action quality; UI Cursor/Composer is outside the current required acceptance scope; global ecosystem completeness, complete runtime topology, near-clone/SBOM duplication, and broad OSS producer value remain not_assessed |
-| P4-035 | `specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Merged via PR #15 with Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep later narrowed with local-config producer smoke |
-| P4-036 | `specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Implemented and merged via PR #16; GitHub checks not_assessed |
-| P4-037 | `specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Implemented and merged via PR #17; GitHub checks not_assessed |
-| P4-038 | `specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Implemented and merged via PR #18; GitHub checks not_assessed |
-| P4-039 | `specs/039-bounded-jscpd-profile/` | Near-clone duplication claims are validated only through a bounded local jscpd profile, or kept failed, blocked, or not_assessed. | Implemented and merged via PR #19; GitHub checks not_assessed |
+| P4-034 | `docs/specs/034-cursor-comparison-validation/` | Cursor-alone and Cursor-plus-Portolan are compared on the same target and question set before claiming Portolan adds value over Cursor. | Accepted on fixed local Bigtop comparison for evidence discipline and next-action quality; UI Cursor/Composer is outside the current required acceptance scope; global ecosystem completeness, complete runtime topology, near-clone/SBOM duplication, and broad OSS producer value remain not_assessed |
+| P4-035 | `docs/specs/035-oss-producer-acceptance/` | Real local OSS producer outputs are generated or explicitly blocked before claiming OSS composition works. | Merged via PR #15 with Syft/CycloneDX verified on fixed Bigtop target; context output preservation fixed; jscpd full run failed as unbounded; Semgrep later narrowed with local-config producer smoke |
+| P4-036 | `docs/specs/036-scope-completeness-validation/` | Local scope and complete inherited-estate coverage are validated separately so repository counts are not overclaimed. | Implemented and merged via PR #16; GitHub checks not_assessed |
+| P4-037 | `docs/specs/037-relationship-evidence-taxonomy/` | Relationship claims distinguish static, declared, runtime, and claim-only evidence in plain product language. | Implemented and merged via PR #17; GitHub checks not_assessed |
+| P4-038 | `docs/specs/038-product-claim-gate/` | Product and client-facing claims are accepted, narrowed, rejected, blocked, or marked not assessed based on validation evidence. | Implemented and merged via PR #18; GitHub checks not_assessed |
+| P4-039 | `docs/specs/039-bounded-jscpd-profile/` | Near-clone duplication claims are validated only through a bounded local jscpd profile, or kept failed, blocked, or not_assessed. | Implemented and merged via PR #19; GitHub checks not_assessed |
 
 ## P5: Productization And Adapter Layer
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P5-040 | `specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Merged via PR #20; local baseline/install smoke and GitHub CI verified |
-| P5-041 | `specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Merged via PR #20; Codex single-repo control, OpenCode + `kimi-for-coding/k2p6` single-repo/multi-repo/black-box, OpenCode English and Russian install prompts on one external single-repo target, OpenCode English install prompt on Bigtop, OpenCode repo-local default-permission output, and Cursor Agent CLI / Composer 2.5 Bigtop lanes verified; Cursor UI is outside the current required acceptance scope; OpenCode external default-permission output failed |
-| P5-042 | `specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Merged via PR #20; first-class Semgrep and Repomix producer execution, Graphify adapter-contract fixture, raw Graphify node-link import with source-backed `EXTRACTED` verification, bounded SCIP/Serena-style JSON symbol-index import, bounded Repomix file-inventory import, and Graphify/Repomix producer smokes verified; Graphify MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena export/MCP behavior, and Repomix source/redaction semantics remain not_assessed |
-| P5-043 | `specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Merged via PR #20; query smoke and GitHub CI verified |
-| P5-044 | `specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Merged via PR #20; runtime/security smoke and GitHub CI verified; local runtime observations verified as `runtime-visible`, partial topology guardrail verified as `unknown`, complete runtime topology remains not_assessed |
-| P5-045 | `specs/045-docs-harness-onboarding/` | Humans and agents can choose the right Portolan documentation route for overview, install/build, Cursor, OpenCode, release, and SpecKit work without reading review ledgers first. | Merged via PR #21; GitHub CI verified; Cursor UI and fresh OpenCode runtime execution remain not_assessed |
-| P5-047 | `specs/047-canonical-public-install-release/` | Public visitors can install or clone Portolan through one canonical identity and reviewers can verify a bounded first release without claim drift. | Implemented and merged via PR #22; canonical identity migrated to `github.com/fcon-tech/portolan`, post-merge source checkout smoke verified, local `v0.1.0` build/checksum verified, GitHub CI verified; versioned public `go install` blocked until `v0.1.0` tag publication |
-| P5-048 | `specs/048-github-community-discovery/` | Public GitHub visitors and contributors can understand Portolan, find contribution/security routes, and see honest OSS-health states. | Implemented and merged via PR #24; OpenSSF Best Practices evidence follow-up merged via PR #25; GitHub description/topics/homepage, private vulnerability reporting, local verification, three non-GPT review lanes, GitHub checks, branch cleanup, post-merge community profile recheck, absent README badge claims, absent Scorecard API entry, and absent Best Practices entry verified; GitHub review approval remains not_assessed; community profile API still reports `issue_template: null` despite YAML issue forms on main |
-| P5-049 | `specs/049-public-demo-showcase/` | Public evaluators can run a reproducible Apache Bigtop demo and read a claim-bounded case study without leaking private context or hiding unknowns. | Implemented and merged via PR #23; public runbook, redacted excerpts, local cold-start and existing-landscape smoke evidence, claim scan, privacy/freshness review, PR review, GitHub checks, and merge closeout verified |
-| P5-050 | `specs/050-fcon-portolan-pages-site/` | FCON and Portolan can publish a static GitHub Pages site that routes visitors to install, demo, release, claims, and GitHub without overclaiming. | Implemented and merged via PR #26; local implementation, PR review, merge state, GitHub checks, and merge command verified; live GitHub Pages deployment, default Pages URL, DNS, HTTPS, and GitHub review approval not_assessed |
+| P5-040 | `docs/specs/040-release-envelope/` | Portolan has a repeatable release and install envelope with CI, clean-checkout bootstrap smoke, and versioned artifact guidance. | Merged via PR #20; local baseline/install smoke and GitHub CI verified |
+| P5-041 | `docs/specs/041-agent-acceptance-matrix/` | Portolan's product claim is tested across multiple agent harnesses and target shapes, with degraded lanes kept explicit. | Merged via PR #20; Codex single-repo control, OpenCode + `kimi-for-coding/k2p6` single-repo/multi-repo/black-box, OpenCode English and Russian install prompts on one external single-repo target, OpenCode English install prompt on Bigtop, OpenCode repo-local default-permission output, and Cursor Agent CLI / Composer 2.5 Bigtop lanes verified; Cursor UI is outside the current required acceptance scope; OpenCode external default-permission output failed |
+| P5-042 | `docs/specs/042-agent-adapter-layer/` | First-wave OSS/context adapters are evaluated and normalized as inputs rather than reimplemented scanners. | Merged via PR #20; first-class Semgrep and Repomix producer execution, Graphify adapter-contract fixture, raw Graphify node-link import with source-backed `EXTRACTED` verification, bounded SCIP/Serena-style JSON symbol-index import, bounded Repomix file-inventory import, and Graphify/Repomix producer smokes verified; Graphify MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena export/MCP behavior, and Repomix source/redaction semantics remain not_assessed |
+| P5-043 | `docs/specs/043-readonly-query-surface/` | Agents can ask bounded read-only questions against a map bundle without loading the full graph first. | Merged via PR #20; query smoke and GitHub CI verified |
+| P5-044 | `docs/specs/044-runtime-security-boundary/` | Runtime observation inputs and untrusted-artifact security boundaries are documented, validated, and reflected in product claims. | Merged via PR #20; runtime/security smoke and GitHub CI verified; local runtime observations verified as `runtime-visible`, partial topology guardrail verified as `unknown`, complete runtime topology remains not_assessed |
+| P5-045 | `docs/specs/045-docs-harness-onboarding/` | Humans and agents can choose the right Portolan documentation route for overview, install/build, Cursor, OpenCode, release, and SpecKit work without reading review ledgers first. | Merged via PR #21; GitHub CI verified; Cursor UI and fresh OpenCode runtime execution remain not_assessed |
+| P5-047 | `docs/specs/047-canonical-public-install-release/` | Public visitors can install or clone Portolan through one canonical identity and reviewers can verify a bounded first release without claim drift. | Implemented and merged via PR #22; canonical identity migrated to `github.com/fcon-tech/portolan`, post-merge source checkout smoke verified, local `v0.1.0` build/checksum verified, GitHub CI verified; versioned public `go install` blocked until `v0.1.0` tag publication |
+| P5-048 | `docs/specs/048-github-community-discovery/` | Public GitHub visitors and contributors can understand Portolan, find contribution/security routes, and see honest OSS-health states. | Implemented and merged via PR #24; OpenSSF Best Practices evidence follow-up merged via PR #25; GitHub description/topics/homepage, private vulnerability reporting, local verification, three non-GPT review lanes, GitHub checks, branch cleanup, post-merge community profile recheck, absent README badge claims, absent Scorecard API entry, and absent Best Practices entry verified; GitHub review approval remains not_assessed; community profile API still reports `issue_template: null` despite YAML issue forms on main |
+| P5-049 | `docs/specs/049-public-demo-showcase/` | Public evaluators can run a reproducible Apache Bigtop demo and read a claim-bounded case study without leaking private context or hiding unknowns. | Implemented and merged via PR #23; public runbook, redacted excerpts, local cold-start and existing-landscape smoke evidence, claim scan, privacy/freshness review, PR review, GitHub checks, and merge closeout verified |
+| P5-050 | `docs/specs/050-fcon-portolan-pages-site/` | FCON and Portolan can publish a static GitHub Pages site that routes visitors to install, demo, release, claims, and GitHub without overclaiming. | Implemented and merged via PR #26; local implementation, PR review, merge state, GitHub checks, and merge command verified; live GitHub Pages deployment, default Pages URL, DNS, HTTPS, and GitHub review approval not_assessed |
 
 ## P6: First-Run Product UX Closure
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P6-051 | `specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Ready-for-review PR #28; GitHub checks verified; merge approval not_assessed |
+| P6-051 | `docs/specs/051-portolan-quality-boundary/` | Portolan has a maintained product quality boundary, maturity matrix, canonical claim wording, and report-quality contract so generated reports cannot overclaim weak evidence. | Ready-for-review PR #28; GitHub checks verified; merge approval not_assessed |
 
 ## Backlog Rules
 

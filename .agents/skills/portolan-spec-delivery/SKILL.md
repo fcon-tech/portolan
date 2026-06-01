@@ -34,7 +34,7 @@ only when the PR state and evidence are coherent.
 4. Reconstruct status consistency before coding: compare backlog status, spec
    status, task checkboxes, review dispositions, recent git history, and the
    current implementation files. If these surfaces disagree, record a
-   spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`,
+   spec-local status reconstruction under `docs/specs/<NNN-short-name>/reviews/`,
    fix stale status metadata, and only then choose the next implementation
    target.
    Also verify branch metadata: `spec.md`, `plan.md`, the current git branch,
@@ -104,7 +104,7 @@ Before implementation, explicitly review and record:
 Write this as a spec-local artifact, for example:
 
 ```text
-specs/<NNN-short-name>/reviews/requirements-product-vision-drift-YYYY-MM-DD.md
+docs/specs/<NNN-short-name>/reviews/requirements-product-vision-drift-YYYY-MM-DD.md
 ```
 
 If the drift review finds a mismatch that affects scope, safety, evidence
@@ -157,7 +157,7 @@ because Codex itself is already GPT-family.
 Write review dispositions under:
 
 ```text
-specs/<NNN-short-name>/reviews/
+docs/specs/<NNN-short-name>/reviews/
 ```
 
 Do not put review artifacts under a repo-root `reviews/` directory.
@@ -276,7 +276,7 @@ Before marking a PR ready:
    one repo-grounded local reviewer. Serious or risky PRs need three assessed
    independent non-GPT model lanes.
 
-   If the PR touches `specs/`, `.specify/`, `.agents/skills/`, backlog rows,
+   If the PR touches `docs/specs/`, `.specify/`, `.agents/skills/`, backlog rows,
    review workflow, or governance docs, include `.specify/memory/constitution.md`
    in the review packet. Do not let constitution drift become `not_assessed`
    merely because the prompt omitted the constitution. For docs/public-artifact

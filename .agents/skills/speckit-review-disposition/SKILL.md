@@ -1,7 +1,7 @@
 ---
 name: "speckit-review-disposition"
 description: "Record and resolve review or analyze findings for a Portolan SpecKit feature before PR work. Use when the user says review disposition, analyze disposition, fix analyze findings, close review findings, or resolve SpecKit review issues."
-compatibility: "Portolan repository with specs/<NNN-short-name>/ and reviews/ artifacts"
+compatibility: "Portolan repository with docs/specs/<NNN-short-name>/ and reviews/ artifacts"
 metadata:
   author: "portolan"
   source: "repo-local"
@@ -77,7 +77,7 @@ State:
 4. Write a disposition under:
 
    ```text
-   specs/<NNN-short-name>/reviews/review-disposition-YYYY-MM-DD.md
+   docs/specs/<NNN-short-name>/reviews/review-disposition-YYYY-MM-DD.md
    ```
 
    Use a more specific name when useful, for example

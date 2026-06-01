@@ -23,7 +23,7 @@ fixture, and local raw Graphify node-link JSON import:
 
 ```bash
 portolan produce graphify --root /path/to/source-root --out /tmp/portolan-graphify-run
-portolan adapter validate --in testdata/oss-adapter-contract/graphify-minimal.json
+portolan adapter validate --in internal/testfixtures/oss-adapter-contract/graphify-minimal.json
 portolan import graphify --in /tmp/portolan-graphify-run/source-copy/graphify-out/graph.json --out graph.json
 portolan import graphify --in /tmp/portolan-graphify-run/source-copy/graphify-out/graph.json --root /path/to/source-root --out graph.json
 ```
@@ -82,10 +82,10 @@ Portolan can read the referenced `source_file` inside that root.
 
 ```bash
 go test -count=1 ./internal/adapter ./internal/app
-go run ./cmd/portolan produce graphify --root testdata/importer-normalization/graphify-source --out /tmp/portolan-graphify-run --graphify graphify --force
-go run ./cmd/portolan adapter validate --in testdata/oss-adapter-contract/graphify-minimal.json
-go run ./cmd/portolan import graphify --in testdata/importer-normalization/graphify.json --out /tmp/portolan-graphify-import.json --force
-go run ./cmd/portolan import graphify --in testdata/importer-normalization/graphify-edges.json --root testdata/importer-normalization/graphify-source --out /tmp/portolan-graphify-source-backed.json --force
+go run ./cmd/portolan produce graphify --root internal/testfixtures/importer-normalization/graphify-source --out /tmp/portolan-graphify-run --graphify graphify --force
+go run ./cmd/portolan adapter validate --in internal/testfixtures/oss-adapter-contract/graphify-minimal.json
+go run ./cmd/portolan import graphify --in internal/testfixtures/importer-normalization/graphify.json --out /tmp/portolan-graphify-import.json --force
+go run ./cmd/portolan import graphify --in internal/testfixtures/importer-normalization/graphify-edges.json --root internal/testfixtures/importer-normalization/graphify-source --out /tmp/portolan-graphify-source-backed.json --force
 ```
 
 ## Deferred Work

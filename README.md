@@ -140,8 +140,9 @@ If you are not sure which document to open first, start with the
 agents, Cursor operators, OpenCode operators, and release reviewers to the
 maintained surface for each workflow.
 
-For a public Apache Bigtop walkthrough with redacted example artifacts, see
-[Public Demo: Apache Bigtop](docs/demo.md).
+For a larger named stress example, see
+[Apache Bigtop Stress Example](docs/demo.md). It is evidence for one local
+target shape, not the main product path.
 
 ## Public Routes
 
@@ -149,7 +150,9 @@ These routes are current and boundary-limited. Some public surfaces are initial
 community infrastructure rather than proof of broad adoption or support.
 
 - Install: use the [Quick Start](#quick-start) above.
-- Demo: see [Public Demo: Apache Bigtop](docs/demo.md).
+- Demo: run the [Quick Start](#quick-start) against any local target you can
+  inspect. For a larger named example, see
+  [Apache Bigtop Stress Example](docs/demo.md).
 - Product claims: read [Product Claims](docs/product-claims.md) before reusing
   public wording.
 - Product quality: read
@@ -223,7 +226,8 @@ ecosystem validation.
 
 Important limits:
 
-- The validated Cursor comparison is headless Cursor on one fixed local Bigtop
+- Named acceptance examples are target-specific evidence, not the main product
+  story. The validated Cursor comparison is headless Cursor on one fixed local
   target, not UI Cursor/Composer generally.
 - Local repository count does not prove complete inherited-estate coverage.
 - Runtime service topology is not assessed unless supported local runtime
@@ -233,15 +237,10 @@ Important limits:
   selected local CLI risks; this is not a broad security certification.
 - Exact duplicate source/config clusters are supported; near-clone detection
   needs local jscpd-style evidence.
-- Syft/CycloneDX component identity evidence has been validated for the fixed
-  Bigtop target; Semgrep is a first-class local producer path with a local
-  config and explicit output; Repomix is a first-class local producer path;
-  Graphify is a first-class local producer path through a read-only staging
-  copy; Graphify node-link import with source-backed `EXTRACTED` verification,
-  SCIP/Serena-style JSON symbol-index import, and Repomix file-inventory import
-  are validated. These OSS tools are accepted local dependencies in the
-  workflow when installed and explicitly requested; broad OSS producer value
-  remains evidence-specific.
+- OSS producer validation is evidence-specific. Syft/CycloneDX, Semgrep,
+  Repomix, Graphify, jscpd-style JSON, and symbol-index JSON surfaces are
+  bounded local inputs or explicit local producer paths when installed and
+  requested; they do not imply broad scanner coverage or certification.
 
 ## More Documentation
 
@@ -256,7 +255,7 @@ English:
 - [Runtime Observations](docs/runtime-observations.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
-- [Demo Status](docs/demo.md)
+- [Apache Bigtop Stress Example](docs/demo.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
 - [Support](SUPPORT.md)

@@ -88,7 +88,7 @@ mark that lane `not_assessed`. Do not silently substitute another Gemini model.
 3. Record raw reviewer outputs under:
 
    ```text
-   specs/<NNN-short-name>/reviews/pr-review-<lane>-YYYY-MM-DD.md
+   docs/specs/<NNN-short-name>/reviews/pr-review-<lane>-YYYY-MM-DD.md
    ```
 
 4. Verify each accepted finding locally.
@@ -97,7 +97,7 @@ mark that lane `not_assessed`. Do not silently substitute another Gemini model.
 7. Write disposition:
 
    ```text
-   specs/<NNN-short-name>/reviews/pr-review-disposition-YYYY-MM-DD.md
+   docs/specs/<NNN-short-name>/reviews/pr-review-disposition-YYYY-MM-DD.md
    ```
 
 8. Commit fixes through `/speckit-git-commit` or the enabled auto-commit hook.

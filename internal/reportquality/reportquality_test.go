@@ -7,7 +7,7 @@ import (
 )
 
 func TestValidatePassesThinHonestReport(t *testing.T) {
-	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "testdata", "report-quality", "thin-honest.json")})
+	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "internal", "testfixtures", "report-quality", "thin-honest.json")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -17,7 +17,7 @@ func TestValidatePassesThinHonestReport(t *testing.T) {
 }
 
 func TestValidateFailsUnsupportedPositiveClaim(t *testing.T) {
-	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "testdata", "report-quality", "unsupported-positive-claim.json")})
+	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "internal", "testfixtures", "report-quality", "unsupported-positive-claim.json")})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestValidateFailsUnsupportedPositiveClaim(t *testing.T) {
 }
 
 func TestValidateFailsHiddenWeakState(t *testing.T) {
-	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "testdata", "report-quality", "hidden-weak-state.json")})
+	result, err := Run(Options{SummaryPath: filepath.Join("..", "..", "internal", "testfixtures", "report-quality", "hidden-weak-state.json")})
 	if err != nil {
 		t.Fatal(err)
 	}

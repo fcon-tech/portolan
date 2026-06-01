@@ -53,7 +53,7 @@ vulnerabilities.
 
 ## Before Opening A Pull Request
 
-For repository changes, start from the relevant SpecKit package under `specs/`
+For repository changes, start from the relevant SpecKit package under `docs/specs/`
 or open a proposal issue when no spec exists yet.
 
 Follow the [Code Of Conduct](CODE_OF_CONDUCT.md). By contributing, you confirm

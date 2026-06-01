@@ -1,13 +1,17 @@
-# Public Demo: Apache Bigtop
+# Apache Bigtop Stress Example
 
-This demo shows Portolan as a local evidence-preparation step before an agent
-answers questions about a large software landscape. It is not a benchmark, a
+This page is a named stress example for Portolan, not the primary product
+route. The primary route is target-agnostic: run `context prepare`, `map`, and
+bounded queries against a local target you can inspect.
+
+The example shows Portolan as a local evidence-preparation step before an agent
+answers questions about a larger software landscape. It is not a benchmark, a
 readiness gate, or proof of complete Apache Bigtop ecosystem coverage.
 
-The public target is Apache Bigtop because it is an Apache 2.0 integration
-project for packaging, testing, and configuring open source big-data
-components. A Portolan self-map was rejected as the primary public demo because
-it would overfit to this repository's own structure.
+Apache Bigtop is useful here because it is an Apache 2.0 integration project
+for packaging, testing, and configuring open source big-data components. It is
+one target-specific example, not the default workflow and not a special
+Portolan product mode.
 
 ## Prepare The Target
 
@@ -23,7 +27,7 @@ git clone https://github.com/apache/bigtop.git apache-bigtop-repo
 
 For a broader local stress run, add component repositories under the same
 `repos/` directory. The maintained corpus reference is
-`testdata/corpus-manifests/apache-bigtop/manifest.json`, and the background notes are in
+`internal/testfixtures/corpus-manifests/apache-bigtop/manifest.json`, and the background notes are in
 `docs/test-corpora/apache-bigtop.md`.
 
 Portolan itself does not clone repositories, call upstream services, start a
@@ -125,9 +129,9 @@ finish under the same time.
 
 ## Case Study Boundary
 
-The validated product claim is narrow: in a fixed local Bigtop headless Cursor
-comparison, the Portolan-assisted lane reduced unsupported claims from 12 to 0
-and produced equal or better next actions across the tested questions.
+The validated product claim is narrow: in one named local Bigtop headless
+Cursor comparison, the Portolan-assisted lane reduced unsupported claims from
+12 to 0 and produced equal or better next actions across the tested questions.
 
 That does not validate UI Cursor/Composer generally, arbitrary external
 targets, complete inherited-estate coverage, complete runtime topology, or broad
@@ -146,6 +150,6 @@ send generated Bigtop outputs until a privacy/freshness review checks:
 - stale timestamps presented as current verification.
 
 This repository commits only small redacted excerpts under
-`examples/public-demo/bigtop/`. Current redaction is manual: replace private
+`docs/test-corpora/apache-bigtop/examples/`. Current redaction is manual: replace private
 root/output prefixes with `<bigtop-root>` and `<demo-output>`, then run the
 privacy scan recorded under the spec reviews.

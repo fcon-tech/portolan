@@ -26,7 +26,7 @@ rg -n "github.com/(fcon-tech|fall-out-bug)/portolan|go install|git clone" README
 ```bash
 go test -count=1 ./...
 go vet ./...
-jq empty schema/*.json testdata/oss-adapter-contract/*.json
+jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
 git diff --check
 go run ./cmd/portolan --help
 ```
@@ -93,8 +93,7 @@ Release notes must include these current limits from `docs/product-claims.md`
 until newer validation evidence changes them:
 
 - UI Cursor/Composer behavior is outside the current required acceptance scope;
-  comparison evidence is for Cursor Agent CLI / Composer 2.5 on the fixed local
-  Bigtop target.
+  Cursor evidence is for headless Cursor Agent CLI on named local targets only.
 - OpenCode default-permission execution is verified only when `OUTPUT_PATH`
   stays inside the Portolan checkout; external output paths failed without
   permission bypass.
@@ -102,18 +101,16 @@ until newer validation evidence changes them:
 - Runtime-visible observations can be represented from supported local files,
   but complete service topology remains `not_assessed` without complete
   supported runtime evidence.
-- OSS producer validation is narrow: Syft/CycloneDX component identity is
-  verified for the fixed target, bounded jscpd JSON ingestion is verified on
-  the Portolan repository smoke target, first-class local Semgrep producer
-  execution is verified with a local config and output path, first-class local
-  Graphify producer execution is verified through a read-only staging copy,
-  first-class local Repomix producer execution is verified, raw Graphify
-  node-link import with source-backed `EXTRACTED` verification is verified,
-  bounded Repomix file-inventory import is verified, and bounded
-  SCIP/Serena-style JSON symbol-index import is verified. The full Bigtop
-  near-clone run, Graphify MCP/LLM/dashboard behavior, SCIP protobuf/real
-  indexer output, real Serena export/MCP behavior, and Repomix source/redaction
-  semantics remain unproven or `not_assessed`.
+- OSS producer validation is narrow and named. Producer/import paths may be
+  used when installed and explicitly requested, but broad scanner coverage,
+  certification, and target-independent producer value remain unproven or
+  `not_assessed`. The current named boundaries include local Semgrep producer
+  execution with local config/output, raw Graphify node-link import with
+  source-backed `EXTRACTED` verification, bounded Repomix file-inventory
+  import, and bounded SCIP/Serena-style JSON symbol-index import. Graphify
+  MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena
+  export/MCP behavior, and Repomix source/redaction semantics remain unproven
+  or `not_assessed`.
 - Output quality depends on the local evidence supplied to Portolan. Missing,
   stale, or incomplete inputs must stay visible as gaps.
 

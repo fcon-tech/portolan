@@ -53,7 +53,7 @@ action. Hidden optional producer gaps produce warnings.
 ## Command
 
 ```bash
-portolan report quality --summary testdata/report-quality/thin-honest.json
+portolan report quality --summary internal/testfixtures/report-quality/thin-honest.json
 ```
 
 The command exits `0` for `pass`, exits `1` for a valid summary that fails

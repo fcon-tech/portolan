@@ -57,7 +57,7 @@ does not parse source snippets into facts. Future broader adapters must:
 ```bash
 go test -count=1 ./internal/app ./internal/importer
 go run ./cmd/portolan produce repomix --root /tmp/portolan-repomix-local/target --out /tmp/portolan-repomix-local/out/repomix-output.xml --style xml --force
-go run ./cmd/portolan import repomix --in testdata/importer-normalization/repomix-output.xml --out /tmp/portolan-repomix-import.json --force
+go run ./cmd/portolan import repomix --in internal/testfixtures/importer-normalization/repomix-output.xml --out /tmp/portolan-repomix-import.json --force
 ```
 
 Future producer recipes should prefer local-only output, security checks
