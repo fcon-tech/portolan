@@ -140,7 +140,7 @@ func Run(opts Options) (Result, error) {
 		warnings = append(warnings, "no records matched the query")
 	}
 	if opts.Family == FamilyGaps {
-		warnings = append(warnings, "query gaps returns weak map coverage and finding records; context/gaps.jsonl contains context-preparation producer gaps when context prepare was run")
+		warnings = append(warnings, "query gaps returns weak records from the existing map bundle only; it does not supersede context/gaps.jsonl. Use context/gaps.jsonl and producer-* evidence-index records for producer-family acquisition, and query gaps for weak map coverage or finding records.")
 	}
 	return Result{
 		SchemaVersion: SchemaVersion,

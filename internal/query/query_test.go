@@ -113,6 +113,9 @@ func TestRunGapsIncludesWeakCoverageAndFindingRecords(t *testing.T) {
 	if finding.Reference != "portolan://bundle/findings/finding-unsupported-languages-not-assessed" {
 		t.Fatalf("reference = %q, want stable weak finding reference", finding.Reference)
 	}
+	if len(result.Warnings) == 0 || !strings.Contains(result.Warnings[0], "does not supersede context/gaps.jsonl") {
+		t.Fatalf("warnings = %#v, want context/map gap boundary", result.Warnings)
+	}
 }
 
 func TestRunEscapesReferenceIDs(t *testing.T) {
