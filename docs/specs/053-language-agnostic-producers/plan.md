@@ -90,6 +90,10 @@ No constitution violations are approved. If implementation requires a new
 dependency, producer execution wrapper, network access, daemon behavior, or
 credential handling, stop and record a design review before continuing.
 
+Implementation is also gated on PR #29/spec 052 merging and this branch being
+rebased onto the merge commit. Until then, only spec, review, and contract
+planning work is approved on this stacked branch.
+
 ## Phase 0: Research
 
 See [research.md](research.md).

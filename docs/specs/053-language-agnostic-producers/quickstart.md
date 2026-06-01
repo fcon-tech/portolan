@@ -29,6 +29,8 @@ Verify:
   runtime-observation evidence when applicable;
 - recommendations preserve `not_assessed`, `unknown`, or `cannot_verify`;
 - candidate tools are described as options, not verified support;
+- candidate tools are objects with `verification_state` and `support_state`,
+  not plain strings;
 - answer-contract text says Portolan does not own native PHP/JVM/Scala/
   TypeScript/shell semantics from recommendations alone.
 
@@ -43,6 +45,8 @@ Verify:
 - candidates without local evidence remain `not_assessed`;
 - risky candidates are rejected, blocked, or narrowed instead of becoming
   defaults.
+- Portolan validates and surfaces the evaluation record; it does not score,
+  rank, probe, install, or run the candidate producer itself.
 
 ## Expected Stress Follow-Up
 

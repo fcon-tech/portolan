@@ -10,21 +10,25 @@
 
 ## Phase 1: Setup And Reviews
 
-- [ ] T001 Create requirements/product-vision drift review in
+- [x] T001 Create requirements/product-vision drift review in
   `docs/specs/053-language-agnostic-producers/reviews/`.
-- [ ] T002 Record analyze or manual cross-artifact consistency disposition in
+- [x] T002 Record analyze or manual cross-artifact consistency disposition in
   `docs/specs/053-language-agnostic-producers/reviews/`.
-- [ ] T003 Verify stacked branch/base status against PR #29 and record whether
+- [x] T003 Verify stacked branch/base status against PR #29 and record whether
   implementation may proceed before PR #29 merges.
 
 ## Phase 2: Foundational Contract
 
 - [ ] T004 [P] Add producer recommendation/evaluation fixture files under
   `internal/testfixtures/language-agnostic-producers/`.
-- [ ] T005 [P] Add schema or contract validation expectations for
-  producer-recommendation, producer-evaluation, and producer-coverage records.
+- [ ] T005 [P] Add `schema/producer-family.schema.json` or equivalent
+  allow-listed contract validation for producer-recommendation,
+  producer-evaluation, and producer-coverage records.
 - [ ] T006 Add answer-contract wording expectations that recommendations are
   not evidence and per-language scanner ownership is not implied.
+- [ ] T006A Add contract tests that reject plain-string `candidate_tools`,
+  undeclared runtime-topology/native-language-semantics fields, and accepted or
+  narrowed candidates without local evaluation evidence.
 
 ## Phase 3: User Story 1 - Choose Producer Families By Evidence Need (P1)
 
@@ -36,10 +40,13 @@ families and blocked claims while preserving `not_assessed`.
 
 - [ ] T007 [P] [US1] Add failing context-preparation test for producer-family
   recommendation records in `internal/app/app_test.go`.
+- [ ] T007A [P] [US1] Add fixture coverage proving weak states survive
+  recommendation generation without upgrade to observed evidence.
 - [ ] T008 [US1] Implement bounded producer recommendation records in
   `internal/contextprep/`.
 - [ ] T009 [US1] Ensure recommendation records map blocked claims to evidence
-  families rather than PHP/JVM/Scala adapter names.
+  families rather than PHP/JVM/Scala adapter names, and represent candidates as
+  objects with `verification_state` and `support_state`.
 - [ ] T010 [US1] Update `answer-contract.md` generation to state that producer
   recommendations are options, not observed evidence.
 
@@ -55,7 +62,8 @@ integration-cost decisions.
 - [ ] T011 [P] [US2] Add failing fixture or unit test for accepted, narrowed,
   rejected, blocked, and `not_assessed` producer-evaluation states.
 - [ ] T012 [US2] Implement producer evaluation normalization or fixture loading
-  in the smallest existing artifact path.
+  in the smallest existing artifact path; do not score, rank, probe, install,
+  or run producer tools.
 - [ ] T013 [US2] Ensure risky defaults with network, credentials, daemon,
   mutation, or source export are rejected, blocked, or narrowed.
 - [ ] T014 [US2] Record candidate evaluation examples for at least two
@@ -71,6 +79,8 @@ symbol, API/catalog/model, and runtime evidence states remain separate.
 
 - [ ] T015 [P] [US3] Add failing test for producer-family coverage matrix
   records by repository in `internal/app/app_test.go`.
+- [ ] T015A [P] [US3] Add mixed-language partial coverage fixture with
+  repository, subdirectory/component, and `languages_in_scope` expectations.
 - [ ] T016 [US3] Implement coverage matrix record generation in the selected
   context or evidence-index artifact.
 - [ ] T017 [US3] Ensure partial subdirectory or single-family evidence does not
@@ -96,6 +106,9 @@ symbol, API/catalog/model, and runtime evidence states remain separate.
 
 - This spec is stacked after PR #29/spec 052 until 052 merges.
 - Implementation should not update PR #29.
+- Implementation must wait until PR #29 merges and this branch is rebased onto
+  the merge commit, unless the user explicitly accepts a stacked implementation
+  branch.
 - UX/report polish remains downstream of evidence-family coverage and should
   not begin until this producer-family contract is either implemented or
   explicitly deferred.

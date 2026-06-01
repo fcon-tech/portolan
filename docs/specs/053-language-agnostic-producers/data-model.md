@@ -12,6 +12,10 @@
 - `required_output`: expected local artifact or export shape
 - `candidate_tools`: candidate producer ids, each treated as an option unless
   evaluated
+- `candidate_tools[].verification_state`: not_assessed, cannot_verify,
+  verified_local_output, or blocked
+- `candidate_tools[].support_state`: candidate_only, accepted, narrowed,
+  rejected, or blocked
 - `reason`: why this family is recommended
 
 ## Producer Candidate
@@ -39,6 +43,7 @@
 - `maintenance`: active, stale, unknown, or `not_assessed`
 - `privacy`: local_safe, narrowed, blocked, or `not_assessed`
 - `integration_cost`: low, medium, high, or unknown
+- `integration_cost`: low, medium, high, unknown, or not_assessed
 - `evidence_source`: local file, review artifact, command output, or
   `not_assessed`
 - `notes`: bounded explanation
@@ -63,6 +68,10 @@
   claim-only, unknown, cannot_verify, or `not_assessed`
 - `source_artifact`: local artifact that justifies the status
 - `scope`: repository, subdirectory, landscape, or unknown
+- `scope_detail`: repository id, relative path, component id, or other bounded
+  scope detail when coverage is partial
+- `languages_in_scope`: language families covered by this record; empty means
+  language coverage is not assessed
 - `reason`: bounded explanation for agents
 
 ## State Rules
@@ -70,7 +79,10 @@
 - A recommendation is not evidence. It cannot upgrade a claim from
   `not_assessed` to observed.
 - A candidate is not supported until a producer evaluation says accepted or
-  narrowed with local evidence.
+  narrowed with local evidence. Candidate tool names must be represented as
+  objects with support state, never as plain strings.
 - Runtime topology remains `not_assessed` unless runtime-visible local
   observations exist and are in scope.
 - Partial output must stay partial by repository, directory, or family.
+- Portolan validates and surfaces evaluation records in this slice; it does not
+  autonomously score, rank, probe, install, or run candidate producer tools.

@@ -5,7 +5,9 @@
 **Created**: 2026-06-01
 
 **Status**: Draft specification, plan, and tasks prepared on a stacked branch
-after PR #29 became ready-for-review; implementation not_started
+after PR #29 became ready-for-review; pre-implementation review disposition
+recorded; implementation blocked until PR #29 merges and this branch is rebased
+onto the merge commit
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the
@@ -135,6 +137,8 @@ preserves those states separately.
   present and normalized.
 - **FR-005**: Recommendations MUST name candidate producer tools or formats as
   options, not as verified support, unless local evaluation evidence exists.
+  Candidate entries MUST carry machine-readable verification/support state so
+  consumers cannot treat a tool-name list as verified support.
 - **FR-006**: Candidate producer evaluation MUST record fit, output contract
   stability, local execution posture, license, maintenance health, privacy
   posture, integration cost, and default boundary risks.
@@ -142,7 +146,8 @@ preserves those states separately.
   target mutation, or source export MUST be rejected, blocked, or explicitly
   narrowed before it can appear as a default Portolan recommendation.
 - **FR-008**: The mixed-language coverage surface MUST report coverage by
-  repository and evidence family, including partial and off-scope coverage.
+  repository, evidence family, and scoped coverage unit, including partial and
+  off-scope coverage for subdirectories, components, or language subsets.
 - **FR-009**: Portolan MUST NOT treat dependency output, symbol output,
   manifest candidates, or catalog files as runtime topology unless
   runtime-visible local observations are supplied.
@@ -155,6 +160,13 @@ preserves those states separately.
 - **FR-012**: The feature MUST include a review disposition before
   implementation that checks product-boundary drift, OSS composition posture,
   and evidence-state honesty.
+- **FR-013**: Portolan MUST validate producer-family recommendation,
+  evaluation, and coverage records against an allow-listed schema before agents
+  or reports consume them.
+- **FR-014**: Evaluation records MUST be supplied by an operator or separate
+  local evaluation artifact. Portolan may validate and surface those records in
+  this slice, but MUST NOT autonomously score, rank, probe, install, or run
+  candidate producer tools.
 
 ### Key Entities
 
@@ -204,3 +216,6 @@ preserves those states separately.
   recorded local exports; absence of such evidence is `not_assessed`.
 - UX/report polish remains downstream of evidence-family coverage and should
   not convert recommendations into verified support claims.
+- Implementation must wait until PR #29/spec 052 merges and this branch is
+  rebased onto the merge commit, unless a later explicit approval authorizes a
+  stacked implementation branch.
