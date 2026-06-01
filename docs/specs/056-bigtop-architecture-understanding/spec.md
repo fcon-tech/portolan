@@ -4,8 +4,9 @@
 
 **Created**: 2026-06-01
 
-**Status**: In implementation; bounded question set and Cursor Composer 2.5
-comparison ledger recorded; evidence-discipline improvement is confirmed for
+**Status**: Merged via PR #34; bounded question set, Cursor Composer 2.5
+comparison ledger, independent review disposition, GitHub checks, squash merge,
+and branch cleanup verified; evidence-discipline improvement is confirmed for
 the bounded packet, while broad architecture understanding, runtime topology,
 symbol/reference, full coverage, and enterprise parity remain partial,
 blocked, or not_assessed
