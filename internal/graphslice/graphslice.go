@@ -257,6 +257,11 @@ func buildSlice(bundle string, mode string, value string, limit int, g graph.Gra
 	nodeSamples := sampleNodes(matchingNodes, limit)
 	edgeSamples := sampleEdges(matchingEdges, limit)
 	findingSamples := sampleFindings(matchingFindings, limit)
+	truncated := Truncated{
+		Nodes:    max(0, len(matchingNodes)-len(nodeSamples)),
+		Edges:    max(0, len(matchingEdges)-len(edgeSamples)),
+		Findings: max(0, len(matchingFindings)-len(findingSamples)),
+	}
 
 	return Slice{
 		SchemaVersion: SchemaVersion,
@@ -273,20 +278,30 @@ func buildSlice(bundle string, mode string, value string, limit int, g graph.Gra
 			MatchingEdges:    len(matchingEdges),
 			MatchingFindings: len(matchingFindings),
 		},
-		Truncated: Truncated{
-			Nodes:    max(0, len(matchingNodes)-len(nodeSamples)),
-			Edges:    max(0, len(matchingEdges)-len(edgeSamples)),
-			Findings: max(0, len(matchingFindings)-len(findingSamples)),
-		},
-		Nodes:    nodeSamples,
-		Edges:    edgeSamples,
-		Findings: findingSamples,
-		Rules: []string{
-			"This is a bounded slice from a Portolan map bundle, not the full graph.",
-			"Use graph.json only when this slice and graph-index.json are insufficient.",
-			"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
-		},
+		Truncated: truncated,
+		Nodes:     nodeSamples,
+		Edges:     edgeSamples,
+		Findings:  findingSamples,
+		Rules:     sliceRules(mode, value, truncated),
 	}
+}
+
+func sliceRules(mode string, value string, truncated Truncated) []string {
+	rules := []string{
+		"This is a bounded slice from a Portolan map bundle, not the full graph.",
+		"Use graph.json only when this slice and graph-index.json are insufficient.",
+		"Preserve unknown, cannot_verify, and not_assessed evidence states in answers.",
+	}
+	if mode == "finding-kind" {
+		rules = append(rules, "Finding-kind slices contain matching findings; use --edge-kind or --repo for edge and node drill-down.")
+	}
+	if truncated.Edges > 0 {
+		rules = append(rules, fmt.Sprintf("Edge samples are evenly spread across sorted matching %q edges; do not extrapolate missing edges from the sample.", value))
+	}
+	if truncated.Findings > 0 || truncated.Nodes > 0 {
+		rules = append(rules, "Truncated samples are incomplete; use narrower repo, edge-kind, or finding-kind criteria for precise claims.")
+	}
+	return rules
 }
 
 func uniqueNodes(nodes []graph.Node) []graph.Node {
@@ -320,11 +335,10 @@ func sampleNodes(nodes []graph.Node, limit int) []NodeSample {
 }
 
 func sampleEdges(edges []graph.Edge, limit int) []EdgeSample {
-	if len(edges) > limit {
-		edges = edges[:limit]
-	}
-	samples := make([]EdgeSample, 0, len(edges))
-	for _, edge := range edges {
+	sampleIndexes := boundedSampleIndexes(len(edges), limit)
+	samples := make([]EdgeSample, 0, len(sampleIndexes))
+	for _, index := range sampleIndexes {
+		edge := edges[index]
 		samples = append(samples, EdgeSample{
 			From:           edge.From,
 			To:             edge.To,
@@ -334,6 +348,38 @@ func sampleEdges(edges []graph.Edge, limit int) []EdgeSample {
 		})
 	}
 	return samples
+}
+
+func boundedSampleIndexes(total int, limit int) []int {
+	if total <= 0 || limit <= 0 {
+		return nil
+	}
+	if total <= limit {
+		indexes := make([]int, total)
+		for i := range indexes {
+			indexes[i] = i
+		}
+		return indexes
+	}
+	if limit == 1 {
+		return []int{0}
+	}
+	indexes := make([]int, 0, limit)
+	last := total - 1
+	denominator := limit - 1
+	previous := -1
+	for i := 0; i < limit; i++ {
+		index := (i*last + denominator/2) / denominator
+		if index <= previous {
+			index = previous + 1
+		}
+		if index >= total {
+			index = total - 1
+		}
+		indexes = append(indexes, index)
+		previous = index
+	}
+	return indexes
 }
 
 func sampleFindings(findings []findingRecord, limit int) []FindingSample {
