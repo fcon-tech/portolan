@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR; runtime capture approval remains pending and
+**Status**: Merged via PR #39; runtime capture approval remains pending and
 Bigtop runtime topology remains `cannot_verify`
 
 **Input**: PR #38 proved that existing local surfaces cannot verify Bigtop
