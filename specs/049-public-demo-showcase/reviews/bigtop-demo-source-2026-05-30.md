@@ -13,7 +13,7 @@ git clone https://github.com/apache/bigtop.git apache-bigtop-repo
 Broader stress setup:
 
 - add component repositories under the same `repos/` directory;
-- use `corpora/apache-bigtop/manifest.json` as the maintained corpus reference;
+- use `testdata/corpus-manifests/apache-bigtop/manifest.json` as the maintained corpus reference;
 - keep clone/fetch behavior outside Portolan itself.
 
 ## Source And License

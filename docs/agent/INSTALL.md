@@ -73,7 +73,7 @@ cannot be used:
 
 ```bash
 go run ./cmd/portolan --version
-go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
 ## Safety Defaults

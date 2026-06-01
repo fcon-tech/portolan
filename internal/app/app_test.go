@@ -471,40 +471,6 @@ func TestRunSelectionValidateRequiresSelectionFlag(t *testing.T) {
 	}
 }
 
-func TestRunSelectionGenerateBigtopWritesFullCorpusSelection(t *testing.T) {
-	root := t.TempDir()
-	repoDir := filepath.Join(root, "repos")
-	mustMkdir(t, filepath.Join(repoDir, "apache-bigtop-repo"))
-	mustMkdir(t, filepath.Join(repoDir, "apache-hadoop"))
-	manifest := filepath.Join(root, "manifest.json")
-	mustWrite(t, manifest, `{
-		"schema_version":"0.1.0",
-		"id":"apache-bigtop",
-		"targets":[
-			{"id":"apache-bigtop-repo","label":"Bigtop","kind":"repository","lifecycle":"active","role":"integrator","evidence_state":"source-visible"},
-			{"id":"apache-hadoop","label":"Hadoop","kind":"repository","lifecycle":"active","role":"filesystem","evidence_state":"source-visible"},
-			{"id":"bigtop-utils","label":"Utils","kind":"package","lifecycle":"internal-support","role":"support","evidence_state":"metadata-visible"}
-		]
-	}`)
-	out := filepath.Join(root, "selection.json")
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"selection", "generate-bigtop", "--manifest", manifest, "--repo-dir", repoDir, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	selection := readJSONFile(t, out)
-	if selection["corpus_manifest"] != manifest || selection["require_full_corpus"] != true {
-		t.Fatalf("selection = %#v, want full-corpus manifest fields", selection)
-	}
-	targets := selection["targets"].([]any)
-	if len(targets) != 2 {
-		t.Fatalf("targets = %#v, want only active repositories", targets)
-	}
-}
-
 func TestRunPacketHelpDescribesGraphOnlyMarkdown(t *testing.T) {
 	tests := [][]string{
 		{"packet", "--help"},

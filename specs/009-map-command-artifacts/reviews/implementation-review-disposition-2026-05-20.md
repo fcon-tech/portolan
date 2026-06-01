@@ -11,7 +11,7 @@ Date: 2026-05-20
 | Fixture command | verified | `go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force` wrote the bundle. |
 | JSON artifacts | verified | `jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json` passed. |
 | JSONL findings | verified | Each line in `/tmp/portolan-map-run/findings.jsonl` parsed with `jq empty`. |
-| JSON/schema syntax | verified | `jq empty schema/*.json corpora/apache-bigtop/manifest.json` passed. |
+| JSON/schema syntax | verified | `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` passed. |
 | Whitespace | verified | `git diff --check` passed. |
 
 ## Review Lanes

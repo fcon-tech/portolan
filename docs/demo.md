@@ -23,7 +23,7 @@ git clone https://github.com/apache/bigtop.git apache-bigtop-repo
 
 For a broader local stress run, add component repositories under the same
 `repos/` directory. The maintained corpus reference is
-`corpora/apache-bigtop/manifest.json`, and the background notes are in
+`testdata/corpus-manifests/apache-bigtop/manifest.json`, and the background notes are in
 `docs/test-corpora/apache-bigtop.md`.
 
 Portolan itself does not clone repositories, call upstream services, start a
@@ -44,7 +44,7 @@ export DEMO_OUT=/tmp/portolan-demo/portolan-output
 .portolan/bin/portolan context prepare \
   --root "$BIGTOP_ROOT" \
   --out "$DEMO_OUT/context" \
-  --profile cursor
+  --profile agent
 
 .portolan/bin/portolan map \
   --root "$BIGTOP_ROOT" \
@@ -105,13 +105,13 @@ The committed excerpts redact private machine paths manually.
 ### Cold-start primary setup
 
 - `git clone --depth 1 https://github.com/apache/bigtop.git apache-bigtop-repo`: passed in 0:04.01.
-- `portolan context prepare --root <bigtop-root> --out <out>/context --profile cursor`: passed in 0.07s.
+- `portolan context prepare --root <bigtop-root> --out <out>/context --profile agent`: passed in 0.07s.
 - `portolan map --root <bigtop-root> --out <out>/map`: passed in 0.40s.
 - `portolan query gaps --bundle <out>/map --limit 5`: passed.
 
 ### Larger existing-landscape smoke
 
-- `portolan context prepare --root <bigtop-root> --out <out>/context --profile cursor`: passed in 0.08s.
+- `portolan context prepare --root <bigtop-root> --out <out>/context --profile agent`: passed in 0.08s.
 - `portolan map --root <bigtop-root> --out <out>/map`: passed in 2:25.74.
 - Map output: 18 source-visible repositories, 172243 graph nodes, 148714 graph
   edges, 555 findings, and 21 coverage records.

@@ -43,7 +43,7 @@ mutation during `map`. Bigtop corpus preparation is explicit setup outside the
 blind map run.
 
 **Scale/Scope**: Full Bigtop 3.5.0 corpus inventory as defined by
-`corpora/apache-bigtop/manifest.json`, including meta-repo, component
+`testdata/corpus-manifests/apache-bigtop/manifest.json`, including meta-repo, component
 repositories, support packages, retired projects, and runtime/package metadata
 surfaces.
 
@@ -76,7 +76,7 @@ internal/tooloutput/
 schema/
 agent/
 .cursor/rules/
-corpora/apache-bigtop/
+testdata/corpus-manifests/apache-bigtop/
 testdata/landscape-map/
 testdata/apache-bigtop-landscape/
 specs/016-landscape-map-orchestration/

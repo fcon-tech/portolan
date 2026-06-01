@@ -244,7 +244,7 @@ backed by artifacts.
   claims, black boxes, and imported tool outputs maps successfully with
   `portolan map --selection` and writes all five required artifacts.
 - **SC-002**: A Bigtop landscape selection generated or validated from
-  `corpora/apache-bigtop/manifest.json` reaches 100% local source-repository
+  `testdata/corpus-manifests/apache-bigtop/manifest.json` reaches 100% local source-repository
   coverage for active and external product repositories before the blind
   operator scan starts.
 - **SC-003**: A deliberately incomplete Bigtop landscape selection blocks

@@ -35,7 +35,7 @@ partly black-box.
 The main workflow creates a context pack for an agent:
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Typical output:
@@ -108,7 +108,7 @@ cd portolan
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 .portolan/bin/portolan --help
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 .portolan/bin/portolan map --root <target-root> --out <output-dir>/map
 ```
 
@@ -125,7 +125,7 @@ PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 If you are developing Portolan itself, you can also use:
 
 ```bash
-go run ./cmd/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+go run ./cmd/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 go run ./cmd/portolan map --root <target-root> --out <output-dir>/map
 go run ./cmd/portolan query gaps --bundle <output-dir>/map --limit 20
 ```

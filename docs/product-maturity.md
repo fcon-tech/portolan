@@ -10,7 +10,7 @@ remain visible.
 | Surface | Kind | Maturity | Product Boundary | Not Supported | Verification |
 | --- | --- | --- | --- | --- | --- |
 | `portolan context prepare` | CLI | `stable-first-run` | Builds local agent context packs | Does not answer architecture questions itself | Go tests and CLI smoke |
-| `portolan map` | CLI | `stable-first-run` | Builds local map bundles with graph, coverage, findings, summary, and packet | Does not prove complete estate coverage | Go tests and Bigtop/local smokes |
+| `portolan map` | CLI | `stable-first-run` | Builds local map bundles with graph, coverage, findings, summary, and packet | Does not prove complete estate coverage | Go tests, map fixtures, and recorded acceptance lanes |
 | `portolan query findings` | CLI | `stable-first-run` | Reads bounded finding records from a map bundle | Not a general graph query language | Go tests and CLI smoke |
 | `portolan query gaps` | CLI | `stable-first-run` | Surfaces weak evidence and missing coverage records | Does not resolve the gaps | Go tests and CLI smoke |
 | `portolan report quality` | CLI | `tooling` | Validates report-quality summaries before UX/report claims | Does not judge prose quality or create evidence | Go tests and fixture smokes |

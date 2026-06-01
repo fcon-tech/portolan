@@ -37,7 +37,7 @@
 - [x] T019 Record pre-implementation review disposition under `specs/010-relationship-detection/reviews/`.
 - [x] T020 Record post-slice review disposition under `specs/010-relationship-detection/reviews/`.
 - [x] T021 Run `go test -count=1 ./...`.
-- [x] T022 Run `jq empty schema/*.json corpora/apache-bigtop/manifest.json`.
+- [x] T022 Run `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json`.
 - [x] T023 Run `go run ./cmd/portolan map --root testdata/relationship-detection/repo --out /tmp/portolan-relationships-run --force`.
 - [x] T024 Run `jq empty /tmp/portolan-relationships-run/run.json /tmp/portolan-relationships-run/graph.json`.
 - [x] T025 Run a `jq` check that every `imports` and `depends-on` edge in `/tmp/portolan-relationships-run/graph.json` has `from`, `to`, `kind`, `evidence.state`, and `evidence.source`.

@@ -19,7 +19,7 @@ PR: https://github.com/fall-out-bug/portolan/pull/10
 | Check | Status |
 | --- | --- |
 | `go test -count=1 ./...` | verified |
-| `jq empty schema/*.json corpora/apache-bigtop/manifest.json` | verified |
+| `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` | verified |
 | `go run ./cmd/portolan map --root testdata/relationship-detection/repo --out /tmp/portolan-relationships-run --force` | verified |
 | `jq empty /tmp/portolan-relationships-run/run.json /tmp/portolan-relationships-run/graph.json` | verified |
 | Relationship-edge `jq` field check over `/tmp/portolan-relationships-run/graph.json` | verified |

@@ -19,7 +19,7 @@
 | Check | Status |
 | --- | --- |
 | `go test ./...` | verified |
-| `jq empty schema/*.json corpora/apache-bigtop/manifest.json` | verified |
+| `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` | verified |
 | `git diff --check` | verified |
 | `go run ./cmd/portolan --version` | verified |
 | `go run ./cmd/portolan scan --help` | verified |

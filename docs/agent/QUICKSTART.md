@@ -50,13 +50,13 @@ go run ./cmd/portolan --version
 ## 2. Prepare Agent Context
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 If using the repo-local binary:
 
 ```bash
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Read these files before answering broad questions:

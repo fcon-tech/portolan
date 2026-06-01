@@ -9,7 +9,7 @@ Evaluation is based only on direct inspection of `/home/fall_out_bug/projects/bi
 
 **`selection.json` mismatch (observed):**
 - Lists **15** repository targets; **does not list** `apache-livy`, `apache-oozie`, or `apache-sqoop`, though all three exist on disk.
-- Sets `require_full_corpus: true` and points `corpus_manifest` to a path **outside** this target (`/home/fall_out_bug/projects/sdp/portolan/corpora/apache-bigtop/manifest.json`). Full-corpus membership and missing upstream repos are **`unknown`** from target-only inspection.
+- Sets `require_full_corpus: true` and points `corpus_manifest` to a path **outside** this target (`/home/fall_out_bug/projects/sdp/portolan/testdata/corpus-manifests/apache-bigtop/manifest.json`). Full-corpus membership and missing upstream repos are **`unknown`** from target-only inspection.
 
 **Declared Bigtop stack vs local trees (from `bigtop.bom` `components` block):**
 - **In current BOM (17 packaged components):** zookeeper, hadoop, hbase, hive, tez, solr, spark, flink, phoenix, kafka, zeppelin, livy, ranger, airflow, alluxio, plus bigtop-groovy/utils/select/jsvc (packaged from `apache-bigtop-repo`, not separate repos).

@@ -23,7 +23,7 @@
 - [x] T008 Update `docs/product-backlog.md` and `specs/008-agent-skill-pack/spec.md` status after implementation.
 - [x] T009 Record review disposition under `specs/008-agent-skill-pack/reviews/`.
 - [x] T010 Run `go test ./...`.
-- [x] T011 Run `jq empty schema/*.json corpora/apache-bigtop/manifest.json`.
+- [x] T011 Run `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json`.
 - [x] T012 Run `git diff --check`.
 
 ## Dependencies

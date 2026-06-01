@@ -20,7 +20,7 @@ implementation:
 | Check | Status | Notes |
 | --- | --- | --- |
 | `go test -count=1 ./...` | verified | Passed after planning-only edits. |
-| `jq empty schema/*.json corpora/apache-bigtop/manifest.json` | verified | Passed after planning-only edits. |
+| `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` | verified | Passed after planning-only edits. |
 | `git diff --check` | verified | Passed after planning-only edits. |
 | SpecKit prerequisites | verified | `check-prerequisites.sh --json --require-tasks --include-tasks` found `research.md`, `data-model.md`, `quickstart.md`, and `tasks.md`. |
 

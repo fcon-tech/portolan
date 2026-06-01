@@ -45,7 +45,7 @@ for Portolan scans.
    profiles.
 
 The committed machine-readable profile is
-`corpora/apache-bigtop/manifest.json`; the schema is
+`testdata/corpus-manifests/apache-bigtop/manifest.json`; the schema is
 `schema/corpus-manifest.schema.json`.
 
 ## Test Strategy

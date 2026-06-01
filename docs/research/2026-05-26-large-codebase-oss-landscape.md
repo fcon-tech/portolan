@@ -40,7 +40,7 @@ evidence-labeled answers that can say `unknown` or `cannot_verify`.
 The next product slice should be closer to:
 
 ```text
-portolan context prepare --root <folder> --out <dir> --profile cursor
+portolan context prepare --root <folder> --out <dir> --profile agent
 ```
 
 The exact command name is open, but the job is specific: prepare a bounded,

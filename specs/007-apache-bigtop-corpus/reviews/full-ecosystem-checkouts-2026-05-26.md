@@ -13,7 +13,7 @@ repo noise.
 
 ## Repository Checkouts
 
-Cloned every `repository_url` target from `corpora/apache-bigtop/manifest.json`
+Cloned every `repository_url` target from `testdata/corpus-manifests/apache-bigtop/manifest.json`
 using shallow working-tree checkouts:
 
 - `apache-bigtop-repo`
@@ -49,7 +49,7 @@ Command:
 
 ```bash
 go run ./cmd/portolan selection generate-bigtop \
-  --manifest corpora/apache-bigtop/manifest.json \
+  --manifest testdata/corpus-manifests/apache-bigtop/manifest.json \
   --repo-dir /home/fall_out_bug/projects/bigtop-landscape/repos \
   --out /home/fall_out_bug/projects/bigtop-landscape/selection.json \
   --force

@@ -44,7 +44,7 @@ Use Cursor as an operator over local Portolan artifacts:
 2. Prepare context before answering broad claims:
 
    ```bash
-   portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+   portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
    ```
 
 3. Build a map only when needed:

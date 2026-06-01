@@ -18,7 +18,7 @@ Review verdict: CHANGES_REQUESTED
 | --- | --- |
 | Focused tests: `go test -count=1 ./internal/app ./internal/maprun ./internal/relationships` | verified |
 | Full tests: `go test -count=1 ./...` | verified |
-| Schema syntax: `jq empty schema/*.json corpora/apache-bigtop/manifest.json` | verified |
+| Schema syntax: `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` | verified |
 | Map fixture command | verified |
 | Bundle JSON/JQ checks | verified |
 | Relationship skipped-surface and `not_assessed` finding checks | verified |

@@ -19,7 +19,7 @@ Date: 2026-05-20
 | Check | Status |
 | --- | --- |
 | `go test ./...` | verified |
-| `jq empty schema/*.json corpora/apache-bigtop/manifest.json` | verified |
+| `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json` | verified |
 | `go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force` | verified |
 | `jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json` | verified |
 | JSONL parse check over `/tmp/portolan-map-run/findings.jsonl` | verified |

@@ -9,6 +9,15 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 - Base: `main`
 - Scope: spec 051 quality boundary, maturity matrix, report-quality contract,
   local validator, schema, fixtures, and doc routes.
+- Scope cleanup: top-level `corpora/` was removed as a misleading product
+  surface. The Bigtop acceptance manifest now lives under
+  `testdata/corpus-manifests/apache-bigtop/manifest.json`.
+- Scope cleanup: Bigtop-specific product hardcode was removed from the current
+  CLI and Go packages. `portolan selection generate-bigtop` and
+  `internal/corpus` no longer exist; Bigtop remains only as testdata and
+  historical acceptance evidence.
+- Scope cleanup: `context prepare` now defaults to generic `--profile agent`;
+  `--profile cursor` remains a compatibility alias for older lanes.
 - Adjacent spec scope: `specs/052-agent-scan-report-ux/` was pruned from the
   PR diff; future UX/report work must be reintroduced as a separate spec.
 
@@ -25,6 +34,9 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 | MI > 70 for production code in `internal/reportquality` and `internal/app` | verified |
 | `go run ./cmd/portolan report quality --summary testdata/report-quality/thin-honest.json` | verified |
 | Hidden weak-state fixture fail verdict | verified |
+| Top-level `corpora/` absent | verified |
+| Bigtop-specific CLI command absent | verified |
+| Generic `context prepare --profile agent` | verified |
 | OpenCode agent runtime smoke against this worktree | diagnostic_pass; not accepted as agent acceptance evidence |
 | Cursor Agent CLI runtime smoke against this worktree | diagnostic_pass with explicit `--yolo`; not accepted as agent acceptance evidence |
 | Full blind OpenCode acceptance lane | verified on external single-repo target |
@@ -45,6 +57,9 @@ PR: https://github.com/fcon-tech/portolan/pull/28
   `full-blind-agent-acceptance-2026-06-01.md`; raw transcripts recorded in
   `full-blind-opencode-spec-kit-2026-06-01.raw.md` and
   `full-blind-cursor-spec-kit-2026-06-01.raw.md`.
+- Product hardcode audit: `product-hardcode-audit-2026-06-01.md` records the
+  removed Bigtop-specific product command/package and remaining product-doc
+  hardcode candidates.
 
 ## GitHub State
 

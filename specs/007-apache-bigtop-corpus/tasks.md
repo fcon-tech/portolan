@@ -7,7 +7,7 @@
 
 - [x] T001 Add `schema/corpus-manifest.schema.json` for curated test corpus
   manifests.
-- [x] T002 Add `corpora/apache-bigtop/manifest.json` pinned to Bigtop 3.5.0
+- [x] T002 Add `testdata/corpus-manifests/apache-bigtop/manifest.json` pinned to Bigtop 3.5.0
   official metadata.
 - [x] T003 Record Bigtop source references, layers, targets, evidence states,
   acceptance checks, and scope exclusions.
@@ -95,7 +95,7 @@
 ## Deferred Work
 
 - [x] D001 Add a manifest-to-selection generator.
-  - Implemented by spec 016 as `portolan selection generate-bigtop`.
+  - Implemented by spec 016 as `removed Bigtop-specific selection generator`.
 - [ ] D002 Add a minimal local fixture derived from the Bigtop manifest.
 - [ ] D003 Add schema validation beyond JSON syntax.
 - [ ] D004 Add optional corpus preparation commands with explicit network

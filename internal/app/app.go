@@ -12,7 +12,6 @@ import (
 
 	"github.com/fcon-tech/portolan/internal/adapter"
 	"github.com/fcon-tech/portolan/internal/contextprep"
-	"github.com/fcon-tech/portolan/internal/corpus"
 	graphdiff "github.com/fcon-tech/portolan/internal/diff"
 	"github.com/fcon-tech/portolan/internal/graphslice"
 	"github.com/fcon-tech/portolan/internal/importer"
@@ -1060,51 +1059,10 @@ func runSelection(args []string, stdout io.Writer, stderr io.Writer) int {
 	switch args[0] {
 	case "validate":
 		return runSelectionValidate(args[1:], stdout, stderr)
-	case "generate-bigtop":
-		return runSelectionGenerateBigtop(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown selection command %q\n", args[0])
 		return 2
 	}
-}
-
-func runSelectionGenerateBigtop(args []string, stdout io.Writer, stderr io.Writer) int {
-	if len(args) == 1 && (args[0] == "-h" || args[0] == "--help") {
-		writeSelectionGenerateBigtopUsage(stdout)
-		return 0
-	}
-
-	flags := flag.NewFlagSet("selection generate-bigtop", flag.ContinueOnError)
-	flags.SetOutput(stderr)
-	flags.Usage = func() {}
-	manifestPath := flags.String("manifest", "", "local Bigtop corpus manifest JSON path")
-	repoDir := flags.String("repo-dir", "", "directory containing local repository checkouts by manifest id")
-	outputPath := flags.String("out", "", "output selection JSON path")
-	force := flags.Bool("force", false, "overwrite an existing selection file")
-	if err := flags.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			writeSelectionGenerateBigtopUsage(stdout)
-			return 0
-		}
-		return 2
-	}
-	if flags.NArg() != 0 {
-		fmt.Fprintf(stderr, "unexpected selection generate-bigtop argument %q\n", flags.Arg(0))
-		return 2
-	}
-
-	sel, err := corpus.GenerateBigtopSelection(corpus.BigtopSelectionOptions{
-		ManifestPath: *manifestPath,
-		RepoDir:      *repoDir,
-		OutputPath:   *outputPath,
-		Force:        *force,
-	})
-	if err != nil {
-		fmt.Fprintf(stderr, "selection generate-bigtop: %v\n", err)
-		return 2
-	}
-	fmt.Fprintf(stdout, "wrote Bigtop selection %s (%d repositories)\n", *outputPath, len(sel.Targets))
-	return 0
 }
 
 func runSelectionValidate(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -1259,7 +1217,7 @@ Usage:
   portolan produce semgrep --root . --config .semgrep.yml --out semgrep.json
   portolan produce repomix --root . --out repomix-output.xml
   portolan produce graphify --root . --out graphify-run
-  portolan context prepare --root . --out .portolan/context --profile cursor
+  portolan context prepare --root . --out .portolan/context --profile agent
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
   portolan query findings --bundle .portolan/run --kind relationships --limit 20
@@ -1268,7 +1226,6 @@ Usage:
   portolan graph slice --bundle .portolan/run --repo repo-id --out slice.json
   portolan adapter validate --in adapter.json
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
-  portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
   portolan scan --help
@@ -1496,7 +1453,7 @@ loading large graph.json into an agent prompt.
 
 func writeContextUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
-  portolan context prepare --root <dir> --out <dir> --profile cursor [--force]
+  portolan context prepare --root <dir> --out <dir> --profile agent [--force]
 
 Prepare local, read-only agent context packs.
 
@@ -1507,7 +1464,7 @@ Available subcommands:
 
 func writeContextPrepareUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
-  portolan context prepare --root <dir> --out <dir> --profile cursor [--force]
+  portolan context prepare --root <dir> --out <dir> --profile agent [--force]
 
 Prepare a Cursor-readable local context pack before an agent answers broad
 codebase or architecture questions. The command discovers bounded local Git
@@ -1660,28 +1617,11 @@ not_assessed unless backed by separate evidence.
 func writeSelectionUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
   portolan selection validate --selection selection.json
-  portolan selection generate-bigtop --manifest manifest.json --repo-dir repos --out selection.json [--force]
 
 Validate local selection inventory without reading target contents.
 
 Default selection behavior is local-first, makes no network calls, and does not
 modify selected paths.
-`)
-}
-
-func writeSelectionGenerateBigtopUsage(w io.Writer) {
-	fmt.Fprint(w, `Usage:
-  portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /path/to/repos --out selection.json [--force]
-
-Generate a full-corpus Bigtop landscape selection from the committed manifest
-and an explicit local checkout directory. The command does not clone, fetch, or
-mutate repositories; it only writes the selected output JSON.
-
-Flags:
-  --manifest path   local Bigtop corpus manifest JSON path
-  --repo-dir path   directory containing local repository checkouts named by manifest id
-  --out path        output selection JSON path
-  --force           overwrite an existing selection file
 `)
 }
 

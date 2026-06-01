@@ -87,7 +87,7 @@ testdata/
 - JSONL parse check over `/tmp/portolan-relationships-run/findings.jsonl`.
 - `jq` check that relationship edges contain `from`, `to`, `kind`,
   `evidence.state`, and `evidence.source`.
-- `jq empty schema/*.json corpora/apache-bigtop/manifest.json`.
+- `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json`.
 - `go test -count=1 ./...`.
 - `git diff --check`.
 

@@ -16,7 +16,7 @@ agent a Bigtop-specific operator packet.
 - portable Portolan agent guide;
 - Cursor rule wrapper;
 - current Portolan CLI;
-- `corpora/apache-bigtop/manifest.json`;
+- `testdata/corpus-manifests/apache-bigtop/manifest.json`;
 - for real operator acceptance: a local Apache Bigtop checkout selected by the
   operator;
 - for command preflight only:

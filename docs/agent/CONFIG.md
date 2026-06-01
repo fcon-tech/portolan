@@ -6,7 +6,7 @@ directory, and optional input files.
 ## Context Preparation
 
 ```bash
-portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
 Use this first when preparing an agent to answer questions.

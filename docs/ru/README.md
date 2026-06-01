@@ -34,7 +34,7 @@ Portolan особенно полезен для messy, legacy, multi-repo и par
 Основной workflow создает context bundle для агента:
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Типичный output:
@@ -109,7 +109,7 @@ cd portolan
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 .portolan/bin/portolan --help
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 .portolan/bin/portolan map --root <target-root> --out <output-dir>/map
 ```
 

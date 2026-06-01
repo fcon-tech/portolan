@@ -10,5 +10,5 @@
       "apache-spark"
     ]
   },
-  "source": "corpora/apache-bigtop/manifest.json"
+  "source": "testdata/corpus-manifests/apache-bigtop/manifest.json"
 }

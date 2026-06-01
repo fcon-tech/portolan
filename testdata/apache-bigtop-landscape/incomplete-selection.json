@@ -7,6 +7,6 @@
   "metadata": [
     {"id": "apache-bigtop-release-350", "path": "metadata/release-350.json"}
   ],
-  "corpus_manifest": "../../corpora/apache-bigtop/manifest.json",
+  "corpus_manifest": "../../testdata/corpus-manifests/apache-bigtop/manifest.json",
   "require_full_corpus": true
 }

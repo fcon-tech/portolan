@@ -62,7 +62,7 @@ agent/
 - Check Cursor rule delegates to `agent/AGENT_GUIDE.md`.
 - Check example report has required sections and evidence columns.
 - `go test ./...`.
-- `jq empty schema/*.json corpora/apache-bigtop/manifest.json`.
+- `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json`.
 - `git diff --check`.
 
 ## Risks

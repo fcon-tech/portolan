@@ -58,7 +58,7 @@ go run ./cmd/portolan --version
 ## 2. Подготовь Контекст Для Агента
 
 ```bash
-<portolan-cmd> context prepare --root <target-root> --out <output-dir>/context --profile cursor
+<portolan-cmd> context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Перед ответом прочитай:

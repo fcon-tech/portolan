@@ -157,7 +157,7 @@ or `not_assessed`; do not replace it with a fixture pass.
 
 ### Measurable Outcomes
 
-- **SC-001**: `jq empty corpora/apache-bigtop/manifest.json` succeeds.
+- **SC-001**: `jq empty testdata/corpus-manifests/apache-bigtop/manifest.json` succeeds.
 - **SC-002**: `jq empty schema/corpus-manifest.schema.json` succeeds.
 - **SC-003**: The manifest contains at least one target in each category:
   repository, release, documentation, binary-repository, docker-image, runtime,

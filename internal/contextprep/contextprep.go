@@ -151,9 +151,9 @@ func Run(opts Options) (Result, error) {
 		return Result{}, errors.New("--out is required")
 	}
 	if opts.Profile == "" {
-		opts.Profile = "cursor"
+		opts.Profile = "agent"
 	}
-	if opts.Profile != "cursor" {
+	if opts.Profile != "agent" && opts.Profile != "cursor" {
 		return Result{}, fmt.Errorf("unsupported profile %q", opts.Profile)
 	}
 	if opts.Version == "" {
@@ -225,7 +225,7 @@ func Run(opts Options) (Result, error) {
 	if err := writeGaps(filepath.Join(temp, "gaps.jsonl"), gaps); err != nil {
 		return Result{}, err
 	}
-	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, repos, tools, ossPlan, gaps)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root)), 0o644); err != nil {
@@ -1119,7 +1119,7 @@ func localSemgrepConfig(root string) string {
 }
 
 func rerunContextCommand(root, out string) string {
-	return "portolan context prepare --root " + shellQuote(root) + " --out " + shellQuote(out) + " --profile cursor --force"
+	return "portolan context prepare --root " + shellQuote(root) + " --out " + shellQuote(out) + " --profile agent --force"
 }
 
 func shellQuote(value string) string {
@@ -1134,7 +1134,7 @@ func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
-func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap) string {
+func renderAgentBrief(root string, profile string, repos []Repository, tools []ToolEntry, ossPlan ossPlanFile, gaps []Gap) string {
 	var b strings.Builder
 	observedTools := 0
 	cannotVerifyTools := 0
@@ -1153,7 +1153,7 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPla
 		}
 	}
 	fmt.Fprintf(&b, "# Portolan Agent Brief\n\n")
-	fmt.Fprintf(&b, "Profile: Cursor\n\n")
+	fmt.Fprintf(&b, "Profile: %s\n\n", profileLabel(profile))
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
 	fmt.Fprintf(&b, "Start here before answering CTO-level questions about this landscape.\n\n")
 	fmt.Fprintf(&b, "## What To Read First\n\n")
@@ -1176,6 +1176,15 @@ func renderAgentBrief(root string, repos []Repository, tools []ToolEntry, ossPla
 	return b.String()
 }
 
+func profileLabel(profile string) string {
+	switch profile {
+	case "cursor":
+		return "Cursor (compatibility alias)"
+	default:
+		return "Agent"
+	}
+}
+
 func renderAnswerContract(root string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Portolan Answer Contract\n\n")
@@ -1189,7 +1198,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "- Next local command: the smallest read-only command that would reduce the most important unknown.\n\n")
 	fmt.Fprintf(&b, "Do not answer from vibes, naming conventions, or repository size alone. If an evidence family is missing, say `not_assessed` and point to `oss-plan.json` or the needed map command. Do not invent Portolan commands or flags; if no listed command reduces an unknown, say that user-supplied local evidence is required.\n\n")
 	fmt.Fprintf(&b, "## Allowed Next Commands\n\n")
-	fmt.Fprintf(&b, "- Refresh context: `portolan context prepare --root <target-root> --out <context-dir> --profile cursor --force`.\n")
+	fmt.Fprintf(&b, "- Refresh context: `portolan context prepare --root <target-root> --out <context-dir> --profile agent --force`.\n")
 	fmt.Fprintf(&b, "- Build a map bundle: `portolan map --root <target-root> --out <run-dir> --force`.\n")
 	fmt.Fprintf(&b, "- Use a curated local inventory only when it already exists: `portolan selection validate --selection <selection.json>` then `portolan map --selection <selection.json> --out <run-dir> --force`.\n")
 	fmt.Fprintf(&b, "- Drill down from a map bundle: `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind` variants.\n")

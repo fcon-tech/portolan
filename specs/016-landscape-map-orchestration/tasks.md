@@ -63,7 +63,7 @@
 
 ## Phase 7: Full Bigtop Readiness Verification
 
-- [x] T037 Generate or validate a Bigtop landscape selection from `corpora/apache-bigtop/manifest.json` with 100% local source-repository coverage for active and external product repositories.
+- [x] T037 Generate or validate a Bigtop landscape selection from `testdata/corpus-manifests/apache-bigtop/manifest.json` with 100% local source-repository coverage for active and external product repositories.
 - [x] T038 Run the incomplete Bigtop fixture and verify it blocks before acceptance.
 - [x] T039 Run the complete Bigtop landscape selection and verify all five artifacts are written.
 - [x] T040 Inspect `coverage.json` and confirm every active/external Bigtop product repository is local and source-visible, and every non-source inventory id is represented with the correct evidence state.

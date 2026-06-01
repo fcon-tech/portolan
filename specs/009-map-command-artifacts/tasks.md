@@ -33,7 +33,7 @@
 - [x] T015 Update `docs/product-backlog.md` and `specs/009-map-command-artifacts/spec.md` status after implementation.
 - [x] T016 Record review disposition under `specs/009-map-command-artifacts/reviews/`.
 - [x] T017 Run `go test ./...`.
-- [x] T018 Run `jq empty schema/*.json corpora/apache-bigtop/manifest.json`.
+- [x] T018 Run `jq empty schema/*.json testdata/corpus-manifests/apache-bigtop/manifest.json`.
 - [x] T019 Run `go run ./cmd/portolan map --root testdata/map-command/repo --out /tmp/portolan-map-run --force`.
 - [x] T020 Run `jq empty /tmp/portolan-map-run/run.json /tmp/portolan-map-run/graph.json`.
 - [x] T021 Run JSONL parse check over `/tmp/portolan-map-run/findings.jsonl`.

@@ -10,7 +10,7 @@ acceptance as blocked on landscape map orchestration or as generally
 
 - P1-016 is implemented and merged via PR #13.
 - `portolan map --selection` is the product-grade landscape workflow.
-- `portolan selection generate-bigtop` exists and was delivered by spec 016.
+- `removed Bigtop-specific selection generator` exists and was delivered by spec 016.
 - The full Bigtop corpus selection and local Portolan map run were verified
   during spec 016 closeout.
 - The real Cursor + Composer 2.5 blind operator run remains open because the

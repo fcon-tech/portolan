@@ -3,7 +3,7 @@
 ## Prepare Context For A Single Repo
 
 ```bash
-portolan context prepare --root /path/to/repo --out /tmp/portolan-context --profile cursor
+portolan context prepare --root /path/to/repo --out /tmp/portolan-context --profile agent
 ```
 
 Then read:

@@ -8,7 +8,7 @@ implemented. It does not allow partial Bigtop acceptance.
 Use the committed Bigtop corpus manifest as the inventory source:
 
 ```bash
-jq empty corpora/apache-bigtop/manifest.json
+jq empty testdata/corpus-manifests/apache-bigtop/manifest.json
 ```
 
 Prepare the Bigtop meta-repository and local source repositories for every
@@ -19,16 +19,10 @@ preparation step may clone or fetch repositories only as an explicit setup
 action before the blind map run. The map run itself remains offline and
 read-only.
 
-After the repositories are present locally, generate the selection from the
-manifest and the checkout directory:
-
-```bash
-portolan selection generate-bigtop \
-  --manifest corpora/apache-bigtop/manifest.json \
-  --repo-dir /path/to/bigtop-landscape/repos \
-  --out /path/to/bigtop-landscape/selection.json \
-  --force
-```
+After the repositories are present locally, prepare a normal Portolan
+`selection.json` that references the local repository paths plus the corpus
+manifest. Bigtop-specific selection generation is intentionally not part of the
+product CLI.
 
 The preparation output is a landscape selection such as:
 

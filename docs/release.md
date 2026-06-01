@@ -36,7 +36,7 @@ go run ./cmd/portolan --help
 ```bash
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
-.portolan/bin/portolan context prepare --root . --out /tmp/portolan-context-smoke --profile cursor --force
+.portolan/bin/portolan context prepare --root . --out /tmp/portolan-context-smoke --profile agent --force
 .portolan/bin/portolan map --root . --out /tmp/portolan-map-smoke --force
 ```
 

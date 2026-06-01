@@ -71,7 +71,7 @@ Implemented local landscape mapping support for `portolan map --selection`:
 - verified: `git diff --check`
 - verified: `go run ./cmd/portolan map --selection testdata/landscape-map/selection.json --out <tmp>/run --force`
 - verified: `go run ./cmd/portolan map --selection testdata/apache-bigtop-landscape/incomplete-selection.json --out <tmp>/run` exits non-zero, names missing active/external Bigtop repositories, and writes no output directory
-- verified: `go run ./cmd/portolan selection generate-bigtop --manifest corpora/apache-bigtop/manifest.json --repo-dir /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/repos --out /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/selection.json --force`
+- verified: `go run ./cmd/removed Bigtop-specific selection generator --manifest testdata/corpus-manifests/apache-bigtop/manifest.json --repo-dir /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/repos --out /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/selection.json --force`
 - verified: `go run ./cmd/portolan map --selection /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/selection.json --out /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/run --force`
 - verified: `/Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/run/coverage.json` has `blocked: []`, 15 selected local repository records, and no non-source inventory blockers.
 - verified: `/Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/run/` contains `run.json`, `coverage.json`, `graph.json`, `findings.jsonl`, and `map.md`.

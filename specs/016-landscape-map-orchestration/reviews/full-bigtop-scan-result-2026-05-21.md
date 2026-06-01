@@ -2,7 +2,7 @@
 
 ## Inputs
 
-- Manifest: `corpora/apache-bigtop/manifest.json`
+- Manifest: `testdata/corpus-manifests/apache-bigtop/manifest.json`
 - Local repository directory:
   `/Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/repos`
 - Generated selection:
@@ -16,7 +16,7 @@ Command:
 
 ```bash
 go run ./cmd/portolan selection generate-bigtop \
-  --manifest corpora/apache-bigtop/manifest.json \
+  --manifest testdata/corpus-manifests/apache-bigtop/manifest.json \
   --repo-dir /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/repos \
   --out /Users/fall_out_bug/projects/faust/sdp/bigtop-landscape/selection.json \
   --force

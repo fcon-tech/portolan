@@ -35,7 +35,7 @@ implementation is in scope.
 ## Project Structure
 
 ```text
-corpora/apache-bigtop/manifest.json
+testdata/corpus-manifests/apache-bigtop/manifest.json
 docs/test-corpora/apache-bigtop.md
 schema/corpus-manifest.schema.json
 specs/007-apache-bigtop-corpus/spec.md
