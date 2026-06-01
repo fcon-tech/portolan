@@ -8,10 +8,11 @@
 recommendations, evaluation loading, coverage matrix, review-driven fixes, full
 local baseline, independent review disposition, GitHub checks, explicit user
 merge approval, squash merge, and branch cleanup verified; post-merge Cursor +
-Composer 2.5 stress, guidance follow-up PR #31 ready-for-review, and post-map
-SBOM/unknown-node navigation-index stress verified; real producer outputs beyond
-052, GitHub review approval, and refreshed PR #31 merge/check state remain
-`not_assessed`
+Composer 2.5 stress, guidance follow-up PR #31, post-map SBOM/unknown-node
+navigation-index stress, refreshed PR #31 checks, explicit user merge approval,
+squash merge, and branch cleanup verified; real producer outputs beyond 052,
+GitHub review approval, complete architecture understanding, and runtime
+topology remain `not_assessed`
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the
