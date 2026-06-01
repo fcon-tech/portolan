@@ -95,6 +95,36 @@ func TestNormalizeDependencyToolOutputCreatesRelationshipEvidence(t *testing.T) 
 	}
 }
 
+func TestNormalizeDependencyToolOutputMarksMissingRefsCannotVerify(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "cyclonedx-missing-ref.json")
+	if err := os.WriteFile(path, []byte(`{
+		"bomFormat":"CycloneDX",
+		"components":[{"bom-ref":"php-api","type":"application","name":"acme/api"}],
+		"dependencies":[{"ref":"php-api","dependsOn":["missing-library"]}]
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	nodes, edges, findings := normalizeToolOutput(selection.ToolOutput{
+		ID:   "deps",
+		Kind: "dependency",
+		Tool: "cyclonedx",
+		Path: path,
+	})
+
+	missing := maprunNode(nodes, "deps:component:missing-library")
+	if missing == nil || missing.Evidence.State != graph.CannotVerify {
+		t.Fatalf("missing component node = %#v, want cannot_verify", missing)
+	}
+	edge := maprunEdge(edges, "deps:component:php-api", "deps:component:missing-library", "depends-on")
+	if edge == nil || edge.Evidence.State != graph.CannotVerify || !strings.Contains(edge.Evidence.Reason, "dependency ref was not present") {
+		t.Fatalf("dependency edge = %#v, want cannot_verify missing-ref edge", edge)
+	}
+	if len(findings) != 1 || findings[0].Status != "observed" {
+		t.Fatalf("findings = %#v, want producer finding retained as observed with degraded edge", findings)
+	}
+}
+
 func TestNormalizeDependencyToolOutputCannotVerifyMalformedOrOversized(t *testing.T) {
 	t.Run("malformed", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "bad-cyclonedx.json")
@@ -193,9 +223,17 @@ func TestNormalizeSymbolIndexToolOutputCreatesBoundedRelationshipEvidence(t *tes
 		if edge.Kind != "owns" {
 			t.Fatalf("edge = %#v, want only owns relationships from symbol-index output", edge)
 		}
-		if edge.Evidence.State != graph.MetadataVisible || !strings.Contains(edge.Evidence.Reason, "not a complete call graph") {
-			t.Fatalf("edge evidence = %#v, want bounded metadata-visible symbol evidence", edge.Evidence)
+		if edge.Evidence.State != graph.MetadataVisible {
+			t.Fatalf("edge evidence = %#v, want metadata-visible symbol evidence", edge.Evidence)
 		}
+	}
+	docEdge := maprunEdge(edges, "mixed-symbols", "mixed-symbols:document:src-controller-php", "owns")
+	if docEdge == nil || docEdge.Evidence.Reason != "symbol-index document ownership; not a complete call graph" {
+		t.Fatalf("document ownership edge = %#v, want explicit non-call-graph reason", docEdge)
+	}
+	symbolEdge := maprunEdge(edges, "mixed-symbols:document:src-controller-php", "mixed-symbols:symbol:php-app-controller", "owns")
+	if symbolEdge == nil || symbolEdge.Evidence.Reason != "symbol occurrence listed by local export; not a complete call graph" {
+		t.Fatalf("symbol ownership edge = %#v, want explicit non-call-graph reason", symbolEdge)
 	}
 	if len(findings) != 1 || findings[0].Kind != "relationships" || findings[0].Status != "observed" {
 		t.Fatalf("findings = %#v, want observed relationship finding", findings)
@@ -208,6 +246,30 @@ func TestNormalizeSymbolIndexToolOutputCreatesBoundedRelationshipEvidence(t *tes
 }
 
 func TestNormalizeSymbolIndexToolOutputCannotVerifyEmptyOrTooManySymbols(t *testing.T) {
+	t.Run("malformed", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "symbols.json")
+		if err := os.WriteFile(path, []byte(`{"documents":[`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		nodes, edges, findings := normalizeToolOutput(selection.ToolOutput{
+			ID:   "bad-symbols",
+			Kind: "symbol-index",
+			Tool: "fixture",
+			Path: path,
+		})
+
+		if len(edges) != 0 {
+			t.Fatalf("edges = %#v, want no assessed relationships", edges)
+		}
+		if nodes[0].Evidence.State != graph.CannotVerify {
+			t.Fatalf("source evidence = %#v, want cannot_verify", nodes[0].Evidence)
+		}
+		if findings[0].Status != "cannot_verify" || !strings.Contains(strings.ToLower(findings[0].Summary), "malformed") {
+			t.Fatalf("finding = %#v, want malformed symbol-index cannot_verify", findings[0])
+		}
+	})
+
 	t.Run("empty documents", func(t *testing.T) {
 		path := filepath.Join(t.TempDir(), "symbols.json")
 		if err := os.WriteFile(path, []byte(`{"producer":"fixture","documents":[]}`), 0o644); err != nil {
@@ -260,6 +322,38 @@ func TestNormalizeSymbolIndexToolOutputCannotVerifyEmptyOrTooManySymbols(t *test
 		}
 		if findings[0].Status != "cannot_verify" || !strings.Contains(findings[0].Summary, "exceeds") {
 			t.Fatalf("finding = %#v, want oversized symbol cannot_verify", findings[0])
+		}
+	})
+
+	t.Run("too many documents", func(t *testing.T) {
+		oldLimit := maxSelectedSymbolDocuments
+		maxSelectedSymbolDocuments = 1
+		t.Cleanup(func() { maxSelectedSymbolDocuments = oldLimit })
+		path := filepath.Join(t.TempDir(), "symbols.json")
+		if err := os.WriteFile(path, []byte(`{
+			"documents":[
+				{"path":"a.php","symbols":[{"id":"php:A"}]},
+				{"path":"b.php","symbols":[{"id":"php:B"}]}
+			]
+		}`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		nodes, edges, findings := normalizeToolOutput(selection.ToolOutput{
+			ID:   "large-documents",
+			Kind: "symbol-index",
+			Tool: "fixture",
+			Path: path,
+		})
+
+		if len(edges) != 0 {
+			t.Fatalf("edges = %#v, want no assessed relationships", edges)
+		}
+		if nodes[0].Evidence.State != graph.CannotVerify {
+			t.Fatalf("source evidence = %#v, want cannot_verify", nodes[0].Evidence)
+		}
+		if findings[0].Status != "cannot_verify" || !strings.Contains(findings[0].Summary, "document count") || !strings.Contains(findings[0].Summary, "exceeds") {
+			t.Fatalf("finding = %#v, want oversized document cannot_verify", findings[0])
 		}
 	})
 }

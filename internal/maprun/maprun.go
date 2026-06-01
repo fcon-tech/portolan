@@ -78,6 +78,8 @@ const graphIndexHighDegreeLimit = 25
 // Selected tool-output normalization is intentionally in-memory and bounded.
 // Larger producer outputs should use a streaming/importer path or remain
 // cannot_verify until a later spec approves a larger graph budget.
+// These limits are vars so focused tests can lower them without allocating
+// large producer fixtures.
 var maxSelectedToolOutputBytes int64 = 64 * 1024 * 1024
 var maxSelectedSymbolDocuments = 5000
 var maxSelectedSymbols = 50000

@@ -510,7 +510,10 @@ func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
 				Count:         counts[family],
 				EvidenceState: "source-visible",
 				Summary:       relationshipCandidateSummary(repo.ID, family, counts[family]),
-				Reason:        "local source file names indicate build/deploy relationship evidence candidates; semantic parsing remains not_assessed",
+				// This slice records source-visible candidate locations only;
+				// semantic parsing must stay explicit until a parser-backed
+				// slice replaces this fixed reason.
+				Reason: "local source file names indicate build/deploy relationship evidence candidates; semantic parsing remains not_assessed",
 			})
 		}
 	}
