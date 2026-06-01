@@ -4,11 +4,12 @@
 
 **Created**: 2026-06-01
 
-**Status**: PR #30 ready-for-review after status-only closeout refresh;
-producer-family schema/fixtures, context recommendations, evaluation loading,
-coverage matrix, review-driven fixes, full local baseline, independent review
-disposition, GitHub checks, and PR readiness closeout verified; real producer
-outputs beyond 052 and GitHub review approval remain `not_assessed`
+**Status**: Merged via PR #30; producer-family schema/fixtures, context
+recommendations, evaluation loading, coverage matrix, review-driven fixes, full
+local baseline, independent review disposition, GitHub checks, explicit user
+merge approval, squash merge, and branch cleanup verified; real producer outputs
+beyond 052, post-merge Cursor + Composer 2.5 stress, and GitHub review approval
+remain `not_assessed`
 
 **Input**: User description: "If this is a PHP project, or a mixed-language
 estate, do we write an adapter for each language? Do not make a JVM adapter the
