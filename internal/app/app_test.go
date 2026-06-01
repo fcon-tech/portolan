@@ -1670,7 +1670,7 @@ func TestRunQueryGapsPreservesWeakStates(t *testing.T) {
 		t.Fatalf("records = %#v, want weak records", records)
 	}
 	warnings := fmt.Sprint(result["warnings"])
-	for _, want := range []string{"weak map coverage and finding records", "context/gaps.jsonl"} {
+	for _, want := range []string{"weak records from the existing map bundle", "does not supersede context/gaps.jsonl"} {
 		if !strings.Contains(warnings, want) {
 			t.Fatalf("warnings = %s, want %q", warnings, want)
 		}
@@ -1950,7 +1950,21 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"Cursor", "answer-contract.md", "oss-plan.json", "unknown", "cannot_verify", "Do not infer"} {
+	for _, want := range []string{
+		"Cursor",
+		"answer-contract.md",
+		"oss-plan.json",
+		"unknown",
+		"cannot_verify",
+		"Do not infer",
+		"Local producer evaluation records",
+		"map `summary.json.skipped_surfaces`",
+		"Go imports and go.mod manifests",
+		"SBOM package fan-out",
+		"Observed CycloneDX components",
+		"context-preparation producer gaps",
+		"`context/gaps.jsonl` and `producer-*`",
+	} {
 		if !strings.Contains(string(brief), want) {
 			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
 		}
@@ -2016,10 +2030,14 @@ func TestRunContextPrepareWritesCursorPack(t *testing.T) {
 		"native PHP, JVM, Scala",
 		"producer evidence",
 		"build/deploy relationship candidates",
+		"Go imports and go.mod manifests",
 	} {
 		if !strings.Contains(taxonomySection, want) {
 			t.Errorf("answer-contract.md relationship taxonomy missing %q:\n%s", want, taxonomySection)
 		}
+	}
+	if !strings.Contains(string(answerContract), "Portolan does not synthesize producer evaluations from recommendation records") {
+		t.Fatalf("answer-contract.md missing explicit producer evaluation boundary:\n%s", answerContract)
 	}
 	if stderr.Len() != 0 {
 		t.Fatalf("stderr = %q, want empty", stderr.String())
