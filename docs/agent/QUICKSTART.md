@@ -135,6 +135,6 @@ Do not invent facts that are not in the Portolan artifacts.
 - Source/config duplicate clusters are evidence, not a refactoring order.
 - Local visible scope is not complete estate coverage.
 - Runtime topology needs runtime observations.
-- OSS producers are valid local dependencies when installed and explicitly
-  requested, but producer plans are not evidence until outputs exist.
+- OSS tools are valid local dependencies when installed and explicitly
+  requested, but output recipes are not evidence until outputs exist.
 - `not_assessed` is a valid result.

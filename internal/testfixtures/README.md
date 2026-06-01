@@ -24,7 +24,6 @@ templates, or supported input catalogs.
 | `corpus-manifests/apache-bigtop/` | Apache Bigtop manifest used by historical acceptance and coverage reviews. | Named corpus reference only; not a product catalog. |
 | `black-box-profile/` | Selection, metadata, runtime, and claim fixtures for black-box profile behavior. | Test fixture. |
 | `configuration-surfaces/` | Small repository fixture for config, env, port, workflow, and secret-reference detection. | Test fixture. |
-| `duplication-detection/` | Small repository fixture for exact duplicate source/config detection. | Test fixture. |
 | `evidence-diff/` | Graph snapshots for evidence diff behavior. | Test fixture. |
 | `human-readable-packet/` | Graph fixtures for packet rendering, weak-state visibility, and malformed input handling. | Test fixture. |
 | `importer-normalization/` | Local importer fixtures for CycloneDX, Graphify, Repomix, and symbol-index style inputs. | Test fixture. |

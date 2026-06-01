@@ -33,27 +33,27 @@ large-codebase OSS landscape and the recommended agent-context direction.
 ## Current Validation Status
 
 These states are product-evidence states, not a list of tools found on one
-developer machine. A local binary on `PATH` is not success until a bounded
-producer output is generated, preserved, normalized, and recorded.
+developer machine. A local binary on `PATH` is not success until bounded native
+OSS output is generated, preserved, normalized, and recorded.
 
 | Component | Current state | Evidence boundary |
 | --- | --- | --- |
 | Syft / CycloneDX | `verified` narrowly | Syft produced a local CycloneDX SBOM for one named stress target; Portolan preserved it in the context pack and recorded CycloneDX as `metadata-visible`. This supports component identity evidence only. |
 | jscpd | `narrowed` / mixed | A bounded jscpd run on the Portolan repository smoke target produced usable JSON and was preserved as `metadata-visible`. A separate large stress-target jscpd run failed before usable JSON output, so broad near-clone evidence remains unproven. |
-| Semgrep | `verified` as a first-class local OSS producer path | `portolan produce semgrep` invokes installed Semgrep with a local config and explicit JSON output path. A real Semgrep 1.157.0 run produced findings on a temporary local target, and `context prepare` preserved that JSON as `metadata-visible`. Registry-backed configs, remote rules, and broad rule-value claims remain outside the default boundary. |
-| Graphify | `verified` as a first-class local OSS producer path plus raw node-link import and source-backed `EXTRACTED` verification | `portolan produce graphify` invokes installed Graphify through a staged source copy under an explicit output directory, so the target checkout remains read-only. The Graphify-style fixture validates confidence-to-evidence-state mapping. A local Graphify snapshot also produced `graphify-out/graph.json` on a temporary target. `portolan import graphify` normalizes raw `nodes`/`links` or `nodes`/`edges` outputs and can mark `EXTRACTED` facts `source-visible` when `--root` is supplied and `source_file` is readable inside that root. Graphify MCP/LLM behavior, PR dashboards, source-range hashing, and large-graph limits are still outside the importer contract. |
+| Semgrep | `verified` as a local OSS output contract | Native Semgrep CLI output with a local config and explicit JSON output path can be preserved by `context prepare` as `metadata-visible`. Agents should use Semgrep's native CLI/skill/MCP surfaces when available; Portolan does not wrap Semgrep execution. Registry-backed configs, remote rules, and broad rule-value claims remain outside the default boundary. |
+| Graphify | `verified` for raw node-link import and source-backed `EXTRACTED` verification | Native Graphify CLI/skill/MCP output can be imported when it produces local `graphify-out/graph.json` node-link data. The Graphify-style fixture validates confidence-to-evidence-state mapping. `portolan import graphify` normalizes raw `nodes`/`links` or `nodes`/`edges` outputs and can mark `EXTRACTED` facts `source-visible` when `--root` is supplied and `source_file` is readable inside that root. Graphify MCP/LLM behavior, PR dashboards, source-range hashing, and large-graph limits are still outside the importer contract. |
 | SCIP / Serena-style symbol indexes | `verified` narrowly for bounded JSON symbol-index import; SCIP CLI `verified` only | SCIP CLI help ran from the local snapshot, proving protocol tooling availability. `portolan import symbol-index` normalizes a local SCIP/Serena-style JSON export into document and symbol metadata. SCIP protobuf parsing, real SCIP indexer output, real Serena export, LSP/MCP daemon behavior, semantic correctness, and call-graph completeness remain unassessed. |
-| Repomix | `verified` as a first-class local OSS producer and file-inventory import path | `portolan produce repomix` invokes installed Repomix with an explicit local output path and security checks enabled by default. `repomix@1.14.1` also packed a temporary one-file local target. `portolan import repomix` normalizes local packed-output file paths as `metadata-visible` inventory and marks disabled security-check packs as `cannot_verify`. Packed source parsing as architecture facts, redaction enforcement, and token/summary semantics remain unimplemented. |
+| Repomix | `verified` as a file-inventory import path | Native Repomix CLI/skill/MCP output can be imported from an explicit local output path. `portolan import repomix` normalizes local packed-output file paths as `metadata-visible` inventory and marks disabled security-check packs as `cannot_verify`. Packed source parsing as architecture facts, redaction enforcement, and token/summary semantics remain unimplemented. |
 
 ## First-Wave Adapter Profiles
 
 Spec `docs/specs/042-agent-adapter-layer/` adds the first productization wave of
 adapter profiles:
 
-- `docs/adapter-contracts/graphify-profile.md`: Graphify is accepted as an
-  installed local OSS producer invoked by Portolan through a staging copy, plus
-  a local adapter-contract validation profile, raw node-link import, and
-  source-backed verification for readable `source_file` paths under `--root`.
+- `docs/adapter-contracts/graphify-profile.md`: Graphify is accepted through
+  native OSS output plus a local adapter-contract validation profile, raw
+  node-link import, and source-backed verification for readable `source_file`
+  paths under `--root`.
   `EXTRACTED` producer confidence is `source-visible` only after Portolan source
   inspection, otherwise `metadata-visible`; `INFERRED` is `claim-only`, and
   `AMBIGUOUS` is `cannot_verify`.
@@ -66,7 +66,7 @@ adapter profiles:
 
 The first-wave evaluation ledger is recorded in
 `docs/specs/042-agent-adapter-layer/reviews/oss-candidate-ledger-2026-05-27.md`.
-The follow-up producer smoke ledger is recorded in
+The historical follow-up OSS smoke ledger is recorded in
 `docs/specs/042-agent-adapter-layer/reviews/oss-composition-followup-2026-05-27.md`.
 
 ## Integration Rules
@@ -75,7 +75,7 @@ The follow-up producer smoke ledger is recorded in
 - Treat OSS scanners as optional local dependencies. Portolan may run or import
   them only after the tool is installed locally and the user has approved that
   evidence source.
-- Verify upstream tools before running producers: Semgrep
+- Verify upstream tools before running native OSS commands: Semgrep
   (<https://semgrep.dev/docs/getting-started/quickstart>), Repomix
   (<https://github.com/yamadashy/repomix>), Graphify
   (<https://github.com/safishamsi/graphify>), Syft

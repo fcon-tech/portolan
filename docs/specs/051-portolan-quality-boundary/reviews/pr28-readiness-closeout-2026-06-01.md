@@ -66,6 +66,12 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 - Product hardcode audit: `product-hardcode-audit-2026-06-01.md` records the
   removed Bigtop-specific product command/package and remaining product-doc
   hardcode candidates.
+- Bigtop harness stress: `bigtop-harness-stress-2026-06-01.md` records the
+  repeated Cursor Composer 2.5 and OpenCode lanes against
+  `/home/fall_out_bug/projects/bigtop-landscape/` under the revised harness
+  concept. Result: Portolan was materially useful for structured
+  landscape-navigation evidence, but Java/Scala/Maven relationships and
+  full-landscape duplication remain `not_assessed`/`failed`.
 
 ## GitHub State
 
@@ -86,6 +92,10 @@ PR: https://github.com/fcon-tech/portolan/pull/28
 - Agent runtime acceptance for this slice: OpenCode and Cursor Agent CLI
   verified on an external single-repo blind acceptance target. Cursor UI
   remains `not_assessed`.
+- Landscape harness stress: Cursor Composer 2.5 and OpenCode lanes completed
+  against the local Bigtop landscape. Portolan materially improved
+  evidence-state discipline, scope drift detection, and config/workflow
+  metrics; full-root jscpd duplication evidence failed with Node OOM.
 
 ## Stop Reason
 

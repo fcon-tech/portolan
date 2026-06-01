@@ -19,9 +19,9 @@ remain visible.
 | `map.md` and packet Markdown | Artifact | `stable-first-run` | Human-readable view derived from graph evidence | Does not add facts beyond source artifacts | Packet tests |
 | CycloneDX/Syft import | Producer/import | `tooling` | Normalizes local SBOM component identity and dependencies | Does not run Syft or prove security posture | Importer tests |
 | jscpd-style duplication input | Producer/import | `tooling` | Represents bounded near-clone evidence from local JSON | Does not prove all duplication across a landscape | Adapter/import tests |
-| Semgrep producer | Producer | `tooling` | Runs installed Semgrep with local config/output | Does not download rules or certify security | Producer smoke and docs |
-| Graphify producer/import | Producer/import | `experimental` | Imports and can run Graphify locally through a staged copy | MCP, LLM, dashboard, and full semantic quality remain not_assessed | Producer/import tests |
-| Repomix producer/import | Producer/import | `tooling` | Packs or imports local file inventory evidence | Source/redaction semantics remain bounded | Producer/import tests |
+| Semgrep output contract | Producer/import | `tooling` | Preserves native Semgrep JSON output as metadata evidence | Does not run Semgrep, download rules, or certify security | Output contract tests and docs |
+| Graphify import | Producer/import | `experimental` | Imports native Graphify node-link output | MCP, LLM, dashboard, execution, and full semantic quality remain not_assessed | Adapter/import tests |
+| Repomix import | Producer/import | `tooling` | Imports local Repomix file inventory evidence | Execution and source/redaction semantics remain bounded | Importer tests |
 | Symbol-index import | Producer/import | `experimental` | Imports bounded SCIP/Serena-style JSON symbol records | Does not run indexers or language servers | Importer tests |
 | Agent docs and install prompts | Doc | `stable-first-run` | Give harness-independent local execution instructions | Do not prove arbitrary harness behavior | Acceptance matrix lanes |
 | Cursor/OpenCode adapter guidance | Adapter/doc | `experimental` | Static guidance and selected recorded runtime lanes | UI Cursor and arbitrary targets remain not_assessed | Acceptance matrix evidence |

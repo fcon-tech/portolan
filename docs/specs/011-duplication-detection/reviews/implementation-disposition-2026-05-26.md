@@ -2,6 +2,14 @@
 
 Date: 2026-05-26
 
+## Superseded Boundary
+
+This disposition records the original 2026-05-26 native exact-duplicate
+implementation. That implementation has since been removed: Portolan no longer
+ships a native source/config clone detector. Current duplication behavior is
+OSS/tool-output backed; absent supported local duplication output, duplication
+coverage is `not_assessed`.
+
 ## Scope
 
 - Spec: `docs/specs/011-duplication-detection/`

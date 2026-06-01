@@ -1,31 +1,30 @@
 # Graphify Adapter Profile
 
-Graphify is accepted in Portolan as an installed local OSS producer and local
-output format, not as a vendored core scanner or replacement target.
+Graphify is accepted in Portolan as a native OSS output format, not as a
+vendored core scanner or replacement target.
 
 ## Decision
 
-- State: accepted for first-class local producer invocation, adapter contract
-  validation/profile, raw node-link import, and source-backed verification when
-  `--root` is supplied.
+- State: accepted for adapter contract validation/profile, raw node-link
+  import, and source-backed verification when `--root` is supplied.
 - Source: https://github.com/safishamsi/graphify
 - License posture: MIT observed, `needs_review` before broader integration.
-- Portolan behavior in this slice: invoke installed Graphify locally through a
-  staged source copy; validate a Graphify adapter contract and confidence
-  mapping; import local `graph.json` node-link payloads into stable Portolan
-  node and edge records; optionally inspect source files under `--root` before
-  marking `EXTRACTED` facts `source-visible`.
+- Portolan behavior in this slice: validate a Graphify adapter contract and
+  confidence mapping; import local `graph.json` node-link payloads produced by
+  native Graphify CLI, skill, or MCP surfaces into stable Portolan node and
+  edge records; optionally inspect source files under `--root` before marking
+  `EXTRACTED` facts `source-visible`.
 
 ## Supported Subset
 
-The current supported subset is local producer execution, the adapter contract
-fixture, and local raw Graphify node-link JSON import:
+The current supported subset is the adapter contract fixture and local raw
+Graphify node-link JSON import:
 
 ```bash
-portolan produce graphify --root /path/to/source-root --out /tmp/portolan-graphify-run
+# Produce graphify-out/graph.json with native Graphify CLI, skill, or MCP.
 portolan adapter validate --in internal/testfixtures/oss-adapter-contract/graphify-minimal.json
-portolan import graphify --in /tmp/portolan-graphify-run/source-copy/graphify-out/graph.json --out graph.json
-portolan import graphify --in /tmp/portolan-graphify-run/source-copy/graphify-out/graph.json --root /path/to/source-root --out graph.json
+portolan import graphify --in /tmp/graphify-out/graph.json --out graph.json
+portolan import graphify --in /tmp/graphify-out/graph.json --root /path/to/source-root --out graph.json
 ```
 
 Supported Graphify-style fields for the raw importer:
@@ -64,15 +63,11 @@ Portolan can read the referenced `source_file` inside that root.
 
 ## Privacy And Safety
 
-- Run installed Graphify only through `portolan produce graphify` with an
-  explicit `--out` directory.
-- Portolan stages a source copy under `--out/source-copy` before invoking
-  `graphify update <out>/source-copy --force --no-cluster`; this preserves the
-  read-only target-root boundary even though Graphify's no-LLM update mode
-  writes `graphify-out` inside its input path.
-- The staging copy excludes symlinks, `.git`, `.portolan`, and existing
-  `graphify-out` directories so prior local Portolan/Graphify artifacts do not
-  become new source evidence.
+- Run installed Graphify through its native CLI, skill, or MCP surface with an
+  explicit local output directory.
+- If the selected Graphify mode writes inside its input path, the agent should
+  use an explicit temporary/staged copy outside the target checkout. Portolan
+  does not provide this wrapper.
 - Do not start Graphify MCP or hook/watch behavior from Portolan.
 - Treat node labels, source paths, rationale, and semantic edges as potentially
   sensitive when exporting outside the local machine.
@@ -82,7 +77,6 @@ Portolan can read the referenced `source_file` inside that root.
 
 ```bash
 go test -count=1 ./internal/adapter ./internal/app
-go run ./cmd/portolan produce graphify --root internal/testfixtures/importer-normalization/graphify-source --out /tmp/portolan-graphify-run --graphify graphify --force
 go run ./cmd/portolan adapter validate --in internal/testfixtures/oss-adapter-contract/graphify-minimal.json
 go run ./cmd/portolan import graphify --in internal/testfixtures/importer-normalization/graphify.json --out /tmp/portolan-graphify-import.json --force
 go run ./cmd/portolan import graphify --in internal/testfixtures/importer-normalization/graphify-edges.json --root internal/testfixtures/importer-normalization/graphify-source --out /tmp/portolan-graphify-source-backed.json --force

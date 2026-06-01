@@ -10,10 +10,11 @@ artifacts before an agent answers questions: what repositories were visible,
 what relationships and duplicate/configuration surfaces were found, what looks
 like technical debt, and what is still unknown.
 
-Portolan is not a coding harness, readiness gate, service catalog,
-observability platform, modernization engine, or replacement for Cursor,
-Claude, Sourcegraph, Backstage, or enterprise code-intelligence tools. It is a
-local evidence layer an agent can use before making claims.
+Portolan is an agent harness for landscape navigation: it gives the agent a
+bounded route through local evidence, explicit gaps, and imported OSS outputs.
+It is not a coding harness, readiness gate, service catalog, observability
+platform, modernization engine, or replacement for Cursor, Claude, Sourcegraph,
+Backstage, or enterprise code-intelligence tools.
 
 ## When To Use It
 
@@ -235,12 +236,14 @@ Important limits:
   topology.
 - Portolan has a documented untrusted-artifact boundary and focused tests for
   selected local CLI risks; this is not a broad security certification.
-- Exact duplicate source/config clusters are supported; near-clone detection
-  needs local jscpd-style evidence.
-- OSS producer validation is evidence-specific. Syft/CycloneDX, Semgrep,
-  Repomix, Graphify, jscpd-style JSON, and symbol-index JSON surfaces are
-  bounded local inputs or explicit local producer paths when installed and
-  requested; they do not imply broad scanner coverage or certification.
+- Duplication findings require selected local tool output, such as
+  jscpd/CPD-style JSON. Without that output, duplication remains
+  `not_assessed`.
+- OSS validation is evidence-specific. Syft/CycloneDX, Semgrep, Repomix,
+  Graphify, jscpd-style JSON, and symbol-index JSON surfaces are bounded local
+  inputs produced through their native CLI, skill, or MCP surfaces when
+  installed and requested; Portolan imports and normalizes the outputs instead
+  of wrapping or replacing the scanners.
 
 ## More Documentation
 

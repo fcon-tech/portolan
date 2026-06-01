@@ -108,15 +108,16 @@ type ossPlanFile struct {
 }
 
 type OSSToolPlan struct {
-	ID            string       `json:"id"`
-	Family        string       `json:"family"`
-	Producer      string       `json:"producer"`
-	Purpose       string       `json:"purpose"`
-	Executable    string       `json:"executable"`
-	Status        string       `json:"status"`
-	EvidenceState string       `json:"evidence_state"`
-	Reason        string       `json:"reason"`
-	Commands      []OSSCommand `json:"commands,omitempty"`
+	ID                string       `json:"id"`
+	Family            string       `json:"family"`
+	Producer          string       `json:"producer"`
+	Purpose           string       `json:"purpose"`
+	Executable        string       `json:"executable"`
+	AgentCapabilities []string     `json:"agent_capabilities,omitempty"`
+	Status            string       `json:"status"`
+	EvidenceState     string       `json:"evidence_state"`
+	Reason            string       `json:"reason"`
+	Commands          []OSSCommand `json:"commands,omitempty"`
 }
 
 type OSSCommand struct {
@@ -935,9 +936,9 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
 		OutputPath:    out,
 		ToolOutputDir: toolOutputDir,
 		Rules: []string{
-			"do not run producer commands without user approval when they are slow, expensive, or outside the current task boundary",
+			"do not run native OSS CLI, skill, or MCP commands without user approval when they are slow, expensive, or outside the current task boundary",
 			"do not install, fetch, or update tools without explicit user approval",
-			"producer commands must write only under the context output directory",
+			"native OSS output commands must write only under the context output directory",
 			"after producing outputs, rerun context preparation and inspect tool-registry.json",
 		},
 	}
@@ -963,6 +964,11 @@ func toolFamiliesPresent(tools []ToolEntry) map[string]bool {
 
 func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan := baseOSSPlan("jscpd", "jscpd", "jscpd", "Detect duplicated source and text fragments as metadata-visible duplication evidence.")
+	plan.AgentCapabilities = []string{
+		"jscpd CLI JSON reporter",
+		"jscpd agent skill when installed in the active coding agent",
+		"jscpd MCP server when installed in the active coding agent",
+	}
 	if inputPresent {
 		return markInputPresent(plan, "local jscpd-style output is already present in tool-registry.json")
 	}
@@ -975,7 +981,7 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.Executable = exe
 	plan.Reason = "jscpd is available locally; Portolan did not run it"
 	plan.Commands = []OSSCommand{{
-		Label:  "produce bounded jscpd JSON output",
+		Label:  "run bounded native jscpd JSON output",
 		Tool:   exe,
 		Args:   boundedJSCPDArgs(toolOutputDir, root),
 		Reads:  []string{root},
@@ -985,7 +991,7 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 			"max source file lines: 1000",
 			"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
 			"respect local .gitignore files",
-			"producer exit status remains visible to the operator",
+			"native tool exit status remains visible to the operator",
 		},
 		MutatesTarget:        false,
 		Network:              "not_expected",
@@ -997,15 +1003,17 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 
 func boundedJSCPDArgs(toolOutputDir, root string) []string {
 	return []string{
+		root,
 		"--reporters", "json",
 		"--output", toolOutputDir,
+		"--min-lines", "50",
+		"--min-tokens", "100",
 		"--max-size", "100kb",
 		"--max-lines", "1000",
 		"--ignore", "**/.git/**,**/.portolan/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/generated/**",
 		"--noSymlinks",
 		"--gitignore",
 		"--silent",
-		root,
 	}
 }
 
@@ -1160,7 +1168,7 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "1. `evidence-index.jsonl` for the bounded list of local evidence records and gaps.\n")
 	fmt.Fprintf(&b, "2. `repos.json` for discovered local repositories.\n")
 	fmt.Fprintf(&b, "3. `tool-registry.json` for local OSS/tool-output candidates.\n")
-	fmt.Fprintf(&b, "4. `oss-plan.json` for safe local producer commands when OSS outputs are missing.\n")
+	fmt.Fprintf(&b, "4. `oss-plan.json` for native local OSS CLI, skill, or MCP recipes when OSS outputs are missing.\n")
 	fmt.Fprintf(&b, "5. `answer-contract.md` for how to turn Portolan evidence into CTO answers.\n")
 	fmt.Fprintf(&b, "6. `query-plan.md` for the inspection order.\n")
 	fmt.Fprintf(&b, "7. `gaps.jsonl` for `unknown`, `cannot_verify`, and `not_assessed` surfaces.\n\n")
@@ -1169,10 +1177,10 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "- Local tool-output candidates: %d\n", len(tools))
 	fmt.Fprintf(&b, "- Observed OSS/tool-output summaries: %d\n", observedTools)
 	fmt.Fprintf(&b, "- Cannot-verify tool outputs: %d\n", cannotVerifyTools)
-	fmt.Fprintf(&b, "- Available OSS producer recipes not run: %d\n", availablePlans)
+	fmt.Fprintf(&b, "- Available OSS output recipes not run: %d\n", availablePlans)
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
-	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `evidence-index.jsonl` and `tool-registry.json` summaries as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running producer commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
+	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `evidence-index.jsonl` and `tool-registry.json` summaries as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running native OSS CLI, skill, or MCP commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
 	return b.String()
 }
 
@@ -1203,19 +1211,19 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "- Use a curated local inventory only when it already exists: `portolan selection validate --selection <selection.json>` then `portolan map --selection <selection.json> --out <run-dir> --force`.\n")
 	fmt.Fprintf(&b, "- Drill down from a map bundle: `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind` variants.\n")
 	fmt.Fprintf(&b, "- Validate a new adapter contract: `portolan adapter validate --in <adapter.json>`.\n")
-	fmt.Fprintf(&b, "- For missing OSS producers, use only the exact commands in `oss-plan.json` and only after approval.\n\n")
+	fmt.Fprintf(&b, "- For missing OSS outputs, use only the native CLI, skill, or MCP recipes in `oss-plan.json` and only after approval.\n\n")
 	fmt.Fprintf(&b, "There is no generic `portolan context --manifest` command and no generic `context prepare --manifest` flag. External ecosystem completeness stays `unknown` until a local selection, corpus manifest, or other user-supplied inventory is provided and mapped.\n\n")
 	fmt.Fprintf(&b, "## Artifact Order\n\n")
 	fmt.Fprintf(&b, "1. Context pack: read `agent-brief.md`, `answer-contract.md`, `evidence-index.jsonl`, `repos.json`, `tool-registry.json`, `oss-plan.json`, `query-plan.md`, and `gaps.jsonl`.\n")
 	fmt.Fprintf(&b, "2. Map bundle: when the question needs relationships, graph facts, duplication, configuration, technical debt, or coverage, run or inspect `portolan map --root <target-root> --out <run-dir>` and then read `summary.json`, `graph-index.json`, `coverage.json`, `findings.jsonl`, and `map.md` before full `graph.json`.\n")
 	fmt.Fprintf(&b, "3. Graph slice: when `graph-index.json` points at a repo, edge kind, or finding kind that needs drill-down, run `portolan graph slice --bundle <run-dir> --repo <id> --out <slice.json>` or the `--edge-kind` / `--finding-kind` variants before opening full `graph.json`.\n")
-	fmt.Fprintf(&b, "4. OSS producers: when `tool-registry.json` lacks a needed family, inspect `oss-plan.json`. Run producer commands only after approval and only into the declared Portolan output paths.\n\n")
+	fmt.Fprintf(&b, "4. OSS outputs: when `tool-registry.json` lacks a needed family, inspect `oss-plan.json`. Run native OSS CLI, skill, or MCP commands only after approval and only into the declared Portolan output paths.\n\n")
 	fmt.Fprintf(&b, "## CTO Question Families\n\n")
 	fmt.Fprintf(&b, "| Question | Start with | Use as evidence | Missing evidence means |\n")
 	fmt.Fprintf(&b, "| --- | --- | --- | --- |\n")
 	fmt.Fprintf(&b, "| What is the local scope? | `evidence-index.jsonl`, `repos.json`, `coverage.json` | discovered repositories, ignored paths, coverage records | external ecosystem completeness is `unknown` |\n")
 	fmt.Fprintf(&b, "| What talks to what? | `evidence-index.jsonl`, `summary.json`, `graph-index.json`, `findings.jsonl` | Portolan relationship findings plus Backstage/OpenAPI/AsyncAPI/Structurizr entries in `tool-registry.json` | runtime topology or undocumented relationships are `not_assessed` |\n")
-	fmt.Fprintf(&b, "| Where are duplicate components? | `evidence-index.jsonl`, `findings.jsonl`, `tool-registry.json` | exact source/config duplicate findings; jscpd or CycloneDX/Syft summaries when present | near-clone and component duplication are `not_assessed` |\n")
+	fmt.Fprintf(&b, "| Where are duplicate components? | `evidence-index.jsonl`, `findings.jsonl`, `tool-registry.json` | jscpd/CPD-style duplication summaries and CycloneDX/Syft summaries when present | duplication is `not_assessed` without selected local tool output |\n")
 	fmt.Fprintf(&b, "| What implicit knowledge is visible? | `evidence-index.jsonl`, `findings.jsonl`, `graph-index.json`, `tool-registry.json` | unowned relationships, repeated wrappers, undocumented config surfaces, local catalogs/contracts | intent, ownership, and production behavior stay `unknown` unless evidenced |\n")
 	fmt.Fprintf(&b, "| What configuration matters? | `findings.jsonl`, `graph-index.json` | env var names, ports, manifests, workflows, feature flags, secret references without values | semantic IaC/config correctness is `not_assessed` without OSS output such as Semgrep |\n")
 	fmt.Fprintf(&b, "| What technical debt is visible? | `findings.jsonl`, `summary.json` | technical-debt candidate findings derived from local evidence | modernization, rewrite, release, or readiness verdicts are `not_assessed` |\n\n")
@@ -1254,7 +1262,7 @@ func renderQueryPlan() string {
 
 - Duplicate components: start with jscpd and CycloneDX/Syft summaries in
   ` + "`tool-registry.json`" + `. If they are absent, report duplication as
-  not_assessed and inspect ` + "`oss-plan.json`" + ` for safe local producer recipes.
+  not_assessed and inspect ` + "`oss-plan.json`" + ` for native local OSS output recipes.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,

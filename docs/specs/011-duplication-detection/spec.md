@@ -2,9 +2,10 @@
 
 **Feature Branch**: `011-duplication-detection`
 **Created**: 2026-05-20
-**Status**: Implemented for exact source/config file clusters; near-clone
-detection remains OSS-tool-backed and `not_assessed` when no jscpd-style output
-is present.
+**Status**: Revised. Native exact duplicate detection was removed because it
+duplicated mature OSS scanner responsibilities. Duplication findings now depend
+on selected local duplication tool output, such as jscpd/CPD-style JSON, and
+remain `not_assessed` when no supported output is present.
 **Input**: Product backlog P2-011: report duplicate code, duplicated config,
 and repeated wrappers as evidence-backed finding clusters.
 
@@ -12,18 +13,20 @@ and repeated wrappers as evidence-backed finding clusters.
 
 ### User Story 1 - Report Duplicate Code Clusters (Priority: P1)
 
-An agent can see likely copy/paste or near-duplicate code clusters without
-reading the whole repository manually.
+An agent can see likely copy/paste or near-duplicate code clusters when a
+supported local duplication tool output is supplied.
 
-**Independent Test**: A fixture with repeated retry logic emits one
-`duplication` finding with file/source pointers.
+**Independent Test**: A fixture without selected duplication tool output emits
+a `duplication` finding with `not_assessed`; supported jscpd/CPD-style output
+is represented as metadata evidence.
 
 ### User Story 2 - Report Duplicated Configuration (Priority: P1)
 
-A reviewer can see repeated or drifting config blocks across environments.
+A reviewer can see repeated or drifting config blocks across environments when
+a supported local duplication/config tool output is supplied.
 
-**Independent Test**: A fixture with staging/prod config drift emits a
-duplication/config finding with source-visible evidence.
+**Independent Test**: Without supported local duplication output, config
+duplication remains `not_assessed` rather than inferred by native Portolan code.
 
 ### User Story 3 - Keep Similarity As Evidence, Not Verdict (Priority: P2)
 
@@ -35,45 +38,45 @@ recommendation unless evidence supports it.
 
 ## Requirements
 
-- **FR-001**: System MUST emit duplication findings with file-level evidence.
-- **FR-002**: System MUST distinguish exact source-file duplication and exact
-  config duplication in native map runs.
+- **FR-001**: System MUST emit duplication findings only from selected local
+  duplication tool output or as explicit `not_assessed` placeholders.
+- **FR-002**: System MUST NOT implement native source/config clone detection
+  when mature OSS duplication tools can provide the evidence.
 - **FR-003**: System MUST not include raw private code snippets in committed
   fixtures.
 - **FR-004**: System MUST not turn duplication into an automatic rewrite plan.
-- **FR-005**: System MUST keep unsupported near-clone detection, skipped large
+- **FR-005**: System MUST keep unsupported duplication coverage, skipped large
   files, and unreadable candidate files as `not_assessed` or `cannot_verify`
   rather than silently claiming clean coverage.
-- **FR-006**: Native exact-duplicate detection MUST skip Portolan output,
-  VCS/vendor/dependency/build directories, lockfiles, binary files, and
-  generated artifacts that would produce noisy or private-heavy signals.
-- **FR-007**: Native exact-duplicate detection MUST not execute external tools,
-  fetch dependencies, mutate target repositories, or write outside the selected
-  map output directory.
+- **FR-006**: Portolan MUST preserve native OSS tool boundaries: agents may use
+  native CLI, skill, or MCP surfaces to produce output, while Portolan imports
+  and normalizes the saved local output.
+- **FR-007**: Portolan MUST not execute external duplication tools, fetch
+  dependencies, mutate target repositories, or write outside the selected map
+  output directory.
 
 ## Existing Open Source
 
 - jscpd remains the preferred OSS detector for copy/paste and near-clone
-  analysis. Portolan already discovers jscpd-style outputs and emits safe local
-  producer recipes through `oss-plan.json`.
-- Native detection is intentionally limited to exact source/config file
-  duplicates so agents get a deterministic baseline without adding a dependency
-  or replacing jscpd.
+  analysis. Portolan discovers jscpd-style outputs and emits bounded native
+  CLI/skill/MCP recipes through `oss-plan.json` when output is missing.
+- Native exact source/config duplicate detection was rejected because it
+  reproduced scanner behavior without enough product value.
 - Future dependency addition still requires license, maintenance, privacy, and
   output-stability review.
 
 ## Success Criteria
 
-- **SC-001**: Fixture emits at least one duplicate-code finding and one
-  duplicated-config finding.
-- **SC-002**: Findings include evidence state, source pointers, confidence, and
-  severity.
+- **SC-001**: Without supported local duplication output, map output contains a
+  duplication `not_assessed` finding.
+- **SC-002**: When supported duplication output is selected, findings include
+  evidence state, source pointers when available, confidence, and severity.
 - **SC-003**: A fixture with no supported duplicate clusters retains a
   `duplication` `not_assessed` finding rather than claiming no duplication.
-- **SC-004**: Bigtop smoke can compare native exact clusters with jscpd-style
-  OSS output to decide whether richer scanner execution is justified.
+- **SC-004**: Bigtop stress work uses native OSS duplication tooling output
+  rather than Portolan's own clone detector.
 
 ## Assumptions
 
-- Exact duplicate source/config files are useful as a first agent-facing signal,
-  but insufficient for architectural conclusions about copy/paste logic.
+- Duplication without selected local tool output is unknown/not assessed, not a
+  negative result.

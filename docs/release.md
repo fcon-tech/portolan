@@ -101,11 +101,11 @@ until newer validation evidence changes them:
 - Runtime-visible observations can be represented from supported local files,
   but complete service topology remains `not_assessed` without complete
   supported runtime evidence.
-- OSS producer validation is narrow and named. Producer/import paths may be
-  used when installed and explicitly requested, but broad scanner coverage,
-  certification, and target-independent producer value remain unproven or
-  `not_assessed`. The current named boundaries include local Semgrep producer
-  execution with local config/output, raw Graphify node-link import with
+- OSS output validation is narrow and named. Native OSS CLI, skill, or MCP
+  outputs may be used when installed and explicitly requested, but broad
+  scanner coverage, certification, and target-independent OSS value remain
+  unproven or `not_assessed`. The current named boundaries include
+  local Semgrep output with local config, raw Graphify node-link import with
   source-backed `EXTRACTED` verification, bounded Repomix file-inventory
   import, and bounded SCIP/Serena-style JSON symbol-index import. Graphify
   MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena

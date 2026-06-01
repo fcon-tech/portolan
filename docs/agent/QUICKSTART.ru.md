@@ -129,6 +129,6 @@ records остаются доступны через `query findings` by kind. Q
 - Source/config duplicate clusters являются evidence, а не refactoring order.
 - Локально видимый scope не доказывает complete estate coverage.
 - Runtime topology требует runtime observations.
-- OSS producers являются valid local dependencies, когда установлены и явно
-  requested, но producer plans не evidence, пока outputs не существуют.
+- OSS tools являются valid local dependencies, когда установлены и явно
+  requested, но output recipes не evidence, пока outputs не существуют.
 - `not_assessed` - нормальный результат.

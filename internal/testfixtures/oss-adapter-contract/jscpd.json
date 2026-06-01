@@ -30,14 +30,27 @@
   },
   "commands": [
     {
-      "label": "jscpd json report",
+      "label": "bounded jscpd json report via CLI, agent skill, or MCP",
       "executable": "jscpd",
-      "args": ["--reporters", "json", "--output", "<tool-output-dir>", "<target-root>"],
+      "args": [
+        "<target-root>",
+        "--reporters", "json",
+        "--output", "<tool-output-dir>",
+        "--min-lines", "50",
+        "--min-tokens", "100",
+        "--max-size", "100kb",
+        "--max-lines", "1000",
+        "--ignore", "**/.git/**,**/.portolan/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/generated/**",
+        "--noSymlinks",
+        "--gitignore",
+        "--silent"
+      ],
       "output_path": "<tool-output-dir>/jscpd-report.json"
     }
   ],
   "limitations": [
     "May include source fragments depending on reporter configuration",
+    "Portolan does not wrap jscpd execution; agents should use the native CLI, installed skill, or MCP server and preserve the raw JSON output",
     "Does not prove component-level duplication without SBOM evidence"
   ]
 }

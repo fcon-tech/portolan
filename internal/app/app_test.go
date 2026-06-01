@@ -16,7 +16,6 @@ import (
 
 const mapCommandFixtureRoot = "../../internal/testfixtures/map-command/repo"
 const relationshipFixtureRoot = "../../internal/testfixtures/relationship-detection/repo"
-const duplicationFixtureRoot = "../../internal/testfixtures/duplication-detection/repo"
 const configurationFixtureRoot = "../../internal/testfixtures/configuration-surfaces/repo"
 const technicalDebtFixtureRoot = "../../internal/testfixtures/technical-debt-findings/repo"
 const landscapeMapSelection = "../../internal/testfixtures/landscape-map/selection.json"
@@ -152,7 +151,7 @@ func TestReleaseDocsPreserveCurrentProductClaimLimits(t *testing.T) {
 		"OpenCode default-permission execution is verified only when `OUTPUT_PATH`",
 		"Complete inherited-estate coverage is not proven by repository count.",
 		"complete service topology remains `not_assessed`",
-		"local Semgrep producer",
+		"local Semgrep output",
 		"raw Graphify",
 		"source/redaction",
 		"semantics remain",
@@ -838,158 +837,6 @@ func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
 	assertEvidenceState(t, findNode(t, result, "symbol-index:symbol:serena://internal/app/App"), "metadata-visible")
 	assertEvidenceState(t, findEdge(t, result, "symbol-index:source", "symbol-index:document:cmd/app/main.go", "owns"), "metadata-visible")
 	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:scip-go gomod fmt Println().", "owns"), "metadata-visible")
-}
-
-func TestRunProduceSemgrepInvokesInstalledOSSProducer(t *testing.T) {
-	root := t.TempDir()
-	mustMkdir(t, filepath.Join(root, ".git"))
-	config := filepath.Join(root, ".semgrep.yml")
-	mustWrite(t, config, "rules: []\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "semgrep-args.txt")
-	fakeSemgrep := filepath.Join(bin, "semgrep")
-	mustWrite(t, fakeSemgrep, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-out=""
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = "--json-output" ]; then
-    shift
-    out="$1"
-  fi
-  shift
-done
-printf '{"version":"fake-semgrep","results":[]}\n' > "$out"
-`, logPath))
-	if err := os.Chmod(fakeSemgrep, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "semgrep.json")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "semgrep", "--root", root, "--config", config, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "wrote ") {
-		t.Fatalf("stdout = %q, want write summary", stdout.String())
-	}
-	output := readJSONFile(t, out)
-	if output["version"] != "fake-semgrep" {
-		t.Fatalf("semgrep output = %#v, want fake output", output)
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{"scan", "--config", config, "--json", "--json-output", out, "--metrics=off", root} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("semgrep args missing %q:\n%s", want, args)
-		}
-	}
-}
-
-func TestRunProduceRepomixInvokesInstalledOSSProducer(t *testing.T) {
-	root := t.TempDir()
-	mustWrite(t, filepath.Join(root, "main.go"), "package main\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "repomix-args.txt")
-	fakeRepomix := filepath.Join(bin, "repomix")
-	mustWrite(t, fakeRepomix, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-out=""
-while [ "$#" -gt 0 ]; do
-  if [ "$1" = "--output" ]; then
-    shift
-    out="$1"
-  fi
-  shift
-done
-printf '%%s\n' '<files>' '<file path="main.go">' 'package main' '</file>' '</files>' > "$out"
-`, logPath))
-	if err := os.Chmod(fakeRepomix, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "repomix-output.xml")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "repomix", "--root", root, "--out", out, "--style", "xml"}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "wrote ") {
-		t.Fatalf("stdout = %q, want write summary", stdout.String())
-	}
-	if !strings.Contains(mustReadFile(t, out), `<file path="main.go">`) {
-		t.Fatalf("repomix output missing file entry:\n%s", mustReadFile(t, out))
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{root, "--output", out, "--style", "xml"} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("repomix args missing %q:\n%s", want, args)
-		}
-	}
-}
-
-func TestRunProduceGraphifyInvokesInstalledOSSProducerWithoutMutatingTarget(t *testing.T) {
-	root := t.TempDir()
-	mustWrite(t, filepath.Join(root, "main.go"), "package main\nfunc main() {}\n")
-	mustMkdir(t, filepath.Join(root, ".git"))
-	mustWrite(t, filepath.Join(root, ".git", "config"), "[core]\n")
-	mustMkdir(t, filepath.Join(root, ".portolan", "old-run"))
-	mustWrite(t, filepath.Join(root, ".portolan", "old-run", "summary.json"), "{}\n")
-	bin := filepath.Join(t.TempDir(), "bin")
-	mustMkdir(t, bin)
-	logPath := filepath.Join(root, "graphify-args.txt")
-	fakeGraphify := filepath.Join(bin, "graphify")
-	mustWrite(t, fakeGraphify, fmt.Sprintf(`#!/bin/sh
-printf '%%s\n' "$@" > %q
-target="$2"
-mkdir -p "$target/graphify-out"
-printf '{"nodes":[{"id":"main","label":"main","type":"function","source_file":"main.go","extraction_status":"EXTRACTED"}],"links":[]}\n' > "$target/graphify-out/graph.json"
-`, logPath))
-	if err := os.Chmod(fakeGraphify, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	out := filepath.Join(root, ".portolan", "tool-outputs", "graphify-run")
-	mustMkdir(t, filepath.Dir(out))
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"produce", "graphify", "--root", root, "--out", out}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	if !strings.Contains(stdout.String(), "graphify-out/graph.json") {
-		t.Fatalf("stdout = %q, want graphify output path", stdout.String())
-	}
-	graphPath := filepath.Join(out, "source-copy", "graphify-out", "graph.json")
-	if !strings.Contains(mustReadFile(t, graphPath), `"nodes"`) {
-		t.Fatalf("graphify output missing nodes:\n%s", mustReadFile(t, graphPath))
-	}
-	if _, err := os.Stat(filepath.Join(root, "graphify-out")); !os.IsNotExist(err) {
-		t.Fatalf("target root was mutated with graphify-out: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(out, "source-copy", ".git")); !os.IsNotExist(err) {
-		t.Fatalf(".git should not be copied into staging tree: %v", err)
-	}
-	if _, err := os.Stat(filepath.Join(out, "source-copy", ".portolan")); !os.IsNotExist(err) {
-		t.Fatalf(".portolan should not be copied into staging tree: %v", err)
-	}
-	args := mustReadFile(t, logPath)
-	for _, want := range []string{"update", filepath.Join(out, "source-copy"), "--force", "--no-cluster"} {
-		if !strings.Contains(args, want) {
-			t.Fatalf("graphify args missing %q:\n%s", want, args)
-		}
-	}
 }
 
 func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
@@ -2192,13 +2039,13 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	}
 	jscpdCommand := planByID["jscpd"]["commands"].([]any)[0].(map[string]any)
 	jscpdArgs := fmt.Sprint(jscpdCommand["args"])
-	for _, want := range []string{"--max-size 100kb", "--max-lines 1000", "--noSymlinks", "--silent", "**/node_modules/**", "**/.portolan/**"} {
+	for _, want := range []string{"--min-lines 50", "--min-tokens 100", "--max-size 100kb", "--max-lines 1000", "--noSymlinks", "--silent", "**/node_modules/**", "**/.portolan/**"} {
 		if !strings.Contains(jscpdArgs, want) {
 			t.Fatalf("jscpd args = %s, want bounded argument %q", jscpdArgs, want)
 		}
 	}
 	if strings.Contains(jscpdArgs, "--exitCode") {
-		t.Fatalf("jscpd args = %s, must not force producer exit code", jscpdArgs)
+		t.Fatalf("jscpd args = %s, must not force native tool exit code", jscpdArgs)
 	}
 	jscpdLimits := jscpdCommand["limits"].([]any)
 	wantLimits := []string{
@@ -2206,7 +2053,7 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 		"max source file lines: 1000",
 		"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
 		"respect local .gitignore files",
-		"producer exit status remains visible to the operator",
+		"native tool exit status remains visible to the operator",
 	}
 	if len(jscpdLimits) != len(wantLimits) {
 		t.Fatalf("jscpd limits = %#v, want %d limits", jscpdLimits, len(wantLimits))
@@ -2214,6 +2061,12 @@ func TestRunContextPrepareWritesOSSExecutionPlan(t *testing.T) {
 	for i, want := range wantLimits {
 		if jscpdLimits[i] != want {
 			t.Fatalf("jscpd limits[%d] = %q, want %q", i, jscpdLimits[i], want)
+		}
+	}
+	capabilities := fmt.Sprint(planByID["jscpd"]["agent_capabilities"])
+	for _, want := range []string{"jscpd CLI JSON reporter", "jscpd agent skill", "jscpd MCP server"} {
+		if !strings.Contains(capabilities, want) {
+			t.Fatalf("jscpd capabilities = %s, want %q", capabilities, want)
 		}
 	}
 }
@@ -3095,81 +2948,27 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 	}
 }
 
-func TestRunMapDetectsExactSourceAndConfigDuplication(t *testing.T) {
+func TestRunMapKeepsDuplicationNotAssessedWithoutToolOutput(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	code := Run([]string{"map", "--root", duplicationFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
+	code := Run([]string{"map", "--root", mapCommandFixtureRoot, "--out", out, "--force"}, &stdout, &stderr)
 
 	if code != 0 {
 		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
 	}
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	source := findFindingByID(findings, "finding-duplication-exact-source-001")
-	if source == nil {
-		t.Fatalf("findings = %#v, want exact source duplication finding", findings)
+	duplication := findFindingByID(findings, "finding-duplication-not-assessed")
+	if duplication == nil {
+		t.Fatalf("findings = %#v, want not_assessed duplication finding", findings)
 	}
-	if source["status"] != "observed" || source["evidence_state"] != "source-visible" {
-		t.Fatalf("source duplication finding = %#v, want observed source-visible", source)
+	if duplication["status"] != "not_assessed" || duplication["evidence_state"] != "not_assessed" {
+		t.Fatalf("duplication finding = %#v, want not_assessed", duplication)
 	}
-	for _, want := range []string{"src/retry_a.go", "src/retry_b.go"} {
-		if !strings.Contains(source["evidence_source"].(string), want) {
-			t.Fatalf("source duplication evidence = %#v, want %s", source, want)
-		}
+	if !strings.Contains(duplication["summary"].(string), "local duplication tool output") {
+		t.Fatalf("duplication finding = %#v, want OSS/tool-output wording", duplication)
 	}
-	if strings.Contains(source["summary"].(string), "attempts := 3") {
-		t.Fatalf("source duplication summary leaked source snippet: %#v", source)
-	}
-
-	config := findFindingByID(findings, "finding-duplication-exact-config-001")
-	if config == nil {
-		t.Fatalf("findings = %#v, want exact config duplication finding", findings)
-	}
-	if config["status"] != "observed" || config["evidence_state"] != "source-visible" {
-		t.Fatalf("config duplication finding = %#v, want observed source-visible", config)
-	}
-	for _, want := range []string{"config/prod.json", "config/staging.json"} {
-		if !strings.Contains(config["evidence_source"].(string), want) {
-			t.Fatalf("config duplication evidence = %#v, want %s", config, want)
-		}
-	}
-
-	graph := readGraph(t, filepath.Join(out, "graph.json"))
-	findNode(t, graph, "duplication-exact-source-001")
-	findNode(t, graph, "duplication-exact-config-001")
-}
-
-func TestRunMapSelectionDetectsPrefixedDuplication(t *testing.T) {
-	root, err := filepath.Abs(duplicationFixtureRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	selectionPath := writeSelection(t, t.TempDir(), "duplication", `{
-  "schema_version": "0.1.0",
-  "targets": [
-    {"id": "dup", "kind": "repository", "path": `+quote(root)+`}
-  ]
-}`)
-	out := filepath.Join(t.TempDir(), "run")
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	code := Run([]string{"map", "--selection", selectionPath, "--out", out, "--force"}, &stdout, &stderr)
-
-	if code != 0 {
-		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
-	}
-	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
-	source := findFindingByID(findings, "dup-finding-duplication-exact-source-001")
-	if source == nil {
-		t.Fatalf("findings = %#v, want prefixed source duplication finding", findings)
-	}
-	if source["status"] != "observed" || !strings.Contains(source["evidence_source"].(string), "dup:src/retry_a.go") {
-		t.Fatalf("prefixed source duplication finding = %#v", source)
-	}
-	graph := readGraph(t, filepath.Join(out, "graph.json"))
-	findNode(t, graph, "dup:duplication-exact-source-001")
 }
 
 func TestRunMapDetectsConfigurationSurfacesWithoutSecretValues(t *testing.T) {
@@ -3265,7 +3064,6 @@ func TestRunMapDerivesConcreteTechnicalDebtFindings(t *testing.T) {
 	findings := readFindings(t, filepath.Join(out, "findings.jsonl"))
 	for _, id := range []string{
 		"finding-technical-debt-relationship-follow-up",
-		"finding-technical-debt-duplication-follow-up",
 		"finding-technical-debt-configuration-follow-up",
 		"finding-technical-debt-unresolved-findings",
 	} {

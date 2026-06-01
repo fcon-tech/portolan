@@ -1,10 +1,16 @@
 # Граница Продукта
 
-Portolan - локальный read-only набор для навигации по кодовым базам. Его
-первая задача - не оценить, хорошая система или плохая, а подготовить bounded
-evidence artifacts, по которым агент или инженерный лидер может говорить о
-видимом scope, relationships, duplication, configuration surfaces,
-technical-debt candidates и пробелах.
+Portolan - локальный read-only harness для навигации агента по кодовым базам и
+software landscape. Его первая задача - не оценить, хорошая система или
+плохая, а задать агенту bounded маршрут по evidence artifacts, по которым
+агент или инженерный лидер может говорить о видимом scope, relationships,
+duplication, configuration surfaces, technical-debt candidates и пробелах.
+
+Здесь harness означает навигационный контур: где агент смотрит сначала, как
+маркирует evidence, какие OSS outputs подключает, где обязан сказать
+`unknown`, `cannot_verify` или `not_assessed`. Это не coding harness, который
+редактирует код, запускает автономные dev loops или заменяет Cursor, Claude,
+Codex, OpenCode, pi либо другой agent runtime.
 
 Текущие безопасные формулировки и статусы claims живут в
 [Product Claims](../product-claims.md). Если claim имеет статус `narrowed`, в
@@ -23,10 +29,12 @@ technical-debt candidates и пробелах.
   explicit claims.
 - Evidence states: `source-visible`, `metadata-visible`, `runtime-visible`,
   `claim-only`, `unknown`, `cannot_verify`, `not_assessed`.
+- Harness rules для навигации агента: порядок просмотра evidence, правила
+  подключения OSS outputs и сохранение слабых/непроверенных состояний.
 
 ## Вне Scope
 
-- Coding harness.
+- Coding harness для изменения кода или autonomous development loops.
 - Readiness gate.
 - Service catalog.
 - Observability platform.
@@ -36,8 +44,8 @@ technical-debt candidates и пробелах.
 - Hidden network calls.
 - Always-on daemon collection.
 - Credentials harvesting.
-- Зависимость от Cursor, Claude, Codex, OpenCode, pi или любого одного agent
-  harness.
+- Зависимость от Cursor, Claude, Codex, OpenCode, pi или любого одного
+  coding-agent runtime.
 - Замена Sourcegraph, CAST, Backstage, Port, Datadog, New Relic, Dynatrace,
   Moderne или других enterprise tools.
 - Claim о complete inherited-estate coverage только по локальному количеству
