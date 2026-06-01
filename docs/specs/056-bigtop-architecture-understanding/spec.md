@@ -1,11 +1,14 @@
 # Feature Specification: Bigtop Architecture Understanding
 
-**Feature Branch**: `codex/054-bigtop-architecture-proof`
+**Feature Branch**: `codex/056-bigtop-architecture-understanding`
 
 **Created**: 2026-06-01
 
-**Status**: Draft; depends on specs 054 and 055 before any verified architecture
-understanding claim
+**Status**: In implementation; bounded question set and Cursor Composer 2.5
+comparison ledger recorded; evidence-discipline improvement is confirmed for
+the bounded packet, while broad architecture understanding, runtime topology,
+symbol/reference, full coverage, and enterprise parity remain partial,
+blocked, or not_assessed
 
 **Input**: User description: "Verify that Portolan understands Apache Bigtop
 architecture like a human or enterprise code intelligence, necessarily in
