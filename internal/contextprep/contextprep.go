@@ -1875,11 +1875,36 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "- Local producer run records: %d (`verified` records describe externally generated outputs; Portolan did not execute them)\n", len(producerRuns))
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
+	if len(producerRuns) > 0 {
+		fmt.Fprintf(&b, "## Producer Run Coverage\n\n")
+		for _, line := range producerRunCoverageLines(producerRuns) {
+			fmt.Fprintf(&b, "- %s\n", line)
+		}
+		fmt.Fprintf(&b, "\nProducer-run scope is bounded to each record's `repository`, `directory`, and `covered_units`. `metadata-visible` producer-run records, including Docker Compose, Helm, and protobuf descriptors, do not prove runtime topology.\n\n")
+	}
 	fmt.Fprintf(&b, "Use `answer-contract.md` to structure broad answers. Use `evidence-index.jsonl` and `tool-registry.json` summaries as evidence candidates, not final architecture verdicts. If relevant OSS outputs are missing, read `oss-plan.json` and ask before running native OSS CLI, skill, or MCP commands. Do not infer service relationships, duplicated components, ownership, runtime topology, or technical debt outside local evidence. Preserve `unknown`, `cannot_verify`, and `not_assessed` in the answer.\n")
 	fmt.Fprintf(&b, "\nMap relationship limits to preserve after `portolan map`: current native relationship extraction is limited to Go imports and go.mod manifests. Read map `summary.json.skipped_surfaces` and keep non-Go, JVM, PHP, Scala, service topology, runtime inference, and lifecycle modeling claims as `not_assessed` unless local producer output supplies evidence.\n")
 	fmt.Fprintf(&b, "\nSBOM scale boundary: if CycloneDX/Syft output is present, a map can contain high-degree SBOM package fan-out. Use `summary.json`, `graph-index.json`, `portolan query`, and `portolan graph slice` before opening full `graph.json`; do not treat SBOM package fan-out as service topology or runtime coupling.\n")
 	fmt.Fprintf(&b, "\nGap boundary: `context/gaps.jsonl` and `producer-*` records guide missing producer-family acquisition. `portolan query gaps` reports weak coverage and findings from an existing map bundle. Neither supersedes the other.\n")
 	return b.String()
+}
+
+func producerRunCoverageLines(records []EvidenceRecord) []string {
+	counts := map[string]int{}
+	for _, record := range records {
+		key := record.Family + " / " + record.Status + " / " + record.EvidenceState
+		counts[key]++
+	}
+	keys := make([]string, 0, len(counts))
+	for key := range counts {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	lines := make([]string, 0, len(keys))
+	for _, key := range keys {
+		lines = append(lines, fmt.Sprintf("%s: %d", key, counts[key]))
+	}
+	return lines
 }
 
 func profileLabel(profile string) string {
@@ -1936,6 +1961,8 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. Native map relationship extraction is limited to Go imports and go.mod manifests; JVM, PHP, Scala, and other non-Go coupling stays `not_assessed` unless supplied through local producer output. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
 	fmt.Fprintf(&b, "## Producer Family Recommendations\n\n")
 	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Portolan does not synthesize producer evaluations from recommendation records; if no `producer-evaluation` record is present, candidate evaluation remains `not_assessed`. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
+	fmt.Fprintf(&b, "## Producer Run Records\n\n")
+	fmt.Fprintf(&b, "`producer-run` records in `evidence-index.jsonl` describe externally generated local outputs selected by the operator. They are not Portolan execution receipts and they do not imply a `portolan produce` command exists. A `verified` producer-run record proves only that the referenced local output file existed during context preparation and that the record passed Portolan's metadata validation. Use `producer_family`, `producer_tool`, `output_path`, `scope`, `covered_units`, `freshness`, and `limitations` before making a claim. Static `deployment-model` and `api-catalog` records stay `metadata-visible`; they must not be promoted to `runtime-visible` or to whole-landscape coverage. Runtime topology stays `not_assessed` unless a runtime producer family supplies `runtime-visible` local observations.\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
 	fmt.Fprintf(&b, "- Do not claim complete service inventory without coverage evidence.\n")
 	fmt.Fprintf(&b, "- Do not claim dependency or component duplication without SBOM or duplicate findings.\n")

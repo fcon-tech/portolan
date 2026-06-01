@@ -71,15 +71,15 @@ runtime topology.
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Add context output test that static deployment/API records stay `metadata-visible` in `internal/app/app_test.go`
-- [ ] T016 [P] [US2] Add map/context test that runtime topology remains `not_assessed` without runtime-observation records in `internal/app/app_test.go`
+- [x] T015 [P] [US2] Add context output test that static deployment/API records stay `metadata-visible` in `internal/app/app_test.go`
+- [x] T016 [P] [US2] Add map/context test that runtime topology remains `not_assessed` without runtime-observation records in `internal/app/app_test.go`
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Add bounded producer coverage summary for producer-run records in `internal/contextprep/`
-- [ ] T018 [US2] Add agent-brief/answer-contract wording for producer-run outputs and their limitations in `internal/contextprep/`
-- [ ] T019 [US2] Ensure no `portolan produce ...` command or producer execution wrapper is introduced by searching code/docs and recording evidence
-- [ ] T020 [US2] Run fresh Bigtop context/map smoke and record whether Compose/Helm/protoc outputs improve coverage without runtime overclaiming
+- [x] T017 [US2] Add bounded producer coverage summary for producer-run records in `internal/contextprep/`
+- [x] T018 [US2] Add agent-brief/answer-contract wording for producer-run outputs and their limitations in `internal/contextprep/`
+- [x] T019 [US2] Ensure no `portolan produce ...` command or producer execution wrapper is introduced by searching code/docs and recording evidence
+- [x] T020 [US2] Run fresh Bigtop context/map smoke and record whether Compose/Helm/protoc outputs improve coverage without runtime overclaiming
 
 **Checkpoint**: User Story 2 is complete when context/map artifacts can route
 agents to real producer outputs while preserving evidence-state boundaries.

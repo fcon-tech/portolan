@@ -2544,8 +2544,33 @@ func TestRunContextPrepareSurfacesProducerRunRecords(t *testing.T) {
 		}
 	}
 	brief := mustReadFile(t, filepath.Join(out, "agent-brief.md"))
-	if !strings.Contains(brief, "Local producer run records: 4") || !strings.Contains(brief, "Portolan did not execute them") {
-		t.Fatalf("agent-brief.md missing producer-run boundary:\n%s", brief)
+	for _, want := range []string{
+		"Local producer run records: 4",
+		"Portolan did not execute them",
+		"## Producer Run Coverage",
+		"api-catalog / verified / metadata-visible: 1",
+		"deployment-model / verified / metadata-visible: 2",
+		"runtime-observation / not_assessed / not_assessed: 1",
+		"`metadata-visible` producer-run records, including Docker Compose, Helm, and protobuf descriptors, do not prove runtime topology",
+	} {
+		if !strings.Contains(brief, want) {
+			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
+		}
+	}
+	contract := mustReadFile(t, filepath.Join(out, "answer-contract.md"))
+	for _, want := range []string{
+		"## Producer Run Records",
+		"externally generated local outputs",
+		"they do not imply a `portolan produce` command exists",
+		"Static `deployment-model` and `api-catalog` records stay `metadata-visible`",
+		"Runtime topology stays `not_assessed` unless a runtime producer family supplies `runtime-visible` local observations",
+	} {
+		if !strings.Contains(contract, want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
+		}
+	}
+	if strings.Contains(contract, "portolan produce --") {
+		t.Fatalf("answer-contract.md invented producer command:\n%s", contract)
 	}
 }
 
