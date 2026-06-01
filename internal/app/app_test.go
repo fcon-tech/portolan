@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/fcon-tech/portolan/internal/graph"
+	"github.com/fcon-tech/portolan/internal/producerfamily"
 	"github.com/fcon-tech/portolan/internal/scan"
 )
 
@@ -2229,6 +2230,183 @@ func TestRunContextPrepareSummarizesSymbolIndexToolOutput(t *testing.T) {
 	}
 	if !strings.Contains(string(evidenceIndex), `"family":"symbol-index"`) {
 		t.Fatalf("evidence-index.jsonl = %q, want symbol-index record", evidenceIndex)
+	}
+}
+
+func TestRunContextPrepareWritesProducerFamilyRecommendations(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "repos", "api", ".git"))
+	mustMkdir(t, filepath.Join(root, "repos", "worker", ".git"))
+	mustWrite(t, filepath.Join(root, "repos", "api", "composer.json"), `{"require":{"php":">=8.2"}}`)
+	mustWrite(t, filepath.Join(root, "repos", "worker", "pom.xml"), `<project><artifactId>worker</artifactId></project>`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	records := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	symbolRecommendation := findFindingByID(records, "producer-recommendation-landscape-symbol-index")
+	if symbolRecommendation == nil {
+		t.Fatalf("missing symbol-index producer recommendation in %#v", records)
+	}
+	encoded, err := json.Marshal(symbolRecommendation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := producerfamily.ValidateJSON(encoded); err != nil {
+		t.Fatalf("generated producer recommendation is invalid: %v\n%s", err, encoded)
+	}
+	if symbolRecommendation["kind"] != "producer-recommendation" ||
+		symbolRecommendation["status"] != "not_assessed" ||
+		symbolRecommendation["evidence_state"] != "not_assessed" {
+		t.Fatalf("symbol recommendation = %#v, want not_assessed recommendation", symbolRecommendation)
+	}
+	candidates := symbolRecommendation["candidate_tools"].([]any)
+	if len(candidates) == 0 {
+		t.Fatalf("candidate_tools = %#v, want candidate option objects", candidates)
+	}
+	for _, raw := range candidates {
+		candidate, ok := raw.(map[string]any)
+		if !ok {
+			t.Fatalf("candidate_tools contains %#v, want object", raw)
+		}
+		if candidate["verification_state"] != "not_assessed" || candidate["support_state"] != "candidate_only" {
+			t.Fatalf("candidate = %#v, want not_assessed candidate_only", candidate)
+		}
+	}
+	contract := mustReadFile(t, filepath.Join(out, "answer-contract.md"))
+	for _, want := range []string{
+		"Producer recommendations are options, not observed evidence.",
+		"Do not propose a Portolan-owned PHP/JVM/Scala adapter",
+		"`candidate_only`",
+	} {
+		if !strings.Contains(contract, want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
+		}
+	}
+}
+
+func TestRunContextPrepareWritesProducerCoverageMatrix(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, "repos", "api", ".git"))
+	mustMkdir(t, filepath.Join(root, "repos", "worker", ".git"))
+	mustWrite(t, filepath.Join(root, "repos", "api", "composer.json"), `{"require":{"php":">=8.2"}}`)
+	mustWrite(t, filepath.Join(root, "repos", "worker", "pom.xml"), `<project><artifactId>worker</artifactId></project>`)
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	records := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	symbolCoverage := findFindingByID(records, "producer-coverage-api-symbol-index")
+	if symbolCoverage == nil {
+		t.Fatalf("missing symbol-index producer coverage in %#v", records)
+	}
+	encoded, err := json.Marshal(symbolCoverage)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := producerfamily.ValidateJSON(encoded); err != nil {
+		t.Fatalf("generated producer coverage is invalid: %v\n%s", err, encoded)
+	}
+	if symbolCoverage["kind"] != "producer-coverage" ||
+		symbolCoverage["repository_id"] != "api" ||
+		symbolCoverage["scope"] != "repository" ||
+		symbolCoverage["status"] != "not_assessed" ||
+		symbolCoverage["evidence_state"] != "not_assessed" {
+		t.Fatalf("symbol coverage = %#v, want repository-scoped not_assessed coverage", symbolCoverage)
+	}
+	if languages := symbolCoverage["languages_in_scope"].([]any); len(languages) != 0 {
+		t.Fatalf("languages_in_scope = %#v, want empty list because language coverage is not assessed", languages)
+	}
+	runtimeCoverage := findFindingByID(records, "producer-coverage-worker-runtime-observation")
+	if runtimeCoverage == nil {
+		t.Fatalf("missing runtime producer coverage in %#v", records)
+	}
+	if runtimeCoverage["status"] != "not_assessed" || runtimeCoverage["evidence_state"] != "not_assessed" {
+		t.Fatalf("runtime coverage = %#v, want not_assessed", runtimeCoverage)
+	}
+	queryPlan := mustReadFile(t, filepath.Join(out, "query-plan.md"))
+	for _, want := range []string{"producer-coverage", "producer-recommendation", "mixed-language"} {
+		if !strings.Contains(queryPlan, want) {
+			t.Fatalf("query-plan.md missing %q:\n%s", want, queryPlan)
+		}
+	}
+}
+
+func TestRunContextPrepareSurfacesProducerEvaluations(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, ".portolan"))
+	mustWrite(t, filepath.Join(root, ".portolan", "producer-family-records.jsonl"), mustReadRepoFile(t, "internal/testfixtures/language-agnostic-producers/producer-records.jsonl"))
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	records := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	evaluation := findFindingByID(records, "producer-evaluation-sourcebot-symbol-index")
+	if evaluation == nil {
+		t.Fatalf("missing producer evaluation in %#v", records)
+	}
+	encoded, err := json.Marshal(evaluation)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := producerfamily.ValidateJSON(encoded); err != nil {
+		t.Fatalf("generated producer evaluation is invalid: %v\n%s", err, encoded)
+	}
+	if evaluation["kind"] != "producer-evaluation" ||
+		evaluation["decision"] != "blocked" ||
+		evaluation["privacy"] != "blocked" ||
+		evaluation["scope"] != "landscape" ||
+		evaluation["scope_detail"] != "root" ||
+		evaluation["status"] != "blocked" ||
+		evaluation["evidence_state"] != "metadata-visible" {
+		t.Fatalf("evaluation = %#v, want blocked metadata-visible evaluation", evaluation)
+	}
+	ignored := findFindingByID(records, "gap-producer-family-non-evaluation-producer-family-records-jsonl")
+	if ignored == nil || ignored["status"] != "not_assessed" || ignored["scope"] != "landscape" || ignored["scope_detail"] != "root" {
+		t.Fatalf("missing ignored non-evaluation diagnostic in %#v", records)
+	}
+	if strings.Contains(fmt.Sprint(evaluation), "score") || strings.Contains(fmt.Sprint(evaluation), "rank") {
+		t.Fatalf("evaluation = %#v, must not score or rank candidate tools", evaluation)
+	}
+}
+
+func TestRunContextPrepareSkipsSymlinkedProducerEvaluationFiles(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustMkdir(t, filepath.Join(root, ".portolan"))
+	outside := filepath.Join(t.TempDir(), "producer-family-records.jsonl")
+	mustWrite(t, outside, mustReadRepoFile(t, "internal/testfixtures/language-agnostic-producers/producer-records.jsonl"))
+	if err := os.Symlink(outside, filepath.Join(root, ".portolan", "producer-family-records.jsonl")); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(root, ".portolan", "context")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"context", "prepare", "--root", root, "--out", out, "--profile", "cursor"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	records := readFindings(t, filepath.Join(out, "evidence-index.jsonl"))
+	if evaluation := findFindingByID(records, "producer-evaluation-sourcebot-symbol-index"); evaluation != nil {
+		t.Fatalf("symlinked producer evaluation file was followed: %#v", evaluation)
 	}
 }
 
