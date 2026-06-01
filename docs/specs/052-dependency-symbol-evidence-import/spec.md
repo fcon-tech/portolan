@@ -4,9 +4,10 @@
 
 **Created**: 2026-06-01
 
-**Status**: PR #29 ready-for-review; local implementation, PR-level review,
-current-head Cursor + Composer 2.5 navigation stress, GitHub checks, and
-ready-for-review closeout verified; GitHub review approval and merge approval
+**Status**: Merged via PR #29; local implementation, PR-level review,
+current-head Cursor + Composer 2.5 navigation stress, GitHub checks, explicit
+user merge approval, squash merge, and branch cleanup verified; GitHub review
+approval and real symbol/API/catalog/model/runtime producer evidence remain
 `not_assessed`
 
 **Input**: User description: "Create the next Portolan spec as a
