@@ -34,4 +34,4 @@ ledger contract, quickstart, and pre-implementation analyze.
 
 - [x] T014 Run local verification for changed docs/artifacts
 - [x] T015 Run independent review lanes and record disposition
-- [ ] T016 Create or update PR and record readiness closeout
+- [x] T016 Create or update PR and record readiness closeout
