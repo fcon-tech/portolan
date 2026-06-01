@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/055-runtime-topology-evidence/plan.md`
+`docs/specs/056-bigtop-architecture-understanding/plan.md`
 <!-- SPECKIT END -->
