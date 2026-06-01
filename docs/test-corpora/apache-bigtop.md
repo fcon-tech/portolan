@@ -1,9 +1,9 @@
 # Apache Bigtop Test Corpus
 
-Apache Bigtop is the proposed large OSS corpus for Portolan acceptance work. It
-is useful because it is already an integration project for big-data components,
-not a synthetic list of repositories. The corpus should stress the parts of
-Portolan that matter most:
+Apache Bigtop is a named stress corpus for Portolan acceptance work, not the
+default product path. It is useful because it is already an integration project
+for big-data components, not a synthetic list of repositories. The corpus
+should stress the parts of Portolan that matter most:
 multi-repo source evidence, integration metadata, package/runtime surfaces,
 legacy projects, and honest unknowns.
 
@@ -45,7 +45,7 @@ for Portolan scans.
    profiles.
 
 The committed machine-readable profile is
-`corpora/apache-bigtop/manifest.json`; the schema is
+`internal/testfixtures/corpus-manifests/apache-bigtop/manifest.json`; the schema is
 `schema/corpus-manifest.schema.json`.
 
 ## Test Strategy
@@ -57,9 +57,9 @@ layer has produced concrete product decisions.
 ### Phase 0 - Agent Bootstrap And Blind Acceptance
 
 - Implement the generic agent bootstrap in
-  `specs/014-agent-bootstrap-discovery/`.
+  `docs/specs/014-agent-bootstrap-discovery/`.
 - Implement the blind acceptance protocol in
-  `specs/015-blind-agent-acceptance/`.
+  `docs/specs/015-blind-agent-acceptance/`.
 - Run Cursor + Composer 2.5 with only the generic Portolan path, target path,
   output path, and mapping request.
 - Use a real local Apache Bigtop checkout for the real operator lane.
@@ -69,11 +69,11 @@ layer has produced concrete product decisions.
 - Record missing Portolan capabilities as product gaps, not as free-form agent
   advice.
 - Follow the smoke runbook in
-  `specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
+  `docs/specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
   The agent-facing workflow is defined in `docs/agent/QUICKSTART.md`.
 - If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
   is unavailable, run the local fallback smoke against
-  `testdata/apache-bigtop-smoke/selection.json` only as preflight and mark the
+  `internal/testfixtures/apache-bigtop-smoke/selection.json` only as preflight and mark the
   real operator lane blocked or `not_assessed`.
 
 ### Phase 1 - Manifest Acceptance

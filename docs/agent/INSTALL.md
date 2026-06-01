@@ -73,7 +73,7 @@ cannot be used:
 
 ```bash
 go run ./cmd/portolan --version
-go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile cursor
+go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
 ## Safety Defaults
@@ -106,8 +106,10 @@ Portolan can invoke installed local OSS tools when the user explicitly asks for
 those evidence sources and the tools are already installed. Portolan does not
 bundle these scanners. Do not install or download these tools without approval.
 
-Before running an optional producer, verify the upstream tool exists on `PATH`
-with its normal `--version` or `--help` command. Common upstream entry points:
+Before running an optional OSS tool, verify the upstream tool exists on `PATH`
+with its normal `--version` or `--help` command. Prefer the native CLI, skill,
+or MCP surface for that tool; Portolan imports and normalizes the resulting
+local output.
 
 - Semgrep: <https://semgrep.dev/docs/getting-started/quickstart>
 - Repomix: <https://github.com/yamadashy/repomix>
@@ -116,16 +118,15 @@ with its normal `--version` or `--help` command. Common upstream entry points:
 - jscpd: <https://jscpd.dev/>
 
 ```bash
-portolan produce semgrep --root <target-root> --config <local-semgrep-config> --out <output-dir>/semgrep.json
-portolan produce repomix --root <target-root> --out <output-dir>/repomix-output.xml
-portolan produce graphify --root <target-root> --out <output-dir>/graphify-run
+semgrep --config <local-semgrep-config> --json --output <output-dir>/semgrep.json <target-root>
+repomix <target-root> --output <output-dir>/repomix-output.xml --style xml
+# Produce Graphify graph.json with native Graphify CLI, skill, or MCP.
 ```
 
-Graphify is staged under `<output-dir>/graphify-run/source-copy` before
-execution so the target checkout remains read-only. The staging copy excludes
-`.git`, `.portolan`, symlinks, and existing `graphify-out` directories. Import
-the produced graph when needed:
+If the selected Graphify mode writes inside its input path, run it against an
+explicit temporary/staged copy outside the target checkout. Import the produced
+graph when needed:
 
 ```bash
-portolan import graphify --in <output-dir>/graphify-run/source-copy/graphify-out/graph.json --root <target-root> --out <output-dir>/graphify-portolan-graph.json
+portolan import graphify --in <output-dir>/graphify-out/graph.json --root <target-root> --out <output-dir>/graphify-portolan-graph.json
 ```

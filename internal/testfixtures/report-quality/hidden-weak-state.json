@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "report_id": "hidden-weak-state",
+  "required_sections": [
+    {
+      "name": "visible_scope",
+      "present": true
+    }
+  ],
+  "positive_claims": [
+    {
+      "claim": "The report found source-visible repository evidence.",
+      "evidence_ref": "portolan://graph/nodes/repo:api",
+      "supported": true
+    }
+  ],
+  "weak_states": [
+    {
+      "state": "unknown",
+      "visible": false,
+      "evidence_ref": "portolan://coverage/runtime-topology"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "targets": [
+    {
+      "id": "demo-repo",
+      "kind": "repository",
+      "path": "repo"
+    }
+  ],
+  "claims": [
+    {
+      "id": "claims-main",
+      "path": "claims.json"
+    },
+    {
+      "id": "claims-missing",
+      "path": "missing-claims.json"
+    },
+    {
+      "id": "claims-malformed",
+      "path": "malformed-claims.json"
+    }
+  ]
+}

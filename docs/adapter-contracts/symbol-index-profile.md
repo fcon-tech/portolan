@@ -55,7 +55,7 @@ Evidence state:
 
 ```bash
 go test -count=1 ./internal/app ./internal/importer
-go run ./cmd/portolan import symbol-index --in testdata/importer-normalization/symbol-index.json --out /tmp/portolan-symbol-index-import.json --force
+go run ./cmd/portolan import symbol-index --in internal/testfixtures/importer-normalization/symbol-index.json --out /tmp/portolan-symbol-index-import.json --force
 ```
 
 Agents may use external SCIP or Serena tooling separately, then present local

@@ -68,7 +68,7 @@ Do not use unqualified "ready".
 4. Write:
 
    ```text
-   specs/<NNN-short-name>/reviews/pr-readiness-closeout-YYYY-MM-DD.md
+   docs/specs/<NNN-short-name>/reviews/pr-readiness-closeout-YYYY-MM-DD.md
    ```
 
 ## Required Matrix

@@ -1,16 +1,24 @@
 # Product Boundary
 
-Portolan gives AI agents and engineering leaders a local, read-only codebase
-navigation kit for mapping incomplete software landscapes.
+Portolan gives AI agents and engineering leaders a local, read-only harness for
+codebase and software-landscape navigation.
 
 The first product job is not to judge whether a system is good. It is to help an
 agent produce a verified map of relationships, duplication, configuration
 surfaces, and technical debt while showing what is visible, claimed, missing,
 or unverifiable.
 
+This is a harness in the navigation sense: it constrains how the agent gathers,
+labels, routes through, and cites local evidence. It is not a coding harness
+that edits code, runs autonomous development loops, or replaces Cursor, Claude,
+Codex, OpenCode, pi, or any other agent runtime.
+
 For current client-safe wording and claim status, use
 [Product Claims](product-claims.md). Product copy may use only accepted or
 narrowed claims from that page, and narrowed claims must carry their scope.
+For product guarantees, non-guarantees, maturity labels, and report-quality
+gates, use [Product Quality Boundary](product-quality-boundary.md) and
+[Product Maturity Matrix](product-maturity.md).
 
 ## In Scope
 
@@ -26,6 +34,9 @@ narrowed claims from that page, and narrowed claims must carry their scope.
 - Machine-readable findings output.
 - Human-readable packets generated from graph data.
 - Evidence states that preserve uncertainty.
+- Harness rules for agent navigation: where to look first, which evidence
+  states to preserve, which OSS outputs can be imported, and when to say
+  `unknown`, `cannot_verify`, or `not_assessed`.
 
 ## Out Of Scope
 
@@ -34,7 +45,8 @@ narrowed claims from that page, and narrowed claims must carry their scope.
 - Hidden network calls.
 - Always-on daemon collection.
 - Credential harvesting.
-- Requiring Cursor, Claude, Codex, OpenCode, pi, or any one harness.
+- Requiring Cursor, Claude, Codex, OpenCode, pi, or any one coding-agent
+  runtime.
 - Replacing enterprise tools such as Sourcegraph, CAST, Backstage, Port,
   Datadog, New Relic, Dynatrace, or Moderne.
 - Claiming complete inherited-estate coverage from a local repository count.

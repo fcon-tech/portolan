@@ -101,7 +101,7 @@ Rules:
 - If implementation reveals task/spec drift, update the spec-local artifacts
   and record why.
 - After every implementation slice, run focused verification and record review
-  evidence under `specs/<NNN-short-name>/reviews/`.
+  evidence under `docs/specs/<NNN-short-name>/reviews/`.
 - Continue until `tasks.md` is complete or a blocker is recorded.
 
 ## Phase 3: Review-Fix Loop Before PR

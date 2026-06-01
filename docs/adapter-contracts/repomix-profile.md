@@ -9,13 +9,13 @@ evidence and not as a Portolan scanner replacement.
 - State: accepted as context-pack profile and bounded file-inventory import.
 - License posture: MIT observed, `needs_review` before dependency or
   distribution changes.
-- Current Portolan behavior: invoke installed Repomix as a local producer,
-  import local packed-output file paths as inventory metadata, no remote
-  packing, no MCP behavior, and no source-content architecture parsing.
+- Current Portolan behavior: import local packed-output file paths produced by
+  native Repomix CLI, skill, or MCP surfaces as inventory metadata; no remote
+  packing, no execution wrapper, and no source-content architecture parsing.
 
 ## Supported Evidence Shape
 
-Supported for the current producer/import adapter:
+Supported for the current import adapter:
 
 - local packed output path;
 - `<file path="...">` inventory from Repomix XML-style packed output;
@@ -56,9 +56,9 @@ does not parse source snippets into facts. Future broader adapters must:
 
 ```bash
 go test -count=1 ./internal/app ./internal/importer
-go run ./cmd/portolan produce repomix --root /tmp/portolan-repomix-local/target --out /tmp/portolan-repomix-local/out/repomix-output.xml --style xml --force
-go run ./cmd/portolan import repomix --in testdata/importer-normalization/repomix-output.xml --out /tmp/portolan-repomix-import.json --force
+# Produce repomix-output.xml with native Repomix CLI, skill, or MCP.
+go run ./cmd/portolan import repomix --in internal/testfixtures/importer-normalization/repomix-output.xml --out /tmp/portolan-repomix-import.json --force
 ```
 
-Future producer recipes should prefer local-only output, security checks
-enabled, explicit include/exclude patterns, and bounded split output.
+Future output recipes should prefer local-only output, security checks enabled,
+explicit include/exclude patterns, and bounded split output.

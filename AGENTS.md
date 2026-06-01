@@ -53,7 +53,7 @@ Portolan is:
 
 - Use `.specify/memory/constitution.md` as the governing SpecKit contract.
 - Use `docs/product-backlog.md` as the backlog index.
-- Use `specs/<NNN-short-name>/` for feature slices.
+- Use `docs/specs/<NNN-short-name>/` for feature slices.
 - Do not implement a non-trivial feature until its `spec.md`, `plan.md`, and
   `tasks.md` are concrete.
 - Backlog-only specs may start with `spec.md`; active work needs plan and tasks.
@@ -61,7 +61,7 @@ Portolan is:
   implementation state consistent. Before treating a spec as ready, verify that
   `docs/product-backlog.md`, `spec.md`, `tasks.md`, existing reviews, and the
   current code agree. If they disagree, stop implementation, record a
-  spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`, and
+  spec-local status reconstruction under `docs/specs/<NNN-short-name>/reviews/`, and
   fix the stale status before choosing the next task.
 - Generated Spec Kit skills under `.agents/skills/` are committed; do not store
   credentials or private runtime state under `.agents/`.
@@ -84,7 +84,7 @@ When asked to take the next ready spec into implementation:
   to reimplement completed work.
 - Start with review, not coding. Review the spec/plan/tasks against the
   constitution, backlog order, schemas, CLI contract, and product boundary.
-- Record review evidence under `specs/<NNN-short-name>/reviews/`; do not create
+- Record review evidence under `docs/specs/<NNN-short-name>/reviews/`; do not create
   root-level review clutter.
 - Treat empty, hung, malformed, stale, or off-topic model output as
   `not_assessed`. Do not count it as review evidence.
@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/048-github-community-discovery/plan.md`
+`docs/specs/048-github-community-discovery/plan.md`
 <!-- SPECKIT END -->

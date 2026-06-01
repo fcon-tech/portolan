@@ -15,7 +15,6 @@ import (
 	"github.com/fcon-tech/portolan/internal/blackbox"
 	"github.com/fcon-tech/portolan/internal/configuration"
 	"github.com/fcon-tech/portolan/internal/coverage"
-	"github.com/fcon-tech/portolan/internal/duplication"
 	"github.com/fcon-tech/portolan/internal/graph"
 	"github.com/fcon-tech/portolan/internal/packet"
 	"github.com/fcon-tech/portolan/internal/relationships"
@@ -254,12 +253,12 @@ func Run(opts Options) (Result, error) {
 		"relationship-runtime-inference",
 		"relationship-lifecycle-modeling",
 		"relationship-service-topology-inference",
-		"duplication-near-clone-detection",
+		"duplication-native-detection",
 		"configuration-semantic-analysis",
 	}
 	warnings := append([]string{
 		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
-		"near-clone duplication and semantic configuration detectors are not implemented; placeholder findings are not_assessed when no supported evidence is observed",
+		"duplication detection is OSS/tool-output backed; placeholder findings are not_assessed when no supported local duplication output is observed",
 		"external ecosystem completeness is unknown without a manifest or explicit inventory",
 	}, append(discoveryWarnings, walkWarnings...)...)
 	metadata := RunMetadata{
@@ -270,7 +269,7 @@ func Run(opts Options) (Result, error) {
 		Root:            root,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "technical-debt-findings"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-tool-output-import", "configuration-surface-detection", "technical-debt-findings"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -360,7 +359,7 @@ func runSelection(opts Options) (Result, error) {
 		"relationship-runtime-inference",
 		"relationship-lifecycle-modeling",
 		"relationship-service-topology-inference",
-		"duplication-near-clone-detection",
+		"duplication-native-detection",
 		"configuration-semantic-analysis",
 	}
 	metadata := RunMetadata{
@@ -371,7 +370,7 @@ func runSelection(opts Options) (Result, error) {
 		Selection:       opts.SelectionPath,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-detection", "configuration-surface-detection", "technical-debt-findings", "coverage", "tool-output-import"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-tool-output-import", "configuration-surface-detection", "technical-debt-findings", "coverage", "tool-output-import"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
@@ -855,17 +854,6 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		for _, issue := range relationshipResult.Issues {
 			warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
 		}
-		duplicationResult := duplication.Detect(target.Path)
-		prefixDuplication := shouldPrefixRelationshipGraph(sel, target)
-		g.Nodes = append(g.Nodes, duplicationNodes(target.ID, prefixDuplication, duplicationResult)...)
-		if prefixDuplication {
-			findings = append(findings, prefixedDuplicationFindings(target.ID, target.Path, duplicationResult)...)
-		} else {
-			findings = append(findings, duplicationFindings(duplicationResult)...)
-		}
-		for _, issue := range duplicationResult.Issues {
-			warnings = append(warnings, "duplication detection: "+issue.Path+": "+issue.Reason)
-		}
 		configurationResult := configuration.Detect(target.Path)
 		prefixConfiguration := shouldPrefixRelationshipGraph(sel, target)
 		g.Nodes = append(g.Nodes, configurationNodes(target.ID, prefixConfiguration, configurationResult)...)
@@ -948,7 +936,7 @@ func ensureSurfaceCoverageFindings(findings []Finding) []Finding {
 	}
 	var additions []Finding
 	if !covered["duplication"] {
-		additions = append(additions, notAssessedFinding("finding-duplication-not-assessed", "duplication", "No supported native duplicate cluster or duplication tool output was observed for this map run."))
+		additions = append(additions, notAssessedFinding("finding-duplication-not-assessed", "duplication", "No supported local duplication tool output was selected for this map run."))
 	}
 	if !covered["configuration"] {
 		additions = append(additions, notAssessedFinding("finding-configuration-not-assessed", "configuration", "No supported configuration or contract-surface tool output was selected for this map run."))
@@ -1192,94 +1180,6 @@ func prefixedRelationshipFindings(prefix, root string, result relationships.Resu
 		findings[i].ID = prefix + "-" + findings[i].ID
 	}
 	return findings
-}
-
-func duplicationNodes(prefix string, prefixed bool, result duplication.Result) []graph.Node {
-	var nodes []graph.Node
-	counters := map[string]int{}
-	for _, cluster := range result.Clusters {
-		counters[cluster.Kind]++
-		id := duplicationClusterID(cluster.Kind, counters[cluster.Kind])
-		if prefixed {
-			id = prefix + ":" + id
-		}
-		nodes = append(nodes, graph.Node{
-			ID:    id,
-			Kind:  "duplication",
-			Label: duplicationClusterLabel(cluster),
-			Evidence: graph.Evidence{
-				State:  cluster.EvidenceState,
-				Source: strings.Join(cluster.Files, "; "),
-			},
-		})
-	}
-	return nodes
-}
-
-func prefixedDuplicationFindings(prefix, _ string, result duplication.Result) []Finding {
-	findings := duplicationFindings(result)
-	for i := range findings {
-		findings[i].ID = prefix + "-" + findings[i].ID
-		findings[i].EvidenceSource = prefix + ":" + findings[i].EvidenceSource
-	}
-	return findings
-}
-
-func duplicationFindings(result duplication.Result) []Finding {
-	var findings []Finding
-	counters := map[string]int{}
-	for _, cluster := range result.Clusters {
-		counters[cluster.Kind]++
-		findings = append(findings, Finding{
-			ID:             "finding-" + duplicationClusterID(cluster.Kind, counters[cluster.Kind]),
-			Kind:           "duplication",
-			Summary:        duplicationClusterSummary(cluster),
-			Severity:       "info",
-			EvidenceState:  string(cluster.EvidenceState),
-			EvidenceSource: strings.Join(cluster.Files, "; "),
-			Confidence:     1,
-			Status:         "observed",
-		})
-	}
-	for i, issue := range result.Issues {
-		findings = append(findings, Finding{
-			ID:             fmt.Sprintf("finding-duplication-%s-%03d", issue.Status, i+1),
-			Kind:           "duplication",
-			Summary:        "Could not assess duplication candidate: " + issue.Reason,
-			Severity:       "info",
-			EvidenceState:  string(issue.EvidenceState),
-			EvidenceSource: issue.Path,
-			Confidence:     0,
-			Status:         issue.Status,
-		})
-	}
-	return findings
-}
-
-func duplicationClusterID(kind string, index int) string {
-	return fmt.Sprintf("duplication-%s-%03d", stableID(kind), index)
-}
-
-func duplicationClusterLabel(cluster duplication.Cluster) string {
-	switch cluster.Kind {
-	case "exact-config":
-		return fmt.Sprintf("exact config duplicate cluster across %d files", len(cluster.Files))
-	case "exact-source":
-		return fmt.Sprintf("exact source duplicate cluster across %d files", len(cluster.Files))
-	default:
-		return fmt.Sprintf("exact duplicate cluster across %d files", len(cluster.Files))
-	}
-}
-
-func duplicationClusterSummary(cluster duplication.Cluster) string {
-	switch cluster.Kind {
-	case "exact-config":
-		return fmt.Sprintf("Detected exact duplicate config content across %d files; review as evidence, not an automatic rewrite plan.", len(cluster.Files))
-	case "exact-source":
-		return fmt.Sprintf("Detected exact duplicate source content across %d files; review as evidence, not an automatic rewrite plan.", len(cluster.Files))
-	default:
-		return fmt.Sprintf("Detected exact duplicate content across %d files; review as evidence, not an automatic rewrite plan.", len(cluster.Files))
-	}
 }
 
 func configurationNodes(prefix string, prefixed bool, result configuration.Result) []graph.Node {

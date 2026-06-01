@@ -12,6 +12,10 @@ behavior is not proven by headless Cursor Agent CLI evidence. OpenCode default
 permissions work with repo-local output paths under the Portolan checkout; the
 recorded external-output default-permission lane failed.
 
+For generated reports, use `docs/product-quality-boundary.md`,
+`docs/product-maturity.md`, and `docs/report-quality.md` before treating a
+report as product-ready.
+
 ## Inputs You Need
 
 - Portolan checkout or installed `portolan` binary.
@@ -46,13 +50,13 @@ go run ./cmd/portolan --version
 ## 2. Prepare Agent Context
 
 ```bash
-portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 If using the repo-local binary:
 
 ```bash
-.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile cursor
+.portolan/bin/portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
 ```
 
 Read these files before answering broad questions:
@@ -131,6 +135,6 @@ Do not invent facts that are not in the Portolan artifacts.
 - Source/config duplicate clusters are evidence, not a refactoring order.
 - Local visible scope is not complete estate coverage.
 - Runtime topology needs runtime observations.
-- OSS producers are valid local dependencies when installed and explicitly
-  requested, but producer plans are not evidence until outputs exist.
+- OSS tools are valid local dependencies when installed and explicitly
+  requested, but output recipes are not evidence until outputs exist.
 - `not_assessed` is a valid result.

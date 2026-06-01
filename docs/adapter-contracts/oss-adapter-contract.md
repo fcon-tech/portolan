@@ -9,7 +9,7 @@ Use an adapter contract before adding a new OSS input family.
 ## Validate
 
 ```bash
-portolan adapter validate --in testdata/oss-adapter-contract/jscpd.json
+portolan adapter validate --in internal/testfixtures/oss-adapter-contract/jscpd.json
 ```
 
 ## Required Decisions
@@ -30,6 +30,11 @@ portolan adapter validate --in testdata/oss-adapter-contract/jscpd.json
 - `execution.network` must be `none` or `optional`; network-required adapters
   are outside the default local-first boundary.
 - `execution.mutates_target` must be `false`.
+- Producer integration should stay thin and agent-native. Prefer the OSS
+  tool's CLI, installed coding-agent skill, or MCP server, then preserve the
+  raw local output for Portolan normalization. Do not add Portolan wrapper
+  commands unless the product boundary explicitly requires first-class
+  execution.
 - Contracts that may include secret values must require redaction.
 - `limitations` must be explicit; missing coverage is not success.
 - `evidence.confidence_map` values must be valid Portolan evidence states.

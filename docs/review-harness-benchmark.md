@@ -135,6 +135,10 @@ Suggested timeouts:
   despite a no-tools prompt, record it as `not_assessed` or `failed` and launch
   an explicit enabled non-GPT replacement lane. Do not count the requested lane
   as assessed just because a fallback was attempted.
+- For Portolan delivery, `.agents/skills/portolan-spec-delivery/SKILL.md` is
+  authoritative for timeout, off-task-output, malformed-packet, and replacement
+  lane disposition rules. Keep this benchmark document focused on roster and
+  prompt-quality evidence so the two surfaces do not drift.
 - Do not launch multiple `pi` lanes at the same time in this environment. If
   `database is locked` appears, rerun the lane sequentially and record the first
   attempt as harness failure.

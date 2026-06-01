@@ -36,7 +36,7 @@ surface is:
   - `.agents/skills/speckit-pr-review-cycle/`
   - `.agents/skills/speckit-pr-readiness-closeout/`
   - `.agents/skills/speckit-merge-closeout/`
-- `specs/<NNN-short-name>/` for product slices.
+- `docs/specs/<NNN-short-name>/` for product slices.
 
 The git extension is installed, but auto-commit hooks are disabled by default in
 `.specify/extensions/git/git-config.yml`. Portolan still requires explicit
@@ -62,7 +62,7 @@ review or merge approval.
 Each active feature should contain:
 
 ```text
-specs/<NNN-short-name>/
+docs/specs/<NNN-short-name>/
 |-- spec.md
 |-- plan.md
 |-- tasks.md
@@ -87,7 +87,7 @@ Implementation is not closed at `/speckit-implement`. For a feature to be
 ready-for-review, the spec directory should contain:
 
 ```text
-specs/<NNN-short-name>/reviews/
+docs/specs/<NNN-short-name>/reviews/
 |-- implementation-disposition-YYYY-MM-DD.md
 |-- review-disposition-YYYY-MM-DD.md
 |-- pr-review-disposition-YYYY-MM-DD.md
@@ -97,7 +97,7 @@ specs/<NNN-short-name>/reviews/
 Merge requires a separate explicit approval and a post-merge closeout:
 
 ```text
-specs/<NNN-short-name>/reviews/merge-closeout-YYYY-MM-DD.md
+docs/specs/<NNN-short-name>/reviews/merge-closeout-YYYY-MM-DD.md
 ```
 
 Use the exact surface names in reports:

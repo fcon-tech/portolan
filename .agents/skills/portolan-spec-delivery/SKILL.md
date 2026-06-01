@@ -34,7 +34,7 @@ only when the PR state and evidence are coherent.
 4. Reconstruct status consistency before coding: compare backlog status, spec
    status, task checkboxes, review dispositions, recent git history, and the
    current implementation files. If these surfaces disagree, record a
-   spec-local status reconstruction under `specs/<NNN-short-name>/reviews/`,
+   spec-local status reconstruction under `docs/specs/<NNN-short-name>/reviews/`,
    fix stale status metadata, and only then choose the next implementation
    target.
    Also verify branch metadata: `spec.md`, `plan.md`, the current git branch,
@@ -104,7 +104,7 @@ Before implementation, explicitly review and record:
 Write this as a spec-local artifact, for example:
 
 ```text
-specs/<NNN-short-name>/reviews/requirements-product-vision-drift-YYYY-MM-DD.md
+docs/specs/<NNN-short-name>/reviews/requirements-product-vision-drift-YYYY-MM-DD.md
 ```
 
 If the drift review finds a mismatch that affects scope, safety, evidence
@@ -133,6 +133,19 @@ the lane is intentionally a bounded no-tools text review, use flags such as
 for that lane. Do not make no-tools mode the default for repo-grounded reviews
 that need file inspection.
 
+Use an explicit command timeout for every `pi` lane. If a lane produces no
+output before the timeout, stop it and record `not_assessed`. When coverage is
+still required, retry once with a shorter packet or run an explicit enabled
+replacement lane that satisfies the current independence rules. If the output
+is a tool-call request, context-mode instruction dump, or other harness/process
+instruction instead of a review verdict, treat it as off-task `not_assessed`.
+
+When building no-tools review packets in shell, verify that the packet actually
+contains the intended file contents before counting the lane. A prompt that
+contains literal unevaluated shell snippets or asks the reviewer to fetch files
+is malformed packet evidence. Retry once with a corrected packet when coverage
+is still required; otherwise record the lane as `not_assessed`.
+
 Each review iteration must produce three assessed independent review lanes.
 Failed, empty, hung, malformed, unavailable, stale, off-topic, or
 `not_assessed` lanes do not count toward the three. If a roster lane cannot be
@@ -144,7 +157,7 @@ because Codex itself is already GPT-family.
 Write review dispositions under:
 
 ```text
-specs/<NNN-short-name>/reviews/
+docs/specs/<NNN-short-name>/reviews/
 ```
 
 Do not put review artifacts under a repo-root `reviews/` directory.
@@ -225,7 +238,11 @@ Before creating or updating the PR:
 4. Record a final implementation or review disposition under the spec's
    `reviews/` directory.
 5. Run the full local verification bundle.
-6. Only then push the branch and start the PR review workflow.
+6. Verify final PR scope against `origin/main` with
+   `git diff --name-status origin/main...HEAD`. If the branch was created from
+   a local planning commit that contains adjacent specs, remove unrelated
+   backlog/spec files from the PR even if they were present in the local base.
+7. Only then push the branch and start the PR review workflow.
 
 ## PR Review And Shipping
 
@@ -259,7 +276,7 @@ Before marking a PR ready:
    one repo-grounded local reviewer. Serious or risky PRs need three assessed
    independent non-GPT model lanes.
 
-   If the PR touches `specs/`, `.specify/`, `.agents/skills/`, backlog rows,
+   If the PR touches `docs/specs/`, `.specify/`, `.agents/skills/`, backlog rows,
    review workflow, or governance docs, include `.specify/memory/constitution.md`
    in the review packet. Do not let constitution drift become `not_assessed`
    merely because the prompt omitted the constitution. For docs/public-artifact
@@ -286,6 +303,10 @@ checks, merge state, and readiness closeout as stale. Re-run or refresh:
 - local verification affected by the changed head;
 - PR description if it names check or blocker states;
 - spec/backlog/readiness closeout if state changed.
+
+If a closeout or status file is amended after checks pass, do not report green
+GitHub checks until the new head SHA has completed. A previous green run is
+stale evidence after the push.
 
 For public demo, public docs, screenshots, recordings, or public artifact
 excerpts, the PR review disposition must check:

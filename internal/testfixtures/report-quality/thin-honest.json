@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.1.0",
+  "report_id": "thin-honest",
+  "required_sections": [
+    {
+      "name": "visible_scope",
+      "present": true
+    },
+    {
+      "name": "unknowns",
+      "present": true
+    }
+  ],
+  "positive_claims": [
+    {
+      "claim": "The report found source-visible repository evidence.",
+      "evidence_ref": "portolan://graph/nodes/repo:api",
+      "supported": true
+    }
+  ],
+  "weak_states": [
+    {
+      "state": "unknown",
+      "visible": true,
+      "evidence_ref": "portolan://coverage/runtime-topology"
+    },
+    {
+      "state": "cannot_verify",
+      "visible": true,
+      "evidence_ref": "portolan://findings/claims/external-owner"
+    },
+    {
+      "state": "not_assessed",
+      "visible": true,
+      "evidence_ref": "portolan://coverage/security-posture"
+    }
+  ],
+  "optional_producers": [
+    {
+      "name": "jscpd",
+      "visible": true
+    }
+  ]
+}

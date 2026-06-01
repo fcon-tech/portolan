@@ -27,7 +27,7 @@ observability platforms, modernization tools, or coding agents.
 
 ### IV. SpecKit Before Implementation
 
-Non-trivial product work must start in `specs/<NNN-short-name>/`. The minimum
+Non-trivial product work must start in `docs/specs/<NNN-short-name>/`. The minimum
 artifact set for implementation is `spec.md`, `plan.md`, and `tasks.md`. A spec
 defines what and why; a plan defines how; tasks define independently testable
 slices. Implementation may start only after the relevant tasks are concrete and
@@ -56,7 +56,7 @@ be verified through link, schema, and placeholder checks instead of code tests.
 Use GitHub Spec Kit artifacts as the product planning source:
 
 1. `/speckit.constitution` or direct constitution edits define global rules.
-2. `/speckit.specify` creates or updates `specs/<NNN-short-name>/spec.md`.
+2. `/speckit.specify` creates or updates `docs/specs/<NNN-short-name>/spec.md`.
 3. `/speckit.clarify` is optional when scope, UX, privacy, or evidence semantics
    are ambiguous.
 4. `/speckit.plan` creates `plan.md`, `research.md`, `data-model.md`,

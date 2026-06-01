@@ -221,7 +221,7 @@ if (Get-Command Test-HasGit -ErrorAction SilentlyContinue) {
 
 Set-Location $repoRoot
 
-$specsDir = Join-Path $repoRoot 'specs'
+$specsDir = Join-Path (Join-Path $repoRoot 'docs') 'specs'
 
 function Get-BranchName {
     param([string]$Description)
