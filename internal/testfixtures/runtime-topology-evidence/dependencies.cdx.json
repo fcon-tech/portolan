@@ -1,0 +1,21 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "api",
+      "type": "application",
+      "name": "fixture/api"
+    },
+    {
+      "bom-ref": "library",
+      "type": "library",
+      "name": "fixture/library"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "api",
+      "dependsOn": ["library"]
+    }
+  ]
+}

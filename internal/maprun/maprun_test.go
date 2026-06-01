@@ -358,6 +358,216 @@ func TestNormalizeSymbolIndexToolOutputCannotVerifyEmptyOrTooManySymbols(t *test
 	})
 }
 
+func TestGraphAndFindingsForSelectionImportsTopLevelRuntimeObservation(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "runtime-observations.json")
+	if err := os.WriteFile(path, []byte(`{
+		"schema_version":"0.1.0",
+		"source":"runtime/export.json",
+		"observations":[
+			{
+				"id":"obs-api-worker",
+				"observed_at":"2026-06-02T00:00:00Z",
+				"from":"api",
+				"to":"worker",
+				"kind":"http-call",
+				"coverage":"partial",
+				"source":"runtime/redacted-export.json"
+			}
+		]
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	g, findings, warnings := graphAndFindingsForSelection(selection.Selection{
+		SchemaVersion: selection.SchemaVersion,
+		Runtime: []selection.InputSource{{
+			ID:   "runtime-export",
+			Path: path,
+		}},
+	})
+
+	if len(warnings) != 0 {
+		t.Fatalf("warnings = %#v, want none", warnings)
+	}
+	if node := maprunNode(g.Nodes, "runtime-export"); node == nil || node.Evidence.State != graph.RuntimeVisible {
+		t.Fatalf("runtime input node = %#v, want runtime-visible", node)
+	}
+	if node := maprunNode(g.Nodes, "api"); node == nil || node.Evidence.State != graph.RuntimeVisible {
+		t.Fatalf("from node = %#v, want runtime-visible api node", node)
+	}
+	if node := maprunNode(g.Nodes, "worker"); node == nil || node.Evidence.State != graph.RuntimeVisible {
+		t.Fatalf("to node = %#v, want runtime-visible worker node", node)
+	}
+	edge := maprunEdge(g.Edges, "api", "worker", "observes")
+	if edge == nil || edge.Evidence.State != graph.RuntimeVisible || edge.Evidence.Source != "runtime/redacted-export.json" {
+		t.Fatalf("runtime edge = %#v, want runtime-visible observation edge with source", edge)
+	}
+	if !strings.Contains(edge.Evidence.Reason, "coverage partial") || !strings.Contains(edge.Evidence.Reason, "kind http-call") {
+		t.Fatalf("runtime edge reason = %q, want observation kind and coverage", edge.Evidence.Reason)
+	}
+	unknown := maprunEdge(g.Edges, "runtime-export", "runtime-export:unknown:runtime-topology", "unknown")
+	if unknown == nil || unknown.Evidence.State != graph.Unknown {
+		t.Fatalf("unknown coverage edge = %#v, want unknown partial-coverage edge", unknown)
+	}
+	finding := maprunFinding(findings, "finding-runtime-runtime-export")
+	if finding == nil || finding.Status != "observed" || finding.EvidenceState != string(graph.RuntimeVisible) {
+		t.Fatalf("runtime finding = %#v, want observed runtime-visible finding", finding)
+	}
+}
+
+func TestGraphAndFindingsForSelectionRuntimeCoverageCompleteDoesNotEmitUnknownTopology(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "runtime-observations.json")
+	if err := os.WriteFile(path, []byte(`{
+		"schema_version":"0.1.0",
+		"observations":[
+			{"id":"obs-api-worker","from":"api","to":"worker","coverage":"complete","source":"runtime/redacted-export.json"}
+		]
+	}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	g, _, _ := graphAndFindingsForSelection(selection.Selection{
+		SchemaVersion: selection.SchemaVersion,
+		Runtime: []selection.InputSource{{
+			ID:   "runtime-export",
+			Path: path,
+		}},
+	})
+
+	if edge := maprunEdge(g.Edges, "api", "worker", "observes"); edge == nil || edge.Evidence.State != graph.RuntimeVisible {
+		t.Fatalf("runtime edge = %#v, want runtime-visible observation edge", edge)
+	}
+	if unknown := maprunEdge(g.Edges, "runtime-export", "runtime-export:unknown:runtime-topology", "unknown"); unknown != nil {
+		t.Fatalf("unknown coverage edge = %#v, want none for complete coverage", unknown)
+	}
+}
+
+func TestGraphAndFindingsForSelectionRejectsInvalidTopLevelRuntimeObservation(t *testing.T) {
+	t.Run("missing file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "missing-runtime-observations.json")
+
+		g, findings, _ := graphAndFindingsForSelection(selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Runtime: []selection.InputSource{{
+				ID:   "missing-runtime",
+				Path: path,
+			}},
+		})
+
+		if node := maprunNode(g.Nodes, "missing-runtime"); node == nil || node.Evidence.State != graph.CannotVerify || node.Evidence.Reason != "path does not exist" {
+			t.Fatalf("runtime input node = %#v, want cannot_verify missing path", node)
+		}
+		finding := maprunFinding(findings, "finding-runtime-missing-runtime")
+		if finding == nil || finding.Status != "cannot_verify" {
+			t.Fatalf("runtime finding = %#v, want cannot_verify", finding)
+		}
+	})
+
+	t.Run("malformed", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "runtime-observations.json")
+		if err := os.WriteFile(path, []byte(`{"schema_version":"0.1.0","observations":[`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		g, findings, _ := graphAndFindingsForSelection(selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Runtime: []selection.InputSource{{
+				ID:   "bad-runtime",
+				Path: path,
+			}},
+		})
+
+		if node := maprunNode(g.Nodes, "bad-runtime"); node == nil || node.Evidence.State != graph.CannotVerify {
+			t.Fatalf("runtime input node = %#v, want cannot_verify", node)
+		}
+		if len(g.Edges) != 0 {
+			t.Fatalf("edges = %#v, want no assessed runtime edges", g.Edges)
+		}
+		finding := maprunFinding(findings, "finding-runtime-bad-runtime")
+		if finding == nil || finding.Status != "cannot_verify" || !strings.Contains(finding.Summary, "malformed") {
+			t.Fatalf("runtime finding = %#v, want malformed cannot_verify finding", finding)
+		}
+	})
+
+	t.Run("unsupported schema version", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "runtime-observations.json")
+		if err := os.WriteFile(path, []byte(`{"schema_version":"0.2.0","observations":[]}`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		g, findings, _ := graphAndFindingsForSelection(selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Runtime: []selection.InputSource{{
+				ID:   "versioned-runtime",
+				Path: path,
+			}},
+		})
+
+		if node := maprunNode(g.Nodes, "versioned-runtime"); node == nil || node.Evidence.State != graph.CannotVerify || !strings.Contains(node.Evidence.Reason, "schema_version") {
+			t.Fatalf("runtime input node = %#v, want cannot_verify schema version", node)
+		}
+		finding := maprunFinding(findings, "finding-runtime-versioned-runtime")
+		if finding == nil || finding.Status != "cannot_verify" {
+			t.Fatalf("runtime finding = %#v, want cannot_verify", finding)
+		}
+	})
+
+	t.Run("unsafe source", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "runtime-observations.json")
+		if err := os.WriteFile(path, []byte(`{
+			"schema_version":"0.1.0",
+			"observations":[
+				{"id":"obs-secret","from":"api","to":"db","coverage":"complete","source":"https://telemetry.example/export?token=secret"}
+			]
+		}`), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		g, findings, _ := graphAndFindingsForSelection(selection.Selection{
+			SchemaVersion: selection.SchemaVersion,
+			Runtime: []selection.InputSource{{
+				ID:   "unsafe-runtime",
+				Path: path,
+			}},
+		})
+
+		if node := maprunNode(g.Nodes, "unsafe-runtime:unsafe-observation:obs-secret"); node == nil || node.Evidence.State != graph.CannotVerify {
+			t.Fatalf("unsafe observation node = %#v, want cannot_verify", node)
+		}
+		if edge := maprunEdge(g.Edges, "api", "db", "observes"); edge != nil {
+			t.Fatalf("runtime edge = %#v, want unsafe observation not promoted", edge)
+		}
+		finding := maprunFinding(findings, "finding-runtime-unsafe-runtime")
+		if finding == nil || finding.Status != "cannot_verify" {
+			t.Fatalf("runtime finding = %#v, want cannot_verify", finding)
+		}
+	})
+
+	t.Run("unsafe source schemes", func(t *testing.T) {
+		for _, source := range []string{"data:text/plain,secret", "javascript:alert(1)"} {
+			t.Run(source, func(t *testing.T) {
+				path := filepath.Join(t.TempDir(), "runtime-observations.json")
+				doc := `{"schema_version":"0.1.0","observations":[{"id":"obs-unsafe","from":"api","to":"worker","coverage":"complete","source":"` + source + `"}]}`
+				if err := os.WriteFile(path, []byte(doc), 0o644); err != nil {
+					t.Fatal(err)
+				}
+
+				g, _, _ := graphAndFindingsForSelection(selection.Selection{
+					SchemaVersion: selection.SchemaVersion,
+					Runtime: []selection.InputSource{{
+						ID:   "unsafe-runtime",
+						Path: path,
+					}},
+				})
+
+				if edge := maprunEdge(g.Edges, "api", "worker", "observes"); edge != nil {
+					t.Fatalf("runtime edge = %#v, want unsafe source not promoted", edge)
+				}
+			})
+		}
+	})
+}
+
 func TestRelationshipProducerGapFindingsPreserveAbsentSymbolNotAssessed(t *testing.T) {
 	findings := relationshipProducerGapFindings(nil)
 
