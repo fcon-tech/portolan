@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: In progress
+**Status**: Ready-for-review PR #51
 
 **Input**: Specs 061, 062, and 065 defined the bounded approval gate for a
 single-node Apache Bigtop Docker provisioner runtime capture. The user

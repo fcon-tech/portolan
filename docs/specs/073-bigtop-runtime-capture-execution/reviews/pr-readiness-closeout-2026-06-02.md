@@ -64,9 +64,12 @@ assessed:
 
 not_assessed:
 
-- GitHub PR checks until PR creation.
 - GitHub review approval.
 - Merge approval.
+
+verified:
+
+- GitHub PR checks passed after PR creation.
 
 ## Local Verification
 
@@ -81,14 +84,25 @@ git diff --check
 
 ## PR State
 
+verified:
+
+- PR URL: `https://github.com/fcon-tech/portolan/pull/51`.
+- PR head branch: `codex/073-bigtop-runtime-capture-execution`.
+- PR base branch: `main`.
+- PR draft state: ready-for-review, not draft.
+- GitHub checks passed:
+  - Baseline.
+  - CodeQL.
+  - Analyze (actions).
+  - Analyze (go).
+  - Analyze (python).
+
 not_assessed:
 
-- PR URL: pending creation.
-- GitHub checks: pending PR creation.
-- Mergeability: pending PR creation.
+- GitHub review approval.
+- Merge approval.
 
 ## Stop Reason
 
-The branch is locally ready for PR creation. It is not ready to merge because
-GitHub checks, GitHub review approval, and explicit merge approval are
-`not_assessed`.
+PR #51 is ready for review. It is not ready to merge because GitHub review
+approval and explicit merge approval are `not_assessed`.
