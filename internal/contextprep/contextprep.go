@@ -22,6 +22,8 @@ const SchemaVersion = "0.1.0"
 const maxContextSymbolDocuments = 5000
 const maxContextSymbols = 50000
 const relationshipCandidateScanLimitPerRepo = 20000
+const staleArtifactExclusion = "Sibling `.portolan/stress/*` roots, root-level `run/`, and unrelated `reports/` outputs are stale or forbidden unless the user, dated lane ledger, or prompt explicitly names them as allowed inputs."
+const baselineArtifactContamination = "In a no-Portolan or baseline lane, `.portolan/`, root-level `run/`, and generated Portolan artifacts are forbidden; any read from those paths makes the lane contaminated and non-counting evidence."
 
 type Options struct {
 	RootPath   string
@@ -304,7 +306,7 @@ func Run(opts Options) (Result, error) {
 	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps, relationshipCandidates, producerRecommendations, producerCoverage, producerEvaluations, producerRuns)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root, out)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write answer contract: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "query-plan.md"), []byte(renderQueryPlan()), 0o644); err != nil {
@@ -2002,6 +2004,7 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "# Portolan Agent Brief\n\n")
 	fmt.Fprintf(&b, "Profile: %s\n\n", profileLabel(profile))
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
+	fmt.Fprint(&b, freshArtifactBoundarySection(ossPlan.OutputPath))
 	fmt.Fprintf(&b, "Start here before answering CTO-level questions about this landscape.\n\n")
 	fmt.Fprintf(&b, "## What To Read First\n\n")
 	fmt.Fprintf(&b, "1. `evidence-index.jsonl` for the bounded list of local evidence records and gaps.\n")
@@ -2068,11 +2071,12 @@ func profileLabel(profile string) string {
 	}
 }
 
-func renderAnswerContract(root string) string {
+func renderAnswerContract(root, out string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Portolan Answer Contract\n\n")
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
 	fmt.Fprintf(&b, "Use this contract before answering CTO-level questions about a large or multi-repo codebase. Portolan augments the coding agent; it does not replace the agent, Cursor, source reading, or human judgment.\n\n")
+	fmt.Fprint(&b, freshArtifactBoundarySection(out))
 	fmt.Fprintf(&b, "## Mandatory Answer Shape\n\n")
 	fmt.Fprintf(&b, "Every broad answer must include:\n\n")
 	fmt.Fprintf(&b, "- Answer: the shortest useful conclusion supported by local evidence.\n")
@@ -2130,13 +2134,14 @@ func renderQueryPlan() string {
 
 ## Before Answering
 
-1. Read ` + "`evidence-index.jsonl`" + ` for the bounded list of evidence records and gaps.
-2. Read ` + "`repos.json`" + ` and identify the local scope.
-3. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
-4. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
-5. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
-6. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
-7. Suggest only commands named in ` + "`answer-contract.md`" + ` or ` + "`oss-plan.json`" + `. Do not invent Portolan subcommands or flags.
+1. Confirm the current context boundary in ` + "`agent-brief.md`" + ` and ` + "`answer-contract.md`" + `. ` + staleArtifactExclusion + ` ` + baselineArtifactContamination + `
+2. Read ` + "`evidence-index.jsonl`" + ` for the bounded list of evidence records and gaps.
+3. Read ` + "`repos.json`" + ` and identify the local scope.
+4. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
+5. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
+6. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
+7. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
+8. Suggest only commands named in ` + "`answer-contract.md`" + ` or ` + "`oss-plan.json`" + `. Do not invent Portolan subcommands or flags.
 
 ## CTO Questions
 
@@ -2169,6 +2174,10 @@ func renderQueryPlan() string {
   manifest flag; ask for a local inventory or use ` + "`selection validate`" + ` and
   ` + "`map --selection`" + ` only when a selection file exists.
 `
+}
+
+func freshArtifactBoundarySection(out string) string {
+	return fmt.Sprintf("## Fresh Artifact Boundary\n\nCurrent context output: `%s`\n\nTreat only this context directory and the output paths declared inside it as current Portolan evidence. %s %s\n\n", out, staleArtifactExclusion, baselineArtifactContamination)
 }
 
 func writeJSON(path string, value any) error {

@@ -24,6 +24,28 @@ Allowed lane states:
 Do not convert `blocked`, `unknown`, or `not_assessed` into success. Do not
 generalize from one harness or target shape to another.
 
+## Clean-Start Artifact Rules
+
+Each dated lane must use a fresh output root. A no-Portolan or baseline lane
+must not read the forbidden paths below. The lane ledger is the dated acceptance
+or spec-local review record for that run; it must list allowed and forbidden
+artifact roots before the lane counts as evidence.
+
+- `.portolan/` under the target root;
+- root-level `run/`;
+- generated Portolan context, map, stress, report, or tool-output artifacts;
+- prior stress roots unless the dated lane ledger or prompt explicitly names
+  them as allowed evidence.
+
+A with-Portolan lane may use only the fresh context/map artifacts generated for
+that lane, plus local source inputs. Prior `.portolan/stress/*` roots,
+root-level `run/`, and unrelated generated outputs are stale unless explicitly
+allowed in the lane ledger before execution.
+
+If a lane reads a forbidden artifact, record the lane as `contaminated`; it must
+not count as valid baseline, comparison, or product evidence even if the answer
+is useful.
+
 ## Planned Harness Lanes
 
 | Harness lane | What it validates | Non-goal |

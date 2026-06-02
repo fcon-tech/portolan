@@ -120,6 +120,70 @@ func TestResolveBuildToolExecutablePrefersExecutableWrapper(t *testing.T) {
 	}
 }
 
+func TestRunWritesFreshArtifactBoundaryGuidance(t *testing.T) {
+	root := t.TempDir()
+	mustMkdirContextprep(t, filepath.Join(root, "repos", "service-a", ".git"))
+	staleContext := filepath.Join(root, ".portolan", "stress", "old-run", "context", "answer-contract.md")
+	staleRun := filepath.Join(root, "run", "map.md")
+	mustWriteContextprep(t, staleContext, "stale")
+	mustWriteContextprep(t, staleRun, "stale")
+	out := filepath.Join(root, ".portolan", "stress", "current-run", "context")
+
+	if _, err := Run(Options{RootPath: root, OutputPath: out, Profile: "agent"}); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	brief := mustReadContextprep(t, filepath.Join(out, "agent-brief.md"))
+	for _, want := range []string{
+		"## Fresh Artifact Boundary",
+		"Current context output: `" + out + "`",
+		"Sibling `.portolan/stress/*` roots",
+		"root-level `run/`",
+	} {
+		if !strings.Contains(brief, want) {
+			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
+		}
+	}
+	assertTextDoesNotContainContextprep(t, brief, []string{staleContext, staleRun, "old-run"})
+
+	contract := mustReadContextprep(t, filepath.Join(out, "answer-contract.md"))
+	for _, want := range []string{
+		"Current context output: `" + out + "`",
+		"no-Portolan or baseline lane",
+		"contaminated and non-counting evidence",
+	} {
+		if !strings.Contains(contract, want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
+		}
+	}
+	assertTextDoesNotContainContextprep(t, contract, []string{staleContext, staleRun, "old-run"})
+
+	queryPlan := mustReadContextprep(t, filepath.Join(out, "query-plan.md"))
+	for _, want := range []string{
+		"Confirm the current context boundary",
+		"Sibling `.portolan/stress/*` roots",
+	} {
+		if !strings.Contains(queryPlan, want) {
+			t.Fatalf("query-plan.md missing %q:\n%s", want, queryPlan)
+		}
+	}
+	assertTextDoesNotContainContextprep(t, queryPlan, []string{staleContext, staleRun, "old-run"})
+
+	for _, name := range []string{"evidence-index.jsonl", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
+		content := mustReadContextprep(t, filepath.Join(out, name))
+		assertTextDoesNotContainContextprep(t, content, []string{staleContext, staleRun, "old-run"})
+	}
+}
+
+func assertTextDoesNotContainContextprep(t *testing.T, text string, forbidden []string) {
+	t.Helper()
+	for _, value := range forbidden {
+		if strings.Contains(text, value) {
+			t.Fatalf("text contains stale artifact reference %q:\n%s", value, text)
+		}
+	}
+}
+
 func assertPathsUnderRoot(t *testing.T, paths []string, root string) {
 	t.Helper()
 	if len(paths) == 0 {
