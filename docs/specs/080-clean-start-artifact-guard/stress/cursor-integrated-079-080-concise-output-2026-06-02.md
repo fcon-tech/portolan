@@ -1,0 +1,17 @@
+- lane_state: integrated-navigation-stress
+- artifacts_read_count: 8
+- forbidden_read: false
+- fresh_boundary_present: true
+- stale_producer_runs_not_assessed: true
+- stale_path_output_command_scrubbed: true
+- jscpd_status: available_not_run
+- jscpd_evidence_state: not_assessed
+- jscpd_command_count: 18
+- jscpd_repository_sharded: true
+- jscpd_full_root_command_present: false
+- jscpd_writes_under_current_context: true
+- missing_failed_unrun_shards_non_counting: true
+- duplication_metrics_claimable: false
+- supported_claims: 18 repos discovered (source-visible); 30 build/deploy relationship-candidate summaries (source-visible, not parsed topology); 11 OSS/producer gap records; fresh boundary declared for current context only; jscpd available with 18 repo-sharded bounded commands writing under context/tool-outputs; 5 producer-run records indexed, all not_assessed
+- unsupported_claims: duplication metrics or clone counts; runtime topology or service communication; verified producer-run outputs (3 scrubbed stale sibling-stress refs); complete ecosystem inventory (external-completeness unknown); API/catalog/OpenAPI/AsyncAPI/Structurizr relationships; CycloneDX/SBOM or Semgrep findings; symbol-index or cross-repo duplication
+- verdict: pass
