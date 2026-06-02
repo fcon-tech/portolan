@@ -26,7 +26,7 @@
 
 ## Closeout
 
-- [ ] T013 Run baseline checks.
-- [ ] T014 Record PR readiness closeout and update status surfaces.
-- [ ] T015 Create PR and reconcile GitHub check state.
+- [x] T013 Run baseline checks.
+- [x] T014 Record PR readiness closeout and update status surfaces.
+- [x] T015 Create PR and reconcile GitHub check state.
 - [ ] T016 Record merge closeout and update post-merge status surfaces.
