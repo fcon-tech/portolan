@@ -120,6 +120,140 @@ func TestResolveBuildToolExecutablePrefersExecutableWrapper(t *testing.T) {
 	}
 }
 
+func TestRunAddsShardedSyftCommandsForMultipleRepositories(t *testing.T) {
+	root := t.TempDir()
+	apiRepo := filepath.Join(root, "repos", "api")
+	workerRepo := filepath.Join(root, "repos", "worker")
+	mustMkdirContextprep(t, filepath.Join(apiRepo, ".git"))
+	mustMkdirContextprep(t, filepath.Join(workerRepo, ".git"))
+	mustWriteContextprep(t, filepath.Join(apiRepo, "go.mod"), "module example.com/api\n")
+	mustWriteContextprep(t, filepath.Join(workerRepo, "package.json"), `{"name":"worker"}`)
+
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdirContextprep(t, bin)
+	syft := filepath.Join(bin, "syft")
+	mustWriteContextprep(t, syft, "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(syft, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin)
+
+	out := filepath.Join(root, ".portolan", "context")
+	if _, err := Run(Options{RootPath: root, OutputPath: out, Profile: "agent"}); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	plan := readOSSPlanContextprep(t, filepath.Join(out, "oss-plan.json"))
+	byID := map[string]OSSToolPlan{}
+	for _, tool := range plan.Tools {
+		byID[tool.ID] = tool
+	}
+	syftPlan := byID["cyclonedx"]
+	if syftPlan.Status != "available_not_run" || syftPlan.EvidenceState != "not_assessed" {
+		t.Fatalf("syft plan = %#v, want available_not_run/not_assessed", syftPlan)
+	}
+	if len(syftPlan.Commands) != 2 {
+		t.Fatalf("syft commands = %#v, want one command per repository shard", syftPlan.Commands)
+	}
+
+	seenReads := map[string]bool{}
+	expectedWrites := map[string]string{
+		apiRepo:    filepath.Join(plan.ToolOutputDir, "syft", "api.cyclonedx.json"),
+		workerRepo: filepath.Join(plan.ToolOutputDir, "syft", "worker.cyclonedx.json"),
+	}
+	for _, command := range syftPlan.Commands {
+		if !command.RequiresUserApproval || command.MutatesTarget {
+			t.Fatalf("syft command = %#v, want approval-required read-only native command", command)
+		}
+		if command.AfterRun == "" {
+			t.Fatalf("syft command = %#v, want after_run context refresh command", command)
+		}
+		if len(command.Reads) != 1 || command.Reads[0] == root {
+			t.Fatalf("syft command reads = %#v, want one repository shard and not full root", command.Reads)
+		}
+		seenReads[command.Reads[0]] = true
+		assertPathsUnderRoot(t, command.Reads, root)
+		assertWritesUnderContextToolOutput(t, command.Writes, plan.ToolOutputDir)
+		if len(command.Writes) != 1 || command.Writes[0] != expectedWrites[command.Reads[0]] {
+			t.Fatalf("syft command writes = %#v for reads %#v, want exact shard path %q", command.Writes, command.Reads, expectedWrites[command.Reads[0]])
+		}
+		args := strings.Join(command.Args, " ")
+		for _, want := range []string{
+			"--exclude ./.portolan/**",
+			"--exclude ./run/**",
+			"cyclonedx-json=" + command.Writes[0],
+		} {
+			if !strings.Contains(args, want) {
+				t.Fatalf("syft args = %q, want %q", args, want)
+			}
+		}
+		if !strings.Contains(strings.Join(command.Limits, " "), "repository shard only") {
+			t.Fatalf("syft limits = %#v, want shard-only boundary", command.Limits)
+		}
+	}
+	for _, want := range []string{apiRepo, workerRepo} {
+		if !seenReads[want] {
+			t.Fatalf("syft commands read %#v, want shard for %q", seenReads, want)
+		}
+	}
+}
+
+func TestRunKeepsSingleRepositorySyftCommandUnsharded(t *testing.T) {
+	root := t.TempDir()
+	mustMkdirContextprep(t, filepath.Join(root, ".git"))
+	mustWriteContextprep(t, filepath.Join(root, "go.mod"), "module example.com/root\n")
+
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdirContextprep(t, bin)
+	syft := filepath.Join(bin, "syft")
+	mustWriteContextprep(t, syft, "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(syft, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin)
+
+	out := filepath.Join(root, ".portolan", "context")
+	if _, err := Run(Options{RootPath: root, OutputPath: out, Profile: "agent"}); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+	plan := readOSSPlanContextprep(t, filepath.Join(out, "oss-plan.json"))
+	byID := map[string]OSSToolPlan{}
+	for _, tool := range plan.Tools {
+		byID[tool.ID] = tool
+	}
+	syftPlan := byID["cyclonedx"]
+	if len(syftPlan.Commands) != 1 {
+		t.Fatalf("syft commands = %#v, want one single-repository command", syftPlan.Commands)
+	}
+	command := syftPlan.Commands[0]
+	if len(command.Reads) != 1 || command.Reads[0] != root {
+		t.Fatalf("syft command reads = %#v, want root repository only", command.Reads)
+	}
+	if len(command.Writes) != 1 || command.Writes[0] != filepath.Join(plan.ToolOutputDir, "syft.cyclonedx.json") {
+		t.Fatalf("syft command writes = %#v, want unsharded report path", command.Writes)
+	}
+}
+
+func TestToolOutputNameSanitizingAndUniqueness(t *testing.T) {
+	tests := map[string]string{
+		"Apache Spark":    "apache-spark",
+		"../Repo/Name":    "repo-name",
+		"service_01.prod": "service-01-prod",
+		"***":             "repository",
+	}
+	for input, want := range tests {
+		if got := sanitizeToolOutputName(input); got != want {
+			t.Fatalf("sanitizeToolOutputName(%q) = %q, want %q", input, got, want)
+		}
+	}
+	used := map[string]int{}
+	first := uniqueToolOutputName(sanitizeToolOutputName("my-repo"), used)
+	second := uniqueToolOutputName(sanitizeToolOutputName("my_repo"), used)
+	if first != "my-repo" || second != "my-repo-2" {
+		t.Fatalf("unique output names = (%q, %q), want (my-repo, my-repo-2)", first, second)
+	}
+}
+
 func assertPathsUnderRoot(t *testing.T, paths []string, root string) {
 	t.Helper()
 	if len(paths) == 0 {

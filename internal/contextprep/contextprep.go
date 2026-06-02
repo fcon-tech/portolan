@@ -238,7 +238,7 @@ func Run(opts Options) (Result, error) {
 	tools := detectToolOutputs(root, out, repos)
 	relationshipCandidates := detectRelationshipCandidates(repos)
 	buildTools := detectBuildToolSurfaces(repos)
-	ossPlan := buildOSSPlan(root, out, opts.Profile, tools, buildTools)
+	ossPlan := buildOSSPlan(root, out, opts.Profile, repos, tools, buildTools)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
 		ID:            "gap-external-completeness",
@@ -1660,7 +1660,7 @@ func producerCoverageRecord(repositoryID, family, sourceID, reason string) Evide
 	}
 }
 
-func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools buildToolSurface) ossPlanFile {
+func buildOSSPlan(root, out, profile string, repos []Repository, tools []ToolEntry, buildTools buildToolSurface) ossPlanFile {
 	toolOutputDir := filepath.Join(out, "tool-outputs")
 	plan := ossPlanFile{
 		SchemaVersion: SchemaVersion,
@@ -1679,7 +1679,7 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools build
 	present := toolFamiliesPresent(tools)
 	plan.Tools = []OSSToolPlan{
 		jscpdPlan(root, out, toolOutputDir, present["jscpd"]),
-		syftPlan(root, out, toolOutputDir, present["cyclonedx"]),
+		syftPlan(root, out, toolOutputDir, repos, present["cyclonedx"]),
 		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
 	}
 	if buildTools.MavenCount > 0 {
@@ -1757,7 +1757,7 @@ func boundedJSCPDArgs(toolOutputDir, root string) []string {
 	}
 }
 
-func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent bool) OSSToolPlan {
 	plan := baseOSSPlan("cyclonedx", "cyclonedx", "syft", "Produce CycloneDX JSON SBOM evidence for component and dependency identity.")
 	if inputPresent {
 		return markInputPresent(plan, "CycloneDX/Syft-compatible output is already present in tool-registry.json")
@@ -1777,6 +1777,38 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
 	plan.Reason = "Syft is available locally; Portolan did not run it"
+	if len(repos) > 1 {
+		plan.Reason += fmt.Sprintf("; %d repository shards are recommended to avoid full-root large-landscape scans", len(repos))
+		commands := make([]OSSCommand, 0, len(repos))
+		usedOutputNames := map[string]int{}
+		for _, repo := range repos {
+			outputName := uniqueToolOutputName(sanitizeToolOutputName(repo.ID), usedOutputNames)
+			output := filepath.Join(toolOutputDir, "syft", outputName+".cyclonedx.json")
+			commands = append(commands, OSSCommand{
+				Label: fmt.Sprintf("produce CycloneDX JSON SBOM for repository %s", repo.ID),
+				Tool:  exe,
+				Args: []string{
+					repo.Path,
+					"--exclude", excludes[0],
+					"--exclude", excludes[1],
+					"-o", "cyclonedx-json=" + output,
+				},
+				Reads:  []string{repo.Path},
+				Writes: []string{output},
+				Limits: []string{
+					"repository shard only; do not scan the full landscape root in multi-repo mode",
+					"exclude .portolan outputs and root-level run artifacts from the SBOM source",
+					"missing, failed, or unrun shards remain not_assessed/failed and must not be aggregated into component coverage",
+				},
+				MutatesTarget:        false,
+				Network:              "not_expected_for_local_filesystem_source",
+				RequiresUserApproval: true,
+				AfterRun:             rerunContextCommand(root, out),
+			})
+		}
+		plan.Commands = commands
+		return plan
+	}
 	plan.Commands = []OSSCommand{{
 		Label:                "produce CycloneDX JSON SBOM",
 		Tool:                 exe,
@@ -1790,6 +1822,31 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 		AfterRun:             rerunContextCommand(root, out),
 	}}
 	return plan
+}
+
+func sanitizeToolOutputName(value string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(value) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			continue
+		}
+		b.WriteByte('-')
+	}
+	result := strings.Trim(b.String(), "-")
+	if result == "" {
+		return "repository"
+	}
+	return result
+}
+
+func uniqueToolOutputName(base string, used map[string]int) string {
+	if used[base] == 0 {
+		used[base] = 1
+		return base
+	}
+	used[base]++
+	return fmt.Sprintf("%s-%d", base, used[base])
 }
 
 func mavenCycloneDXPlan(root, out, toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
