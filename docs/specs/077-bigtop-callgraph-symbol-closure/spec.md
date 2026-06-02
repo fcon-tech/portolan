@@ -1,10 +1,10 @@
 # Feature Specification: Bigtop Callgraph And Symbol Closure
 
-**Feature Branch**: TBD
+**Feature Branch**: `codex/077-bigtop-callgraph-symbol-closure`
 
 **Created**: 2026-06-02
 
-**Status**: Backlog-only
+**Status**: In implementation
 
 **Input**: Spec 075 confirmed that Universal Ctags and selected gopls outputs
 provide bounded symbol/reference evidence for Bigtop, but they do not prove a
