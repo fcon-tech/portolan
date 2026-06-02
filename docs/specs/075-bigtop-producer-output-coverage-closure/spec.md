@@ -1,10 +1,10 @@
 # Feature Specification: Bigtop Producer Output Coverage Closure
 
-**Feature Branch**: TBD
+**Feature Branch**: `codex/075-bigtop-producer-output-coverage-closure`
 
 **Created**: 2026-06-02
 
-**Status**: Backlog-only
+**Status**: In implementation
 
 **Input**: Specs 054-073 produced real Bigtop evidence beyond Syft/CycloneDX:
 Compose and Helm deployment models, protobuf descriptors, Semgrep local-rule
