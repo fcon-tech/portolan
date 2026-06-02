@@ -4,10 +4,10 @@
 
 **Created**: 2026-06-02
 
-**Status**: Draft PR #54; decision record, producer availability ledger,
-Cursor + Composer 2.5 stress, three assessed non-GPT review lanes, and local
-baseline verified; GitHub checks, GitHub review approval, and explicit PR #54
-merge approval remain `not_assessed`
+**Status**: Ready-for-review PR #54; decision record, producer availability
+ledger, Cursor + Composer 2.5 stress, three assessed non-GPT review lanes, local
+baseline, PR creation, and GitHub checks verified; GitHub review approval and
+explicit PR #54 merge approval remain `not_assessed`
 
 **Input**: Spec 075 confirmed that Universal Ctags and selected gopls outputs
 provide bounded symbol/reference evidence for Bigtop, but they do not prove a

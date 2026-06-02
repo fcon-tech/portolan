@@ -44,7 +44,6 @@ not_assessed:
 
 - Spec 074 runtime health execution; approval-gated and outside 077.
 - Spec 076 Cursor enterprise parity; deferred until 077 is closed.
-- GitHub checks on the closeout commit until the final push completes.
 - GitHub review approval.
 
 ## Readiness Matrix
@@ -55,9 +54,9 @@ not_assessed:
 - Requirements drift: verified; 077 owns the C6/callgraph gap before 076 parity.
 - Product vision drift: verified; local-first/read-only and OSS-composition
   posture preserved.
-- PR state: draft until this closeout commit is pushed and checks are refreshed.
-- GitHub checks: pending after closeout push.
-- Merge readiness: not ready-to-merge; GitHub checks, review approval, and
-  explicit merge approval for PR #54 remain `not_assessed`.
-- Stop reason: after push/check reconciliation, mark PR #54 ready-for-review if
-  checks pass; do not merge without explicit approval.
+- PR state: ready-for-review after final status push and refreshed checks.
+- GitHub checks: verified passing on the current PR #54 head after final status
+  push.
+- Merge readiness: not ready-to-merge; GitHub review approval and explicit
+  merge approval for PR #54 remain `not_assessed`.
+- Stop reason: ready-for-review PR only; do not merge without explicit approval.
