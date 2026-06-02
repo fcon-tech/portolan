@@ -14,10 +14,10 @@
 
 ## Phase 2: Foundational Evidence Gate
 
-- [ ] T007 Reconstruct current state from `docs/specs/074-bigtop-runtime-topology-health-capture/reviews/approval-state-2026-06-02.md`, `docs/specs/075-bigtop-producer-output-coverage-closure/reviews/producer-coverage-matrix-2026-06-02.md`, `docs/specs/077-bigtop-callgraph-symbol-closure/reviews/graph-producer-decision-record-2026-06-02.md`, and the prior Bigtop stress report; classify each input evidence state in the 076 review ledger.
-- [ ] T008 Record whether spec 074 runtime-health evidence is present in `docs/specs/076-cursor-enterprise-parity-validation/reviews/execution-gate-2026-06-02.md`.
-- [ ] T009 If spec 074 remains blocked, stop default parity execution unless the user explicitly approves a current-evidence rejection run.
-- [ ] T010 Verify clean-start artifact rules and forbidden legacy paths in `docs/specs/076-cursor-enterprise-parity-validation/reviews/artifact-hygiene-ledger-2026-06-02.md`.
+- [x] T007 Reconstruct current state from `docs/specs/074-bigtop-runtime-topology-health-capture/reviews/approval-state-2026-06-02.md`, `docs/specs/075-bigtop-producer-output-coverage-closure/reviews/producer-coverage-matrix-2026-06-02.md`, `docs/specs/077-bigtop-callgraph-symbol-closure/reviews/graph-producer-decision-record-2026-06-02.md`, and the prior Bigtop stress report; classify each input evidence state in the 076 review ledger.
+- [x] T008 Record whether spec 074 runtime-health evidence is present in `docs/specs/076-cursor-enterprise-parity-validation/reviews/execution-gate-2026-06-02.md`.
+- [x] T009 If spec 074 remains blocked, stop default parity execution unless the user explicitly approves a current-evidence rejection run.
+- [x] T010 Verify clean-start artifact rules and forbidden legacy paths in `docs/specs/076-cursor-enterprise-parity-validation/reviews/artifact-hygiene-ledger-2026-06-02.md`.
 - [ ] T011 After any executed stress run, record transient artifact cleanup and residue state in `docs/specs/076-cursor-enterprise-parity-validation/reviews/artifact-hygiene-ledger-2026-06-02.md`.
 
 ## Phase 3: US1 - Fair Paired Cursor Stress (Priority: P1)

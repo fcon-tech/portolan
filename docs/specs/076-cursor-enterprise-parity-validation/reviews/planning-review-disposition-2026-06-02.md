@@ -18,6 +18,10 @@ assessed:
   `reviews/pi-glm-076-planning-review-2026-06-02.md`.
 - `openrouter/xiaomi/mimo-v2.5-pro` planning review:
   `reviews/pi-mimo-076-planning-review-2026-06-02.md`.
+- Foundational evidence gate:
+  `reviews/evidence-input-state-ledger-2026-06-02.md`.
+- Artifact hygiene gate:
+  `reviews/artifact-hygiene-ledger-2026-06-02.md`.
 
 not_assessed:
 
@@ -52,6 +56,8 @@ verified:
 - Spec 076 has concrete `spec.md`, `plan.md`, `research.md`, `data-model.md`,
   `quickstart.md`, `tasks.md`, execution gate, prompt, analyze disposition, and
   three assessed independent non-GPT planning review lanes.
+- Foundational tasks T007 through T010 are complete and preserve the default
+  execution blocker.
 
 blocked:
 

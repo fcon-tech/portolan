@@ -17,6 +17,7 @@ local planning surface ready:
   runtime-health evidence exists.
 - Shared Cursor prompt requires fresh artifacts, forbidden-path audit, and lane
   attestation.
+- Foundational evidence-input and artifact-hygiene gates are recorded.
 
 not implemented:
 
@@ -79,15 +80,29 @@ verified at PR creation:
 - Base branch: `main`.
 - Head before this closeout commit: `772963387767c65f8fc4fce037376d61834f77f7`.
 
-pending:
+verified before the foundational-gate update:
 
-- GitHub checks were in progress on the pre-closeout head when this file was
-  created. They must be refreshed after this closeout commit is pushed.
+- PR #55 head advanced to `c332eadb4e029e3192e10da52540df00069219c5`.
+- GitHub checks passed on that head: Baseline, CodeQL, Analyze (actions),
+  Analyze (go), and Analyze (python).
+
+pending after this foundational-gate update:
+
+- GitHub checks must be refreshed on the new PR head after the ledger update is
+  pushed.
 
 ## GitHub Checks
 
-not_assessed for the final closeout head until GitHub finishes the post-push
-checks.
+verified on prior head `c332eadb4e029e3192e10da52540df00069219c5`:
+
+- Baseline.
+- CodeQL.
+- Analyze (actions).
+- Analyze (go).
+- Analyze (python).
+
+not_assessed for the final foundational-gate update head until GitHub finishes
+post-push checks.
 
 ## Merge Readiness
 

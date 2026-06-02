@@ -24,6 +24,10 @@ verified:
 - The 2026-06-01 stress report found Portolan materially useful but incomplete,
   with Java/Scala/Maven graph evidence and large-landscape duplication still
   weak.
+- Evidence input state has been reconstructed in
+  `reviews/evidence-input-state-ledger-2026-06-02.md`.
+- Clean-start and forbidden-artifact controls have been reconstructed in
+  `reviews/artifact-hygiene-ledger-2026-06-02.md`.
 
 cannot_verify:
 
@@ -42,6 +46,7 @@ not_assessed:
 - Planning artifacts.
 - Review of requirements/product-vision drift.
 - Prompt and scoring rubric preparation.
+- Evidence-input and artifact-hygiene ledger preparation.
 - Baseline repository checks.
 
 ## Work Requiring Additional Approval
