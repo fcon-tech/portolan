@@ -21,6 +21,19 @@ assessed:
     `docs/specs/079-jscpd-sharded-duplication-plan/reviews/pi-kimi-k2-079-slice-review-2026-06-02.md`
   - verdict: accept with minor notes.
 
+post-PR stress:
+
+- `cursor-agent --print --mode ask --model composer-2.5`
+  - prompt:
+    `docs/specs/079-jscpd-sharded-duplication-plan/stress/cursor-jscpd-sharded-plan-prompt-2026-06-02.md`
+  - raw output:
+    `docs/specs/079-jscpd-sharded-duplication-plan/stress/cursor-jscpd-sharded-plan-output-2026-06-02.md`
+  - disposition:
+    `docs/specs/079-jscpd-sharded-duplication-plan/reviews/cursor-jscpd-sharded-plan-stress-2026-06-02.md`
+  - verdict: verified lane; adequate navigation-harness improvement for the
+    duplication/OOM gap, while actual duplication evidence remains
+    `not_assessed`.
+
 ## Accepted Findings And Fixes
 
 fixed:
@@ -54,6 +67,9 @@ verified:
 - `go vet ./...`
 - `jq empty schema/*.json`
 - `git diff --check`
+- Cursor Composer 2.5 sharded-plan stress read only the fresh context artifacts,
+  identified 18 repository-sharded jscpd commands, and preserved duplication
+  metrics as `not_assessed`.
 
 not_assessed:
 

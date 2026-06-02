@@ -39,3 +39,10 @@
 - [x] T020 Update task ledger and status surfaces.
 - [x] T021 Run three assessed independent non-GPT review lanes or record the exact blocker.
 - [x] T022 Create/update PR and record PR readiness closeout.
+
+## Post-PR Stress Evidence
+
+- [x] T023 Run Cursor Composer 2.5 against the fresh Bigtop sharded jscpd
+  context and record lane evidence.
+- [ ] T024 Refresh PR state, GitHub checks, and closeout after the post-PR
+  stress evidence commit.
