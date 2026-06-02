@@ -138,6 +138,16 @@ type RelationshipCandidate struct {
 	Reason        string
 }
 
+type buildToolSurface struct {
+	MavenCount    int
+	MavenSample   string
+	MavenRepoPath string
+
+	GradleCount    int
+	GradleSample   string
+	GradleRepoPath string
+}
+
 type repoFile struct {
 	SchemaVersion string       `json:"schema_version"`
 	GeneratedAt   time.Time    `json:"generated_at"`
@@ -227,7 +237,8 @@ func Run(opts Options) (Result, error) {
 	repos, repoGaps := discoverRepositories(root)
 	tools := detectToolOutputs(root, out, repos)
 	relationshipCandidates := detectRelationshipCandidates(repos)
-	ossPlan := buildOSSPlan(root, out, opts.Profile, tools)
+	buildTools := detectBuildToolSurfaces(repos)
+	ossPlan := buildOSSPlan(root, out, opts.Profile, tools, buildTools)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
 		ID:            "gap-external-completeness",
@@ -783,6 +794,61 @@ func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
 		return candidates[i].ID < candidates[j].ID
 	})
 	return candidates
+}
+
+func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
+	var surface buildToolSurface
+	for _, repo := range repos {
+		scanned := 0
+		err := filepath.WalkDir(repo.Path, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				return nil
+			}
+			if path == repo.Path {
+				return nil
+			}
+			if entry.IsDir() {
+				if shouldSkipRelationshipCandidateDir(entry.Name()) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			scanned++
+			if scanned > relationshipCandidateScanLimitPerRepo {
+				return errStopRelationshipCandidateScan
+			}
+			switch buildToolManifestKind(entry.Name()) {
+			case "maven":
+				surface.MavenCount++
+				if surface.MavenSample == "" {
+					surface.MavenSample = path
+					surface.MavenRepoPath = repo.Path
+				}
+			case "gradle":
+				surface.GradleCount++
+				if surface.GradleSample == "" {
+					surface.GradleSample = path
+					surface.GradleRepoPath = repo.Path
+				}
+			}
+			return nil
+		})
+		if err != nil && !errors.Is(err, errStopRelationshipCandidateScan) {
+			continue
+		}
+	}
+	return surface
+}
+
+func buildToolManifestKind(name string) string {
+	switch strings.ToLower(name) {
+	case "pom.xml":
+		return "maven"
+	case "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties":
+		return "gradle"
+	default:
+		return ""
+	}
 }
 
 var errStopRelationshipCandidateScan = errors.New("stop relationship candidate scan")
@@ -1594,7 +1660,7 @@ func producerCoverageRecord(repositoryID, family, sourceID, reason string) Evide
 	}
 }
 
-func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
+func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools buildToolSurface) ossPlanFile {
 	toolOutputDir := filepath.Join(out, "tool-outputs")
 	plan := ossPlanFile{
 		SchemaVersion: SchemaVersion,
@@ -1615,6 +1681,12 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry) ossPlanFile {
 		jscpdPlan(root, out, toolOutputDir, present["jscpd"]),
 		syftPlan(root, out, toolOutputDir, present["cyclonedx"]),
 		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
+	}
+	if buildTools.MavenCount > 0 {
+		plan.Tools = append(plan.Tools, mavenCycloneDXPlan(root, out, toolOutputDir, present["cyclonedx"], buildTools))
+	}
+	if buildTools.GradleCount > 0 {
+		plan.Tools = append(plan.Tools, gradleCycloneDXPlan(toolOutputDir, present["cyclonedx"], buildTools))
 	}
 	sort.Slice(plan.Tools, func(i, j int) bool {
 		return plan.Tools[i].ID < plan.Tools[j].ID
@@ -1720,6 +1792,75 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	return plan
 }
 
+func mavenCycloneDXPlan(root, out, toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
+	plan := baseOSSPlan("maven-cyclonedx", "cyclonedx", "cyclonedx-maven-plugin", "Produce Maven-native CycloneDX dependency evidence for a visible pom.xml surface.")
+	plan.AgentCapabilities = []string{
+		"CycloneDX Maven plugin makeAggregateBom goal",
+		"Maven dependency-plugin dependency:tree JSON as a future parser candidate",
+	}
+	if inputPresent {
+		return markInputPresent(plan, "CycloneDX/Syft-compatible dependency output is already present in tool-registry.json; inspect it before running an additional Maven-specific producer")
+	}
+	exe, ok := resolveBuildToolExecutable(surface.MavenRepoPath, "mvn", "mvnw")
+	if !ok {
+		return markNotAvailable(plan, "Maven manifests are visible, but mvn or an executable mvnw wrapper was not found")
+	}
+	output := filepath.Join(toolOutputDir, "maven-cyclonedx.json")
+	plan.Status = "available_not_run"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = fmt.Sprintf("Maven manifests are visible (%d files); CycloneDX Maven output can reduce dependency unknowns, but Portolan did not run Maven", surface.MavenCount)
+	plan.Commands = []OSSCommand{{
+		Label: "produce Maven CycloneDX JSON for a selected pom.xml",
+		Tool:  exe,
+		Args: []string{
+			"-B",
+			"-f", surface.MavenSample,
+			"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
+			"-DoutputFormat=json",
+			"-DoutputName=maven-cyclonedx",
+			"-DoutputDirectory=" + toolOutputDir,
+			"-Dcyclonedx.skipAttach=true",
+		},
+		Reads:  []string{surface.MavenRepoPath, surface.MavenSample},
+		Writes: []string{output},
+		Limits: []string{
+			"declared producer output is under the context tool-output directory",
+			"bounded to one sample pom.xml; repeat per selected repository only after approval",
+			"reads/writes list declared context intent only; Maven may also read settings, parent POMs, and local caches",
+			"may resolve Maven plugins/dependencies and write Maven caches, target directories, or project-defined plugin outputs",
+			"dependency evidence is not runtime topology, service communication, or call graph evidence",
+		},
+		MutatesTarget:        true,
+		Network:              "possible_for_plugin_and_dependency_resolution",
+		RequiresUserApproval: true,
+		AfterRun:             rerunContextCommand(root, out),
+	}}
+	return plan
+}
+
+func gradleCycloneDXPlan(toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
+	plan := baseOSSPlan("gradle-cyclonedx", "cyclonedx", "cyclonedx-gradle-plugin", "Identify a Gradle-native CycloneDX dependency evidence path for visible Gradle manifests.")
+	plan.AgentCapabilities = []string{
+		"CycloneDX Gradle plugin cyclonedxBom task when already configured by the project",
+		"CycloneDX Gradle plugin init-script workflow after explicit approval",
+	}
+	if inputPresent {
+		return markInputPresent(plan, "CycloneDX/Syft-compatible dependency output is already present in tool-registry.json; inspect it before running an additional Gradle-specific producer")
+	}
+	exe, ok := resolveBuildToolExecutable(surface.GradleRepoPath, "gradle", "gradlew")
+	if !ok {
+		return markNotAvailable(plan, "Gradle manifests are visible, but gradle or an executable gradlew wrapper was not found")
+	}
+	// The executable exists, but no recipe is available until a project-local
+	// plugin or init script can prove JSON output stays under toolOutputDir.
+	plan.Status = "not_assessed"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = fmt.Sprintf("Gradle manifests are visible (%d files), but Portolan does not synthesize a Gradle command because safe output-path-bounded CycloneDX execution requires project-local plugin or init-script configuration that writes JSON under %s", surface.GradleCount, toolOutputDir)
+	return plan
+}
+
 func semgrepPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan := baseOSSPlan("semgrep", "semgrep", "semgrep", "Produce local structural findings when a repository-provided Semgrep config exists.")
 	if inputPresent {
@@ -1789,6 +1930,17 @@ func lookupExecutable(name string) (string, bool) {
 		return "", false
 	}
 	return path, true
+}
+
+func resolveBuildToolExecutable(repoPath, binary, wrapper string) (string, bool) {
+	if repoPath != "" {
+		wrapperPath := filepath.Join(repoPath, wrapper)
+		info, err := os.Stat(wrapperPath)
+		if err == nil && info.Mode().IsRegular() && info.Mode().Perm()&0o111 != 0 {
+			return wrapperPath, true
+		}
+	}
+	return lookupExecutable(binary)
 }
 
 func localSemgrepConfig(root string) string {
@@ -1961,6 +2113,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. Native map relationship extraction is limited to Go imports and go.mod manifests; JVM, PHP, Scala, and other non-Go coupling stays `not_assessed` unless supplied through local producer output. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
 	fmt.Fprintf(&b, "## Producer Family Recommendations\n\n")
 	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Portolan does not synthesize producer evaluations from recommendation records; if no `producer-evaluation` record is present, candidate evaluation remains `not_assessed`. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
+	fmt.Fprintf(&b, "Native Maven/Gradle build-tool producer output is the preferred first step for visible JVM build manifests. Java/Scala/Maven dependency relationships remain `not_assessed` until local producer output exists and is inspected. `oss-plan.json` may list Maven or Gradle CycloneDX producer options when `pom.xml`, `build.gradle`, or `build.gradle.kts` files are visible, but those options are approval-required and do not imply Portolan executed Maven, Gradle, or a `portolan produce` command. Do not turn a visible `pom.xml` or `build.gradle` into a Portolan-owned JVM adapter request; keep it as a native producer-evidence acquisition question.\n\n")
 	fmt.Fprintf(&b, "## Producer Run Records\n\n")
 	fmt.Fprintf(&b, "`producer-run` records in `evidence-index.jsonl` describe externally generated local outputs selected by the operator. They are not Portolan execution receipts and they do not imply a `portolan produce` command exists. A `verified` producer-run record proves only that the referenced local output file existed during context preparation and that the record passed Portolan's metadata validation. Use `producer_family`, `producer_tool`, `output_path`, `scope`, `covered_units`, `freshness`, and `limitations` before making a claim. Static `deployment-model` and `api-catalog` records stay `metadata-visible`; they must not be promoted to `runtime-visible` or to whole-landscape coverage. Runtime topology stays `not_assessed` unless a runtime producer family supplies `runtime-visible` local observations.\n\n")
 	fmt.Fprintf(&b, "## Hard Boundaries\n\n")
@@ -1994,6 +2147,11 @@ func renderQueryPlan() string {
   records with kind ` + "`relationship-candidate`" + ` before opening raw source.
   They point at build manifests, distribution manifests, RPM specs, and
   deployment manifests; they are candidate evidence, not parsed topology.
+- Maven/Gradle dependency evidence: if build manifests are visible but
+  CycloneDX/build-tool outputs are missing, inspect ` + "`oss-plan.json`" + ` for
+  ` + "`maven-cyclonedx`" + ` and ` + "`gradle-cyclonedx`" + ` plans. Treat them as
+  approval-gated native producer options, not Portolan-owned JVM adapters, and
+  keep dependency relationships ` + "`not_assessed`" + ` until local output exists.
 - Producer family gaps: inspect ` + "`producer-coverage`" + ` and
   ` + "`producer-recommendation`" + ` records in ` + "`evidence-index.jsonl`" + ` before
   making mixed-language coverage claims. Recommendations are options, not
