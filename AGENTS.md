@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/070-bigtop-ctags-import-references/plan.md`
+`docs/specs/071-bigtop-ctags-cross-language-imports/plan.md`
 <!-- SPECKIT END -->
