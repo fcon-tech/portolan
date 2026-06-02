@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -11,10 +12,13 @@ import (
 func TestRunAddsBuildToolDependencyProducerPlans(t *testing.T) {
 	root := t.TempDir()
 	mavenRepo := filepath.Join(root, "repos", "maven-service")
+	mavenSecondRepo := filepath.Join(root, "repos", "maven-worker")
 	gradleRepo := filepath.Join(root, "repos", "gradle-service")
 	mustMkdirContextprep(t, filepath.Join(mavenRepo, ".git"))
+	mustMkdirContextprep(t, filepath.Join(mavenSecondRepo, ".git"))
 	mustMkdirContextprep(t, filepath.Join(gradleRepo, ".git"))
 	mustWriteContextprep(t, filepath.Join(mavenRepo, "pom.xml"), `<project><artifactId>maven-service</artifactId></project>`)
+	mustWriteContextprep(t, filepath.Join(mavenSecondRepo, "pom.xml"), `<project><artifactId>maven-worker</artifactId></project>`)
 	mustWriteContextprep(t, filepath.Join(gradleRepo, "build.gradle.kts"), `plugins { java }`)
 
 	bin := filepath.Join(t.TempDir(), "bin")
@@ -43,28 +47,45 @@ func TestRunAddsBuildToolDependencyProducerPlans(t *testing.T) {
 	if maven.Status != "available_not_run" || maven.EvidenceState != "not_assessed" {
 		t.Fatalf("maven plan = %#v, want available_not_run/not_assessed", maven)
 	}
-	if maven.Producer != "cyclonedx-maven-plugin" || len(maven.Commands) != 1 {
-		t.Fatalf("maven plan = %#v, want one CycloneDX Maven command", maven)
+	if maven.Producer != "cyclonedx-maven-plugin" || len(maven.Commands) != 2 {
+		t.Fatalf("maven plan = %#v, want one CycloneDX Maven command per repository", maven)
 	}
-	mavenCommand := maven.Commands[0]
-	if !mavenCommand.RequiresUserApproval || !mavenCommand.MutatesTarget {
-		t.Fatalf("maven command = %#v, want approval-required command with mutation risk", mavenCommand)
-	}
-	assertPathsUnderRoot(t, mavenCommand.Reads, root)
-	assertWritesUnderContextToolOutput(t, mavenCommand.Writes, plan.ToolOutputDir)
-	mavenArgs := strings.Join(mavenCommand.Args, " ")
-	for _, want := range []string{
-		"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
-		"-DoutputFormat=json",
-		"-DoutputDirectory=" + plan.ToolOutputDir,
-		filepath.Join(mavenRepo, "pom.xml"),
-	} {
-		if !strings.Contains(mavenArgs, want) {
-			t.Fatalf("maven args = %q, want %q", mavenArgs, want)
+	seenMavenPOMs := map[string]bool{}
+	for _, mavenCommand := range maven.Commands {
+		if !mavenCommand.RequiresUserApproval || !mavenCommand.MutatesTarget {
+			t.Fatalf("maven command = %#v, want approval-required command with mutation risk", mavenCommand)
+		}
+		assertPathsUnderRoot(t, mavenCommand.Reads, root)
+		assertWritesUnderContextToolOutput(t, mavenCommand.Writes, plan.ToolOutputDir)
+		mavenArgs := strings.Join(mavenCommand.Args, " ")
+		for _, want := range []string{
+			"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
+			"-DoutputFormat=json",
+			"-DoutputDirectory=" + filepath.Join(plan.ToolOutputDir, "maven-cyclonedx"),
+		} {
+			if !strings.Contains(mavenArgs, want) {
+				t.Fatalf("maven args = %q, want %q", mavenArgs, want)
+			}
+		}
+		for _, pom := range []string{
+			filepath.Join(mavenRepo, "pom.xml"),
+			filepath.Join(mavenSecondRepo, "pom.xml"),
+		} {
+			if strings.Contains(mavenArgs, pom) {
+				seenMavenPOMs[pom] = true
+			}
+		}
+		if !strings.Contains(mavenCommand.Network, "possible") {
+			t.Fatalf("maven network = %q, want possible dependency/plugin resolution boundary", mavenCommand.Network)
 		}
 	}
-	if !strings.Contains(mavenCommand.Network, "possible") {
-		t.Fatalf("maven network = %q, want possible dependency/plugin resolution boundary", mavenCommand.Network)
+	for _, pom := range []string{
+		filepath.Join(mavenRepo, "pom.xml"),
+		filepath.Join(mavenSecondRepo, "pom.xml"),
+	} {
+		if !seenMavenPOMs[pom] {
+			t.Fatalf("maven commands did not include pom %q: %#v", pom, maven.Commands)
+		}
 	}
 
 	gradle := byID["gradle-cyclonedx"]
@@ -117,6 +138,57 @@ func TestResolveBuildToolExecutablePrefersExecutableWrapper(t *testing.T) {
 
 	if !ok || exe != wrapper {
 		t.Fatalf("resolveBuildToolExecutable = (%q, %v), want executable wrapper %q", exe, ok, wrapper)
+	}
+}
+
+func TestMavenCycloneDXPlanCapsRepositoryCommands(t *testing.T) {
+	root := t.TempDir()
+	bin := filepath.Join(t.TempDir(), "bin")
+	mustMkdirContextprep(t, bin)
+	pathMaven := filepath.Join(bin, "mvn")
+	mustWriteContextprep(t, pathMaven, "#!/bin/sh\nexit 0\n")
+	if err := os.Chmod(pathMaven, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", bin)
+
+	var surface buildToolSurface
+	for i := 0; i < maxBuildToolCommandsPerPlan+2; i++ {
+		repoID := "service-" + strconv.Itoa(i)
+		repoPath := filepath.Join(root, "repos", repoID)
+		pom := filepath.Join(repoPath, "pom.xml")
+		mustWriteContextprep(t, pom, `<project></project>`)
+		surface.MavenCount++
+		surface.MavenRepos = append(surface.MavenRepos, buildToolRepoSurface{
+			RepositoryID: repoID,
+			RepoPath:     repoPath,
+			Sample:       pom,
+			Count:        1,
+		})
+	}
+
+	toolOutputDir := filepath.Join(root, ".portolan", "context", "tool-outputs")
+	plan := mavenCycloneDXPlan(root, filepath.Dir(toolOutputDir), toolOutputDir, false, surface)
+
+	if len(plan.Commands) != maxBuildToolCommandsPerPlan {
+		t.Fatalf("command count = %d, want cap %d", len(plan.Commands), maxBuildToolCommandsPerPlan)
+	}
+	if !strings.Contains(plan.Reason, "capped") {
+		t.Fatalf("plan reason = %q, want capped command list disclosure", plan.Reason)
+	}
+}
+
+func TestSanitizeToolOutputName(t *testing.T) {
+	tests := map[string]string{
+		"Apache Spark":    "apache-spark",
+		"../Repo/Name":    "repo-name",
+		"service_01.prod": "service-01-prod",
+		"***":             "repository",
+	}
+	for input, want := range tests {
+		if got := sanitizeToolOutputName(input); got != want {
+			t.Fatalf("sanitizeToolOutputName(%q) = %q, want %q", input, got, want)
+		}
 	}
 }
 
