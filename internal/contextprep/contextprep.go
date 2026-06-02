@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -22,6 +23,8 @@ const SchemaVersion = "0.1.0"
 const maxContextSymbolDocuments = 5000
 const maxContextSymbols = 50000
 const relationshipCandidateScanLimitPerRepo = 20000
+const staleArtifactExclusion = "Sibling `.portolan/stress/*` roots, root-level `run/`, and unrelated `reports/` outputs are stale or forbidden unless the user, dated lane ledger, or prompt explicitly names them as allowed inputs."
+const baselineArtifactContamination = "In a no-Portolan or baseline lane, `.portolan/`, root-level `run/`, and generated Portolan artifacts are forbidden; any read from those paths makes the lane contaminated and non-counting evidence."
 
 type Options struct {
 	RootPath   string
@@ -139,14 +142,23 @@ type RelationshipCandidate struct {
 }
 
 type buildToolSurface struct {
-	MavenCount    int
-	MavenSample   string
-	MavenRepoPath string
+	MavenCount int
+	MavenRepos []buildToolRepoSurface
 
 	GradleCount    int
 	GradleSample   string
 	GradleRepoPath string
 }
+
+type buildToolRepoSurface struct {
+	RepositoryID string
+	RepoPath     string
+	Sample       string
+	Count        int
+}
+
+// Keep context packs as navigation surfaces, not broad execution scripts.
+const maxBuildToolCommandsPerPlan = 50
 
 type repoFile struct {
 	SchemaVersion string       `json:"schema_version"`
@@ -238,7 +250,7 @@ func Run(opts Options) (Result, error) {
 	tools := detectToolOutputs(root, out, repos)
 	relationshipCandidates := detectRelationshipCandidates(repos)
 	buildTools := detectBuildToolSurfaces(repos)
-	ossPlan := buildOSSPlan(root, out, opts.Profile, repos, tools, buildTools)
+	ossPlan := buildOSSPlan(root, out, opts.Profile, tools, buildTools, repos)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
 		ID:            "gap-external-completeness",
@@ -253,7 +265,7 @@ func Run(opts Options) (Result, error) {
 	producerRecommendations := buildProducerRecommendations(repos, gaps)
 	producerCoverage := buildProducerCoverage(repos, gaps)
 	producerEvaluations := detectProducerEvaluations(root, repos)
-	producerRuns := detectProducerRuns(root, repos)
+	producerRuns := detectProducerRuns(root, out, repos)
 
 	parent := filepath.Dir(out)
 	temp, err := os.MkdirTemp(parent, "."+filepath.Base(out)+".tmp-*")
@@ -304,7 +316,7 @@ func Run(opts Options) (Result, error) {
 	if err := os.WriteFile(filepath.Join(temp, "agent-brief.md"), []byte(renderAgentBrief(root, opts.Profile, repos, tools, ossPlan, gaps, relationshipCandidates, producerRecommendations, producerCoverage, producerEvaluations, producerRuns)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write agent brief: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(temp, "answer-contract.md"), []byte(renderAnswerContract(root, out)), 0o644); err != nil {
 		return Result{}, fmt.Errorf("write answer contract: %w", err)
 	}
 	if err := os.WriteFile(filepath.Join(temp, "query-plan.md"), []byte(renderQueryPlan()), 0o644); err != nil {
@@ -645,7 +657,7 @@ func ignoredProducerFamilyRecords(path, scope, scopeDetail string, count int) Ev
 	}
 }
 
-func detectProducerRuns(root string, repos []Repository) []EvidenceRecord {
+func detectProducerRuns(root, out string, repos []Repository) []EvidenceRecord {
 	candidateDirs := []producerRecordDir{
 		{Path: root, Scope: "landscape", ScopeDetail: "root"},
 		{Path: filepath.Join(root, ".portolan"), Scope: "landscape", ScopeDetail: "root"},
@@ -679,7 +691,7 @@ func detectProducerRuns(root string, repos []Repository) []EvidenceRecord {
 				continue
 			}
 			for _, record := range validated {
-				records = append(records, producerRunEvidenceRecord(path, dir.Scope, dir.ScopeDetail, record))
+				records = append(records, producerRunEvidenceRecord(root, out, path, dir.Scope, dir.ScopeDetail, record))
 			}
 		}
 	}
@@ -689,7 +701,7 @@ func detectProducerRuns(root string, repos []Repository) []EvidenceRecord {
 	return records
 }
 
-func producerRunEvidenceRecord(path, scope, scopeDetail string, run producerfamily.ProducerRunRecord) EvidenceRecord {
+func producerRunEvidenceRecord(root, out, path, scope, scopeDetail string, run producerfamily.ProducerRunRecord) EvidenceRecord {
 	outputPath := run.OutputPath
 	if outputPath != "" && !filepath.IsAbs(outputPath) {
 		outputPath = filepath.Join(run.TargetRoot, outputPath)
@@ -699,30 +711,92 @@ func producerRunEvidenceRecord(path, scope, scopeDetail string, run producerfami
 		reason = "producer run metadata supplied by local JSONL input"
 	}
 	summary := fmt.Sprintf("Local %s producer run from %s is %s for %s.", run.ProducerFamily, run.ProducerTool, run.Status, scopeDetail)
+	status := run.Status
+	evidenceState := run.EvidenceState
+	command := run.Command
+	recordPath := outputPath
+	targetRoot := run.TargetRoot
+	if isStaleSiblingStressOutput(root, out, outputPath) {
+		originalStatus := status
+		originalEvidenceState := evidenceState
+		status = "not_assessed"
+		evidenceState = "not_assessed"
+		command = ""
+		recordPath = ""
+		if isStaleSiblingStressOutput(root, out, targetRoot) {
+			targetRoot = ""
+		}
+		summary = fmt.Sprintf("Local %s producer run from %s is not assessed for %s.", run.ProducerFamily, run.ProducerTool, scopeDetail)
+		reason = appendReason(reason, fmt.Sprintf("source record was validated as %s/%s, but its output is under a sibling .portolan/stress run outside the current context artifact boundary; path and command fields were scrubbed to avoid stale artifact reuse", originalStatus, originalEvidenceState))
+	}
 	return EvidenceRecord{
 		ID:             run.ID,
 		Kind:           "producer-run",
 		Family:         run.ProducerFamily,
-		Status:         run.Status,
-		EvidenceState:  run.EvidenceState,
+		Status:         status,
+		EvidenceState:  evidenceState,
 		SourceArtifact: path,
 		SourceID:       run.ProducerTool,
-		Path:           outputPath,
+		Path:           recordPath,
 		Summary:        summary,
 		Reason:         reason,
 		RepositoryID:   run.Scope.Repository,
 		Scope:          scope,
 		ScopeDetail:    scopeDetail,
 		ProducerTool:   run.ProducerTool,
-		Command:        run.Command,
-		TargetRoot:     run.TargetRoot,
-		OutputPath:     outputPath,
+		Command:        command,
+		TargetRoot:     targetRoot,
+		OutputPath:     recordPath,
 		OutputFormat:   run.OutputFormat,
 		CoveredUnits:   run.Scope.CoveredUnits,
 		Freshness:      run.Freshness,
 		Limitations:    run.Limitations,
 		PrivacyReview:  run.PrivacyReview,
 	}
+}
+
+func appendReason(reason, addition string) string {
+	if reason == "" {
+		return addition
+	}
+	return reason + "; " + addition
+}
+
+func isStaleSiblingStressOutput(root, out, outputPath string) bool {
+	if outputPath == "" {
+		return false
+	}
+	currentStressRun, ok := currentStressRunRoot(root, out)
+	if !ok {
+		return false
+	}
+	cleanOutput := filepath.Clean(outputPath)
+	stressRoot := filepath.Join(filepath.Clean(root), ".portolan", "stress")
+	if !isWithinPathBoundary(cleanOutput, stressRoot) {
+		return false
+	}
+	return !isWithinPathBoundary(cleanOutput, currentStressRun)
+}
+
+func currentStressRunRoot(root, out string) (string, bool) {
+	stressRoot := filepath.Join(filepath.Clean(root), ".portolan", "stress")
+	rel, err := filepath.Rel(stressRoot, filepath.Clean(out))
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", false
+	}
+	parts := strings.Split(rel, string(filepath.Separator))
+	if len(parts) == 0 || parts[0] == "" || parts[0] == "." || parts[0] == ".." {
+		return "", false
+	}
+	return filepath.Join(stressRoot, parts[0]), true
+}
+
+func isWithinPathBoundary(path, root string) bool {
+	rel, err := filepath.Rel(filepath.Clean(root), filepath.Clean(path))
+	if err != nil {
+		return false
+	}
+	return rel == "." || (rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)))
 }
 
 func invalidProducerRun(path string, err error) EvidenceRecord {
@@ -798,6 +872,8 @@ func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
 
 func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 	var surface buildToolSurface
+	mavenByRepo := map[string]int{}
+	mavenRepoIndex := map[string]int{}
 	for _, repo := range repos {
 		scanned := 0
 		err := filepath.WalkDir(repo.Path, func(path string, entry os.DirEntry, err error) error {
@@ -820,9 +896,17 @@ func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 			switch buildToolManifestKind(entry.Name()) {
 			case "maven":
 				surface.MavenCount++
-				if surface.MavenSample == "" {
-					surface.MavenSample = path
-					surface.MavenRepoPath = repo.Path
+				mavenByRepo[repo.ID]++
+				if _, ok := mavenRepoIndex[repo.ID]; !ok {
+					surface.MavenRepos = append(surface.MavenRepos, buildToolRepoSurface{
+						RepositoryID: repo.ID,
+						RepoPath:     repo.Path,
+						Sample:       path,
+						Count:        1,
+					})
+					mavenRepoIndex[repo.ID] = len(surface.MavenRepos) - 1
+				} else {
+					surface.MavenRepos[mavenRepoIndex[repo.ID]].Count = mavenByRepo[repo.ID]
 				}
 			case "gradle":
 				surface.GradleCount++
@@ -837,6 +921,9 @@ func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 			continue
 		}
 	}
+	sort.Slice(surface.MavenRepos, func(i, j int) bool {
+		return surface.MavenRepos[i].RepositoryID < surface.MavenRepos[j].RepositoryID
+	})
 	return surface
 }
 
@@ -1660,7 +1747,7 @@ func producerCoverageRecord(repositoryID, family, sourceID, reason string) Evide
 	}
 }
 
-func buildOSSPlan(root, out, profile string, repos []Repository, tools []ToolEntry, buildTools buildToolSurface) ossPlanFile {
+func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools buildToolSurface, repos []Repository) ossPlanFile {
 	toolOutputDir := filepath.Join(out, "tool-outputs")
 	plan := ossPlanFile{
 		SchemaVersion: SchemaVersion,
@@ -1678,7 +1765,7 @@ func buildOSSPlan(root, out, profile string, repos []Repository, tools []ToolEnt
 	}
 	present := toolFamiliesPresent(tools)
 	plan.Tools = []OSSToolPlan{
-		jscpdPlan(root, out, toolOutputDir, present["jscpd"]),
+		jscpdPlan(root, out, toolOutputDir, present["jscpd"], repos),
 		syftPlan(root, out, toolOutputDir, repos, present["cyclonedx"]),
 		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
 	}
@@ -1702,7 +1789,7 @@ func toolFamiliesPresent(tools []ToolEntry) map[string]bool {
 	return present
 }
 
-func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+func jscpdPlan(root, out, toolOutputDir string, inputPresent bool, repos []Repository) OSSToolPlan {
 	plan := baseOSSPlan("jscpd", "jscpd", "jscpd", "Detect duplicated source and text fragments as metadata-visible duplication evidence.")
 	plan.AgentCapabilities = []string{
 		"jscpd CLI JSON reporter",
@@ -1719,33 +1806,53 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.Status = "available_not_run"
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
+	if len(repos) > 1 {
+		plan.Reason = fmt.Sprintf("jscpd is available locally; Portolan did not run it; %d repository shards are recommended to avoid full-root large-landscape failures", len(repos))
+		for _, repo := range sortedRepositoriesForPlan(repos) {
+			outputDir := filepath.Join(toolOutputDir, "jscpd", safeID(repo.ID))
+			plan.Commands = append(plan.Commands, jscpdCommand(exe, root, out, repo.Path, outputDir, filepath.Join(outputDir, "jscpd-report.json"), "run bounded native jscpd JSON output for repository "+repo.ID, true))
+		}
+		return plan
+	}
+	target := root
+	if len(repos) == 1 {
+		target = repos[0].Path
+	}
 	plan.Reason = "jscpd is available locally; Portolan did not run it"
-	plan.Commands = []OSSCommand{{
-		Label:  "run bounded native jscpd JSON output",
-		Tool:   exe,
-		Args:   boundedJSCPDArgs(toolOutputDir, root),
-		Reads:  []string{root},
-		Writes: []string{filepath.Join(toolOutputDir, "jscpd-report.json")},
-		Limits: []string{
-			"max source file size: 100kb",
-			"max source file lines: 1000",
-			"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
-			"respect local .gitignore files",
-			"native tool exit status remains visible to the operator",
-		},
+	plan.Commands = []OSSCommand{
+		jscpdCommand(exe, root, out, target, toolOutputDir, filepath.Join(toolOutputDir, "jscpd-report.json"), "run bounded native jscpd JSON output", false),
+	}
+	return plan
+}
+
+func sortedRepositoriesForPlan(repos []Repository) []Repository {
+	sorted := append([]Repository(nil), repos...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].ID < sorted[j].ID
+	})
+	return sorted
+}
+
+func jscpdCommand(exe, root, out, target, outputDir, outputFile, label string, sharded bool) OSSCommand {
+	return OSSCommand{
+		Label:                label,
+		Tool:                 exe,
+		Args:                 boundedJSCPDArgs(outputDir, target),
+		Reads:                []string{target},
+		Writes:               []string{outputFile},
+		Limits:               jscpdLimits(sharded),
 		MutatesTarget:        false,
 		Network:              "not_expected",
 		RequiresUserApproval: true,
 		AfterRun:             rerunContextCommand(root, out),
-	}}
-	return plan
+	}
 }
 
-func boundedJSCPDArgs(toolOutputDir, root string) []string {
+func boundedJSCPDArgs(outputDir, target string) []string {
 	return []string{
-		root,
+		target,
 		"--reporters", "json",
-		"--output", toolOutputDir,
+		"--output", outputDir,
 		"--min-lines", "50",
 		"--min-tokens", "100",
 		"--max-size", "100kb",
@@ -1757,6 +1864,24 @@ func boundedJSCPDArgs(toolOutputDir, root string) []string {
 	}
 }
 
+func jscpdLimits(sharded bool) []string {
+	limits := []string{
+		"max source file size: 100kb",
+		"max source file lines: 1000",
+		"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
+		"respect local .gitignore files",
+		"native tool exit status remains visible to the operator",
+	}
+	if sharded {
+		limits = append(limits,
+			"repository shard only; run shards sequentially and rerun context preparation after outputs exist",
+			"missing, failed, or unrun shards remain not_assessed/failed and must not be aggregated into duplication metrics",
+			"cross-repository clone detection remains not_assessed",
+		)
+	}
+	return limits
+}
+
 func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent bool) OSSToolPlan {
 	plan := baseOSSPlan("cyclonedx", "cyclonedx", "syft", "Produce CycloneDX JSON SBOM evidence for component and dependency identity.")
 	if inputPresent {
@@ -1766,7 +1891,6 @@ func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent 
 	if !ok {
 		return markNotAvailable(plan, "syft executable was not found on PATH")
 	}
-	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
 	// Syft requires exclude patterns to be source-relative; absolute patterns
 	// are rejected by the CLI.
 	excludes := []string{
@@ -1779,13 +1903,12 @@ func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent 
 	plan.Reason = "Syft is available locally; Portolan did not run it"
 	if len(repos) > 1 {
 		plan.Reason += fmt.Sprintf("; %d repository shards are recommended to avoid full-root large-landscape scans", len(repos))
-		commands := make([]OSSCommand, 0, len(repos))
 		usedOutputNames := map[string]int{}
-		for _, repo := range repos {
+		for _, repo := range sortedRepositoriesForPlan(repos) {
 			outputName := uniqueToolOutputName(sanitizeToolOutputName(repo.ID), usedOutputNames)
 			output := filepath.Join(toolOutputDir, "syft", outputName+".cyclonedx.json")
-			commands = append(commands, OSSCommand{
-				Label: fmt.Sprintf("produce CycloneDX JSON SBOM for repository %s", repo.ID),
+			plan.Commands = append(plan.Commands, OSSCommand{
+				Label: "produce CycloneDX JSON SBOM for repository " + repo.ID,
 				Tool:  exe,
 				Args: []string{
 					repo.Path,
@@ -1806,14 +1929,18 @@ func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent 
 				AfterRun:             rerunContextCommand(root, out),
 			})
 		}
-		plan.Commands = commands
 		return plan
 	}
+	target := root
+	if len(repos) == 1 {
+		target = repos[0].Path
+	}
+	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
 	plan.Commands = []OSSCommand{{
 		Label:                "produce CycloneDX JSON SBOM",
 		Tool:                 exe,
-		Args:                 []string{root, "--exclude", excludes[0], "--exclude", excludes[1], "-o", "cyclonedx-json=" + output},
-		Reads:                []string{root},
+		Args:                 []string{target, "--exclude", excludes[0], "--exclude", excludes[1], "-o", "cyclonedx-json=" + output},
+		Reads:                []string{target},
 		Writes:               []string{output},
 		Limits:               []string{"exclude .portolan outputs and root-level run artifacts from the SBOM source"},
 		MutatesTarget:        false,
@@ -1821,6 +1948,70 @@ func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent 
 		RequiresUserApproval: true,
 		AfterRun:             rerunContextCommand(root, out),
 	}}
+	return plan
+}
+
+func mavenCycloneDXPlan(root, out, toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
+	plan := baseOSSPlan("maven-cyclonedx", "cyclonedx", "cyclonedx-maven-plugin", "Produce Maven-native CycloneDX dependency evidence for a visible pom.xml surface.")
+	plan.AgentCapabilities = []string{
+		"CycloneDX Maven plugin makeAggregateBom goal",
+		"Maven dependency-plugin dependency:tree JSON as a future parser candidate",
+	}
+	if inputPresent {
+		return markInputPresent(plan, "CycloneDX/Syft-compatible dependency output is already present in tool-registry.json; inspect it before running an additional Maven-specific producer")
+	}
+	if len(surface.MavenRepos) == 0 {
+		return markNotAvailable(plan, "Maven manifests are visible, but no repository-scoped pom.xml sample was retained")
+	}
+	exe, ok := resolveFirstBuildToolExecutable(surface.MavenRepos, "mvn", "mvnw")
+	if !ok {
+		return markNotAvailable(plan, "Maven manifests are visible, but mvn or an executable mvnw wrapper was not found")
+	}
+	mavenOutputDir := filepath.Join(toolOutputDir, "maven-cyclonedx")
+	plan.Status = "available_not_run"
+	plan.EvidenceState = "not_assessed"
+	plan.Executable = exe
+	plan.Reason = fmt.Sprintf("Maven manifests are visible (%d files across %d repositories); CycloneDX Maven output can reduce dependency unknowns, but Portolan did not run Maven", surface.MavenCount, len(surface.MavenRepos))
+	for i, repo := range surface.MavenRepos {
+		if i >= maxBuildToolCommandsPerPlan {
+			break
+		}
+		repoExe, repoHasExecutable := resolveBuildToolExecutable(repo.RepoPath, "mvn", "mvnw")
+		if !repoHasExecutable {
+			repoExe = exe
+		}
+		outputName := "maven-cyclonedx-" + sanitizeToolOutputName(repo.RepositoryID)
+		output := filepath.Join(mavenOutputDir, outputName+".json")
+		plan.Commands = append(plan.Commands, OSSCommand{
+			Label: fmt.Sprintf("produce Maven CycloneDX JSON for repository %s", repo.RepositoryID),
+			Tool:  repoExe,
+			Args: []string{
+				"-B",
+				"-f", repo.Sample,
+				"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
+				"-DoutputFormat=json",
+				"-DoutputName=" + outputName,
+				"-DoutputDirectory=" + mavenOutputDir,
+				"-Dcyclonedx.skipAttach=true",
+			},
+			Reads:  []string{repo.RepoPath, repo.Sample},
+			Writes: []string{output},
+			Limits: []string{
+				"declared producer output is under the context tool-output directory",
+				fmt.Sprintf("repository-sharded command for one retained pom.xml sample in %s (%d visible Maven manifests in this repository)", repo.RepositoryID, repo.Count),
+				"reads/writes list declared context intent only; Maven may also read settings, parent POMs, and local caches",
+				"may resolve Maven plugins/dependencies and write Maven caches, target directories, or project-defined plugin outputs",
+				"dependency evidence is not runtime topology, service communication, or call graph evidence",
+			},
+			MutatesTarget:        true,
+			Network:              "possible_for_plugin_and_dependency_resolution",
+			RequiresUserApproval: true,
+			AfterRun:             rerunContextCommand(root, out),
+		})
+	}
+	if len(surface.MavenRepos) > maxBuildToolCommandsPerPlan {
+		plan.Reason += fmt.Sprintf("; command list is capped at %d repositories to keep the plan bounded", maxBuildToolCommandsPerPlan)
+	}
 	return plan
 }
 
@@ -1846,54 +2037,16 @@ func uniqueToolOutputName(base string, used map[string]int) string {
 		return base
 	}
 	used[base]++
-	return fmt.Sprintf("%s-%d", base, used[base])
+	return base + "-" + strconv.Itoa(used[base])
 }
 
-func mavenCycloneDXPlan(root, out, toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
-	plan := baseOSSPlan("maven-cyclonedx", "cyclonedx", "cyclonedx-maven-plugin", "Produce Maven-native CycloneDX dependency evidence for a visible pom.xml surface.")
-	plan.AgentCapabilities = []string{
-		"CycloneDX Maven plugin makeAggregateBom goal",
-		"Maven dependency-plugin dependency:tree JSON as a future parser candidate",
+func resolveFirstBuildToolExecutable(repos []buildToolRepoSurface, binary, wrapper string) (string, bool) {
+	for _, repo := range repos {
+		if exe, ok := resolveBuildToolExecutable(repo.RepoPath, binary, wrapper); ok {
+			return exe, true
+		}
 	}
-	if inputPresent {
-		return markInputPresent(plan, "CycloneDX/Syft-compatible dependency output is already present in tool-registry.json; inspect it before running an additional Maven-specific producer")
-	}
-	exe, ok := resolveBuildToolExecutable(surface.MavenRepoPath, "mvn", "mvnw")
-	if !ok {
-		return markNotAvailable(plan, "Maven manifests are visible, but mvn or an executable mvnw wrapper was not found")
-	}
-	output := filepath.Join(toolOutputDir, "maven-cyclonedx.json")
-	plan.Status = "available_not_run"
-	plan.EvidenceState = "not_assessed"
-	plan.Executable = exe
-	plan.Reason = fmt.Sprintf("Maven manifests are visible (%d files); CycloneDX Maven output can reduce dependency unknowns, but Portolan did not run Maven", surface.MavenCount)
-	plan.Commands = []OSSCommand{{
-		Label: "produce Maven CycloneDX JSON for a selected pom.xml",
-		Tool:  exe,
-		Args: []string{
-			"-B",
-			"-f", surface.MavenSample,
-			"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
-			"-DoutputFormat=json",
-			"-DoutputName=maven-cyclonedx",
-			"-DoutputDirectory=" + toolOutputDir,
-			"-Dcyclonedx.skipAttach=true",
-		},
-		Reads:  []string{surface.MavenRepoPath, surface.MavenSample},
-		Writes: []string{output},
-		Limits: []string{
-			"declared producer output is under the context tool-output directory",
-			"bounded to one sample pom.xml; repeat per selected repository only after approval",
-			"reads/writes list declared context intent only; Maven may also read settings, parent POMs, and local caches",
-			"may resolve Maven plugins/dependencies and write Maven caches, target directories, or project-defined plugin outputs",
-			"dependency evidence is not runtime topology, service communication, or call graph evidence",
-		},
-		MutatesTarget:        true,
-		Network:              "possible_for_plugin_and_dependency_resolution",
-		RequiresUserApproval: true,
-		AfterRun:             rerunContextCommand(root, out),
-	}}
-	return plan
+	return "", false
 }
 
 func gradleCycloneDXPlan(toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {
@@ -2056,9 +2209,20 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 			availablePlans++
 		}
 	}
+	verifiedProducerRuns := 0
+	notAssessedProducerRuns := 0
+	for _, record := range producerRuns {
+		switch record.Status {
+		case "verified":
+			verifiedProducerRuns++
+		case "not_assessed":
+			notAssessedProducerRuns++
+		}
+	}
 	fmt.Fprintf(&b, "# Portolan Agent Brief\n\n")
 	fmt.Fprintf(&b, "Profile: %s\n\n", profileLabel(profile))
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
+	fmt.Fprint(&b, freshArtifactBoundarySection(ossPlan.OutputPath))
 	fmt.Fprintf(&b, "Start here before answering CTO-level questions about this landscape.\n\n")
 	fmt.Fprintf(&b, "## What To Read First\n\n")
 	fmt.Fprintf(&b, "1. `evidence-index.jsonl` for the bounded list of local evidence records and gaps.\n")
@@ -2081,7 +2245,7 @@ func renderAgentBrief(root string, profile string, repos []Repository, tools []T
 	fmt.Fprintf(&b, "- Producer recommendation records: %d\n", len(producerRecommendations))
 	fmt.Fprintf(&b, "- Producer coverage records: %d\n", len(producerCoverage))
 	fmt.Fprintf(&b, "- Local producer evaluation records: %d (`not_assessed` until local evaluation input exists)\n", len(producerEvaluations))
-	fmt.Fprintf(&b, "- Local producer run records: %d (`verified` records describe externally generated outputs; Portolan did not execute them)\n", len(producerRuns))
+	fmt.Fprintf(&b, "- Local producer run records: %d (%d verified current records; %d not_assessed; Portolan did not execute them)\n", len(producerRuns), verifiedProducerRuns, notAssessedProducerRuns)
 	fmt.Fprintf(&b, "- Gap records: %d\n", len(gaps))
 	fmt.Fprintf(&b, "- External ecosystem completeness: `unknown`\n\n")
 	if len(producerRuns) > 0 {
@@ -2125,11 +2289,12 @@ func profileLabel(profile string) string {
 	}
 }
 
-func renderAnswerContract(root string) string {
+func renderAnswerContract(root, out string) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Portolan Answer Contract\n\n")
 	fmt.Fprintf(&b, "Target root: `%s`\n\n", root)
 	fmt.Fprintf(&b, "Use this contract before answering CTO-level questions about a large or multi-repo codebase. Portolan augments the coding agent; it does not replace the agent, Cursor, source reading, or human judgment.\n\n")
+	fmt.Fprint(&b, freshArtifactBoundarySection(out))
 	fmt.Fprintf(&b, "## Mandatory Answer Shape\n\n")
 	fmt.Fprintf(&b, "Every broad answer must include:\n\n")
 	fmt.Fprintf(&b, "- Answer: the shortest useful conclusion supported by local evidence.\n")
@@ -2159,6 +2324,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "| What implicit knowledge is visible? | `evidence-index.jsonl`, `findings.jsonl`, `graph-index.json`, `tool-registry.json` | unowned relationships, repeated wrappers, undocumented config surfaces, local catalogs/contracts | intent, ownership, and production behavior stay `unknown` unless evidenced |\n")
 	fmt.Fprintf(&b, "| What configuration matters? | `findings.jsonl`, `graph-index.json` | env var names, ports, manifests, workflows, feature flags, secret references without values | semantic IaC/config correctness is `not_assessed` without OSS output such as Semgrep |\n")
 	fmt.Fprintf(&b, "| What technical debt is visible? | `findings.jsonl`, `summary.json` | technical-debt candidate findings derived from local evidence | modernization, rewrite, release, or readiness verdicts are `not_assessed` |\n\n")
+	fmt.Fprintf(&b, "For duplicate-code questions, read the jscpd plan before asking for native output. Run repository-sharded jscpd commands sequentially on large multi-repo landscapes and refresh context after outputs exist. Do not aggregate missing, failed, or unrun jscpd shards into a duplication metric. Cross-repository clone detection remains `not_assessed` unless a later approved producer output explicitly covers it.\n\n")
 	fmt.Fprintf(&b, "## Relationship Evidence Taxonomy\n\n")
 	fmt.Fprintf(&b, "| Relationship kind | Evidence type | Can say | Must not claim |\n")
 	fmt.Fprintf(&b, "| --- | --- | --- | --- |\n")
@@ -2187,19 +2353,22 @@ func renderQueryPlan() string {
 
 ## Before Answering
 
-1. Read ` + "`evidence-index.jsonl`" + ` for the bounded list of evidence records and gaps.
-2. Read ` + "`repos.json`" + ` and identify the local scope.
-3. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
-4. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
-5. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
-6. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
-7. Suggest only commands named in ` + "`answer-contract.md`" + ` or ` + "`oss-plan.json`" + `. Do not invent Portolan subcommands or flags.
+1. Confirm the current context boundary in ` + "`agent-brief.md`" + ` and ` + "`answer-contract.md`" + `. ` + staleArtifactExclusion + ` ` + baselineArtifactContamination + `
+2. Read ` + "`evidence-index.jsonl`" + ` for the bounded list of evidence records and gaps.
+3. Read ` + "`repos.json`" + ` and identify the local scope.
+4. Read ` + "`tool-registry.json`" + ` and list available OSS/tool-output families.
+5. Read ` + "`oss-plan.json`" + ` before claiming missing OSS evidence is impossible to obtain.
+6. Read ` + "`answer-contract.md`" + ` for the answer shape and evidence rules.
+7. Read ` + "`gaps.jsonl`" + ` and preserve missing surfaces as unknown, cannot_verify, or not_assessed.
+8. Suggest only commands named in ` + "`answer-contract.md`" + ` or ` + "`oss-plan.json`" + `. Do not invent Portolan subcommands or flags.
 
 ## CTO Questions
 
 - Duplicate components: start with jscpd and CycloneDX/Syft summaries in
   ` + "`tool-registry.json`" + `. If they are absent, report duplication as
   not_assessed and inspect ` + "`oss-plan.json`" + ` for native local OSS output recipes.
+  On multi-repo landscapes, prefer repository-sharded jscpd commands and do not
+  turn failed, missing, or unrun shards into clone metrics.
 - Build/deploy relationship candidates: inspect ` + "`evidence-index.jsonl`" + `
   records with kind ` + "`relationship-candidate`" + ` before opening raw source.
   They point at build manifests, distribution manifests, RPM specs, and
@@ -2226,6 +2395,10 @@ func renderQueryPlan() string {
   manifest flag; ask for a local inventory or use ` + "`selection validate`" + ` and
   ` + "`map --selection`" + ` only when a selection file exists.
 `
+}
+
+func freshArtifactBoundarySection(out string) string {
+	return fmt.Sprintf("## Fresh Artifact Boundary\n\nCurrent context output: `%s`\n\nTreat only this context directory and the output paths declared inside it as current Portolan evidence. %s %s\n\n", out, staleArtifactExclusion, baselineArtifactContamination)
 }
 
 func writeJSON(path string, value any) error {
