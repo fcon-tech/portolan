@@ -238,7 +238,7 @@ func Run(opts Options) (Result, error) {
 	tools := detectToolOutputs(root, out, repos)
 	relationshipCandidates := detectRelationshipCandidates(repos)
 	buildTools := detectBuildToolSurfaces(repos)
-	ossPlan := buildOSSPlan(root, out, opts.Profile, tools, buildTools)
+	ossPlan := buildOSSPlan(root, out, opts.Profile, tools, buildTools, repos)
 	gaps := append(repoGaps, gapsForMissingFamilies(tools)...)
 	gaps = append(gaps, Gap{
 		ID:            "gap-external-completeness",
@@ -1660,7 +1660,7 @@ func producerCoverageRecord(repositoryID, family, sourceID, reason string) Evide
 	}
 }
 
-func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools buildToolSurface) ossPlanFile {
+func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools buildToolSurface, repos []Repository) ossPlanFile {
 	toolOutputDir := filepath.Join(out, "tool-outputs")
 	plan := ossPlanFile{
 		SchemaVersion: SchemaVersion,
@@ -1678,7 +1678,7 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools build
 	}
 	present := toolFamiliesPresent(tools)
 	plan.Tools = []OSSToolPlan{
-		jscpdPlan(root, out, toolOutputDir, present["jscpd"]),
+		jscpdPlan(root, out, toolOutputDir, present["jscpd"], repos),
 		syftPlan(root, out, toolOutputDir, present["cyclonedx"]),
 		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
 	}
@@ -1702,7 +1702,7 @@ func toolFamiliesPresent(tools []ToolEntry) map[string]bool {
 	return present
 }
 
-func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+func jscpdPlan(root, out, toolOutputDir string, inputPresent bool, repos []Repository) OSSToolPlan {
 	plan := baseOSSPlan("jscpd", "jscpd", "jscpd", "Detect duplicated source and text fragments as metadata-visible duplication evidence.")
 	plan.AgentCapabilities = []string{
 		"jscpd CLI JSON reporter",
@@ -1719,33 +1719,53 @@ func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.Status = "available_not_run"
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
+	if len(repos) > 1 {
+		plan.Reason = fmt.Sprintf("jscpd is available locally; Portolan did not run it; %d repository shards are recommended to avoid full-root large-landscape failures", len(repos))
+		for _, repo := range sortedRepositoriesForPlan(repos) {
+			outputDir := filepath.Join(toolOutputDir, "jscpd", safeID(repo.ID))
+			plan.Commands = append(plan.Commands, jscpdCommand(exe, root, out, repo.Path, outputDir, filepath.Join(outputDir, "jscpd-report.json"), "run bounded native jscpd JSON output for repository "+repo.ID, true))
+		}
+		return plan
+	}
+	target := root
+	if len(repos) == 1 {
+		target = repos[0].Path
+	}
 	plan.Reason = "jscpd is available locally; Portolan did not run it"
-	plan.Commands = []OSSCommand{{
-		Label:  "run bounded native jscpd JSON output",
-		Tool:   exe,
-		Args:   boundedJSCPDArgs(toolOutputDir, root),
-		Reads:  []string{root},
-		Writes: []string{filepath.Join(toolOutputDir, "jscpd-report.json")},
-		Limits: []string{
-			"max source file size: 100kb",
-			"max source file lines: 1000",
-			"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
-			"respect local .gitignore files",
-			"native tool exit status remains visible to the operator",
-		},
+	plan.Commands = []OSSCommand{
+		jscpdCommand(exe, root, out, target, toolOutputDir, filepath.Join(toolOutputDir, "jscpd-report.json"), "run bounded native jscpd JSON output", false),
+	}
+	return plan
+}
+
+func sortedRepositoriesForPlan(repos []Repository) []Repository {
+	sorted := append([]Repository(nil), repos...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].ID < sorted[j].ID
+	})
+	return sorted
+}
+
+func jscpdCommand(exe, root, out, target, outputDir, outputFile, label string, sharded bool) OSSCommand {
+	return OSSCommand{
+		Label:                label,
+		Tool:                 exe,
+		Args:                 boundedJSCPDArgs(outputDir, target),
+		Reads:                []string{target},
+		Writes:               []string{outputFile},
+		Limits:               jscpdLimits(sharded),
 		MutatesTarget:        false,
 		Network:              "not_expected",
 		RequiresUserApproval: true,
 		AfterRun:             rerunContextCommand(root, out),
-	}}
-	return plan
+	}
 }
 
-func boundedJSCPDArgs(toolOutputDir, root string) []string {
+func boundedJSCPDArgs(outputDir, target string) []string {
 	return []string{
-		root,
+		target,
 		"--reporters", "json",
-		"--output", toolOutputDir,
+		"--output", outputDir,
 		"--min-lines", "50",
 		"--min-tokens", "100",
 		"--max-size", "100kb",
@@ -1755,6 +1775,24 @@ func boundedJSCPDArgs(toolOutputDir, root string) []string {
 		"--gitignore",
 		"--silent",
 	}
+}
+
+func jscpdLimits(sharded bool) []string {
+	limits := []string{
+		"max source file size: 100kb",
+		"max source file lines: 1000",
+		"ignore .git, .portolan, node_modules, vendor, build, dist, target, and generated directories",
+		"respect local .gitignore files",
+		"native tool exit status remains visible to the operator",
+	}
+	if sharded {
+		limits = append(limits,
+			"repository shard only; run shards sequentially and rerun context preparation after outputs exist",
+			"missing, failed, or unrun shards remain not_assessed/failed and must not be aggregated into duplication metrics",
+			"cross-repository clone detection remains not_assessed",
+		)
+	}
+	return limits
 }
 
 func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
@@ -2102,6 +2140,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "| What implicit knowledge is visible? | `evidence-index.jsonl`, `findings.jsonl`, `graph-index.json`, `tool-registry.json` | unowned relationships, repeated wrappers, undocumented config surfaces, local catalogs/contracts | intent, ownership, and production behavior stay `unknown` unless evidenced |\n")
 	fmt.Fprintf(&b, "| What configuration matters? | `findings.jsonl`, `graph-index.json` | env var names, ports, manifests, workflows, feature flags, secret references without values | semantic IaC/config correctness is `not_assessed` without OSS output such as Semgrep |\n")
 	fmt.Fprintf(&b, "| What technical debt is visible? | `findings.jsonl`, `summary.json` | technical-debt candidate findings derived from local evidence | modernization, rewrite, release, or readiness verdicts are `not_assessed` |\n\n")
+	fmt.Fprintf(&b, "For duplicate-code questions, read the jscpd plan before asking for native output. Run repository-sharded jscpd commands sequentially on large multi-repo landscapes and refresh context after outputs exist. Do not aggregate missing, failed, or unrun jscpd shards into a duplication metric. Cross-repository clone detection remains `not_assessed` unless a later approved producer output explicitly covers it.\n\n")
 	fmt.Fprintf(&b, "## Relationship Evidence Taxonomy\n\n")
 	fmt.Fprintf(&b, "| Relationship kind | Evidence type | Can say | Must not claim |\n")
 	fmt.Fprintf(&b, "| --- | --- | --- | --- |\n")
@@ -2143,6 +2182,8 @@ func renderQueryPlan() string {
 - Duplicate components: start with jscpd and CycloneDX/Syft summaries in
   ` + "`tool-registry.json`" + `. If they are absent, report duplication as
   not_assessed and inspect ` + "`oss-plan.json`" + ` for native local OSS output recipes.
+  On multi-repo landscapes, prefer repository-sharded jscpd commands and do not
+  turn failed, missing, or unrun shards into clone metrics.
 - Build/deploy relationship candidates: inspect ` + "`evidence-index.jsonl`" + `
   records with kind ` + "`relationship-candidate`" + ` before opening raw source.
   They point at build manifests, distribution manifests, RPM specs, and
