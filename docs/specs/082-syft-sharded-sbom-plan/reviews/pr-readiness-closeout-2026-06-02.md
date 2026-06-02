@@ -67,14 +67,20 @@ not_assessed at PR creation:
 - GitHub review approval absent/not_assessed.
 - Ready-to-merge approval absent/not_assessed.
 
+verified after current-head refresh:
+
+- Current PR head: `81918a6a323ef86e0d16c5757ea4091ab61fb722`
+- PR is open and not draft.
+- `mergeStateStatus=CLEAN`.
+- Current GitHub checks: all reported checks completed successfully.
+
 ## Readiness
 
-- Ready-for-review PR: yes, pending current GitHub checks for the final pushed
-  head.
+- Ready-for-review PR: yes.
 - Ready-to-merge PR: no.
 
 Stop reason:
 
-- PR is ready for review after final head checks are refreshed.
+- PR is ready for review.
 - Do not merge without explicit user approval and current merge-state/check
   verification.
