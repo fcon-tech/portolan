@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR after refreshed checks pass and draft is removed
+**Status**: Merged via PR #49
 
 **Input**: Spec 070 verified Java/Go package import references but explicitly
 excluded C/C++ includes, Python imports, shell loaded scripts, and related
