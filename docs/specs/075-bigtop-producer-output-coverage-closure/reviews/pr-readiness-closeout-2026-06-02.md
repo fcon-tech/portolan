@@ -60,13 +60,15 @@ verified:
 - PR URL: `https://github.com/fcon-tech/portolan/pull/53`.
 - PR draft state: ready-for-review.
 
-in_progress:
+verified:
 
-- GitHub checks were running when this closeout was first recorded:
+- GitHub merge state: `CLEAN`.
+- GitHub checks passed:
   - Baseline.
-  - CodeQL Analyze (actions).
-  - CodeQL Analyze (go).
-  - CodeQL Analyze (python).
+  - CodeQL.
+  - Analyze (actions).
+  - Analyze (go).
+  - Analyze (python).
 
 not_assessed:
 
@@ -76,6 +78,5 @@ not_assessed:
 ## Stop Reason
 
 PR #53 is ready for review as a producer-output coverage closure PR. It is not
-ready-to-merge without current GitHub check results and merge approval. It is
-not a runtime-topology verification PR and not a Cursor plus Portolan
-human/enterprise parity proof.
+ready-to-merge without explicit merge approval. It is not a runtime-topology
+verification PR and not a Cursor plus Portolan human/enterprise parity proof.
