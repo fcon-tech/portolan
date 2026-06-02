@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1765,7 +1766,7 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools build
 	present := toolFamiliesPresent(tools)
 	plan.Tools = []OSSToolPlan{
 		jscpdPlan(root, out, toolOutputDir, present["jscpd"], repos),
-		syftPlan(root, out, toolOutputDir, present["cyclonedx"]),
+		syftPlan(root, out, toolOutputDir, repos, present["cyclonedx"]),
 		semgrepPlan(root, out, toolOutputDir, present["semgrep"]),
 	}
 	if buildTools.MavenCount > 0 {
@@ -1881,7 +1882,7 @@ func jscpdLimits(sharded bool) []string {
 	return limits
 }
 
-func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
+func syftPlan(root, out, toolOutputDir string, repos []Repository, inputPresent bool) OSSToolPlan {
 	plan := baseOSSPlan("cyclonedx", "cyclonedx", "syft", "Produce CycloneDX JSON SBOM evidence for component and dependency identity.")
 	if inputPresent {
 		return markInputPresent(plan, "CycloneDX/Syft-compatible output is already present in tool-registry.json")
@@ -1890,7 +1891,6 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	if !ok {
 		return markNotAvailable(plan, "syft executable was not found on PATH")
 	}
-	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
 	// Syft requires exclude patterns to be source-relative; absolute patterns
 	// are rejected by the CLI.
 	excludes := []string{
@@ -1901,11 +1901,46 @@ func syftPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
 	plan.Reason = "Syft is available locally; Portolan did not run it"
+	if len(repos) > 1 {
+		plan.Reason += fmt.Sprintf("; %d repository shards are recommended to avoid full-root large-landscape scans", len(repos))
+		usedOutputNames := map[string]int{}
+		for _, repo := range sortedRepositoriesForPlan(repos) {
+			outputName := uniqueToolOutputName(sanitizeToolOutputName(repo.ID), usedOutputNames)
+			output := filepath.Join(toolOutputDir, "syft", outputName+".cyclonedx.json")
+			plan.Commands = append(plan.Commands, OSSCommand{
+				Label: "produce CycloneDX JSON SBOM for repository " + repo.ID,
+				Tool:  exe,
+				Args: []string{
+					repo.Path,
+					"--exclude", excludes[0],
+					"--exclude", excludes[1],
+					"-o", "cyclonedx-json=" + output,
+				},
+				Reads:  []string{repo.Path},
+				Writes: []string{output},
+				Limits: []string{
+					"repository shard only; do not scan the full landscape root in multi-repo mode",
+					"exclude .portolan outputs and root-level run artifacts from the SBOM source",
+					"missing, failed, or unrun shards remain not_assessed/failed and must not be aggregated into component coverage",
+				},
+				MutatesTarget:        false,
+				Network:              "not_expected_for_local_filesystem_source",
+				RequiresUserApproval: true,
+				AfterRun:             rerunContextCommand(root, out),
+			})
+		}
+		return plan
+	}
+	target := root
+	if len(repos) == 1 {
+		target = repos[0].Path
+	}
+	output := filepath.Join(toolOutputDir, "syft.cyclonedx.json")
 	plan.Commands = []OSSCommand{{
 		Label:                "produce CycloneDX JSON SBOM",
 		Tool:                 exe,
-		Args:                 []string{root, "--exclude", excludes[0], "--exclude", excludes[1], "-o", "cyclonedx-json=" + output},
-		Reads:                []string{root},
+		Args:                 []string{target, "--exclude", excludes[0], "--exclude", excludes[1], "-o", "cyclonedx-json=" + output},
+		Reads:                []string{target},
 		Writes:               []string{output},
 		Limits:               []string{"exclude .portolan outputs and root-level run artifacts from the SBOM source"},
 		MutatesTarget:        false,
@@ -1994,6 +2029,15 @@ func sanitizeToolOutputName(value string) string {
 		return "repository"
 	}
 	return result
+}
+
+func uniqueToolOutputName(base string, used map[string]int) string {
+	if used[base] == 0 {
+		used[base] = 1
+		return base
+	}
+	used[base]++
+	return base + "-" + strconv.Itoa(used[base])
 }
 
 func resolveFirstBuildToolExecutable(repos []buildToolRepoSurface, binary, wrapper string) (string, bool) {
