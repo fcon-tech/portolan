@@ -57,6 +57,12 @@ artifacts for the contamination rule.
 - [x] T020 Refresh local baseline checks, PR review evidence, push the updated
   branch, and refresh GitHub check state.
 
+## Phase 6: Integrated Pending-PR Stress Evidence
+
+- [x] T021 Record local scratch integration evidence for PR #57 plus PR #58,
+  including merge conflict reconstruction, local baseline checks, fresh Bigtop
+  context smoke, and Cursor Composer 2.5 integrated navigation stress.
+
 ## Dependencies & Execution Order
 
 - T003-T004 before implementation.
@@ -64,6 +70,7 @@ artifacts for the contamination rule.
 - T010 after code changes.
 - T012-T015 after the first implementation tasks.
 - T020 after Cursor Composer stress fixes.
+- T021 after PR #57 and PR #58 have current ready-for-review heads.
 
 ## Implementation Strategy
 

@@ -21,6 +21,8 @@ verified:
 - Diff scope is spec 080, generated context guidance, producer-run stale
   metadata normalization, acceptance guidance, focused tests, and stress/review
   evidence.
+- Integrated pending-PR evidence for PR #57 plus PR #58 is recorded under:
+  `docs/specs/080-clean-start-artifact-guard/reviews/integrated-079-080-stress-2026-06-02.md`
 
 not_assessed:
 
@@ -78,6 +80,45 @@ cannot_verify:
 - Physical absence of sibling stress or root-level `run/` artifacts on disk;
   the lane intentionally did not inspect forbidden paths.
 
+## Integrated PR Interaction Stress
+
+verified:
+
+- Local scratch branch `codex/081-integrated-navigation-stress` combined PR
+  #57 and PR #58 from `origin/main`.
+- Combined local verification passed: `go test ./internal/contextprep`,
+  `go test ./...`, `go vet ./...`, `jq empty schema/*.json`, and
+  `git diff --check`.
+- Fresh combined Bigtop context generation passed and kept jscpd as
+  `available_not_run` / `not_assessed` with 18 repository-sharded commands.
+- Cursor Composer 2.5 final concise integrated lane read 8 fresh context files,
+  did not read forbidden paths, preserved stale producer runs as
+  `not_assessed`, preserved jscpd metrics as non-claimable, and returned
+  `verdict: pass`.
+
+degraded:
+
+- The first fuller integrated Cursor output stopped mid-sentence and is
+  retained as non-counting degraded evidence.
+
+not_assessed:
+
+- Actual jscpd shard execution.
+- Duplication metrics and clone counts.
+- Merge approval or GitHub review approval for PR #57 or PR #58.
+
+observed integration conflicts:
+
+- `.specify/feature.json`
+- `AGENTS.md`
+- `docs/product-backlog.md`
+- `internal/contextprep/contextprep_test.go`
+
+disposition:
+
+- The conflicts are status/pointer/test co-location conflicts, not a context
+  generation behavior blocker.
+
 ## Review Evidence
 
 verified:
@@ -122,6 +163,15 @@ refreshed check state before post-Cursor update:
 
 post-Cursor update check refresh for head
 `47bcc4188995299ffcda4c7676b833319d274f7c`:
+
+- `Baseline`: verified pass
+- `Analyze (go)`: verified pass
+- `Analyze (actions)`: verified pass
+- `Analyze (python)`: verified pass
+- `CodeQL`: verified pass
+
+pre-integrated-evidence head
+`5eb4cc91427afbf4133f78da6fec167d17a22168`:
 
 - `Baseline`: verified pass
 - `Analyze (go)`: verified pass
