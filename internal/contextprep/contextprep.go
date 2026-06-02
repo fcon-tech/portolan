@@ -176,16 +176,26 @@ type ossPlanFile struct {
 }
 
 type OSSToolPlan struct {
-	ID                string       `json:"id"`
-	Family            string       `json:"family"`
-	Producer          string       `json:"producer"`
-	Purpose           string       `json:"purpose"`
-	Executable        string       `json:"executable"`
-	AgentCapabilities []string     `json:"agent_capabilities,omitempty"`
-	Status            string       `json:"status"`
-	EvidenceState     string       `json:"evidence_state"`
-	Reason            string       `json:"reason"`
-	Commands          []OSSCommand `json:"commands,omitempty"`
+	ID                string          `json:"id"`
+	Family            string          `json:"family"`
+	Producer          string          `json:"producer"`
+	Purpose           string          `json:"purpose"`
+	Executable        string          `json:"executable"`
+	AgentCapabilities []string        `json:"agent_capabilities,omitempty"`
+	Status            string          `json:"status"`
+	EvidenceState     string          `json:"evidence_state"`
+	Reason            string          `json:"reason"`
+	Acquisition       ToolAcquisition `json:"acquisition"`
+	Commands          []OSSCommand    `json:"commands,omitempty"`
+}
+
+type ToolAcquisition struct {
+	Kind                string   `json:"kind"`
+	Availability        string   `json:"availability"`
+	NextAction          string   `json:"next_action"`
+	EvidenceUntilOutput string   `json:"evidence_until_output"`
+	Risks               []string `json:"risks"`
+	Boundary            string   `json:"boundary"`
 }
 
 type OSSCommand struct {
@@ -1691,6 +1701,9 @@ func buildOSSPlan(root, out, profile string, tools []ToolEntry, buildTools build
 	sort.Slice(plan.Tools, func(i, j int) bool {
 		return plan.Tools[i].ID < plan.Tools[j].ID
 	})
+	for i := range plan.Tools {
+		plan.Tools[i].Acquisition = toolAcquisition(plan.Tools[i])
+	}
 	return plan
 }
 
@@ -1700,6 +1713,88 @@ func toolFamiliesPresent(tools []ToolEntry) map[string]bool {
 		present[tool.Family] = true
 	}
 	return present
+}
+
+func toolAcquisition(tool OSSToolPlan) ToolAcquisition {
+	acquisition := ToolAcquisition{
+		Kind:                "native-producer-tool",
+		Availability:        acquisitionAvailability(tool),
+		NextAction:          acquisitionNextAction(tool),
+		EvidenceUntilOutput: "not_assessed",
+		Risks:               acquisitionRisks(tool),
+		Boundary:            "candidate tool guidance is stack-agnostic and does not create a Portolan-owned language adapter; local output must be produced and re-ingested before claims are upgraded",
+	}
+	if tool.Status == "input_present" {
+		acquisition.EvidenceUntilOutput = tool.EvidenceState
+		acquisition.NextAction = "inspect existing local output before acquiring or running another producer"
+	}
+	return acquisition
+}
+
+func acquisitionAvailability(tool OSSToolPlan) string {
+	switch tool.Status {
+	case "available_not_run":
+		return "installed"
+	case "not_assessed":
+		if tool.Executable != "" {
+			return "installed_but_requires_local_evaluation"
+		}
+		return "requires_local_evaluation"
+	case "not_available":
+		return "missing"
+	case "input_present":
+		return "local_output_present"
+	default:
+		return "unknown"
+	}
+}
+
+func acquisitionNextAction(tool OSSToolPlan) string {
+	switch tool.Status {
+	case "available_not_run":
+		if len(tool.Commands) > 0 {
+			return "request approval, run the bounded native producer command, then rerun context prepare --force"
+		}
+		return "request approval and evaluate the local producer before running it"
+	case "not_available":
+		return "install or expose the local producer tool only after approval, then rerun context prepare --force"
+	case "not_assessed":
+		return "evaluate the local producer configuration and output path boundary before suggesting a command"
+	case "input_present":
+		return "inspect existing local output before acquiring or running another producer"
+	default:
+		return "preserve not_assessed and ask for local producer output"
+	}
+}
+
+func acquisitionRisks(tool OSSToolPlan) []string {
+	risks := []string{
+		"candidate tool output is not evidence until local output exists and is re-ingested",
+		"do not install, fetch, or update tools without explicit approval",
+	}
+	if tool.Executable == "" && tool.Status == "not_available" {
+		risks = append(risks, "tool is missing from PATH")
+	}
+	if len(tool.Commands) == 0 {
+		risks = append(risks, "no bounded command is currently declared")
+	}
+	network := ""
+	mutatesTarget := false
+	for _, command := range tool.Commands {
+		if command.Network != "" && command.Network != "not_expected" && command.Network != "not_expected_for_local_filesystem_source" {
+			network = command.Network
+		}
+		if command.MutatesTarget {
+			mutatesTarget = true
+		}
+	}
+	if network != "" {
+		risks = append(risks, "network may be used: "+network)
+	}
+	if mutatesTarget {
+		risks = append(risks, "native command may mutate target files or tool caches")
+	}
+	return risks
 }
 
 func jscpdPlan(root, out, toolOutputDir string, inputPresent bool) OSSToolPlan {
@@ -2113,6 +2208,7 @@ func renderAnswerContract(root string) string {
 	fmt.Fprintf(&b, "Relationship answers must name both relationship kind and evidence type. For relationship claims, including \"what talks to what?\", look first at `evidence-index.jsonl`, `tool-registry.json`, `gaps.jsonl`, then map-bundle `summary.json`, `graph-index.json`, and `findings.jsonl`. `evidence-index.jsonl` may include build/deploy relationship candidates such as build manifests, distribution manifests, RPM specs, and deployment manifests; those are source-visible places to inspect, not parsed service topology. Native map relationship extraction is limited to Go imports and go.mod manifests; JVM, PHP, Scala, and other non-Go coupling stays `not_assessed` unless supplied through local producer output. `source-visible` and `metadata-visible` records do not prove runtime communication; runtime topology is `not_assessed` unless runtime-visible local observations were supplied and inspected. Dependency and symbol records from local producer outputs do not mean Portolan has native PHP, JVM, Scala, or other language semantics; they are producer evidence. Missing relationship surfaces remain `unknown`, `cannot_verify`, or `not_assessed`; `claim-only` remains a claim, not observed evidence.\n\n")
 	fmt.Fprintf(&b, "## Producer Family Recommendations\n\n")
 	fmt.Fprintf(&b, "Producer recommendations are options, not observed evidence. Treat `producer-recommendation` records in `evidence-index.jsonl` as a safe next-action surface for missing local producer families; they do not prove the candidate tool is installed, supported, or appropriate for this landscape. Candidate tools marked `candidate_only` remain `not_assessed` until local output or a local evaluation record exists. Portolan does not synthesize producer evaluations from recommendation records; if no `producer-evaluation` record is present, candidate evaluation remains `not_assessed`. Check both `verification_state` and `support_state`: `verification_state` describes local evidence for the candidate, while `support_state` describes whether Portolan can present it as supported. Do not propose a Portolan-owned PHP/JVM/Scala adapter as the default answer to language coverage gaps; ask for or evaluate local dependency, symbol-index, API/catalog, deployment/model, static finding, duplication, config, or runtime-observation producer evidence instead.\n\n")
+	fmt.Fprintf(&b, "Tool acquisition guidance is stack-agnostic. Candidate tools are local producer options, not Portolan-owned language adapters. Use `oss-plan.json` acquisition fields to decide whether a tool is installed, missing, or requires local evaluation, and to name approval, network, cache, mutation, and output-path risks before asking the operator to pull it in. Do not propose a Portolan-owned PHP/JVM/Scala/Gradle adapter as the default answer to language coverage gaps; ask for local producer output from an appropriate existing tool family and keep evidence `not_assessed` until that output is present and re-ingested.\n\n")
 	fmt.Fprintf(&b, "Native Maven/Gradle build-tool producer output is the preferred first step for visible JVM build manifests. Java/Scala/Maven dependency relationships remain `not_assessed` until local producer output exists and is inspected. `oss-plan.json` may list Maven or Gradle CycloneDX producer options when `pom.xml`, `build.gradle`, or `build.gradle.kts` files are visible, but those options are approval-required and do not imply Portolan executed Maven, Gradle, or a `portolan produce` command. Do not turn a visible `pom.xml` or `build.gradle` into a Portolan-owned JVM adapter request; keep it as a native producer-evidence acquisition question.\n\n")
 	fmt.Fprintf(&b, "## Producer Run Records\n\n")
 	fmt.Fprintf(&b, "`producer-run` records in `evidence-index.jsonl` describe externally generated local outputs selected by the operator. They are not Portolan execution receipts and they do not imply a `portolan produce` command exists. A `verified` producer-run record proves only that the referenced local output file existed during context preparation and that the record passed Portolan's metadata validation. Use `producer_family`, `producer_tool`, `output_path`, `scope`, `covered_units`, `freshness`, and `limitations` before making a claim. Static `deployment-model` and `api-catalog` records stay `metadata-visible`; they must not be promoted to `runtime-visible` or to whole-landscape coverage. Runtime topology stays `not_assessed` unless a runtime producer family supplies `runtime-visible` local observations.\n\n")
@@ -2158,6 +2254,10 @@ func renderQueryPlan() string {
   verified support. If no ` + "`producer-evaluation`" + ` records are present,
   candidate evaluation remains not_assessed; Portolan does not synthesize
   evaluations from recommendations.
+- Tool acquisition: inspect ` + "`oss-plan.json`" + ` acquisition fields before
+  asking the operator to pull in a local tool. Treat the tool as a candidate
+  producer, not as a Portolan-owned stack adapter. Name availability, approval,
+  network/cache/mutation risks, and the required post-run context refresh.
 - Implicit knowledge: inspect repository manifests, local catalogs, contracts,
   and index handles. Do not turn naming conventions into facts without evidence.
 - Service relationships: start with Backstage, OpenAPI, AsyncAPI, Structurizr,
