@@ -43,3 +43,19 @@ coverage-score those producer outputs before architecture parity is revisited.
 
 - Spec 074 runtime result.
 - Existing producer ledgers from specs 054-073.
+
+## Seed Producer Families
+
+Spec 075 must start from at least these families:
+
+- Runtime health summary from spec 074:
+  `schema_version=portolan.runtime-health.v1`,
+  `producer_id=bigtop-docker-provisioner-health-074`.
+- Docker Compose deployment model from spec 067.
+- Helm deployment/catalog model from spec 068.
+- Protobuf descriptor API/catalog outputs from spec 066 and earlier Alluxio
+  descriptor slices.
+- Semgrep local-rule catalog mentions from spec 063.
+- Universal Ctags definitions/import/reference-role outputs from specs 059-071.
+- Existing compiled-artifact `jdeps` package dependency output from spec 072.
+- Bounded duplication and partial symbol-listing outputs from specs 057-058.

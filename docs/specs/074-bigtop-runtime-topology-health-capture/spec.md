@@ -6,6 +6,10 @@
 
 **Status**: Approval-gated implementation
 
+**Role In Objective**: Prerequisite runtime-topology proof slice. This spec does
+not close producer coverage or Cursor enterprise parity by itself; specs 075
+and 076 carry those dependent proof surfaces.
+
 **Input**: PR #51/spec 073 executed the approved single-node Bigtop Docker
 provisioner run. The Docker lifecycle and one YARN NodeManager were
 `runtime-visible`, but NameNode, ResourceManager, HistoryServer, and
@@ -71,6 +75,9 @@ independent non-GPT reviewers assess the claim boundary.
 - **FR-010**: The feature MUST run cleanup/destroy and record residue checks.
 - **FR-011**: Cursor stress and independent review MUST reject claims of healthy
   Bigtop runtime topology unless FR-005 through FR-008 pass.
+- **FR-012**: The feature MUST record a machine-readable runtime health summary
+  with producer identity, schema version, service states, smoke states, artifact
+  paths, hashes, and final topology classification.
 
 ## Success Criteria
 
@@ -88,6 +95,8 @@ independent non-GPT reviewers assess the claim boundary.
 - **SC-007**: Cursor stress and three assessed independent non-GPT review lanes
   agree that the runtime claim is either verified with evidence or remains
   failed/cannot_verify.
+- **SC-008**: The runtime output schema can be audited without opening the raw
+  Docker transcripts first.
 
 ## Out Of Scope
 
@@ -107,3 +116,17 @@ independent non-GPT reviewers assess the claim boundary.
   described as verified topology.
 - Raw runtime outputs remain external under a dated Bigtop landscape
   `.portolan/stress/` directory.
+
+## Preconditions From Spec 073
+
+Spec 074 starts from these observed failures, not from a clean topology:
+
+- NameNode failed with status `1/FAILURE`.
+- ResourceManager briefly started and failed with status `255/EXCEPTION`.
+- HistoryServer failed with status `1/FAILURE`.
+- ProxyServer failed with status `1/FAILURE`.
+- Datanode setup was skipped and the service unit was not found.
+- NodeManager was active/running.
+
+Spec 074 must either reverse those failures with current health/smoke evidence
+or preserve them as verified runtime failure evidence.

@@ -10,6 +10,7 @@
 - [x] T003 Update `AGENTS.md` SPECKIT pointer to spec 074 plan.
 - [x] T004 Add P6-074, P6-075, and P6-076 to `docs/product-backlog.md`.
 - [x] T005 Create `spec.md`, `plan.md`, and `tasks.md`.
+- [x] T005A Add approval runbook, artifact contract, health command contract, and runtime summary schema.
 
 ## Pre-Implementation Review
 
@@ -28,13 +29,13 @@
 
 ## Stress And Review
 
-- [ ] T015 Run Cursor Composer 2.5 topology claim-boundary stress.
-- [ ] T016 Run three assessed independent non-GPT review lanes.
-- [ ] T017 Record review disposition and fix accepted findings.
+- [x] T015 Run Cursor Composer 2.5 topology claim-boundary stress.
+- [x] T016 Run three assessed independent non-GPT review lanes.
+- [x] T017 Record review disposition and fix accepted findings.
 
 ## Closeout
 
-- [ ] T018 Run baseline checks.
-- [ ] T019 Record PR readiness closeout and update status surfaces.
+- [x] T018 Run baseline checks.
+- [x] T019 Record PR readiness closeout and update status surfaces.
 - [ ] T020 Create PR and reconcile GitHub check state.
 - [ ] T021 Record merge closeout and update post-merge status surfaces.
