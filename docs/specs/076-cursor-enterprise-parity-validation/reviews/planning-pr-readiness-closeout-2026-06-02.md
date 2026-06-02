@@ -89,14 +89,22 @@ verified before the PR review disposition update:
 - GitHub checks passed on `fd28c2791cf00edf1b6711fea7f50e111fdf5d06`:
   Baseline, CodeQL, Analyze (actions), Analyze (go), and Analyze (python).
 
-pending after the PR review disposition update:
+pre-merge pending state after the PR review disposition update:
 
 - GitHub checks must be refreshed on any new PR head after this file is changed
   and pushed. Use `gh pr view` and `gh pr checks` as the live source of truth
   for the latest head.
-- After this readiness-status update is pushed and checks pass, PR #55 may be
-  marked as a ready-for-review planning PR. That state does not imply
+- After this readiness-status update was pushed and checks passed, PR #55 could
+  be marked as a ready-for-review planning PR. That state did not imply
   ready-to-merge or execution readiness.
+
+post-merge update:
+
+- PR #55 was marked ready-for-review, then squash-merged after explicit user
+  merge approval on 2026-06-02.
+- Merge commit: `68219196a674b0809d97e18151145cfe8b8755ae`.
+- The remote branch `codex/076-cursor-enterprise-parity-validation` was deleted.
+- See `merge-closeout-2026-06-02.md` for the post-merge evidence ledger.
 
 ## GitHub Checks
 
@@ -111,20 +119,19 @@ not_assessed for any later head until GitHub finishes post-push checks.
 
 ## Merge Readiness
 
-not ready-to-merge:
+merged planning gate:
 
 - Human/GitHub review approval is `not_assessed`.
 - Default spec 076 stress execution is blocked on spec 074 runtime-health
   evidence or explicit current-evidence rejection approval.
-- Merge approval is `not_assessed`.
+- Merge approval is verified from the user request `сливай` on 2026-06-02.
 
 ## Stop Reason
 
-ready-for-review planning PR with execution blocker:
+merged planning gate with execution blocker:
 
 - Planning slice is locally verified and reviewed.
-- PR #55 can be marked ready-for-review after this status update is pushed and
-  checks pass.
+- PR #55 was merged after explicit user merge approval.
 - Default paired Cursor stress must not run until spec 074 runtime-health
   evidence exists, unless the user explicitly approves a current-evidence
   rejection run that keeps broad parity `cannot_verify`.

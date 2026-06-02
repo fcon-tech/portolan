@@ -79,7 +79,6 @@ not_assessed:
 
 ## Readiness Boundary
 
-PR #55 is ready to be marked as a ready-for-review planning PR after this
-readiness-status update is pushed and GitHub checks pass. It is not
-ready-to-merge, and default paired Cursor stress remains blocked while the spec
-074 execution gate is unresolved.
+PR #55 was marked ready-for-review and squash-merged after explicit user merge
+approval on 2026-06-02. Default paired Cursor stress remains blocked while the
+spec 074 execution gate is unresolved.
