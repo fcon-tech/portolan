@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR after refreshed checks pass and draft is removed
+**Status**: Merged via PR #47
 
 **Input**: After PRs #35-#46, Portolan has additional real Bigtop producer
 outputs beyond Syft/CycloneDX: ctags definitions, local Semgrep metadata,
