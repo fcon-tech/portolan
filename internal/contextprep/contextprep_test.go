@@ -83,17 +83,17 @@ func TestRunAddsBuildToolDependencyProducerPlans(t *testing.T) {
 
 	contract := mustReadContextprep(t, filepath.Join(out, "answer-contract.md"))
 	for _, want := range []string{
-		"Native Maven/Gradle build-tool producer output",
-		"Java/Scala/Maven dependency relationships remain `not_assessed`",
-		"Do not turn a visible `pom.xml` or `build.gradle` into a Portolan-owned JVM adapter request",
+		"Build-system and SBOM producer output can be the right first evidence path",
+		"Java, Scala, Maven, Gradle, PHP, Composer, and other ecosystem relationships remain `not_assessed`",
+		"not requests for Portolan-owned language or build-system adapters",
 	} {
 		if !strings.Contains(contract, want) {
 			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
 		}
 	}
 	queryPlan := mustReadContextprep(t, filepath.Join(out, "query-plan.md"))
-	if !strings.Contains(queryPlan, "Maven/Gradle dependency evidence") {
-		t.Fatalf("query-plan.md missing Maven/Gradle dependency guidance:\n%s", queryPlan)
+	if !strings.Contains(queryPlan, "Dependency producer evidence") {
+		t.Fatalf("query-plan.md missing dependency producer guidance:\n%s", queryPlan)
 	}
 }
 
