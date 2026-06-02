@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR after PR closeout refresh
+**Status**: Merged via PR #50
 
 **Input**: Specs 069-071 strengthened Bigtop producer evidence but left full
 symbol/reference graph, call graph, runtime topology, and enterprise parity as
