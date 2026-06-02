@@ -69,14 +69,23 @@ not_assessed at PR creation:
 - GitHub review approval absent/not_assessed.
 - Ready-to-merge approval absent/not_assessed.
 
+verified after current-head refresh:
+
+- Current PR head: `bd6e15fad6981b15c14975e59a828c1f364da5f3`
+- PR is open and not draft.
+- `mergeStateStatus=CLEAN`.
+- Current GitHub checks: all reported checks completed successfully.
+- Integrated PR #57-#61 stack-agnostic stress is recorded under
+  `docs/specs/083-tool-acquisition-guidance/reviews/integrated-stack-agnostic-navigation-stress-2026-06-02.md`
+  on the scratch integration branch.
+
 ## Readiness
 
-- Ready-for-review PR: yes, pending current GitHub checks for the final pushed
-  head.
+- Ready-for-review PR: yes.
 - Ready-to-merge PR: no.
 
 Stop reason:
 
-- PR is ready for review after final head checks are refreshed.
+- PR is ready for review.
 - Do not merge without explicit user approval and current merge-state/check
   verification.
