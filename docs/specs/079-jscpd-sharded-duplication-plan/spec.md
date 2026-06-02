@@ -4,7 +4,9 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #57
+**Status**: Ready-for-review PR #57; local baseline, fresh Bigtop context
+smoke, Cursor Composer 2.5 sharded-plan stress, three assessed non-GPT review
+lanes, and GitHub checks verified; merge approval `not_assessed`
 
 **Input**: The Bigtop stress report shows full-root jscpd failed with Node OOM.
 That failure is useful evidence about the producer attempt, but it is not clone
