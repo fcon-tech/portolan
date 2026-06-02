@@ -38,6 +38,6 @@
 ## Closeout
 
 - [x] T016 Run baseline checks.
-- [ ] T017 Record PR readiness closeout and update status surfaces.
+- [x] T017 Record PR readiness closeout and update status surfaces.
 - [ ] T018 Create PR and reconcile GitHub check state.
 - [ ] T019 Record merge closeout and update post-merge status surfaces.
