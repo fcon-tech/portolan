@@ -25,7 +25,7 @@
 
 - [x] T010 Run baseline checks.
 - [x] T011 Record PR readiness closeout and update status surfaces.
-- [ ] T012 Create PR and reconcile GitHub check state.
+- [x] T012 Create PR and reconcile GitHub check state.
 
 ## Review Reconciliation
 
