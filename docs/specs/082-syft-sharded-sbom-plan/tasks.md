@@ -31,4 +31,4 @@
 - [x] T014 Run `jq empty schema/*.json`.
 - [x] T015 Run `git diff --check`.
 - [x] T016 Run independent review lanes or record degraded/not_assessed lanes.
-- [ ] T017 Commit, push, create PR, and refresh check state.
+- [x] T017 Commit, push, create PR, and refresh check state.
