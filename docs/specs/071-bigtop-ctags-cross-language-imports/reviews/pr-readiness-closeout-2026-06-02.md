@@ -67,14 +67,31 @@ verified:
 
 ## PR State
 
-not_assessed:
+verified on PR head `78b58fb63e4a688b1f09253ba7fe9282ed652ee7` before this
+closeout update:
 
-- GitHub PR URL.
-- Draft state.
-- GitHub checks.
-- Merge state.
+- PR #49 exists: https://github.com/fcon-tech/portolan/pull/49
+- Draft state: draft.
+- Merge state: `CLEAN`.
+- Baseline: success.
+- CodeQL Analyze (go): success.
+- CodeQL Analyze (actions): success.
+- CodeQL Analyze (python): success.
+- CodeQL: success.
+
+not_assessed until this closeout update is pushed:
+
+- Refreshed GitHub checks for the final PR head.
+- Final draft state after refreshed checks.
 - GitHub review approval.
 
-Stop reason: local implementation is ready to publish as a PR, but PR state and
-GitHub checks are not assessed until the branch is pushed and the PR is created.
-This is not a ready-to-merge surface.
+## Ready-For-Review Decision
+
+Ready-for-review PR: yes, after this closeout update is pushed, GitHub checks
+refresh successfully on the final head, and draft state is removed.
+
+Ready-to-merge PR: no. GitHub review approval is not assessed, and merge still
+requires explicit user approval plus merge closeout.
+
+Stop reason: publish the closeout update, refresh checks, and remove draft if
+checks pass. This is not a ready-to-merge surface.
