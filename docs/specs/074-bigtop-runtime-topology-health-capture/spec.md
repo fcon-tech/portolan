@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Approval-gated implementation
+**Status**: Ready-for-review PR #52; runtime execution approval-gated
 
 **Role In Objective**: Prerequisite runtime-topology proof slice. This spec does
 not close producer coverage or Cursor enterprise parity by itself; specs 075

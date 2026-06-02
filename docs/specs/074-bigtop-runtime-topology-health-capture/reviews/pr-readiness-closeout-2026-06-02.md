@@ -26,9 +26,12 @@ not_assessed:
 - Spec 074 runtime command execution.
 - Spec 074 service-health, daemon-log, smoke-probe, cleanup, and runtime health
   summary evidence.
-- GitHub PR checks until PR creation.
 - GitHub review approval.
 - Merge approval.
+
+verified:
+
+- GitHub PR checks passed after PR creation.
 
 cannot_verify:
 
@@ -64,14 +67,26 @@ git diff --check
 
 ## PR State
 
+verified:
+
+- PR URL: `https://github.com/fcon-tech/portolan/pull/52`.
+- PR head branch: `codex/074-bigtop-runtime-topology-health-capture`.
+- PR base branch: `main`.
+- PR draft state: ready-for-review, not draft.
+- GitHub checks passed:
+  - Baseline.
+  - CodeQL.
+  - Analyze (actions).
+  - Analyze (go).
+  - Analyze (python).
+
 not_assessed:
 
-- PR URL: pending creation.
-- GitHub checks: pending PR creation.
-- Mergeability: pending PR creation.
+- GitHub review approval.
+- Merge approval.
 
 ## Stop Reason
 
-The branch is locally ready for a planning/approval-gate PR. It is not a
+PR #52 is ready for review as a planning/approval-gate PR. It is not a
 runtime-topology verification PR because the runtime execution is blocked until
 the spec 074 command sequence is explicitly approved.
