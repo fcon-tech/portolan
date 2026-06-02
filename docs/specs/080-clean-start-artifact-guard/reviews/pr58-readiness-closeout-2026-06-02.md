@@ -14,7 +14,10 @@ verified:
   `codex/080-clean-start-artifact-guard`.
 - Branch: `codex/080-clean-start-artifact-guard`.
 - PR base: `main`.
-- PR state before final push refresh: open, not draft, mergeable.
+- Code/stress update head before this closeout-only evidence refresh:
+  `47bcc4188995299ffcda4c7676b833319d274f7c`.
+- PR state after code/stress update checks: open, not draft, mergeable,
+  `mergeStateStatus=CLEAN`.
 - Diff scope is spec 080, generated context guidance, producer-run stale
   metadata normalization, acceptance guidance, focused tests, and stress/review
   evidence.
@@ -117,10 +120,14 @@ refreshed check state before post-Cursor update:
 - `Analyze (python)`: verified pass
 - `CodeQL`: verified pass
 
-post-Cursor update check refresh:
+post-Cursor update check refresh for head
+`47bcc4188995299ffcda4c7676b833319d274f7c`:
 
-- To be refreshed after the final branch push. If any check fails, this closeout
-  must be updated before claiming ready-for-review.
+- `Baseline`: verified pass
+- `Analyze (go)`: verified pass
+- `Analyze (actions)`: verified pass
+- `Analyze (python)`: verified pass
+- `CodeQL`: verified pass
 
 ## Readiness
 
