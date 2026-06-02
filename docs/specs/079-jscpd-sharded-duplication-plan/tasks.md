@@ -38,4 +38,4 @@
 - [x] T019 Run `git diff --check`.
 - [x] T020 Update task ledger and status surfaces.
 - [x] T021 Run three assessed independent non-GPT review lanes or record the exact blocker.
-- [ ] T022 Create/update PR and record PR readiness closeout.
+- [x] T022 Create/update PR and record PR readiness closeout.

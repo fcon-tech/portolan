@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Active implementation
+**Status**: Ready-for-review PR #57
 
 **Input**: The Bigtop stress report shows full-root jscpd failed with Node OOM.
 That failure is useful evidence about the producer attempt, but it is not clone
