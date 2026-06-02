@@ -90,15 +90,20 @@ current state before closeout commit:
 - `Analyze (python)`: in progress
 - aggregate `CodeQL`: not yet completed
 
+current state after refresh:
+
+- Current PR head: `487217bfddf9a709131811cb1a3c8b9611ac4a56`
+- PR is open and not draft.
+- `mergeStateStatus=CLEAN`.
+- Current GitHub checks: all reported checks completed successfully.
+
 ## Readiness
 
-ready-for-review PR: local implementation `verified`; GitHub checks still need
-current-head refresh after this closeout commit.
+ready-for-review PR: `verified`.
 
 ready-to-merge PR: `not_assessed`.
 
 merge approval: `not_assessed`.
 
-Stop reason: PR is created and locally ready for review, but final current-head
-GitHub checks, GitHub review approval, and explicit merge approval are not yet
-verified.
+Stop reason: PR is ready for review, but GitHub review approval and explicit
+merge approval remain `not_assessed`.
