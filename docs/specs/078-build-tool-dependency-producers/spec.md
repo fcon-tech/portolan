@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #56
+**Status**: Merged via PR #56
 
 **Input**: The Bigtop stress report and fresh `context prepare` run show that
 Portolan lists generic Syft/CycloneDX and jscpd producer options, but does not
