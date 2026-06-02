@@ -1,0 +1,5 @@
+Verdict: approve_with_findings
+Findings:
+- severity: major; title: Candidate runbook found but insufficient for runtime topology claim; evidence: runtime-surface-summary.tsv records bigtop_runtime_candidate_runbook as found while docker_bigtop_containers, kubernetes_bigtop_pods, and bigtop_service_processes are all not_found; recommendation: The slice must not claim Bigtop runtime verified based solely on runbook existence. Maintain cannot_verify and await explicit runtime execution approval.
+- severity: major; title: Unrelated container presence may cause future probe confusion; evidence: Running Docker containers include Faust/bot/Tika/minikube, and Kubernetes pods include personal-beetles/openclaw alongside minikube system pods; recommendation: Ensure future read-only probes filter strictly for Bigtop-labeled containers/pods to prevent false positive claims.
+- severity: minor; title: process-scan false positive required fix; evidence: process-scan was zero bytes after fixing a false positive on ssh sparky; recommendation: Document the false-positive pattern and add a negative-match guard before the next scan iteration.
