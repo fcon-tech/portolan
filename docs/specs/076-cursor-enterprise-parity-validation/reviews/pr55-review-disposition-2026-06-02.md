@@ -79,6 +79,7 @@ not_assessed:
 
 ## Readiness Boundary
 
-PR #55 is ready for a refreshed local/GitHub verification pass after this
-disposition commit. It is not ready-to-merge and remains draft while the
-execution gate is unresolved.
+PR #55 is ready to be marked as a ready-for-review planning PR after this
+readiness-status update is pushed and GitHub checks pass. It is not
+ready-to-merge, and default paired Cursor stress remains blocked while the spec
+074 execution gate is unresolved.

@@ -94,6 +94,9 @@ pending after the PR review disposition update:
 - GitHub checks must be refreshed on any new PR head after this file is changed
   and pushed. Use `gh pr view` and `gh pr checks` as the live source of truth
   for the latest head.
+- After this readiness-status update is pushed and checks pass, PR #55 may be
+  marked as a ready-for-review planning PR. That state does not imply
+  ready-to-merge or execution readiness.
 
 ## GitHub Checks
 
@@ -110,16 +113,18 @@ not_assessed for any later head until GitHub finishes post-push checks.
 
 not ready-to-merge:
 
-- PR is draft.
+- Human/GitHub review approval is `not_assessed`.
 - Default spec 076 stress execution is blocked on spec 074 runtime-health
   evidence or explicit current-evidence rejection approval.
-- Human/GitHub review approval is `not_assessed`.
+- Merge approval is `not_assessed`.
 
 ## Stop Reason
 
-draft PR with recorded blocker:
+ready-for-review planning PR with execution blocker:
 
 - Planning slice is locally verified and reviewed.
+- PR #55 can be marked ready-for-review after this status update is pushed and
+  checks pass.
 - Default paired Cursor stress must not run until spec 074 runtime-health
   evidence exists, unless the user explicitly approves a current-evidence
   rejection run that keeps broad parity `cannot_verify`.
