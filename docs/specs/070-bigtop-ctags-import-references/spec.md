@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Local implementation complete; PR readiness in progress
+**Status**: Ready-for-review PR after refreshed checks pass and draft is removed
 
 **Input**: Spec 069 showed C6 remains partial because prior Universal Ctags
 evidence proved broad definitions but not references or call graph. The local

@@ -29,4 +29,4 @@
 
 - [x] T012 Run baseline checks.
 - [x] T013 Record PR readiness closeout and update status surfaces.
-- [ ] T014 Create PR and reconcile GitHub check state.
+- [x] T014 Create PR and reconcile GitHub check state.
