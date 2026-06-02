@@ -23,7 +23,6 @@ not_assessed:
 
 - Merge approval.
 - GitHub review approval.
-- Final GitHub checks after this closeout file is pushed.
 - Merge readiness.
 
 ## Local Verification
@@ -74,23 +73,28 @@ initial PR head:
 
 - `7245b5ef044fc5191d6fb54853671bd414cce23d`
 
-initial check state:
+initial check state after PR creation:
 
 - `Baseline`: pending
 - `Analyze (go)`: pending
 - `Analyze (actions)`: pending
 - `Analyze (python)`: pending
 
-After this closeout update is committed and pushed, checks must be refreshed for
-the final PR head before claiming ready-for-review PR state.
+refreshed check state:
+
+- `Baseline`: verified pass
+- `Analyze (go)`: verified pass
+- `Analyze (actions)`: verified pass
+- `Analyze (python)`: verified pass
+- `CodeQL`: verified pass
 
 ## Readiness
 
-ready-for-review PR: `pending` until final-head GitHub checks are refreshed.
+ready-for-review PR: `verified`.
 
 ready-to-merge PR: `not_assessed`; explicit merge approval is absent.
 
 merge approval: `not_assessed`.
 
-Stop reason: PR is open and local/review evidence is coherent, but final-head
-GitHub checks and merge approval are not yet verified.
+Stop reason: PR is open and ready for review. It is not ready to merge because
+explicit merge approval and GitHub review approval are `not_assessed`.

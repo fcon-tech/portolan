@@ -4,8 +4,8 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #58; GitHub checks pending/not_assessed after
-closeout update; merge approval `not_assessed`
+**Status**: Ready-for-review PR #58; local baseline, review lanes, fresh Bigtop
+smoke, and GitHub checks verified; merge approval `not_assessed`
 
 **Input**: The Bigtop stress report showed a contaminated no-Portolan lane that
 read legacy `run/map.md`, and the active objective requires clean starts between
