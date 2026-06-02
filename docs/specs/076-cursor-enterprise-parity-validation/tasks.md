@@ -11,6 +11,7 @@
 - [x] T004 Update `docs/product-backlog.md` and `docs/specs/076-cursor-enterprise-parity-validation/spec.md` from backlog-only to gated planning state.
 - [x] T005 Create concrete `docs/specs/076-cursor-enterprise-parity-validation/plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and `tasks.md`.
 - [x] T006 Create spec-local execution gate, drift review, analyze disposition, planning review disposition, and shared Cursor prompt artifacts.
+- [x] T028 Record PR #55 planning-gate review, merge authorization, squash merge, and remote branch cleanup in `docs/specs/076-cursor-enterprise-parity-validation/reviews/merge-closeout-2026-06-02.md`.
 
 ## Phase 2: Foundational Evidence Gate
 
@@ -60,6 +61,8 @@
 ## Dependencies & Execution Order
 
 - Phase 1 is complete in this planning branch.
+- PR #55 merged the planning gate on 2026-06-02; remaining open tasks are the
+  execution/scoring/claim-closeout path, not PR #55 cleanup.
 - The `2026-06-02` suffixes are planning-branch artifact names; if execution
   happens later, update or map output paths to the actual run id in the lane and
   scoring ledgers.

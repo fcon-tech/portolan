@@ -4,10 +4,10 @@
 
 **Created**: 2026-06-02
 
-**Status**: Planning PR #55 ready-for-review; paired Cursor stress execution is
-blocked until spec 074 runtime-health evidence exists, unless the user
+**Status**: Planning gate merged via PR #55; paired Cursor stress execution
+remains blocked until spec 074 runtime-health evidence exists, unless the user
 explicitly approves a current-evidence rejection run that keeps broad parity
-`cannot_verify`.
+`cannot_verify`. GitHub review approval remains `not_assessed`.
 
 **Input**: The user objective asks whether Portolan plus Cursor understands
 Bigtop architecture like a human or enterprise code intelligence system. Prior
