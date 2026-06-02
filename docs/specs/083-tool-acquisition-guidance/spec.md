@@ -4,10 +4,11 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #61; local baseline, fresh Bigtop context
-smoke, Cursor Composer 2.5 stress, integrated PR #57-#61 stack-agnostic stress,
-three assessed non-GPT review lanes, and GitHub checks verified; merge approval
-`not_assessed`
+**Status**: Merged via PR #61; local baseline, fresh Bigtop context smoke,
+Cursor Composer 2.5 stress, integrated PR #57-#61 stack-agnostic stress, three
+assessed non-GPT review lanes, GitHub checks, explicit user merge approval,
+squash merge `847e84e`, post-merge Bigtop context smoke, and remote branch
+cleanup verified; GitHub review approval remains `not_assessed`
 
 **Input**: Integrated Cursor Composer 2.5 stress for PR #57-#60 judged the
 context adequate as a pre-UX navigation harness, but the follow-up discussion

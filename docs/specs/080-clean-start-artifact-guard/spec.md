@@ -4,9 +4,10 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #58; post-Cursor local baseline, fresh Bigtop
-context smoke, final Cursor Composer 2.5 clean-start stress, and three final
-non-GPT review lanes verified; merge approval `not_assessed`
+**Status**: Merged via PR #58; post-Cursor local baseline, fresh Bigtop context
+smoke, final Cursor Composer 2.5 clean-start stress, three final non-GPT review
+lanes, GitHub checks, explicit user merge approval, squash merge `6a5b6fa`, and
+remote branch cleanup verified; GitHub review approval remains `not_assessed`
 
 **Input**: The Bigtop stress report showed a contaminated no-Portolan lane that
 read legacy `run/map.md`, and the active objective requires clean starts between

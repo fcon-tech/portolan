@@ -4,9 +4,10 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #59; local baseline, fresh Bigtop context
-smoke, Cursor Composer 2.5 stress, three assessed non-GPT review lanes, and
-GitHub checks verified; merge approval `not_assessed`
+**Status**: Merged via PR #59; local baseline, fresh Bigtop context smoke,
+Cursor Composer 2.5 stress, three assessed non-GPT review lanes, GitHub checks,
+explicit user merge approval, squash merge `a89a965`, and remote branch cleanup
+verified; GitHub review approval remains `not_assessed`
 
 **Input**: Cursor Composer 2.5 stress on a fresh Bigtop context found that
 spec 078 improved JVM/build-tool navigation but left the Maven next action
