@@ -39,8 +39,8 @@ artifacts for the contamination rule.
 
 - [x] T012 Run local baseline checks: `go test ./internal/contextprep`, `go test ./...`, `go vet ./...`, `jq empty schema/*.json`, `git diff --check`.
 - [x] T013 Run three assessed independent non-GPT review lanes or record degraded lanes and replacements.
-- [ ] T014 Record review disposition and PR readiness closeout under `docs/specs/080-clean-start-artifact-guard/reviews/`.
-- [ ] T015 Commit, push, create PR, and refresh GitHub check state.
+- [x] T014 Record review disposition and PR readiness closeout under `docs/specs/080-clean-start-artifact-guard/reviews/`.
+- [x] T015 Commit, push, create PR, and refresh GitHub check state.
 
 ## Dependencies & Execution Order
 
