@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #44
 
 **Input**: The broader objective requires real producer outputs beyond
 Syft/CycloneDX. Prior slices verified small API/catalog outputs and Semgrep
