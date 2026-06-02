@@ -124,9 +124,13 @@ func TestRunWritesFreshArtifactBoundaryGuidance(t *testing.T) {
 	root := t.TempDir()
 	mustMkdirContextprep(t, filepath.Join(root, "repos", "service-a", ".git"))
 	staleContext := filepath.Join(root, ".portolan", "stress", "old-run", "context", "answer-contract.md")
+	staleProducerOutput := filepath.Join(root, ".portolan", "stress", "old-run", "tool-outputs", "compose.json")
 	staleRun := filepath.Join(root, "run", "map.md")
 	mustWriteContextprep(t, staleContext, "stale")
+	mustWriteContextprep(t, staleProducerOutput, `{"services":{"stale":{}}}`)
 	mustWriteContextprep(t, staleRun, "stale")
+	mustWriteContextprep(t, filepath.Join(root, ".portolan", "producer-runs.jsonl"), strings.ReplaceAll(`{"record_type":"producer-run","id":"producer-run-stale-compose","producer_family":"deployment-model","producer_tool":"docker-compose","command":"docker compose -f .portolan/stress/old-run/compose.yml config --format json","target_root":"$ROOT","output_path":".portolan/stress/old-run/tool-outputs/compose.json","output_format":"json","scope":{"repository":"service-a","directory":"deploy","covered_units":["service:stale"]},"freshness":"2026-06-01T20:25:23Z","status":"verified","evidence_state":"metadata-visible","limitations":["static deployment model only"],"privacy_review":"not_assessed"}
+{"record_type":"producer-run","id":"producer-run-stale-failed","producer_family":"deployment-model","producer_tool":"docker-compose","command":"docker compose -f .portolan/stress/old-run/failed.yml config --format json","target_root":"$ROOT","output_path":".portolan/stress/old-run/tool-outputs/compose.json","output_format":"json","scope":{"repository":"service-a","directory":"deploy","covered_units":["service:failed"]},"freshness":"2026-06-01T20:26:23Z","status":"failed","evidence_state":"cannot_verify","limitations":["previous producer run failed"],"privacy_review":"not_assessed"}`, "$ROOT", root))
 	out := filepath.Join(root, ".portolan", "stress", "current-run", "context")
 
 	if _, err := Run(Options{RootPath: root, OutputPath: out, Profile: "agent"}); err != nil {
@@ -139,12 +143,16 @@ func TestRunWritesFreshArtifactBoundaryGuidance(t *testing.T) {
 		"Current context output: `" + out + "`",
 		"Sibling `.portolan/stress/*` roots",
 		"root-level `run/`",
+		"Local producer run records: 2 (0 verified current records; 2 not_assessed; Portolan did not execute them)",
 	} {
 		if !strings.Contains(brief, want) {
 			t.Fatalf("agent-brief.md missing %q:\n%s", want, brief)
 		}
 	}
 	assertTextDoesNotContainContextprep(t, brief, []string{staleContext, staleRun, "old-run"})
+	if strings.Contains(brief, "`verified` records describe externally generated outputs") {
+		t.Fatalf("agent-brief.md contains ambiguous producer-run status summary:\n%s", brief)
+	}
 
 	contract := mustReadContextprep(t, filepath.Join(out, "answer-contract.md"))
 	for _, want := range []string{
@@ -171,7 +179,35 @@ func TestRunWritesFreshArtifactBoundaryGuidance(t *testing.T) {
 
 	for _, name := range []string{"evidence-index.jsonl", "repos.json", "tool-registry.json", "oss-plan.json", "gaps.jsonl"} {
 		content := mustReadContextprep(t, filepath.Join(out, name))
-		assertTextDoesNotContainContextprep(t, content, []string{staleContext, staleRun, "old-run"})
+		assertTextDoesNotContainContextprep(t, content, []string{staleContext, staleProducerOutput, staleRun, "old-run"})
+	}
+
+	evidenceIndex := mustReadContextprep(t, filepath.Join(out, "evidence-index.jsonl"))
+	for _, want := range []string{
+		`"id":"producer-run-stale-compose"`,
+		`"id":"producer-run-stale-failed"`,
+		`"kind":"producer-run"`,
+		`"status":"not_assessed"`,
+		`"evidence_state":"not_assessed"`,
+		"source record was validated",
+		"sibling .portolan/stress run",
+	} {
+		if !strings.Contains(evidenceIndex, want) {
+			t.Fatalf("evidence-index.jsonl missing %q:\n%s", want, evidenceIndex)
+		}
+	}
+	records := readEvidenceIndexContextprep(t, filepath.Join(out, "evidence-index.jsonl"))
+	for _, id := range []string{"producer-run-stale-compose", "producer-run-stale-failed"} {
+		record, ok := records[id]
+		if !ok {
+			t.Fatalf("missing evidence record %q in %#v", id, records)
+		}
+		if record.Status != "not_assessed" || record.EvidenceState != "not_assessed" {
+			t.Fatalf("record %q = %#v, want not_assessed/not_assessed", id, record)
+		}
+		if record.Path != "" || record.OutputPath != "" || record.Command != "" {
+			t.Fatalf("record %q leaked stale path or command: %#v", id, record)
+		}
 	}
 }
 
@@ -221,6 +257,23 @@ func readOSSPlanContextprep(t *testing.T, path string) ossPlanFile {
 		t.Fatal(err)
 	}
 	return plan
+}
+
+func readEvidenceIndexContextprep(t *testing.T, path string) map[string]EvidenceRecord {
+	t.Helper()
+	records := map[string]EvidenceRecord{}
+	for _, line := range strings.Split(mustReadContextprep(t, path), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var record EvidenceRecord
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			t.Fatalf("unmarshal evidence record: %v\n%s", err, line)
+		}
+		records[record.ID] = record
+	}
+	return records
 }
 
 func mustMkdirContextprep(t *testing.T, path string) {

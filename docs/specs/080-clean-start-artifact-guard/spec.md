@@ -4,8 +4,9 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #58; local baseline, review lanes, fresh Bigtop
-smoke, and GitHub checks verified; merge approval `not_assessed`
+**Status**: Ready-for-review PR #58; post-Cursor local baseline, fresh Bigtop
+context smoke, final Cursor Composer 2.5 clean-start stress, and three final
+non-GPT review lanes verified; merge approval `not_assessed`
 
 **Input**: The Bigtop stress report showed a contaminated no-Portolan lane that
 read legacy `run/map.md`, and the active objective requires clean starts between
@@ -83,6 +84,10 @@ contaminated and non-counting.
   artifacts is contaminated and must not count as valid comparison evidence.
 - **FR-006**: This feature MUST NOT introduce target deletion, network access,
   daemon behavior, or new dependencies.
+- **FR-007**: In a fresh stress context, producer-run records whose verified
+  output paths point to a sibling `.portolan/stress/*` run MUST NOT be promoted
+  as current verified evidence; the generated evidence record MUST be
+  `not_assessed` and MUST NOT expose the stale output path or stale command.
 
 ### Key Entities
 
@@ -102,10 +107,13 @@ contaminated and non-counting.
   artifacts without deleting existing stress evidence.
 - **SC-003**: Local baseline checks pass and no evidence state is upgraded.
 - **SC-004**: PR closeout separates ready-for-review from ready-to-merge state.
+- **SC-005**: Cursor Composer 2.5 clean-start stress confirms that stale
+  producer-run outputs are downgraded or scrubbed and that forbidden artifacts
+  were not read.
 
 ## Assumptions
 
 - Agents can follow explicit artifact-boundary instructions when the context
   pack and acceptance guide make them visible.
-- This slice improves stress hygiene; it does not execute Cursor Composer 2.5
-  or approve the blocked spec 074 runtime-health run.
+- This slice improves stress hygiene; it does not approve the blocked spec 074
+  runtime-health run.

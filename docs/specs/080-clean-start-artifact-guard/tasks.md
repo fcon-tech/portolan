@@ -42,14 +42,32 @@ artifacts for the contamination rule.
 - [x] T014 Record review disposition and PR readiness closeout under `docs/specs/080-clean-start-artifact-guard/reviews/`.
 - [x] T015 Commit, push, create PR, and refresh GitHub check state.
 
+## Phase 5: Cursor Composer Clean-Start Stress Feedback
+
+- [x] T016 Run headless Cursor Agent Composer 2.5 against the fresh Bigtop
+  context pack without allowing sibling stress roots or root-level generated
+  artifacts.
+- [x] T017 [US1] Downgrade and scrub stale sibling `.portolan/stress/*`
+  producer-run outputs so they cannot appear as current verified evidence in a
+  fresh stress context.
+- [x] T018 [US1] Update producer-run coverage summary text to count current
+  `verified` and `not_assessed` statuses from `evidence-index.jsonl`.
+- [x] T019 Record Cursor stress evidence, accepted findings, fixes, and final
+  pass under `docs/specs/080-clean-start-artifact-guard/reviews/`.
+- [x] T020 Refresh local baseline checks, PR review evidence, push the updated
+  branch, and refresh GitHub check state.
+
 ## Dependencies & Execution Order
 
 - T003-T004 before implementation.
 - T005 before T006-T008.
 - T010 after code changes.
-- T012-T015 after all implementation tasks.
+- T012-T015 after the first implementation tasks.
+- T020 after Cursor Composer stress fixes.
 
 ## Implementation Strategy
 
-Keep the change as guidance-only. Do not add cleanup commands, schema changes,
-or target mutation.
+Keep the change local-first and read-only. Do not add cleanup commands, schema
+changes, target mutation, network access, daemon behavior, or dependencies.
+Stale producer-run metadata may be normalized into `not_assessed` records, but
+must not delete the source ledger or prior stress artifacts.

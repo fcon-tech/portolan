@@ -24,4 +24,7 @@ Expected:
 - `agent-brief.md` names the current context output path.
 - `answer-contract.md` includes fresh artifact boundary rules.
 - `query-plan.md` instructs the agent to confirm the current context boundary.
+- Producer-run records that point to sibling `.portolan/stress/*` outputs are
+  `not_assessed` and do not expose stale `path`, `output_path`, or `command`
+  fields in the fresh `evidence-index.jsonl`.
 - No old `.portolan/stress/*` artifacts are deleted or reused by default.

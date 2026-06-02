@@ -7,11 +7,12 @@
 
 ## Summary
 
-Add a small artifact-boundary guard to generated context guidance and the agent
-acceptance guide. The feature prevents stress lane contamination by making the
-current context directory explicit and treating stale `.portolan/stress/*`,
-root-level `run/`, and unrelated generated outputs as forbidden unless the user
-or run ledger explicitly names them.
+Add a small artifact-boundary guard to generated context guidance, producer-run
+normalization, and the agent acceptance guide. The feature prevents stress lane
+contamination by making the current context directory explicit, treating stale
+`.portolan/stress/*`, root-level `run/`, and unrelated generated outputs as
+forbidden unless the user or run ledger explicitly names them, and refusing to
+promote stale sibling producer-run outputs as current verified evidence.
 
 ## Technical Context
 
@@ -31,20 +32,23 @@ or run ledger explicitly names them.
 preparation.
 
 **Constraints**: Preserve local-first/read-only defaults; do not delete target
-files; do not run Cursor, jscpd, Maven, Gradle, Docker, or runtime capture.
+files; do not run jscpd, Maven, Gradle, Docker, or runtime capture. Cursor
+Composer 2.5 may be run as a read-only stress reviewer against the generated
+context pack.
 
 **Scale/Scope**: Applies to generated context packs for single-repo and
 multi-repo landscapes.
 
 ## Constitution Check
 
-- Local-first/read-only: Pass. The slice changes generated guidance only.
+- Local-first/read-only: Pass. The slice changes generated guidance and
+  context metadata normalization only.
 - Evidence honesty: Pass. Contaminated lanes are invalid evidence, not degraded
   success.
 - Complement, do not replace: Pass. No new scanner or harness behavior.
 - SpecKit before implementation: Pass. Spec, plan, and tasks are concrete.
 - Test-first for behavior: Pass. Add focused contextprep test for generated
-  guidance.
+  guidance and stale producer-run scrubbing.
 
 ## Project Structure
 
