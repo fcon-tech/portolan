@@ -80,29 +80,31 @@ verified at PR creation:
 - Base branch: `main`.
 - Head before this closeout commit: `772963387767c65f8fc4fce037376d61834f77f7`.
 
-verified before the foundational-gate update:
+verified before the PR review disposition update:
 
 - PR #55 head advanced to `c332eadb4e029e3192e10da52540df00069219c5`.
 - GitHub checks passed on that head: Baseline, CodeQL, Analyze (actions),
   Analyze (go), and Analyze (python).
+- PR #55 then advanced to `fd28c2791cf00edf1b6711fea7f50e111fdf5d06`.
+- GitHub checks passed on `fd28c2791cf00edf1b6711fea7f50e111fdf5d06`:
+  Baseline, CodeQL, Analyze (actions), Analyze (go), and Analyze (python).
 
-pending after this foundational-gate update:
+pending after the PR review disposition update:
 
-- GitHub checks must be refreshed on the new PR head after the ledger update is
-  pushed.
+- GitHub checks must be refreshed on any new PR head after this file is changed
+  and pushed. Use `gh pr view` and `gh pr checks` as the live source of truth
+  for the latest head.
 
 ## GitHub Checks
 
-verified on prior head `c332eadb4e029e3192e10da52540df00069219c5`:
+verified on prior heads:
 
-- Baseline.
-- CodeQL.
-- Analyze (actions).
-- Analyze (go).
-- Analyze (python).
+- `c332eadb4e029e3192e10da52540df00069219c5`: Baseline, CodeQL,
+  Analyze (actions), Analyze (go), and Analyze (python).
+- `fd28c2791cf00edf1b6711fea7f50e111fdf5d06`: Baseline, CodeQL,
+  Analyze (actions), Analyze (go), and Analyze (python).
 
-not_assessed for the final foundational-gate update head until GitHub finishes
-post-push checks.
+not_assessed for any later head until GitHub finishes post-push checks.
 
 ## Merge Readiness
 

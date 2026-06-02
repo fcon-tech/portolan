@@ -147,10 +147,18 @@ The `2026-06-02` suffixes below identify this planning branch. If execution
 happens later, use the actual run date or run id and record the mapping in the
 lane and scoring ledgers.
 
+Planning PR artifacts:
+
 - `reviews/requirements-product-vision-drift-2026-06-02.md`
 - `reviews/execution-gate-2026-06-02.md`
 - `reviews/analyze-disposition-2026-06-02.md`
 - `reviews/planning-review-disposition-2026-06-02.md`
+- `reviews/planning-pr-readiness-closeout-2026-06-02.md`
+- `reviews/pr55-review-disposition-2026-06-02.md`
+
+Execution-phase artifacts, intentionally absent until the execution gate is
+satisfied or an explicitly approved current-evidence rejection run is performed:
+
 - `stress/cursor-enterprise-parity-prompt-2026-06-02.md`
 - `stress/cursor-baseline-output-2026-06-02.md`
 - `stress/cursor-with-portolan-output-2026-06-02.md`
