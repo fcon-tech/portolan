@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #42
 
 **Input**: Full symbol/reference graph remains `cannot_verify` after ctags
 definition inventory and Semgrep mention evidence. The objective requires
