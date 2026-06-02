@@ -24,4 +24,4 @@
 - [x] T010 Run fresh Bigtop context smoke.
 - [x] T011 Run Cursor Composer 2.5 bounded stress.
 - [x] T012 Run independent review lanes and record disposition.
-- [ ] T013 Commit, push, create PR, and refresh check state.
+- [x] T013 Commit, push, create PR, and refresh check state.
