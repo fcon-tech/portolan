@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/068-bigtop-helm-model-producer/plan.md`
+`docs/specs/069-bigtop-architecture-synthesis/plan.md`
 <!-- SPECKIT END -->
