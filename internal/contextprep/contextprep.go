@@ -141,14 +141,23 @@ type RelationshipCandidate struct {
 }
 
 type buildToolSurface struct {
-	MavenCount    int
-	MavenSample   string
-	MavenRepoPath string
+	MavenCount int
+	MavenRepos []buildToolRepoSurface
 
 	GradleCount    int
 	GradleSample   string
 	GradleRepoPath string
 }
+
+type buildToolRepoSurface struct {
+	RepositoryID string
+	RepoPath     string
+	Sample       string
+	Count        int
+}
+
+// Keep context packs as navigation surfaces, not broad execution scripts.
+const maxBuildToolCommandsPerPlan = 50
 
 type repoFile struct {
 	SchemaVersion string       `json:"schema_version"`
@@ -862,6 +871,8 @@ func detectRelationshipCandidates(repos []Repository) []RelationshipCandidate {
 
 func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 	var surface buildToolSurface
+	mavenByRepo := map[string]int{}
+	mavenRepoIndex := map[string]int{}
 	for _, repo := range repos {
 		scanned := 0
 		err := filepath.WalkDir(repo.Path, func(path string, entry os.DirEntry, err error) error {
@@ -884,9 +895,17 @@ func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 			switch buildToolManifestKind(entry.Name()) {
 			case "maven":
 				surface.MavenCount++
-				if surface.MavenSample == "" {
-					surface.MavenSample = path
-					surface.MavenRepoPath = repo.Path
+				mavenByRepo[repo.ID]++
+				if _, ok := mavenRepoIndex[repo.ID]; !ok {
+					surface.MavenRepos = append(surface.MavenRepos, buildToolRepoSurface{
+						RepositoryID: repo.ID,
+						RepoPath:     repo.Path,
+						Sample:       path,
+						Count:        1,
+					})
+					mavenRepoIndex[repo.ID] = len(surface.MavenRepos) - 1
+				} else {
+					surface.MavenRepos[mavenRepoIndex[repo.ID]].Count = mavenByRepo[repo.ID]
 				}
 			case "gradle":
 				surface.GradleCount++
@@ -901,6 +920,9 @@ func detectBuildToolSurfaces(repos []Repository) buildToolSurface {
 			continue
 		}
 	}
+	sort.Slice(surface.MavenRepos, func(i, j int) bool {
+		return surface.MavenRepos[i].RepositoryID < surface.MavenRepos[j].RepositoryID
+	})
 	return surface
 }
 
@@ -1903,42 +1925,84 @@ func mavenCycloneDXPlan(root, out, toolOutputDir string, inputPresent bool, surf
 	if inputPresent {
 		return markInputPresent(plan, "CycloneDX/Syft-compatible dependency output is already present in tool-registry.json; inspect it before running an additional Maven-specific producer")
 	}
-	exe, ok := resolveBuildToolExecutable(surface.MavenRepoPath, "mvn", "mvnw")
+	if len(surface.MavenRepos) == 0 {
+		return markNotAvailable(plan, "Maven manifests are visible, but no repository-scoped pom.xml sample was retained")
+	}
+	exe, ok := resolveFirstBuildToolExecutable(surface.MavenRepos, "mvn", "mvnw")
 	if !ok {
 		return markNotAvailable(plan, "Maven manifests are visible, but mvn or an executable mvnw wrapper was not found")
 	}
-	output := filepath.Join(toolOutputDir, "maven-cyclonedx.json")
+	mavenOutputDir := filepath.Join(toolOutputDir, "maven-cyclonedx")
 	plan.Status = "available_not_run"
 	plan.EvidenceState = "not_assessed"
 	plan.Executable = exe
-	plan.Reason = fmt.Sprintf("Maven manifests are visible (%d files); CycloneDX Maven output can reduce dependency unknowns, but Portolan did not run Maven", surface.MavenCount)
-	plan.Commands = []OSSCommand{{
-		Label: "produce Maven CycloneDX JSON for a selected pom.xml",
-		Tool:  exe,
-		Args: []string{
-			"-B",
-			"-f", surface.MavenSample,
-			"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
-			"-DoutputFormat=json",
-			"-DoutputName=maven-cyclonedx",
-			"-DoutputDirectory=" + toolOutputDir,
-			"-Dcyclonedx.skipAttach=true",
-		},
-		Reads:  []string{surface.MavenRepoPath, surface.MavenSample},
-		Writes: []string{output},
-		Limits: []string{
-			"declared producer output is under the context tool-output directory",
-			"bounded to one sample pom.xml; repeat per selected repository only after approval",
-			"reads/writes list declared context intent only; Maven may also read settings, parent POMs, and local caches",
-			"may resolve Maven plugins/dependencies and write Maven caches, target directories, or project-defined plugin outputs",
-			"dependency evidence is not runtime topology, service communication, or call graph evidence",
-		},
-		MutatesTarget:        true,
-		Network:              "possible_for_plugin_and_dependency_resolution",
-		RequiresUserApproval: true,
-		AfterRun:             rerunContextCommand(root, out),
-	}}
+	plan.Reason = fmt.Sprintf("Maven manifests are visible (%d files across %d repositories); CycloneDX Maven output can reduce dependency unknowns, but Portolan did not run Maven", surface.MavenCount, len(surface.MavenRepos))
+	for i, repo := range surface.MavenRepos {
+		if i >= maxBuildToolCommandsPerPlan {
+			break
+		}
+		repoExe, repoHasExecutable := resolveBuildToolExecutable(repo.RepoPath, "mvn", "mvnw")
+		if !repoHasExecutable {
+			repoExe = exe
+		}
+		outputName := "maven-cyclonedx-" + sanitizeToolOutputName(repo.RepositoryID)
+		output := filepath.Join(mavenOutputDir, outputName+".json")
+		plan.Commands = append(plan.Commands, OSSCommand{
+			Label: fmt.Sprintf("produce Maven CycloneDX JSON for repository %s", repo.RepositoryID),
+			Tool:  repoExe,
+			Args: []string{
+				"-B",
+				"-f", repo.Sample,
+				"org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom",
+				"-DoutputFormat=json",
+				"-DoutputName=" + outputName,
+				"-DoutputDirectory=" + mavenOutputDir,
+				"-Dcyclonedx.skipAttach=true",
+			},
+			Reads:  []string{repo.RepoPath, repo.Sample},
+			Writes: []string{output},
+			Limits: []string{
+				"declared producer output is under the context tool-output directory",
+				fmt.Sprintf("repository-sharded command for one retained pom.xml sample in %s (%d visible Maven manifests in this repository)", repo.RepositoryID, repo.Count),
+				"reads/writes list declared context intent only; Maven may also read settings, parent POMs, and local caches",
+				"may resolve Maven plugins/dependencies and write Maven caches, target directories, or project-defined plugin outputs",
+				"dependency evidence is not runtime topology, service communication, or call graph evidence",
+			},
+			MutatesTarget:        true,
+			Network:              "possible_for_plugin_and_dependency_resolution",
+			RequiresUserApproval: true,
+			AfterRun:             rerunContextCommand(root, out),
+		})
+	}
+	if len(surface.MavenRepos) > maxBuildToolCommandsPerPlan {
+		plan.Reason += fmt.Sprintf("; command list is capped at %d repositories to keep the plan bounded", maxBuildToolCommandsPerPlan)
+	}
 	return plan
+}
+
+func sanitizeToolOutputName(value string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(value) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			continue
+		}
+		b.WriteByte('-')
+	}
+	result := strings.Trim(b.String(), "-")
+	if result == "" {
+		return "repository"
+	}
+	return result
+}
+
+func resolveFirstBuildToolExecutable(repos []buildToolRepoSurface, binary, wrapper string) (string, bool) {
+	for _, repo := range repos {
+		if exe, ok := resolveBuildToolExecutable(repo.RepoPath, binary, wrapper); ok {
+			return exe, true
+		}
+	}
+	return "", false
 }
 
 func gradleCycloneDXPlan(toolOutputDir string, inputPresent bool, surface buildToolSurface) OSSToolPlan {

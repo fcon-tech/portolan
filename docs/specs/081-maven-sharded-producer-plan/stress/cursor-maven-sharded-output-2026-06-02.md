@@ -1,0 +1,20 @@
+- lane_state: assessed
+- artifacts_read_count: 8
+- forbidden_read: false
+- maven_plan_present: true
+- maven_status: available_not_run
+- maven_evidence_state: not_assessed
+- maven_command_count: 16
+- maven_repository_sharded: true
+- maven_sample_only_gap_present: false
+- all_maven_commands_require_approval: true
+- all_maven_writes_under_current_context: true
+- gradle_plan_boundary_preserved: true
+- adapter_default_rejected: true
+- dependency_relationships_claimable: false
+- producer_execution_claimable: false
+- next_action_specific_enough: true
+- blocking_confusion_or_gap: none for the stated correction; residual operator notes only -- per-repo plan still uses one retained `pom.xml` per Maven-bearing repo (816 manifests total), `mutates_target` is true so Maven may also write caches/`target` under repos, and Gradle-only repos (`apache-solr`, `apache-sqoop`) have no Maven shard entries by design
+- supported_claims: 18 local repositories discovered (`repos.json`); repository-sharded `maven-cyclonedx` plan with 16 approval-gated commands in `oss-plan.json`, each with repo-specific `-f` pom, distinct output JSON under `context/tool-outputs/maven-cyclonedx/`, and `requires_user_approval: true`; Maven CycloneDX evidence remains `not_assessed` / `available_not_run`; all 18 repos have `producer-coverage-*-dependency` = `not_assessed`; `gap-cyclonedx-not-assessed` and answer-contract/query-plan preserve dependency and JVM relationship claims as blocked until local producer output exists; Gradle path explicitly not synthesized (`gradle-cyclonedx` `not_assessed`); answer-contract rejects Portolan-owned JVM adapter as default next action
+- unsupported_claims: landscape-wide or per-repo dependency/component graphs; Java/Scala/Maven coupling or "what talks to what" from manifests alone; Maven or Gradle producer execution or success; runtime topology; complete ecosystem inventory (`gap-external-completeness` = `unknown`)
+- verdict: corrected
