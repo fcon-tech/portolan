@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #45
 
 **Input**: Runtime topology remains blocked pending explicit execution approval,
 but the upstream Bigtop Docker provisioner has Compose files that can be
