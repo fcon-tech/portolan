@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR #53; not ready-to-merge
+**Status**: Merged via PR #53
 
 **Input**: Specs 054-073 produced real Bigtop evidence beyond Syft/CycloneDX:
 Compose and Helm deployment models, protobuf descriptors, Semgrep local-rule
