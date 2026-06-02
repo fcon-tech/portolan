@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #46
 
 **Input**: The broader goal requires real model/catalog producer outputs beyond
 Syft/CycloneDX. The local Bigtop landscape contains the Apache Airflow Helm
