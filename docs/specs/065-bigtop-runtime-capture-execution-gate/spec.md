@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Ready-for-review PR
+**Status**: Merged via PR #43
 
 **Input**: Specs 061 and 062 defined and preflighted a Bigtop Docker
 provisioner runtime capture path, but no Bigtop services were started. The
