@@ -190,6 +190,40 @@ func TestRunWritesStackAgnosticToolAcquisitionGuidance(t *testing.T) {
 	}
 }
 
+func TestRunWritesExternalToolProfileGuidanceWithoutPromotingEvidence(t *testing.T) {
+	root := t.TempDir()
+	repo := filepath.Join(root, "repos", "service")
+	mustMkdirContextprep(t, filepath.Join(repo, ".git"))
+	mustWriteContextprep(t, filepath.Join(repo, "main.go"), "package main\n")
+
+	out := filepath.Join(root, ".portolan", "context")
+	if _, err := Run(Options{RootPath: root, OutputPath: out, Profile: "agent"}); err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	contract := mustReadContextprep(t, filepath.Join(out, "answer-contract.md"))
+	for _, want := range []string{
+		"External tool evaluation profiles are adoption guidance, not evidence",
+		"docs/adapter-contracts/external-tool-evaluation-profiles.md",
+		"treat the profile as stale if its `Last refreshed` date is older than the current review window",
+		"ast-index is the strongest current symbol/reference producer candidate",
+		"CodeGraph is lower-fit optional",
+		"Understand-Anything is UX inspiration",
+		"Do not promote candidate profiles to source-visible, metadata-visible, or runtime-visible evidence",
+	} {
+		if !strings.Contains(contract, want) {
+			t.Fatalf("answer-contract.md missing %q:\n%s", want, contract)
+		}
+	}
+
+	evidenceIndex := strings.ToLower(mustReadContextprep(t, filepath.Join(out, "evidence-index.jsonl")))
+	for _, forbidden := range []string{"codegraph", "Understand-Anything", "Claude-ast-index-search"} {
+		if strings.Contains(evidenceIndex, strings.ToLower(forbidden)) {
+			t.Fatalf("evidence-index.jsonl contains profile candidate %q as evidence:\n%s", forbidden, evidenceIndex)
+		}
+	}
+}
+
 func TestResolveBuildToolExecutablePrefersExecutableWrapper(t *testing.T) {
 	repo := t.TempDir()
 	bin := filepath.Join(t.TempDir(), "bin")
