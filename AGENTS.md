@@ -202,5 +202,5 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/083-tool-acquisition-guidance/plan.md`
+`docs/specs/084-external-tool-evaluation-profiles/plan.md`
 <!-- SPECKIT END -->
