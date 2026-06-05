@@ -1,11 +1,10 @@
 # Feature Specification: External Tool Evaluation Profiles
 
-**Feature Branch**: `codex/084-tool-adoption-specs`
+**Feature Branch**: `codex/084-external-tool-evaluation-profiles`
 
 **Created**: 2026-06-04
 
-**Status**: Draft; backlog-only. Requires `plan.md` and `tasks.md` before
-implementation.
+**Status**: Implemented locally; PR review pending.
 
 **Input**: User asked to turn the external review of `colbymchenry/codegraph`,
 `Lum1104/Understand-Anything`, and `defendend/Claude-ast-index-search` into
@@ -164,6 +163,17 @@ without changing graph schemas.
 
 - This slice is documentation and guidance first; it does not add an importer,
   execute external tools, install dependencies, or change schemas.
+- Bounded context-pack guidance may add a small pointer in
+  `internal/contextprep`; this is not an importer, schema change, or graph
+  evidence fact.
 - External project metadata must be refreshed during implementation planning
   because upstream repositories can change after the 2026-06-04 review snapshot.
 - `not_assessed` remains a verification/status label, not a graph evidence state.
+
+## Related Future Slices
+
+- `docs/specs/085-ast-index-producer-import/` remains backlog-only and owns any
+  future import of explicitly supplied ast-index output.
+- `docs/specs/086-evidence-navigation-ux-patterns/` remains backlog-only and
+  owns any future adoption of navigation UX patterns from CodeGraph,
+  Understand-Anything, or ast-index.
