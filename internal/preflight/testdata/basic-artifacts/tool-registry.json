@@ -1,0 +1,10 @@
+{
+  "tools": [
+    {
+      "family": "semgrep"
+    },
+    {
+      "family": "jscpd"
+    }
+  ]
+}

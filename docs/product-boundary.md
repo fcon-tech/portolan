@@ -1,17 +1,16 @@
 # Product Boundary
 
-Portolan gives AI agents and engineering leaders a local, read-only harness for
-codebase and software-landscape navigation.
+Portolan gives AI agents and engineering leaders a local, read-only preflight
+for codebase and software-landscape navigation.
 
 The first product job is not to judge whether a system is good. It is to help an
-agent produce a verified map of relationships, duplication, configuration
-surfaces, and technical debt while showing what is visible, claimed, missing,
-or unverifiable.
+operator run a brownfield preflight before AI work: map what is visible, choose
+the useful local code-understanding tools, record blind spots, and hand bounded
+context to the agent.
 
-This is a harness in the navigation sense: it constrains how the agent gathers,
-labels, routes through, and cites local evidence. It is not a coding harness
-that edits code, runs autonomous development loops, or replaces Cursor, Claude,
-Codex, OpenCode, pi, or any other agent runtime.
+It constrains how the agent gathers, labels, routes through, and cites local
+evidence. It does not edit code, run autonomous development loops, or replace
+Cursor, Claude, Codex, OpenCode, pi, or any other agent runtime.
 
 For current client-safe wording and claim status, use
 [Product Claims](product-claims.md). Product copy may use only accepted or
@@ -25,6 +24,7 @@ gates, use [Product Quality Boundary](product-quality-boundary.md) and
 - Local read-only collection.
 - Multi-repo inventory.
 - Import and normalization of external tool outputs.
+- Local toolchain discovery, recommendation, and doctor-style checks.
 - Black-box representation through metadata, runtime signals, or explicit
   claims.
 - Agent-facing CLI workflows and skill/rule packs.
@@ -34,16 +34,22 @@ gates, use [Product Quality Boundary](product-quality-boundary.md) and
 - Machine-readable findings output.
 - Human-readable packets generated from graph data.
 - Evidence states that preserve uncertainty.
-- Harness rules for agent navigation: where to look first, which evidence
-  states to preserve, which OSS outputs can be imported, and when to say
-  `unknown`, `cannot_verify`, or `not_assessed`.
+- Navigation rules for agents: where to look first, which evidence states to
+  preserve, which OSS outputs can be imported, and when to say `unknown`,
+  `cannot_verify`, or `not_assessed`.
+- Preflight artifacts that summarize target shape, candidate tools, blind
+  spots, and agent handoff without becoming a second truth source.
 
 ## Out Of Scope
 
 - Automatic rewrite recommendations.
 - Merge, release, or procurement decisions.
 - Hidden network calls.
+- Default network installation of external tools.
 - Always-on daemon collection.
+- Model routing or multi-agent orchestration.
+- Autonomous coding loops.
+- Global agent configuration writes without explicit approval.
 - Credential harvesting.
 - Requiring Cursor, Claude, Codex, OpenCode, pi, or any one coding-agent
   runtime.
