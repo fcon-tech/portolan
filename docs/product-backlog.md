@@ -5,36 +5,39 @@ the planning view; detailed requirements live under `docs/specs/`.
 
 ## Roadmap Order
 
-The roadmap is staged around agent augmentation first, then larger corpus
-stress tests:
+The roadmap is now centered on one narrow product job: **Brownfield
+Preflight**. Before an AI agent works on a legacy or multi-repo system,
+Portolan should map what is locally visible, choose the useful local
+code-understanding tools, record blind spots, and hand bounded context to the
+agent. Use [Brownfield Preflight Roadmap](brownfield-preflight-roadmap.md) as
+the current product reset.
 
-1. **Runnable substrate**: local selection input, read-only scan, graph output,
-   packet rendering, importer normalization, and black-box evidence handling.
-2. **Agent context preparation**: a compact pack with discovered repositories,
-   OSS/tool-output candidates, query plan, and honest gaps.
-3. **Agent toolbox**: a portable skill/rule pack that any agent can follow
-   before answering.
-4. **Agent bootstrap discovery**: an agent can discover Portolan from the
-   repository root or portable skill without being told an internal guide path.
-5. **Blind agent acceptance**: an agent can run the same target-agnostic mapping
-   protocol against arbitrary local targets without hidden scaffolding.
-6. **Landscape map orchestration**: curated local selections remain available as
-   advanced input, not the first-run Cursor workflow.
-7. **Product hypothesis validation**: compare Cursor-alone with
-   Cursor-plus-Portolan context preparation on non-Bigtop and Bigtop targets.
-8. **Useful map contents**: relationships, duplication, configuration surfaces,
-   and technical-debt findings implemented because agent runs prove they are
-   needed.
-9. **Repeatability and scale**: evidence diff, adapter contracts, optional MCP
-   and LSP/index surfaces, and larger Bigtop runs.
-10. **Product validation closure**: separate product-proof gaps into independent
-    validation specs before claiming Portolan exists as a product.
-11. **Productization and adapters**: add release/CI proof, broader harness
-    acceptance, first-wave OSS adapter evaluation, bounded query surfaces, and
-    runtime/security contracts without turning Portolan into a harness.
-12. **Public showcase and OSS discovery**: make the public repository install,
-    release, community, demo, and GitHub Pages surfaces trustworthy without
-    broadening product claims beyond verified evidence.
+The staged order is:
+
+1. **Runnable substrate**: keep the existing local selection, read-only scan,
+   graph, packet, importer, and black-box support.
+2. **Agent context substrate**: keep context packs, answer contracts, query
+   plans, evidence indexes, tool registries, OSS plans, and gap records.
+3. **Map/query substrate**: keep relationship, duplication, configuration,
+   technical-debt, bounded graph, and query surfaces as reusable preflight
+   inputs.
+4. **Brownfield Preflight on Bigtop**: produce one bounded Bigtop preflight
+   bundle that shows target shape, current evidence, candidate tools, blind
+   spots, and agent handoff without installing or running external tools by
+   default.
+5. **Toolchain doctor**: verify installed tools, versions, license/privacy risk,
+   target mutation risk, output compatibility, and the evidence family each
+   tool can unlock.
+6. **Approved acquisition plan**: provide explicit opt-in install/run plans for
+   selected tools with approval, rollback, and refresh boundaries.
+7. **Run/import/refresh loop**: after approval, ingest or run one selected
+   producer, refresh the preflight, and show which blind spots changed.
+8. **Usefulness validation**: compare an AI agent with and without the Bigtop
+   preflight on the same first-run task. Judge visible product difference first;
+   unsupported-claim reduction remains a quality metric.
+9. **Deferred gates/traces/evals**: build merge gates, delivery traces, eval
+   platforms, and dashboards only after Brownfield Preflight proves repeated
+   value.
 
 Cursor + Composer 2.5 is the first cheap acceptance client because it is a
 popular agentic IDE where reports can be read and graphs can be inspected. It is
@@ -165,9 +168,19 @@ fixtures are preflight evidence only.
 | P6-081 | `docs/specs/081-maven-sharded-producer-plan/` | Context packs emit repository-sharded Maven/CycloneDX next actions for multi-repo JVM landscapes so agents do not treat one sample `pom.xml` as a landscape rollout plan. | Merged via PR #59; local baseline, fresh Bigtop context smoke, Cursor Composer 2.5 stress, three assessed non-GPT review lanes, GitHub checks, explicit user merge approval, squash merge `a89a965`, and remote branch cleanup verified. Maven execution, dependency evidence, JVM relationship claims, and GitHub review approval remain `not_assessed` |
 | P6-082 | `docs/specs/082-syft-sharded-sbom-plan/` | Context packs emit repository-sharded Syft/CycloneDX SBOM next actions for multi-repo landscapes so component/dependency evidence can be acquired incrementally without full-root SBOM scans. | Merged via PR #60; local baseline, fresh Bigtop context smoke, Cursor Composer 2.5 stress, three assessed non-GPT review lanes, GitHub checks, explicit user merge approval, squash merge `9390379`, and remote branch cleanup verified. Syft execution, component inventory, dependency evidence, and GitHub review approval remain `not_assessed` |
 | P6-083 | `docs/specs/083-tool-acquisition-guidance/` | Context packs make tool acquisition guidance explicit and stack-agnostic: agents can pull in the right local producer tools without treating Portolan as a PHP/JVM/Gradle adapter stack. | Merged via PR #61; local baseline, fresh Bigtop context smoke, Cursor Composer 2.5 stress, integrated PR #57-#61 stack-agnostic stress, three assessed non-GPT review lanes, GitHub checks, explicit user merge approval, squash merge `847e84e`, post-merge Bigtop context smoke, and remote branch cleanup verified. Native producer execution, tool install/acquisition, component inventory, dependency relationships, duplication metrics, runtime topology, and GitHub review approval remain `not_assessed` |
-| P6-084 | `docs/specs/084-external-tool-evaluation-profiles/` | Portolan keeps dated evaluation profiles for CodeGraph, Understand-Anything, and ast-index so external tool adoption stays explicit, evidence-honest, and refreshable. | Draft spec; backlog-only. No plan/tasks yet. External tool metadata, profile implementation, and generated guidance remain `not_assessed` until planning and verification refresh the 2026-06-04 review snapshot |
-| P6-085 | `docs/specs/085-ast-index-producer-import/` | Explicit local ast-index outputs can be imported as bounded symbol/reference/module producer evidence without Portolan installing, executing, watching, or mutating targets. | Draft spec; backlog-only. No plan/tasks yet. ast-index execution, real output acquisition, importer implementation, CodeGraph import, and call-graph parity remain `not_assessed` |
-| P6-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Useful navigation ideas from Understand-Anything, CodeGraph, and ast-index are adopted as evidence-backed guide patterns without accepting LLM-authored graphs or live dashboards as truth. | Draft spec; backlog-only. No plan/tasks yet. UX implementation, dashboard/MCP surfaces, LLM workflows, and agent acceptance impact remain `not_assessed` |
+| P6-084 | `docs/specs/084-external-tool-evaluation-profiles/` | Portolan keeps dated evaluation profiles for CodeGraph, Understand-Anything, and ast-index so external tool adoption stays explicit, evidence-honest, and refreshable. | Parked by Brownfield Preflight reset. Tool profiles alone are not a product slice; revive only when tied to a preflight toolchain decision. |
+| P6-085 | `docs/specs/085-ast-index-producer-import/` | Explicit local ast-index outputs can be imported as bounded symbol/reference/module producer evidence without Portolan installing, executing, watching, or mutating targets. | Deferred by Brownfield Preflight reset. Importer planning may resume only after Bigtop preflight selects ast-index or a comparable producer as the best next tool for a visible gap. |
+| P6-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Useful navigation ideas from Understand-Anything, CodeGraph, and ast-index are adopted as evidence-backed guide patterns without accepting LLM-authored graphs or live dashboards as truth. | Parked by Brownfield Preflight reset. Navigation work must become preflight orientation and agent handoff, not another guide/report artifact. |
+
+## P7: Brownfield Preflight Reset
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P7-087 | `docs/specs/087-bigtop-brownfield-preflight/` | A local Bigtop preflight bundle shows target shape, current evidence, candidate tools, blind spots, and agent handoff before external tool install/execution or AI coding work. | Plan/tasks/drift review present; opencode plan-task review complete with accepted fixes; implementation may proceed by task ledger. |
+| P7-088 | future | `portolan tools doctor` or equivalent verifies installed code-understanding tools, versions, output compatibility, license/privacy posture, target mutation risk, and missing approval gates. | Idea; depends on P7-087. |
+| P7-089 | future | A selected tool acquisition plan provides exact opt-in commands, expected outputs, risk boundaries, cleanup, and refresh instructions without default network/install behavior. | Idea; depends on P7-088. |
+| P7-090 | future | After explicit approval, one selected producer output is generated or supplied, imported, and used to refresh the preflight before/after gap delta. | Idea; depends on P7-089 and a named selected tool. |
+| P7-091 | future | Cursor, Codex, OpenCode, or pi is compared with and without the Bigtop preflight on the same first-run brownfield task, measuring visible usefulness and blind-spot handling. | Idea; depends on P7-087 and at least one refreshed preflight loop. |
 
 ## Backlog Rules
 

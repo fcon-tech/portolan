@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fcon-tech/portolan/schema/preflight-toolchain.schema.json",
+  "title": "Portolan Preflight Toolchain",
+  "type": "object",
+  "required": ["schema_version", "target", "tools"],
+  "properties": {
+    "schema_version": {
+      "const": "preflight-toolchain/v1"
+    },
+    "target": {
+      "type": "object",
+      "required": ["root", "scope"],
+      "properties": {
+        "root": { "type": "string", "minLength": 1 },
+        "scope": {
+          "type": "string",
+          "enum": ["single-repo", "partial-multi-repo", "unknown"]
+        },
+        "repositories": { "type": "integer", "minimum": 0 },
+        "ecosystem_signals": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "tool",
+          "job",
+          "status",
+          "evidence_family",
+          "approval_boundary",
+          "risk",
+          "next_action",
+          "evidence_state"
+        ],
+        "properties": {
+          "tool": { "type": "string", "minLength": 1 },
+          "job": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": [
+              "installed",
+              "missing",
+              "supplied-output",
+              "approval-required",
+              "parked",
+              "rejected"
+            ]
+          },
+          "evidence_family": { "type": "string", "minLength": 1 },
+          "approval_boundary": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "risk": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "next_action": { "type": "string", "minLength": 1 },
+          "evidence_state": { "const": "not_evidence" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

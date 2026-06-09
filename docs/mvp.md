@@ -2,9 +2,10 @@
 
 The MVP should prove one narrow product promise:
 
-> An AI agent can run Portolan locally against a repository or software
-> landscape and receive a context pack plus optional evidence-backed map before
-> answering CTO-level questions, without turning guesses into facts.
+> Before an AI agent works on a brownfield repository or software landscape,
+> Portolan can run a local preflight that maps what is visible, selects useful
+> local code-understanding tools, records blind spots, and hands bounded context
+> to the agent without turning guesses into facts.
 
 ## Phase 0: Bootstrap
 
@@ -27,14 +28,17 @@ The MVP should prove one narrow product promise:
 - Add an agent skill/rule pack that works in Cursor first and remains portable
   to Claude, Codex, OpenCode, pi, and other harnesses.
 
-## Phase 3: Product Hypothesis Checks
+## Phase 3: Brownfield Preflight
 
-- Compare Cursor-alone with Cursor-plus-Portolan context preparation.
-- Start with a non-Bigtop local target, then use Apache Bigtop as the larger
-  stress target when local checkouts are available.
-- Record false claims, missing evidence, ignored gaps, and useful answers.
+- Produce a preflight bundle from existing context/map artifacts.
+- Show target shape, current evidence, blind spots, candidate local tools, and
+  agent handoff in one bounded artifact set.
+- Start with Apache Bigtop as the first demonstration target because it is
+  messy enough to test the job and prior local evidence exists.
+- Do not install tools, run network commands, mutate target repositories, write
+  global agent configuration, or start daemons by default.
 
-## Phase 4: Map Command And Evidence Useful To Users
+## Phase 4: Map Command And Evidence Useful To Preflight
 
 - Keep `portolan map --root . --out .portolan/run` as the direct map command;
   it discovers the root, direct child Git repositories, and `repos/*` Git
@@ -57,23 +61,33 @@ The MVP should prove one narrow product promise:
   CI/CD, feature flags, and secret references.
 - Generate technical-debt findings from local evidence without policy verdicts.
 
-## Phase 5: Importers And Tool Composition
+## Phase 5: Toolchain Doctor And Approved Acquisition
+
+- Verify installed tools, versions, license/privacy posture, output
+  compatibility, target mutation risk, and approval boundaries.
+- Provide explicit opt-in acquisition or run plans for selected tools.
+- Keep candidate tools as future evidence steps until local output is produced
+  and re-ingested.
+
+## Phase 6: Importers And Tool Composition
 
 - Add importers for existing OSS/tool outputs where licenses and formats fit.
 - Favor adapters over native reimplementation.
 - Preserve source attribution and evidence state per imported fact.
 
-## Phase 6: Black-Box Profile
+## Phase 7: Black-Box Profile
 
 - Represent systems without source through metadata, runtime observations, and
   claims.
 - Keep black-box facts visibly lower authority than source-visible facts.
 - Report `unknown` or `cannot_verify` instead of inventing conclusions.
 
-## Phase 7: Diff And Larger Ecosystem Acceptance
+## Phase 8: Diff And Usefulness Validation
 
 - Compare map runs without readiness, pass/fail, or degradation verdicts.
-- Return to Apache Bigtop for larger runs after each product gap is addressed.
+- Compare AI-agent work with and without preflight on the same Bigtop task.
+- Judge visible first-run usefulness first: where to start, which artifacts to
+  read, which tools to acquire, and which blind spots remain.
 - Keep corpus preparation separate from default map/scan execution so Bigtop
   does not introduce surprise network access, cloning, or heavyweight setup into
   the MVP path.
@@ -85,4 +99,6 @@ The MVP should prove one narrow product promise:
 - No repository mutation.
 - No automatic modernization plan.
 - No policy gate.
+- No autonomous delivery trace platform.
+- No eval platform until preflight usefulness is proven.
 - No dependency on one agent IDE or harness.
