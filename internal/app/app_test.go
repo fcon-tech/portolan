@@ -38,6 +38,69 @@ func TestRunVersionWritesVersion(t *testing.T) {
 	}
 }
 
+func TestRunPreflightWritesBundle(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	artifacts := t.TempDir()
+	if err := os.WriteFile(filepath.Join(artifacts, "summary.json"), []byte(`{"repositories":{"total":1}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := filepath.Join(t.TempDir(), "preflight")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"preflight", "--root", root, "--artifacts", artifacts, "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "wrote preflight bundle") {
+		t.Fatalf("stdout = %q, want preflight write message", stdout.String())
+	}
+	for _, name := range []string{"preflight.md", "toolchain.json", "agent-handoff.md", "preflight-gaps.jsonl"} {
+		if _, err := os.Stat(filepath.Join(out, name)); err != nil {
+			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+}
+
+func TestRunPreflightHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"preflight", "--help"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0", code)
+	}
+	for _, want := range []string{"portolan preflight", "--artifacts", "Candidate tools are recommendations"} {
+		if !strings.Contains(stdout.String(), want) {
+			t.Fatalf("help missing %q:\n%s", want, stdout.String())
+		}
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr = %q, want empty", stderr.String())
+	}
+}
+
+func TestRunPreflightRejectsUnsafeOut(t *testing.T) {
+	root := t.TempDir()
+	artifacts := t.TempDir()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"preflight", "--root", root, "--artifacts", artifacts, "--out", filepath.Join("..", "unsafe")}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("Run returned %d, want 2", code)
+	}
+	if !strings.Contains(stderr.String(), "path traversal") {
+		t.Fatalf("stderr = %q, want traversal error", stderr.String())
+	}
+}
+
 func TestReleaseBuildCanInjectVersion(t *testing.T) {
 	workDir := t.TempDir()
 	out := filepath.Join(workDir, "portolan")

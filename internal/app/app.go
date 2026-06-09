@@ -14,6 +14,7 @@ import (
 	"github.com/fcon-tech/portolan/internal/importer"
 	"github.com/fcon-tech/portolan/internal/maprun"
 	"github.com/fcon-tech/portolan/internal/packet"
+	"github.com/fcon-tech/portolan/internal/preflight"
 	"github.com/fcon-tech/portolan/internal/query"
 	"github.com/fcon-tech/portolan/internal/reportquality"
 	"github.com/fcon-tech/portolan/internal/scan"
@@ -55,6 +56,8 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return runReport(args[1:], stdout, stderr)
 	case "context":
 		return runContext(args[1:], stdout, stderr)
+	case "preflight":
+		return runPreflight(args[1:], stdout, stderr)
 	case "adapter":
 		return runAdapter(args[1:], stdout, stderr)
 	default:
@@ -62,6 +65,37 @@ func Run(args []string, stdout io.Writer, stderr io.Writer) int {
 		writeUsage(stderr)
 		return 2
 	}
+}
+
+func runPreflight(args []string, stdout io.Writer, stderr io.Writer) int {
+	if isSingleHelpArg(args) {
+		writePreflightUsage(stdout)
+		return 0
+	}
+	flags := flag.NewFlagSet("preflight", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.Usage = func() {}
+	root := flags.String("root", "", "local target root")
+	artifacts := flags.String("artifacts", "", "existing context or map artifact directory")
+	out := flags.String("out", "", "output preflight directory")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			writePreflightUsage(stdout)
+			return 0
+		}
+		return 2
+	}
+	if flags.NArg() != 0 {
+		fmt.Fprintf(stderr, "unexpected preflight argument %q\n", flags.Arg(0))
+		return 2
+	}
+	result, err := preflight.Run(preflight.Options{Root: *root, Artifacts: *artifacts, Out: *out})
+	if err != nil {
+		fmt.Fprintf(stderr, "preflight: %v\n", err)
+		return 2
+	}
+	fmt.Fprintf(stdout, "wrote preflight bundle %s\n", result.OutputPath)
+	return 0
 }
 
 func runReport(args []string, stdout io.Writer, stderr io.Writer) int {
@@ -871,6 +905,7 @@ Usage:
   portolan import repomix --in repomix-output.xml --out graph.json
   portolan import symbol-index --in symbols.json --out graph.json
   portolan context prepare --root . --out .portolan/context --profile agent
+  portolan preflight --root . --artifacts .portolan/context --out .portolan/preflight
   portolan map --selection selection.json --out .portolan/run
   portolan map --root . --out .portolan/run
   portolan query findings --bundle .portolan/run --kind relationships --limit 20
@@ -885,6 +920,26 @@ Usage:
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
+`)
+}
+
+func writePreflightUsage(w io.Writer) {
+	fmt.Fprint(w, `Usage:
+  portolan preflight --root <dir> --artifacts <dir> --out <dir>
+
+Generate a local Brownfield Preflight bundle before AI coding work. The command
+reads one existing context or map artifact directory, writes only to --out, and
+does not install tools, run network commands, mutate target repositories, write
+global agent configuration, register MCP servers, start daemons, or start
+watchers.
+
+Flags:
+  --root path       local target root path
+  --artifacts path  existing context or map artifact directory
+  --out path        output preflight bundle directory
+
+The bundle contains preflight.md, toolchain.json, agent-handoff.md, and
+preflight-gaps.jsonl. Candidate tools are recommendations, not graph evidence.
 `)
 }
 
