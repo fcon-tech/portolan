@@ -15,7 +15,7 @@
         "root": { "type": "string", "minLength": 1 },
         "scope": {
           "type": "string",
-          "enum": ["single-repo", "partial-multi-repo", "curated-landscape", "unknown"]
+          "enum": ["single-repo", "partial-multi-repo", "unknown"]
         },
         "repositories": { "type": "integer", "minimum": 0 },
         "ecosystem_signals": {

@@ -6,12 +6,13 @@ directory.
 ## Command Shape
 
 ```bash
-portolan preflight --root <target-root> --artifacts <existing-artifact-dir> --out <output-dir>
+portolan preflight --root <target-root> --artifacts <existing-artifact-dir> --out <output-dir> [--force]
 ```
 
-`--artifacts` may point to an existing context or map bundle. The command must
-not require network access, tool installation, target mutation, global config
-writes, MCP registration, daemon startup, or watcher startup.
+`--artifacts` may point to an existing context or map bundle. `--force`
+overwrites existing preflight bundle files in the selected output directory. The
+command must not require network access, tool installation, target mutation,
+global config writes, MCP registration, daemon startup, or watcher startup.
 
 ## Artifact Discovery
 
@@ -42,6 +43,8 @@ The command resolves `--root`, `--artifacts`, and `--out` to absolute paths
 before use. Generated writes must stay inside `--out`. Symlink or traversal
 escapes from the selected output directory are rejected. Unreadable input
 directories and unwritable output directories fail with explicit errors.
+Existing preflight output files are not overwritten unless `--force` is
+supplied.
 
 ## Required Outputs
 

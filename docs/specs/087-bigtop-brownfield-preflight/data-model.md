@@ -21,8 +21,7 @@ Validation rules:
 ## TargetShape
 
 - `root`: local target root or artifact root.
-- `scope`: `single-repo`, `partial-multi-repo`, `curated-landscape`, or
-  `unknown`.
+- `scope`: `single-repo`, `partial-multi-repo`, or `unknown`.
 - `repositories`: bounded repository names/counts when visible.
 - `ecosystem_signals`: languages, manifests, deployment/config surfaces.
 - `source_artifacts`: links to existing context/map artifacts used.

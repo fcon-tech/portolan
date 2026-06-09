@@ -34,6 +34,7 @@ type Options struct {
 	Root      string
 	Artifacts string
 	Out       string
+	Force     bool
 }
 
 type Result struct {
@@ -94,12 +95,16 @@ func Run(options Options) (Result, error) {
 	if err := os.MkdirAll(out, 0o755); err != nil {
 		return Result{}, fmt.Errorf("create output directory: %w", err)
 	}
-	if err := ensureInside(out, out); err != nil {
+	if err := ensurePreflightOutputsWritable(out, options.Force); err != nil {
 		return Result{}, err
 	}
 	files := map[string][]byte{}
 	files["preflight.md"] = []byte(RenderPreflightMarkdown(bundle))
-	files["toolchain.json"] = mustMarshalToolchain(bundle.Toolchain)
+	toolchainData, err := MarshalToolchain(bundle.Toolchain)
+	if err != nil {
+		return Result{}, err
+	}
+	files["toolchain.json"] = toolchainData
 	files["agent-handoff.md"] = []byte(RenderAgentHandoff(bundle))
 	files["preflight-gaps.jsonl"] = []byte(RenderGapsJSONL(bundle.Gaps))
 	for name, data := range files {
@@ -115,10 +120,11 @@ func Run(options Options) (Result, error) {
 }
 
 func Build(root string, artifacts string) Bundle {
+	repositories := countRepositories(root)
 	target := TargetShape{
 		Root:             root,
-		Scope:            detectScope(root),
-		Repositories:     countRepositories(root),
+		Scope:            detectScope(root, repositories),
+		Repositories:     repositories,
 		EcosystemSignals: detectSignals(root),
 	}
 	links, gaps := discoverArtifacts(artifacts)
@@ -180,6 +186,7 @@ func RenderPreflightMarkdown(bundle Bundle) string {
 	for _, gap := range firstGaps(bundle.Gaps, 8) {
 		fmt.Fprintf(&b, "- `%s`: %s\n", escapeInline(gap.ID), escapeText(gap.Reason))
 	}
+	writeGapTruncationNotice(&b, bundle.Gaps, 8)
 	fmt.Fprintf(&b, "\n## Next Probes\n\n")
 	fmt.Fprintf(&b, "- Read `agent-handoff.md` before asking an AI agent to change code.\n")
 	fmt.Fprintf(&b, "- Read `toolchain.json` before installing or running additional tools.\n")
@@ -207,6 +214,7 @@ func RenderAgentHandoff(bundle Bundle) string {
 	for _, gap := range firstGaps(bundle.Gaps, 6) {
 		fmt.Fprintf(&b, "- `%s`: %s (`%s`)\n", escapeInline(gap.ID), escapeText(gap.Reason), escapeInline(gap.Status))
 	}
+	writeGapTruncationNotice(&b, bundle.Gaps, 6)
 	fmt.Fprintf(&b, "\n## Safe Probes\n\n")
 	fmt.Fprintf(&b, "- Inspect linked Portolan artifacts first.\n")
 	fmt.Fprintf(&b, "- Ask for explicit approval before running external tools or install commands.\n")
@@ -267,7 +275,7 @@ func discoverArtifacts(dir string) ([]ArtifactLink, []PreflightGap) {
 	var gaps []PreflightGap
 	for _, name := range knownArtifactNames {
 		path := filepath.Join(dir, name)
-		link := ArtifactLink{Kind: name, Path: name, Status: "missing"}
+		link := ArtifactLink{Kind: name, Path: filepath.Join(dir, name), Status: "missing"}
 		if info, err := os.Stat(path); err == nil && !info.IsDir() {
 			link.Status = "present"
 			if isJSONArtifact(name) {
@@ -356,6 +364,7 @@ func readGapRecords(path string) []PreflightGap {
 	defer file.Close()
 	var gaps []PreflightGap
 	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -376,8 +385,8 @@ func readGapRecords(path string) []PreflightGap {
 	return gaps
 }
 
-func detectScope(root string) string {
-	if countRepositories(root) > 1 {
+func detectScope(root string, repositories int) string {
+	if repositories > 1 {
 		return "partial-multi-repo"
 	}
 	if _, err := os.Stat(filepath.Join(root, ".git")); err == nil {
@@ -427,6 +436,9 @@ func detectSignals(root string) []string {
 }
 
 func validateJSONArtifact(path string, jsonl bool) error {
+	if jsonl {
+		return validateJSONLinesArtifact(path)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -434,11 +446,18 @@ func validateJSONArtifact(path string, jsonl bool) error {
 	if strings.TrimSpace(string(data)) == "" {
 		return nil
 	}
-	if !jsonl {
-		var raw any
-		return json.Unmarshal(data, &raw)
+	var raw any
+	return json.Unmarshal(data, &raw)
+}
+
+func validateJSONLinesArtifact(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
 	}
-	scanner := bufio.NewScanner(strings.NewReader(string(data)))
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
@@ -471,15 +490,15 @@ func artifactFamily(name string) string {
 	}
 }
 
-func mustMarshalToolchain(toolchain Toolchain) []byte {
+func MarshalToolchain(toolchain Toolchain) ([]byte, error) {
 	if err := ValidateToolchain(toolchain); err != nil {
-		panic(err)
+		return nil, err
 	}
 	data, err := json.MarshalIndent(toolchain, "", "  ")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return append(data, '\n')
+	return append(data, '\n'), nil
 }
 
 func firstGaps(gaps []PreflightGap, limit int) []PreflightGap {
@@ -487,6 +506,12 @@ func firstGaps(gaps []PreflightGap, limit int) []PreflightGap {
 		return gaps
 	}
 	return gaps[:limit]
+}
+
+func writeGapTruncationNotice(b *strings.Builder, gaps []PreflightGap, limit int) {
+	if len(gaps) > limit {
+		fmt.Fprintf(b, "- `%d more gaps`: read `preflight-gaps.jsonl` before treating this list as complete\n", len(gaps)-limit)
+	}
 }
 
 func stringValue(raw map[string]any, key string, fallback string) string {
@@ -534,6 +559,20 @@ func ensureInside(base string, path string) error {
 	return nil
 }
 
+func ensurePreflightOutputsWritable(out string, force bool) error {
+	if force {
+		return nil
+	}
+	for _, name := range []string{"preflight.md", "toolchain.json", "agent-handoff.md", "preflight-gaps.jsonl"} {
+		if _, err := os.Lstat(filepath.Join(out, name)); err == nil {
+			return fmt.Errorf("output file %s already exists; use --force to overwrite", name)
+		} else if !os.IsNotExist(err) {
+			return err
+		}
+	}
+	return nil
+}
+
 func escapeInline(value string) string {
 	value = strings.ReplaceAll(value, "`", "'")
 	return escapeText(value)
@@ -543,6 +582,10 @@ func escapeText(value string) string {
 	value = html.EscapeString(value)
 	value = strings.ReplaceAll(value, "\n", " ")
 	value = strings.ReplaceAll(value, "\r", " ")
+	value = strings.ReplaceAll(value, "[", "&#91;")
+	value = strings.ReplaceAll(value, "]", "&#93;")
+	value = strings.ReplaceAll(value, "!", "&#33;")
+	value = strings.ReplaceAll(value, "*", "&#42;")
 	if len(value) > 240 {
 		return value[:240] + "..."
 	}
