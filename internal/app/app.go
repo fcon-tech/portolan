@@ -78,6 +78,7 @@ func runPreflight(args []string, stdout io.Writer, stderr io.Writer) int {
 	root := flags.String("root", "", "local target root")
 	artifacts := flags.String("artifacts", "", "existing context or map artifact directory")
 	out := flags.String("out", "", "output preflight directory")
+	force := flags.Bool("force", false, "overwrite existing preflight files")
 	if err := flags.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			writePreflightUsage(stdout)
@@ -89,7 +90,7 @@ func runPreflight(args []string, stdout io.Writer, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "unexpected preflight argument %q\n", flags.Arg(0))
 		return 2
 	}
-	result, err := preflight.Run(preflight.Options{Root: *root, Artifacts: *artifacts, Out: *out})
+	result, err := preflight.Run(preflight.Options{Root: *root, Artifacts: *artifacts, Out: *out, Force: *force})
 	if err != nil {
 		fmt.Fprintf(stderr, "preflight: %v\n", err)
 		return 2
@@ -925,7 +926,7 @@ an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portola
 
 func writePreflightUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
-  portolan preflight --root <dir> --artifacts <dir> --out <dir>
+  portolan preflight --root <dir> --artifacts <dir> --out <dir> [--force]
 
 Generate a local Brownfield Preflight bundle before AI coding work. The command
 reads one existing context or map artifact directory, writes only to --out, and
@@ -937,6 +938,7 @@ Flags:
   --root path       local target root path
   --artifacts path  existing context or map artifact directory
   --out path        output preflight bundle directory
+  --force           overwrite existing preflight bundle files
 
 The bundle contains preflight.md, toolchain.json, agent-handoff.md, and
 preflight-gaps.jsonl. Candidate tools are recommendations, not graph evidence.

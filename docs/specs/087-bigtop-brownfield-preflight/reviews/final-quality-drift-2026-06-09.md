@@ -39,9 +39,11 @@ Changed surfaces:
   validation, artifact discovery, and CLI dispatch have separate functions;
   no broad inheritance/extension mechanism is introduced.
 - **DRY**: verified. No duplicated scanner/importer logic is introduced;
-  tool recommendations use shared constructors/classification.
+  tool recommendations use shared constructors/classification, and repository
+  scope/count calculation is shared within the preflight bundle build.
 - **YAGNI**: verified. No daemon, UI, MCP registration, network install,
-  runtime execution, or new dependency was added.
+  runtime execution, new dependency, or unreachable `curated-landscape` v1
+  schema state was added.
 
 ## Verification
 
@@ -55,7 +57,7 @@ Changed surfaces:
 - `jq empty schema/*.json`: verified
 - `git diff --check`: verified
 - `go run ./cmd/portolan preflight --help`: verified
-- fixture `portolan preflight --root --artifacts --out`: verified
+- fixture `portolan preflight --root --artifacts --out --force`: verified
 
 ## Remaining Risks
 

@@ -4,8 +4,8 @@
 
 **Created**: 2026-06-09
 
-**Status**: Draft; backlog-only. Requires `plan.md`, `tasks.md`, and
-pre-implementation drift review before implementation.
+**Status**: Implemented locally; draft PR review/closeout in progress. Merge
+approval is not assessed.
 
 **Input**: Product reset from "evidence substrate" toward one narrow job:
 before an AI agent works on a brownfield system, Portolan should run a local
@@ -210,3 +210,8 @@ implementation.
 - `not_assessed` remains a status label; graph evidence states remain
   `source-visible`, `metadata-visible`, `runtime-visible`, `claim-only`,
   `unknown`, and `cannot_verify`.
+
+## Related Product Surface
+
+- `docs/brownfield-preflight-roadmap.md` records the product roadmap reset that
+  led to this slice and keeps 084/085/086 behind the preflight decision.

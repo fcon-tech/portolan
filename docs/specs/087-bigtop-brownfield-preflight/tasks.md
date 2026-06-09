@@ -85,8 +85,8 @@ imported.
 - [x] T027 Run full baseline: `go test ./...`, `go vet ./...`, `jq empty schema/*.json`, `git diff --check`.
 - [x] T028 Run CLI smoke: `go run ./cmd/portolan preflight --help` and a fixture preflight command.
 - [x] T029 Record final drift/quality review for spec drift, constitution drift, product drift, CRAP < 5, MI > 70, CleanArch hex, CleanCode, SOLID, DRY, and YAGNI in `docs/specs/087-bigtop-brownfield-preflight/reviews/final-quality-drift-2026-06-09.md`.
-- [ ] T030 Commit, push, create PR, and run three opencode PR review lanes.
-- [ ] T031 Fix accepted PR review findings and update `docs/specs/087-bigtop-brownfield-preflight/reviews/pr-readiness-closeout-2026-06-09.md`.
+- [x] T030 Commit, push, create PR, and run three opencode PR review lanes.
+- [x] T031 Fix accepted PR review findings and update `docs/specs/087-bigtop-brownfield-preflight/reviews/pr-readiness-closeout-2026-06-09.md`.
 
 ## Dependencies & Execution Order
 

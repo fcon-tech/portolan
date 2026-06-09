@@ -11,7 +11,8 @@ or Bigtop-like brownfield landscape.
 go run ./cmd/portolan preflight \
   --root /home/fall_out_bug/projects/bigtop-landscape \
   --artifacts /home/fall_out_bug/projects/bigtop-landscape/.portolan/context \
-  --out /home/fall_out_bug/projects/bigtop-landscape/.portolan/preflight/087
+  --out /home/fall_out_bug/projects/bigtop-landscape/.portolan/preflight/087 \
+  --force
 ```
 
 ## Expected Outputs
@@ -33,6 +34,10 @@ preflight-gaps.jsonl
    what not to claim.
 4. Confirm no network install, target mutation, global config write, MCP
    registration, daemon, or watcher was run by default.
+5. Treat `installed` tool status as a current `PATH` snapshot only. It is not
+   Portolan graph evidence until local tool output is supplied and imported.
+6. Omit `--force` on first run when preserving any existing preflight bundle
+   matters; use it only when intentionally refreshing the four output files.
 
 ## Agent Check
 

@@ -101,6 +101,41 @@ func TestRunPreflightRejectsUnsafeOut(t *testing.T) {
 	}
 }
 
+func TestRunPreflightExistingOutputRequiresForce(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".git"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	artifacts := t.TempDir()
+	out := filepath.Join(t.TempDir(), "preflight")
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	existing := filepath.Join(out, "preflight.md")
+	if err := os.WriteFile(existing, []byte("old"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := Run([]string{"preflight", "--root", root, "--artifacts", artifacts, "--out", out}, &stdout, &stderr)
+
+	if code != 2 || !strings.Contains(stderr.String(), "--force") {
+		t.Fatalf("code = %d stderr = %q, want force error", code, stderr.String())
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	code = Run([]string{"preflight", "--root", root, "--artifacts", artifacts, "--out", out, "--force"}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("force run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	if content := mustReadFile(t, existing); content == "old" {
+		t.Fatalf("force run did not overwrite %s", existing)
+	}
+}
+
 func TestReleaseBuildCanInjectVersion(t *testing.T) {
 	workDir := t.TempDir()
 	out := filepath.Join(workDir, "portolan")
