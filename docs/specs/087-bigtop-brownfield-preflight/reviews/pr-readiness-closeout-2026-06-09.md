@@ -60,14 +60,17 @@ mutate target repositories, and does not start daemons or watchers.
 
 ## PR State
 
-`pr_state`: draft until refreshed after the closeout commit is pushed.
+`pr_state`: ready-for-review.
 
-`github_checks`: not_assessed for the closeout commit until GitHub checks
-complete on the new head.
+`github_checks`: verified passing on head
+`0078937f80a1b5dd30d5c6d30d6489694bc97a79` before the final closeout-status
+commit.
 
 `review_decision`: not_assessed.
 
-`merge_state`: not_assessed for the closeout commit until PR state is refreshed.
+`merge_state`: verified clean on head
+`0078937f80a1b5dd30d5c6d30d6489694bc97a79` before the final closeout-status
+commit.
 
 `merge_approval`: not_assessed.
 
