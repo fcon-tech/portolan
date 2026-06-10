@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-10
 
-**Status**: Implemented; ready-to-merge (PR #65)
+**Status**: Merged via PR #65 (`8025de3`)
 
 **Input**: Add config-surfaces inventory and ctags symbol-density layers to the orient harness path; close PR #64 deferred debt items.
 
