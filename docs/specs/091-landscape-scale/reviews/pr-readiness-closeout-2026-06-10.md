@@ -11,8 +11,8 @@
 | Local implementation | verified | specs 087–091 tasks complete; review-fix commit applied |
 | Local verification | verified | `go test -count=1 ./...`, `go vet ./...`, `jq empty` schemas, `scripts/harness-orient-smoke.sh` |
 | Review evidence | verified | 3 replacement lanes + disposition in `reviews/pr-review-disposition-2026-06-10.md` |
-| PR state | draft → ready-for-review | after green checks on CI-alignment commit |
-| GitHub checks | verified (Baseline) / flaky (org CodeQL) | Repo `CI` Baseline green incl. harness smoke; org default CodeQL dynamic jobs intermittently fail on token auth — do not add repo `codeql.yml` while default setup is enabled |
+| PR state | ready-for-review | marked ready on `e2c7695` after all checks green |
+| GitHub checks | verified | Baseline + Analyze (go/python/actions) + CodeQL success on `e2c7695` |
 | Merge approval | not_assessed | no human/GitHub approval recorded |
 | Merge readiness | not-ready | explicit merge approval required |
 
@@ -28,4 +28,4 @@ Org **default CodeQL setup** is enabled. Adding repo `codeql.yml` or `codeql-con
 
 ## Stop reason
 
-Ready-for-review after latest push checks are green. Not ready-to-merge without explicit approval.
+Ready-for-review on `e2c7695` (all GitHub checks green). Not ready-to-merge without explicit approval.
