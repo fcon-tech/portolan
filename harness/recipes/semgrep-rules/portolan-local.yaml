@@ -1,0 +1,11 @@
+rules:
+  - id: portolan-hardcoded-secret-pattern
+    message: Possible hardcoded secret reference (name only; verify locally)
+    severity: WARNING
+    languages: [generic]
+    pattern-regex: '(?i)(api[_-]?key|secret|password|token)\s*=\s*["''][^"'']+["'']'
+  - id: portolan-todo-fixme
+    message: TODO/FIXME marker — debt candidate
+    severity: INFO
+    languages: [generic]
+    pattern-regex: '(?i)(TODO|FIXME|HACK|XXX):'

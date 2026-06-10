@@ -42,10 +42,21 @@ be verified through link, schema, and placeholder checks instead of code tests.
 
 ## Product Constraints
 
-- Primary implementation language: Go.
-- Runtime default: local CLI.
-- Default output: machine-readable evidence graph plus optional human-readable
-  packet generated from the same graph.
+- Primary delivery: harness artifacts (`harness/` skills, recipes, guardrails,
+  contracts) plus optional local orient viewer output.
+- Implementation language: Go remains for the legacy CLI and normalization
+  library; new product slices may use shell, TypeScript, or other local tooling
+  when a spec documents the boundary.
+- Runtime default: harness-first workflow (OSS recipes → orient bundle → viewer);
+  legacy Go CLI is frozen for new features until the Go decision gate resolves.
+- Default output: ranked `orient/` hotspot bundle for navigation; legacy
+  machine-readable evidence graph remains supported as an optional bridge.
+- Local viewer: a read-only static orient viewer may be served locally for the
+  duration of a user session; it must not mutate targets or require network by
+  default.
+- Viewer truth boundary: graph nodes in the orient viewer must come from imported
+  producer evidence or Portolan normalization; LLM-authored graphs are UX-only and
+  must never be labeled `source-visible`.
 - Default privacy posture: no raw private source snippets, prompts, credentials,
   provider URLs, or customer-sensitive payloads in committed fixtures.
 - Default integration posture: import files and exported tool outputs before
@@ -81,4 +92,7 @@ Changes require:
 - a migration note if existing specs become stale;
 - fresh verification using the baseline checks in `AGENTS.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-20 | **Last Amended**: 2026-05-20
+**Version**: 1.1.0 | **Ratified**: 2026-05-20 | **Last Amended**: 2026-06-10
+
+Migration note (1.1.0): harness-first pivot per spec 087. Existing Go CLI specs
+remain valid as legacy bridges; new MVP work targets `harness/` and `viewer/`.

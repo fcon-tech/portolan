@@ -31,9 +31,31 @@ Use Portolan when you want an agent to answer questions like:
 Portolan is especially useful when the target is messy, multi-repo, legacy, or
 partly black-box.
 
-## What You Get
+## Harness-First Quick Start (recommended)
 
-The main workflow creates a context pack for an agent:
+Portolan is primarily a **harness supplement**: portable skill, OSS recipes,
+guardrails, and a local orient map — not a Go module you must install first.
+
+**One command** (tool check → recipes → bundle → viewer):
+
+```bash
+scripts/orient-wizard.sh <target-root> <orient-dir> --yes
+```
+
+Add `--no-viewer` to build only. See `scripts/orient-wizard.sh --help`.
+
+The orient viewer supports search, filters, a directory heat map, and click-to-source
+preview (local files only). See [`docs/demo-runbook.md`](docs/demo-runbook.md).
+
+Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from
+[`harness/recipes/`](harness/recipes/), then `scripts/build-orient-bundle.sh`.
+
+See [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md) for
+legacy Go CLI status.
+
+## What You Get (legacy Go path)
+
+The Go CLI workflow creates a context pack for an agent:
 
 ```bash
 portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
@@ -277,5 +299,7 @@ For repository development:
 ```bash
 go test -count=1 ./...
 jq empty schema/*.json
+jq empty harness/contracts/orient-bundle.schema.json
+scripts/harness-orient-smoke.sh
 git diff --check
 ```
