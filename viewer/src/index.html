@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portolan Orient</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>Portolan Orient</h1>
+        <p id="subtitle">Evidence-backed hotspots — not LLM architecture truth</p>
+      </div>
+      <div class="search-wrap">
+        <label for="search-input" class="sr-only">Search hotspots</label>
+        <input type="search" id="search-input" placeholder="Search summary, path, id…" autocomplete="off">
+      </div>
+    </div>
+    <div id="status-banner" class="status-banner hidden" role="status"></div>
+    <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
+  </header>
+  <main class="layout">
+    <section class="panel" id="tour">
+      <h2>Hotspot tour <span id="tour-count" class="count-badge"></span></h2>
+      <ol id="hotspot-list"></ol>
+    </section>
+    <section class="panel" id="graph-panel">
+      <h2>Directory heat map</h2>
+      <div id="heat-tree" class="heat-tree" aria-label="Directory heat map"></div>
+    </section>
+    <section class="panel" id="detail">
+      <h2>Detail</h2>
+      <div id="detail-body"><p>Select a hotspot.</p></div>
+      <div id="source-preview" class="source-preview hidden">
+        <h3>Source</h3>
+        <pre id="source-code"></pre>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span id="manifest-info"></span>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

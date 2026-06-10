@@ -1,0 +1,9 @@
+{
+  "duplicates": [
+    {
+      "firstFile": { "name": "pkg/a/util.go" },
+      "secondFile": { "name": "pkg/b/util.go" },
+      "lines": 42
+    }
+  ]
+}

@@ -18,8 +18,8 @@ Portolan is not:
 Portolan is:
 
 - a read-only local discovery substrate an agent can run;
-- an agent-facing toolbox exposed through CLI first, then skills/MCP/LSP-style
-  surfaces when justified;
+- a harness-first supplement (`harness/SKILL.md`, recipes, guardrails, orient
+  viewer) with an optional legacy Go CLI bridge;
 - a normalizer for source, metadata, runtime, and claim evidence;
 - a machine-readable evidence graph;
 - a finding generator for relationships, duplication, configuration surfaces,
@@ -42,8 +42,11 @@ Portolan is:
 
 ## Engineering Rules
 
-- Primary implementation language: Go.
-- Keep `cmd/portolan` thin; put behavior in internal packages.
+- Primary delivery: harness artifacts and orient bundle contract; see spec 087.
+- Go CLI is frozen for new features per
+  [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md).
+- Keep `cmd/portolan` thin; put behavior in internal packages when Go changes are
+  allowed (bugfix/bridge only during freeze).
 - Add focused tests before behavior changes.
 - Do not add dependencies unless the product boundary and integration cost are
   documented.
@@ -190,6 +193,9 @@ Run:
 go test ./...
 go vet ./...
 jq empty schema/*.json
+jq empty harness/contracts/orient-bundle.schema.json
+scripts/harness-orient-smoke.sh
+scripts/orient-wizard.sh --help
 git diff --check
 ```
 
@@ -202,5 +208,17 @@ go run ./cmd/portolan scan --help
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`docs/specs/083-tool-acquisition-guidance/plan.md`
+`docs/specs/087-harness-first-product/plan.md`
 <!-- SPECKIT END -->
+
+## Learned User Preferences
+
+- Ask clarifying questions before drafting implementation plans when harness targets, Go role, or MVP surface are still open.
+- Prioritize user-facing landscape navigation (hotspots, tech debt, duplication, where to look first) over evidence-discipline artifacts as the primary deliverable.
+- Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan.
+- Expand harness rules, guardrails, and OSS tool recipes rather than the Go codebase when adding product behavior.
+
+## Learned Workspace Facts
+
+- Understand-Anything is the reference UX for the local orient map; graph nodes must stay evidence-backed, not LLM-authored truth.
+- Product-success questions center on concrete code pain (debt, duplication, risky zones), not abstract trust infrastructure alone.

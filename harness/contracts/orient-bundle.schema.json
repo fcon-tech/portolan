@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/orient-bundle.schema.json",
+  "title": "Portolan Orient Bundle",
+  "type": "object",
+  "required": ["manifest", "hotspot_record", "gap_record"],
+  "properties": {
+    "manifest": {
+      "type": "object",
+      "required": ["schema_version", "target_root", "generated_at"],
+      "properties": {
+        "schema_version": { "type": "string" },
+        "target_root": { "type": "string" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "hotspot_count": { "type": "integer", "minimum": 0 },
+        "gap_count": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": true
+    },
+    "hotspot_record": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "severity",
+        "summary",
+        "paths",
+        "evidence_state",
+        "producer",
+        "producer_ref",
+        "rank"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "duplication",
+            "static-finding",
+            "config",
+            "dep-hub",
+            "debt-candidate"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "low", "medium", "high", "critical"]
+        },
+        "summary": { "type": "string" },
+        "paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "evidence_state": {
+          "type": "string",
+          "enum": [
+            "source-visible",
+            "metadata-visible",
+            "runtime-visible",
+            "claim-only",
+            "unknown",
+            "cannot_verify",
+            "not_assessed"
+          ]
+        },
+        "producer": { "type": "string" },
+        "producer_ref": { "type": "string" },
+        "rank": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "gap_record": {
+      "type": "object",
+      "required": ["id", "surface", "status", "summary"],
+      "properties": {
+        "id": { "type": "string" },
+        "surface": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["unknown", "cannot_verify", "not_assessed"]
+        },
+        "summary": { "type": "string" },
+        "recipe": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

@@ -14,16 +14,18 @@ surface derived from that evidence.
 
 ## Current Client-Safe Answer
 
-Portolan is useful when an agent needs a bounded local evidence pack before it
-answers architecture or estate questions. The product story is target-agnostic:
-run Portolan against a local target, read bounded artifacts first, preserve
-weak evidence states, and cite local evidence for every material claim.
+Portolan helps engineers and agents find where local code pain is visible:
+duplication clusters, static findings, dependency hubs, and configuration
+hotspots — then navigate there through a harness workflow and local orient map.
 
-The practical value is evidence discipline. Portolan prepares local context,
-map, graph, finding, and answer-contract artifacts that tell an agent what is
-visible, what is only declared, what is missing, and what remains unknown. That
-makes an agent less likely to turn local files, partial scans, or planned OSS
-integrations into broader claims.
+The primary product path is harness-first: follow [`harness/SKILL.md`](../harness/SKILL.md),
+run documented OSS recipes, build an `orient/` bundle, and open the local viewer.
+The legacy Go CLI (`context prepare`, `map`) remains an optional bridge.
+
+Evidence discipline is a **secondary** (B2B) value: hotspots and viewer nodes
+cite `producer_ref` and evidence states; unknowns stay visible without blocking
+first-run navigation. Portolan does not replace mature scanners — it composes
+their local outputs into one orient surface.
 
 Named examples, including the Apache Bigtop runs, are evidence records for
 specific target shapes. They are not the main product path and must not be
