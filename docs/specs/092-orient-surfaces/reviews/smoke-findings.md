@@ -19,7 +19,11 @@ scripts/orient-wizard.sh . /tmp/orient-smoke-a --no-viewer --skip-install --yes
 | static-finding | 4 |
 | truncated | no |
 
-ctags JSONL ingested; top debt-candidate includes symbol-dense agent artifacts under `.codex-subagents/`.
+ctags JSONL ingested. **Pre-FR-007 note:** smoke A initially listed symbol-dense paths under `.codex-subagents/`; after slice 3.5 those paths are excluded (`grep -c codex-subagents hotspots.jsonl` → 0).
+
+## Smoke A post-FR-007 (2026-06-10)
+
+Re-run on harness-only head: ignored agent artifact paths no longer appear in bundle output; debt-candidate counts may differ from pre-gitignore smoke A table above.
 
 ## Smoke B — bigtop bounded (3 repos)
 

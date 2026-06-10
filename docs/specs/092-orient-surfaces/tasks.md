@@ -5,4 +5,5 @@
 - [x] Slice 1: scan-config-surfaces + wizard + bundle config hotspots
 - [x] Slice 2: ctags wizard + bundle debt-candidate + viewer detail
 - [x] Slice 3: real-target smoke + docs + backlog
+- [x] Slice 3.5: gitignore across producers + bundle post-filter
 - [x] PR review cycle + ready-for-review closeout

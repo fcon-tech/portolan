@@ -179,7 +179,7 @@ fixtures are preflight evidence only.
 | P7-089 | `docs/specs/089-orient-wizard/` | One-command `orient-wizard.sh`: tool check, consent install, recipes, bundle, viewer; real-target smoke. | Implemented |
 | P7-090 | `docs/specs/090-viewer-demo-ux/` | Demo-ready viewer: search, filters, directory heat map, source preview, demo runbook. | Implemented |
 | P7-091 | `docs/specs/091-landscape-scale/` | Full bigtop scale: bounded jscpd shards, shard gaps, kind-quota budget, hotspots-full.jsonl. | Implemented |
-| P7-092 | `docs/specs/092-orient-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh. | Ready for review (PR) |
+| P7-092 | `docs/specs/092-orient-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh; gitignore hardening. | Ready for merge (PR #65) |
 | P7-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Local orient viewer (UA-inspired) over evidence hotspots. | Demo-ready in `viewer/` (spec 090) |
 | P7-ADR | `docs/adr/001-go-cli-fate.md` | Go CLI maintenance-mode decision after harness smoke. | Provisional ADR recorded |
 

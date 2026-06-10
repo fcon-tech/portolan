@@ -23,3 +23,10 @@
 ## Slice 3 — ship
 
 - real-target smoke, docs, backlog P7-092, draft PR
+
+## Slice 3.5 — gitignore hardening
+
+- `scripts/orient-ignore.sh` + `git check-ignore` fallback patterns
+- jscpd `--gitignore`, ctags `git ls-files -co --exclude-standard`, config scan filter
+- bundle post-filter in `build-orient-bundle.sh`
+- harness-orient-smoke: assert ignored paths excluded from fixture bundle
