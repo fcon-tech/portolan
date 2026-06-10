@@ -35,6 +35,8 @@ Useful flags:
 
 Shard failures are recorded in `producers/_gaps.jsonl` and merged into `gaps.jsonl`.
 Full hotspot list (pre-budget) is written to `hotspots-full.jsonl` for agents.
+Producers respect `.gitignore` (jscpd `--gitignore`, ctags via `git ls-files`, config
+scan via `git check-ignore`; bundle build drops any ignored paths that slip through).
 
 ### Manual fallback (recipes)
 

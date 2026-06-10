@@ -3,6 +3,18 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=orient-ignore.sh
+. "$ROOT/scripts/orient-ignore.sh"
+
+orient_rel_path_is_ignored "$ROOT" ".codex-subagents/monitor.mjs" || {
+  echo "expected .codex-subagents to be gitignored" >&2
+  exit 1
+}
+orient_rel_path_is_ignored "$ROOT" "scripts/orient-wizard.sh" && {
+  echo "did not expect scripts/orient-wizard.sh to be ignored" >&2
+  exit 1
+}
+
 FIXTURE_TARGET="$ROOT/internal/testfixtures/orient-bundle/target"
 FIXTURE_ORIENT="$ROOT/internal/testfixtures/orient-bundle/orient-smoke"
 VIEWER_PORT="${VIEWER_PORT:-4174}"

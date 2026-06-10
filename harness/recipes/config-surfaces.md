@@ -3,6 +3,7 @@
 ## Prerequisites
 
 - `jq` and standard `find` (no install; read-only).
+- Respects repo `.gitignore` via `git check-ignore` when `.git` is present.
 
 ## Bounded scan
 

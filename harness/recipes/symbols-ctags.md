@@ -12,9 +12,11 @@ Limit to selected repos or top-level source dirs to control output size.
 TARGET=<absolute-target-root>
 OUT=<orient-dir>/producers/ctags
 mkdir -p "$OUT"
-ctags --output-format=json --fields=+nKz -R \
-  --exclude=.git --exclude=node_modules --exclude=vendor \
-  -f "$OUT/tags.json" "$TARGET"
+# Prefer gitignore-aware file list (wizard default):
+git -C "$TARGET" ls-files -co --exclude-standard > /tmp/ctags-files.txt
+ctags --output-format=json --fields=+nKz --links=no \
+  -L /tmp/ctags-files.txt -f "$OUT/tags.json"
+# Run from repo root: (cd "$TARGET" && ctags ... -L /tmp/ctags-files.txt ...)
 ```
 
 ## Re-ingest

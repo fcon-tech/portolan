@@ -4,6 +4,10 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=orient-ignore.sh
+. "$(dirname "$0")/orient-ignore.sh"
+
+JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor/**,**/.agents/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/orient-smoke/**,**/generated/**"
 
 YES=0
 SKIP_INSTALL=0
@@ -216,17 +220,24 @@ run_config() {
 run_ctags() {
   command -v ctags >/dev/null || { log "ctags not available"; return 1; }
   mkdir -p "$PRODUCERS_DIR/ctags"
-  local repo slug outdir
+  local repo slug outdir list_file
   while IFS= read -r repo; do
     [[ -z "$repo" ]] && continue
     slug=$(repo_slug "$repo")
     outdir="$PRODUCERS_DIR/ctags/$slug"
     mkdir -p "$outdir"
-    log "ctags: $repo"
+    list_file=$(mktemp)
+    orient_repo_file_list "$repo" >"$list_file"
+    if [[ ! -s "$list_file" ]]; then
+      log "ctags: $repo (no non-ignored files)"
+      rm -f "$list_file"
+      continue
+    fi
+    log "ctags: $repo ($(wc -l <"$list_file" | tr -d ' ') files, gitignore-aware)"
     run_shard ctags "$repo" \
-      ctags --output-format=json --fields=+nKz -R --links=no \
-        --exclude=.git --exclude=node_modules --exclude=vendor \
-        -f "$outdir/tags.json" "$repo" 2>>"$FAILURES_LOG" || true
+      bash -c 'cd "$1" && ctags --output-format=json --fields=+nKz --links=no -L "$2" -f "$3"' \
+      _ "$repo" "$list_file" "$outdir/tags.json" 2>>"$FAILURES_LOG" || true
+    rm -f "$list_file"
   done < <(discover_repos)
 }
 
@@ -276,7 +287,8 @@ run_jscpd() {
         --min-tokens 50 \
         --threshold 999999 \
         --noSymlinks \
-        --ignore "**/node_modules/**,**/.git/**,**/vendor/**" \
+        --gitignore \
+        --ignore "$JSCPD_IGNORE_GLOBS" \
         2>>"$FAILURES_LOG" || true
   done < <(discover_repos)
 }

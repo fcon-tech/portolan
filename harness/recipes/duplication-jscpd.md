@@ -17,7 +17,9 @@ jscpd "$TARGET" \
   --min-lines 5 \
   --min-tokens 50 \
   --threshold 999999 \
-  --ignore "**/node_modules/**,**/.git/**,**/vendor/**"
+  --noSymlinks \
+  --gitignore \
+  --ignore "**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/node_modules/**,**/vendor/**,**/dist/**,**/orient-smoke/**"
 ```
 
 ## Multi-repo (sharded)

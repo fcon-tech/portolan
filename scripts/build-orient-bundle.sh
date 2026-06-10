@@ -28,6 +28,10 @@ command -v jq >/dev/null 2>&1 || {
   exit 1
 }
 
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=orient-ignore.sh
+. "$SCRIPT_DIR/orient-ignore.sh"
+
 producer_repo_slug() {
   local p=$1
   local base hash
@@ -67,6 +71,38 @@ append_gap() {
     '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' >>"$gaps_raw"
 }
 
+bundle_path_ignored() {
+  local p=$1
+  [[ -z "$p" || "$p" == "(dependency-hub)" ]] && return 1
+  local norm root
+  norm=$(printf '%s' "$p" | sed 's|\\|/|g')
+  root="$TARGET_ROOT"
+  while IFS= read -r rpath; do
+    [[ -z "$rpath" ]] && continue
+    if [[ "$norm" == "$rpath" || "$norm" == "$rpath"/* ]]; then
+      root="$rpath"
+      break
+    fi
+  done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
+  orient_path_is_ignored "$root" "$norm"
+}
+
+filter_paths_json() {
+  local raw=$1
+  local -a kept=()
+  local p
+  while IFS= read -r p; do
+    [[ -z "$p" ]] && continue
+    bundle_path_ignored "$p" && continue
+    kept+=("$p")
+  done < <(jq -r '.[]?' <<<"$raw")
+  if [[ ${#kept[@]} -eq 0 ]]; then
+    echo '[]'
+    return 0
+  fi
+  printf '%s\n' "${kept[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))'
+}
+
 process_jscpd_file() {
   local jfile=$1
   jq -r --arg ref "$jfile" '
@@ -75,6 +111,8 @@ process_jscpd_file() {
     [.firstFile.name, (.secondFile.name // ""), (.lines // 0 | tostring), $ref] | @tsv
   ' "$jfile" | while IFS=$'\t' read -r first second lines ref; do
     [[ -z "$first" ]] && continue
+    bundle_path_ignored "$first" && continue
+    [[ -n "$second" ]] && bundle_path_ignored "$second" && continue
     id="dup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg first "$first" --arg second "$second" \
@@ -90,6 +128,7 @@ process_semgrep_file() {
     [.path, .check_id, (.extra.severity // "WARNING"), $ref] | @tsv
   ' "$sfile" | while IFS=$'\t' read -r fpath check sev_raw ref; do
     [[ -z "$fpath" ]] && continue
+    bundle_path_ignored "$fpath" && continue
     sev=$(echo "$sev_raw" | tr '[:upper:]' '[:lower:]')
     case "$sev" in
       error|critical) severity="critical" ;;
@@ -192,8 +231,9 @@ while IFS= read -r cfile; do
   ' "$cfile" | while IFS= read -r group; do
     [[ -z "$group" ]] && continue
     surface_kind=$(echo "$group" | jq -r '.surface_kind')
-    count=$(echo "$group" | jq -r '.count')
-    paths_json=$(echo "$group" | jq -c '.paths')
+    paths_json=$(filter_paths_json "$(echo "$group" | jq -c '.paths')")
+    [[ "$(jq 'length' <<<"$paths_json")" -eq 0 ]] && continue
+    count=$(jq 'length' <<<"$paths_json")
     id="cfg-$(printf '%s%s' "$cfile" "$surface_kind" | sha256sum | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg surface_kind "$surface_kind" --argjson count "$count" \
@@ -221,6 +261,7 @@ while IFS= read -r tfile; do
     .[] | [.path, (.count|tostring), $ref] | @tsv
   ' "$tfile" | while IFS=$'\t' read -r fpath symcount ref; do
     [[ -z "$fpath" ]] && continue
+    bundle_path_ignored "$fpath" && continue
     id="sym-$(printf '%s' "$fpath" | sha256sum | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg path "$fpath" --argjson n "${symcount:-0}" --arg ref "$ref" \

@@ -3,6 +3,10 @@
 # Emits JSONL: {"path":"relative/path","surface_kind":"dockerfile|..."}
 set -euo pipefail
 
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=orient-ignore.sh
+. "$SCRIPT_DIR/orient-ignore.sh"
+
 if [[ $# -lt 2 ]]; then
   echo "usage: $0 <repo-root> <output.jsonl>" >&2
   exit 2
@@ -21,6 +25,7 @@ append_surface() {
   local rel
   rel="${path#"$REPO_ROOT"/}"
   [[ "$rel" == "$path" && "$path" != "$REPO_ROOT"/* ]] && return 0
+  orient_rel_path_is_ignored "$REPO_ROOT" "$rel" && return 0
   jq -nc --arg path "$rel" --arg surface_kind "$kind" \
     '{path:$path,surface_kind:$surface_kind}' >>"$OUT"
 }
