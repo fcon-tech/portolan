@@ -12,12 +12,62 @@ const KIND_LABELS = {
   'dep-hub': 'Dependency hub',
 };
 
-const QUICK_PRESETS = [
-  { id: 'start', label: 'Where to start', kinds: null, maxRank: 15 },
-  { id: 'pain', label: 'Code pain', kinds: ['duplication', 'static-finding', 'debt-candidate'] },
-  { id: 'config', label: 'Config & deploy', kinds: ['config'] },
-  { id: 'deps', label: 'Dependencies', kinds: ['dep-hub'] },
-];
+/** viewMode: preset id or 'custom' when user toggles kind chips */
+const VIEWS = {
+  all: {
+    label: 'All',
+    description: 'Every hotspot in this bundle (subject to search & severity filters).',
+  },
+  top15: {
+    label: 'Tour · top 15',
+    description:
+      'Only ranks #1–#15. Rank is bundle sort order (severity first, then kind quotas) — a guided slice, not the full landscape.',
+    maxRank: 15,
+  },
+  'code-pain': {
+    label: 'Code pain',
+    description: 'Duplication, semgrep smells, and symbol-dense files — typical refactor/review targets.',
+    kinds: ['duplication', 'static-finding', 'debt-candidate'],
+  },
+  config: {
+    label: 'Config & deploy',
+    description: 'Docker, CI, compose, env, terraform inventory — where ops/config risk lives (informational).',
+    kinds: ['config'],
+  },
+  deps: {
+    label: 'Dependencies',
+    description: 'Packages with many dependents in the SBOM (Syft) — upgrade blast-radius hubs.',
+    kinds: ['dep-hub'],
+  },
+};
+
+const KIND_HELP = {
+  duplication: {
+    why: 'jscpd found a repeated code block. Copies drift apart when you change one copy and forget the other.',
+    tool: 'jscpd',
+    limit: 'Only near-identical fragments; not design-level duplication.',
+  },
+  'static-finding': {
+    why: 'Semgrep matched a local rule (TODO/FIXME, secret-like patterns, etc.).',
+    tool: 'semgrep',
+    limit: 'Rule-based; not a full security audit.',
+  },
+  config: {
+    why: 'File is part of deploy/config surface (Dockerfile, workflow, .env, terraform…).',
+    tool: 'config scan',
+    limit: 'Inventory only — severity is info, not a vulnerability claim.',
+  },
+  'debt-candidate': {
+    why: 'File has many symbols (ctags). Dense files are harder to navigate — candidate for split or review.',
+    tool: 'universal-ctags',
+    limit: 'Symbol count ≠ complexity score; no AI judgment.',
+  },
+  'dep-hub': {
+    why: 'Package has many dependency edges in the CycloneDX SBOM.',
+    tool: 'syft',
+    limit: 'Landscape-level; no file path attached.',
+  },
+};
 
 let allHotspots = [];
 let repos = [];
@@ -27,7 +77,8 @@ let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
 let searchQuery = '';
 let selectedId = null;
 let expandedDirs = new Set();
-let activeQuickPreset = null;
+/** @type {keyof VIEWS | 'custom'} */
+let viewMode = 'top15';
 
 async function loadJSONL(url) {
   const res = await fetch(url);
@@ -74,7 +125,6 @@ function normalizeDisplayPath(p) {
   return p.replace(/\\/g, '/');
 }
 
-/** Show repo-relative or tail of path for list UI. */
 function shortPath(p) {
   const norm = normalizeDisplayPath(p);
   if (!norm || norm === '(dependency-hub)') return norm;
@@ -98,8 +148,7 @@ function shortPath(p) {
 function primaryPath(h) {
   const paths = h.paths || [];
   if (!paths.length) return null;
-  const filePath = paths.find((p) => p && p !== '(dependency-hub)') || paths[0];
-  return filePath;
+  return paths.find((p) => p && p !== '(dependency-hub)') || paths[0];
 }
 
 function repoForPath(p) {
@@ -136,17 +185,19 @@ function matchesSearch(h, q) {
   return hay.includes(q);
 }
 
-function matchesQuickPreset(h) {
-  if (!activeQuickPreset) return true;
-  const preset = QUICK_PRESETS.find((p) => p.id === activeQuickPreset);
-  if (!preset) return true;
-  if (preset.kinds && !preset.kinds.includes(h.kind)) return false;
-  if (preset.maxRank != null && h.rank > preset.maxRank) return false;
+function matchesView(h) {
+  if (viewMode === 'custom') {
+    if (filters.kinds.size && !filters.kinds.has(h.kind)) return false;
+    return true;
+  }
+  const view = VIEWS[viewMode];
+  if (!view) return true;
+  if (view.kinds && !view.kinds.includes(h.kind)) return false;
+  if (view.maxRank != null && h.rank > view.maxRank) return false;
   return true;
 }
 
 function matchesFilters(h) {
-  if (filters.kinds.size && !filters.kinds.has(h.kind)) return false;
   if (filters.severities.size && !filters.severities.has(h.severity)) return false;
   if (filters.repoIds.size) {
     if (h.kind !== 'dep-hub') {
@@ -160,7 +211,7 @@ function matchesFilters(h) {
 function filteredHotspots() {
   const q = searchQuery.trim().toLowerCase();
   return allHotspots
-    .filter((h) => matchesSearch(h, q) && matchesFilters(h) && matchesQuickPreset(h))
+    .filter((h) => matchesSearch(h, q) && matchesView(h) && matchesFilters(h))
     .sort((a, b) => a.rank - b.rank);
 }
 
@@ -172,59 +223,104 @@ function kindCounts(hotspots) {
   return counts;
 }
 
-function renderStatsRow() {
-  const el = document.getElementById('stats-row');
+function setView(mode) {
+  viewMode = mode;
+  filters.kinds.clear();
+  renderViewBar();
+  renderFilterExplainer();
+  renderFilters();
+  render();
+}
+
+function enterCustomKindFilter(kind) {
+  viewMode = 'custom';
+  filters.kinds.clear();
+  filters.kinds.add(kind);
+  renderViewBar();
+  renderFilterExplainer();
+  renderFilters();
+  render();
+}
+
+function toggleCustomKind(kind) {
+  if (filters.kinds.has(kind)) filters.kinds.delete(kind);
+  else filters.kinds.add(kind);
+  renderFilterExplainer();
+  renderFilters();
+  render();
+}
+
+function kindChipState(kind) {
+  if (viewMode === 'custom') {
+    if (filters.kinds.size === 0) return 'inactive';
+    return filters.kinds.has(kind) ? 'active' : 'inactive';
+  }
+  const view = VIEWS[viewMode];
+  if (view?.kinds) {
+    return view.kinds.includes(kind) ? 'locked' : 'inactive';
+  }
+  return 'inactive';
+}
+
+function renderViewBar() {
+  const el = document.getElementById('view-bar');
   el.innerHTML = '';
-  const counts = manifest?.kind_counts || kindCounts(allHotspots);
-  const total = manifest?.hotspot_count ?? allHotspots.length;
-  const totalPill = document.createElement('span');
-  totalPill.className = 'stat-pill';
-  totalPill.innerHTML = `<strong>${total}</strong> hotspots`;
-  el.appendChild(totalPill);
-  const order = ['debt-candidate', 'config', 'static-finding', 'duplication', 'dep-hub'];
-  const kinds = [...new Set([...order, ...Object.keys(counts)])];
-  for (const k of kinds) {
-    const n = counts[k];
-    if (!n) continue;
-    const pill = document.createElement('span');
-    pill.className = 'stat-pill';
-    pill.innerHTML = `<span class="stat-dot ${escapeHtml(k)}"></span><strong>${n}</strong> ${escapeHtml(kindLabel(k))}`;
-    el.appendChild(pill);
+  for (const [id, view] of Object.entries(VIEWS)) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'view-btn' + (viewMode === id ? ' active' : '');
+    btn.textContent = view.label;
+    btn.title = view.description;
+    btn.addEventListener('click', () => setView(id));
+    el.appendChild(btn);
+  }
+  if (viewMode === 'custom') {
+    const custom = document.createElement('span');
+    custom.className = 'view-btn active custom-tag';
+    custom.textContent = 'Custom kind filter';
+    el.appendChild(custom);
   }
 }
 
-function renderQuickFilters() {
-  const el = document.getElementById('quick-filters');
-  el.innerHTML = '';
-  const clear = document.createElement('button');
-  clear.type = 'button';
-  clear.className = 'quick-btn' + (!activeQuickPreset && !filters.kinds.size ? ' active' : '');
-  clear.textContent = 'All';
-  clear.addEventListener('click', () => {
-    activeQuickPreset = null;
-    filters.kinds.clear();
-    filters.severities.clear();
-    filters.repoIds.clear();
-    renderFilters();
-    render();
-  });
-  el.appendChild(clear);
-  for (const preset of QUICK_PRESETS) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'quick-btn' + (activeQuickPreset === preset.id ? ' active' : '');
-    btn.textContent = preset.label;
-    btn.addEventListener('click', () => {
-      activeQuickPreset = preset.id === activeQuickPreset ? null : preset.id;
-      if (activeQuickPreset) {
-        filters.kinds.clear();
-        if (preset.kinds) preset.kinds.forEach((k) => filters.kinds.add(k));
-      }
-      renderFilters();
-      render();
-    });
-    el.appendChild(btn);
+function renderFilterExplainer() {
+  const el = document.getElementById('filter-explainer');
+  const shown = filteredHotspots().length;
+  const total = allHotspots.length;
+  let main = '';
+  if (viewMode === 'custom') {
+    const kinds =
+      filters.kinds.size === 0
+        ? 'all kinds'
+        : [...filters.kinds].map(kindLabel).join(', ');
+    main = `<strong>Custom filter</strong> — kinds: ${escapeHtml(kinds)}. Click kind chips below to add/remove. Pick a view above to reset.`;
+  } else {
+    const view = VIEWS[viewMode];
+    main = view
+      ? `<strong>${escapeHtml(view.label)}</strong> — ${escapeHtml(view.description)}`
+      : '';
   }
+  el.innerHTML = `
+    <p class="explainer-main">${main}</p>
+    <p class="explainer-meta">Showing <strong>${shown}</strong> of ${total} hotspots in bundle.
+      Rank #n = sort position (severity + per-kind budget).
+      Only tools that ran in this orient run appear; missing layers are gaps, not hidden hotspots.</p>
+  `;
+}
+
+function renderKindGuide() {
+  const el = document.getElementById('kind-guide-body');
+  const order = ['duplication', 'static-finding', 'debt-candidate', 'config', 'dep-hub'];
+  el.innerHTML = order
+    .filter((k) => KIND_HELP[k])
+    .map((k) => {
+      const h = KIND_HELP[k];
+      return `<div class="guide-item">
+        <h4><span class="kind-pill ${k}">${escapeHtml(kindLabel(k))}</span></h4>
+        <p>${escapeHtml(h.why)}</p>
+        <p class="guide-meta">Tool: <code>${escapeHtml(h.tool)}</code> · ${escapeHtml(h.limit)}</p>
+      </div>`;
+    })
+    .join('');
 }
 
 function buildTree(hotspots) {
@@ -297,13 +393,36 @@ function renderFilters() {
   const severities = [...new Set(allHotspots.map((h) => h.severity))].sort(
     (a, b) => sevRank(a) - sevRank(b)
   );
-  bar.appendChild(
-    makeChipGroup('Kind', kinds, filters.kinds, () => {
-      activeQuickPreset = null;
-      renderQuickFilters();
-      render();
-    }, (v) => kindLabel(v), counts)
-  );
+
+  const kindWrap = document.createElement('div');
+  kindWrap.className = 'filter-group';
+  const kindLbl = document.createElement('span');
+  kindLbl.className = 'filter-label';
+  kindLbl.textContent = viewMode === 'custom' ? 'Kind (custom)' : 'Kind (click to customize)';
+  kindWrap.appendChild(kindLbl);
+  for (const v of kinds) {
+    const state = kindChipState(v);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip ' + state;
+    btn.innerHTML =
+      escapeHtml(kindLabel(v)) + `<span class="chip-count">${counts[v] ?? 0}</span>`;
+    if (state === 'locked') {
+      btn.title = 'Set by current view. Click to switch to custom filter for this kind only.';
+    } else if (state === 'inactive') {
+      btn.title = 'Click to filter by this kind only (switches to custom filter).';
+    }
+    btn.addEventListener('click', () => {
+      if (viewMode !== 'custom') {
+        enterCustomKindFilter(v);
+      } else {
+        toggleCustomKind(v);
+      }
+    });
+    kindWrap.appendChild(btn);
+  }
+  bar.appendChild(kindWrap);
+
   bar.appendChild(
     makeChipGroup('Severity', severities, filters.severities, () => render(), (v) => v, null)
   );
@@ -351,7 +470,7 @@ function renderBanner() {
   const parts = [];
   if (manifest?.hotspots_truncated) {
     parts.push(
-      `<span class="status-banner truncation">Showing top <strong>${manifest.hotspot_count}</strong> of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget}). Use <code>hotspots-full.jsonl</code> for the full list.</span>`
+      `<span class="status-banner truncation">Bundle truncated: <strong>${manifest.hotspot_count}</strong> of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget}). Full list: <code>hotspots-full.jsonl</code>.</span>`
     );
   }
   if (gaps.length) {
@@ -360,7 +479,9 @@ function renderBanner() {
       .map((g) => `${escapeHtml(g.surface)}: ${escapeHtml(g.status)}`)
       .join(' · ');
     const more = gaps.length > 4 ? ` (+${gaps.length - 4} more)` : '';
-    parts.push(`<span class="status-banner gaps">Not assessed: ${items}${more}</span>`);
+    parts.push(
+      `<span class="status-banner gaps">Layers not run or empty: ${items}${more}. These are not hidden hotspots — they were <em>not assessed</em> in this run.</span>`
+    );
   }
   if (parts.length) {
     el.innerHTML = parts.join(' ');
@@ -369,6 +490,11 @@ function renderBanner() {
     el.innerHTML = '';
     el.classList.add('hidden');
   }
+}
+
+function kindWhyLine(kind) {
+  const h = KIND_HELP[kind];
+  return h ? h.why : 'Flagged by a local producer in this orient bundle.';
 }
 
 function renderTour(hotspots) {
@@ -383,7 +509,7 @@ function renderTour(hotspots) {
     const empty = document.createElement('li');
     empty.className = 'detail-empty';
     empty.innerHTML =
-      '<p class="empty-title">No matches</p><p class="empty-hint">Try clearing filters or search.</p>';
+      '<p class="empty-title">No matches</p><p class="empty-hint">Try view <strong>All</strong> or clear severity filters.</p>';
     list.appendChild(empty);
     return;
   }
@@ -393,18 +519,18 @@ function renderTour(hotspots) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'hotspot-card' + (h.id === selectedId ? ' active' : '');
-    btn.dataset.id = h.id;
     const path = primaryPath(h);
     const pathHtml = path
       ? `<div class="card-path" title="${escapeHtml(normalizeDisplayPath(path))}">${escapeHtml(shortPath(path))}</div>`
       : '';
     btn.innerHTML = `
       <div class="card-top">
-        <span class="card-rank">#${h.rank}</span>
+        <span class="card-rank" title="Bundle sort position">#${h.rank}</span>
         <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
         <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
       </div>
       <p class="card-summary">${escapeHtml(h.summary)}</p>
+      <p class="card-why">${escapeHtml(kindWhyLine(h.kind))}</p>
       ${pathHtml}
     `;
     btn.addEventListener('click', () => selectHotspot(h));
@@ -554,13 +680,14 @@ function renderDetail(h) {
   if (!h) {
     el.className = 'detail-empty';
     el.innerHTML = `
-      <p class="empty-title">Pick a hotspot</p>
-      <p class="empty-hint">Use quick filters above or search. Each item links to local source when a file path exists.</p>
+      <p class="empty-title">Select a hotspot</p>
+      <p class="empty-hint">Choose a <strong>view</strong> above, then click a row. This panel explains why the tool flagged it.</p>
     `;
     document.getElementById('source-preview').classList.add('hidden');
     return;
   }
   el.className = '';
+  const help = KIND_HELP[h.kind] || {};
   const rid = hotspotRepo(h);
   const repoLabel = rid ? repos.find((r) => r.id === rid)?.name || rid : '';
   const symCount = h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
@@ -580,19 +707,24 @@ function renderDetail(h) {
         <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
         <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
         ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
-        <span class="badge">#${h.rank}</span>
+        <span class="badge" title="Bundle sort position">rank #${h.rank}</span>
       </div>
       <h2 class="detail-title">${escapeHtml(h.summary)}</h2>
-      ${symCount ? `<p class="path">Symbol count: <strong>${escapeHtml(symCount)}</strong></p>` : ''}
+    </div>
+    <div class="detail-section why-section">
+      <h3>Why is this here?</h3>
+      <p>${escapeHtml(help.why || kindWhyLine(h.kind))}</p>
+      ${help.limit ? `<p class="guide-meta">${escapeHtml(help.limit)}</p>` : ''}
+      ${symCount ? `<p>Symbol count in file: <strong>${escapeHtml(symCount)}</strong> (ctags).</p>` : ''}
+      <p class="guide-meta">Tool: <code>${escapeHtml(h.producer)}</code> · Evidence: ${escapeHtml(h.evidence_state)}</p>
     </div>
     <div class="detail-section">
       <h3>Paths</h3>
       ${pathHtml}
     </div>
     <details class="evidence-toggle">
-      <summary>Evidence &amp; provenance</summary>
+      <summary>Raw provenance</summary>
       <div class="evidence-body">
-        <p>State: ${escapeHtml(h.evidence_state)} · Producer: ${escapeHtml(h.producer)}</p>
         <p>id: <code>${escapeHtml(h.id)}</code></p>
         <p>producer_ref: ${escapeHtml(h.producer_ref || '')}</p>
       </div>
@@ -625,6 +757,7 @@ function render() {
     selectedId = null;
     renderDetail(null);
   }
+  renderFilterExplainer();
   renderBanner();
   renderTour(hotspots);
   renderTree(hotspots);
@@ -643,8 +776,9 @@ async function main() {
     ? `${targetShort} · ${manifest.hotspot_count} hotspots · ${manifest.gap_count} gaps`
     : 'no manifest';
 
-  renderStatsRow();
-  renderQuickFilters();
+  renderKindGuide();
+  renderViewBar();
+  renderFilterExplainer();
   renderFilters();
   renderBanner();
 

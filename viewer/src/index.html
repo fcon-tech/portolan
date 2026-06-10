@@ -11,15 +11,26 @@
     <div class="header-top">
       <div class="brand">
         <h1>Portolan Orient</h1>
-        <p id="subtitle">Where to look first — evidence-backed, not LLM guesses</p>
+        <p id="subtitle">Local tool findings — not LLM architecture truth</p>
       </div>
       <div class="search-wrap">
         <label for="search-input" class="sr-only">Search hotspots</label>
         <input type="search" id="search-input" placeholder="Search path, summary, kind…" autocomplete="off">
       </div>
     </div>
-    <div id="stats-row" class="stats-row" aria-label="Hotspot summary"></div>
-    <div id="quick-filters" class="quick-filters" aria-label="Quick filters"></div>
+    <p id="intro-line" class="intro-line">
+      Each row is one <strong>hotspot</strong>: a file or pattern a local scanner flagged.
+      Pick a <strong>view</strong> below, then a row to see <em>why</em> it was included.
+    </p>
+    <div class="view-section">
+      <span class="filter-label">View</span>
+      <div id="view-bar" class="view-bar" aria-label="Views"></div>
+    </div>
+    <div id="filter-explainer" class="filter-explainer" role="status"></div>
+    <details id="kind-guide" class="kind-guide">
+      <summary>What counts as a hotspot? Tools &amp; limits</summary>
+      <div id="kind-guide-body" class="kind-guide-body"></div>
+    </details>
     <div id="status-banner" class="status-banner hidden" role="status"></div>
     <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
   </header>
@@ -38,8 +49,8 @@
     <section class="panel panel-detail" id="detail">
       <h2 class="sr-only">Detail</h2>
       <div id="detail-body" class="detail-empty">
-        <p class="empty-title">Pick a hotspot</p>
-        <p class="empty-hint">Use quick filters above or search. Each item links to local source when a file path exists.</p>
+        <p class="empty-title">Select a hotspot</p>
+        <p class="empty-hint">Choose a view (e.g. <strong>Tour · top 15</strong>), then click a row. The right panel explains why that tool flagged it and shows source when available.</p>
       </div>
       <div id="source-preview" class="source-preview hidden">
         <div class="source-head">
