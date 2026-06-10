@@ -384,6 +384,11 @@ async function loadSourcePreview(h) {
   }
 }
 
+function symbolCountFromSummary(summary) {
+  const m = String(summary || '').match(/\((\d+) symbols\)/);
+  return m ? m[1] : null;
+}
+
 function renderDetail(h) {
   const el = document.getElementById('detail-body');
   if (!h) {
@@ -396,6 +401,8 @@ function renderDetail(h) {
     .join('');
   const rid = hotspotRepo(h);
   const repoLabel = rid ? repos.find((r) => r.id === rid)?.name || rid : '';
+  const symCount =
+    h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
   el.innerHTML = `
     <p>
       <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
@@ -406,6 +413,7 @@ function renderDetail(h) {
       ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
     </p>
     <p><strong>${escapeHtml(h.summary)}</strong></p>
+    ${symCount ? `<p>Symbol count: <strong>${escapeHtml(symCount)}</strong></p>` : ''}
     <p>id: <code>${escapeHtml(h.id)}</code></p>
     ${paths || '<p class="path">(no file paths)</p>'}
     <p class="path">producer_ref: ${escapeHtml(h.producer_ref || '')}</p>

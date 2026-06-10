@@ -1,0 +1,8 @@
+[
+  {"name": "sample", "path": "sample.go", "kind": "package", "line": 1},
+  {"name": "Run", "path": "sample.go", "kind": "function", "line": 4},
+  {"name": "HelperA", "path": "sample.go", "kind": "function", "line": 6},
+  {"name": "HelperB", "path": "sample.go", "kind": "function", "line": 7},
+  {"name": "HelperC", "path": "sample.go", "kind": "function", "line": 8},
+  {"name": "HelperD", "path": "sample.go", "kind": "function", "line": 9}
+]

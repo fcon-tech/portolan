@@ -40,14 +40,14 @@ Open http://127.0.0.1:4173/
 
 1. **Context** — Point at header: target path, hotspot count, evidence-backed (not LLM graph).
 2. **Search** — Type `TODO` or `duplicate`; list and tree narrow instantly.
-3. **Filter** — Toggle `static-finding` or `duplication`; on bigtop, pick a **Repo** chip.
+3. **Filter** — Toggle `static-finding`, `duplication`, or **`config`** (Docker/CI/env inventory); on bigtop, pick a **Repo** chip. Optional: `debt-candidate` for symbol-dense files when ctags ran.
 4. **Directory heat map** — Expand a hot folder (severity bar + count); click a hotspot row.
 5. **Source** — In Detail, show file paths and the **Source** snippet from local files (read-only).
 
 ## Talking points
 
 - Gaps/truncation banner = honest limits (`not_assessed`, budget cap).
-- Every claim ties to `producer_ref` (jscpd, semgrep, syft).
+- Every claim ties to `producer_ref` (jscpd, semgrep, syft, config-scan, ctags).
 - No network; local-first.
 
 ## Troubleshooting
