@@ -1,0 +1,8 @@
+name: Portolan CodeQL
+
+# Fixture trees use intentional broken imports for graph/debt tests; exclude from extraction.
+paths-ignore:
+  - internal/testfixtures
+  - viewer/dist
+  - docs
+  - harness/recipes/semgrep-rules
