@@ -26,6 +26,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Go vet
         run: go vet ./...
 
@@ -33,7 +38,12 @@ jobs:
         run: go test -count=1 ./...
 
       - name: Validate schemas
-        run: jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
+        run: |
+          jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
+          jq empty harness/contracts/orient-bundle.schema.json
+
+      - name: Harness orient smoke
+        run: scripts/harness-orient-smoke.sh
 
       - name: Diff whitespace check
         run: git diff --check
