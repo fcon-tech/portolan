@@ -16,7 +16,7 @@ surface derived from that evidence.
 
 Portolan helps engineers and agents find where local code pain is visible:
 duplication clusters, static findings, dependency hubs, and configuration
-hotspots — then navigate there through a harness workflow and local orient map.
+hotspots — then navigate there through a harness workflow and the local viewer.
 
 The primary product path is harness-first: follow [`harness/SKILL.md`](../harness/SKILL.md),
 run documented OSS recipes, build an `orient/` bundle, and open the local viewer.

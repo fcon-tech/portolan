@@ -34,7 +34,7 @@ partly black-box.
 ## Harness-First Quick Start (recommended)
 
 Portolan is primarily a **harness supplement**: portable skill, OSS recipes,
-guardrails, and a local orient map — not a Go module you must install first.
+guardrails, and a local hotspot viewer — not a Go module you must install first.
 
 **One command** (tool check → recipes → bundle → viewer):
 
@@ -44,8 +44,8 @@ scripts/orient-wizard.sh <target-root> <orient-dir> --yes
 
 Add `--no-viewer` to build only. See `scripts/orient-wizard.sh --help`.
 
-The orient viewer supports search, filters (including `config` and `debt-candidate`
-kinds), a directory heat map, and click-to-source preview (local files only).
+The viewer shows a ranked hotspot list, folder tree, search, filters (including
+`config` and `debt-candidate` kinds), and click-to-source preview (local files only).
 See [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
 Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from

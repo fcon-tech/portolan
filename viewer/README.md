@@ -1,16 +1,16 @@
-# Portolan Orient Viewer
+# Portolan Viewer
 
-UA-inspired local map for evidence-backed hotspots. Loads `orient/` bundle only;
-does not accept LLM-generated graphs as truth.
+Local UI for ranked scanner hotspots and a folder tree. Loads a Portolan bundle
+(`manifest.json`, `hotspots.jsonl`, …) only — no LLM-generated graphs.
 
 ## Build and serve
 
 ```bash
 node scripts/build-static.js
-node scripts/serve.js --bundle /path/to/orient
+node scripts/serve.js --bundle /path/to/bundle
 ```
 
-Or with npm when available: `npm run build && npm run serve -- --bundle /path/to/orient`
+Or with npm when available: `npm run build && npm run serve -- --bundle /path/to/bundle`
 
 Open http://127.0.0.1:4173/
 
@@ -18,7 +18,7 @@ Open http://127.0.0.1:4173/
 
 ```bash
 npm run build
-npm run serve -- --bundle ../internal/testfixtures/orient-bundle/orient
+npm run serve -- --bundle ../internal/testfixtures/orient-bundle/orient-smoke
 ```
 
 Read-only, local-only, stops when the server process exits.

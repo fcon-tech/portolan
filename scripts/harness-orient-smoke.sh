@@ -94,7 +94,8 @@ sleep 1
 
 BASE="http://127.0.0.1:$VIEWER_PORT"
 HTML=$(curl -sf "$BASE/")
-echo "$HTML" | grep -q 'Portolan Orient'
+echo "$HTML" | grep -q '<h1>Portolan</h1>'
+echo "$HTML" | grep -q 'id="folder-panel"'
 echo "$HTML" | grep -q 'id="search-input"'
 echo "$HTML" | grep -q 'id="filter-bar"'
 echo "$HTML" | grep -q 'id="heat-tree"'

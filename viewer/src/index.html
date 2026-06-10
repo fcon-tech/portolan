@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portolan Orient</title>
+  <title>Portolan</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
     <div class="header-top">
       <div class="brand">
-        <h1>Portolan Orient</h1>
-        <p id="subtitle">Local tool findings — not LLM architecture truth</p>
+        <h1>Portolan</h1>
+        <p id="subtitle">Ranked scanner findings on your machine — not an AI architecture graph</p>
       </div>
       <div class="search-wrap">
         <label for="search-input" class="sr-only">Search hotspots</label>
@@ -19,8 +19,9 @@
       </div>
     </div>
     <p id="intro-line" class="intro-line">
-      Each row is one <strong>hotspot</strong>: a file or pattern a local scanner flagged.
-      Pick a <strong>view</strong> below, then a row to see <em>why</em> it was included.
+      Each row is one <strong>hotspot</strong>: something a local tool flagged (jscpd, semgrep, config scan, …).
+      Use the <strong>folder tree</strong> to see where pain clusters, or the <strong>ranked list</strong> for priority order.
+      Click a row for <em>why</em> it was included.
     </p>
     <div class="view-section">
       <span class="filter-label">View</span>
@@ -34,23 +35,28 @@
     <div id="status-banner" class="status-banner hidden" role="status"></div>
     <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
   </header>
-  <main class="layout">
+  <main class="layout layout-three">
+    <section class="panel panel-tree" id="folder-panel">
+      <div class="panel-head">
+        <h2>By folder</h2>
+        <span id="tree-count" class="count-badge"></span>
+      </div>
+      <p class="panel-hint">Folders with flagged paths. Bar color = worst severity in that branch; number = hotspot count.</p>
+      <div id="heat-tree" class="heat-tree" aria-label="Hotspots by folder"></div>
+    </section>
     <section class="panel panel-list" id="tour">
       <div class="panel-head">
-        <h2>Hotspots</h2>
+        <h2>Ranked list</h2>
         <span id="tour-count" class="count-badge"></span>
       </div>
+      <p class="panel-hint">Sorted by severity and per-kind budget — rank #1 is the bundle’s top slot, not a universal score.</p>
       <ul id="hotspot-list"></ul>
-      <details class="folder-browse" id="folder-browse">
-        <summary>Browse by folder</summary>
-        <div id="heat-tree" class="heat-tree" aria-label="Directory heat map"></div>
-      </details>
     </section>
     <section class="panel panel-detail" id="detail">
       <h2 class="sr-only">Detail</h2>
       <div id="detail-body" class="detail-empty">
         <p class="empty-title">Select a hotspot</p>
-        <p class="empty-hint">Choose a view (e.g. <strong>Tour · top 15</strong>), then click a row. The right panel explains why that tool flagged it and shows source when available.</p>
+        <p class="empty-hint">Pick from the folder tree or ranked list. This panel explains which tool flagged it and shows source when available.</p>
       </div>
       <div id="source-preview" class="source-preview hidden">
         <div class="source-head">

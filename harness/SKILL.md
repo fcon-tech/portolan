@@ -1,15 +1,15 @@
-# Portolan Orient Harness
+# Portolan Harness
 
 Use this skill when the user wants to find code pain (duplication, static smells,
-dependency hubs) and navigate a local landscape with an orient map.
+dependency hubs) and browse ranked hotspots in the local viewer.
 
-Portolan is a **harness supplement**: recipes + guardrails + orient bundle + local
+Portolan is a **harness supplement**: recipes + guardrails + evidence bundle + local
 viewer. The legacy Go CLI is optional (see `docs/harness/GO-FREEZE-POLICY.md`).
 
 ## Inputs
 
 - `TARGET_PATH` — absolute path to repo or landscape root (read-only).
-- `ORIENT_PATH` — absolute empty output directory for the orient bundle.
+- `ORIENT_PATH` — absolute empty output directory for the Portolan bundle (convention: any empty dir).
 - `PORTOLAN_PATH` — absolute path to this Portolan checkout.
 
 ## Workflow (recommended: orient wizard)
@@ -56,14 +56,15 @@ Write outputs under `$ORIENT_PATH/producers/`, then:
 "$PORTOLAN_PATH/scripts/build-orient-bundle.sh" "$TARGET_PATH" "$ORIENT_PATH"
 ```
 
-### Open orient map (human)
+### Open viewer (human)
 
 ```bash
 cd "$PORTOLAN_PATH/viewer" && npm install && npm run serve -- --bundle "$ORIENT_PATH"
 ```
 
-Viewer features (spec 090): search, kind/severity/repo filters, directory heat map,
-truncation/gaps banners, and read-only source preview via `/source` (path-guarded).
+Viewer features (spec 090): folder tree, ranked list, search, kind/severity/repo
+filters, truncation/gaps banners, and read-only source preview via `/source`
+(path-guarded).
 Demo script: [`docs/demo-runbook.md`](../docs/demo-runbook.md).
 
 ### Agent navigation

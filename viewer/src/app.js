@@ -1,5 +1,5 @@
 /**
- * Portolan orient viewer — evidence bundle from /bundle/*; UA-inspired navigation.
+ * Portolan viewer — ranked hotspots and folder tree from /bundle/* (evidence only).
  */
 
 const SEV_RANK = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
@@ -303,7 +303,7 @@ function renderFilterExplainer() {
     <p class="explainer-main">${main}</p>
     <p class="explainer-meta">Showing <strong>${shown}</strong> of ${total} hotspots in bundle.
       Rank #n = sort position (severity + per-kind budget).
-      Only tools that ran in this orient run appear; missing layers are gaps, not hidden hotspots.</p>
+      Only tools that ran in this scan appear; missing layers are gaps, not hidden hotspots.</p>
   `;
 }
 
@@ -494,7 +494,7 @@ function renderBanner() {
 
 function kindWhyLine(kind) {
   const h = KIND_HELP[kind];
-  return h ? h.why : 'Flagged by a local producer in this orient bundle.';
+  return h ? h.why : 'Flagged by a local scanner in this Portolan bundle.';
 }
 
 function renderTour(hotspots) {
@@ -607,7 +607,14 @@ function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
 
 function renderTree(hotspots) {
   const treeEl = document.getElementById('heat-tree');
+  const countEl = document.getElementById('tree-count');
   treeEl.innerHTML = '';
+  if (countEl) {
+    countEl.textContent =
+      hotspots.length === allHotspots.length
+        ? `${hotspots.length} hotspots`
+        : `${hotspots.length} of ${allHotspots.length}`;
+  }
   const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
   const root = buildTree(hotspots);
 
@@ -792,5 +799,5 @@ async function main() {
 
 main().catch((e) => {
   document.getElementById('detail-body').innerHTML =
-    `<p>Failed to load bundle. Run: npm run serve -- --bundle &lt;orient-dir&gt;</p><pre>${escapeHtml(e.message)}</pre>`;
+    `<p>Failed to load bundle. Run: <code>npm run serve -- --bundle &lt;bundle-dir&gt;</code></p><pre>${escapeHtml(e.message)}</pre>`;
 });

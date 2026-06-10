@@ -401,4 +401,4 @@ jq -s '{schema_version:"0.1.0",nodes:[.[]|{id:.id,label:.summary,kind:.kind,path
   echo '{"schema_version":"0.1.0","nodes":[],"edges":[]}' >"$ORIENT_DIR/graph-slice.json"
 
 rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
-echo "orient bundle written to $ORIENT_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
+echo "Portolan bundle written to $ORIENT_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"

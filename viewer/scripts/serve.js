@@ -16,7 +16,7 @@ for (let i = 0; i < args.length; i++) {
 }
 
 if (!bundlePath || !fs.existsSync(bundlePath)) {
-  console.error('usage: npm run serve -- --bundle <orient-dir> [--port 4173]');
+  console.error('usage: npm run serve -- --bundle <bundle-dir> [--port 4173]');
   process.exit(2);
 }
 
@@ -172,6 +172,6 @@ function sendFile(filePath, res) {
 }
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`Portolan orient viewer: http://127.0.0.1:${port}/`);
+  console.log(`Portolan viewer: http://127.0.0.1:${port}/`);
   console.log(`Bundle: ${bundlePath}`);
 });
