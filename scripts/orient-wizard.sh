@@ -4,13 +4,17 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# shellcheck source=orient-ignore.sh
+. "$(dirname "$0")/orient-ignore.sh"
+
+JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor/**,**/.agents/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/orient-smoke/**,**/generated/**"
 
 YES=0
 SKIP_INSTALL=0
 NO_VIEWER=0
 PORT=4173
 LIMIT_REPOS=0
-PRODUCERS="jscpd,semgrep,syft"
+PRODUCERS="config,jscpd,semgrep,syft,ctags"
 HOTSPOT_BUDGET=200
 SHARD_TIMEOUT=600
 JSCPD_MEMORY_MB=2048
@@ -25,7 +29,7 @@ Options:
   --no-viewer        Build bundle only; do not start viewer
   --port N           Viewer port (default 4173)
   --limit-repos N    Cap discovered git repos for sharded producers
-  --producers LIST   Comma-separated: jscpd,semgrep,syft (default all three)
+  --producers LIST   Comma-separated: config,jscpd,semgrep,syft,ctags (default all five)
   --hotspot-budget N Max hotspots in bundle (default 200)
   --shard-timeout SEC Per-shard timeout in seconds (default 600)
   --jscpd-memory-mb N Node heap cap for each jscpd shard (default 2048)
@@ -193,6 +197,48 @@ ensure_tools() {
       "brew install syft" \
       "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin" || true
   fi
+  if has_producer ctags; then
+    install_tool ctags \
+      "brew install universal-ctags" \
+      "apt-get install -y universal-ctags" || true
+  fi
+}
+
+run_config() {
+  mkdir -p "$PRODUCERS_DIR/config"
+  local repo slug out
+  while IFS= read -r repo; do
+    [[ -z "$repo" ]] && continue
+    slug=$(repo_slug "$repo")
+    out="$PRODUCERS_DIR/config/${slug}.jsonl"
+    log "config-surfaces: $repo"
+    run_shard config "$repo" \
+      "$ROOT/scripts/scan-config-surfaces.sh" "$repo" "$out" 2>>"$FAILURES_LOG" || true
+  done < <(discover_repos)
+}
+
+run_ctags() {
+  command -v ctags >/dev/null || { log "ctags not available"; return 1; }
+  mkdir -p "$PRODUCERS_DIR/ctags"
+  local repo slug outdir list_file
+  while IFS= read -r repo; do
+    [[ -z "$repo" ]] && continue
+    slug=$(repo_slug "$repo")
+    outdir="$PRODUCERS_DIR/ctags/$slug"
+    mkdir -p "$outdir"
+    list_file=$(mktemp)
+    orient_repo_file_list "$repo" >"$list_file"
+    if [[ ! -s "$list_file" ]]; then
+      log "ctags: $repo (no non-ignored files)"
+      rm -f "$list_file"
+      continue
+    fi
+    log "ctags: $repo ($(wc -l <"$list_file" | tr -d ' ') files, gitignore-aware)"
+    run_shard ctags "$repo" \
+      bash -c 'cd "$1" && ctags --output-format=json --fields=+nKz --links=no -L "$2" -f "$3"' \
+      _ "$repo" "$list_file" "$outdir/tags.json" 2>>"$FAILURES_LOG" || true
+    rm -f "$list_file"
+  done < <(discover_repos)
 }
 
 discover_repos() {
@@ -216,7 +262,10 @@ discover_repos() {
 
 repo_slug() {
   local p=$1
-  basename "$p" | tr ' /' '__'
+  local base hash
+  base=$(basename "$p" | tr ' /' '__')
+  hash=$(printf '%s' "$p" | sha256sum | cut -c1-8)
+  echo "${base}-${hash}"
 }
 
 run_jscpd() {
@@ -238,7 +287,8 @@ run_jscpd() {
         --min-tokens 50 \
         --threshold 999999 \
         --noSymlinks \
-        --ignore "**/node_modules/**,**/.git/**,**/vendor/**" \
+        --gitignore \
+        --ignore "$JSCPD_IGNORE_GLOBS" \
         2>>"$FAILURES_LOG" || true
   done < <(discover_repos)
 }
@@ -295,6 +345,10 @@ run_syft() {
 
 ensure_tools
 
+if has_producer config; then
+  run_config || true
+fi
+
 if has_producer jscpd && command -v jscpd >/dev/null; then
   run_jscpd || true
 elif has_producer jscpd; then
@@ -311,6 +365,14 @@ if has_producer syft && command -v syft >/dev/null; then
   run_syft || true
 elif has_producer syft; then
   fail_log "syft skipped: not installed"
+fi
+
+if has_producer ctags && command -v ctags >/dev/null; then
+  run_ctags || true
+elif has_producer ctags; then
+  append_gap_record "gap-ctags" "symbols" "not_assessed" \
+    "ctags not installed; see harness/recipes/symbols-ctags.md" \
+    "harness/recipes/symbols-ctags.md"
 fi
 
 export ORIENT_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"

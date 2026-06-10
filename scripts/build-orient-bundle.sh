@@ -28,6 +28,18 @@ command -v jq >/dev/null 2>&1 || {
   exit 1
 }
 
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+# shellcheck source=orient-ignore.sh
+. "$SCRIPT_DIR/orient-ignore.sh"
+
+producer_repo_slug() {
+  local p=$1
+  local base hash
+  base=$(basename "$p" | tr ' /' '__')
+  hash=$(printf '%s' "$p" | sha256sum | cut -c1-8)
+  echo "${base}-${hash}"
+}
+
 # --- repos.json ---
 if [[ -d "$TARGET_ROOT/.git" ]]; then
   jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
@@ -59,6 +71,38 @@ append_gap() {
     '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' >>"$gaps_raw"
 }
 
+bundle_path_ignored() {
+  local p=$1
+  [[ -z "$p" || "$p" == "(dependency-hub)" ]] && return 1
+  local norm root
+  norm=$(printf '%s' "$p" | sed 's|\\|/|g')
+  root="$TARGET_ROOT"
+  while IFS= read -r rpath; do
+    [[ -z "$rpath" ]] && continue
+    if [[ "$norm" == "$rpath" || "$norm" == "$rpath"/* ]]; then
+      root="$rpath"
+      break
+    fi
+  done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
+  orient_path_is_ignored "$root" "$norm"
+}
+
+filter_paths_json() {
+  local raw=$1
+  local -a kept=()
+  local p
+  while IFS= read -r p; do
+    [[ -z "$p" ]] && continue
+    bundle_path_ignored "$p" && continue
+    kept+=("$p")
+  done < <(jq -r '.[]?' <<<"$raw")
+  if [[ ${#kept[@]} -eq 0 ]]; then
+    echo '[]'
+    return 0
+  fi
+  printf '%s\n' "${kept[@]}" | jq -Rsc 'split("\n") | map(select(length > 0))'
+}
+
 process_jscpd_file() {
   local jfile=$1
   jq -r --arg ref "$jfile" '
@@ -67,6 +111,8 @@ process_jscpd_file() {
     [.firstFile.name, (.secondFile.name // ""), (.lines // 0 | tostring), $ref] | @tsv
   ' "$jfile" | while IFS=$'\t' read -r first second lines ref; do
     [[ -z "$first" ]] && continue
+    bundle_path_ignored "$first" && continue
+    [[ -n "$second" ]] && bundle_path_ignored "$second" && continue
     id="dup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg first "$first" --arg second "$second" \
@@ -82,6 +128,7 @@ process_semgrep_file() {
     [.path, .check_id, (.extra.severity // "WARNING"), $ref] | @tsv
   ' "$sfile" | while IFS=$'\t' read -r fpath check sev_raw ref; do
     [[ -z "$fpath" ]] && continue
+    bundle_path_ignored "$fpath" && continue
     sev=$(echo "$sev_raw" | tr '[:upper:]' '[:lower:]')
     case "$sev" in
       error|critical) severity="critical" ;;
@@ -123,9 +170,11 @@ done < <(find "$PRODUCERS_DIR/semgrep" -type f -name '*.json' 2>/dev/null)
 
 # --- cyclonedx (producers/syft/**) ---
 syft_found=0
+syft_file_seen=0
 dep_hub_min=8
 while IFS= read -r sbom; do
   [[ -f "$sbom" ]] || continue
+  syft_file_seen=1
   jq -e '.components' "$sbom" >/dev/null 2>&1 || continue
   syft_found=1
   jq -r --arg ref "$sbom" --argjson min "$dep_hub_min" '
@@ -147,8 +196,85 @@ while IFS= read -r sbom; do
   done
 done < <(find "$PRODUCERS_DIR/syft" -type f \( -name 'cyclonedx.json' -o -name '*cyclonedx*.json' \) 2>/dev/null)
 
-[[ "$syft_found" -eq 1 ]] || append_gap "gap-deps" "dependencies" "not_assessed" \
-  "No Syft/CycloneDX producer output found." "harness/recipes/deps-syft-cyclonedx.md"
+if [[ "$syft_found" -eq 1 ]]; then
+  :
+elif [[ "$syft_file_seen" -eq 1 ]]; then
+  append_gap "gap-deps" "dependencies" "not_assessed" \
+    "Syft CycloneDX output had no usable components." "harness/recipes/deps-syft-cyclonedx.md"
+else
+  append_gap "gap-deps" "dependencies" "not_assessed" \
+    "No Syft/CycloneDX producer output found." "harness/recipes/deps-syft-cyclonedx.md"
+fi
+
+declare -A SLUG_REPO_ROOT=()
+while IFS= read -r rpath; do
+  [[ -z "$rpath" ]] && continue
+  slug=$(producer_repo_slug "$rpath")
+  SLUG_REPO_ROOT[$slug]="$rpath"
+done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
+
+# --- config surfaces (producers/config/*.jsonl) ---
+while IFS= read -r cfile; do
+  [[ -f "$cfile" ]] || continue
+  [[ -s "$cfile" ]] || continue
+  cslug=$(basename "$cfile" .jsonl)
+  repo_root="${SLUG_REPO_ROOT[$cslug]:-$TARGET_ROOT}"
+  jq -s -c --arg ref "$cfile" --arg root "$repo_root" '
+    group_by(.surface_kind) | map(
+      .[0].surface_kind as $k |
+      {surface_kind: $k,
+       paths: ([.[].path] | unique |
+         map(if startswith($root) or startswith("/") then . else ($root + "/" + .) end) | .[0:5]),
+       count: length}
+    ) | .[] |
+    select(.count > 0)
+  ' "$cfile" | while IFS= read -r group; do
+    [[ -z "$group" ]] && continue
+    surface_kind=$(echo "$group" | jq -r '.surface_kind')
+    paths_json=$(filter_paths_json "$(echo "$group" | jq -c '.paths')")
+    [[ "$(jq 'length' <<<"$paths_json")" -eq 0 ]] && continue
+    count=$(jq 'length' <<<"$paths_json")
+    id="cfg-$(printf '%s%s' "$cfile" "$surface_kind" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg surface_kind "$surface_kind" --argjson count "$count" \
+      --argjson paths "$paths_json" --arg ref "$cfile" \
+      '{id:$id,kind:"config",severity:"info",summary:("Config surface: "+$surface_kind+" ("+($count|tostring)+" files)"),paths:$paths,evidence_state:"source-visible",producer:"config-scan",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+done < <(find "$PRODUCERS_DIR/config" -type f -name '*.jsonl' 2>/dev/null)
+
+# --- ctags symbol density (producers/ctags/**/tags.json) ---
+CTAGS_MIN_SYMBOLS="${CTAGS_MIN_SYMBOLS:-5}"
+ctags_found=0
+while IFS= read -r tfile; do
+  [[ -f "$tfile" ]] || continue
+  jq -e '.' "$tfile" >/dev/null 2>&1 || continue
+  ctags_found=1
+  jq -s -r --arg ref "$tfile" --argjson min "$CTAGS_MIN_SYMBOLS" --arg root "$TARGET_ROOT" '
+    def tag_rows:
+      if length == 1 and (.[0] | type) == "array" then .[0] else . end;
+    def rel_path($p):
+      if ($p | startswith($root)) then $p[($root | length):] | ltrimstr("/") else $p end;
+    [tag_rows[] | select((._type == "tag" or (._type == null and .name != null)) and .path != null) |
+      rel_path(.path) as $rp | select($rp != "") | $rp] |
+    group_by(.) | map({path: .[0], count: length}) |
+    map(select(.count >= $min)) | sort_by(-.count) | .[0:30] |
+    .[] | [.path, (.count|tostring), $ref] | @tsv
+  ' "$tfile" | while IFS=$'\t' read -r fpath symcount ref; do
+    [[ -z "$fpath" ]] && continue
+    bundle_path_ignored "$fpath" && continue
+    id="sym-$(printf '%s' "$fpath" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg path "$fpath" --argjson n "${symcount:-0}" --arg ref "$ref" \
+      '{id:$id,kind:"debt-candidate",severity:"medium",summary:("Symbol-dense file: "+$path+" ("+($n|tostring)+" symbols)"),paths:[$path],evidence_state:"source-visible",producer:"ctags",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+done < <(find "$PRODUCERS_DIR/ctags" -type f -name 'tags.json' 2>/dev/null)
+
+if [[ "$ctags_found" -eq 0 ]]; then
+  if [[ ! -f "$PRODUCERS_DIR/_gaps.jsonl" ]] || ! grep -q 'gap-ctags' "$PRODUCERS_DIR/_gaps.jsonl" 2>/dev/null; then
+    append_gap "gap-ctags" "symbols" "not_assessed" \
+      "No ctags producer output found." "harness/recipes/symbols-ctags.md"
+  fi
+fi
 
 # --- merge shard gaps from wizard ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
@@ -186,17 +312,19 @@ if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
       elif s == "low" then 3 else 4 end;
     def sort_h: sort_by(sev_rank(.severity), .summary);
     def quota(k):
-      if k == "static-finding" then ($budget * 0.5 | floor)
-      elif k == "duplication" then ($budget * 0.3 | floor)
-      elif k == "dep-hub" then ($budget * 0.2 | floor)
+      if k == "static-finding" then ($budget * 0.45 | floor)
+      elif k == "duplication" then ($budget * 0.25 | floor)
+      elif k == "dep-hub" then ($budget * 0.15 | floor)
+      elif k == "config" then ($budget * 0.15 | floor)
       else 0 end;
     . as $all |
-    (["static-finding", "duplication", "dep-hub"] | map(
+    (["static-finding", "duplication", "dep-hub", "config"] | map(
       . as $k | ([$all[] | select(.kind == $k)] | sort_h) | .[0:quota($k)]
     ) | add) as $selected |
     ($selected | map(.id)) as $ids |
-    ([$all[] | select(.id as $i | ($ids | index($i) | not))] | sort_h) as $rest |
-    ($selected + $rest[0:($budget - ($selected | length))]) |
+    ($budget - ($selected | length)) as $rem |
+    ([$all[] | select(.id as $i | ($ids | index($i) | not)) | select(.kind == "debt-candidate")] | sort_h | .[0:$rem]) as $debt_fill |
+    ($selected + $debt_fill) |
     sort_by(sev_rank(.severity), .kind, .summary) | .[]
   ' "$hotspots_raw" >"$budgeted" || {
     echo "warn: kind-quota jq failed; falling back to global head budget" >&2
