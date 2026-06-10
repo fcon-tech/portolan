@@ -45,6 +45,16 @@ jobs:
       - name: Harness orient smoke
         run: scripts/harness-orient-smoke.sh
 
+      - name: Orient wizard orchestration smoke
+        run: |
+          scripts/orient-wizard.sh \
+            internal/testfixtures/orient-bundle/target \
+            /tmp/wizard-ci-orient \
+            --no-viewer --skip-install --yes
+          test -f /tmp/wizard-ci-orient/manifest.json
+          test -s /tmp/wizard-ci-orient/gaps.jsonl
+          grep -q not_assessed /tmp/wizard-ci-orient/gaps.jsonl
+
       - name: Diff whitespace check
         run: git diff --check
 

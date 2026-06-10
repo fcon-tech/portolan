@@ -22,11 +22,20 @@ directory that both the viewer and agents consume.
 orient/
   manifest.json
   hotspots.jsonl
+  hotspots-full.jsonl   # all hotspots before budget truncation
   repos.json
   gaps.jsonl
   producers/
   graph-slice.json   # optional
 ```
+
+### manifest.json fields
+
+Beyond `schema_version`, `target_root`, `generated_at`, `hotspot_count`, `gap_count`:
+
+- `hotspot_budget`, `hotspots_truncated`, `hotspots_total`
+- `kind_counts`, `kind_counts_total` (per-kind counts after/before budget)
+- `gap_budget`, `gaps_truncated`
 
 ## Hotspot record
 

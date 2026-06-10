@@ -150,6 +150,59 @@ done < <(find "$PRODUCERS_DIR/syft" -type f \( -name 'cyclonedx.json' -o -name '
 [[ "$syft_found" -eq 1 ]] || append_gap "gap-deps" "dependencies" "not_assessed" \
   "No Syft/CycloneDX producer output found." "harness/recipes/deps-syft-cyclonedx.md"
 
+# --- config surfaces (producers/config/*.jsonl) ---
+config_found=0
+while IFS= read -r cfile; do
+  [[ -f "$cfile" ]] || continue
+  [[ -s "$cfile" ]] || continue
+  config_found=1
+  jq -s -c --arg ref "$cfile" '
+    group_by(.surface_kind) | map(
+      .[0].surface_kind as $k |
+      {surface_kind: $k, paths: ([.[].path] | unique | .[0:5]), count: length}
+    ) | .[] |
+    select(.count > 0)
+  ' "$cfile" | while IFS= read -r group; do
+    [[ -z "$group" ]] && continue
+    kind=$(echo "$group" | jq -r '.surface_kind')
+    count=$(echo "$group" | jq -r '.count')
+    paths_json=$(echo "$group" | jq -c '.paths')
+    id="cfg-$(printf '%s%s' "$cfile" "$kind" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg kind "$kind" --argjson count "$count" \
+      --argjson paths "$paths_json" --arg ref "$cfile" \
+      '{id:$id,kind:"config",severity:"info",summary:("Config surface: "+$kind+" ("+($count|tostring)+" files)"),paths:$paths,evidence_state:"source-visible",producer:"config-scan",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+done < <(find "$PRODUCERS_DIR/config" -type f -name '*.jsonl' 2>/dev/null)
+
+# --- ctags symbol density (producers/ctags/**/tags.json) ---
+CTAGS_MIN_SYMBOLS="${CTAGS_MIN_SYMBOLS:-5}"
+ctags_found=0
+while IFS= read -r tfile; do
+  [[ -f "$tfile" ]] || continue
+  jq -e '.' "$tfile" >/dev/null 2>&1 || continue
+  ctags_found=1
+  jq -s -r --arg ref "$tfile" --argjson min "$CTAGS_MIN_SYMBOLS" --arg root "$TARGET_ROOT" '
+    def tag_rows:
+      if length == 1 and (.[0] | type) == "array" then .[0] else . end;
+    def rel_path($p):
+      if ($p | startswith($root)) then $p[($root | length):] | ltrimstr("/") else $p end;
+    [tag_rows[] | select((._type == "tag" or (._type == null and .name != null)) and .path != null) |
+      rel_path(.path) as $rp | select($rp != "") | $rp] |
+    group_by(.) | map({path: .[0], count: length}) |
+    map(select(.count >= $min)) | sort_by(-.count) | .[0:30] |
+    .[] | [.path, (.count|tostring), $ref] | @tsv
+  ' "$tfile" | while IFS=$'\t' read -r fpath symcount ref; do
+    [[ -z "$fpath" ]] && continue
+    id="sym-$(printf '%s' "$fpath" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg path "$fpath" --argjson n "${symcount:-0}" --arg ref "$ref" \
+      '{id:$id,kind:"debt-candidate",severity:"medium",summary:("Symbol-dense file: "+$path+" ("+($n|tostring)+" symbols)"),paths:[$path],evidence_state:"source-visible",producer:"ctags",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+done < <(find "$PRODUCERS_DIR/ctags" -type f -name 'tags.json' 2>/dev/null)
+
+[[ "$ctags_found" -eq 1 ]] || true
+
 # --- merge shard gaps from wizard ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
   cat "$PRODUCERS_DIR/_gaps.jsonl" >>"$gaps_raw"
@@ -186,12 +239,13 @@ if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
       elif s == "low" then 3 else 4 end;
     def sort_h: sort_by(sev_rank(.severity), .summary);
     def quota(k):
-      if k == "static-finding" then ($budget * 0.5 | floor)
-      elif k == "duplication" then ($budget * 0.3 | floor)
-      elif k == "dep-hub" then ($budget * 0.2 | floor)
+      if k == "static-finding" then ($budget * 0.45 | floor)
+      elif k == "duplication" then ($budget * 0.25 | floor)
+      elif k == "dep-hub" then ($budget * 0.15 | floor)
+      elif k == "config" then ($budget * 0.15 | floor)
       else 0 end;
     . as $all |
-    (["static-finding", "duplication", "dep-hub"] | map(
+    (["static-finding", "duplication", "dep-hub", "config"] | map(
       . as $k | ([$all[] | select(.kind == $k)] | sort_h) | .[0:quota($k)]
     ) | add) as $selected |
     ($selected | map(.id)) as $ids |

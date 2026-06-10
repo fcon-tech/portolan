@@ -44,8 +44,9 @@ scripts/orient-wizard.sh <target-root> <orient-dir> --yes
 
 Add `--no-viewer` to build only. See `scripts/orient-wizard.sh --help`.
 
-The orient viewer supports search, filters, a directory heat map, and click-to-source
-preview (local files only). See [`docs/demo-runbook.md`](docs/demo-runbook.md).
+The orient viewer supports search, filters (including `config` and `debt-candidate`
+kinds), a directory heat map, and click-to-source preview (local files only).
+See [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
 Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from
 [`harness/recipes/`](harness/recipes/), then `scripts/build-orient-bundle.sh`.

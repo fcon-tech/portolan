@@ -28,7 +28,7 @@ Useful flags:
 | `--no-viewer` | Build bundle only |
 | `--skip-install` | Never install missing tools (gaps only) |
 | `--limit-repos N` | Cap multi-repo sharding |
-| `--producers jscpd,semgrep,syft` | Subset of producers |
+| `--producers config,jscpd,semgrep,syft,ctags` | Subset of producers (default: all five) |
 | `--shard-timeout SEC` | Per-repo producer timeout (default 600) |
 | `--jscpd-memory-mb N` | Node heap cap per jscpd shard (default 2048) |
 | `--hotspot-budget N` | Max hotspots in bundle; kind quotas apply when truncated |
@@ -45,7 +45,8 @@ When you need fine-grained control, run individual recipes from `harness/recipes
 | Where is duplication? | `duplication-jscpd.md` |
 | Where are smells / static issues? | `static-semgrep-local.md` |
 | What depends on what? | `deps-syft-cyclonedx.md` |
-| Symbol navigation (optional) | `symbols-ctags.md` |
+| Config / deploy surfaces? | `config-surfaces.md` |
+| Symbol-dense files (optional) | `symbols-ctags.md` |
 
 Write outputs under `$ORIENT_PATH/producers/`, then:
 
@@ -88,6 +89,8 @@ go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$ORIENT_PA
 | --- | --- | --- |
 | Duplication? | hotspots `kind=duplication` | Run jscpd recipe; say `not_assessed` |
 | Tech debt / smells? | hotspots `kind=static-finding` | Run Semgrep recipe |
+| Config surfaces? | hotspots `kind=config` | Run config-surfaces recipe (no install) |
+| Symbol-dense files? | hotspots `kind=debt-candidate` | Run ctags recipe or gap |
 | Dependencies? | hotspots `kind=dep-hub` | Run Syft recipe |
 | Where to start? | lowest `rank` in hotspots.jsonl | gaps.jsonl for next recipe |
 
