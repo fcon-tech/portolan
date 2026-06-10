@@ -1,4 +1,4 @@
-# Feature Specification: Viewer Landscape UX
+# Feature Specification: Landscape Report Viewer (093)
 
 **Feature Branch**: `codex/093-viewer-landscape-ux`
 
@@ -6,38 +6,49 @@
 
 **Status**: Active implementation
 
-**Input**: Improve Portolan viewer for human demo use: honest product naming, clearer
-entry path, folder tree as first-class navigation, per-hotspot rationale. Not a graph
-map — ranked scanner findings + folder clustering only.
+**Input**: Human-readable landscape report in the viewer, inspired by sdp_lab scout
+ProjectCard + Portolan `map.md` sections. Resurrects pruned `052-agent-scan-report-ux`
+scope. Scanner findings drill-down (UA navigation pattern), not LLM architecture graph.
 
-**Out of scope**: `map.md` / navigation guide / landscape report (separate future spec).
+**Out of scope**: sdp_lab runtime (`sdp scout`), LLM Q&A, full `portolan map` graph import (spec 094).
 
 ## User Scenarios
 
-### User Story 1 - Understand what Portolan shows (Priority: P1)
+### User Story 1 - Report in 10 seconds (Priority: P1)
 
-A human opens the viewer and immediately sees that rows are tool-backed hotspots,
-not an AI architecture graph, and how to start (views + folder tree or ranked list).
+A human opens the viewer and sees a project card (language, scale, maturity) and repo
+matrix before diving into individual findings.
 
-### User Story 2 - Navigate by folder (Priority: P1)
+### User Story 2 - Findings by section (Priority: P1)
 
-Hotspots cluster in a visible folder tree (not buried in collapsed details) with
-severity bars and counts; selecting a file hotspot opens detail.
+Findings appear grouped like `map.md` (duplication, config, smells, symbol density, deps),
+not only a flat ranked list.
 
-### User Story 3 - Know why a hotspot exists (Priority: P1)
+### User Story 3 - Gaps visible (Priority: P1)
 
-Each hotspot shows tool, rationale, and limits; detail panel expands evidence.
+A dedicated tab lists what the scan did not assess.
+
+### User Story 4 - Findings map (Priority: P2)
+
+Inside the Findings tab, a folder map and inspector support drill-down to source.
+
+### User Story 5 - Drill-down (Priority: P1)
+
+Click a finding → detail panel → read-only source preview.
 
 ## Requirements
 
-- **FR-001**: Product UI uses **Portolan** naming; remove user-facing **orient** jargon.
-- **FR-002**: Three-column layout: folder tree | ranked list | detail (+ source).
-- **FR-003**: View presets (top 15, code pain, config, deps) with explainer; kind chips
-  sync with view vs custom filter state.
-- **FR-004**: Expandable guide: what counts as a hotspot, tools, limits.
-- **FR-005**: harness-orient-smoke DOM markers updated for new layout (`folder-panel`, `Portolan` title).
+- **FR-001**: Product UI uses **Portolan** naming; no user-facing **orient** jargon.
+- **FR-002**: Default tab = **Overview** (`landscape-card.json` + `landscape-report.json`).
+- **FR-003**: Tabs: Overview | Findings | Gaps.
+- **FR-004**: Bundle emits `landscape-card.json` and `landscape-report.json`.
+- **FR-005**: Findings grouped by kind/section (map.md parity).
+- **FR-006**: When scan found more than viewer shows, UI states «найдено Y, показано X» and offers load-all.
+- **FR-007**: `portolan-scan.sh` (wrapper on legacy `orient-wizard.sh` name deprecated).
+- **FR-008**: Report sections use `evidence_ref`; unknown/gap states stay visible.
+- **FR-009**: harness-portolan-smoke checks report DOM markers.
 
 ## Success Criteria
 
-- **SC-001**: harness-orient-smoke passes on fixture bundle.
-- **SC-002**: Operator can explain viewer purpose without reading external docs.
+- **SC-001**: harness-portolan-smoke passes with fixture bundle including report artifacts.
+- **SC-002**: Operator answers target identity, repo count, top issues, and gaps without external docs.

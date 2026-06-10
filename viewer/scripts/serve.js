@@ -146,6 +146,15 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/repos.json') {
     return sendFile(path.join(bundlePath, 'repos.json'), res);
   }
+  if (url.pathname === '/bundle/hotspots-full.jsonl') {
+    return sendFile(path.join(bundlePath, 'hotspots-full.jsonl'), res);
+  }
+  if (url.pathname === '/bundle/landscape-card.json') {
+    return sendFile(path.join(bundlePath, 'landscape-card.json'), res);
+  }
+  if (url.pathname === '/bundle/landscape-report.json') {
+    return sendFile(path.join(bundlePath, 'landscape-report.json'), res);
+  }
 
   const distResolved = path.resolve(distDir) + path.sep;
   let filePath = path.resolve(

@@ -9,16 +9,16 @@ viewer. The legacy Go CLI is optional (see `docs/harness/GO-FREEZE-POLICY.md`).
 ## Inputs
 
 - `TARGET_PATH` — absolute path to repo or landscape root (read-only).
-- `ORIENT_PATH` — absolute empty output directory for the Portolan bundle (convention: any empty dir).
+- `BUNDLE_DIR` — absolute empty output directory for the Portolan bundle (convention: any empty dir).
 - `PORTOLAN_PATH` — absolute path to this Portolan checkout.
 
-## Workflow (recommended: orient wizard)
+## Workflow (recommended: portolan scan)
 
 One command checks tools, runs producers (with consent-gated install), builds the
 bundle, prints a summary, and optionally opens the local viewer:
 
 ```bash
-"$PORTOLAN_PATH/scripts/orient-wizard.sh" "$TARGET_PATH" "$ORIENT_PATH" --yes
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_PATH" "$BUNDLE_DIR" --yes
 ```
 
 Useful flags:
@@ -53,7 +53,7 @@ When you need fine-grained control, run individual recipes from `harness/recipes
 Write outputs under `$ORIENT_PATH/producers/`, then:
 
 ```bash
-"$PORTOLAN_PATH/scripts/build-orient-bundle.sh" "$TARGET_PATH" "$ORIENT_PATH"
+"$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "$TARGET_PATH" "$BUNDLE_DIR"
 ```
 
 ### Open viewer (human)

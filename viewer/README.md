@@ -21,4 +21,6 @@ npm run build
 npm run serve -- --bundle ../internal/testfixtures/orient-bundle/orient-smoke
 ```
 
+Bundle from `build-portolan-bundle.sh` also includes `landscape-card.json` and `landscape-report.json` for the Overview tab.
+
 Read-only, local-only, stops when the server process exits.

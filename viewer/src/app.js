@@ -73,10 +73,15 @@ let allHotspots = [];
 let repos = [];
 let manifest = null;
 let gaps = [];
+let landscapeCard = null;
+let landscapeReport = null;
 let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
 let searchQuery = '';
 let selectedId = null;
 let expandedDirs = new Set();
+/** @type {'overview' | 'findings' | 'gaps'} */
+let activeTab = 'overview';
+let usingFullHotspots = false;
 /** @type {keyof VIEWS | 'custom'} */
 let viewMode = 'top15';
 
@@ -757,7 +762,198 @@ function selectHotspot(h) {
   });
 }
 
-function render() {
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === `tab-${tab}`);
+  });
+  if (tab === 'overview') renderOverview();
+  else if (tab === 'gaps') renderGapsTab();
+  else renderFindingsTab();
+}
+
+function boolBadge(val, yes, no) {
+  if (val === true) return `<span class="badge ok">${escapeHtml(yes)}</span>`;
+  if (val === false) return `<span class="badge warn">${escapeHtml(no)}</span>`;
+  return `<span class="badge unknown">unknown</span>`;
+}
+
+function renderOverview() {
+  const cardEl = document.getElementById('landscape-card');
+  const scaleEl = document.getElementById('findings-scale');
+  const repoEl = document.getElementById('repo-matrix');
+  const kindEl = document.getElementById('kind-summary');
+  const stepsEl = document.getElementById('next-steps');
+
+  const card = landscapeCard || {};
+  const id = card.identity || {};
+  const scale = card.scale || {};
+  const activity = card.activity || {};
+  const maturity = card.maturity || {};
+  const health = card.health_signals || {};
+
+  const langs = id.languages && typeof id.languages === 'object'
+    ? Object.entries(id.languages)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 4)
+        .map(([l, n]) => `${l} (${n})`)
+        .join(' · ')
+    : id.primary_language || 'unknown';
+
+  cardEl.innerHTML = `
+    <h2>${escapeHtml(id.name || 'Landscape')}</h2>
+    <div class="card-grid">
+      <div class="card-stat"><span class="label">Language</span><span class="value">${escapeHtml(String(langs))}</span></div>
+      <div class="card-stat"><span class="label">Files</span><span class="value">${scale.total_files != null ? escapeHtml(String(scale.total_files)) : 'unknown'}</span></div>
+      <div class="card-stat"><span class="label">LOC (approx)</span><span class="value">${scale.total_loc != null ? escapeHtml(String(scale.total_loc)) : 'unknown'}</span></div>
+      <div class="card-stat"><span class="label">Repos</span><span class="value">${repos.length || '—'}</span></div>
+      <div class="card-stat"><span class="label">Last commit</span><span class="value">${escapeHtml(activity.last_commit || 'unknown')}</span></div>
+      <div class="card-stat"><span class="label">Contributors</span><span class="value">${activity.contributors != null ? escapeHtml(String(activity.contributors)) : 'unknown'}</span></div>
+    </div>
+    <div class="maturity-row">
+      ${boolBadge(maturity.has_readme, 'README', 'no README')}
+      ${boolBadge(maturity.has_ci, 'CI', 'no CI')}
+      ${boolBadge(maturity.has_tests, 'tests', 'no tests')}
+      ${boolBadge(maturity.has_docker, 'Docker', 'no Docker')}
+    </div>
+    ${health.staleness || health.test_coverage_hint ? `<p class="health-hint">Staleness: ${escapeHtml(health.staleness || 'unknown')} · Test hint: ${escapeHtml(health.test_coverage_hint || 'unknown')}</p>` : ''}
+  `;
+
+  const shown = manifest?.hotspot_count ?? allHotspots.length;
+  const total = manifest?.hotspots_total ?? shown;
+  scaleEl.innerHTML = `
+    <p class="scale-line">Scan found <strong>${total}</strong> findings; this bundle shows <strong>${shown}</strong>${manifest?.hotspots_truncated ? ' (budget truncated)' : ''}.</p>
+    ${manifest?.hotspots_truncated ? '<p class="scale-hint">Open the <strong>Findings</strong> tab and use <em>Show all findings from scan</em> to load the full list.</p>' : ''}
+  `;
+
+  if (repos.length) {
+    repoEl.innerHTML = `
+      <h3>Repositories</h3>
+      <table class="repo-table"><thead><tr><th>Name</th><th>Path</th></tr></thead>
+      <tbody>${repos.map((r) => `<tr><td>${escapeHtml(r.name || r.id)}</td><td class="mono" title="${escapeHtml(r.path)}">${escapeHtml(shortPath(r.path))}</td></tr>`).join('')}</tbody></table>
+    `;
+  } else {
+    repoEl.innerHTML = '';
+  }
+
+  const kc = manifest?.kind_counts || kindCounts(allHotspots);
+  const kcTotal = manifest?.kind_counts_total || kc;
+  kindEl.innerHTML = `
+    <h3>Findings by kind (shown / scan total)</h3>
+    <ul class="kind-list">${Object.keys({ ...kcTotal, ...kc })
+      .sort()
+      .map((k) => `<li><span class="kind-pill ${escapeHtml(k)}">${escapeHtml(kindLabel(k))}</span> ${kc[k] ?? 0} / ${kcTotal[k] ?? kc[k] ?? 0}</li>`)
+      .join('')}</ul>
+  `;
+
+  const nextSection = landscapeReport?.sections?.find((s) => s.id === 'next_steps');
+  const items = nextSection?.items || allHotspots.slice(0, 5).map((h) => ({
+    rank: h.rank,
+    kind: h.kind,
+    summary: h.summary,
+    evidence_ref: `hotspot:${h.id}`,
+  }));
+  stepsEl.innerHTML = `
+    <h3>Where to look first</h3>
+    <ol class="next-list">${items
+      .map(
+        (it) =>
+          `<li><button type="button" class="next-link" data-ref="${escapeHtml(it.evidence_ref || '')}"><span class="card-rank">#${it.rank ?? '?'}</span> <span class="kind-pill ${escapeHtml(it.kind || '')}">${escapeHtml(kindLabel(it.kind || ''))}</span> ${escapeHtml(it.summary || '')}</button></li>`
+      )
+      .join('')}</ol>
+  `;
+  stepsEl.querySelectorAll('.next-link').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const ref = btn.dataset.ref || '';
+      const hid = ref.replace(/^hotspot:/, '');
+      const h = allHotspots.find((x) => x.id === hid);
+      if (h) {
+        switchTab('findings');
+        selectHotspot(h);
+      }
+    });
+  });
+}
+
+function renderGapsTab() {
+  const table = document.getElementById('gaps-table');
+  if (!gaps.length) {
+    table.innerHTML = '<p class="empty-hint">No gaps recorded — all configured layers produced output or explicit skip records.</p>';
+    return;
+  }
+  table.innerHTML = `
+    <table class="gaps-table"><thead><tr><th>Surface</th><th>Status</th><th>Summary</th><th>Recipe</th></tr></thead>
+    <tbody>${gaps
+      .map(
+        (g) =>
+          `<tr><td>${escapeHtml(g.surface || '')}</td><td><span class="badge">${escapeHtml(g.status || '')}</span></td><td>${escapeHtml(g.summary || '')}</td><td class="mono">${escapeHtml(g.recipe_ref || g.producer_ref || '—')}</td></tr>`
+      )
+      .join('')}</tbody></table>
+  `;
+}
+
+function renderFindingsSections() {
+  const el = document.getElementById('findings-sections');
+  const section = landscapeReport?.sections?.find((s) => s.id === 'findings_by_kind');
+  const groups = section?.groups || [];
+  if (!groups.length) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = `
+    <h3>Sections (map.md parity)</h3>
+    <div class="section-grid">${groups
+      .map(
+        (g) => `
+      <details class="section-block" open>
+        <summary><span class="kind-pill ${escapeHtml(g.kind)}">${escapeHtml(kindLabel(g.kind))}</span> ${g.count ?? (g.items?.length ?? 0)}</summary>
+        <ul>${(g.items || [])
+          .slice(0, 8)
+          .map(
+            (it) =>
+              `<li><button type="button" class="section-link" data-id="${escapeHtml(it.id)}">#${it.rank ?? '?'} ${escapeHtml(it.summary || '')}</button></li>`
+          )
+          .join('')}${(g.items?.length ?? 0) > 8 ? `<li class="more">+${g.items.length - 8} more in list above</li>` : ''}</ul>
+      </details>`
+      )
+      .join('')}</div>
+  `;
+  el.querySelectorAll('.section-link').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const h = allHotspots.find((x) => x.id === btn.dataset.id);
+      if (h) selectHotspot(h);
+    });
+  });
+}
+
+function updateLoadAllButton() {
+  const btn = document.getElementById('load-all-btn');
+  if (!manifest?.hotspots_truncated && !usingFullHotspots) {
+    btn.classList.add('hidden');
+    return;
+  }
+  const total = manifest?.hotspots_total ?? allHotspots.length;
+  btn.classList.remove('hidden');
+  btn.textContent = usingFullHotspots
+    ? `Showing all ${allHotspots.length} findings from scan`
+    : `Show all ${total} findings from scan`;
+  btn.disabled = usingFullHotspots;
+}
+
+async function loadFullHotspots() {
+  if (usingFullHotspots) return;
+  const full = await loadJSONL('/bundle/hotspots-full.jsonl');
+  if (!full.length) return;
+  allHotspots = full;
+  usingFullHotspots = true;
+  updateLoadAllButton();
+  renderFindingsTab();
+}
+
+function renderFindingsTab() {
   const hotspots = filteredHotspots();
   const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
   if (selectedId && !hotspotById.has(selectedId)) {
@@ -768,6 +964,14 @@ function render() {
   renderBanner();
   renderTour(hotspots);
   renderTree(hotspots);
+  renderFindingsSections();
+  updateLoadAllButton();
+}
+
+function render() {
+  if (activeTab === 'overview') renderOverview();
+  else if (activeTab === 'gaps') renderGapsTab();
+  else renderFindingsTab();
 }
 
 async function main() {
@@ -775,26 +979,31 @@ async function main() {
   allHotspots = await loadJSONL('/bundle/hotspots.jsonl');
   gaps = await loadJSONL('/bundle/gaps.jsonl');
   repos = (await loadJSON('/bundle/repos.json')) || [];
+  landscapeCard = await loadJSON('/bundle/landscape-card.json');
+  landscapeReport = await loadJSON('/bundle/landscape-report.json');
 
   const targetShort = manifest?.target_root
     ? shortPath(manifest.target_root) || manifest.target_root
     : '';
   document.getElementById('manifest-info').textContent = manifest
-    ? `${targetShort} · ${manifest.hotspot_count} hotspots · ${manifest.gap_count} gaps`
+    ? `${targetShort} · ${manifest.hotspot_count}/${manifest.hotspots_total ?? manifest.hotspot_count} findings · ${manifest.gap_count} gaps`
     : 'no manifest';
 
   renderKindGuide();
   renderViewBar();
-  renderFilterExplainer();
   renderFilters();
   renderBanner();
 
+  document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+  document.getElementById('load-all-btn').addEventListener('click', () => loadFullHotspots());
   document.getElementById('search-input').addEventListener('input', (e) => {
     searchQuery = e.target.value;
-    render();
+    if (activeTab === 'findings') renderFindingsTab();
   });
 
-  render();
+  switchTab('overview');
 }
 
 main().catch((e) => {

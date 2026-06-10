@@ -41,13 +41,15 @@ jobs:
         run: |
           jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
           jq empty harness/contracts/orient-bundle.schema.json
+          jq empty harness/contracts/landscape-card.schema.json
+          jq empty harness/contracts/landscape-report.schema.json
 
-      - name: Harness orient smoke
-        run: scripts/harness-orient-smoke.sh
+      - name: Harness portolan smoke
+        run: scripts/harness-portolan-smoke.sh
 
-      - name: Orient wizard orchestration smoke
+      - name: Portolan scan orchestration smoke
         run: |
-          scripts/orient-wizard.sh \
+          scripts/portolan-scan.sh \
             internal/testfixtures/orient-bundle/target \
             /tmp/wizard-ci-orient \
             --no-viewer --skip-install --yes

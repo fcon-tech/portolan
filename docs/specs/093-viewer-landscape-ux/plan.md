@@ -1,18 +1,29 @@
-# Implementation Plan: Viewer Landscape UX (093)
+# Implementation Plan: Landscape Report Viewer (093)
 
-## Slice 1 — naming and honesty
+## Slice 1–2 (done) — interim UX
 
-- Title/subtitle: Portolan; subtitle states scanner findings, not AI graph
-- serve.js, README, SKILL, onboarding, product-claims copy cleanup
-- Bundle schema title: Portolan Bundle
+Portolan naming, explainers, folder tree + list (superseded by tabbed report).
 
-## Slice 2 — layout and navigation
+## Slice 3b — CLI naming
 
-- Three-column layout: By folder | Ranked list | Detail
-- View bar + filter explainer + kind guide
-- Locked vs custom kind chip behavior
+- `portolan-scan.sh`, `build-portolan-bundle.sh`, `harness-portolan-smoke.sh`, `portolan-ignore.sh`
+- Deprecation wrappers for legacy `orient-*` names
 
-## Slice 3 — ship
+## Slice 4 — Report artifacts
 
-- harness-orient-smoke marker updates
-- backlog P7-093, draft PR
+- `scripts/scan-landscape-card.sh` → `landscape-card.json`
+- `build-portolan-bundle.sh` → `landscape-report.json` + enriched `graph-slice.json`
+- `harness/contracts/landscape-card.schema.json`, `landscape-report.schema.json`
+
+## Slice 5 — Report viewer shell
+
+- Tabs: Overview | Findings | Gaps (default Overview)
+- Overview renders card + repo matrix + next steps
+
+## Slice 6 — Findings tab
+
+- Sections by kind, folder map, inspector, load-all findings, source preview
+
+## Slice 7 — Ship
+
+- Smoke, demo evidence, PR #66 ready-for-review

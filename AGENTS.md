@@ -194,8 +194,10 @@ go test ./...
 go vet ./...
 jq empty schema/*.json
 jq empty harness/contracts/orient-bundle.schema.json
-scripts/harness-orient-smoke.sh
-scripts/orient-wizard.sh --help
+scripts/harness-portolan-smoke.sh
+scripts/portolan-scan.sh --help
+jq empty harness/contracts/landscape-card.schema.json
+jq empty harness/contracts/landscape-report.schema.json
 git diff --check
 ```
 
