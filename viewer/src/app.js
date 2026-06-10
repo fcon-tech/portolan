@@ -102,8 +102,12 @@ function matchesFilters(h) {
   if (filters.kinds.size && !filters.kinds.has(h.kind)) return false;
   if (filters.severities.size && !filters.severities.has(h.severity)) return false;
   if (filters.repoIds.size) {
-    const rid = hotspotRepo(h);
-    if (!rid || !filters.repoIds.has(rid)) return false;
+    if (h.kind === 'dep-hub') {
+      // Dependency hubs are landscape-wide; repo chips should not hide them.
+    } else {
+      const rid = hotspotRepo(h);
+      if (!rid || !filters.repoIds.has(rid)) return false;
+    }
   }
   return true;
 }

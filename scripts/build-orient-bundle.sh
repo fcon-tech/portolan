@@ -12,6 +12,15 @@ TARGET_ROOT=$(cd "$1" && pwd)
 ORIENT_DIR=$2
 PRODUCERS_DIR="$ORIENT_DIR/producers"
 HOTSPOT_BUDGET="${ORIENT_HOTSPOT_BUDGET:-200}"
+GAP_BUDGET="${ORIENT_GAP_BUDGET:-20}"
+if ! [[ "$HOTSPOT_BUDGET" =~ ^[0-9]+$ ]] || [[ "$HOTSPOT_BUDGET" -lt 1 ]]; then
+  echo "invalid ORIENT_HOTSPOT_BUDGET: $HOTSPOT_BUDGET" >&2
+  exit 2
+fi
+if ! [[ "$GAP_BUDGET" =~ ^[0-9]+$ ]] || [[ "$GAP_BUDGET" -lt 1 ]]; then
+  echo "invalid ORIENT_GAP_BUDGET: $GAP_BUDGET" >&2
+  exit 2
+fi
 mkdir -p "$ORIENT_DIR" "$PRODUCERS_DIR"
 
 command -v jq >/dev/null 2>&1 || {
@@ -134,7 +143,7 @@ while IFS= read -r sbom; do
     jq -nc \
       --arg id "$id" --arg summary "Dependency hub: $name ($dep_count dependencies)" \
       --arg ref "$ref" \
-      '{id:$id,kind:"dep-hub",severity:"low",summary:$summary,paths:[],evidence_state:"metadata-visible",producer:"syft",producer_ref:$ref}' >>"$hotspots_raw"
+      '{id:$id,kind:"dep-hub",severity:"low",summary:$summary,paths:["(dependency-hub)"],evidence_state:"metadata-visible",producer:"syft",producer_ref:$ref}' >>"$hotspots_raw"
   done
 done < <(find "$PRODUCERS_DIR/syft" -type f \( -name 'cyclonedx.json' -o -name '*cyclonedx*.json' \) 2>/dev/null)
 
@@ -220,8 +229,26 @@ kind_counts_total=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add //
 kind_counts=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add // {}' "$ORIENT_DIR/hotspots.jsonl" 2>/dev/null || echo '{}')
 
 : >"$ORIENT_DIR/gaps.jsonl"
+gaps_truncated=0
 if [[ -s "$gaps_raw" ]]; then
-  cat "$gaps_raw" >>"$ORIENT_DIR/gaps.jsonl"
+  gap_sorted=$(mktemp)
+  jq -sc '
+    sort_by(
+      (if .status == "cannot_verify" then 0
+       elif .status == "not_assessed" then 1
+       else 2 end),
+      .surface,
+      .summary
+    ) | .[]
+  ' "$gaps_raw" >"$gap_sorted"
+  gap_total=$(wc -l <"$gap_sorted" | tr -d ' ')
+  if [[ "$gap_total" -gt "$GAP_BUDGET" ]]; then
+    head -n "$GAP_BUDGET" "$gap_sorted" >>"$ORIENT_DIR/gaps.jsonl"
+    gaps_truncated=1
+  else
+    cat "$gap_sorted" >>"$ORIENT_DIR/gaps.jsonl"
+  fi
+  rm -f "$gap_sorted"
 fi
 gap_count=$(wc -l <"$ORIENT_DIR/gaps.jsonl" | tr -d ' ')
 
@@ -236,7 +263,9 @@ jq -n \
   --argjson hotspots_total "$total_before" \
   --argjson kind_counts "$kind_counts" \
   --argjson kind_counts_total "$kind_counts_total" \
-  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total}' \
+  --argjson gap_budget "$GAP_BUDGET" \
+  --argjson gaps_truncated "$gaps_truncated" \
+  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
   >"$ORIENT_DIR/manifest.json"
 
 jq -s '{schema_version:"0.1.0",nodes:[.[]|{id:.id,label:.summary,kind:.kind,paths:(.paths//[])}],edges:[]}' \

@@ -36,18 +36,27 @@ EOF
 log() { echo "orient-wizard: $*" >&2; }
 fail_log() { echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $*" >>"$FAILURES_LOG"; }
 
+require_opt_value() {
+  local flag=$1 val=${2:-}
+  if [[ -z "$val" || "$val" == -* ]]; then
+    echo "option $flag requires a value" >&2
+    usage >&2
+    exit 2
+  fi
+}
+
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --yes) YES=1; shift ;;
     --skip-install) SKIP_INSTALL=1; shift ;;
     --no-viewer) NO_VIEWER=1; shift ;;
-    --port) PORT="$2"; shift 2 ;;
-    --limit-repos) LIMIT_REPOS="$2"; shift 2 ;;
-    --producers) PRODUCERS="$2"; shift 2 ;;
-    --hotspot-budget) HOTSPOT_BUDGET="$2"; shift 2 ;;
-    --shard-timeout) SHARD_TIMEOUT="$2"; shift 2 ;;
-    --jscpd-memory-mb) JSCPD_MEMORY_MB="$2"; shift 2 ;;
+    --port) require_opt_value --port "${2:-}"; PORT="$2"; shift 2 ;;
+    --limit-repos) require_opt_value --limit-repos "${2:-}"; LIMIT_REPOS="$2"; shift 2 ;;
+    --producers) require_opt_value --producers "${2:-}"; PRODUCERS="$2"; shift 2 ;;
+    --hotspot-budget) require_opt_value --hotspot-budget "${2:-}"; HOTSPOT_BUDGET="$2"; shift 2 ;;
+    --shard-timeout) require_opt_value --shard-timeout "${2:-}"; SHARD_TIMEOUT="$2"; shift 2 ;;
+    --jscpd-memory-mb) require_opt_value --jscpd-memory-mb "${2:-}"; JSCPD_MEMORY_MB="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     --) shift; POSITIONAL+=("$@"); break ;;
     -*) echo "unknown option: $1" >&2; usage; exit 2 ;;
@@ -57,6 +66,23 @@ done
 
 if [[ ${#POSITIONAL[@]} -lt 2 ]]; then
   usage >&2
+  exit 2
+fi
+
+if ! [[ "$HOTSPOT_BUDGET" =~ ^[0-9]+$ ]] || [[ "$HOTSPOT_BUDGET" -lt 1 ]]; then
+  echo "invalid --hotspot-budget: $HOTSPOT_BUDGET (positive integer required)" >&2
+  exit 2
+fi
+if ! [[ "$SHARD_TIMEOUT" =~ ^[0-9]+$ ]] || [[ "$SHARD_TIMEOUT" -lt 1 ]]; then
+  echo "invalid --shard-timeout: $SHARD_TIMEOUT (positive integer required)" >&2
+  exit 2
+fi
+if ! [[ "$JSCPD_MEMORY_MB" =~ ^[0-9]+$ ]] || [[ "$JSCPD_MEMORY_MB" -lt 256 ]]; then
+  echo "invalid --jscpd-memory-mb: $JSCPD_MEMORY_MB (integer >= 256 required)" >&2
+  exit 2
+fi
+if [[ "$LIMIT_REPOS" != 0 ]] && { ! [[ "$LIMIT_REPOS" =~ ^[0-9]+$ ]] || [[ "$LIMIT_REPOS" -lt 1 ]]; }; then
+  echo "invalid --limit-repos: $LIMIT_REPOS (positive integer required)" >&2
   exit 2
 fi
 
@@ -79,6 +105,14 @@ append_shard_gap() {
     '{id:$id,surface:$surface,status:$status,summary:$summary,repo:$repo}' >>"$SHARD_GAPS"
 }
 
+append_gap_record() {
+  local id=$1 surface=$2 status=$3 summary=$4 recipe=${5:-}
+  jq -nc \
+    --arg id "$id" --arg surface "$surface" --arg status "$status" \
+    --arg summary "$summary" --arg recipe "$recipe" \
+    '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' >>"$SHARD_GAPS"
+}
+
 run_shard() {
   local producer=$1 repo=$2
   shift 2
@@ -87,11 +121,11 @@ run_shard() {
   if ! timeout "$SHARD_TIMEOUT" "$@"; then
     local code=$?
     if [[ $code -eq 124 ]]; then
-      append_shard_gap "shard-${producer}-${slug}" "$producer" "failed" \
+      append_shard_gap "shard-${producer}-${slug}" "$producer" "cannot_verify" \
         "${producer} timed out after ${SHARD_TIMEOUT}s on ${slug}" "$repo"
       fail_log "${producer} timeout: $repo"
     else
-      append_shard_gap "shard-${producer}-${slug}" "$producer" "failed" \
+      append_shard_gap "shard-${producer}-${slug}" "$producer" "cannot_verify" \
         "${producer} failed (exit ${code}) on ${slug}" "$repo"
       fail_log "${producer} failed: $repo (exit $code)"
     fi
@@ -101,7 +135,6 @@ run_shard() {
 }
 
 command -v jq >/dev/null || { log "jq is required"; exit 1; }
-command -v node >/dev/null || { log "node is required for viewer"; exit 1; }
 
 has_producer() {
   local p=$1
@@ -214,8 +247,11 @@ run_semgrep() {
   command -v semgrep >/dev/null || { log "semgrep not available"; return 1; }
   local rules="$SEMGREP_RULES"
   if [[ ! -f "$rules" ]]; then
-    rules="p/default"
-    log "local semgrep rules missing; using p/default (needs approval for network rules)"
+    log "local semgrep rules missing at $rules; recording gap (no network fallback)"
+    append_gap_record "gap-semgrep-rules" "static-analysis" "not_assessed" \
+      "Local semgrep rules missing; install harness/recipes/semgrep-rules/portolan-local.yaml" \
+      "harness/recipes/static-semgrep-local.md"
+    return 1
   fi
   mkdir -p "$PRODUCERS_DIR/semgrep"
   local repos
@@ -297,6 +333,8 @@ if [[ "$NO_VIEWER" -eq 1 ]]; then
   log "bundle ready at $ORIENT_DIR (--no-viewer)"
   exit 0
 fi
+
+command -v node >/dev/null || { log "node is required for viewer"; exit 1; }
 
 cd "$ROOT/viewer"
 node scripts/build-static.js

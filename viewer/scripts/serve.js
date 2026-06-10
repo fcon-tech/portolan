@@ -42,11 +42,33 @@ function loadRepoRoots() {
 }
 repoRoots = loadRepoRoots();
 
+function isPathUnderRoot(filePath, root) {
+  const resolvedRoot = path.resolve(root);
+  const resolved = path.resolve(filePath);
+  return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep);
+}
+
 function isUnderRepoRoot(filePath) {
   const resolved = path.resolve(filePath);
-  return repoRoots.some(
-    (root) => resolved === root || resolved.startsWith(root + path.sep)
-  );
+  return repoRoots.some((root) => isPathUnderRoot(resolved, root));
+}
+
+function isReadableRepoFile(filePath) {
+  let stats;
+  try {
+    stats = fs.lstatSync(filePath);
+  } catch {
+    return false;
+  }
+  if (stats.isSymbolicLink()) return false;
+  if (!stats.isFile()) return false;
+  let realPath;
+  try {
+    realPath = fs.realpathSync(filePath);
+  } catch {
+    return false;
+  }
+  return isUnderRepoRoot(realPath);
 }
 
 function resolveSourcePath(requestPath) {
@@ -57,13 +79,13 @@ function resolveSourcePath(requestPath) {
   if (path.isAbsolute(raw)) {
     const resolved = path.resolve(raw);
     if (!isUnderRepoRoot(resolved)) return null;
-    return fs.existsSync(resolved) && fs.statSync(resolved).isFile() ? resolved : null;
+    return isReadableRepoFile(resolved) ? resolved : null;
   }
 
   for (const root of repoRoots) {
     const candidate = path.resolve(root, raw);
-    if (!candidate.startsWith(root + path.sep) && candidate !== root) continue;
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    if (!isPathUnderRoot(candidate, root)) continue;
+    if (isReadableRepoFile(candidate)) {
       return candidate;
     }
   }
@@ -125,8 +147,12 @@ const server = http.createServer((req, res) => {
     return sendFile(path.join(bundlePath, 'repos.json'), res);
   }
 
-  let filePath = path.join(distDir, url.pathname === '/' ? 'index.html' : url.pathname);
-  if (!filePath.startsWith(distDir)) {
+  const distResolved = path.resolve(distDir) + path.sep;
+  let filePath = path.resolve(
+    distDir,
+    url.pathname === '/' ? 'index.html' : url.pathname.replace(/^\/+/, '')
+  );
+  if (!filePath.startsWith(distResolved)) {
     res.writeHead(403);
     return res.end('Forbidden');
   }
