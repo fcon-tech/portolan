@@ -1,6 +1,9 @@
 .DS_Store
 /bin/
 /dist/
+viewer/dist/
+**/orient-smoke/
+.cursor/
 /.portolan/
 /coverage.out
 *.out

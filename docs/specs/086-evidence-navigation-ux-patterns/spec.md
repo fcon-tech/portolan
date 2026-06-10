@@ -4,8 +4,8 @@
 
 **Created**: 2026-06-04
 
-**Status**: Draft; backlog-only. Requires `plan.md` and `tasks.md` before
-implementation.
+**Status**: MVP implemented in `viewer/` (2026-06-10 harness pivot). Full UA fork
+deferred per `docs/research/2026-06-10-understand-anything-fork-spike.md`.
 
 **Input**: The external review found that Understand-Anything, CodeGraph, and
 ast-index contain useful navigation ideas, but Portolan must not adopt
@@ -109,9 +109,9 @@ records.
 - **FR-004**: The feature MUST borrow UX patterns only as presentation patterns,
   including guided tours, relationship slices, impact-style entrypoints,
   search/query suggestions, and reader modes.
-- **FR-005**: The feature MUST NOT require LLM calls, live dashboards, browser
-  sessions, daemons, network access, target mutation, or global agent
-  configuration by default.
+- **FR-005**: The feature MUST NOT require LLM calls, network access, target
+  mutation, or global agent configuration by default. A local static viewer on
+  `127.0.0.1` for the duration of `npm run serve` is allowed (constitution 1.1.0).
 - **FR-006**: Understand-Anything-inspired graph tours MUST be constrained to
   evidence-backed Portolan records; LLM-authored nodes, summaries, or recovered
   defaults MUST NOT be accepted as Portolan facts.

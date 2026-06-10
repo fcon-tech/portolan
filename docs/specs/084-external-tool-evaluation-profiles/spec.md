@@ -4,8 +4,8 @@
 
 **Created**: 2026-06-04
 
-**Status**: Draft; backlog-only. Requires `plan.md` and `tasks.md` before
-implementation.
+**Status**: Implemented (P7-084 harness pivot). Profiles in
+`docs/harness/tool-profiles/`; recipes in `harness/recipes/`.
 
 **Input**: User asked to turn the external review of `colbymchenry/codegraph`,
 `Lum1104/Understand-Anything`, and `defendend/Claude-ast-index-search` into

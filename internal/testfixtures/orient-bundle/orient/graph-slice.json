@@ -1,0 +1,31 @@
+{
+  "schema_version": "0.1.0",
+  "nodes": [
+    {
+      "id": "dup-916524ed4981",
+      "label": "Duplicate block (~42 lines): pkg/a/util.go",
+      "kind": "duplication",
+      "paths": [
+        "pkg/a/util.go",
+        "pkg/b/util.go"
+      ]
+    },
+    {
+      "id": "semgrep-47db41588c43",
+      "label": "Semgrep portolan-todo-fixme",
+      "kind": "static-finding",
+      "paths": [
+        "sample.go"
+      ]
+    },
+    {
+      "id": "semgrep-d1e57e314224",
+      "label": "Semgrep portolan-hardcoded-secret-pattern",
+      "kind": "static-finding",
+      "paths": [
+        "config.env"
+      ]
+    }
+  ],
+  "edges": []
+}
