@@ -12,7 +12,7 @@
 | Local verification | verified | `go test -count=1 ./...`, `go vet ./...`, `jq empty` schemas, `scripts/harness-orient-smoke.sh` |
 | Review evidence | verified | 3 replacement lanes + disposition in `reviews/pr-review-disposition-2026-06-10.md` |
 | PR state | draft → ready-for-review | after green checks on CI-alignment commit |
-| GitHub checks | verified (pending re-run) | Baseline/CodeQL green on `27800c2`; duplicate CodeQL workflow flake on `Analyze (python)` |
+| GitHub checks | verified (Baseline) / flaky (org CodeQL) | Repo `CI` Baseline green incl. harness smoke; org default CodeQL dynamic jobs intermittently fail on token auth — do not add repo `codeql.yml` while default setup is enabled |
 | Merge approval | not_assessed | no human/GitHub approval recorded |
 | Merge readiness | not-ready | explicit merge approval required |
 
@@ -24,7 +24,7 @@
 
 ## CI note
 
-Two dynamic CodeQL workflows (`PR #64` and `Code Quality: PR #64`) both run on the same push. One `Analyze (python)` job failed with token upload errors while the sibling workflow succeeded — infra flake, not a code defect. Baseline job updated to run harness orient smoke in-repo.
+Org **default CodeQL setup** is enabled. Adding repo `codeql.yml` or `codeql-config.yml` causes SARIF rejection (`advanced configurations cannot be processed when the default setup is enabled`). Dynamic CodeQL jobs occasionally fail on `Requires authentication` during init/upload — org infra, not PR code. Repo-controlled **Baseline** CI (go test/vet, schemas, harness smoke) is green.
 
 ## Stop reason
 
