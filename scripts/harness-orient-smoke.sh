@@ -7,6 +7,13 @@ FIXTURE_TARGET="$ROOT/internal/testfixtures/orient-bundle/target"
 FIXTURE_ORIENT="$ROOT/internal/testfixtures/orient-bundle/orient-smoke"
 VIEWER_PORT="${VIEWER_PORT:-4174}"
 
+# Live config scan (producer script, not only pre-baked jsonl)
+SCAN_TMP=$(mktemp)
+"$ROOT/scripts/scan-config-surfaces.sh" "$FIXTURE_TARGET" "$SCAN_TMP"
+jq -s 'map(select(.surface_kind == "dockerfile" and .path == "Dockerfile")) | length >= 1' "$SCAN_TMP" >/dev/null
+jq -s 'map(select(.surface_kind == "docker-compose" and .path == "docker-compose.yml")) | length >= 1' "$SCAN_TMP" >/dev/null
+rm -f "$SCAN_TMP"
+
 rm -rf "$FIXTURE_ORIENT"
 mkdir -p "$FIXTURE_ORIENT/producers"
 cp -a "$ROOT/internal/testfixtures/orient-bundle/producers/." "$FIXTURE_ORIENT/producers/"
@@ -17,12 +24,14 @@ test "$(wc -l <"$FIXTURE_ORIENT/hotspots.jsonl" | tr -d ' ')" -ge 1
 test -f "$FIXTURE_ORIENT/manifest.json"
 test -f "$FIXTURE_ORIENT/hotspots-full.jsonl"
 
-grep -q '"kind":"config"' "$FIXTURE_ORIENT/hotspots.jsonl" || {
-  echo "expected config hotspot in bundle" >&2
+jq -e 'select(.kind == "config" and .producer == "config-scan" and (.paths | length) >= 1)' \
+  "$FIXTURE_ORIENT/hotspots.jsonl" >/dev/null || {
+  echo "expected config-scan hotspot in bundle" >&2
   exit 1
 }
-grep -q '"kind":"debt-candidate"' "$FIXTURE_ORIENT/hotspots.jsonl" || {
-  echo "expected debt-candidate hotspot in bundle" >&2
+jq -e 'select(.kind == "debt-candidate" and (.summary | test("\\([0-9]+ symbols\\)")))' \
+  "$FIXTURE_ORIENT/hotspots.jsonl" >/dev/null || {
+  echo "expected debt-candidate hotspot with symbol count in bundle" >&2
   exit 1
 }
 
@@ -78,6 +87,7 @@ echo "$HTML" | grep -q 'id="search-input"'
 echo "$HTML" | grep -q 'id="filter-bar"'
 echo "$HTML" | grep -q 'id="heat-tree"'
 echo "$HTML" | grep -q 'id="status-banner"'
+curl -sf "$BASE/bundle/manifest.json" | jq -e '.hotspot_count >= 1' >/dev/null
 curl -sf "$BASE/bundle/hotspots.jsonl" | grep -q duplication
 curl -sf "$BASE/source?path=sample.go&line=1" | grep -q 'Run'
 

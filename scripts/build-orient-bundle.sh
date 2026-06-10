@@ -28,6 +28,14 @@ command -v jq >/dev/null 2>&1 || {
   exit 1
 }
 
+producer_repo_slug() {
+  local p=$1
+  local base hash
+  base=$(basename "$p" | tr ' /' '__')
+  hash=$(printf '%s' "$p" | sha256sum | cut -c1-8)
+  echo "${base}-${hash}"
+}
+
 # --- repos.json ---
 if [[ -d "$TARGET_ROOT/.git" ]]; then
   jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
@@ -123,9 +131,11 @@ done < <(find "$PRODUCERS_DIR/semgrep" -type f -name '*.json' 2>/dev/null)
 
 # --- cyclonedx (producers/syft/**) ---
 syft_found=0
+syft_file_seen=0
 dep_hub_min=8
 while IFS= read -r sbom; do
   [[ -f "$sbom" ]] || continue
+  syft_file_seen=1
   jq -e '.components' "$sbom" >/dev/null 2>&1 || continue
   syft_found=1
   jq -r --arg ref "$sbom" --argjson min "$dep_hub_min" '
@@ -147,31 +157,48 @@ while IFS= read -r sbom; do
   done
 done < <(find "$PRODUCERS_DIR/syft" -type f \( -name 'cyclonedx.json' -o -name '*cyclonedx*.json' \) 2>/dev/null)
 
-[[ "$syft_found" -eq 1 ]] || append_gap "gap-deps" "dependencies" "not_assessed" \
-  "No Syft/CycloneDX producer output found." "harness/recipes/deps-syft-cyclonedx.md"
+if [[ "$syft_found" -eq 1 ]]; then
+  :
+elif [[ "$syft_file_seen" -eq 1 ]]; then
+  append_gap "gap-deps" "dependencies" "not_assessed" \
+    "Syft CycloneDX output had no usable components." "harness/recipes/deps-syft-cyclonedx.md"
+else
+  append_gap "gap-deps" "dependencies" "not_assessed" \
+    "No Syft/CycloneDX producer output found." "harness/recipes/deps-syft-cyclonedx.md"
+fi
+
+declare -A SLUG_REPO_ROOT=()
+while IFS= read -r rpath; do
+  [[ -z "$rpath" ]] && continue
+  slug=$(producer_repo_slug "$rpath")
+  SLUG_REPO_ROOT[$slug]="$rpath"
+done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
 
 # --- config surfaces (producers/config/*.jsonl) ---
-config_found=0
 while IFS= read -r cfile; do
   [[ -f "$cfile" ]] || continue
   [[ -s "$cfile" ]] || continue
-  config_found=1
-  jq -s -c --arg ref "$cfile" '
+  cslug=$(basename "$cfile" .jsonl)
+  repo_root="${SLUG_REPO_ROOT[$cslug]:-$TARGET_ROOT}"
+  jq -s -c --arg ref "$cfile" --arg root "$repo_root" '
     group_by(.surface_kind) | map(
       .[0].surface_kind as $k |
-      {surface_kind: $k, paths: ([.[].path] | unique | .[0:5]), count: length}
+      {surface_kind: $k,
+       paths: ([.[].path] | unique |
+         map(if startswith($root) or startswith("/") then . else ($root + "/" + .) end) | .[0:5]),
+       count: length}
     ) | .[] |
     select(.count > 0)
   ' "$cfile" | while IFS= read -r group; do
     [[ -z "$group" ]] && continue
-    kind=$(echo "$group" | jq -r '.surface_kind')
+    surface_kind=$(echo "$group" | jq -r '.surface_kind')
     count=$(echo "$group" | jq -r '.count')
     paths_json=$(echo "$group" | jq -c '.paths')
-    id="cfg-$(printf '%s%s' "$cfile" "$kind" | sha256sum | cut -c1-12)"
+    id="cfg-$(printf '%s%s' "$cfile" "$surface_kind" | sha256sum | cut -c1-12)"
     jq -nc \
-      --arg id "$id" --arg kind "$kind" --argjson count "$count" \
+      --arg id "$id" --arg surface_kind "$surface_kind" --argjson count "$count" \
       --argjson paths "$paths_json" --arg ref "$cfile" \
-      '{id:$id,kind:"config",severity:"info",summary:("Config surface: "+$kind+" ("+($count|tostring)+" files)"),paths:$paths,evidence_state:"source-visible",producer:"config-scan",producer_ref:$ref}' >>"$hotspots_raw"
+      '{id:$id,kind:"config",severity:"info",summary:("Config surface: "+$surface_kind+" ("+($count|tostring)+" files)"),paths:$paths,evidence_state:"source-visible",producer:"config-scan",producer_ref:$ref}' >>"$hotspots_raw"
   done
 done < <(find "$PRODUCERS_DIR/config" -type f -name '*.jsonl' 2>/dev/null)
 
@@ -201,7 +228,12 @@ while IFS= read -r tfile; do
   done
 done < <(find "$PRODUCERS_DIR/ctags" -type f -name 'tags.json' 2>/dev/null)
 
-[[ "$ctags_found" -eq 1 ]] || true
+if [[ "$ctags_found" -eq 0 ]]; then
+  if [[ ! -f "$PRODUCERS_DIR/_gaps.jsonl" ]] || ! grep -q 'gap-ctags' "$PRODUCERS_DIR/_gaps.jsonl" 2>/dev/null; then
+    append_gap "gap-ctags" "symbols" "not_assessed" \
+      "No ctags producer output found." "harness/recipes/symbols-ctags.md"
+  fi
+fi
 
 # --- merge shard gaps from wizard ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then

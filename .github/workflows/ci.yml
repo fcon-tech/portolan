@@ -53,7 +53,15 @@ jobs:
             --no-viewer --skip-install --yes
           test -f /tmp/wizard-ci-orient/manifest.json
           test -s /tmp/wizard-ci-orient/gaps.jsonl
-          grep -q not_assessed /tmp/wizard-ci-orient/gaps.jsonl
+          jq -e 'select(.status == "not_assessed")' /tmp/wizard-ci-orient/gaps.jsonl >/dev/null
+          jq -e 'select(.kind == "config" and .producer == "config-scan")' \
+            /tmp/wizard-ci-orient/hotspots.jsonl >/dev/null
+          if ! jq -e 'select(.kind == "debt-candidate")' /tmp/wizard-ci-orient/hotspots.jsonl >/dev/null 2>&1; then
+            jq -e 'select(.id == "gap-ctags" or .surface == "symbols")' \
+              /tmp/wizard-ci-orient/gaps.jsonl >/dev/null
+          fi
+          slug=$(printf '%s' "$(cd internal/testfixtures/orient-bundle/target && pwd)" | sha256sum | cut -c1-8)
+          test -n "$(find /tmp/wizard-ci-orient/producers/config -name "target-${slug}.jsonl" -print -quit)"
 
       - name: Diff whitespace check
         run: git diff --check

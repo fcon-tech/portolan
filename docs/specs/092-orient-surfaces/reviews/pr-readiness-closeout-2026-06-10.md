@@ -1,43 +1,31 @@
 # PR readiness closeout: spec 092 (2026-06-10)
 
-**Branch**: `codex/092-orient-surfaces`  
-**Surface**: ready-for-review PR (merge pending explicit approval)
+**PR**: https://github.com/fcon-tech/portolan/pull/65  
+**Branch**: `codex/092-orient-surfaces`
 
-## Implementation
+## Readiness Matrix
 
-| Slice | Status |
-| --- | --- |
-| 0 PR #64 debt | done |
-| 1 config-surfaces | done |
-| 2 ctags symbols | done |
-| 3 smoke + docs | done |
+| Surface | State | Evidence |
+| --- | --- | --- |
+| Local implementation | verified | tasks.md complete; slices 0–3 done |
+| Local verification | verified | go test/vet, harness-orient-smoke, wizard smoke |
+| Review evidence | verified | 4 assessed lanes + local; 1 lane not_assessed (maintainability provider) |
+| PR state | ready-for-review | `gh pr view 65` isDraft=false |
+| GitHub checks | verified | Baseline + CodeQL SUCCESS on prior head |
+| Merge approval | not_assessed | no human/GitHub approval yet |
+| Merge readiness | not-ready-to-merge | awaits explicit user merge approval |
 
-## Local verification
+## Implementation summary
 
-| Check | Result |
-| --- | --- |
-| `go test ./...` | verified |
-| `go vet ./...` | verified |
-| `jq empty` schemas | verified |
-| `scripts/harness-orient-smoke.sh` | verified |
-| `scripts/orient-wizard.sh --help` | verified |
-| `git diff --check` | verified |
-| Real smoke A (portolan) | verified — `reviews/smoke-findings.md` |
-| Real smoke B (bigtop x3) | verified — `reviews/smoke-findings.md` |
+- Config surfaces producer + bundle `kind=config`
+- ctags symbol density + `kind=debt-candidate`
+- PR #64 debt closure (repo_slug, smoke, CI wizard)
+- Review-fix: gaps, multi-repo paths, stronger smoke/CI
 
-## Review evidence
+## Blockers
 
-- `reviews/pr-review-disposition-2026-06-10.md` (2 assessed independent lanes + local)
-- Testing lane: not_assessed (subagent network abort)
-
-## GitHub
-
-| Item | Status |
-| --- | --- |
-| PR | pending push |
-| CI | not_assessed until PR checks run |
-| Merge | blocked — requires explicit user approval |
+None for ready-for-review. Merge blocked until user approves.
 
 ## Stop reason
 
-Local implementation complete; PR ready for review after push and CI.
+PR review-fix cycle complete; ready-for-review PR with green CI expected on new head.
