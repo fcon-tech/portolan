@@ -11,7 +11,7 @@
 | Local verification | verified | go test/vet, harness-orient-smoke, wizard smoke |
 | Review evidence | verified | 4 assessed lanes + local; 1 lane not_assessed (maintainability provider) |
 | PR state | ready-for-review | `gh pr view 65` isDraft=false |
-| GitHub checks | verified | Baseline + CodeQL SUCCESS on prior head |
+| GitHub checks | verified | Baseline + CodeQL SUCCESS on `7120e01` |
 | Merge approval | not_assessed | no human/GitHub approval yet |
 | Merge readiness | not-ready-to-merge | awaits explicit user merge approval |
 
