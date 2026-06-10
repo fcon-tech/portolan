@@ -5,4 +5,4 @@
 - [x] Slice 1: scan-config-surfaces + wizard + bundle config hotspots
 - [x] Slice 2: ctags wizard + bundle debt-candidate + viewer detail
 - [x] Slice 3: real-target smoke + docs + backlog
-- [ ] PR review cycle + ready-for-review closeout
+- [x] PR review cycle + ready-for-review closeout
