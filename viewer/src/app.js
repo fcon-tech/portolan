@@ -4,6 +4,21 @@
 
 const SEV_RANK = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
 
+const KIND_LABELS = {
+  duplication: 'Duplication',
+  'static-finding': 'Static smell',
+  config: 'Config surface',
+  'debt-candidate': 'Symbol density',
+  'dep-hub': 'Dependency hub',
+};
+
+const QUICK_PRESETS = [
+  { id: 'start', label: 'Where to start', kinds: null, maxRank: 15 },
+  { id: 'pain', label: 'Code pain', kinds: ['duplication', 'static-finding', 'debt-candidate'] },
+  { id: 'config', label: 'Config & deploy', kinds: ['config'] },
+  { id: 'deps', label: 'Dependencies', kinds: ['dep-hub'] },
+];
+
 let allHotspots = [];
 let repos = [];
 let manifest = null;
@@ -12,6 +27,7 @@ let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
 let searchQuery = '';
 let selectedId = null;
 let expandedDirs = new Set();
+let activeQuickPreset = null;
 
 async function loadJSONL(url) {
   const res = await fetch(url);
@@ -49,13 +65,41 @@ function sevClass(s) {
   return `sev-${s || 'info'}`;
 }
 
-function kindClass(kind) {
-  return kind || 'debt-candidate';
+function kindLabel(kind) {
+  return KIND_LABELS[kind] || kind;
 }
 
 function normalizeDisplayPath(p) {
   if (!p) return '';
   return p.replace(/\\/g, '/');
+}
+
+/** Show repo-relative or tail of path for list UI. */
+function shortPath(p) {
+  const norm = normalizeDisplayPath(p);
+  if (!norm || norm === '(dependency-hub)') return norm;
+  if (norm.startsWith('/')) {
+    for (const r of repos) {
+      const root = r.path.replace(/\\/g, '/');
+      if (norm === root || norm.startsWith(root + '/')) {
+        const rel = norm.slice(root.length).replace(/^\//, '');
+        return rel || r.name || r.id;
+      }
+    }
+    const parts = norm.split('/').filter(Boolean);
+    if (parts.length <= 2) return parts.join('/');
+    return '…/' + parts.slice(-2).join('/');
+  }
+  const parts = norm.split('/').filter(Boolean);
+  if (parts.length <= 3) return norm;
+  return '…/' + parts.slice(-2).join('/');
+}
+
+function primaryPath(h) {
+  const paths = h.paths || [];
+  if (!paths.length) return null;
+  const filePath = paths.find((p) => p && p !== '(dependency-hub)') || paths[0];
+  return filePath;
 }
 
 function repoForPath(p) {
@@ -86,25 +130,26 @@ function hotspotRepo(h) {
 
 function matchesSearch(h, q) {
   if (!q) return true;
-  const hay = [
-    h.summary,
-    h.id,
-    h.kind,
-    h.severity,
-    ...(h.paths || []),
-  ]
+  const hay = [h.summary, h.id, h.kind, h.severity, kindLabel(h.kind), ...(h.paths || [])]
     .join(' ')
     .toLowerCase();
   return hay.includes(q);
+}
+
+function matchesQuickPreset(h) {
+  if (!activeQuickPreset) return true;
+  const preset = QUICK_PRESETS.find((p) => p.id === activeQuickPreset);
+  if (!preset) return true;
+  if (preset.kinds && !preset.kinds.includes(h.kind)) return false;
+  if (preset.maxRank != null && h.rank > preset.maxRank) return false;
+  return true;
 }
 
 function matchesFilters(h) {
   if (filters.kinds.size && !filters.kinds.has(h.kind)) return false;
   if (filters.severities.size && !filters.severities.has(h.severity)) return false;
   if (filters.repoIds.size) {
-    if (h.kind === 'dep-hub') {
-      // Dependency hubs are landscape-wide; repo chips should not hide them.
-    } else {
+    if (h.kind !== 'dep-hub') {
       const rid = hotspotRepo(h);
       if (!rid || !filters.repoIds.has(rid)) return false;
     }
@@ -115,8 +160,71 @@ function matchesFilters(h) {
 function filteredHotspots() {
   const q = searchQuery.trim().toLowerCase();
   return allHotspots
-    .filter((h) => matchesSearch(h, q) && matchesFilters(h))
+    .filter((h) => matchesSearch(h, q) && matchesFilters(h) && matchesQuickPreset(h))
     .sort((a, b) => a.rank - b.rank);
+}
+
+function kindCounts(hotspots) {
+  const counts = {};
+  for (const h of hotspots) {
+    counts[h.kind] = (counts[h.kind] || 0) + 1;
+  }
+  return counts;
+}
+
+function renderStatsRow() {
+  const el = document.getElementById('stats-row');
+  el.innerHTML = '';
+  const counts = manifest?.kind_counts || kindCounts(allHotspots);
+  const total = manifest?.hotspot_count ?? allHotspots.length;
+  const totalPill = document.createElement('span');
+  totalPill.className = 'stat-pill';
+  totalPill.innerHTML = `<strong>${total}</strong> hotspots`;
+  el.appendChild(totalPill);
+  const order = ['debt-candidate', 'config', 'static-finding', 'duplication', 'dep-hub'];
+  const kinds = [...new Set([...order, ...Object.keys(counts)])];
+  for (const k of kinds) {
+    const n = counts[k];
+    if (!n) continue;
+    const pill = document.createElement('span');
+    pill.className = 'stat-pill';
+    pill.innerHTML = `<span class="stat-dot ${escapeHtml(k)}"></span><strong>${n}</strong> ${escapeHtml(kindLabel(k))}`;
+    el.appendChild(pill);
+  }
+}
+
+function renderQuickFilters() {
+  const el = document.getElementById('quick-filters');
+  el.innerHTML = '';
+  const clear = document.createElement('button');
+  clear.type = 'button';
+  clear.className = 'quick-btn' + (!activeQuickPreset && !filters.kinds.size ? ' active' : '');
+  clear.textContent = 'All';
+  clear.addEventListener('click', () => {
+    activeQuickPreset = null;
+    filters.kinds.clear();
+    filters.severities.clear();
+    filters.repoIds.clear();
+    renderFilters();
+    render();
+  });
+  el.appendChild(clear);
+  for (const preset of QUICK_PRESETS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'quick-btn' + (activeQuickPreset === preset.id ? ' active' : '');
+    btn.textContent = preset.label;
+    btn.addEventListener('click', () => {
+      activeQuickPreset = preset.id === activeQuickPreset ? null : preset.id;
+      if (activeQuickPreset) {
+        filters.kinds.clear();
+        if (preset.kinds) preset.kinds.forEach((k) => filters.kinds.add(k));
+      }
+      renderFilters();
+      render();
+    });
+    el.appendChild(btn);
+  }
 }
 
 function buildTree(hotspots) {
@@ -143,12 +251,17 @@ function buildTree(hotspots) {
 
   function addPath(pathStr, h) {
     const norm = normalizeDisplayPath(pathStr);
-    if (!norm || norm === '(dependency-hubs)') {
+    if (!norm || norm === '(dependency-hub)') {
       const node = ensureChild(root, '(dependency-hubs)', '(dependency-hubs)', false);
       node.hotspotIds.add(h.id);
       return;
     }
-    const parts = norm.split('/').filter(Boolean);
+    let rel = norm;
+    if (norm.startsWith('/')) {
+      rel = shortPath(norm);
+      if (rel.startsWith('…/')) rel = norm.split('/').pop() || norm;
+    }
+    const parts = rel.split('/').filter(Boolean);
     let node = root;
     let built = '';
     for (let i = 0; i < parts.length; i++) {
@@ -162,7 +275,7 @@ function buildTree(hotspots) {
 
   for (const h of hotspots) {
     if (!h.paths || h.paths.length === 0) {
-      addPath('(dependency-hubs)', h);
+      addPath('(dependency-hub)', h);
     } else {
       for (const p of h.paths) addPath(p, h);
     }
@@ -179,14 +292,21 @@ function treeStats(node, hotspotById) {
 function renderFilters() {
   const bar = document.getElementById('filter-bar');
   bar.innerHTML = '';
-
+  const counts = kindCounts(allHotspots);
   const kinds = [...new Set(allHotspots.map((h) => h.kind))].sort();
   const severities = [...new Set(allHotspots.map((h) => h.severity))].sort(
     (a, b) => sevRank(a) - sevRank(b)
   );
-
-  bar.appendChild(makeChipGroup('Kind', kinds, filters.kinds, () => render()));
-  bar.appendChild(makeChipGroup('Severity', severities, filters.severities, () => render()));
+  bar.appendChild(
+    makeChipGroup('Kind', kinds, filters.kinds, () => {
+      activeQuickPreset = null;
+      renderQuickFilters();
+      render();
+    }, (v) => kindLabel(v), counts)
+  );
+  bar.appendChild(
+    makeChipGroup('Severity', severities, filters.severities, () => render(), (v) => v, null)
+  );
   if (repos.length > 1) {
     const repoLabels = repos.map((r) => ({ id: r.id, label: r.name || r.id }));
     bar.appendChild(
@@ -195,13 +315,14 @@ function renderFilters() {
         repoLabels.map((r) => r.id),
         filters.repoIds,
         () => render(),
-        (id) => repoLabels.find((r) => r.id === id)?.label || id
+        (id) => repoLabels.find((r) => r.id === id)?.label || id,
+        null
       )
     );
   }
 }
 
-function makeChipGroup(label, values, activeSet, onChange, labelFn = (v) => v) {
+function makeChipGroup(label, values, activeSet, onChange, labelFn = (v) => v, counts = null) {
   const wrap = document.createElement('div');
   wrap.className = 'filter-group';
   const lbl = document.createElement('span');
@@ -212,7 +333,9 @@ function makeChipGroup(label, values, activeSet, onChange, labelFn = (v) => v) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'chip' + (activeSet.has(v) ? ' active' : '');
-    btn.textContent = labelFn(v);
+    const count = counts?.[v];
+    btn.innerHTML =
+      escapeHtml(labelFn(v)) + (count != null ? `<span class="chip-count">${count}</span>` : '');
     btn.addEventListener('click', () => {
       if (activeSet.has(v)) activeSet.delete(v);
       else activeSet.add(v);
@@ -228,12 +351,16 @@ function renderBanner() {
   const parts = [];
   if (manifest?.hotspots_truncated) {
     parts.push(
-      `<span class="status-banner truncation">Showing ${manifest.hotspot_count} of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget} applied).</span>`
+      `<span class="status-banner truncation">Showing top <strong>${manifest.hotspot_count}</strong> of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget}). Use <code>hotspots-full.jsonl</code> for the full list.</span>`
     );
   }
   if (gaps.length) {
-    const summary = gaps.map((g) => `${g.surface}: ${g.status}`).join(' · ');
-    parts.push(`<span class="status-banner gaps">Gaps: ${escapeHtml(summary)}</span>`);
+    const items = gaps
+      .slice(0, 4)
+      .map((g) => `${escapeHtml(g.surface)}: ${escapeHtml(g.status)}`)
+      .join(' · ');
+    const more = gaps.length > 4 ? ` (+${gaps.length - 4} more)` : '';
+    parts.push(`<span class="status-banner gaps">Not assessed: ${items}${more}</span>`);
   }
   if (parts.length) {
     el.innerHTML = parts.join(' ');
@@ -244,15 +371,44 @@ function renderBanner() {
   }
 }
 
-function renderTour(hotspots, hotspotById) {
+function renderTour(hotspots) {
   const list = document.getElementById('hotspot-list');
   list.innerHTML = '';
-  document.getElementById('tour-count').textContent = `(${hotspots.length})`;
+  document.getElementById('tour-count').textContent =
+    hotspots.length === allHotspots.length
+      ? `${hotspots.length} shown`
+      : `${hotspots.length} of ${allHotspots.length}`;
+
+  if (!hotspots.length) {
+    const empty = document.createElement('li');
+    empty.className = 'detail-empty';
+    empty.innerHTML =
+      '<p class="empty-title">No matches</p><p class="empty-hint">Try clearing filters or search.</p>';
+    list.appendChild(empty);
+    return;
+  }
+
   for (const h of hotspots) {
     const li = document.createElement('li');
-    li.className = h.id === selectedId ? 'active' : '';
-    li.innerHTML = `<span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>${escapeHtml(h.summary)}`;
-    li.addEventListener('click', () => selectHotspot(h));
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hotspot-card' + (h.id === selectedId ? ' active' : '');
+    btn.dataset.id = h.id;
+    const path = primaryPath(h);
+    const pathHtml = path
+      ? `<div class="card-path" title="${escapeHtml(normalizeDisplayPath(path))}">${escapeHtml(shortPath(path))}</div>`
+      : '';
+    btn.innerHTML = `
+      <div class="card-top">
+        <span class="card-rank">#${h.rank}</span>
+        <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
+        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
+      </div>
+      <p class="card-summary">${escapeHtml(h.summary)}</p>
+      ${pathHtml}
+    `;
+    btn.addEventListener('click', () => selectHotspot(h));
+    li.appendChild(btn);
     list.appendChild(li);
   }
 }
@@ -266,7 +422,7 @@ function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
   for (const [, child] of entries) {
     const stats = treeStats(child, hotspotById);
     const hasChildren = child.children.size > 0;
-    const isExpanded = expandedDirs.has(child.pathKey) || depth < 2;
+    const isExpanded = expandedDirs.has(child.pathKey) || depth < 1;
 
     const row = document.createElement('div');
     row.className = 'tree-node';
@@ -277,7 +433,7 @@ function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
     toggle.className = 'tree-toggle' + (hasChildren ? '' : ' empty');
     toggle.textContent = hasChildren ? (isExpanded ? '▾' : '▸') : '';
     const bar = document.createElement('span');
-    bar.className = `sev-bar ${child.isFile ? sevClass(stats.maxSeverity) : sevClass(stats.maxSeverity)}`;
+    bar.className = `sev-bar ${sevClass(stats.maxSeverity)}`;
     const name = document.createElement('span');
     name.className = 'tree-name';
     name.textContent = child.name;
@@ -308,7 +464,8 @@ function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
       for (const h of fileHotspots) {
         const hs = document.createElement('div');
         hs.className = 'tree-hotspot' + (h.id === selectedId ? ' active' : '');
-        hs.innerHTML = `<span class="badge">${escapeHtml(h.kind)}</span>#${h.rank} ${escapeHtml(h.summary)}`;
+        hs.textContent = `#${h.rank} ${kindLabel(h.kind)}`;
+        hs.title = h.summary;
         hs.addEventListener('click', () => selectHotspot(h));
         row.appendChild(hs);
       }
@@ -320,7 +477,6 @@ function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
     row.appendChild(childWrap);
     parentEl.appendChild(row);
   }
-
 }
 
 function renderTree(hotspots) {
@@ -334,14 +490,15 @@ function renderTree(hotspots) {
     const stats = treeStats(depNode, hotspotById);
     const row = document.createElement('div');
     row.className = 'tree-row';
-    row.innerHTML = `<span class="tree-toggle empty"></span><span class="sev-bar low"></span><span class="tree-name">(dependency-hubs)</span><span class="tree-meta">${stats.count}</span>`;
+    row.innerHTML = `<span class="tree-toggle empty"></span><span class="sev-bar sev-low"></span><span class="tree-name">(dependency-hubs)</span><span class="tree-meta">${stats.count}</span>`;
     treeEl.appendChild(row);
     for (const id of depNode.hotspotIds) {
       const h = hotspotById.get(id);
       if (!h) continue;
       const hs = document.createElement('div');
       hs.className = 'tree-hotspot' + (h.id === selectedId ? ' active' : '');
-      hs.innerHTML = `<span class="badge">${escapeHtml(h.kind)}</span>#${h.rank} ${escapeHtml(h.summary)}`;
+      hs.textContent = `#${h.rank} ${kindLabel(h.kind)}`;
+      hs.title = h.summary;
       hs.addEventListener('click', () => selectHotspot(h));
       treeEl.appendChild(hs);
     }
@@ -354,20 +511,23 @@ function renderTree(hotspots) {
   }
 }
 
-async function loadSourcePreview(h) {
+async function loadSourcePreview(h, pathOverride) {
   const preview = document.getElementById('source-preview');
   const code = document.getElementById('source-code');
-  const path = (h.paths || [])[0];
-  if (!path) {
+  const pathLabel = document.getElementById('source-path');
+  const path = pathOverride || primaryPath(h);
+  if (!path || path === '(dependency-hub)') {
     preview.classList.add('hidden');
     return;
   }
+  pathLabel.textContent = shortPath(path);
+  pathLabel.title = normalizeDisplayPath(path);
   try {
     const params = new URLSearchParams({ path, line: '1' });
     const res = await fetch(`/source?${params}`);
     if (!res.ok) {
       preview.classList.remove('hidden');
-      code.textContent = `Source unavailable (${res.status}) for ${path}`;
+      code.textContent = `Source unavailable (${res.status})`;
       return;
     }
     const data = await res.json();
@@ -392,32 +552,59 @@ function symbolCountFromSummary(summary) {
 function renderDetail(h) {
   const el = document.getElementById('detail-body');
   if (!h) {
-    el.innerHTML = '<p>Select a hotspot.</p>';
+    el.className = 'detail-empty';
+    el.innerHTML = `
+      <p class="empty-title">Pick a hotspot</p>
+      <p class="empty-hint">Use quick filters above or search. Each item links to local source when a file path exists.</p>
+    `;
     document.getElementById('source-preview').classList.add('hidden');
     return;
   }
-  const paths = (h.paths || [])
-    .map((p) => `<div class="path">${escapeHtml(p)}</div>`)
-    .join('');
+  el.className = '';
   const rid = hotspotRepo(h);
   const repoLabel = rid ? repos.find((r) => r.id === rid)?.name || rid : '';
-  const symCount =
-    h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
+  const symCount = h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
+  const paths = (h.paths || []).filter((p) => p && p !== '(dependency-hub)');
+  const pathHtml = paths.length
+    ? paths
+        .map(
+          (p, i) =>
+            `<button type="button" class="path-chip${i === 0 ? ' primary' : ''}" data-path="${escapeHtml(normalizeDisplayPath(p))}" title="${escapeHtml(normalizeDisplayPath(p))}">${escapeHtml(shortPath(p))}</button>`
+        )
+        .join('')
+    : '<p class="path">No file paths (landscape-level hotspot).</p>';
+
   el.innerHTML = `
-    <p>
-      <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
-      <span class="badge">${escapeHtml(h.kind)}</span>
-      <span class="badge">${escapeHtml(h.evidence_state)}</span>
-      <span class="badge">${escapeHtml(h.producer)}</span>
-      <span class="badge">#${h.rank}</span>
-      ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
-    </p>
-    <p><strong>${escapeHtml(h.summary)}</strong></p>
-    ${symCount ? `<p>Symbol count: <strong>${escapeHtml(symCount)}</strong></p>` : ''}
-    <p>id: <code>${escapeHtml(h.id)}</code></p>
-    ${paths || '<p class="path">(no file paths)</p>'}
-    <p class="path">producer_ref: ${escapeHtml(h.producer_ref || '')}</p>
+    <div class="detail-header">
+      <div class="detail-meta">
+        <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
+        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
+        ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
+        <span class="badge">#${h.rank}</span>
+      </div>
+      <h2 class="detail-title">${escapeHtml(h.summary)}</h2>
+      ${symCount ? `<p class="path">Symbol count: <strong>${escapeHtml(symCount)}</strong></p>` : ''}
+    </div>
+    <div class="detail-section">
+      <h3>Paths</h3>
+      ${pathHtml}
+    </div>
+    <details class="evidence-toggle">
+      <summary>Evidence &amp; provenance</summary>
+      <div class="evidence-body">
+        <p>State: ${escapeHtml(h.evidence_state)} · Producer: ${escapeHtml(h.producer)}</p>
+        <p>id: <code>${escapeHtml(h.id)}</code></p>
+        <p>producer_ref: ${escapeHtml(h.producer_ref || '')}</p>
+      </div>
+    </details>
   `;
+
+  el.querySelectorAll('.path-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      loadSourcePreview(h, chip.dataset.path);
+    });
+  });
+
   loadSourcePreview(h);
 }
 
@@ -425,6 +612,10 @@ function selectHotspot(h) {
   selectedId = h?.id ?? null;
   renderDetail(h);
   render();
+  requestAnimationFrame(() => {
+    const active = document.querySelector('.hotspot-card.active');
+    active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
 }
 
 function render() {
@@ -435,7 +626,7 @@ function render() {
     renderDetail(null);
   }
   renderBanner();
-  renderTour(hotspots, hotspotById);
+  renderTour(hotspots);
   renderTree(hotspots);
 }
 
@@ -445,10 +636,15 @@ async function main() {
   gaps = await loadJSONL('/bundle/gaps.jsonl');
   repos = (await loadJSON('/bundle/repos.json')) || [];
 
+  const targetShort = manifest?.target_root
+    ? shortPath(manifest.target_root) || manifest.target_root
+    : '';
   document.getElementById('manifest-info').textContent = manifest
-    ? `target: ${manifest.target_root} · hotspots: ${manifest.hotspot_count} · gaps: ${manifest.gap_count}`
+    ? `${targetShort} · ${manifest.hotspot_count} hotspots · ${manifest.gap_count} gaps`
     : 'no manifest';
 
+  renderStatsRow();
+  renderQuickFilters();
   renderFilters();
   renderBanner();
 
@@ -458,10 +654,6 @@ async function main() {
   });
 
   render();
-  if (allHotspots.length) {
-    const first = filteredHotspots()[0] || allHotspots[0];
-    selectHotspot(first);
-  }
 }
 
 main().catch((e) => {

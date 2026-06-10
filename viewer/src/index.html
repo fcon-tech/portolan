@@ -9,32 +9,43 @@
 <body>
   <header>
     <div class="header-top">
-      <div>
+      <div class="brand">
         <h1>Portolan Orient</h1>
-        <p id="subtitle">Evidence-backed hotspots — not LLM architecture truth</p>
+        <p id="subtitle">Where to look first — evidence-backed, not LLM guesses</p>
       </div>
       <div class="search-wrap">
         <label for="search-input" class="sr-only">Search hotspots</label>
-        <input type="search" id="search-input" placeholder="Search summary, path, id…" autocomplete="off">
+        <input type="search" id="search-input" placeholder="Search path, summary, kind…" autocomplete="off">
       </div>
     </div>
+    <div id="stats-row" class="stats-row" aria-label="Hotspot summary"></div>
+    <div id="quick-filters" class="quick-filters" aria-label="Quick filters"></div>
     <div id="status-banner" class="status-banner hidden" role="status"></div>
     <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
   </header>
   <main class="layout">
-    <section class="panel" id="tour">
-      <h2>Hotspot tour <span id="tour-count" class="count-badge"></span></h2>
-      <ol id="hotspot-list"></ol>
+    <section class="panel panel-list" id="tour">
+      <div class="panel-head">
+        <h2>Hotspots</h2>
+        <span id="tour-count" class="count-badge"></span>
+      </div>
+      <ul id="hotspot-list"></ul>
+      <details class="folder-browse" id="folder-browse">
+        <summary>Browse by folder</summary>
+        <div id="heat-tree" class="heat-tree" aria-label="Directory heat map"></div>
+      </details>
     </section>
-    <section class="panel" id="graph-panel">
-      <h2>Directory heat map</h2>
-      <div id="heat-tree" class="heat-tree" aria-label="Directory heat map"></div>
-    </section>
-    <section class="panel" id="detail">
-      <h2>Detail</h2>
-      <div id="detail-body"><p>Select a hotspot.</p></div>
+    <section class="panel panel-detail" id="detail">
+      <h2 class="sr-only">Detail</h2>
+      <div id="detail-body" class="detail-empty">
+        <p class="empty-title">Pick a hotspot</p>
+        <p class="empty-hint">Use quick filters above or search. Each item links to local source when a file path exists.</p>
+      </div>
       <div id="source-preview" class="source-preview hidden">
-        <h3>Source</h3>
+        <div class="source-head">
+          <h3>Source</h3>
+          <span id="source-path" class="source-path"></span>
+        </div>
         <pre id="source-code"></pre>
       </div>
     </section>
