@@ -31,7 +31,7 @@ scan_glob() {
   while IFS= read -r f; do
     [[ -f "$f" ]] || continue
     append_surface "$kind" "$f"
-  done < <(find "$REPO_ROOT" -type f \
+  done < <(find -P "$REPO_ROOT" -type f \
     \( -path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/vendor/*' \) -prune \
     -o -type f -name "$pattern" -print 2>/dev/null)
 }
@@ -50,7 +50,7 @@ scan_glob env-file '*.env'
 while IFS= read -r f; do
   [[ -f "$f" ]] || continue
   append_surface ci-workflow "$f"
-done < <(find "$REPO_ROOT" -type f \
+done < <(find -P "$REPO_ROOT" -type f \
   \( -path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/vendor/*' \) -prune \
   -o -type f \( -path '*/.github/workflows/*.yml' -o -path '*/.github/workflows/*.yaml' -o -name '.gitlab-ci.yml' \) -print 2>/dev/null)
 scan_glob terraform '*.tf'
@@ -67,7 +67,7 @@ while IFS= read -r f; do
       append_surface kubernetes "$f"
       ;;
   esac
-done < <(find "$REPO_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) \
+done < <(find -P "$REPO_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) \
   \( -path '*/.git/*' -o -path '*/node_modules/*' \) -prune -o -type f -print 2>/dev/null)
 
 sort -u -o "$OUT" "$OUT" 2>/dev/null || true

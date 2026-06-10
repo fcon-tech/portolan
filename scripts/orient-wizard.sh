@@ -224,7 +224,7 @@ run_ctags() {
     mkdir -p "$outdir"
     log "ctags: $repo"
     run_shard ctags "$repo" \
-      ctags --output-format=json --fields=+nKz -R \
+      ctags --output-format=json --fields=+nKz -R --links=no \
         --exclude=.git --exclude=node_modules --exclude=vendor \
         -f "$outdir/tags.json" "$repo" 2>>"$FAILURES_LOG" || true
   done < <(discover_repos)

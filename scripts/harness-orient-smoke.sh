@@ -55,7 +55,7 @@ fi
 
 # Truncation smoke: budget=2 must truncate when full list is longer
 TRUNC_ORIENT=$(mktemp -d)
-trap 'kill $PID 2>/dev/null || true; rm -rf "$TRUNC_ORIENT"' EXIT
+trap 'rm -rf "$TRUNC_ORIENT"' EXIT
 mkdir -p "$TRUNC_ORIENT/producers"
 cp -a "$ROOT/internal/testfixtures/orient-bundle/producers/." "$TRUNC_ORIENT/producers/"
 ORIENT_HOTSPOT_BUDGET=2 "$ROOT/scripts/build-orient-bundle.sh" "$FIXTURE_TARGET" "$TRUNC_ORIENT"
@@ -68,6 +68,7 @@ cd "$ROOT/viewer"
 node scripts/build-static.js
 node scripts/serve.js --bundle "$FIXTURE_ORIENT" --port "$VIEWER_PORT" &
 PID=$!
+trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$TRUNC_ORIENT"' EXIT
 sleep 1
 
 BASE="http://127.0.0.1:$VIEWER_PORT"

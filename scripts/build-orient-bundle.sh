@@ -249,8 +249,9 @@ if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
       . as $k | ([$all[] | select(.kind == $k)] | sort_h) | .[0:quota($k)]
     ) | add) as $selected |
     ($selected | map(.id)) as $ids |
-    ([$all[] | select(.id as $i | ($ids | index($i) | not))] | sort_h) as $rest |
-    ($selected + $rest[0:($budget - ($selected | length))]) |
+    ($budget - ($selected | length)) as $rem |
+    ([$all[] | select(.id as $i | ($ids | index($i) | not)) | select(.kind == "debt-candidate")] | sort_h | .[0:$rem]) as $debt_fill |
+    ($selected + $debt_fill) |
     sort_by(sev_rank(.severity), .kind, .summary) | .[]
   ' "$hotspots_raw" >"$budgeted" || {
     echo "warn: kind-quota jq failed; falling back to global head budget" >&2
