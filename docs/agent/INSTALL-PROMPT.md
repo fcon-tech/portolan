@@ -14,29 +14,29 @@ Replace variables with absolute local paths:
 ```text
 PORTOLAN_PATH=<absolute path to Portolan checkout>
 TARGET_PATH=<absolute path to local target>
-ORIENT_PATH=<absolute path to empty orient output directory>
+BUNDLE_DIR=<absolute path to empty bundle output directory>
 ```
 
 Then send:
 
 ```text
-Run the Portolan orient harness on TARGET_PATH. Write the orient bundle to
-ORIENT_PATH. Execute now; do not ask unless a path is missing.
+Run the Portolan harness on TARGET_PATH. Write the Portolan bundle to
+BUNDLE_DIR. Execute now; do not ask unless a path is missing.
 
 1. Read PORTOLAN_PATH/harness/SKILL.md
-2. PORTOLAN_PATH/scripts/orient-wizard.sh TARGET_PATH ORIENT_PATH --no-viewer --yes
-   (or run recipes manually + build-orient-bundle.sh if operator prefers)
+2. PORTOLAN_PATH/scripts/portolan-scan.sh TARGET_PATH BUNDLE_DIR --no-viewer --yes
+   (or run recipes manually + build-portolan-bundle.sh if operator prefers)
 3. Read hotspots.jsonl and gaps.jsonl; cite hotspot.id and producer_ref per
    PORTOLAN_PATH/harness/guardrails/citation-rules.md
 
 If harness blocks external writes, use
-PORTOLAN_PATH/.portolan/runs/<target-name> as ORIENT_PATH.
+PORTOLAN_PATH/.portolan/runs/<target-name> as BUNDLE_DIR.
 
 Answer with:
 1. Recipes run (verified/failed/blocked)
 2. Top 5 hotspots by rank with evidence
 3. Gaps and not_assessed surfaces
-4. Viewer command: cd PORTOLAN_PATH/viewer && npm run serve -- --bundle ORIENT_PATH
+4. Viewer command: cd PORTOLAN_PATH/viewer && npm run serve -- --bundle BUNDLE_DIR
 5. Unsupported claims avoided
 
 Legacy Go CLI (optional): docs/harness/GO-FREEZE-POLICY.md

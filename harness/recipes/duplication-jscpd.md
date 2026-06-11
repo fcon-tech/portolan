@@ -9,7 +9,7 @@
 
 ```bash
 TARGET=<absolute-target-root>
-OUT=<orient-dir>/producers/jscpd
+OUT=<bundle-dir>/producers/jscpd
 mkdir -p "$OUT"
 jscpd "$TARGET" \
   --reporters json \
@@ -19,7 +19,7 @@ jscpd "$TARGET" \
   --threshold 999999 \
   --noSymlinks \
   --gitignore \
-  --ignore "**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/node_modules/**,**/vendor/**,**/dist/**,**/orient-smoke/**"
+  --ignore "**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/node_modules/**,**/vendor/**,**/dist/**,**/portolan-smoke/**"
 ```
 
 ## Multi-repo (sharded)
@@ -28,7 +28,7 @@ Discover git repos under the landscape root, then run one jscpd command per repo
 
 ```bash
 ROOT=<landscape-root>
-OUT=<orient-dir>/producers/jscpd
+OUT=<bundle-dir>/producers/jscpd
 mkdir -p "$OUT"
 while IFS= read -r repo; do
   name=$(basename "$repo")
@@ -38,12 +38,12 @@ done < <(find "$ROOT" -name .git -type d -prune | sed 's|/.git||')
 ```
 
 Failed shards do not produce duplication metrics; mark duplication `not_assessed`
-for that repo in the orient bundle.
+for that repo in the Portolan bundle.
 
 ## Re-ingest
 
 ```bash
-scripts/build-orient-bundle.sh "$TARGET" "$ORIENT_DIR"
+scripts/build-portolan-bundle.sh "$TARGET" "$BUNDLE_DIR"
 ```
 
 ## Failure modes

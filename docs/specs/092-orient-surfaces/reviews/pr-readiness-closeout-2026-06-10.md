@@ -9,7 +9,7 @@
 | Surface | State | Evidence |
 | --- | --- | --- |
 | Local implementation | verified | tasks.md complete; slices 0–3 + 3.5 (gitignore) |
-| Local verification | verified | go test/vet, jq schema, harness-orient-smoke, git diff --check |
+| Local verification | verified | go test/vet, jq schema, harness-portolan-smoke, git diff --check |
 | Review evidence | verified | 4 assessed lanes + local on review-fix head; post-gitignore harness-only diff — repo-grounded re-check only |
 | PR state | ready-for-review | `gh pr view 65` isDraft=false |
 | GitHub checks | pending re-verify | force-push harness-only head; expect Baseline + CodeQL green |
@@ -22,7 +22,7 @@
 - ctags symbol density + `kind=debt-candidate`
 - PR #64 debt closure (repo_slug, smoke, CI wizard)
 - Review-fix: gaps, multi-repo paths, stronger smoke/CI
-- Slice 3.5: `.gitignore` across producers + bundle post-filter (`orient-ignore.sh`)
+- Slice 3.5: `.gitignore` across producers + bundle post-filter (`portolan-ignore.sh`)
 
 ## Out of scope (follow-up)
 

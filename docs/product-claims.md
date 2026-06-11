@@ -16,16 +16,16 @@ surface derived from that evidence.
 
 Portolan helps engineers and agents find where local code pain is visible:
 duplication clusters, static findings, dependency hubs, and configuration
-hotspots — then navigate there through a harness workflow and local orient map.
+hotspots — then navigate there through a harness workflow and the local viewer.
 
 The primary product path is harness-first: follow [`harness/SKILL.md`](../harness/SKILL.md),
-run documented OSS recipes, build an `orient/` bundle, and open the local viewer.
+run documented OSS recipes, build an Portolan bundle, and open the local viewer.
 The legacy Go CLI (`context prepare`, `map`) remains an optional bridge.
 
 Evidence discipline is a **secondary** (B2B) value: hotspots and viewer nodes
 cite `producer_ref` and evidence states; unknowns stay visible without blocking
 first-run navigation. Portolan does not replace mature scanners — it composes
-their local outputs into one orient surface.
+their local outputs into one Portolan surface.
 
 Named examples, including the Apache Bigtop runs, are evidence records for
 specific target shapes. They are not the main product path and must not be

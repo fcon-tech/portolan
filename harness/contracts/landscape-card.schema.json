@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/landscape-card.schema.json",
+  "title": "Portolan Landscape Card",
+  "type": "object",
+  "required": ["version", "identity", "scale", "maturity", "health_signals"],
+  "properties": {
+    "version": { "type": "string" },
+    "scanned_at": { "type": "string" },
+    "identity": { "type": "object" },
+    "scale": { "type": "object" },
+    "activity": { "type": "object" },
+    "maturity": { "type": "object" },
+    "health_signals": { "type": "object" }
+  },
+  "additionalProperties": true
+}

@@ -9,7 +9,7 @@
 | Surface | State | Evidence |
 | --- | --- | --- |
 | Local implementation | verified | specs 087–091 tasks complete; review-fix commit applied |
-| Local verification | verified | `go test -count=1 ./...`, `go vet ./...`, `jq empty` schemas, `scripts/harness-orient-smoke.sh` |
+| Local verification | verified | `go test -count=1 ./...`, `go vet ./...`, `jq empty` schemas, `scripts/harness-portolan-smoke.sh` |
 | Review evidence | verified | 3 replacement lanes + disposition in `reviews/pr-review-disposition-2026-06-10.md` |
 | PR state | ready-for-review | marked ready on `e2c7695` after all checks green |
 | GitHub checks | verified | Baseline + Analyze (go/python/actions) + CodeQL success on `e2c7695` |

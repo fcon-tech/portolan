@@ -6,7 +6,7 @@
 
 **Status**: Implemented (smoke + demo evidence in reviews/).
 
-**Input**: Demo-ready orient viewer: search, filters, directory heat tree, source
+**Input**: Demo-ready Portolan viewer: search, filters, directory heat tree, source
 preview, truncation transparency.
 
 ## User Scenarios
@@ -36,5 +36,5 @@ When hotspot budget truncated the bundle, the viewer shows how many were omitted
 
 ## Success Criteria
 
-- **SC-001**: harness-orient-smoke passes with search UI and /source path-safety checks.
+- **SC-001**: harness-portolan-smoke passes with search UI and /source path-safety checks.
 - **SC-002**: Demo works on portolan bundle (~128 hotspots) and bigtop bundle (200).

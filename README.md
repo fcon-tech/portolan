@@ -34,22 +34,22 @@ partly black-box.
 ## Harness-First Quick Start (recommended)
 
 Portolan is primarily a **harness supplement**: portable skill, OSS recipes,
-guardrails, and a local orient map — not a Go module you must install first.
+guardrails, and a local hotspot viewer — not a Go module you must install first.
 
 **One command** (tool check → recipes → bundle → viewer):
 
 ```bash
-scripts/orient-wizard.sh <target-root> <orient-dir> --yes
+scripts/portolan-scan.sh <target-root> <bundle-dir> --yes
 ```
 
-Add `--no-viewer` to build only. See `scripts/orient-wizard.sh --help`.
+Add `--no-viewer` to build only. See `scripts/portolan-scan.sh --help`.
 
-The orient viewer supports search, filters (including `config` and `debt-candidate`
-kinds), a directory heat map, and click-to-source preview (local files only).
+The viewer shows a ranked hotspot list, folder tree, search, filters (including
+`config` and `debt-candidate` kinds), and click-to-source preview (local files only).
 See [`docs/demo-runbook.md`](docs/demo-runbook.md).
 
 Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from
-[`harness/recipes/`](harness/recipes/), then `scripts/build-orient-bundle.sh`.
+[`harness/recipes/`](harness/recipes/), then `scripts/build-portolan-bundle.sh`.
 
 See [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md) for
 legacy Go CLI status.
@@ -300,7 +300,7 @@ For repository development:
 ```bash
 go test -count=1 ./...
 jq empty schema/*.json
-jq empty harness/contracts/orient-bundle.schema.json
-scripts/harness-orient-smoke.sh
+jq empty harness/contracts/portolan-bundle.schema.json
+scripts/harness-portolan-smoke.sh
 git diff --check
 ```

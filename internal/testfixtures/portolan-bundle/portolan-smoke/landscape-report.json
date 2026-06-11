@@ -1,0 +1,165 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at": "2026-06-11T06:31:47Z",
+  "target_root": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
+  "sections": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "blocks": [
+        {
+          "type": "text",
+          "text": "Target: /home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target"
+        },
+        {
+          "type": "text",
+          "text": "Findings shown: 7 of 7 found by scan"
+        },
+        {
+          "type": "card_ref",
+          "evidence_ref": "landscape-card.json"
+        }
+      ]
+    },
+    {
+      "id": "repos",
+      "title": "Repositories",
+      "items": [
+        {
+          "id": "target",
+          "name": "target",
+          "path": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
+          "evidence_ref": "repo:target"
+        }
+      ]
+    },
+    {
+      "id": "findings_by_kind",
+      "title": "Findings",
+      "groups": [
+        {
+          "kind": "config",
+          "count": 2,
+          "items": [
+            {
+              "id": "cfg-0b0a94188350",
+              "summary": "Config surface: docker-compose (1 files)",
+              "severity": "info",
+              "rank": 5,
+              "evidence_ref": "hotspot:cfg-0b0a94188350"
+            },
+            {
+              "id": "cfg-41103ff5c511",
+              "summary": "Config surface: dockerfile (1 files)",
+              "severity": "info",
+              "rank": 6,
+              "evidence_ref": "hotspot:cfg-41103ff5c511"
+            }
+          ]
+        },
+        {
+          "kind": "debt-candidate",
+          "count": 1,
+          "items": [
+            {
+              "id": "sym-e92eec1034e5",
+              "summary": "Symbol-dense file: sample.go (6 symbols)",
+              "severity": "medium",
+              "rank": 1,
+              "evidence_ref": "hotspot:sym-e92eec1034e5"
+            }
+          ]
+        },
+        {
+          "kind": "duplication",
+          "count": 2,
+          "items": [
+            {
+              "id": "dup-916524ed4981",
+              "summary": "Duplicate block (~42 lines): pkg/a/util.go",
+              "severity": "medium",
+              "rank": 2,
+              "evidence_ref": "hotspot:dup-916524ed4981"
+            },
+            {
+              "id": "dup-916524ed4981",
+              "summary": "Duplicate block (~42 lines): pkg/a/util.go",
+              "severity": "medium",
+              "rank": 3,
+              "evidence_ref": "hotspot:dup-916524ed4981"
+            }
+          ]
+        },
+        {
+          "kind": "static-finding",
+          "count": 2,
+          "items": [
+            {
+              "id": "semgrep-d1e57e314224",
+              "summary": "Semgrep portolan-hardcoded-secret-pattern",
+              "severity": "medium",
+              "rank": 4,
+              "evidence_ref": "hotspot:semgrep-d1e57e314224"
+            },
+            {
+              "id": "semgrep-47db41588c43",
+              "summary": "Semgrep portolan-todo-fixme",
+              "severity": "info",
+              "rank": 7,
+              "evidence_ref": "hotspot:semgrep-47db41588c43"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gaps",
+      "title": "Not assessed",
+      "items": [
+        {
+          "id": "gap-deps",
+          "surface": "dependencies",
+          "status": "not_assessed",
+          "summary": "No Syft/CycloneDX producer output found.",
+          "evidence_ref": "gap:gap-deps"
+        }
+      ]
+    },
+    {
+      "id": "next_steps",
+      "title": "Where to look first",
+      "items": [
+        {
+          "summary": "Symbol-dense file: sample.go (6 symbols)",
+          "kind": "debt-candidate",
+          "rank": 1,
+          "evidence_ref": "hotspot:sym-e92eec1034e5"
+        },
+        {
+          "summary": "Duplicate block (~42 lines): pkg/a/util.go",
+          "kind": "duplication",
+          "rank": 2,
+          "evidence_ref": "hotspot:dup-916524ed4981"
+        },
+        {
+          "summary": "Duplicate block (~42 lines): pkg/a/util.go",
+          "kind": "duplication",
+          "rank": 3,
+          "evidence_ref": "hotspot:dup-916524ed4981"
+        },
+        {
+          "summary": "Semgrep portolan-hardcoded-secret-pattern",
+          "kind": "static-finding",
+          "rank": 4,
+          "evidence_ref": "hotspot:semgrep-d1e57e314224"
+        },
+        {
+          "summary": "Config surface: docker-compose (1 files)",
+          "kind": "config",
+          "rank": 5,
+          "evidence_ref": "hotspot:cfg-0b0a94188350"
+        }
+      ]
+    }
+  ]
+}

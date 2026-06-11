@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# Build orient/ bundle from target root and optional producer outputs under
-# <orient-dir>/producers/. See harness/SKILL.md and spec 088/091.
+# Build Portolan bundle from target root and producer outputs under
+# <bundle-dir>/producers/. See harness/SKILL.md and spec 088/091/093.
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <target-root> <orient-dir>" >&2
+  echo "usage: $0 <target-root> <bundle-dir>" >&2
   exit 2
 fi
 
 TARGET_ROOT=$(cd "$1" && pwd)
-ORIENT_DIR=$2
-PRODUCERS_DIR="$ORIENT_DIR/producers"
-HOTSPOT_BUDGET="${ORIENT_HOTSPOT_BUDGET:-200}"
-GAP_BUDGET="${ORIENT_GAP_BUDGET:-20}"
+BUNDLE_DIR=$2
+PRODUCERS_DIR="$BUNDLE_DIR/producers"
+HOTSPOT_BUDGET="${PORTOLAN_HOTSPOT_BUDGET:-200}"
+GAP_BUDGET="${PORTOLAN_GAP_BUDGET:-20}"
 if ! [[ "$HOTSPOT_BUDGET" =~ ^[0-9]+$ ]] || [[ "$HOTSPOT_BUDGET" -lt 1 ]]; then
-  echo "invalid ORIENT_HOTSPOT_BUDGET: $HOTSPOT_BUDGET" >&2
+  echo "invalid PORTOLAN_HOTSPOT_BUDGET: $HOTSPOT_BUDGET" >&2
   exit 2
 fi
 if ! [[ "$GAP_BUDGET" =~ ^[0-9]+$ ]] || [[ "$GAP_BUDGET" -lt 1 ]]; then
-  echo "invalid ORIENT_GAP_BUDGET: $GAP_BUDGET" >&2
+  echo "invalid PORTOLAN_GAP_BUDGET: $GAP_BUDGET" >&2
   exit 2
 fi
-mkdir -p "$ORIENT_DIR" "$PRODUCERS_DIR"
+mkdir -p "$BUNDLE_DIR" "$PRODUCERS_DIR"
 
 command -v jq >/dev/null 2>&1 || {
   echo "jq is required" >&2
@@ -29,8 +29,8 @@ command -v jq >/dev/null 2>&1 || {
 }
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-# shellcheck source=orient-ignore.sh
-. "$SCRIPT_DIR/orient-ignore.sh"
+# shellcheck source=portolan-ignore.sh
+. "$SCRIPT_DIR/portolan-ignore.sh"
 
 producer_repo_slug() {
   local p=$1
@@ -43,7 +43,7 @@ producer_repo_slug() {
 # --- repos.json ---
 if [[ -d "$TARGET_ROOT/.git" ]]; then
   jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
-    '[{id: $name, path: $path, name: $name}]' >"$ORIENT_DIR/repos.json"
+    '[{id: $name, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
 else
   repos='[]'
   while IFS= read -r gitdir; do
@@ -56,7 +56,7 @@ else
     repos=$(jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
       '[{id: $name, path: $path, name: $name}]')
   fi
-  echo "$repos" >"$ORIENT_DIR/repos.json"
+  echo "$repos" >"$BUNDLE_DIR/repos.json"
 fi
 
 hotspots_raw=$(mktemp)
@@ -83,8 +83,8 @@ bundle_path_ignored() {
       root="$rpath"
       break
     fi
-  done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
-  orient_path_is_ignored "$root" "$norm"
+  done < <(jq -r '.[].path' "$BUNDLE_DIR/repos.json")
+  portolan_path_is_ignored "$root" "$norm"
 }
 
 filter_paths_json() {
@@ -211,7 +211,7 @@ while IFS= read -r rpath; do
   [[ -z "$rpath" ]] && continue
   slug=$(producer_repo_slug "$rpath")
   SLUG_REPO_ROOT[$slug]="$rpath"
-done < <(jq -r '.[].path' "$ORIENT_DIR/repos.json")
+done < <(jq -r '.[].path' "$BUNDLE_DIR/repos.json")
 
 # --- config surfaces (producers/config/*.jsonl) ---
 while IFS= read -r cfile; do
@@ -301,8 +301,8 @@ fi
 
 total_before=$(wc -l <"$sorted_all" | tr -d ' ')
 
-: >"$ORIENT_DIR/hotspots-full.jsonl"
-cp "$sorted_all" "$ORIENT_DIR/hotspots-full.jsonl"
+: >"$BUNDLE_DIR/hotspots-full.jsonl"
+cp "$sorted_all" "$BUNDLE_DIR/hotspots-full.jsonl"
 
 budgeted=$(mktemp)
 if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
@@ -343,20 +343,20 @@ if [[ "$budget_count" -gt "$HOTSPOT_BUDGET" ]]; then
   truncated=1
 fi
 
-: >"$ORIENT_DIR/hotspots.jsonl"
+: >"$BUNDLE_DIR/hotspots.jsonl"
 rank=0
 while IFS= read -r line; do
   [[ -z "$line" ]] && continue
   rank=$((rank + 1))
-  echo "$line" | jq -c --argjson rank "$rank" '. + {rank: $rank}' >>"$ORIENT_DIR/hotspots.jsonl"
+  echo "$line" | jq -c --argjson rank "$rank" '. + {rank: $rank}' >>"$BUNDLE_DIR/hotspots.jsonl"
 done <"$budgeted"
 
-hotspot_count=$(wc -l <"$ORIENT_DIR/hotspots.jsonl" | tr -d ' ')
+hotspot_count=$(wc -l <"$BUNDLE_DIR/hotspots.jsonl" | tr -d ' ')
 
-kind_counts_total=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add // {}' "$ORIENT_DIR/hotspots-full.jsonl" 2>/dev/null || echo '{}')
-kind_counts=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add // {}' "$ORIENT_DIR/hotspots.jsonl" 2>/dev/null || echo '{}')
+kind_counts_total=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add // {}' "$BUNDLE_DIR/hotspots-full.jsonl" 2>/dev/null || echo '{}')
+kind_counts=$(jq -s 'group_by(.kind) | map({(.[0].kind): length}) | add // {}' "$BUNDLE_DIR/hotspots.jsonl" 2>/dev/null || echo '{}')
 
-: >"$ORIENT_DIR/gaps.jsonl"
+: >"$BUNDLE_DIR/gaps.jsonl"
 gaps_truncated=0
 if [[ -s "$gaps_raw" ]]; then
   gap_sorted=$(mktemp)
@@ -371,14 +371,14 @@ if [[ -s "$gaps_raw" ]]; then
   ' "$gaps_raw" >"$gap_sorted"
   gap_total=$(wc -l <"$gap_sorted" | tr -d ' ')
   if [[ "$gap_total" -gt "$GAP_BUDGET" ]]; then
-    head -n "$GAP_BUDGET" "$gap_sorted" >>"$ORIENT_DIR/gaps.jsonl"
+    head -n "$GAP_BUDGET" "$gap_sorted" >>"$BUNDLE_DIR/gaps.jsonl"
     gaps_truncated=1
   else
-    cat "$gap_sorted" >>"$ORIENT_DIR/gaps.jsonl"
+    cat "$gap_sorted" >>"$BUNDLE_DIR/gaps.jsonl"
   fi
   rm -f "$gap_sorted"
 fi
-gap_count=$(wc -l <"$ORIENT_DIR/gaps.jsonl" | tr -d ' ')
+gap_count=$(wc -l <"$BUNDLE_DIR/gaps.jsonl" | tr -d ' ')
 
 jq -n \
   --arg schema_version "0.1.0" \
@@ -394,11 +394,88 @@ jq -n \
   --argjson gap_budget "$GAP_BUDGET" \
   --argjson gaps_truncated "$gaps_truncated" \
   '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
-  >"$ORIENT_DIR/manifest.json"
+  >"$BUNDLE_DIR/manifest.json"
 
-jq -s '{schema_version:"0.1.0",nodes:[.[]|{id:.id,label:.summary,kind:.kind,paths:(.paths//[])}],edges:[]}' \
-  "$ORIENT_DIR/hotspots.jsonl" >"$ORIENT_DIR/graph-slice.json" 2>/dev/null || \
-  echo '{"schema_version":"0.1.0","nodes":[],"edges":[]}' >"$ORIENT_DIR/graph-slice.json"
+# graph-slice: findings + unique path nodes for map tab
+jq -s '
+  . as $hs |
+  ($hs | map(.paths[]? // empty) | map(select(. != "(dependency-hub)")) | unique) as $paths |
+  {
+    schema_version: "0.1.0",
+    nodes: (
+      [ $hs[] | {id: .id, type: "finding", label: .summary, kind: .kind, severity: .severity, rank: .rank, paths: (.paths // [])} ]
+      + [ $paths[] | {id: ("path:" + .), type: "path", label: (. | split("/") | last), path: .} ]
+    ),
+    edges: [ $hs[] | . as $h | .paths[]? | select(. != "(dependency-hub)") | {from: ("path:" + .), to: $h.id, kind: "finding_at"} ]
+  }
+' "$BUNDLE_DIR/hotspots.jsonl" >"$BUNDLE_DIR/graph-slice.json" 2>/dev/null || \
+  echo '{"schema_version":"0.1.0","nodes":[],"edges":[]}' >"$BUNDLE_DIR/graph-slice.json"
+
+# landscape-card.json (spec 093)
+"$SCRIPT_DIR/scan-landscape-card.sh" "$TARGET_ROOT" "$BUNDLE_DIR/landscape-card.json" || \
+  echo '{"version":"0.1.0","identity":{"name":"unknown"},"scale":{},"maturity":{},"health_signals":{}}' >"$BUNDLE_DIR/landscape-card.json"
+
+# landscape-report.json (map.md-inspired sections)
+jq -n \
+  --slurpfile manifest "$BUNDLE_DIR/manifest.json" \
+  --slurpfile repos "$BUNDLE_DIR/repos.json" \
+  --slurpfile card "$BUNDLE_DIR/landscape-card.json" \
+  --rawfile hotspots "$BUNDLE_DIR/hotspots.jsonl" \
+  --rawfile gaps "$BUNDLE_DIR/gaps.jsonl" \
+  --rawfile hotspots_full "$BUNDLE_DIR/hotspots-full.jsonl" \
+  '
+  def hs_lines: ($hotspots | split("\n") | map(select(length > 0)) | map(fromjson));
+  def gap_lines: ($gaps | split("\n") | map(select(length > 0)) | map(fromjson));
+  def kind_groups:
+    hs_lines | group_by(.kind) | map({
+      kind: .[0].kind,
+      count: length,
+      items: map({id: .id, summary: .summary, severity: .severity, rank: .rank, evidence_ref: ("hotspot:" + .id)})
+    });
+  {
+    schema_version: "0.1.0",
+    generated_at: $manifest[0].generated_at,
+    target_root: $manifest[0].target_root,
+    sections: [
+      {
+        id: "overview",
+        title: "Overview",
+        blocks: [
+          {type: "text", text: ("Target: " + $manifest[0].target_root)},
+          {type: "text", text: ("Findings shown: " + ($manifest[0].hotspot_count|tostring) + " of " + ($manifest[0].hotspots_total|tostring) + " found by scan")},
+          {type: "card_ref", evidence_ref: "landscape-card.json"}
+        ]
+      },
+      {
+        id: "repos",
+        title: "Repositories",
+        items: [ $repos[0][] | {id: .id, name: .name, path: .path, evidence_ref: ("repo:" + .id)} ]
+      },
+      {
+        id: "findings_by_kind",
+        title: "Findings",
+        groups: kind_groups
+      },
+      {
+        id: "gaps",
+        title: "Not assessed",
+        items: [ gap_lines[] | {id: .id, surface: .surface, status: .status, summary: .summary, evidence_ref: ("gap:" + .id)} ]
+      },
+      {
+        id: "next_steps",
+        title: "Where to look first",
+        items: (
+          hs_lines | sort_by(.rank) | .[0:5] | map({
+            summary: .summary,
+            kind: .kind,
+            rank: .rank,
+            evidence_ref: ("hotspot:" + .id)
+          })
+        )
+      }
+    ]
+  }
+  ' >"$BUNDLE_DIR/landscape-report.json"
 
 rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
-echo "orient bundle written to $ORIENT_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
+echo "Portolan bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"

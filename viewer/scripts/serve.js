@@ -16,7 +16,7 @@ for (let i = 0; i < args.length; i++) {
 }
 
 if (!bundlePath || !fs.existsSync(bundlePath)) {
-  console.error('usage: npm run serve -- --bundle <orient-dir> [--port 4173]');
+  console.error('usage: npm run serve -- --bundle <bundle-dir> [--port 4173]');
   process.exit(2);
 }
 
@@ -146,6 +146,15 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/repos.json') {
     return sendFile(path.join(bundlePath, 'repos.json'), res);
   }
+  if (url.pathname === '/bundle/hotspots-full.jsonl') {
+    return sendFile(path.join(bundlePath, 'hotspots-full.jsonl'), res);
+  }
+  if (url.pathname === '/bundle/landscape-card.json') {
+    return sendFile(path.join(bundlePath, 'landscape-card.json'), res);
+  }
+  if (url.pathname === '/bundle/landscape-report.json') {
+    return sendFile(path.join(bundlePath, 'landscape-report.json'), res);
+  }
 
   const distResolved = path.resolve(distDir) + path.sep;
   let filePath = path.resolve(
@@ -172,6 +181,6 @@ function sendFile(filePath, res) {
 }
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`Portolan orient viewer: http://127.0.0.1:${port}/`);
+  console.log(`Portolan viewer: http://127.0.0.1:${port}/`);
   console.log(`Bundle: ${bundlePath}`);
 });

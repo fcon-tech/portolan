@@ -1,0 +1,1 @@
+{"id":"gap-deps","surface":"dependencies","status":"not_assessed","summary":"No Syft/CycloneDX producer output found.","recipe":"harness/recipes/deps-syft-cyclonedx.md"}

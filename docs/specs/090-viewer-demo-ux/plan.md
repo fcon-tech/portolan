@@ -7,12 +7,12 @@
 - [viewer/src/](../../../viewer/src/) — search, filters, heat tree, detail + source
 - [viewer/scripts/serve.js](../../../viewer/scripts/serve.js) — `/source` endpoint
 - [docs/demo-runbook.md](../../../docs/demo-runbook.md)
-- Smoke extensions in [scripts/harness-orient-smoke.sh](../../../scripts/harness-orient-smoke.sh)
+- Smoke extensions in [scripts/harness-portolan-smoke.sh](../../../scripts/harness-portolan-smoke.sh)
 
 ## Verification
 
 ```bash
 node viewer/scripts/build-static.js
-scripts/harness-orient-smoke.sh
-scripts/orient-wizard.sh . /tmp/orient-portolan --no-viewer --yes
+scripts/harness-portolan-smoke.sh
+scripts/portolan-scan.sh . /tmp/portolan-portolan --no-viewer --yes
 ```
