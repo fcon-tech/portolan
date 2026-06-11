@@ -180,7 +180,7 @@ fixtures are preflight evidence only.
 | P7-090 | `docs/specs/090-viewer-demo-ux/` | Demo-ready viewer: search, filters, directory heat map, source preview, demo runbook. | Implemented |
 | P7-091 | `docs/specs/091-landscape-scale/` | Full bigtop scale: bounded jscpd shards, shard gaps, kind-quota budget, hotspots-full.jsonl. | Implemented |
 | P7-092 | `docs/specs/092-orient-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh; gitignore hardening. | Implemented via PR #65 |
-| P7-093 | `docs/specs/093-viewer-landscape-ux/` | Landscape report viewer: `portolan-scan`, landscape-card/report bundle, tabbed Overview/Findings/Gaps (report-first, map.md sections). | Ready for review (PR #66) |
+| P7-093 | `docs/specs/093-viewer-landscape-ux/` | Landscape report viewer: `portolan-scan`, landscape-card/report bundle, tabbed Overview/Findings/Gaps (report-first, map.md sections). | Implemented via PR #66 |
 | P7-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Local Portolan viewer (UA-inspired) over evidence hotspots. | Demo-ready in `viewer/` (spec 090) |
 | P7-ADR | `docs/adr/001-go-cli-fate.md` | Go CLI maintenance-mode decision after harness smoke. | Provisional ADR recorded |
 

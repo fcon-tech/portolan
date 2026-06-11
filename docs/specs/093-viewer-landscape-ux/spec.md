@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-10
 
-**Status**: Active implementation
+**Status**: Implemented (merged PR #66, 2026-06-11)
 
 **Input**: Human-readable landscape report in the viewer: Portolan `landscape-card.json` /
 `landscape-report.json` and `map.md`-style sections. Resurrects pruned `052-agent-scan-report-ux`

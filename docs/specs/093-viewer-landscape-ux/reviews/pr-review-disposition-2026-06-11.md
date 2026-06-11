@@ -58,6 +58,6 @@
 
 ## Merge readiness
 
-**Local implementation: LGTM** — all assessed local review lanes pass; no blocking findings remain.
+**Merged** — squash merge to `main` at `d40fee2` (2026-06-11). User LGTM + explicit merge authorization in session.
 
-**PR #66: ready-for-review** — CI green on `abcf87b`. OpenCode independent lanes (glm/kimi/minimax) remain `not_assessed`; merge per AGENTS.md still needs explicit user approval and optional OpenCode lane retry.
+See `merge-closeout-2026-06-11.md`.
