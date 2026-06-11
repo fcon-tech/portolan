@@ -1,5 +1,6 @@
 # Tasks: Repo Profiles Producer (104)
 
-- [ ] scan-repo-profiles.sh + repo-profiles.json
-- [ ] Slug-based repos.json ids
-- [ ] Schema + bundle-build wiring + smoke slice
+- [x] scan-repo-profiles.sh + repo-profiles.json
+- [x] Slug-based repos.json ids
+- [x] Schema + bundle-build wiring (gap on failure)
+- [ ] Smoke slice on 2-repo fixture landscape (delivered with P9 smoke, see harness-cross-repo-smoke.sh)

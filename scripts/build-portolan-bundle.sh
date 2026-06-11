@@ -40,23 +40,33 @@ producer_repo_slug() {
   echo "${base}-${hash}"
 }
 
-# --- repos.json ---
+# --- repos.json (slug ids: basename + path hash, collision-safe; spec 104) ---
 if [[ -d "$TARGET_ROOT/.git" ]]; then
-  jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
-    '[{id: $name, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
+  jq -n --arg id "$(producer_repo_slug "$TARGET_ROOT")" \
+    --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
+    '[{id: $id, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
 else
   repos='[]'
   while IFS= read -r gitdir; do
     repo=$(dirname "$gitdir")
     name=$(basename "$repo")
-    repos=$(echo "$repos" | jq --arg id "$name" --arg path "$repo" --arg name "$name" \
+    repos=$(echo "$repos" | jq --arg id "$(producer_repo_slug "$repo")" --arg path "$repo" --arg name "$name" \
       '. + [{id: $id, path: $path, name: $name}]')
-  done < <(find "$TARGET_ROOT" -name .git -type d 2>/dev/null || true)
+  done < <(find "$TARGET_ROOT" -name .git -type d 2>/dev/null | sort || true)
   if [[ "$(echo "$repos" | jq 'length')" -eq 0 ]]; then
-    repos=$(jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
-      '[{id: $name, path: $path, name: $name}]')
+    repos=$(jq -n --arg id "$(producer_repo_slug "$TARGET_ROOT")" \
+      --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
+      '[{id: $id, path: $path, name: $name}]')
   fi
   echo "$repos" >"$BUNDLE_DIR/repos.json"
+fi
+
+# --- repo-profiles.json (spec 104) ---
+if ! "$SCRIPT_DIR/scan-repo-profiles.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
+  echo "warn: scan-repo-profiles failed; recording gap" >&2
+  PROFILE_GAP=1
+else
+  PROFILE_GAP=0
 fi
 
 hotspots_raw=$(mktemp)
@@ -70,6 +80,9 @@ append_gap() {
     --arg summary "$4" --arg recipe "${5:-}" \
     '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' >>"$gaps_raw"
 }
+
+[[ "${PROFILE_GAP:-0}" -eq 1 ]] && append_gap "gap-repo-profiles" "repo-profiles" "cannot_verify" \
+  "scan-repo-profiles failed during bundle build." "scripts/scan-repo-profiles.sh"
 
 bundle_path_ignored() {
   local p=$1
