@@ -2,9 +2,9 @@
 
 ## Slice 0 — PR #64 debt
 
-- `repo_slug` hash in orient-wizard.sh
+- `repo_slug` hash in portolan-scan.sh
 - spec 088 layout: hotspots-full.jsonl, manifest fields
-- harness-orient-smoke: filter-bar, heat-tree, status-banner, truncation test
+- harness-portolan-smoke: filter-bar, heat-tree, status-banner, truncation test
 - CI: wizard --skip-install on fixture target
 
 ## Slice 1 — config-surfaces
@@ -12,7 +12,7 @@
 - `scripts/scan-config-surfaces.sh`
 - `harness/recipes/config-surfaces.md`
 - wizard `run_config` + bundle jq + kind quotas
-- fixture config files under orient-bundle/target
+- fixture config files under portolan-bundle/target
 
 ## Slice 2 — ctags
 
@@ -26,7 +26,7 @@
 
 ## Slice 3.5 — gitignore hardening
 
-- `scripts/orient-ignore.sh` + `git check-ignore` fallback patterns
+- `scripts/portolan-ignore.sh` + `git check-ignore` fallback patterns
 - jscpd `--gitignore`, ctags `git ls-files -co --exclude-standard`, config scan filter
-- bundle post-filter in `build-orient-bundle.sh`
-- harness-orient-smoke: assert ignored paths excluded from fixture bundle
+- bundle post-filter in `build-portolan-bundle.sh`
+- harness-portolan-smoke: assert ignored paths excluded from fixture bundle

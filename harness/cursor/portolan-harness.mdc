@@ -1,17 +1,17 @@
 ---
-description: Portolan orient harness — recipes, orient bundle, local map viewer
+description: Portolan harness — recipes, Portolan bundle, local map viewer
 globs:
 alwaysApply: false
 ---
 
-# Portolan Orient
+# Portolan harness
 
 When mapping a local codebase for duplication, static findings, or dependency hubs:
 
 1. Read `harness/SKILL.md` in the Portolan checkout.
 2. Run approved recipes from `harness/recipes/`.
-3. Build bundle: `scripts/build-orient-bundle.sh <target> <orient-dir>`.
-4. Open viewer: `cd viewer && npm run serve -- --bundle <orient-dir>`.
+3. Build bundle: `scripts/build-portolan-bundle.sh <target> <bundle-dir>`.
+4. Open viewer: `cd viewer && npm run serve -- --bundle <bundle-dir>`.
 5. Follow `harness/guardrails/citation-rules.md` for answers.
 
 Do not require `go install` unless the user asks for the legacy Go path.

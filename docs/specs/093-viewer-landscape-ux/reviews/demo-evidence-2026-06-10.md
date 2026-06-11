@@ -10,7 +10,7 @@
 | Viewer default tab | Overview (`#report-overview`) |
 | Bundle artifacts | `landscape-card.json`, `landscape-report.json`, `graph-slice.json` |
 
-## Fixture smoke bundle (`orient-smoke`)
+## Fixture smoke bundle (`portolan-smoke`)
 
 - **Identity**: fixture target name from `landscape-card.json`
 - **Findings**: 7 shown / 7 total (no truncation in fixture)
@@ -28,7 +28,7 @@
 
 ## Comparison notes
 
-- **sdp_lab scout**: card fields mirror simplified `ProjectCard` (identity, scale, maturity, health_signals) without runtime `sdp scout` dependency.
+- **landscape-card.json**: standalone Portolan contract (identity, scale, maturity, health_signals); no external scout runtime.
 - **map.md**: `landscape-report.json` sections `repos`, `findings_by_kind`, `gaps`, `next_steps` align with `writeMap` section intent; full Go `portolan map` bridge deferred to spec 094.
 
 ## Not assessed

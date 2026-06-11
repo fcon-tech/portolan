@@ -7,12 +7,12 @@
 
 ## Bounded scan
 
-Per repository shard (orient-wizard default):
+Per repository shard (portolan-scan default):
 
 ```bash
 REPO=<absolute-repo-path>
 SLUG=<repo-slug>
-OUT=<orient-dir>/producers/config/${SLUG}.jsonl
+OUT=<bundle-dir>/producers/config/${SLUG}.jsonl
 scripts/scan-config-surfaces.sh "$REPO" "$OUT"
 ```
 
@@ -23,7 +23,7 @@ scripts/scan-config-surfaces.sh "$REPO" "$OUT"
 ## Re-ingest
 
 ```bash
-scripts/build-orient-bundle.sh "$TARGET" "$ORIENT_DIR"
+scripts/build-portolan-bundle.sh "$TARGET" "$BUNDLE_DIR"
 ```
 
 Hotspots use kind `config`, grouped by `surface_kind` per repo (not one hotspot per file).

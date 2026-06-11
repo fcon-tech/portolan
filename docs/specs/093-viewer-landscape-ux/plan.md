@@ -7,7 +7,7 @@ Portolan naming, explainers, folder tree + list (superseded by tabbed report).
 ## Slice 3b — CLI naming
 
 - `portolan-scan.sh`, `build-portolan-bundle.sh`, `harness-portolan-smoke.sh`, `portolan-ignore.sh`
-- Deprecation wrappers for legacy `orient-*` names
+- Remove misnamed legacy scripts (no deprecation wrappers)
 
 ## Slice 4 — Report artifacts
 

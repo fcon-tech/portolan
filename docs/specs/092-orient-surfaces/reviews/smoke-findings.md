@@ -6,7 +6,7 @@
 ## Smoke A — portolan (self)
 
 ```bash
-scripts/orient-wizard.sh . /tmp/orient-smoke-a --no-viewer --skip-install --yes
+scripts/portolan-scan.sh . /tmp/portolan-smoke-a --no-viewer --skip-install --yes
 ```
 
 | Metric | Value |
@@ -28,7 +28,7 @@ Re-run on harness-only head: ignored agent artifact paths no longer appear in bu
 ## Smoke B — bigtop bounded (3 repos)
 
 ```bash
-scripts/orient-wizard.sh ~/projects/bigtop-landscape/repos /tmp/orient-smoke-b \
+scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-smoke-b \
   --no-viewer --skip-install --yes --limit-repos 3
 ```
 
@@ -44,12 +44,12 @@ config + ctags producers ran per repo; bundle kind mix includes duplication, con
 
 ## Fixture smoke (CI)
 
-`scripts/harness-orient-smoke.sh` — **verified** locally:
+`scripts/harness-portolan-smoke.sh` — **verified** locally:
 
 - kind `config` and `debt-candidate` in fixture bundle
 - viewer DOM: `filter-bar`, `heat-tree`, `status-banner`
-- `ORIENT_HOTSPOT_BUDGET=2` truncation manifest + full list length
+- `PORTOLAN_HOTSPOT_BUDGET=2` truncation manifest + full list length
 
 ## Wizard CI orchestration
 
-`orient-wizard.sh` on fixture with `--skip-install --no-viewer` — gaps non-empty (`not_assessed` for missing syft when tools skipped).
+`portolan-scan.sh` on fixture with `--skip-install --no-viewer` — gaps non-empty (`not_assessed` for missing syft when tools skipped).

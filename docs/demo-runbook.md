@@ -56,7 +56,7 @@ Operator answers without external docs:
 | Top problems? | Overview → next steps; Findings → sections |
 | What was not checked? | Gaps tab |
 
-Compare mentally with `sdp scout` text output and `docs/test-corpora/apache-bigtop/examples/map-excerpt.md`.
+Compare with `docs/test-corpora/apache-bigtop/examples/map-excerpt.md` for section parity.
 
 ## Talking points
 

@@ -50,7 +50,7 @@ When you need fine-grained control, run individual recipes from `harness/recipes
 | Config / deploy surfaces? | `config-surfaces.md` |
 | Symbol-dense files (optional) | `symbols-ctags.md` |
 
-Write outputs under `$ORIENT_PATH/producers/`, then:
+Write outputs under `$BUNDLE_DIR/producers/`, then:
 
 ```bash
 "$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "$TARGET_PATH" "$BUNDLE_DIR"
@@ -59,7 +59,7 @@ Write outputs under `$ORIENT_PATH/producers/`, then:
 ### Open viewer (human)
 
 ```bash
-cd "$PORTOLAN_PATH/viewer" && npm install && npm run serve -- --bundle "$ORIENT_PATH"
+cd "$PORTOLAN_PATH/viewer" && npm install && npm run serve -- --bundle "$BUNDLE_DIR"
 ```
 
 Viewer features (spec 090): folder tree, ranked list, search, kind/severity/repo
@@ -71,9 +71,9 @@ Demo script: [`docs/demo-runbook.md`](../docs/demo-runbook.md).
 
 Read in order:
 
-1. `$ORIENT_PATH/manifest.json`
-2. `$ORIENT_PATH/hotspots.jsonl` (ranked pain points)
-3. `$ORIENT_PATH/gaps.jsonl` (missing evidence — do not invent)
+1. `$BUNDLE_DIR/manifest.json`
+2. `$BUNDLE_DIR/hotspots.jsonl` (ranked pain points)
+3. `$BUNDLE_DIR/gaps.jsonl` (missing evidence — do not invent)
 
 Cite `hotspot.id` and `producer_ref` for every material claim.
 
@@ -82,8 +82,8 @@ Guardrails: `harness/guardrails/`.
 ## Legacy bridge (optional)
 
 ```bash
-go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$ORIENT_PATH/map" --force
-"$PORTOLAN_PATH/scripts/orient-export-from-map.sh" "$ORIENT_PATH/map" "$ORIENT_PATH"
+go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$BUNDLE_DIR/map" --force
+"$PORTOLAN_PATH/scripts/portolan-export-from-map.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
 ```
 
 ## User question routing

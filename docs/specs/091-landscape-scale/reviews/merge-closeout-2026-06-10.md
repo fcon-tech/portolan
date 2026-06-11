@@ -21,8 +21,8 @@
 | --- | --- |
 | `gh pr checks 64` | pass (Baseline, Analyze go/python/actions, CodeQL) |
 | `go test ./...` | pass |
-| `scripts/harness-orient-smoke.sh` | ok |
-| User smoke | `scripts/orient-wizard.sh . /tmp/orient-check --no-viewer --yes` → 128 hotspots, 0 gaps |
+| `scripts/harness-portolan-smoke.sh` | ok |
+| User smoke | `scripts/portolan-scan.sh . /tmp/portolan-check --no-viewer --yes` → 128 hotspots, 0 gaps |
 
 ## Review evidence
 

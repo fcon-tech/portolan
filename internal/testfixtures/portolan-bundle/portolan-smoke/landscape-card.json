@@ -1,0 +1,42 @@
+{
+  "version": "0.1.0",
+  "scanned_at": "2026-06-11T05:46:32Z",
+  "identity": {
+    "name": "target",
+    "primary_language": "go",
+    "languages": {
+      "go": {
+        "files": 1,
+        "ratio": 1.0000
+      },
+      "config": {
+        "files": 1,
+        "ratio": 1.0000
+      }
+    },
+    "monorepo": false,
+    "build_system": null,
+    "repo_count": 0
+  },
+  "scale": {
+    "total_files": 3,
+    "source_files": 1,
+    "test_files": 0,
+    "test_ratio": 0.0000
+  },
+  "activity": {
+    "last_commit": null,
+    "contributors": 0,
+    "commits_30d": 0
+  },
+  "maturity": {
+    "has_readme": false,
+    "has_ci": false,
+    "has_tests": false,
+    "has_docker": true
+  },
+  "health_signals": {
+    "staleness": "unknown",
+    "test_coverage_hint": "none"
+  }
+}

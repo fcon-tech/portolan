@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # One-command Portolan scan: tool check → recipes → bundle → viewer.
-# See docs/specs/089-orient-wizard/ and harness/SKILL.md.
+# See docs/specs/089-portolan-scan/ (superseded by portolan-scan) and harness/SKILL.md.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 # shellcheck source=portolan-ignore.sh
 . "$(dirname "$0")/portolan-ignore.sh"
 
-JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor/**,**/.agents/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/orient-smoke/**,**/generated/**"
+JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor/**,**/.agents/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/portolan-smoke/**,**/generated/**"
 
 YES=0
 SKIP_INSTALL=0
@@ -91,13 +91,13 @@ if [[ "$LIMIT_REPOS" != 0 ]] && { ! [[ "$LIMIT_REPOS" =~ ^[0-9]+$ ]] || [[ "$LIM
 fi
 
 TARGET_ROOT=$(cd "${POSITIONAL[0]}" && pwd)
-ORIENT_DIR=${POSITIONAL[1]}
-PRODUCERS_DIR="$ORIENT_DIR/producers"
+BUNDLE_DIR=${POSITIONAL[1]}
+PRODUCERS_DIR="$BUNDLE_DIR/producers"
 FAILURES_LOG="$PRODUCERS_DIR/_failures.log"
 SHARD_GAPS="$PRODUCERS_DIR/_gaps.jsonl"
 SEMGREP_RULES="$ROOT/harness/recipes/semgrep-rules/portolan-local.yaml"
 
-mkdir -p "$ORIENT_DIR" "$PRODUCERS_DIR"
+mkdir -p "$BUNDLE_DIR" "$PRODUCERS_DIR"
 : >"$FAILURES_LOG"
 : >"$SHARD_GAPS"
 
@@ -227,7 +227,7 @@ run_ctags() {
     outdir="$PRODUCERS_DIR/ctags/$slug"
     mkdir -p "$outdir"
     list_file=$(mktemp)
-    orient_repo_file_list "$repo" >"$list_file"
+    portolan_repo_file_list "$repo" >"$list_file"
     if [[ ! -s "$list_file" ]]; then
       log "ctags: $repo (no non-ignored files)"
       rm -f "$list_file"
@@ -375,24 +375,24 @@ elif has_producer ctags; then
     "harness/recipes/symbols-ctags.md"
 fi
 
-export ORIENT_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
-"$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$ORIENT_DIR"
+export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
+"$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
 
 log "--- summary ---"
-if [[ -f "$ORIENT_DIR/manifest.json" ]]; then
-  jq -r '"hotspots=\(.hotspot_count) gaps=\(.gap_count) target=\(.target_root)"' "$ORIENT_DIR/manifest.json"
+if [[ -f "$BUNDLE_DIR/manifest.json" ]]; then
+  jq -r '"hotspots=\(.hotspot_count) gaps=\(.gap_count) target=\(.target_root)"' "$BUNDLE_DIR/manifest.json"
 fi
-if [[ -f "$ORIENT_DIR/hotspots.jsonl" ]]; then
+if [[ -f "$BUNDLE_DIR/hotspots.jsonl" ]]; then
   log "top hotspots:"
-  head -5 "$ORIENT_DIR/hotspots.jsonl" | jq -r '"  #\(.rank) [\(.kind)] \(.summary)"'
+  head -5 "$BUNDLE_DIR/hotspots.jsonl" | jq -r '"  #\(.rank) [\(.kind)] \(.summary)"'
 fi
-if [[ -f "$ORIENT_DIR/gaps.jsonl" && -s "$ORIENT_DIR/gaps.jsonl" ]]; then
+if [[ -f "$BUNDLE_DIR/gaps.jsonl" && -s "$BUNDLE_DIR/gaps.jsonl" ]]; then
   log "gaps:"
-  cat "$ORIENT_DIR/gaps.jsonl" | jq -r '"  \(.surface): \(.status) — \(.summary)"'
+  cat "$BUNDLE_DIR/gaps.jsonl" | jq -r '"  \(.surface): \(.status) — \(.summary)"'
 fi
 
 if [[ "$NO_VIEWER" -eq 1 ]]; then
-  log "bundle ready at $ORIENT_DIR (--no-viewer)"
+  log "bundle ready at $BUNDLE_DIR (--no-viewer)"
   exit 0
 fi
 
@@ -401,4 +401,4 @@ command -v node >/dev/null || { log "node is required for viewer"; exit 1; }
 cd "$ROOT/viewer"
 node scripts/build-static.js
 log "viewer: http://127.0.0.1:$PORT/ (Ctrl+C to stop)"
-exec node scripts/serve.js --bundle "$ORIENT_DIR" --port "$PORT"
+exec node scripts/serve.js --bundle "$BUNDLE_DIR" --port "$PORT"

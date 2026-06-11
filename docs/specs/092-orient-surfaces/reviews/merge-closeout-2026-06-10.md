@@ -20,7 +20,7 @@
 - Config surfaces producer + bundle `kind=config`
 - ctags symbol density + `kind=debt-candidate`
 - Kind-quota budget + PR #64 debt closure
-- FR-007 gitignore hardening (`orient-ignore.sh`)
+- FR-007 gitignore hardening (`portolan-ignore.sh`)
 - Real-target smoke in `reviews/smoke-findings.md`
 
 ## Stop reason

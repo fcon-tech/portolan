@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "target_root": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
+  "generated_at": "2026-06-11T05:46:32Z",
+  "hotspot_count": 7,
+  "gap_count": 1,
+  "hotspot_budget": 200,
+  "hotspots_truncated": 0,
+  "hotspots_total": 7,
+  "kind_counts": {
+    "config": 2,
+    "debt-candidate": 1,
+    "duplication": 2,
+    "static-finding": 2
+  },
+  "kind_counts_total": {
+    "config": 2,
+    "debt-candidate": 1,
+    "duplication": 2,
+    "static-finding": 2
+  },
+  "gap_budget": 20,
+  "gaps_truncated": 0
+}

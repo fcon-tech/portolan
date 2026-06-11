@@ -43,18 +43,18 @@ be verified through link, schema, and placeholder checks instead of code tests.
 ## Product Constraints
 
 - Primary delivery: harness artifacts (`harness/` skills, recipes, guardrails,
-  contracts) plus optional local orient viewer output.
+  contracts) plus optional local Portolan viewer output.
 - Implementation language: Go remains for the legacy CLI and normalization
   library; new product slices may use shell, TypeScript, or other local tooling
   when a spec documents the boundary.
-- Runtime default: harness-first workflow (OSS recipes → orient bundle → viewer);
+- Runtime default: harness-first workflow (OSS recipes → Portolan bundle → viewer);
   legacy Go CLI is frozen for new features until the Go decision gate resolves.
-- Default output: ranked `orient/` hotspot bundle for navigation; legacy
+- Default output: ranked Portolan bundle (`manifest.json`, `hotspots.jsonl`, …) for navigation; legacy
   machine-readable evidence graph remains supported as an optional bridge.
-- Local viewer: a read-only static orient viewer may be served locally for the
+- Local viewer: a read-only static Portolan viewer may be served locally for the
   duration of a user session; it must not mutate targets or require network by
   default.
-- Viewer truth boundary: graph nodes in the orient viewer must come from imported
+- Viewer truth boundary: graph nodes in the Portolan viewer must come from imported
   producer evidence or Portolan normalization; LLM-authored graphs are UX-only and
   must never be labeled `source-visible`.
 - Default privacy posture: no raw private source snippets, prompts, credentials,

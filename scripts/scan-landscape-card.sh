@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Emit landscape-card.json (sdp scout ProjectCard-inspired, no LLM).
+# Emit landscape-card.json (standalone Portolan contract; no sdp_lab runtime).
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
@@ -47,9 +47,9 @@ count_file() {
 if [[ -d "$TARGET_ROOT/.git" ]]; then
   while IFS= read -r rel; do
     [[ -z "$rel" ]] && continue
-    orient_rel_path_is_ignored "$TARGET_ROOT" "$rel" && continue
+    portolan_rel_path_is_ignored "$TARGET_ROOT" "$rel" && continue
     count_file "$rel"
-  done < <(orient_repo_file_list "$TARGET_ROOT")
+  done < <(portolan_repo_file_list "$TARGET_ROOT")
 else
   while IFS= read -r f; do
     rel=${f#"$TARGET_ROOT"/}

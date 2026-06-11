@@ -18,7 +18,7 @@ Open http://127.0.0.1:4173/
 
 ```bash
 npm run build
-npm run serve -- --bundle ../internal/testfixtures/orient-bundle/orient-smoke
+npm run serve -- --bundle ../internal/testfixtures/portolan-bundle/portolan-smoke
 ```
 
 Bundle from `build-portolan-bundle.sh` also includes `landscape-card.json` and `landscape-report.json` for the Overview tab.

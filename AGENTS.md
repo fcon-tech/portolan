@@ -18,7 +18,7 @@ Portolan is not:
 Portolan is:
 
 - a read-only local discovery substrate an agent can run;
-- a harness-first supplement (`harness/SKILL.md`, recipes, guardrails, orient
+- a harness-first supplement (`harness/SKILL.md`, recipes, guardrails, Portolan
   viewer) with an optional legacy Go CLI bridge;
 - a normalizer for source, metadata, runtime, and claim evidence;
 - a machine-readable evidence graph;
@@ -42,7 +42,7 @@ Portolan is:
 
 ## Engineering Rules
 
-- Primary delivery: harness artifacts and orient bundle contract; see spec 087.
+- Primary delivery: harness artifacts and Portolan bundle contract; see spec 087.
 - Go CLI is frozen for new features per
   [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md).
 - Keep `cmd/portolan` thin; put behavior in internal packages when Go changes are
@@ -193,7 +193,7 @@ Run:
 go test ./...
 go vet ./...
 jq empty schema/*.json
-jq empty harness/contracts/orient-bundle.schema.json
+jq empty harness/contracts/portolan-bundle.schema.json
 scripts/harness-portolan-smoke.sh
 scripts/portolan-scan.sh --help
 jq empty harness/contracts/landscape-card.schema.json
@@ -216,11 +216,17 @@ shell commands, and other important information, read the current plan:
 ## Learned User Preferences
 
 - Ask clarifying questions before drafting implementation plans when harness targets, Go role, or MVP surface are still open.
-- Prioritize user-facing landscape navigation (hotspots, tech debt, duplication, where to look first) over evidence-discipline artifacts as the primary deliverable.
+- Prioritize a report-first landscape viewer (Overview landing with ranked problems) over raw hotspot lists, map-only icicles, or evidence-discipline artifacts as the primary deliverable.
 - Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan.
 - Expand harness rules, guardrails, and OSS tool recipes rather than the Go codebase when adding product behavior.
+- Use Portolan-prefixed names in user-facing CLI, scripts, and UI copy (e.g. `portolan-scan`, `scripts/portolan-scan.sh`).
+- Explain in the viewer why findings rank as problems and what each navigation control does.
+- Review delivery by observable facts and demo behavior, not code inspection alone.
 
 ## Learned Workspace Facts
 
-- Understand-Anything is the reference UX for the local orient map; graph nodes must stay evidence-backed, not LLM-authored truth.
+- Understand-Anything drill-down inside a landscape report is the reference UX; graph nodes must stay evidence-backed, not LLM-authored truth.
 - Product-success questions center on concrete code pain (debt, duplication, risky zones), not abstract trust infrastructure alone.
+- Landscape report UX references Portolan `map.md` sections and the standalone `landscape-card.json` contract; no sdp_lab runtime dependency.
+- Demo-ready output must let an operator identify the target, repos, top problems, and gaps without external docs.
+- Scan and viewer inventories must honor `.gitignore`.

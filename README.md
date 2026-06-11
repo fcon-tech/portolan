@@ -42,7 +42,7 @@ guardrails, and a local hotspot viewer — not a Go module you must install firs
 scripts/portolan-scan.sh <target-root> <bundle-dir> --yes
 ```
 
-Add `--no-viewer` to build only. See `scripts/portolan-scan.sh --help`. Legacy `orient-wizard.sh` remains as a deprecation wrapper.
+Add `--no-viewer` to build only. See `scripts/portolan-scan.sh --help`.
 
 The viewer shows a ranked hotspot list, folder tree, search, filters (including
 `config` and `debt-candidate` kinds), and click-to-source preview (local files only).
@@ -300,7 +300,7 @@ For repository development:
 ```bash
 go test -count=1 ./...
 jq empty schema/*.json
-jq empty harness/contracts/orient-bundle.schema.json
+jq empty harness/contracts/portolan-bundle.schema.json
 scripts/harness-portolan-smoke.sh
 git diff --check
 ```

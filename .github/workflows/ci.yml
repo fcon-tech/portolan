@@ -40,7 +40,7 @@ jobs:
       - name: Validate schemas
         run: |
           jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json
-          jq empty harness/contracts/orient-bundle.schema.json
+          jq empty harness/contracts/portolan-bundle.schema.json
           jq empty harness/contracts/landscape-card.schema.json
           jq empty harness/contracts/landscape-report.schema.json
 
@@ -50,20 +50,20 @@ jobs:
       - name: Portolan scan orchestration smoke
         run: |
           scripts/portolan-scan.sh \
-            internal/testfixtures/orient-bundle/target \
-            /tmp/wizard-ci-orient \
+            internal/testfixtures/portolan-bundle/target \
+            /tmp/wizard-ci-portolan \
             --no-viewer --skip-install --yes
-          test -f /tmp/wizard-ci-orient/manifest.json
-          test -s /tmp/wizard-ci-orient/gaps.jsonl
-          jq -e 'select(.status == "not_assessed")' /tmp/wizard-ci-orient/gaps.jsonl >/dev/null
+          test -f /tmp/wizard-ci-portolan/manifest.json
+          test -s /tmp/wizard-ci-portolan/gaps.jsonl
+          jq -e 'select(.status == "not_assessed")' /tmp/wizard-ci-portolan/gaps.jsonl >/dev/null
           jq -e 'select(.kind == "config" and .producer == "config-scan")' \
-            /tmp/wizard-ci-orient/hotspots.jsonl >/dev/null
-          if ! jq -e 'select(.kind == "debt-candidate")' /tmp/wizard-ci-orient/hotspots.jsonl >/dev/null 2>&1; then
+            /tmp/wizard-ci-portolan/hotspots.jsonl >/dev/null
+          if ! jq -e 'select(.kind == "debt-candidate")' /tmp/wizard-ci-portolan/hotspots.jsonl >/dev/null 2>&1; then
             jq -e 'select(.id == "gap-ctags" or .surface == "symbols")' \
-              /tmp/wizard-ci-orient/gaps.jsonl >/dev/null
+              /tmp/wizard-ci-portolan/gaps.jsonl >/dev/null
           fi
-          slug=$(printf '%s' "$(cd internal/testfixtures/orient-bundle/target && pwd)" | sha256sum | cut -c1-8)
-          test -n "$(find /tmp/wizard-ci-orient/producers/config -name "target-${slug}.jsonl" -print -quit)"
+          slug=$(printf '%s' "$(cd internal/testfixtures/portolan-bundle/target && pwd)" | sha256sum | cut -c1-8)
+          test -n "$(find /tmp/wizard-ci-portolan/producers/config -name "target-${slug}.jsonl" -print -quit)"
 
       - name: Diff whitespace check
         run: git diff --check

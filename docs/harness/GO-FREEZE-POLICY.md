@@ -13,7 +13,7 @@ features** until the Go decision gate in
 - Bug fixes with regression tests.
 - Security fixes for path handling and untrusted artifact imports.
 - Documentation corrections.
-- Bridge commands/scripts that export legacy map output to `orient/` bundles.
+- Bridge commands/scripts that export legacy map output to Portolan bundles.
 - Dependency patches required for `go test ./...` on supported Go versions.
 
 ## Not allowed without a new spec and Go gate outcome
@@ -28,14 +28,14 @@ features** until the Go decision gate in
 Use [`harness/SKILL.md`](../../harness/SKILL.md):
 
 1. Run OSS recipes from `harness/recipes/`.
-2. Build `orient/` with `scripts/build-orient-bundle.sh`.
+2. Build a Portolan bundle with `scripts/build-portolan-bundle.sh`.
 3. Open the local viewer from `viewer/`.
 
 Optional legacy bridge:
 
 ```bash
 go run ./cmd/portolan map --root <target> --out <map-dir>
-scripts/orient-export-from-map.sh <map-dir> <orient-dir>
+scripts/portolan-export-from-map.sh <map-dir> <bundle-dir>
 ```
 
 ## Review
