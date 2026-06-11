@@ -33,8 +33,16 @@ scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-bigtop1
   --limit-repos 10 --cross-repo-dup --yes --no-viewer
 ```
 
-`--cross-repo-dup` adds one bounded jscpd pass across repo boundaries; on OOM or
-timeout it degrades to an honest gap, never a silent miss.
+`--cross-repo-dup` runs **pairwise bounded** jscpd across every repo pair. Completion
+is recorded in `producers/jscpd-cross/_scan.json`; proven zero cross-repo clones
+after a complete scan is tier-A evidence (manifest `cross_repo_duplication.status=complete`).
+`gap-cross-repo-dup` appears only when one or more pairs fail—not as opt-in degradation.
+
+Strict bigtop-10 acceptance (not default CI):
+
+```bash
+scripts/harness-bigtop10-acceptance.sh /tmp/portolan-bigtop10
+```
 
 **Full landscape stress (18 repos, spec 091):**
 

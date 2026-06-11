@@ -79,22 +79,27 @@ for s in "$SLUG_A" "$SLUG_B"; do
 EOF
 done
 
-# --- synthesized jscpd-cross report: one cross-repo pair + one intra pair ---
-cat >"$BUNDLE/producers/jscpd-cross/jscpd-report.json" <<EOF
+# --- per-repo jscpd stubs (spec 109 strict per-repo contract) ---
+mkdir -p "$BUNDLE/producers/jscpd/$SLUG_A" "$BUNDLE/producers/jscpd/$SLUG_B"
+echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_A/jscpd-report.json"
+echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_B/jscpd-report.json"
+
+# --- pairwise jscpd-cross: cross pair only (intra pair excluded from cross pass) ---
+PAIR_DIR="$BUNDLE/producers/jscpd-cross/${SLUG_A}--${SLUG_B}"
+mkdir -p "$PAIR_DIR"
+cat >"$PAIR_DIR/jscpd-report.json" <<EOF
 {
   "duplicates": [
     {
       "firstFile": {"name": "$LAND/repo-a/cmd/server/main.go"},
       "secondFile": {"name": "$LAND/repo-b/go.mod"},
       "lines": 12
-    },
-    {
-      "firstFile": {"name": "$LAND/repo-a/go.mod"},
-      "secondFile": {"name": "$LAND/repo-a/README.md"},
-      "lines": 7
     }
   ]
 }
+EOF
+cat >"$BUNDLE/producers/jscpd-cross/_scan.json" <<EOF
+{"schema_version":"0.1.0","pairs_total":1,"pairs_ok":1,"pairs_failed":0,"clone_pairs":1,"completed_at":"2026-06-11T00:00:00Z"}
 EOF
 
 "$ROOT/scripts/build-portolan-bundle.sh" "$LAND" "$BUNDLE" >/dev/null
@@ -147,9 +152,11 @@ grep -q '"id":"xdup-' "$BUNDLE/hotspots.jsonl" || fail "cross-repo dup hotspot m
 jq -es 'map(select(.id | startswith("xdup-"))) | .[0].severity == "high"' \
   "$BUNDLE/hotspots.jsonl" >/dev/null || fail "cross-repo dup severity must be high"
 
-# --- manifest counters ---
+# --- manifest counters + cross-repo completion metadata (spec 110) ---
 jq -e '.repo_count == 2 and .relationship_count >= 4' "$BUNDLE/manifest.json" >/dev/null ||
   fail "manifest repo_count/relationship_count wrong"
+jq -e '.cross_repo_duplication.status == "complete" and .cross_repo_duplication.clone_pairs == 1' \
+  "$BUNDLE/manifest.json" >/dev/null || fail "manifest cross_repo_duplication metadata missing or wrong"
 
 # --- claims import (spec 106) ---
 if [[ -x "$ROOT/scripts/import-analysis-claims.sh" ]]; then

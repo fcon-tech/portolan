@@ -1,1 +1,3 @@
+{"id":"gap-duplication-target-3e259084","surface":"duplication","status":"cannot_verify","summary":"No bounded jscpd report for repo target-3e259084.","recipe":"harness/recipes/duplication-jscpd.md"}
+{"id":"gap-ctags-target-3e259084","surface":"symbols","status":"cannot_verify","summary":"No usable ctags tags.json for repo target-3e259084.","recipe":"harness/recipes/symbols-ctags.md"}
 {"id":"gap-deps","surface":"dependencies","status":"not_assessed","summary":"No Syft/CycloneDX producer output found.","recipe":"harness/recipes/deps-syft-cyclonedx.md"}

@@ -208,12 +208,32 @@ done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$
 [[ "$jscpd_found" -eq 1 ]] || append_gap "gap-duplication" "duplication" "not_assessed" \
   "No jscpd producer output found." "harness/recipes/duplication-jscpd.md"
 
-# --- cross-repo duplication pairs (producers/jscpd-cross/**, opt-in; spec 105) ---
+# Per-repo jscpd coverage (spec 109 strict): every repo must have a report when jscpd ran.
+if [[ -d "$PRODUCERS_DIR/jscpd" ]] && [[ -f "$BUNDLE_DIR/repos.json" ]]; then
+  while IFS=$'\t' read -r rid rpath; do
+    [[ -z "$rid" || -z "$rpath" ]] && continue
+    rslug=$(producer_repo_slug "$rpath")
+    repo_ok=0
+    if [[ -d "$PRODUCERS_DIR/jscpd/$rslug" ]]; then
+      while IFS= read -r jf; do
+        [[ -f "$jf" ]] || continue
+        jq -e '.duplicates | type == "array"' "$jf" >/dev/null 2>&1 && repo_ok=1 && break
+      done < <(find "$PRODUCERS_DIR/jscpd/$rslug" -type f -name '*.json' 2>/dev/null)
+    fi
+    if [[ "$repo_ok" -eq 0 ]]; then
+      append_gap "gap-duplication-${rid}" "duplication" "cannot_verify" \
+        "No bounded jscpd report for repo ${rid}." "harness/recipes/duplication-jscpd.md"
+    fi
+  done < <(jq -r '.[] | [.id, .path] | @tsv' "$BUNDLE_DIR/repos.json")
+fi
+
+# --- cross-repo duplication pairs (producers/jscpd-cross/**, opt-in; spec 105/110) ---
 while IFS= read -r jfile; do
   [[ -f "$jfile" ]] || continue
+  [[ "$(basename "$jfile")" == "_scan.json" ]] && continue
   jq -e '.duplicates' "$jfile" >/dev/null 2>&1 || continue
   process_jscpd_cross_file "$jfile"
-done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' 2>/dev/null)
+done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' ! -name '_scan.json' 2>/dev/null)
 
 # --- semgrep (producers/semgrep/**) ---
 semgrep_found=0
@@ -335,6 +355,19 @@ if [[ "$ctags_found" -eq 0 ]]; then
   fi
 fi
 
+# Per-repo ctags coverage (spec 111 strict): every repo must have tags.json when ctags ran.
+if [[ -d "$PRODUCERS_DIR/ctags" ]] && [[ -f "$BUNDLE_DIR/repos.json" ]]; then
+  while IFS=$'\t' read -r rid rpath; do
+    [[ -z "$rid" || -z "$rpath" ]] && continue
+    rslug=$(producer_repo_slug "$rpath")
+    tfile="$PRODUCERS_DIR/ctags/$rslug/tags.json"
+    if [[ ! -f "$tfile" ]] || ! jq -e . "$tfile" >/dev/null 2>&1; then
+      append_gap "gap-ctags-${rid}" "symbols" "cannot_verify" \
+        "No usable ctags tags.json for repo ${rid}." "harness/recipes/symbols-ctags.md"
+    fi
+  done < <(jq -r '.[] | [.id, .path] | @tsv' "$BUNDLE_DIR/repos.json")
+fi
+
 # --- relationships.jsonl (spec 105) ---
 if ! "$SCRIPT_DIR/scan-cross-repo.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
   echo "warn: scan-cross-repo failed; recording gap" >&2
@@ -453,6 +486,17 @@ if [[ -f "$BUNDLE_DIR/relationships.jsonl" ]]; then
   relationship_count=$(wc -l <"$BUNDLE_DIR/relationships.jsonl" | tr -d ' ')
 fi
 
+cross_dup_json='null'
+if [[ -f "$PRODUCERS_DIR/jscpd-cross/_scan.json" ]]; then
+  cross_dup_json=$(jq -c '
+    if .pairs_failed == 0 and .pairs_ok == .pairs_total then
+      {status:"complete", pairs_total:.pairs_total, pairs_ok:.pairs_ok, clone_pairs:(.clone_pairs // 0)}
+    else
+      {status:"incomplete", pairs_total:.pairs_total, pairs_ok:(.pairs_ok // 0), pairs_failed:(.pairs_failed // 0)}
+    end
+  ' "$PRODUCERS_DIR/jscpd-cross/_scan.json" 2>/dev/null || echo 'null')
+fi
+
 jq -n \
   --arg schema_version "0.1.0" \
   --arg target_root "$TARGET_ROOT" \
@@ -468,7 +512,8 @@ jq -n \
   --argjson kind_counts_total "$kind_counts_total" \
   --argjson gap_budget "$GAP_BUDGET" \
   --argjson gaps_truncated "$gaps_truncated" \
-  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
+  --argjson cross_repo_duplication "$cross_dup_json" \
+  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated} + (if $cross_repo_duplication != null then {cross_repo_duplication:$cross_repo_duplication} else {} end)' \
   >"$BUNDLE_DIR/manifest.json"
 
 # graph-slice: findings + unique path nodes for map tab

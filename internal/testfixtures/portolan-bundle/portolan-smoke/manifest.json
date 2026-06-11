@@ -1,9 +1,9 @@
 {
   "schema_version": "0.1.0",
   "target_root": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
-  "generated_at": "2026-06-11T13:00:51Z",
+  "generated_at": "2026-06-11T14:29:09Z",
   "hotspot_count": 7,
-  "gap_count": 1,
+  "gap_count": 3,
   "repo_count": 1,
   "relationship_count": 0,
   "hotspot_budget": 200,
