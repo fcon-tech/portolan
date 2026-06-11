@@ -45,34 +45,44 @@ trap 'rm -f "$ids_tmp"' EXIT
 mapfile -t REPO_ROOTS < <(jq -r '.[].path' "$BUNDLE_DIR/repos.json")
 TARGET_ROOT=$(jq -r '.target_root // ""' "$BUNDLE_DIR/manifest.json" 2>/dev/null || echo "")
 
+# canonical containment check: file exists and its realpath stays under root's
+# realpath (blocks ../ traversal and symlink escapes in cited refs)
+file_under_root() {
+  local root=$1 candidate=$2 rootreal absreal
+  [[ -n "$root" && -f "$candidate" ]] || return 1
+  rootreal=$(readlink -f -- "$root" 2>/dev/null) || return 1
+  absreal=$(readlink -f -- "$candidate" 2>/dev/null) || return 1
+  [[ "$absreal" == "$rootreal" || "$absreal" == "$rootreal"/* ]]
+}
+
 resolve_path_ref() {
-  # path:<p>[:line] — file must exist under a repo root (or target root)
-  local raw=$1 p line root
+  # path:<p>[:line] — file must canonically resolve under a repo root (or target root)
+  local raw=$1 p root
   p=${raw#path:}
   if [[ "$p" =~ ^(.+):([0-9]+)$ ]]; then
     p="${BASH_REMATCH[1]}"
   fi
   [[ -z "$p" ]] && return 1
   if [[ "$p" = /* ]]; then
-    [[ -f "$p" ]] || return 1
     for root in "${REPO_ROOTS[@]}" "$TARGET_ROOT"; do
-      [[ -n "$root" && ( "$p" == "$root" || "$p" == "$root"/* ) ]] && return 0
+      file_under_root "$root" "$p" && return 0
     done
     return 1
   fi
   for root in "${REPO_ROOTS[@]}" "$TARGET_ROOT"; do
-    [[ -n "$root" && -f "$root/$p" ]] && return 0
+    file_under_root "$root" "$root/$p" && return 0
   done
   return 1
 }
 
 resolve_producer_ref() {
+  # producer_ref:<p> — must canonically resolve inside the bundle dir only
   local p=${1#producer_ref:}
   [[ -z "$p" ]] && return 1
   if [[ "$p" = /* ]]; then
-    [[ -f "$p" ]]
+    file_under_root "$BUNDLE_DIR" "$p"
   else
-    [[ -f "$BUNDLE_DIR/$p" ]]
+    file_under_root "$BUNDLE_DIR" "$BUNDLE_DIR/$p"
   fi
 }
 
@@ -113,8 +123,8 @@ while IFS= read -r line || [[ -n "$line" ]]; do
       then "subject required (landscape | repo:<id> | path:<path>)"
     elif (.cited_refs | type) != "array"
       then "cited_refs must be an array"
-    elif ([.cited_refs[]? | select(type != "string")] | length) > 0
-      then "cited_refs must contain strings"
+    elif ([.cited_refs[]? | select(type != "string" or length == 0)] | length) > 0
+      then "cited_refs must contain non-empty strings"
     elif (.agent | type) != "string" or (.agent | length) == 0
       then "agent required (agent/model id)"
     else ""
@@ -123,6 +133,11 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     reject "$cid" "$err"
     continue
   fi
+
+  # re-import contract: every schema-valid row claims its agent slot, so an
+  # import file where all rows of an agent are rejected still purges that
+  # agent's prior claims instead of leaving stale ones
+  jq -r '.agent' <<<"$line" >>"$agents_tmp"
 
   tier=$(jq -r '.claim_tier' <<<"$line")
   subject=$(jq -r '.subject' <<<"$line")
@@ -181,7 +196,6 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 
   jq -c --arg now "$NOW" \
     '. + {evidence_state: "claim-only", imported_at: $now}' <<<"$line" >>"$accepted_tmp"
-  jq -r '.agent' <<<"$line" >>"$agents_tmp"
 done <"$CLAIMS_FILE"
 
 # duplicate ids within the import file: keep first, reject later ones
@@ -196,13 +210,22 @@ if [[ "$dup_count" -gt 0 ]]; then
 fi
 mv "$dedup_tmp" "$accepted_tmp"
 
-# replace prior claims of the same agent(s); keep other agents
+# replace prior claims of the same agent(s); keep other agents.
+# Per-line filtering: one malformed line in the existing claims.jsonl must not
+# destroy other agents' claims, so unparseable lines are preserved as-is.
 agents_json=$(sort -u "$agents_tmp" | jq -Rsc 'split("\n") | map(select(length > 0))')
 merged_tmp=$(mktemp)
+: >"$merged_tmp"
 if [[ -f "$OUT" ]]; then
-  jq -c --argjson agents "$agents_json" 'select(($agents | index(.agent)) == null)' "$OUT" >"$merged_tmp" 2>/dev/null || : >"$merged_tmp"
-else
-  : >"$merged_tmp"
+  while IFS= read -r prev || [[ -n "$prev" ]]; do
+    [[ -z "${prev// /}" ]] && continue
+    if jq -e . >/dev/null 2>&1 <<<"$prev"; then
+      keep=$(jq -c --argjson agents "$agents_json" 'select(.agent as $a | ($agents | index($a)) == null)' <<<"$prev")
+      [[ -n "$keep" ]] && printf '%s\n' "$keep" >>"$merged_tmp"
+    else
+      printf '%s\n' "$prev" >>"$merged_tmp"
+    fi
+  done <"$OUT"
 fi
 cat "$accepted_tmp" >>"$merged_tmp"
 mv "$merged_tmp" "$OUT"

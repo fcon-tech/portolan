@@ -160,16 +160,40 @@ if [[ -x "$ROOT/scripts/import-analysis-claims.sh" ]]; then
 {"id":"claim-ok-2","claim_tier":"speculative","statement":"Console may be split from repo-a historically.","subject":"repo:${SLUG_B}","cited_refs":[],"agent":"smoke-agent"}
 {"id":"claim-bad-1","claim_tier":"analytical","statement":"Bogus claim citing nothing real.","subject":"landscape","cited_refs":["hotspot:does-not-exist"],"agent":"smoke-agent"}
 {"id":"claim-bad-2","claim_tier":"synthetic","statement":"Synthetic claim without any refs.","subject":"landscape","cited_refs":[],"agent":"smoke-agent"}
+{"id":"claim-bad-3","claim_tier":"analytical","statement":"Empty-string ref must not satisfy the >=1 ref rule.","subject":"landscape","cited_refs":[""],"agent":"smoke-agent"}
+{"id":"claim-bad-4","claim_tier":"analytical","statement":"Traversal ref must not escape repo roots.","subject":"landscape","cited_refs":["path:../../../../etc/passwd"],"agent":"smoke-agent"}
+{"id":"claim-bad-5","claim_tier":"analytical","statement":"Absolute producer_ref outside the bundle must not resolve.","subject":"landscape","cited_refs":["producer_ref:/etc/passwd"],"agent":"smoke-agent"}
 EOF
   "$ROOT/scripts/import-analysis-claims.sh" "$BUNDLE" "$WORK/claims.jsonl" >/dev/null || true
   [[ -f "$BUNDLE/claims.jsonl" ]] || fail "claims.jsonl missing after import"
   [[ "$(wc -l <"$BUNDLE/claims.jsonl" | tr -d ' ')" -eq 2 ]] || fail "expected exactly 2 accepted claims"
   jq -es 'all(.evidence_state == "claim-only")' "$BUNDLE/claims.jsonl" >/dev/null ||
     fail "claims must stay claim-only"
-  jq -e '.rejected | length == 2' "$BUNDLE/claims-import-report.json" >/dev/null ||
-    fail "expected 2 rejected claims in import report"
+  jq -e '.rejected | length == 5' "$BUNDLE/claims-import-report.json" >/dev/null ||
+    fail "expected 5 rejected claims in import report"
   jq -e '.rejected[] | select(.id == "claim-bad-1") | .reason | test("hotspot:does-not-exist")' \
     "$BUNDLE/claims-import-report.json" >/dev/null || fail "broken ref must be named in rejection reason"
+  jq -e '.rejected[] | select(.id == "claim-bad-3") | .reason | test("non-empty")' \
+    "$BUNDLE/claims-import-report.json" >/dev/null || fail "empty-string ref must be rejected"
+  jq -e '.rejected[] | select(.id == "claim-bad-4")' "$BUNDLE/claims-import-report.json" >/dev/null ||
+    fail "traversal path ref must be rejected"
+  jq -e '.rejected[] | select(.id == "claim-bad-5")' "$BUNDLE/claims-import-report.json" >/dev/null ||
+    fail "outside-bundle producer_ref must be rejected"
+
+  # re-import with all rows of the same agent rejected must purge prior claims
+  printf '%s\n' '{"id":"claim-bad-6","claim_tier":"analytical","statement":"All-rejected re-import.","subject":"landscape","cited_refs":["hotspot:nope"],"agent":"smoke-agent"}' >"$WORK/claims-reimport.jsonl"
+  "$ROOT/scripts/import-analysis-claims.sh" "$BUNDLE" "$WORK/claims-reimport.jsonl" >/dev/null || true
+  [[ "$(wc -l <"$BUNDLE/claims.jsonl" | tr -d ' ')" -eq 0 ]] ||
+    fail "all-rejected re-import must purge that agent's prior claims"
+
+  # symlinked README must not pull outside content into profiles
+  outside="$WORK/outside-secret.txt"
+  echo "OUTSIDE-SECRET" >"$outside"
+  rm -f "$LAND/repo-b/README.md"; ln -s "$outside" "$LAND/repo-b/README.md"
+  "$ROOT/scripts/scan-repo-profiles.sh" "$LAND" "$BUNDLE" >/dev/null 2>&1 || fail "profiles rerun failed"
+  jq -e --arg b "$SLUG_B" '.repos[] | select(.id == $b) | .purpose.readme_path == null' \
+    "$BUNDLE/repo-profiles.json" >/dev/null || fail "symlinked README escaped repo root into profile"
+  grep -q "OUTSIDE-SECRET" "$BUNDLE/repo-profiles.json" && fail "outside content leaked into profiles" || true
 fi
 
 echo "harness-cross-repo-smoke: ok"

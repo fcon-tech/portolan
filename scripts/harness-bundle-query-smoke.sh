@@ -58,6 +58,10 @@ echo '{"id":"ev-1","family":"relationships","summary":"fixture edge","evidence_s
 # repos / relationships families (107)
 "$Q" repos --bundle "$FIXTURE_BUNDLE" --limit 5 \
   | jq -e '.records | length >= 1' >/dev/null
+
+# unknown repo filter must return no records (not the whole landscape)
+"$Q" hotspots --bundle "$FIXTURE_BUNDLE" --repo no-such-repo --limit 5 \
+  | jq -e '(.records | length == 0) and (.warnings | length >= 1)' >/dev/null
 # single-repo fixture: empty edge list is a valid clean result (file present, no edges)
 "$Q" relationships --bundle "$FIXTURE_BUNDLE" --limit 5 \
   | jq -e '.records | type == "array"' >/dev/null
