@@ -100,6 +100,15 @@ Optional map-bridge (after `portolan map`):
 
 Guardrails: `harness/guardrails/` including `bundle-query.md`.
 
+### MCP (agent harnesses preferring tools over shell)
+
+```bash
+export PORTOLAN_BUNDLE_DIR="$BUNDLE_DIR"
+"$PORTOLAN_PATH/scripts/portolan-bundle-query-mcp.sh"
+```
+
+Recipe: `harness/recipes/bundle-query-mcp.md` (Cursor `mcp.json` example). Tools mirror CLI families; results are `bundle-query-result` JSON.
+
 ## Legacy bridge (optional)
 
 ```bash

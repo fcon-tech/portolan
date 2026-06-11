@@ -40,8 +40,19 @@ Open http://127.0.0.1:4173/
 1. **Overview tab (default)** — Project card: language, scale, maturity (README/CI/tests/Docker), repo matrix, findings shown vs scan total, top “where to look first”.
 2. **Gaps tab** — What was **not** assessed (`not_assessed` / `cannot_verify`); not hidden findings.
 3. **Findings tab** — Sections by kind (map.md parity), then folder tree + ranked list.
-4. **Search & filter** — Type `TODO` or `duplicate`; use views (Tour top 15, Code pain, Config).
-5. **Drill-down** — Click a finding → detail + **Source** snippet (read-only local files).
+4. **Search & filter** — Header search hits the code index (`search-index.jsonl`); filter chips and views (Tour top 15, Code pain, Config).
+5. **Graph hints tab** — Optional relationship hints when `map-bridge/` exists (after `portolan map` + `build-map-bridge.sh`); not a call graph.
+6. **Drill-down** — Click a finding → detail + **Source** snippet (read-only local files).
+
+## Agents (query at answer time)
+
+Portolan does not ship pre-built Q&A. Agents query the bundle:
+
+```bash
+scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --kind duplication --limit 10
+```
+
+MCP: `PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh` — recipe in `harness/recipes/bundle-query-mcp.md`.
 
 If bundle is truncated, use **Show all findings from scan** on the Findings tab.
 

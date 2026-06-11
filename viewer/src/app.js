@@ -905,6 +905,7 @@ function switchTab(tab) {
   });
   if (tab === 'overview') renderOverview();
   else if (tab === 'gaps') renderGapsTab();
+  else if (tab === 'graph-hints') renderGraphHintsTab();
   else renderFindingsTab();
 }
 
@@ -985,6 +986,14 @@ function renderOverview() {
   const activity = card.activity || {};
   const maturity = card.maturity || {};
   const health = card.health_signals || {};
+  const blocksEl = document.getElementById('overview-blocks');
+  const overviewSection = landscapeReport?.sections?.find((s) => s.id === 'overview');
+  const textBlocks = (overviewSection?.blocks || []).filter((b) => b.type === 'text' && b.text);
+  if (blocksEl) {
+    blocksEl.innerHTML = textBlocks.length
+      ? textBlocks.map((b) => `<p class="overview-block">${escapeHtml(b.text)}</p>`).join('')
+      : '';
+  }
 
   const langs = formatLanguagesSummary(id.languages, id.primary_language);
 
@@ -1071,6 +1080,50 @@ function renderOverview() {
         selectHotspot(h);
       }
     });
+  });
+}
+
+async function loadEvidenceIndexRecords() {
+  try {
+    const res = await fetch('/api/evidence-index?limit=50');
+    if (res.ok) {
+      const data = await res.json();
+      return { records: data.records || [], warnings: data.warnings || [] };
+    }
+  } catch {
+    /* static bundle fallback */
+  }
+  try {
+    const lines = await loadJSONL('/bundle/map-bridge/evidence-index.jsonl');
+    return { records: lines.map((row, i) => ({ ...row, id: row.id || `ev-${i}` })), warnings: [] };
+  } catch {
+    return { records: [], warnings: ['map-bridge/evidence-index.jsonl missing'] };
+  }
+}
+
+function renderGraphHintsTab() {
+  const body = document.getElementById('graph-hints-body');
+  if (!body) return;
+  body.innerHTML = '<p class="empty-hint">Loading graph hints…</p>';
+  loadEvidenceIndexRecords().then(({ records, warnings }) => {
+    if (!records.length) {
+      const warn = warnings.length ? warnings.join(' ') : 'No map-bridge sidecar in this bundle.';
+      body.innerHTML = `
+        <p class="empty-hint">${escapeHtml(warn)}</p>
+        <p class="empty-hint">Optional: run <code>portolan map</code>, then <code>scripts/build-map-bridge.sh</code> — see <code>harness/SKILL.md</code>.</p>
+      `;
+      return;
+    }
+    body.innerHTML = `
+      <ul class="graph-hints-list">${records
+        .map(
+          (r) =>
+            `<li><span class="badge">${escapeHtml(r.evidence_state || r.kind || 'hint')}</span> ` +
+            `<strong>${escapeHtml(r.summary || r.id || '')}</strong>` +
+            `${r.family ? ` <span class="mono">(${escapeHtml(r.family)})</span>` : ''}</li>`
+        )
+        .join('')}</ul>
+    `;
   });
 }
 
@@ -1169,6 +1222,7 @@ function renderFindingsTab() {
 function render() {
   if (activeTab === 'overview') renderOverview();
   else if (activeTab === 'gaps') renderGapsTab();
+  else if (activeTab === 'graph-hints') renderGraphHintsTab();
   else renderFindingsTab();
 }
 

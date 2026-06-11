@@ -481,5 +481,10 @@ rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
 
 "$SCRIPT_DIR/build-symbol-index.sh" "$BUNDLE_DIR" || true
 "$SCRIPT_DIR/build-search-index.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+if ! command -v rg >/dev/null 2>&1; then
+  append_gap "search-index-rg" "not_assessed" \
+    "ripgrep not installed; search index uses bounded head-only lines per file" \
+    "install ripgrep for fuller code index"
+fi
 
 echo "Portolan bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
