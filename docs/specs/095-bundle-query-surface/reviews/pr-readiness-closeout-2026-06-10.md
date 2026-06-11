@@ -1,7 +1,7 @@
 # PR readiness closeout — specs 094–097 — 2026-06-10
 
 **PR**: https://github.com/fcon-tech/portolan/pull/67  
-**Head**: `b065a0b`  
+**Head**: `78085d1`  
 **Branch**: `codex/094-097-queryable-map-substrate`
 
 ## Readiness Matrix
@@ -11,8 +11,8 @@
 | Local implementation | verified | Commit `b065a0b`; specs 094–097 tasks complete |
 | Local verification | verified | `go test ./...`, `harness-portolan-smoke.sh`, `harness-bundle-query-smoke.sh`, `jq empty` |
 | Review evidence | verified | cavecrew + correctness + security LGTM; disposition on disk |
-| PR state | draft | PR #67 created draft pending mark-ready |
-| GitHub checks | verified | Baseline pass; CodeQL Analyze (go/js/py/actions) pass; CodeQL aggregate skipping |
+| PR state | ready-for-review | PR #67 marked ready |
+| GitHub checks | verified | Baseline pass; CodeQL + Analyze (go/js/py/actions) pass on `78085d1` |
 | Merge approval | not_assessed | No GitHub review approval yet |
 | Merge readiness | not-ready | Draft PR; no merge approval |
 
@@ -27,4 +27,4 @@
 
 ## Stop reason
 
-Ready to mark PR **ready-for-review** after user confirms or explicit mark-ready request. Not ready-to-merge without approval.
+**Ready-for-review PR** with green CI and local LGTM. **Not ready-to-merge** — awaiting GitHub review approval and explicit merge authorization.
