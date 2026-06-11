@@ -194,7 +194,9 @@ go test ./...
 go vet ./...
 jq empty schema/*.json
 jq empty harness/contracts/portolan-bundle.schema.json
+jq empty harness/contracts/bundle-query-result.schema.json
 scripts/harness-portolan-smoke.sh
+scripts/harness-bundle-query-smoke.sh
 scripts/portolan-scan.sh --help
 jq empty harness/contracts/landscape-card.schema.json
 jq empty harness/contracts/landscape-report.schema.json
@@ -219,7 +221,9 @@ shell commands, and other important information, read the current plan:
 - Prioritize a report-first landscape viewer (Overview landing with ranked problems) over raw hotspot lists, map-only icicles, or evidence-discipline artifacts as the primary deliverable.
 - Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan.
 - Expand harness rules, guardrails, and OSS tool recipes rather than the Go codebase when adding product behavior.
-- Use Portolan-prefixed names in user-facing CLI, scripts, and UI copy (e.g. `portolan-scan`, `scripts/portolan-scan.sh`).
+- Reject `orient` naming and legacy orient entrypoints; use Portolan-prefixed names in CLI, scripts, and UI (e.g. `portolan-scan`, `scripts/portolan-scan.sh`) and remove old orient scripts rather than thin deprecation wrappers.
+- Reject pre-built answer packs or suggested-question artifacts; prefer a queryable scan bundle (indexes, bundle-query tools) retrieved at question time.
+- Keep LLM Q&A agent-first through harness tools and skills; the viewer stays local navigation without network by default.
 - Explain in the viewer why findings rank as problems and what each navigation control does.
 - Review delivery by observable facts and demo behavior, not code inspection alone.
 
@@ -228,5 +232,7 @@ shell commands, and other important information, read the current plan:
 - Understand-Anything drill-down inside a landscape report is the reference UX; graph nodes must stay evidence-backed, not LLM-authored truth.
 - Product-success questions center on concrete code pain (debt, duplication, risky zones), not abstract trust infrastructure alone.
 - Landscape report UX references Portolan `map.md` sections and the standalone `landscape-card.json` contract; no sdp_lab runtime dependency.
+- Early sdp_lab landscape-report prototypes set the demo richness bar; borrow report structure only, never sdp_lab runtime or scout dependencies.
+- Agent Q&A over a landscape uses bundle-query tools and indexes over the portolan-scan bundle, not pre-rendered briefing packs.
 - Demo-ready output must let an operator identify the target, repos, top problems, and gaps without external docs.
 - Scan and viewer inventories must honor `.gitignore`.
