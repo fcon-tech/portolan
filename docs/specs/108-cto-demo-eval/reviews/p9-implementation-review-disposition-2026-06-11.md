@@ -66,3 +66,18 @@ repo-grounded.
 Tier-laundering invariant re-checked after fixes: claims stay
 `claim-only`, never enter ranked findings, badges mandatory, importer never
 raises tier, refs now canonically contained.
+
+## Focused re-review of the fix commit (6145d5b)
+
+Lane: correctness reviewer resumed on `composer-2.5` over `git show 6145d5b`
+plus current files. Verdict: all six targeted areas fixed; two low follow-ups.
+
+| Follow-up | Disposition |
+|---|---|
+| `main.go`/`main.py` entrypoint detection still used `[[ -f ]]` instead of `repo_file` | accepted/fixed — consistency change (existence-only label, no content read) |
+| Import file containing only schema-invalid rows does not purge that agent's prior claims | rejected — schema-invalid rows cannot be trusted to name an agent; letting a malformed file trigger deletion would be a destruction vector. Purge boundary stays at schema-valid rows (rows rejected later for subject/ref reasons do purge) |
+
+Residual notes carried (UX inconsistency: `repos`/`relationships` unknown
+`--repo` returns 0 records without the explicit warning `hotspots` emits;
+viewer `loadJSONL` strictness — both pre-existing patterns, not P9
+regressions).
