@@ -199,9 +199,9 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P8-101 | `docs/specs/101-real-target-query-eval/` | Query eval lane A vs B on real self-target portolan-scan bundle. | Ready-for-review PR #70 |
-| P8-102 | `docs/specs/102-map-bridge-scan-workflow/` | Optional `--with-map-bridge` on portolan-scan for Graph hints tab. | Ready-for-review PR #70 |
-| P8-103 | `docs/specs/103-viewer-pain-ranking-ux/` | Rank/control explainers and detail CTAs in viewer; self-target demo bar. | Ready-for-review PR #70 |
+| P8-101 | `docs/specs/101-real-target-query-eval/` | Query eval lane A vs B on real self-target portolan-scan bundle. | Implemented via PR #70 |
+| P8-102 | `docs/specs/102-map-bridge-scan-workflow/` | Optional `--with-map-bridge` on portolan-scan for Graph hints tab. | Implemented via PR #70 |
+| P8-103 | `docs/specs/103-viewer-pain-ranking-ux/` | Rank/control explainers and detail CTAs in viewer; self-target demo bar. | Implemented via PR #70 |
 
 ## Backlog Rules
 

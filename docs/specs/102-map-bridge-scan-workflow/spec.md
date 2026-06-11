@@ -1,6 +1,6 @@
 # Feature Specification: Map-Bridge Scan Workflow (102)
 
-**Status**: Ready for implementation
+**Status**: Implemented via PR #70
 
 **Input**: Optional `--with-map-bridge` on `portolan-scan.sh` to populate Graph hints without manual steps.
 

@@ -1,6 +1,6 @@
 # Feature Specification: Real-Target Query Eval (101)
 
-**Status**: Ready for implementation
+**Status**: Implemented via PR #70
 
 **Input**: Lane A vs B eval on a real `portolan-scan` self-target bundle (not smoke fixture).
 
