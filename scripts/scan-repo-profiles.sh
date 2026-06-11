@@ -257,8 +257,8 @@ while IFS=$'\t' read -r rid rpath rname; do
   entrypoints=$(
     {
       { grep -E '^cmd/[^/]+/' "$files_tmp" || true; } | cut -d/ -f1-2 | sort -u | sed 's/^/go:/'
-      [[ -f "$rpath/main.go" ]] && echo "go:main.go"
-      [[ -f "$rpath/main.py" ]] && echo "python:main.py"
+      repo_file "$rpath" main.go && echo "go:main.go"
+      repo_file "$rpath" main.py && echo "python:main.py"
       if repo_file "$rpath" package.json && jq -e . "$rpath/package.json" >/dev/null 2>&1; then
         jq -r '(.bin // {}) | if type == "object" then keys[] elif type == "string" then "." else empty end' \
           "$rpath/package.json" 2>/dev/null | sed 's/^/npm-bin:/' || true
