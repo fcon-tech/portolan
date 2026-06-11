@@ -203,6 +203,16 @@ fixtures are preflight evidence only.
 | P8-102 | `docs/specs/102-map-bridge-scan-workflow/` | Optional `--with-map-bridge` on portolan-scan for Graph hints tab. | Implemented via PR #70 |
 | P8-103 | `docs/specs/103-viewer-pain-ranking-ux/` | Rank/control explainers and detail CTAs in viewer; self-target demo bar. | Implemented via PR #70 |
 
+## P9: CTO Landscape Understanding (active)
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P9-104 | `docs/specs/104-repo-profiles/` | Per-repo tier-A profiles (purpose surfaces, activity, maturity); slug-safe repo ids. | Ready for implementation |
+| P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Ready for implementation |
+| P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Ready for implementation |
+| P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Ready for implementation |
+| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Ready for implementation |
+
 ## Backlog Rules
 
 - Every P0/P1/P2 item must map to exactly one SpecKit feature directory before
