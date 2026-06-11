@@ -88,9 +88,39 @@ Portolan does **not** guess user questions. Query at answer time:
 "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 30
 "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE_DIR" --name "Run" --limit 20
 "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --path sample.go --line 4
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" claims --bundle "$BUNDLE_DIR" --tier analytical --limit 20
 ```
 
-Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`, `/api/symbol`, `/api/source`.
+Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`, `/api/symbol`, `/api/source`, `/api/claims`.
+
+### Agent analysis claims (tiers B/C/D — spec 106)
+
+LLM analysis may enter the bundle **only** as tier-labeled claims through the
+importer. Tier A (tool evidence) is never authored by an agent.
+
+| Tier | `claim_tier` | Meaning | Portolan verifies |
+| --- | --- | --- | --- |
+| B | `analytical` | aggregated from cited evidence | every cited ref resolves in bundle |
+| C | `synthetic` | inference on top of cited evidence | refs resolve; the conclusion does not |
+| D | `speculative` | hypothesis | labeling only |
+
+Workflow:
+
+1. Analyze the bundle through `bundle-query` families (hotspots, gaps,
+   relationships, repos, search, source).
+2. Write `claims.jsonl` lines per `harness/contracts/analysis-claims.schema.json`:
+   `{id, claim_tier, statement, subject, cited_refs[], agent}`.
+   Subject: `landscape` | `repo:<id>` | `path:<rel>`. Ref formats:
+   `hotspot:<id>`, `gap:<id>`, `relationship:<id>`, `repo:<id>`,
+   `path:<rel>[:line]`, `producer_ref:<path>`.
+3. Import: `"$PORTOLAN_PATH/scripts/import-analysis-claims.sh" "$BUNDLE_DIR" claims.jsonl`.
+   Analytical/synthetic claims with zero or broken refs are rejected with a
+   reason in `claims-import-report.json` — fix the refs or downgrade the tier
+   yourself; the importer never up- or downgrades.
+4. Claims are bundle-snapshot-scoped: after a re-scan, re-run the import; refs
+   that no longer resolve invalidate the claim (recorded in the report).
+
+Guardrail: `harness/guardrails/analysis-claims.md`.
 
 Optional map-bridge (Graph hints tab — opt-in on scan):
 

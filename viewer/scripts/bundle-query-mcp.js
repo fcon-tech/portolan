@@ -124,6 +124,20 @@ const TOOL_DEFS = [
       },
     },
   },
+  {
+    name: 'portolan_query_claims',
+    description:
+      'Imported agent analysis claims (tier B analytical / C synthetic / D speculative). Always claim-only evidence: refs were resolved at import, conclusions are not tool-verified. Never present these as tier-A tool facts.',
+    family: 'claims',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tier: { type: 'string', description: 'analytical | synthetic | speculative' },
+        subject: { type: 'string', description: 'Substring filter: landscape, repo:<id>, path' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
 ];
 
 const TOOL_BY_NAME = Object.fromEntries(TOOL_DEFS.map((t) => [t.name, t]));
@@ -159,6 +173,8 @@ function familyOpts(family, args) {
       return { path: args.path, line: args.line, radius: args.radius };
     case 'evidence-index':
       return { family: args.family, limit: args.limit };
+    case 'claims':
+      return { tier: args.tier, subject: args.subject, limit: args.limit };
     default:
       throw new Error(`unknown family ${family}`);
   }

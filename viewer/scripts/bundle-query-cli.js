@@ -13,6 +13,7 @@ const families = [
   'symbol',
   'source',
   'evidence-index',
+  'claims',
 ];
 
 function printUsage() {
@@ -26,6 +27,7 @@ Families:
   symbol         --name NAME [--kind K] --limit N
   source         --path PATH [--line N] [--radius N]
   evidence-index [--family F] --limit N
+  claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
 
 Options:
   --bundle DIR   Portolan bundle directory (required)
@@ -106,6 +108,14 @@ function parseArgs(argv) {
         break;
       case '--family':
         opts.family = next;
+        i++;
+        break;
+      case '--tier':
+        opts.tier = next;
+        i++;
+        break;
+      case '--subject':
+        opts.subject = next;
         i++;
         break;
       case '--limit':
