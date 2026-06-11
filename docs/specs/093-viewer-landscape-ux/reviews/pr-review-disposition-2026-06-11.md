@@ -1,6 +1,6 @@
 # PR #66 review disposition — 2026-06-11
 
-**Head**: `71d471f` (refactor orient purge + prior 093 viewer commits)  
+**Head**: `abcf87b` (fix viewer load-all sync + attribute escaping)  
 **PR**: https://github.com/fcon-tech/portolan/pull/66
 
 ## Verification
@@ -8,36 +8,56 @@
 | Check | Status |
 | --- | --- |
 | `scripts/harness-portolan-smoke.sh` | verified |
-| `go test ./...` | verified |
-| GitHub Baseline + CodeQL | verified (SUCCESS on push) |
-| OpenCode independent lanes (glm/kimi/minimax) | not_assessed — runs hung, no `result.md` |
+| `go test ./...` | verified (prior runs) |
+| GitHub Baseline + CodeQL | verified (SUCCESS on `abcf87b` push) |
+| OpenCode independent lanes (glm/kimi/minimax) | not_assessed — prior runs hung, no `result.md` |
 
-## Review lanes
+## Review lanes (iteration 3 — post `abcf87b`)
 
-| Lane | Model / harness | Status |
-| --- | --- | --- |
-| Repo-grounded | cavecrew-reviewer (local diff) | assessed |
-| Requirements | zai-coding-plan/glm-5.1 | not_assessed |
-| Code | kimi-for-coding/k2p6 | not_assessed |
-| Security | minimax/MiniMax-M2.7 | not_assessed |
-
-## Accepted (fix before merge)
-
-| ID | Severity | Finding | Action |
+| Lane | Model / harness | Status | Verdict |
 | --- | --- | --- | --- |
-| R1 | major | `viewer/src/app.js` language display sorts `{files,ratio}` objects with subtraction → `[object Object]` | Fix sort + format |
-| R2 | major | Gaps table uses `recipe_ref`; bundle emits `recipe` | Use `g.recipe \|\| g.recipe_ref` |
-| R3 | major | After load-all, findings sections still from budgeted `landscapeReport` | Regroup from `allHotspots` when full list loaded |
+| Repo-grounded | cavecrew-reviewer | assessed | LGTM (0 blockers, 2 residual 🟡) |
+| Correctness | ce-correctness-reviewer | assessed | LGTM |
+| Security | ce-security-reviewer | assessed | LGTM |
+| Requirements | zai-coding-plan/glm-5.1 | not_assessed | — |
+| Code | kimi-for-coding/k2p6 | not_assessed | — |
+| Security (OpenCode) | minimax/MiniMax-M2.7 | not_assessed | — |
+
+## Fixed (was blocking)
+
+| ID | Severity | Finding | Fix commit |
+| --- | --- | --- | --- |
+| R1 | major | Language display `[object Object]` | `517fd47` |
+| R2 | major | Gaps `recipe_ref` vs `recipe` | `517fd47` |
+| R3 | major | Findings sections stale after load-all | `517fd47` |
+| R4 | major | Truncation banner after load-all | `abcf87b` |
+| R5 | major | Overview scale/kind counts stale after load-all | `abcf87b` |
+| R6 | major | `escapeHtml` in attributes → attribute-breakout XSS | `abcf87b` |
+| R7 | major | Filter chip counts stale after load-all | `abcf87b` |
+| R8 | minor | Findings sections vs active filters misaligned | `abcf87b` |
+| R9 | minor | Kind section order not map.md order | `abcf87b` |
+| R10 | minor | Manifest footer stale after load-all | `abcf87b` |
+
+## Accepted residuals (non-blocking)
+
+| ID | Finding | Disposition |
+| --- | --- | --- |
+| Y1 | Empty `hotspots-full.jsonl` → silent load-all click | accepted — edge case; bundle contract expects file when truncated |
+| Y2 | Short full file vs `manifest.hotspots_total` mismatch | accepted — pre-existing bundle contract assumption |
+| Y3 | Manifest numeric fields in banner innerHTML unescaped | accepted — local bundle threat model; low risk |
+| Y4 | Overview `renderOverview()` on load-all only when on overview tab | accepted — tab switch re-renders via `switchTab` |
 
 ## Rejected / deferred
 
 | ID | Finding | Disposition |
 | --- | --- | --- |
-| D1 | Overview does not render all `landscape-report.json` blocks | deferred — slice 5 delivered card + next_steps; spec/plan alignment follow-up |
-| D2 | `total_loc` always unknown | deferred — remove stat or add LOC in scanner (095) |
-| D3 | Loose landscape schemas + no CI artifact validation | deferred — tighten in follow-up slice |
-| D4 | Silent stub card on scan-landscape-card failure | accepted as minor; fix optional |
+| D1 | Overview does not render all `landscape-report.json` blocks | deferred — slice 5 delivered card + next_steps |
+| D2 | `total_loc` always unknown | deferred — scanner follow-up |
+| D3 | Loose landscape schemas + no CI artifact validation | deferred |
+| D4 | Silent stub card on scan-landscape-card failure | accepted as minor |
 
 ## Merge readiness
 
-**Not ready-to-merge** until R1–R3 fixed and at least two independent non-GPT lanes assessed per AGENTS.md.
+**Local implementation: LGTM** — all assessed local review lanes pass; no blocking findings remain.
+
+**PR #66: ready-for-review** — CI green on `abcf87b`. OpenCode independent lanes (glm/kimi/minimax) remain `not_assessed`; merge per AGENTS.md still needs explicit user approval and optional OpenCode lane retry.
