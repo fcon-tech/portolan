@@ -4,8 +4,13 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+export PATH="/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:${HOME}/.local/bin:${PATH}"
 # shellcheck source=portolan-ignore.sh
 . "$(dirname "$0")/portolan-ignore.sh"
+# shellcheck source=lib/jscpd-bounded.sh
+. "$(dirname "$0")/lib/jscpd-bounded.sh"
+# shellcheck source=lib/install-ctags.sh
+. "$(dirname "$0")/lib/install-ctags.sh"
 
 JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor/**,**/.agents/**,**/node_modules/**,**/vendor/**,**/build/**,**/dist/**,**/target/**,**/portolan-smoke/**,**/generated/**"
 
@@ -13,12 +18,18 @@ YES=0
 SKIP_INSTALL=0
 NO_VIEWER=0
 WITH_MAP_BRIDGE=0
+CROSS_REPO_DUP=0
+CROSS_REPO_DUP_ONLY=0
+CROSS_REPO_DUP_MAX_PAIRS=0
 PORT=4173
 LIMIT_REPOS=0
 PRODUCERS="config,jscpd,semgrep,syft,ctags"
 HOTSPOT_BUDGET=200
 SHARD_TIMEOUT=600
 JSCPD_MEMORY_MB=2048
+JSCPD_SUBSHARD_FILE_THRESHOLD="${PORTOLAN_JSCPD_SUBSHARD_THRESHOLD:-3000}"
+JSCPD_SUBSHARD_MAX="${PORTOLAN_JSCPD_SUBSHARD_MAX:-12}"
+CROSS_JSCPD_FILES_PER_REPO="${PORTOLAN_CROSS_JSCPD_FILES_PER_REPO:-1500}"
 
 usage() {
   cat <<'EOF'
@@ -29,6 +40,9 @@ Options:
   --skip-install     Never install missing tools (gaps only)
   --no-viewer        Build bundle only; do not start viewer
   --with-map-bridge  After bundle build, run portolan map + map-bridge sidecar (opt-in)
+  --cross-repo-dup   Pairwise bounded jscpd across repo pairs (multi-repo only)
+  --cross-repo-dup-only  Re-run only cross-repo jscpd + bundle build (existing producers)
+  --cross-repo-dup-max-pairs N  Cap cross-repo pairs (0 = all pairs; default 0)
   --port N           Viewer port (default 4173)
   --limit-repos N    Cap discovered git repos for sharded producers
   --producers LIST   Comma-separated: config,jscpd,semgrep,syft,ctags (default all five)
@@ -58,6 +72,9 @@ while [[ $# -gt 0 ]]; do
     --skip-install) SKIP_INSTALL=1; shift ;;
     --no-viewer) NO_VIEWER=1; shift ;;
     --with-map-bridge) WITH_MAP_BRIDGE=1; shift ;;
+    --cross-repo-dup) CROSS_REPO_DUP=1; shift ;;
+    --cross-repo-dup-only) CROSS_REPO_DUP=1; CROSS_REPO_DUP_ONLY=1; shift ;;
+    --cross-repo-dup-max-pairs) require_opt_value --cross-repo-dup-max-pairs "${2:-}"; CROSS_REPO_DUP_MAX_PAIRS="$2"; shift 2 ;;
     --port) require_opt_value --port "${2:-}"; PORT="$2"; shift 2 ;;
     --limit-repos) require_opt_value --limit-repos "${2:-}"; LIMIT_REPOS="$2"; shift 2 ;;
     --producers) require_opt_value --producers "${2:-}"; PRODUCERS="$2"; shift 2 ;;
@@ -125,8 +142,9 @@ run_shard() {
   shift 2
   local slug
   slug=$(repo_slug "$repo")
-  if ! timeout "$SHARD_TIMEOUT" "$@"; then
-    local code=$?
+  local code=0
+  timeout "$SHARD_TIMEOUT" "$@" || code=$?
+  if [[ $code -ne 0 ]]; then
     if [[ $code -eq 124 ]]; then
       append_shard_gap "shard-${producer}-${slug}" "$producer" "cannot_verify" \
         "${producer} timed out after ${SHARD_TIMEOUT}s on ${slug}" "$repo"
@@ -185,26 +203,40 @@ install_tool() {
 }
 
 ensure_tools() {
+  local missing=0
   if has_producer jscpd; then
     install_tool jscpd \
       "npm install -g jscpd" \
-      "brew install jscpd" || true
+      "brew install jscpd" || missing=1
   fi
   if has_producer semgrep; then
     install_tool semgrep \
       "pipx install semgrep" \
-      "brew install semgrep" || true
+      "brew install semgrep" || missing=1
   fi
   if has_producer syft; then
     install_tool syft \
       "brew install syft" \
-      "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin" || true
+      "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b ${HOME}/.local/bin" || missing=1
   fi
   if has_producer ctags; then
-    install_tool ctags \
-      "brew install universal-ctags" \
-      "apt-get install -y universal-ctags" || true
+    if ! install_tool ctags \
+      "portolan_install_ctags" \
+      "brew install universal-ctags"; then
+      missing=1
+    fi
   fi
+  if [[ "$missing" -ne 0 && "$YES" -eq 1 && "$SKIP_INSTALL" -eq 0 ]]; then
+    log "required producer tool(s) missing after install attempts; aborting (--yes)"
+    exit 2
+  fi
+}
+
+# Bounded jscpd without recording a shard gap (sub-shard / pair attempts).
+jscpd_try_bounded() {
+  local code=0
+  jscpd_run_bounded "$@" || code=$?
+  return "$code"
 }
 
 run_config() {
@@ -237,9 +269,17 @@ run_ctags() {
       continue
     fi
     log "ctags: $repo ($(wc -l <"$list_file" | tr -d ' ') files, gitignore-aware)"
-    run_shard ctags "$repo" \
+    local ok=0
+    if run_shard ctags "$repo" \
       bash -c 'cd "$1" && ctags --output-format=json --fields=+nKz --links=no -L "$2" -f "$3"' \
-      _ "$repo" "$list_file" "$outdir/tags.json" 2>>"$FAILURES_LOG" || true
+      _ "$repo" "$list_file" "$outdir/tags.json" 2>>"$FAILURES_LOG"; then
+      ok=1
+    fi
+    if [[ "$ok" -eq 0 ]] || [[ ! -f "$outdir/tags.json" ]] || ! jq -e . "$outdir/tags.json" >/dev/null 2>&1; then
+      append_shard_gap "shard-ctags-${slug}" "ctags" "cannot_verify" \
+        "ctags produced no usable tags.json" "$repo"
+      fail_log "ctags failed: $repo"
+    fi
     rm -f "$list_file"
   done < <(discover_repos)
 }
@@ -271,28 +311,64 @@ repo_slug() {
   echo "${base}-${hash}"
 }
 
+jscpd_subshard_segments() {
+  # Emit top-level path segments (first component) for sub-sharding, capped.
+  local list_file=$1
+  awk -F/ 'NF > 0 && $1 != "" { print $1 }' "$list_file" | sort -u | head -n "$JSCPD_SUBSHARD_MAX"
+}
+
+run_jscpd_repo() {
+  local repo=$1 slug=$2 out_base=$3
+  local list_file file_count ok=0 seg subpath out code
+  list_file=$(mktemp)
+  portolan_repo_file_list "$repo" >"$list_file"
+  file_count=$(wc -l <"$list_file" | tr -d ' ')
+
+  if [[ "$file_count" -le "$JSCPD_SUBSHARD_FILE_THRESHOLD" ]]; then
+    out="$out_base"
+    mkdir -p "$out"
+    log "jscpd: $repo ($file_count files, bounded, ${JSCPD_MEMORY_MB}MB, ${SHARD_TIMEOUT}s)"
+    code=0
+    if jscpd_try_bounded "$repo" "$out"; then
+      jscpd_dir_has_report "$out" && ok=1
+    else
+      code=$?
+      [[ "$code" -eq 124 ]] && fail_log "jscpd timeout: $repo"
+    fi
+  else
+    log "jscpd: $repo ($file_count files → sub-shards, max $JSCPD_SUBSHARD_MAX)"
+    while IFS= read -r seg; do
+      [[ -z "$seg" ]] && continue
+      subpath="$repo/$seg"
+      [[ -d "$subpath" ]] || continue
+      out="$out_base/$seg"
+      mkdir -p "$out"
+      log "jscpd sub-shard: $repo/$seg"
+      if jscpd_try_bounded "$subpath" "$out"; then
+        jscpd_dir_has_report "$out" && ok=1
+      fi
+    done < <(jscpd_subshard_segments "$list_file")
+  fi
+  rm -f "$list_file"
+
+  if [[ "$ok" -eq 0 ]]; then
+    append_shard_gap "shard-jscpd-${slug}" "jscpd" "cannot_verify" \
+      "jscpd produced no report for repo (all sub-shards failed or timed out)" "$repo"
+    fail_log "jscpd failed: $repo"
+    return 1
+  fi
+  return 0
+}
+
 run_jscpd() {
   command -v jscpd >/dev/null || { log "jscpd not available"; return 1; }
-  local repo out
+  local repo slug out_base
   while IFS= read -r repo; do
     [[ -z "$repo" ]] && continue
-    local slug
     slug=$(repo_slug "$repo")
-    out="$PRODUCERS_DIR/jscpd/$slug"
-    mkdir -p "$out"
-    log "jscpd: $repo (${JSCPD_MEMORY_MB}MB cap, ${SHARD_TIMEOUT}s timeout)"
-    NODE_OPTIONS="--max-old-space-size=${JSCPD_MEMORY_MB}" \
-      run_shard jscpd "$repo" \
-      jscpd "$repo" \
-        --reporters json \
-        --output "$out" \
-        --min-lines 5 \
-        --min-tokens 50 \
-        --threshold 999999 \
-        --noSymlinks \
-        --gitignore \
-        --ignore "$JSCPD_IGNORE_GLOBS" \
-        2>>"$FAILURES_LOG" || true
+    out_base="$PRODUCERS_DIR/jscpd/$slug"
+    mkdir -p "$out_base"
+    run_jscpd_repo "$repo" "$slug" "$out_base" || true
   done < <(discover_repos)
 }
 
@@ -332,6 +408,97 @@ run_semgrep() {
   fi
 }
 
+jscpd_cross_stage_repo() {
+  local repo=$1 staging=$2 label=$3 max_files=$4
+  local dest="$staging/$label" f rel d n=0
+  mkdir -p "$dest"
+  while IFS= read -r f; do
+    [[ -z "$f" || ! -f "$f" ]] && continue
+    [[ "$n" -ge "$max_files" ]] && break
+    rel="${f#"$repo"/}"
+    [[ -z "$rel" || "$rel" == "$f" ]] && continue
+    d="$dest/$(dirname "$rel")"
+    mkdir -p "$d"
+    ln -sf "$f" "$dest/$rel"
+    n=$((n + 1))
+  done < <(portolan_repo_file_list "$repo")
+  echo "$n"
+}
+
+run_jscpd_cross() {
+  # Pairwise bounded cross-repo duplication (spec 110): one jscpd per repo pair.
+  if ! command -v jscpd >/dev/null; then
+    fail_log "jscpd-cross skipped: jscpd not installed"
+    append_gap_record "gap-cross-repo-dup" "duplication" "not_assessed" \
+      "--cross-repo-dup requested but jscpd is not installed" \
+      "harness/recipes/duplication-jscpd.md"
+    return 0
+  fi
+  local -a repos=()
+  mapfile -t repos < <(discover_repos)
+  if [[ ${#repos[@]} -lt 2 ]]; then
+    log "jscpd-cross: single repo landscape; skipping cross pass"
+    return 0
+  fi
+  local cross_root="$PRODUCERS_DIR/jscpd-cross"
+  mkdir -p "$cross_root"
+  local pairs_total=0 pairs_ok=0 pairs_failed=0 clone_pairs=0
+  local i j ra rb slug_a slug_b pair_dir pair_limit=$CROSS_REPO_DUP_MAX_PAIRS
+  log "jscpd-cross: pairwise bounded passes for ${#repos[@]} repos"
+  for ((i = 0; i < ${#repos[@]}; i++)); do
+    for ((j = i + 1; j < ${#repos[@]}; j++)); do
+      if [[ "$pair_limit" -gt 0 && "$pairs_total" -ge "$pair_limit" ]]; then
+        break 2
+      fi
+      ra="${repos[$i]}"
+      rb="${repos[$j]}"
+      slug_a=$(repo_slug "$ra")
+      slug_b=$(repo_slug "$rb")
+      pair_dir="$cross_root/${slug_a}--${slug_b}"
+      mkdir -p "$pair_dir"
+      pairs_total=$((pairs_total + 1))
+      log "jscpd-cross pair: $slug_a <-> $slug_b (≤${CROSS_JSCPD_FILES_PER_REPO} files/repo)"
+      staging=$(mktemp -d)
+      na=$(jscpd_cross_stage_repo "$ra" "$staging" "$slug_a" "$CROSS_JSCPD_FILES_PER_REPO")
+      nb=$(jscpd_cross_stage_repo "$rb" "$staging" "$slug_b" "$CROSS_JSCPD_FILES_PER_REPO")
+      pair_ok=0
+      if [[ "$na" -eq 0 && "$nb" -eq 0 ]]; then
+        printf '%s\n' '{"duplicates":[]}' >"$pair_dir/jscpd-report.json"
+        pair_ok=1
+      elif jscpd_try_bounded "$staging/$slug_a" "$staging/$slug_b" "$pair_dir"; then
+        jscpd_dir_has_report "$pair_dir" && pair_ok=1
+      fi
+      rm -rf "$staging"
+      if [[ "$pair_ok" -eq 1 ]]; then
+        pairs_ok=$((pairs_ok + 1))
+        n=$(jq -r '.duplicates | map(select(.firstFile.name != null and .secondFile.name != null)) | length' \
+          "$pair_dir"/jscpd-report.json 2>/dev/null || echo 0)
+        [[ "$n" =~ ^[0-9]+$ ]] && clone_pairs=$((clone_pairs + n))
+      else
+        pairs_failed=$((pairs_failed + 1))
+        fail_log "jscpd-cross pair failed: $slug_a -- $slug_b"
+      fi
+    done
+  done
+
+  jq -n \
+    --arg completed_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+    --argjson pairs_total "$pairs_total" \
+    --argjson pairs_ok "$pairs_ok" \
+    --argjson pairs_failed "$pairs_failed" \
+    --argjson clone_pairs "$clone_pairs" \
+    '{schema_version:"0.1.0",completed_at:$completed_at,pairs_total:$pairs_total,pairs_ok:$pairs_ok,pairs_failed:$pairs_failed,clone_pairs:$clone_pairs}' \
+    >"$cross_root/_scan.json"
+
+  if [[ "$pairs_failed" -gt 0 ]]; then
+    append_gap_record "gap-cross-repo-dup" "duplication" "cannot_verify" \
+      "cross-repo pairwise jscpd: ${pairs_failed}/${pairs_total} pair(s) failed" \
+      "harness/recipes/duplication-jscpd.md"
+  else
+    log "jscpd-cross: complete ${pairs_ok}/${pairs_total} pairs, clone_pairs=$clone_pairs"
+  fi
+}
+
 run_syft() {
   command -v syft >/dev/null || { log "syft not available"; return 1; }
   mkdir -p "$PRODUCERS_DIR/syft"
@@ -347,6 +514,16 @@ run_syft() {
 }
 
 ensure_tools
+
+if [[ "$CROSS_REPO_DUP_ONLY" -eq 1 ]]; then
+  rm -rf "$PRODUCERS_DIR/jscpd-cross"
+  run_jscpd_cross || true
+  export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
+  export PORTOLAN_LIMIT_REPOS="$LIMIT_REPOS"
+  "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
+  log "done (cross-repo-dup-only): $BUNDLE_DIR"
+  exit 0
+fi
 
 if has_producer config; then
   run_config || true
@@ -373,12 +550,21 @@ fi
 if has_producer ctags && command -v ctags >/dev/null; then
   run_ctags || true
 elif has_producer ctags; then
-  append_gap_record "gap-ctags" "symbols" "not_assessed" \
-    "ctags not installed; see harness/recipes/symbols-ctags.md" \
+  append_gap_record "gap-ctags" "symbols" "cannot_verify" \
+    "ctags required but not installed after preflight; see harness/recipes/symbols-ctags.md" \
     "harness/recipes/symbols-ctags.md"
+  if [[ "$YES" -eq 1 && "$SKIP_INSTALL" -eq 0 ]]; then
+    log "aborting: ctags required (--yes)"
+    exit 2
+  fi
+fi
+
+if [[ "$CROSS_REPO_DUP" -eq 1 ]]; then
+  run_jscpd_cross || true
 fi
 
 export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
+export PORTOLAN_LIMIT_REPOS="$LIMIT_REPOS"
 "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
 
 append_bundle_gap() {

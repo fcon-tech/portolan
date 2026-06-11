@@ -1,6 +1,6 @@
 ---
 name: "portolan-spec-delivery"
-description: "Use when implementing or reviewing Portolan SpecKit slices, taking the next ready spec, running review cycles with pi/Codex reviewers, improving a PR, marking it ready, or merging after explicit approval."
+description: "Use when implementing or reviewing Portolan SpecKit slices, taking the next ready spec, running review cycles with OpenCode/codex-subagent reviewers, improving a PR, marking it ready, or merging after explicit approval."
 compatibility: "Portolan repository with SpecKit specs, docs/product-backlog.md, and AGENTS.md"
 metadata:
   author: "portolan"
@@ -115,30 +115,18 @@ Run independent review lanes. Prefer:
 
 - one requirements/UX/DX lane;
 - one security/evidence lane;
-- model lanes through `pi` when useful, using enabled models from
-  `~/.pi/agent/settings.json`.
+- model lanes through **OpenCode** (`codex-subagent run opencode`) per
+  `~/.agents/skills/review/SKILL.md`.
 
-Choose slice-review model lanes from the repo review roster in
-`docs/review-harness-benchmark.md`. Use `pi` as the default review harness.
-Start with subscription/provider-direct lanes where they are live, then use the
-documented OpenRouter fallback for the same model family before replacing the
-lane. If a lane is unavailable, empty, stale, or off-task, mark it
-`not_assessed` and do not count it toward coverage.
+Choose slice-review model lanes from `docs/review-harness-benchmark.md`. Default
+harness is OpenCode, not `pi` (deprecated for Portolan implementation review).
 
-Run `pi` review lanes sequentially, not in parallel. In the current local
-environment, parallel `pi` launches can contend on extension startup state and
-return `database is locked`; that is harness failure, not review evidence. If
-the lane is intentionally a bounded no-tools text review, use flags such as
-`--no-tools --no-context-files --no-session` and optionally disable extensions
-for that lane. Do not make no-tools mode the default for repo-grounded reviews
-that need file inspection.
+Run OpenCode review lanes sequentially with explicit timeouts. **Never** pass
+`--task` together with `--context-pack` to `codex-subagent`. If a lane is
+unavailable, empty, stale, or off-task, mark it `not_assessed` and do not count
+it toward coverage.
 
-Use an explicit command timeout for every `pi` lane. If a lane produces no
-output before the timeout, stop it and record `not_assessed`. When coverage is
-still required, retry once with a shorter packet or run an explicit enabled
-replacement lane that satisfies the current independence rules. If the output
-is a tool-call request, context-mode instruction dump, or other harness/process
-instruction instead of a review verdict, treat it as off-task `not_assessed`.
+Preflight: `scripts/harness-review-opencode-smoke.sh`
 
 When building no-tools review packets in shell, verify that the packet actually
 contains the intended file contents before counting the lane. A prompt that
@@ -208,12 +196,12 @@ touches:
 - schema compatibility;
 - CLI user behavior.
 
-For ordinary code slices, run the default slice-review model lanes through `pi`:
+For ordinary code slices, run the default slice-review model lanes through OpenCode:
 
 ```bash
-pi --no-tools --no-context-files --no-session --model openrouter/deepseek/deepseek-v4-pro -p "$PROMPT"
-pi --no-tools --no-context-files --no-session --model openrouter/minimax/minimax-m2.7 -p "$PROMPT"
-pi --no-tools --no-context-files --no-session --model zai/glm-5.1 -p "$PROMPT"
+codex-subagent run opencode --model zai-coding-plan/glm-5.1 --context-pack "$PACK" --prompt "$PROMPT"
+codex-subagent run opencode --model kimi-for-coding/k2p6 --context-pack "$PACK" --prompt "$PROMPT"
+codex-subagent run opencode --model minimax/MiniMax-M2.7 --context-pack "$PACK" --prompt "$PROMPT"
 ```
 
 Review findings must be dispositioned:

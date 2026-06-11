@@ -1,8 +1,38 @@
 # Review Harness And Model Roster
 
-Date: 2026-05-27
+Date: 2026-06-11 (P9.1 OpenCode primary)
 
-## Decision
+## Decision (current)
+
+Use **OpenCode via `codex-subagent`** as the default Portolan review harness for
+durable review evidence. Follow [`.agents/skills/review/SKILL.md`](../../.agents/skills/review/SKILL.md)
+at the workspace root (not `pi`).
+
+Required independent lanes (non-GPT):
+
+| Lane | Model |
+| --- | --- |
+| Requirements / product | `zai-coding-plan/glm-5.1` |
+| Code / maintainability | `kimi-for-coding/k2p6` |
+| Security / evidence | `minimax/MiniMax-M2.7` |
+
+Invocation pattern:
+
+```bash
+codex-subagent run opencode \
+  --model "<model-id>" \
+  --context-pack "<pack-dir>" \
+  --prompt "<review prompt>"
+```
+
+**Never** pass `--task` together with `--context-pack` (CLI error). Use one or
+the other.
+
+Health check: `scripts/harness-review-opencode-smoke.sh`
+
+`pi` is **deprecated** for Portolan code review (historical artifacts only).
+
+## Decision (2026-05-27, superseded for implementation review)
 
 Use `pi` as the default Portolan review harness for durable review evidence.
 Use `omp` for interactive agent work, sub-agent orchestration, or cases where

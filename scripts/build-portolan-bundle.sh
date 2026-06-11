@@ -40,23 +40,45 @@ producer_repo_slug() {
   echo "${base}-${hash}"
 }
 
-# --- repos.json ---
+# --- repos.json (slug ids: basename + path hash, collision-safe; spec 104) ---
+# PORTOLAN_LIMIT_REPOS keeps the bundle repo set consistent with the
+# --limit-repos cap applied to sharded producers in portolan-scan.sh.
+LIMIT_REPOS="${PORTOLAN_LIMIT_REPOS:-0}"
 if [[ -d "$TARGET_ROOT/.git" ]]; then
-  jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
-    '[{id: $name, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
+  jq -n --arg id "$(producer_repo_slug "$TARGET_ROOT")" \
+    --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
+    '[{id: $id, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
 else
   repos='[]'
+  repo_seen=0
   while IFS= read -r gitdir; do
     repo=$(dirname "$gitdir")
     name=$(basename "$repo")
-    repos=$(echo "$repos" | jq --arg id "$name" --arg path "$repo" --arg name "$name" \
+    if [[ "$LIMIT_REPOS" -gt 0 && "$repo_seen" -ge "$LIMIT_REPOS" ]]; then
+      break
+    fi
+    repo_seen=$((repo_seen + 1))
+    repos=$(echo "$repos" | jq --arg id "$(producer_repo_slug "$repo")" --arg path "$repo" --arg name "$name" \
       '. + [{id: $id, path: $path, name: $name}]')
-  done < <(find "$TARGET_ROOT" -name .git -type d 2>/dev/null || true)
+  done < <(find "$TARGET_ROOT" -name .git -type d 2>/dev/null | sort || true)
   if [[ "$(echo "$repos" | jq 'length')" -eq 0 ]]; then
-    repos=$(jq -n --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
-      '[{id: $name, path: $path, name: $name}]')
+    repos=$(jq -n --arg id "$(producer_repo_slug "$TARGET_ROOT")" \
+      --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
+      '[{id: $id, path: $path, name: $name}]')
   fi
   echo "$repos" >"$BUNDLE_DIR/repos.json"
+fi
+
+# --- repo-profiles.json (spec 104) ---
+# drop any stale profiles first: a failed producer must leave no previous-run
+# artifact behind while the gap says cannot_verify
+rm -f "$BUNDLE_DIR/repo-profiles.json"
+if ! "$SCRIPT_DIR/scan-repo-profiles.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
+  echo "warn: scan-repo-profiles failed; recording gap" >&2
+  rm -f "$BUNDLE_DIR/repo-profiles.json"
+  PROFILE_GAP=1
+else
+  PROFILE_GAP=0
 fi
 
 hotspots_raw=$(mktemp)
@@ -70,6 +92,9 @@ append_gap() {
     --arg summary "$4" --arg recipe "${5:-}" \
     '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' >>"$gaps_raw"
 }
+
+[[ "${PROFILE_GAP:-0}" -eq 1 ]] && append_gap "gap-repo-profiles" "repo-profiles" "cannot_verify" \
+  "scan-repo-profiles failed during bundle build." "scripts/scan-repo-profiles.sh"
 
 bundle_path_ignored() {
   local p=$1
@@ -121,6 +146,33 @@ process_jscpd_file() {
   done
 }
 
+process_jscpd_cross_file() {
+  # Cross-repo clone pairs only (spec 105). Intra-repo pairs are intentionally
+  # skipped here: per-repo jscpd shards already cover them.
+  local jfile=$1
+  jq -r --slurpfile repos "$BUNDLE_DIR/repos.json" --arg ref "$jfile" '
+    def repo_of($p):
+      [ $repos[0][] | . as $r | select($p == $r.path or ($p | startswith($r.path + "/"))) ]
+      | sort_by(-(.path | length)) | (.[0].id // "");
+    .duplicates[]? |
+    select(.firstFile.name != null and .secondFile.name != null) |
+    . as $d |
+    (repo_of($d.firstFile.name)) as $ra |
+    (repo_of($d.secondFile.name)) as $rb |
+    select($ra != "" and $rb != "" and $ra != $rb) |
+    [$d.firstFile.name, $d.secondFile.name, ($d.lines // 0 | tostring), $ra, $rb, $ref] | @tsv
+  ' "$jfile" | while IFS=$'\t' read -r first second lines ra rb ref; do
+    [[ -z "$first" ]] && continue
+    bundle_path_ignored "$first" && continue
+    bundle_path_ignored "$second" && continue
+    id="xdup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg first "$first" --arg second "$second" \
+      --argjson lines "${lines:-0}" --arg ref "$ref" --arg ra "$ra" --arg rb "$rb" \
+      '{id:$id,kind:"duplication",severity:"high",summary:("Cross-repo duplicate (~"+($lines|tostring)+" lines): "+$ra+" <-> "+$rb),paths:[$first,$second],evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+}
+
 process_semgrep_file() {
   local sfile=$1
   jq -r --arg ref "$sfile" '
@@ -151,10 +203,37 @@ while IFS= read -r jfile; do
   jq -e '.duplicates' "$jfile" >/dev/null 2>&1 || continue
   jscpd_found=1
   process_jscpd_file "$jfile"
-done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$PRODUCERS_DIR" -maxdepth 2 -name 'jscpd-report.json' 2>/dev/null)
+done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$PRODUCERS_DIR" -maxdepth 2 -name 'jscpd-report.json' -not -path '*/jscpd-cross/*' 2>/dev/null)
 
 [[ "$jscpd_found" -eq 1 ]] || append_gap "gap-duplication" "duplication" "not_assessed" \
   "No jscpd producer output found." "harness/recipes/duplication-jscpd.md"
+
+# Per-repo jscpd coverage (spec 109 strict): every repo must have a report when jscpd ran.
+if [[ -d "$PRODUCERS_DIR/jscpd" ]] && [[ -f "$BUNDLE_DIR/repos.json" ]]; then
+  while IFS=$'\t' read -r rid rpath; do
+    [[ -z "$rid" || -z "$rpath" ]] && continue
+    rslug=$(producer_repo_slug "$rpath")
+    repo_ok=0
+    if [[ -d "$PRODUCERS_DIR/jscpd/$rslug" ]]; then
+      while IFS= read -r jf; do
+        [[ -f "$jf" ]] || continue
+        jq -e '.duplicates | type == "array"' "$jf" >/dev/null 2>&1 && repo_ok=1 && break
+      done < <(find "$PRODUCERS_DIR/jscpd/$rslug" -type f -name '*.json' 2>/dev/null)
+    fi
+    if [[ "$repo_ok" -eq 0 ]]; then
+      append_gap "gap-duplication-${rid}" "duplication" "cannot_verify" \
+        "No bounded jscpd report for repo ${rid}." "harness/recipes/duplication-jscpd.md"
+    fi
+  done < <(jq -r '.[] | [.id, .path] | @tsv' "$BUNDLE_DIR/repos.json")
+fi
+
+# --- cross-repo duplication pairs (producers/jscpd-cross/**, opt-in; spec 105/110) ---
+while IFS= read -r jfile; do
+  [[ -f "$jfile" ]] || continue
+  [[ "$(basename "$jfile")" == "_scan.json" ]] && continue
+  jq -e '.duplicates' "$jfile" >/dev/null 2>&1 || continue
+  process_jscpd_cross_file "$jfile"
+done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' ! -name '_scan.json' 2>/dev/null)
 
 # --- semgrep (producers/semgrep/**) ---
 semgrep_found=0
@@ -276,6 +355,27 @@ if [[ "$ctags_found" -eq 0 ]]; then
   fi
 fi
 
+# Per-repo ctags coverage (spec 111 strict): every repo must have tags.json when ctags ran.
+if [[ -d "$PRODUCERS_DIR/ctags" ]] && [[ -f "$BUNDLE_DIR/repos.json" ]]; then
+  while IFS=$'\t' read -r rid rpath; do
+    [[ -z "$rid" || -z "$rpath" ]] && continue
+    rslug=$(producer_repo_slug "$rpath")
+    tfile="$PRODUCERS_DIR/ctags/$rslug/tags.json"
+    if [[ ! -f "$tfile" ]] || ! jq -e . "$tfile" >/dev/null 2>&1; then
+      append_gap "gap-ctags-${rid}" "symbols" "cannot_verify" \
+        "No usable ctags tags.json for repo ${rid}." "harness/recipes/symbols-ctags.md"
+    fi
+  done < <(jq -r '.[] | [.id, .path] | @tsv' "$BUNDLE_DIR/repos.json")
+fi
+
+# --- relationships.jsonl (spec 105) ---
+if ! "$SCRIPT_DIR/scan-cross-repo.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
+  echo "warn: scan-cross-repo failed; recording gap" >&2
+  append_gap "gap-relationships" "relationships" "cannot_verify" \
+    "scan-cross-repo failed during bundle build." "scripts/scan-cross-repo.sh"
+  : >"$BUNDLE_DIR/relationships.jsonl"
+fi
+
 # --- merge shard gaps from wizard ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
   cat "$PRODUCERS_DIR/_gaps.jsonl" >>"$gaps_raw"
@@ -380,12 +480,31 @@ if [[ -s "$gaps_raw" ]]; then
 fi
 gap_count=$(wc -l <"$BUNDLE_DIR/gaps.jsonl" | tr -d ' ')
 
+repo_count=$(jq 'length' "$BUNDLE_DIR/repos.json" 2>/dev/null || echo 0)
+relationship_count=0
+if [[ -f "$BUNDLE_DIR/relationships.jsonl" ]]; then
+  relationship_count=$(wc -l <"$BUNDLE_DIR/relationships.jsonl" | tr -d ' ')
+fi
+
+cross_dup_json='null'
+if [[ -f "$PRODUCERS_DIR/jscpd-cross/_scan.json" ]]; then
+  cross_dup_json=$(jq -c '
+    if .pairs_failed == 0 and .pairs_ok == .pairs_total then
+      {status:"complete", pairs_total:.pairs_total, pairs_ok:.pairs_ok, clone_pairs:(.clone_pairs // 0)}
+    else
+      {status:"incomplete", pairs_total:.pairs_total, pairs_ok:(.pairs_ok // 0), pairs_failed:(.pairs_failed // 0)}
+    end
+  ' "$PRODUCERS_DIR/jscpd-cross/_scan.json" 2>/dev/null || echo 'null')
+fi
+
 jq -n \
   --arg schema_version "0.1.0" \
   --arg target_root "$TARGET_ROOT" \
   --arg generated_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
   --argjson hotspot_count "$hotspot_count" \
   --argjson gap_count "$gap_count" \
+  --argjson repo_count "$repo_count" \
+  --argjson relationship_count "$relationship_count" \
   --argjson hotspot_budget "$HOTSPOT_BUDGET" \
   --argjson hotspots_truncated "$truncated" \
   --argjson hotspots_total "$total_before" \
@@ -393,7 +512,8 @@ jq -n \
   --argjson kind_counts_total "$kind_counts_total" \
   --argjson gap_budget "$GAP_BUDGET" \
   --argjson gaps_truncated "$gaps_truncated" \
-  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
+  --argjson cross_repo_duplication "$cross_dup_json" \
+  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated} + (if $cross_repo_duplication != null then {cross_repo_duplication:$cross_repo_duplication} else {} end)' \
   >"$BUNDLE_DIR/manifest.json"
 
 # graph-slice: findings + unique path nodes for map tab

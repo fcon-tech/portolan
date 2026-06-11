@@ -55,6 +55,23 @@ echo '{"id":"ev-1","family":"relationships","summary":"fixture edge","evidence_s
 "$Q" evidence-index --bundle "$FIXTURE_BUNDLE" --limit 5 \
   | jq -e '.records | length >= 1' >/dev/null
 
+# repos / relationships families (107)
+"$Q" repos --bundle "$FIXTURE_BUNDLE" --limit 5 \
+  | jq -e '.records | length >= 1' >/dev/null
+
+# unknown repo filter must return no records (not the whole landscape)
+"$Q" hotspots --bundle "$FIXTURE_BUNDLE" --repo no-such-repo --limit 5 \
+  | jq -e '(.records | length == 0) and (.warnings | length >= 1)' >/dev/null
+# single-repo fixture: empty edge list is a valid clean result (file present, no edges)
+"$Q" relationships --bundle "$FIXTURE_BUNDLE" --limit 5 \
+  | jq -e '.records | type == "array"' >/dev/null
+curl -sf "$BASE/api/repos?limit=3" | jq -e '.records | length >= 1' >/dev/null
+curl -sf "$BASE/api/relationships?limit=3" | jq -e '.records | type == "array"' >/dev/null
+
+# source full read (107): whole file with line cap
+"$Q" source --bundle "$FIXTURE_BUNDLE" --path sample.go --line 1 --full \
+  | jq -e '.records[0].payload | (.startLine == 1) and (.totalLines >= (.lines | length))' >/dev/null
+
 # ast-index import (097)
 AST_FIX=$(mktemp)
 echo '[{"name":"ImportedSym","path":"sample.go","kind":"function","line":4}]' >"$AST_FIX"

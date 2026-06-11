@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "portolan-repo-profiles",
+  "title": "Portolan repo profiles (spec 104)",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "target_root", "repos"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "generated_at": { "type": "string" },
+    "target_root": { "type": "string" },
+    "producer": { "type": "string" },
+    "repos": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/repo_profile" }
+    }
+  },
+  "definitions": {
+    "repo_profile": {
+      "type": "object",
+      "required": ["id", "name", "path", "purpose", "maturity"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "path": { "type": "string" },
+        "scale": {
+          "type": "object",
+          "properties": {
+            "file_count": { "type": "integer", "minimum": 0 },
+            "evidence_state": { "enum": ["source-visible", "metadata-visible", "unknown"] }
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ext", "files"],
+            "properties": {
+              "ext": { "type": "string" },
+              "files": { "type": "integer" }
+            }
+          }
+        },
+        "purpose": {
+          "type": "object",
+          "properties": {
+            "readme_path": { "type": ["string", "null"] },
+            "readme_title": { "type": ["string", "null"] },
+            "manifests": { "type": "array" },
+            "manifest_counts": { "type": "array" },
+            "compose": { "type": "array" },
+            "docker": { "type": "array" },
+            "entrypoints": { "type": "array", "items": { "type": "string" } },
+            "api_specs": { "type": "array", "items": { "type": "string" } },
+            "evidence_state": { "type": "string" }
+          }
+        },
+        "module_ids": { "type": "array", "items": { "type": "string" } },
+        "declared_deps": { "type": "array", "items": { "type": "string" } },
+        "ci_files": { "type": "array", "items": { "type": "string" } },
+        "activity": {
+          "type": "object",
+          "properties": {
+            "last_commit": { "type": ["string", "null"] },
+            "commits_30d": { "type": ["integer", "null"] },
+            "contributors": { "type": ["integer", "null"] },
+            "evidence_state": { "type": "string" }
+          }
+        },
+        "maturity": {
+          "type": "object",
+          "required": ["has_readme", "has_ci", "has_tests", "has_docker"],
+          "properties": {
+            "has_readme": { "type": "boolean" },
+            "has_ci": { "type": "boolean" },
+            "has_tests": { "type": "boolean" },
+            "has_docker": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

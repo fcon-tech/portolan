@@ -1,6 +1,6 @@
 {
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-11T08:35:52Z",
+  "generated_at": "2026-06-11T14:29:09Z",
   "target_root": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
   "sections": [
     {
@@ -26,10 +26,10 @@
       "title": "Repositories",
       "items": [
         {
-          "id": "target",
+          "id": "target-3e259084",
           "name": "target",
           "path": "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target",
-          "evidence_ref": "repo:target"
+          "evidence_ref": "repo:target-3e259084"
         }
       ]
     },
@@ -116,6 +116,20 @@
       "id": "gaps",
       "title": "Not assessed",
       "items": [
+        {
+          "id": "gap-duplication-target-3e259084",
+          "surface": "duplication",
+          "status": "cannot_verify",
+          "summary": "No bounded jscpd report for repo target-3e259084.",
+          "evidence_ref": "gap:gap-duplication-target-3e259084"
+        },
+        {
+          "id": "gap-ctags-target-3e259084",
+          "surface": "symbols",
+          "status": "cannot_verify",
+          "summary": "No usable ctags tags.json for repo target-3e259084.",
+          "evidence_ref": "gap:gap-ctags-target-3e259084"
+        },
         {
           "id": "gap-deps",
           "surface": "dependencies",

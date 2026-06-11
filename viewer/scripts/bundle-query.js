@@ -97,19 +97,21 @@ function resolveSourcePath(requestPath, repoRoots) {
   return null;
 }
 
-function readSourceSnippet(filePath, lineNum, radius = 20) {
+const MAX_FULL_SOURCE_LINES = 2000;
+
+function readSourceSnippet(filePath, lineNum, radius = 20, full = false) {
   const content = fs.readFileSync(filePath, 'utf8');
   const lines = content.split('\n');
   const total = lines.length;
   const center = Math.min(Math.max(parseInt(lineNum, 10) || 1, 1), total || 1);
-  const start = Math.max(1, center - radius);
-  const end = Math.min(total, center + radius);
+  const start = full ? 1 : Math.max(1, center - radius);
+  const end = full ? Math.min(total, MAX_FULL_SOURCE_LINES) : Math.min(total, center + radius);
   const snippet = [];
   for (let i = start; i <= end; i++) {
     snippet.push({
       no: i,
       text: lines[i - 1] ?? '',
-      highlight: i === center,
+      highlight: !full && i === center,
     });
   }
   return {
@@ -118,6 +120,7 @@ function readSourceSnippet(filePath, lineNum, radius = 20) {
     startLine: start,
     endLine: end,
     totalLines: total,
+    truncated: full && total > end,
     lines: snippet,
   };
 }
@@ -188,6 +191,27 @@ function loadHotspots(bundlePath, useFull) {
   return { rows: readJSONL(fp), artifact: file };
 }
 
+function repoPathPrefixes(bundlePath, repoId) {
+  // Absolute root plus target-root-relative form, so hotspot paths recorded
+  // either way attribute to the right repo.
+  const repos = readJSON(path.join(bundlePath, 'repos.json'));
+  if (!Array.isArray(repos)) return null;
+  const repo = repos.find((r) => r && r.id === repoId);
+  if (!repo || typeof repo.path !== 'string') return null;
+  const prefixes = [repo.path.replace(/\\/g, '/')];
+  const manifest = readJSON(path.join(bundlePath, 'manifest.json'));
+  const targetRoot = (manifest?.target_root || '').replace(/\\/g, '/');
+  if (targetRoot && prefixes[0].startsWith(targetRoot + '/')) {
+    prefixes.push(prefixes[0].slice(targetRoot.length + 1));
+  }
+  return prefixes;
+}
+
+function pathInRepo(p, prefixes) {
+  const norm = String(p).replace(/\\/g, '/');
+  return prefixes.some((pre) => norm === pre || norm.startsWith(pre + '/'));
+}
+
 function queryHotspots(bundlePath, opts = {}) {
   const limit = parseLimit(opts.limit);
   const useFull = opts.full === true || opts.full === 'true';
@@ -201,10 +225,22 @@ function queryHotspots(bundlePath, opts = {}) {
   const severity = (opts.severity || '').trim();
   const pathPrefix = (opts.path || opts.pathPrefix || '').trim().toLowerCase();
   const text = (opts.text || opts.q || '').trim().toLowerCase();
+  const repoId = (opts.repo || '').trim();
+  let repoPrefixes = null;
+  let repoUnknown = false;
+  if (repoId) {
+    repoPrefixes = repoPathPrefixes(bundlePath, repoId);
+    if (!repoPrefixes) {
+      // unknown repo must not silently widen the answer to the whole landscape
+      repoUnknown = true;
+      warnings.push(`repo not found in repos.json: ${repoId}; returning no records`);
+    }
+  }
 
-  let matched = rows.filter((h) => {
+  let matched = repoUnknown ? [] : rows.filter((h) => {
     if (kind && h.kind !== kind) return false;
     if (severity && h.severity !== severity) return false;
+    if (repoPrefixes && !(h.paths || []).some((p) => pathInRepo(p, repoPrefixes))) return false;
     if (pathPrefix) {
       const paths = (h.paths || []).map((p) => String(p).toLowerCase());
       if (!paths.some((p) => p.includes(pathPrefix))) return false;
@@ -225,6 +261,7 @@ function queryHotspots(bundlePath, opts = {}) {
       severity: severity || undefined,
       path: pathPrefix || undefined,
       text: text || undefined,
+      repo: repoId || undefined,
       limit,
       bundle_path: path.resolve(bundlePath),
       artifact,
@@ -484,7 +521,8 @@ function querySource(bundlePath, opts = {}) {
   }
 
   const radius = parseInt(opts.radius, 10) || 20;
-  const body = readSourceSnippet(filePath, opts.line || 1, radius);
+  const full = opts.full === true || opts.full === 'true' || opts.full === '1';
+  const body = readSourceSnippet(filePath, opts.line || 1, radius, full);
   const records = [
     {
       id: `source-${body.path}:${body.line}`,
@@ -508,6 +546,7 @@ function querySource(bundlePath, opts = {}) {
       path: opts.path,
       line: body.line,
       radius,
+      full: full || undefined,
       bundle_path: path.resolve(bundlePath),
     },
     records,
@@ -571,6 +610,208 @@ function queryEvidenceIndex(bundlePath, opts = {}) {
   );
 }
 
+function queryRepos(bundlePath, opts = {}) {
+  const limit = parseLimit(opts.limit, MAX_LIMIT);
+  const repoId = (opts.repo || opts.id || '').trim();
+  const text = (opts.text || opts.q || '').trim().toLowerCase();
+  const profilesPath = path.join(bundlePath, 'repo-profiles.json');
+  const profiles = readJSON(profilesPath);
+  const warnings = [];
+
+  let rows = [];
+  let artifact = 'repo-profiles.json';
+  if (profiles && Array.isArray(profiles.repos)) {
+    rows = profiles.repos;
+  } else {
+    const repos = readJSON(path.join(bundlePath, 'repos.json'));
+    rows = Array.isArray(repos) ? repos : [];
+    artifact = 'repos.json';
+    warnings.push('repo-profiles.json missing; identity-only records from repos.json (run scan-repo-profiles.sh)');
+  }
+
+  const matched = rows.filter((r) => {
+    if (repoId && r.id !== repoId) return false;
+    if (text) {
+      const manifests = (r.purpose?.manifests || [])
+        .map((m) => `${m.name || ''} ${m.description || ''} ${m.module || ''}`)
+        .join(' ');
+      const hay = `${r.id} ${r.name || ''} ${r.purpose?.readme_title || ''} ${manifests}`.toLowerCase();
+      if (!hay.includes(text)) return false;
+    }
+    return true;
+  });
+
+  const records = matched.map((r) => ({
+    id: r.id,
+    reference: makeRef(bundlePath, artifact, r.id),
+    bundle_path: path.resolve(bundlePath),
+    artifact,
+    record_id: r.id,
+    kind: 'repo-profile',
+    evidence_state: r.purpose?.evidence_state || 'metadata-visible',
+    // record-level state describes the profile artifact; per-section states
+    // (activity may be unknown) must stay visible, not be flattened to observed
+    activity_evidence_state: r.activity?.evidence_state || 'unknown',
+    status: 'observed',
+    summary:
+      r.purpose?.readme_title ||
+      (r.purpose?.manifests || []).map((m) => m.description).find(Boolean) ||
+      r.name ||
+      r.id,
+    name: r.name || r.id,
+    path: r.path || '',
+    payload: r,
+  }));
+
+  return wrapResult(
+    {
+      family: 'repos',
+      repo: repoId || undefined,
+      text: text || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+      artifact,
+    },
+    records,
+    matched.length,
+    limit,
+    warnings
+  );
+}
+
+function queryRelationships(bundlePath, opts = {}) {
+  const limit = parseLimit(opts.limit);
+  const type = (opts.type || '').trim().toLowerCase();
+  const repoId = (opts.repo || '').trim();
+  const relPath = path.join(bundlePath, 'relationships.jsonl');
+  const warnings = [];
+
+  if (!fs.existsSync(relPath)) {
+    return wrapResult(
+      { family: 'relationships', type: type || undefined, repo: repoId || undefined, limit, bundle_path: path.resolve(bundlePath) },
+      [],
+      0,
+      limit,
+      ['relationships.jsonl missing; bundle built before spec 105 or scan-cross-repo failed (see gaps)']
+    );
+  }
+
+  const rows = readJSONL(relPath);
+  const matched = rows.filter((r) => {
+    if (type && (r.type || '').toLowerCase() !== type) return false;
+    if (repoId) {
+      const members = [r.from_repo, r.to_repo, ...(r.repos || [])].filter(Boolean);
+      if (!members.includes(repoId)) return false;
+    }
+    return true;
+  });
+
+  const records = matched.map((r) => ({
+    id: r.id,
+    reference: makeRef(bundlePath, 'relationships.jsonl', r.id),
+    bundle_path: path.resolve(bundlePath),
+    artifact: 'relationships.jsonl',
+    record_id: r.id,
+    kind: 'relationship',
+    relationship_type: r.type || '',
+    evidence_state: r.evidence_state || 'metadata-visible',
+    status: 'observed',
+    summary: r.summary || '',
+    from_repo: r.from_repo || null,
+    to_repo: r.to_repo || null,
+    repos: r.repos || undefined,
+    detail: r.detail || {},
+    producer: r.producer || '',
+    producer_ref: r.producer_ref || '',
+  }));
+
+  return wrapResult(
+    {
+      family: 'relationships',
+      type: type || undefined,
+      repo: repoId || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+    },
+    records,
+    matched.length,
+    limit,
+    warnings
+  );
+}
+
+function queryClaims(bundlePath, opts = {}) {
+  const limit = parseLimit(opts.limit);
+  const tier = (opts.tier || '').trim().toLowerCase();
+  const subject = (opts.subject || '').trim().toLowerCase();
+  const claimsPath = path.join(bundlePath, 'claims.jsonl');
+  const warnings = [];
+
+  if (!fs.existsSync(claimsPath)) {
+    return wrapResult(
+      { family: 'claims', tier: tier || undefined, subject: subject || undefined, limit, bundle_path: path.resolve(bundlePath) },
+      [],
+      0,
+      limit,
+      ['claims.jsonl missing; no agent analysis imported (see scripts/import-analysis-claims.sh and harness/guardrails/analysis-claims.md)']
+    );
+  }
+
+  const VALID_TIERS = ['analytical', 'synthetic', 'speculative'];
+  if (tier && !VALID_TIERS.includes(tier)) {
+    warnings.push(`unknown tier filter: ${tier} (expected ${VALID_TIERS.join(' | ')}); returning no records`);
+  }
+
+  const rows = readJSONL(claimsPath);
+  const matched = rows.filter((c) => {
+    if (tier && (c.claim_tier || '').toLowerCase() !== tier) return false;
+    if (subject) {
+      // exact subject match; "repo:" / "path:" prefix filters all of that scheme.
+      // Substring matching would let repo:foo answer for repo:foo-bar.
+      const s = (c.subject || '').toLowerCase();
+      const schemeOnly = subject === 'repo:' || subject === 'path:';
+      if (schemeOnly ? !s.startsWith(subject) : s !== subject) return false;
+    }
+    return true;
+  });
+
+  const records = matched.map((c) => ({
+    id: c.id,
+    reference: makeRef(bundlePath, 'claims.jsonl', c.id),
+    bundle_path: path.resolve(bundlePath),
+    artifact: 'claims.jsonl',
+    record_id: c.id,
+    kind: 'analysis-claim',
+    claim_tier: c.claim_tier || 'speculative',
+    evidence_state: 'claim-only',
+    status: 'imported',
+    summary: c.statement || '',
+    statement: c.statement || '',
+    subject: c.subject || '',
+    cited_refs: c.cited_refs || [],
+    agent: c.agent || '',
+    imported_at: c.imported_at || '',
+    resolution_limit:
+      'LLM-authored analysis (tier ' +
+      (c.claim_tier === 'analytical' ? 'B' : c.claim_tier === 'synthetic' ? 'C' : 'D') +
+      '); refs resolved at import time, conclusion not tool-verified',
+  }));
+
+  return wrapResult(
+    {
+      family: 'claims',
+      tier: tier || undefined,
+      subject: subject || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+    },
+    records,
+    matched.length,
+    limit,
+    warnings
+  );
+}
+
 function dispatch(bundlePath, family, opts) {
   const resolved = path.resolve(bundlePath);
   if (!fs.existsSync(resolved)) {
@@ -591,6 +832,12 @@ function dispatch(bundlePath, family, opts) {
       return querySource(resolved, opts);
     case 'evidence-index':
       return queryEvidenceIndex(resolved, opts);
+    case 'claims':
+      return queryClaims(resolved, opts);
+    case 'repos':
+      return queryRepos(resolved, opts);
+    case 'relationships':
+      return queryRelationships(resolved, opts);
     default:
       throw new Error(`unknown query family ${family}`);
   }
@@ -604,6 +851,7 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
       severity: searchParams.get('severity'),
       path: searchParams.get('path'),
       text: searchParams.get('text') || searchParams.get('q'),
+      repo: searchParams.get('repo'),
       limit: searchParams.get('limit'),
       full: searchParams.get('full'),
     });
@@ -637,11 +885,33 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
       path: searchParams.get('path'),
       line: searchParams.get('line'),
       radius: searchParams.get('radius'),
+      full: searchParams.get('full'),
     });
   }
   if (p === '/api/evidence-index') {
     return dispatch(bundlePath, 'evidence-index', {
       family: searchParams.get('family'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/claims') {
+    return dispatch(bundlePath, 'claims', {
+      tier: searchParams.get('tier'),
+      subject: searchParams.get('subject'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/repos') {
+    return dispatch(bundlePath, 'repos', {
+      repo: searchParams.get('repo') || searchParams.get('id'),
+      text: searchParams.get('text') || searchParams.get('q'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/relationships') {
+    return dispatch(bundlePath, 'relationships', {
+      type: searchParams.get('type'),
+      repo: searchParams.get('repo'),
       limit: searchParams.get('limit'),
     });
   }
@@ -664,4 +934,7 @@ module.exports = {
   querySymbol,
   querySource,
   queryEvidenceIndex,
+  queryClaims,
+  queryRepos,
+  queryRelationships,
 };

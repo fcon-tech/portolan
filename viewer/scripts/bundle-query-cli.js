@@ -13,19 +13,25 @@ const families = [
   'symbol',
   'source',
   'evidence-index',
+  'claims',
+  'repos',
+  'relationships',
 ];
 
 function printUsage() {
   const msg = `usage: portolan-bundle-query <family> --bundle <bundle-dir> [options]
 
 Families:
-  hotspots       --kind K --severity S --path PREFIX --text Q --limit N [--full]
+  hotspots       --kind K --severity S --path PREFIX --text Q [--repo ID] --limit N [--full]
   gaps           --surface S --status S --limit N
   landscape      --section ID
   search         --q QUERY [--path-scope PREFIX] --limit N
   symbol         --name NAME [--kind K] --limit N
-  source         --path PATH [--line N] [--radius N]
+  source         --path PATH [--line N] [--radius N] [--full]
   evidence-index [--family F] --limit N
+  claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
+  repos          [--repo ID] [--text Q] --limit N
+  relationships  [--type T] [--repo ID] --limit N
 
 Options:
   --bundle DIR   Portolan bundle directory (required)
@@ -106,6 +112,22 @@ function parseArgs(argv) {
         break;
       case '--family':
         opts.family = next;
+        i++;
+        break;
+      case '--tier':
+        opts.tier = next;
+        i++;
+        break;
+      case '--subject':
+        opts.subject = next;
+        i++;
+        break;
+      case '--repo':
+        opts.repo = next;
+        i++;
+        break;
+      case '--type':
+        opts.type = next;
         i++;
         break;
       case '--limit':
