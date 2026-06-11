@@ -185,9 +185,9 @@ fixtures are preflight evidence only.
 | P7-095 | `docs/specs/095-bundle-query-surface/` | Read-only bundle query CLI + viewer `/api/*` for agent-first Q&A at question time. | Implemented via PR #67 |
 | P7-096 | `docs/specs/096-search-symbol-index/` | Build-time search/symbol indexes + viewer unified search. | Implemented via PR #67 |
 | P7-097 | `docs/specs/097-ast-index-import/` | Import-only ast-index JSON into symbol-index. | Implemented via PR #67 |
-| P7-098 | `docs/specs/098-bundle-query-mcp/` | stdio MCP tools over bundle-query for agent harnesses (P3-016). | Implemented |
-| P7-099 | `docs/specs/099-viewer-graph-search-polish/` | Graph hints tab, rg-aware search index, overview blocks, demo docs. | Implemented |
-| P7-100 | `docs/specs/100-query-eval-validation/` | Lane A vs B eval run recorded per query-eval rubric. | Implemented |
+| P7-098 | `docs/specs/098-bundle-query-mcp/` | stdio MCP tools over bundle-query for agent harnesses (P3-016). | Implemented via PR #68 |
+| P7-099 | `docs/specs/099-viewer-graph-search-polish/` | Graph hints tab, rg-aware search index, overview blocks, demo docs. | Implemented via PR #68 |
+| P7-100 | `docs/specs/100-query-eval-validation/` | Lane A vs B eval run recorded per query-eval rubric. | Implemented via PR #68 |
 | P7-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Local Portolan viewer (UA-inspired) over evidence hotspots. | Demo-ready in `viewer/` (spec 090) |
 | P7-ADR | `docs/adr/001-go-cli-fate.md` | Go CLI maintenance-mode decision after harness smoke. | Provisional ADR recorded |
 
