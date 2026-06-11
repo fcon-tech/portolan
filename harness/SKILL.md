@@ -1,24 +1,24 @@
-# Portolan Orient Harness
+# Portolan Harness
 
 Use this skill when the user wants to find code pain (duplication, static smells,
-dependency hubs) and navigate a local landscape with an orient map.
+dependency hubs) and browse ranked hotspots in the local viewer.
 
-Portolan is a **harness supplement**: recipes + guardrails + orient bundle + local
+Portolan is a **harness supplement**: recipes + guardrails + evidence bundle + local
 viewer. The legacy Go CLI is optional (see `docs/harness/GO-FREEZE-POLICY.md`).
 
 ## Inputs
 
 - `TARGET_PATH` — absolute path to repo or landscape root (read-only).
-- `ORIENT_PATH` — absolute empty output directory for the orient bundle.
+- `BUNDLE_DIR` — absolute empty output directory for the Portolan bundle (convention: any empty dir).
 - `PORTOLAN_PATH` — absolute path to this Portolan checkout.
 
-## Workflow (recommended: orient wizard)
+## Workflow (recommended: portolan scan)
 
 One command checks tools, runs producers (with consent-gated install), builds the
 bundle, prints a summary, and optionally opens the local viewer:
 
 ```bash
-"$PORTOLAN_PATH/scripts/orient-wizard.sh" "$TARGET_PATH" "$ORIENT_PATH" --yes
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_PATH" "$BUNDLE_DIR" --yes
 ```
 
 Useful flags:
@@ -50,29 +50,30 @@ When you need fine-grained control, run individual recipes from `harness/recipes
 | Config / deploy surfaces? | `config-surfaces.md` |
 | Symbol-dense files (optional) | `symbols-ctags.md` |
 
-Write outputs under `$ORIENT_PATH/producers/`, then:
+Write outputs under `$BUNDLE_DIR/producers/`, then:
 
 ```bash
-"$PORTOLAN_PATH/scripts/build-orient-bundle.sh" "$TARGET_PATH" "$ORIENT_PATH"
+"$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "$TARGET_PATH" "$BUNDLE_DIR"
 ```
 
-### Open orient map (human)
+### Open viewer (human)
 
 ```bash
-cd "$PORTOLAN_PATH/viewer" && npm install && npm run serve -- --bundle "$ORIENT_PATH"
+cd "$PORTOLAN_PATH/viewer" && npm install && npm run serve -- --bundle "$BUNDLE_DIR"
 ```
 
-Viewer features (spec 090): search, kind/severity/repo filters, directory heat map,
-truncation/gaps banners, and read-only source preview via `/source` (path-guarded).
+Viewer features (spec 090): folder tree, ranked list, search, kind/severity/repo
+filters, truncation/gaps banners, and read-only source preview via `/source`
+(path-guarded).
 Demo script: [`docs/demo-runbook.md`](../docs/demo-runbook.md).
 
 ### Agent navigation
 
 Read in order:
 
-1. `$ORIENT_PATH/manifest.json`
-2. `$ORIENT_PATH/hotspots.jsonl` (ranked pain points)
-3. `$ORIENT_PATH/gaps.jsonl` (missing evidence — do not invent)
+1. `$BUNDLE_DIR/manifest.json`
+2. `$BUNDLE_DIR/hotspots.jsonl` (ranked pain points)
+3. `$BUNDLE_DIR/gaps.jsonl` (missing evidence — do not invent)
 
 Cite `hotspot.id` and `producer_ref` for every material claim.
 
@@ -81,8 +82,8 @@ Guardrails: `harness/guardrails/`.
 ## Legacy bridge (optional)
 
 ```bash
-go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$ORIENT_PATH/map" --force
-"$PORTOLAN_PATH/scripts/orient-export-from-map.sh" "$ORIENT_PATH/map" "$ORIENT_PATH"
+go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$BUNDLE_DIR/map" --force
+"$PORTOLAN_PATH/scripts/portolan-export-from-map.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
 ```
 
 ## User question routing

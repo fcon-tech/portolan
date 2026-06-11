@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://portolan.local/schemas/orient-bundle.schema.json",
-  "title": "Portolan Orient Bundle",
+  "$id": "https://portolan.local/schemas/portolan-bundle.schema.json",
+  "title": "Portolan Bundle",
   "type": "object",
   "required": ["manifest", "hotspot_record", "gap_record"],
   "properties": {

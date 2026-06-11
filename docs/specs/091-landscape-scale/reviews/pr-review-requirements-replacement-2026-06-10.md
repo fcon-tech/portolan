@@ -10,10 +10,10 @@
 
 | ID | Severity | Fix |
 | --- | --- | --- |
-| REQ-001 | major | `build-orient-bundle.sh`: `ORIENT_GAP_BUDGET` default 20, sort + cap gaps |
+| REQ-001 | major | `build-portolan-bundle.sh`: `PORTOLAN_GAP_BUDGET` default 20, sort + cap gaps |
 | REQ-002 | major | dep-hub `paths: ["(dependency-hub)"]` |
 | REQ-003 | major | shard gaps map to `cannot_verify` (schema enum) |
-| REQ-004 | major | `harness-orient-smoke.sh` validates hotspot/gap records |
+| REQ-004 | major | `harness-portolan-smoke.sh` validates hotspot/gap records |
 | REQ-007 | minor | semgrep: no `p/default` fallback; gap when local rules missing |
 
 ## Rejected / deferred

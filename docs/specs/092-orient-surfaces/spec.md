@@ -6,7 +6,7 @@
 
 **Status**: Merged via PR #65 (`8025de3`)
 
-**Input**: Add config-surfaces inventory and ctags symbol-density layers to the orient harness path; close PR #64 deferred debt items.
+**Input**: Add config-surfaces inventory and ctags symbol-density layers to the Portolan harness path; close PR #64 deferred debt items.
 
 **Out of scope**: Viewer UX polish (views, layout, product naming) — follow-up PR `codex/viewer-ux-followup` / spec 093.
 
@@ -14,7 +14,7 @@
 
 ### User Story 1 - Config surface inventory (Priority: P1)
 
-An agent runs orient-wizard and sees `config` hotspots grouped by surface kind (Dockerfile, compose, k8s, env, CI, terraform) without installing external tools.
+An agent runs portolan-scan and sees `config` hotspots grouped by surface kind (Dockerfile, compose, k8s, env, CI, terraform) without installing external tools.
 
 ### User Story 2 - Symbol-dense files (Priority: P1)
 
@@ -31,8 +31,8 @@ repo_slug hash, spec 088 layout docs, extended harness smoke, wizard orchestrati
 - **FR-003**: Bundle maps config → kind `config`, ctags density → kind `debt-candidate`.
 - **FR-004**: Kind-quota budget: static-finding 45%, duplication 25%, dep-hub 15%, config 15%, remainder debt-candidate.
 - **FR-005**: repo_slug includes path hash suffix to avoid basename collisions.
-- **FR-006**: harness-orient-smoke checks viewer DOM markers and truncation; CI runs wizard with `--skip-install`.
-- **FR-007**: Producers and bundle post-filter respect `.gitignore` (`scripts/orient-ignore.sh`, jscpd `--gitignore`, ctags via `git ls-files`, config scan via `git check-ignore`).
+- **FR-006**: harness-portolan-smoke checks viewer DOM markers and truncation; CI runs wizard with `--skip-install`.
+- **FR-007**: Producers and bundle post-filter respect `.gitignore` (`scripts/portolan-ignore.sh`, jscpd `--gitignore`, ctags via `git ls-files`, config scan via `git check-ignore`).
 
 ## Success Criteria
 

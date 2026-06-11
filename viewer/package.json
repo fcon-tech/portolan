@@ -1,8 +1,8 @@
 {
-  "name": "portolan-orient-viewer",
+  "name": "portolan-viewer",
   "version": "0.1.0",
   "private": true,
-  "description": "Local evidence-backed orient map viewer (UA-inspired, no LLM graph truth)",
+  "description": "Local viewer for Portolan hotspot bundles (folder tree + ranked list)",
   "scripts": {
     "build": "node scripts/build-static.js",
     "serve": "node scripts/serve.js"

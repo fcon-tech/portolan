@@ -10,7 +10,7 @@
 ```bash
 TARGET=<absolute-target-root>
 RULES=<portolan-checkout>/harness/recipes/semgrep-rules
-OUT=<orient-dir>/producers/semgrep
+OUT=<bundle-dir>/producers/semgrep
 mkdir -p "$OUT"
 semgrep scan "$TARGET" \
   --config "$RULES" \
@@ -30,7 +30,7 @@ Only after operator explicitly approves network rule sources.
 ## Re-ingest
 
 ```bash
-scripts/build-orient-bundle.sh "$TARGET" "$ORIENT_DIR"
+scripts/build-portolan-bundle.sh "$TARGET" "$BUNDLE_DIR"
 ```
 
 ## Failure modes

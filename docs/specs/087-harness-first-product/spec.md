@@ -7,7 +7,7 @@
 **Status**: Active implementation slice for the Portolan harness pivot.
 
 **Input**: Product pivot — Portolan is a harness supplement (rules, recipes,
-guardrails, OSS assembly) with an orient map viewer, not primarily a Go module.
+guardrails, OSS assembly) with a Portolan map viewer, not primarily a Go module.
 B2B evidence guardrails are a cherry on top, not the hero value.
 
 ## User Scenarios & Testing
@@ -16,20 +16,20 @@ B2B evidence guardrails are a cherry on top, not the hero value.
 
 An engineer or agent asks where duplication, static smells, dependency hubs, or
 config risks are visible locally and receives a ranked hotspot list plus an
-interactive orient map.
+interactive Portolan map.
 
 **Why this priority**: This is the primary user job. Evidence discipline supports
 the answer; it does not replace the answer.
 
 **Independent Test**: A fixture target with jscpd and Semgrep outputs produces
-an `orient/` bundle and the viewer shows at least one duplication and one
+an Portolan bundle and the viewer shows at least one duplication and one
 static-finding hotspot with file paths.
 
 **Acceptance Scenarios**:
 
 1. **Given** local producer outputs exist, **When** the harness workflow runs,
-   **Then** `orient/hotspots.jsonl` lists ranked pain points with `producer_ref`.
-2. **Given** jscpd output is missing, **When** the orient bundle is built,
+   **Then** `<bundle-dir>/hotspots.jsonl` lists ranked pain points with `producer_ref`.
+2. **Given** jscpd output is missing, **When** the Portolan bundle is built,
    **Then** duplication remains `not_assessed` and the viewer shows a gap badge,
    not synthetic clone clusters.
 
@@ -38,11 +38,11 @@ static-finding hotspot with file paths.
 ### User Story 2 - Harness-Independent Agent Workflow (Priority: P1)
 
 An agent in Cursor, OpenCode, Codex, or Claude can follow one portable skill to
-run OSS recipes, build the orient bundle, and open the local viewer without
+run OSS recipes, build the Portolan bundle, and open the local viewer without
 bootstrapping the Go CLI.
 
 **Independent Test**: `harness/SKILL.md` completes on a fixture repo using only
-documented recipes and `scripts/build-orient-bundle.sh`.
+documented recipes and `scripts/build-portolan-bundle.sh`.
 
 ---
 
@@ -57,7 +57,7 @@ viewer badges match evidence states.
 ## Requirements
 
 - **FR-001**: The primary product path MUST be harness install → OSS recipes →
-  `orient/` bundle → local viewer.
+  Portolan bundle → local viewer.
 - **FR-002**: The hero product claim MUST be navigation to code pain (duplication,
   static findings, deps/config hotspots), not evidence discipline alone.
 - **FR-003**: Portable harness artifacts MUST work across Cursor, OpenCode, and

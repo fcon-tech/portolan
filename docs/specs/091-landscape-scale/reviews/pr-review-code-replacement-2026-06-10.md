@@ -10,13 +10,13 @@
 
 | Severity | File | Fix |
 | --- | --- | --- |
-| P1 | `build-orient-bundle.sh:137` | dep-hub sentinel path |
-| P1 | `orient-wizard.sh:45` | `require_opt_value` for value flags |
-| P2 | `orient-wizard.sh:90` | shard gap status `cannot_verify` |
-| P2 | `build-orient-bundle.sh:173` | integer validation for budgets |
+| P1 | `build-portolan-bundle.sh:137` | dep-hub sentinel path |
+| P1 | `portolan-scan.sh:45` | `require_opt_value` for value flags |
+| P2 | `portolan-scan.sh:90` | shard gap status `cannot_verify` |
+| P2 | `build-portolan-bundle.sh:173` | integer validation for budgets |
 | P2 | `viewer/src/app.js:104` | dep-hub bypasses repo filter |
-| P2 | `build-orient-bundle.sh:222` | gap budget cap |
-| P3 | `orient-wizard.sh:404` | node check only when viewer starts |
+| P2 | `build-portolan-bundle.sh:222` | gap budget cap |
+| P3 | `portolan-scan.sh:404` | node check only when viewer starts |
 
 ## Deferred (not blocking MVP)
 

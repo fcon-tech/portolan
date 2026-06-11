@@ -36,9 +36,9 @@ CORR-003..005, SEC-092-003..006, TEST-001/004/005/008/009 (documented), pattern 
 ```bash
 go test ./...
 go vet ./...
-jq empty harness/contracts/orient-bundle.schema.json
-scripts/harness-orient-smoke.sh
-scripts/orient-wizard.sh internal/testfixtures/orient-bundle/target /tmp/wizard-ci --no-viewer --skip-install --yes
+jq empty harness/contracts/portolan-bundle.schema.json
+scripts/harness-portolan-smoke.sh
+scripts/portolan-scan.sh internal/testfixtures/portolan-bundle/target /tmp/wizard-ci --no-viewer --skip-install --yes
 ```
 
 ## Readiness

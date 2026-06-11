@@ -11,7 +11,7 @@
 ## Output surface
 
 - Upstream: interactive graph + Q&A (not Portolan evidence)
-- Portolan: `orient/` bundle consumed by `viewer/`
+- Portolan: Portolan bundle consumed by `viewer/`
 
 ## Risks
 

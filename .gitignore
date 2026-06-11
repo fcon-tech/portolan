@@ -2,7 +2,7 @@
 /bin/
 /dist/
 viewer/dist/
-**/orient-smoke/
+**/portolan-smoke/
 .cursor/
 /.portolan/
 /coverage.out

@@ -8,7 +8,7 @@
 
 ```bash
 TARGET=<absolute-target-root>
-OUT=<orient-dir>/producers/syft
+OUT=<bundle-dir>/producers/syft
 mkdir -p "$OUT"
 syft scan "dir:$TARGET" -o cyclonedx-json > "$OUT/cyclonedx.json"
 ```
@@ -17,7 +17,7 @@ syft scan "dir:$TARGET" -o cyclonedx-json > "$OUT/cyclonedx.json"
 
 ```bash
 ROOT=<landscape-root>
-OUT=<orient-dir>/producers/syft
+OUT=<bundle-dir>/producers/syft
 mkdir -p "$OUT"
 while IFS= read -r repo; do
   name=$(basename "$repo")
@@ -28,7 +28,7 @@ done < <(find "$ROOT" -name .git -type d -prune | sed 's|/.git||')
 ## Re-ingest
 
 ```bash
-scripts/build-orient-bundle.sh "$TARGET" "$ORIENT_DIR"
+scripts/build-portolan-bundle.sh "$TARGET" "$BUNDLE_DIR"
 ```
 
 ## Failure modes

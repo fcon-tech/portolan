@@ -4,15 +4,15 @@
 
 ## Deliverables
 
-- [`scripts/orient-wizard.sh`](../../../scripts/orient-wizard.sh)
-- Fixes to [`scripts/build-orient-bundle.sh`](../../../scripts/build-orient-bundle.sh)
+- [`scripts/portolan-scan.sh`](../../../scripts/portolan-scan.sh)
+- Fixes to [`scripts/build-portolan-bundle.sh`](../../../scripts/build-portolan-bundle.sh)
 - Smoke evidence in `reviews/`
 
 ## Verification
 
 ```bash
-bash -n scripts/orient-wizard.sh
-scripts/orient-wizard.sh --help
-scripts/harness-orient-smoke.sh
-scripts/orient-wizard.sh . /tmp/orient-portolan --no-viewer --yes
+bash -n scripts/portolan-scan.sh
+scripts/portolan-scan.sh --help
+scripts/harness-portolan-smoke.sh
+scripts/portolan-scan.sh . /tmp/portolan-portolan --no-viewer --yes
 ```

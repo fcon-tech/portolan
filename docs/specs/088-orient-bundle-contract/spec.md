@@ -1,6 +1,6 @@
-# Feature Specification: Orient Bundle Contract
+# Feature Specification: Portolan Bundle Contract
 
-**Feature Branch**: `codex/088-orient-bundle-contract`
+**Feature Branch**: `codex/088-portolan-bundle-contract`
 
 **Created**: 2026-06-10
 
@@ -8,18 +8,18 @@
 
 ## User Scenarios
 
-### User Story 1 - Single Orient Directory (Priority: P1)
+### User Story 1 - Single Portolan Bundle Directory (Priority: P1)
 
-Harness recipes and `scripts/build-orient-bundle.sh` produce one `orient/`
+Harness recipes and `scripts/build-portolan-bundle.sh` produce one Portolan
 directory that both the viewer and agents consume.
 
 **Independent Test**: Fixture producers → bundle validates against
-`harness/contracts/orient-bundle.schema.json`.
+`harness/contracts/portolan-bundle.schema.json`.
 
 ## Bundle layout
 
 ```text
-orient/
+<bundle-dir>/
   manifest.json
   hotspots.jsonl
   hotspots-full.jsonl   # all hotspots before budget truncation
@@ -48,9 +48,9 @@ Kinds: `duplication`, `static-finding`, `config`, `dep-hub`, `debt-candidate`.
 
 - **FR-001**: No LLM summary as evidence; `producer_ref` required for observed hotspots.
 - **FR-002**: `gaps.jsonl` budget: top 20 by default.
-- **FR-003**: `scripts/orient-export-from-map.sh` maps legacy `portolan map` output to orient layout.
+- **FR-003**: `scripts/portolan-export-from-map.sh` maps legacy `portolan map` output to Portolan bundle layout.
 
 ## Success Criteria
 
-- **SC-001**: `jq empty harness/contracts/orient-bundle.schema.json`
+- **SC-001**: `jq empty harness/contracts/portolan-bundle.schema.json`
 - **SC-002**: Smoke fixture bundle loads in viewer.

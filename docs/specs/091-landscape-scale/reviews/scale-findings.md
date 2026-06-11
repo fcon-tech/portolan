@@ -5,7 +5,7 @@
 ## Smoke C command
 
 ```bash
-scripts/orient-wizard.sh ~/projects/bigtop-landscape/repos /tmp/orient-bigtop-full \
+scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-bigtop-full \
   --no-viewer --yes --shard-timeout 600 --jscpd-memory-mb 2048
 ```
 

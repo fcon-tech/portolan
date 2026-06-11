@@ -4,7 +4,7 @@
 
 ## Smoke regression
 
-`scripts/harness-orient-smoke.sh` — **ok**
+`scripts/harness-portolan-smoke.sh` — **ok**
 
 New checks:
 - `id="search-input"` in HTML
@@ -13,7 +13,7 @@ New checks:
 
 ## Demo A — portolan bundle
 
-Bundle: `/tmp/orient-portolan` (128 hotspots, 0 gaps)
+Bundle: `/tmp/portolan-portolan` (128 hotspots, 0 gaps)
 
 | Check | Result |
 | --- | --- |
@@ -24,7 +24,7 @@ Bundle: `/tmp/orient-portolan` (128 hotspots, 0 gaps)
 
 ## Demo B — bigtop bundle (bounded)
 
-Bundle: `/tmp/orient-bigtop` (200 of 830 hotspots, truncated)
+Bundle: `/tmp/portolan-bigtop` (200 of 830 hotspots, truncated)
 
 | Check | Result |
 | --- | --- |

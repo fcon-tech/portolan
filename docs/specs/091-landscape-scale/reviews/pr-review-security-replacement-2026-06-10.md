@@ -21,4 +21,4 @@
 
 ## Test added
 
-- `harness-orient-smoke.sh`: symlink `leak-outside` → `/etc/passwd` returns 403
+- `harness-portolan-smoke.sh`: symlink `leak-outside` → `/etc/passwd` returns 403

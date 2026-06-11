@@ -10,7 +10,7 @@ Limit to selected repos or top-level source dirs to control output size.
 
 ```bash
 TARGET=<absolute-target-root>
-OUT=<orient-dir>/producers/ctags
+OUT=<bundle-dir>/producers/ctags
 mkdir -p "$OUT"
 # Prefer gitignore-aware file list (wizard default):
 git -C "$TARGET" ls-files -co --exclude-standard > /tmp/ctags-files.txt
@@ -22,7 +22,7 @@ ctags --output-format=json --fields=+nKz --links=no \
 ## Re-ingest
 
 ```bash
-scripts/build-orient-bundle.sh "$TARGET" "$ORIENT_DIR"
+scripts/build-portolan-bundle.sh "$TARGET" "$BUNDLE_DIR"
 ```
 
 ## Failure modes

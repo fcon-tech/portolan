@@ -6,7 +6,7 @@
 | User job | Code duplication / near-clone clusters |
 | License | MIT |
 | Review date | 2026-06-10 |
-| Portolan action | Import JSON output into `orient/hotspots.jsonl` (`kind: duplication`) |
+| Portolan action | Import JSON output into `<bundle-dir>/hotspots.jsonl` (`kind: duplication`) |
 
 ## Output surface
 

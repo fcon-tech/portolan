@@ -2,14 +2,14 @@
 
 ## Deliverables
 
-- `harness/contracts/orient-bundle.schema.json`
-- `scripts/build-orient-bundle.sh`
-- `scripts/orient-export-from-map.sh`
-- `internal/testfixtures/orient-bundle/` fixture
+- `harness/contracts/portolan-bundle.schema.json`
+- `scripts/build-portolan-bundle.sh`
+- `scripts/portolan-export-from-map.sh`
+- `internal/testfixtures/portolan-bundle/` fixture
 
 ## Verification
 
 ```bash
-scripts/build-orient-bundle.sh internal/testfixtures/orient-bundle/target internal/testfixtures/orient-bundle/orient
-jq empty harness/contracts/orient-bundle.schema.json
+scripts/build-portolan-bundle.sh internal/testfixtures/portolan-bundle/target internal/testfixtures/portolan-bundle/reference
+jq empty harness/contracts/portolan-bundle.schema.json
 ```

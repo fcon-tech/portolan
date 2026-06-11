@@ -40,7 +40,7 @@
 ## Verification (post-fix)
 
 ```text
-scripts/harness-orient-smoke.sh — ok
+scripts/harness-portolan-smoke.sh — ok
 go test ./... — ok
 ```
 

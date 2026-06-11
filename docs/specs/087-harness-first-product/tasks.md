@@ -9,4 +9,4 @@
 
 ## Dependencies
 
-- Blocks harness recipes (084), orient bundle (088), viewer (086 revised).
+- Blocks harness recipes (084), Portolan bundle (088), viewer (086 revised).

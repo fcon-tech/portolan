@@ -4,7 +4,7 @@
 
 ## Summary
 
-Ship UA-inspired navigation as `viewer/` loading orient bundle evidence only.
+Ship UA-inspired navigation as `viewer/` loading Portolan bundle evidence only.
 Constitution 1.1.0 allows local static viewer session.
 
 ## Deliverables
@@ -15,5 +15,5 @@ Constitution 1.1.0 allows local static viewer session.
 ## Verification
 
 ```bash
-scripts/harness-orient-smoke.sh
+scripts/harness-portolan-smoke.sh
 ```

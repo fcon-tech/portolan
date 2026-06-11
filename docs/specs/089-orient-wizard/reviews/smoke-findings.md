@@ -5,7 +5,7 @@
 ## Smoke A — portolan repo
 
 ```bash
-scripts/orient-wizard.sh . /tmp/orient-portolan --no-viewer --yes
+scripts/portolan-scan.sh . /tmp/portolan-portolan --no-viewer --yes
 ```
 
 | Metric | Value |
@@ -13,18 +13,18 @@ scripts/orient-wizard.sh . /tmp/orient-portolan --no-viewer --yes
 | Runtime | ~18s (jscpd ~7s, semgrep/syft fast on single repo) |
 | Hotspots | 128 (0 gaps) |
 | Top kinds | duplication (jscpd), static-finding (semgrep) |
-| Viewer | `node viewer/scripts/serve.js --bundle /tmp/orient-portolan` — page loads, hotspots.jsonl served |
+| Viewer | `node viewer/scripts/serve.js --bundle /tmp/portolan-portolan` — page loads, hotspots.jsonl served |
 
 ### Fixes applied during smoke
 
 1. **jscpd**: `--noSymlinks true` passed `true` as a path; replaced with `--noSymlinks` + ignore globs.
-2. **CLI flags**: options after positionals (`target orient --no-viewer`) were ignored; positional/flag parsing fixed.
+2. **CLI flags**: options after positionals (`target bundle-dir --no-viewer`) were ignored; positional/flag parsing fixed.
 3. **jscpd output**: read from `producers/jscpd/**/jscpd-report.json` (wizard layout).
 
 ## Smoke B — bigtop-landscape (bounded)
 
 ```bash
-scripts/orient-wizard.sh ~/projects/bigtop-landscape/repos /tmp/orient-bigtop \
+scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-bigtop \
   --no-viewer --yes --limit-repos 3 --producers semgrep,syft
 ```
 
@@ -49,7 +49,7 @@ scripts/orient-wizard.sh ~/projects/bigtop-landscape/repos /tmp/orient-bigtop \
 
 ## Regression
 
-- `scripts/harness-orient-smoke.sh` — **ok** after bundle ranking/budget changes.
+- `scripts/harness-portolan-smoke.sh` — **ok** after bundle ranking/budget changes.
 
 ## Skip-install path
 

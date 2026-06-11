@@ -9,8 +9,8 @@ first.
 | Intent | Start with | Then read | Boundary to preserve |
 | --- | --- | --- | --- |
 | Understand what Portolan is for | [README](../README.md) | [Product Claims](product-claims.md), [Product Boundary](product-boundary.md), [Product Quality Boundary](product-quality-boundary.md) | Portolan is a local evidence layer, not a coding harness, readiness gate, service catalog, observability platform, or Cursor/OpenCode replacement. |
-| Ask an agent to inspect a local target | [Harness Skill](../harness/SKILL.md) | [Install Prompt](agent/INSTALL-PROMPT.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Harness-first: recipes → orient bundle → viewer. Cite hotspot.id and preserve gaps. |
-| Open the orient map (human) | [Viewer README](../viewer/README.md) | [Harness Skill](../harness/SKILL.md) | Local read-only viewer; evidence from producers only. |
+| Ask an agent to inspect a local target | [Harness Skill](../harness/SKILL.md) | [Install Prompt](agent/INSTALL-PROMPT.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Harness-first: recipes → bundle → viewer. Cite hotspot.id and preserve gaps. |
+| Open the viewer (human) | [Viewer README](../viewer/README.md) | [Harness Skill](../harness/SKILL.md) | Local read-only viewer; folder tree + ranked hotspots from producers only. |
 | Install or resolve the command | [Agent Install](agent/INSTALL.md) | [Troubleshooting](agent/TROUBLESHOOTING.md), [Release Guide](release.md) | Source bootstrap is local and does not fetch Go modules unless explicitly approved. |
 | Use Cursor | [Agent Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | Current verified Cursor evidence is headless Cursor Agent CLI / Composer. Cursor UI behavior is outside the current required acceptance scope; no root-level Cursor rule is shipped. |
 | Use OpenCode | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode default-permission runs are verified with repo-local output under the Portolan checkout. The recorded external-output default-permission lane failed. |

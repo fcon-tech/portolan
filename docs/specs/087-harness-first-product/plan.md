@@ -4,16 +4,16 @@
 
 ## Summary
 
-Reposition Portolan around harness artifacts, OSS recipes, orient bundle contract,
+Reposition Portolan around harness artifacts, OSS recipes, Portolan bundle contract,
 and a local evidence-backed viewer. Publish governance (constitution amendment,
 Go freeze policy) before expanding harness and viewer slices.
 
 ## Technical Context
 
 **Primary delivery**: `harness/` skills, recipes, guardrails, contracts; `viewer/`
-local orient UI; `docs/adr/` decision records.
+local Portolan UI; `docs/adr/` decision records.
 
-**Legacy**: Go CLI frozen; optional `scripts/orient-export-from-map.sh` bridge.
+**Legacy**: Go CLI frozen; optional `scripts/portolan-export-from-map.sh` bridge.
 
 **Constraints**: Local-first, read-only default; viewer session may use local static
 serve only.
@@ -32,6 +32,6 @@ serve only.
 ```bash
 test -f harness/SKILL.md
 test -f docs/harness/GO-FREEZE-POLICY.md
-jq empty harness/contracts/orient-bundle.schema.json
+jq empty harness/contracts/portolan-bundle.schema.json
 git diff --check
 ```

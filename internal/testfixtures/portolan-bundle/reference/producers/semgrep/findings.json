@@ -1,0 +1,14 @@
+{
+  "results": [
+    {
+      "check_id": "portolan-todo-fixme",
+      "path": "sample.go",
+      "extra": { "severity": "INFO", "message": "TODO marker" }
+    },
+    {
+      "check_id": "portolan-hardcoded-secret-pattern",
+      "path": "config.env",
+      "extra": { "severity": "WARNING", "message": "Possible secret" }
+    }
+  ]
+}

@@ -26,7 +26,7 @@ summarization — **unacceptable as Portolan `source-visible` evidence**.
 
 1. **Do not** ingest UA LLM graph output as evidence.
 2. **Do** implement `viewer/` as a UA-inspired local viewer that loads only
-   `orient/manifest.json` + `orient/hotspots.jsonl` + optional `graph-slice.json`.
+   `manifest.json` + `hotspots.jsonl` + optional `graph-slice.json`.
 3. **Future option**: submodule or vendor UA frontend after stripping LLM graph
    generation; replace data loader with `loadPortolanBundle()`.
 
@@ -37,7 +37,7 @@ summarization — **unacceptable as Portolan `source-visible` evidence**.
 Rationale:
 
 - Harness skill references one checkout path.
-- Orient bundle contract stays co-located with `harness/contracts/`.
+- Portolan bundle contract stays co-located with `harness/contracts/`.
 - Sibling repo deferred until viewer needs independent release cadence.
 
 ## Effort estimate
@@ -64,5 +64,5 @@ Rationale:
 
 ## Verification
 
-MVP done when `viewer/` opens a fixture `orient/` bundle and shows ranked hotspots
+MVP done when `viewer/` opens a fixture Portolan bundle and shows ranked hotspots
 with evidence badges without network access.

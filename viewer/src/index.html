@@ -3,42 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portolan Orient</title>
+  <title>Portolan</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
     <div class="header-top">
-      <div>
-        <h1>Portolan Orient</h1>
-        <p id="subtitle">Evidence-backed hotspots — not LLM architecture truth</p>
+      <div class="brand">
+        <h1>Portolan</h1>
+        <p id="subtitle">Landscape report from local scanner evidence — not an AI architecture graph</p>
       </div>
       <div class="search-wrap">
-        <label for="search-input" class="sr-only">Search hotspots</label>
-        <input type="search" id="search-input" placeholder="Search summary, path, id…" autocomplete="off">
+        <label for="search-input" class="sr-only">Search findings</label>
+        <input type="search" id="search-input" placeholder="Search path, summary, kind…" autocomplete="off">
       </div>
     </div>
+    <nav id="tab-bar" class="tab-bar" aria-label="Report sections">
+      <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+      <button type="button" class="tab-btn" data-tab="findings">Findings</button>
+      <button type="button" class="tab-btn" data-tab="gaps">Gaps</button>
+    </nav>
     <div id="status-banner" class="status-banner hidden" role="status"></div>
-    <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
   </header>
-  <main class="layout">
-    <section class="panel" id="tour">
-      <h2>Hotspot tour <span id="tour-count" class="count-badge"></span></h2>
-      <ol id="hotspot-list"></ol>
+
+  <main>
+    <section id="tab-overview" class="tab-panel active">
+      <div id="report-overview" class="report-overview">
+        <div id="landscape-card" class="landscape-card"></div>
+        <div id="findings-scale" class="findings-scale"></div>
+        <div id="repo-matrix" class="repo-matrix"></div>
+        <div id="kind-summary" class="kind-summary"></div>
+        <div id="next-steps" class="next-steps"></div>
+      </div>
     </section>
-    <section class="panel" id="graph-panel">
-      <h2>Directory heat map</h2>
-      <div id="heat-tree" class="heat-tree" aria-label="Directory heat map"></div>
+
+    <section id="tab-findings" class="tab-panel">
+      <div class="findings-toolbar">
+        <div id="view-bar" class="view-bar" aria-label="Views"></div>
+        <button type="button" id="load-all-btn" class="load-all-btn hidden">Show all findings from scan</button>
+      </div>
+      <div id="filter-explainer" class="filter-explainer" role="status"></div>
+      <details id="kind-guide" class="kind-guide">
+        <summary>What counts as a finding? Tools &amp; limits</summary>
+        <div id="kind-guide-body" class="kind-guide-body"></div>
+      </details>
+      <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
+      <div class="layout layout-three">
+        <section class="panel panel-tree" id="folder-panel">
+          <div class="panel-head">
+            <h2>By folder</h2>
+            <span id="tree-count" class="count-badge"></span>
+          </div>
+          <div id="heat-tree" class="heat-tree" aria-label="Findings by folder"></div>
+        </section>
+        <section class="panel panel-list" id="tour">
+          <div class="panel-head">
+            <h2>Ranked list</h2>
+            <span id="tour-count" class="count-badge"></span>
+          </div>
+          <ul id="hotspot-list"></ul>
+        </section>
+        <section class="panel panel-detail" id="detail">
+          <h2 class="sr-only">Detail</h2>
+          <div id="detail-body" class="detail-empty">
+            <p class="empty-title">Select a finding</p>
+            <p class="empty-hint">Use the list or folder tree. Detail explains which tool flagged it.</p>
+          </div>
+          <div id="source-preview" class="source-preview hidden">
+            <div class="source-head">
+              <h3>Source</h3>
+              <span id="source-path" class="source-path"></span>
+            </div>
+            <pre id="source-code"></pre>
+          </div>
+        </section>
+      </div>
+      <div id="findings-sections" class="findings-sections"></div>
     </section>
-    <section class="panel" id="detail">
-      <h2>Detail</h2>
-      <div id="detail-body"><p>Select a hotspot.</p></div>
-      <div id="source-preview" class="source-preview hidden">
-        <h3>Source</h3>
-        <pre id="source-code"></pre>
+
+    <section id="tab-gaps" class="tab-panel">
+      <div id="gaps-panel" class="gaps-panel">
+        <h2>Not assessed in this scan</h2>
+        <p class="panel-hint">These layers were not run, failed, or returned empty — they are not hidden findings.</p>
+        <div id="gaps-table"></div>
       </div>
     </section>
   </main>
+
   <footer>
     <span id="manifest-info"></span>
   </footer>

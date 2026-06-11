@@ -2,15 +2,15 @@
 
 **Status**: Provisional — thin maintenance layer (2026-06-10)
 
-**Context**: Harness pivot (spec 087) ships recipes, orient bundle, and viewer
+**Context**: Harness pivot (spec 087) ships recipes, Portolan bundle, and viewer
 without requiring Go. Phase 5 smoke validates harness-only path on fixtures.
 
 ## Decision gate criteria
 
 | Criterion | Result (2026-06-10 smoke) |
 | --- | --- |
-| Harness + scripts build orient bundle | Pass (`build-orient-bundle.sh`) |
-| Viewer loads bundle without Go | Pass (`harness-orient-smoke.sh`) |
+| Harness + scripts build Portolan bundle | Pass (`build-portolan-bundle.sh`) |
+| Viewer loads bundle without Go | Pass (`harness-portolan-smoke.sh`) |
 | Importer edge cases in production | Not re-tested; legacy `internal/importer` retained |
 | Large JSONL / path safety | Legacy Go still has tests; harness uses jq/bash |
 
@@ -21,7 +21,7 @@ cases or a dedicated spec deprecates `cmd/portolan`.
 
 Allowed:
 
-- `map`, `import`, `query`, `orient-export-from-map.sh` bridge
+- `map`, `import`, `query`, `portolan-export-from-map.sh` bridge
 - Bugfixes and security fixes per GO-FREEZE-POLICY
 
 Not allowed without new ADR:
