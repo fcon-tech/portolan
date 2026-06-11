@@ -134,6 +134,33 @@ process_jscpd_file() {
   done
 }
 
+process_jscpd_cross_file() {
+  # Cross-repo clone pairs only (spec 105). Intra-repo pairs are intentionally
+  # skipped here: per-repo jscpd shards already cover them.
+  local jfile=$1
+  jq -r --slurpfile repos "$BUNDLE_DIR/repos.json" --arg ref "$jfile" '
+    def repo_of($p):
+      [ $repos[0][] | . as $r | select($p == $r.path or ($p | startswith($r.path + "/"))) ]
+      | sort_by(-(.path | length)) | (.[0].id // "");
+    .duplicates[]? |
+    select(.firstFile.name != null and .secondFile.name != null) |
+    . as $d |
+    (repo_of($d.firstFile.name)) as $ra |
+    (repo_of($d.secondFile.name)) as $rb |
+    select($ra != "" and $rb != "" and $ra != $rb) |
+    [$d.firstFile.name, $d.secondFile.name, ($d.lines // 0 | tostring), $ra, $rb, $ref] | @tsv
+  ' "$jfile" | while IFS=$'\t' read -r first second lines ra rb ref; do
+    [[ -z "$first" ]] && continue
+    bundle_path_ignored "$first" && continue
+    bundle_path_ignored "$second" && continue
+    id="xdup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
+    jq -nc \
+      --arg id "$id" --arg first "$first" --arg second "$second" \
+      --argjson lines "${lines:-0}" --arg ref "$ref" --arg ra "$ra" --arg rb "$rb" \
+      '{id:$id,kind:"duplication",severity:"high",summary:("Cross-repo duplicate (~"+($lines|tostring)+" lines): "+$ra+" <-> "+$rb),paths:[$first,$second],evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
+  done
+}
+
 process_semgrep_file() {
   local sfile=$1
   jq -r --arg ref "$sfile" '
@@ -168,6 +195,13 @@ done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$
 
 [[ "$jscpd_found" -eq 1 ]] || append_gap "gap-duplication" "duplication" "not_assessed" \
   "No jscpd producer output found." "harness/recipes/duplication-jscpd.md"
+
+# --- cross-repo duplication pairs (producers/jscpd-cross/**, opt-in; spec 105) ---
+while IFS= read -r jfile; do
+  [[ -f "$jfile" ]] || continue
+  jq -e '.duplicates' "$jfile" >/dev/null 2>&1 || continue
+  process_jscpd_cross_file "$jfile"
+done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' 2>/dev/null)
 
 # --- semgrep (producers/semgrep/**) ---
 semgrep_found=0
@@ -289,6 +323,14 @@ if [[ "$ctags_found" -eq 0 ]]; then
   fi
 fi
 
+# --- relationships.jsonl (spec 105) ---
+if ! "$SCRIPT_DIR/scan-cross-repo.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
+  echo "warn: scan-cross-repo failed; recording gap" >&2
+  append_gap "gap-relationships" "relationships" "cannot_verify" \
+    "scan-cross-repo failed during bundle build." "scripts/scan-cross-repo.sh"
+  : >"$BUNDLE_DIR/relationships.jsonl"
+fi
+
 # --- merge shard gaps from wizard ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
   cat "$PRODUCERS_DIR/_gaps.jsonl" >>"$gaps_raw"
@@ -393,12 +435,20 @@ if [[ -s "$gaps_raw" ]]; then
 fi
 gap_count=$(wc -l <"$BUNDLE_DIR/gaps.jsonl" | tr -d ' ')
 
+repo_count=$(jq 'length' "$BUNDLE_DIR/repos.json" 2>/dev/null || echo 0)
+relationship_count=0
+if [[ -f "$BUNDLE_DIR/relationships.jsonl" ]]; then
+  relationship_count=$(wc -l <"$BUNDLE_DIR/relationships.jsonl" | tr -d ' ')
+fi
+
 jq -n \
   --arg schema_version "0.1.0" \
   --arg target_root "$TARGET_ROOT" \
   --arg generated_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
   --argjson hotspot_count "$hotspot_count" \
   --argjson gap_count "$gap_count" \
+  --argjson repo_count "$repo_count" \
+  --argjson relationship_count "$relationship_count" \
   --argjson hotspot_budget "$HOTSPOT_BUDGET" \
   --argjson hotspots_truncated "$truncated" \
   --argjson hotspots_total "$total_before" \
@@ -406,7 +456,7 @@ jq -n \
   --argjson kind_counts_total "$kind_counts_total" \
   --argjson gap_budget "$GAP_BUDGET" \
   --argjson gaps_truncated "$gaps_truncated" \
-  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
+  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated}' \
   >"$BUNDLE_DIR/manifest.json"
 
 # graph-slice: findings + unique path nodes for map tab

@@ -13,6 +13,7 @@ YES=0
 SKIP_INSTALL=0
 NO_VIEWER=0
 WITH_MAP_BRIDGE=0
+CROSS_REPO_DUP=0
 PORT=4173
 LIMIT_REPOS=0
 PRODUCERS="config,jscpd,semgrep,syft,ctags"
@@ -29,6 +30,7 @@ Options:
   --skip-install     Never install missing tools (gaps only)
   --no-viewer        Build bundle only; do not start viewer
   --with-map-bridge  After bundle build, run portolan map + map-bridge sidecar (opt-in)
+  --cross-repo-dup   Opt-in single jscpd pass across repo boundaries (multi-repo only; bounded by --jscpd-memory-mb/--shard-timeout)
   --port N           Viewer port (default 4173)
   --limit-repos N    Cap discovered git repos for sharded producers
   --producers LIST   Comma-separated: config,jscpd,semgrep,syft,ctags (default all five)
@@ -58,6 +60,7 @@ while [[ $# -gt 0 ]]; do
     --skip-install) SKIP_INSTALL=1; shift ;;
     --no-viewer) NO_VIEWER=1; shift ;;
     --with-map-bridge) WITH_MAP_BRIDGE=1; shift ;;
+    --cross-repo-dup) CROSS_REPO_DUP=1; shift ;;
     --port) require_opt_value --port "${2:-}"; PORT="$2"; shift 2 ;;
     --limit-repos) require_opt_value --limit-repos "${2:-}"; LIMIT_REPOS="$2"; shift 2 ;;
     --producers) require_opt_value --producers "${2:-}"; PRODUCERS="$2"; shift 2 ;;
@@ -332,6 +335,44 @@ run_semgrep() {
   fi
 }
 
+run_jscpd_cross() {
+  # Opt-in cross-repo duplication pass (spec 105): one bounded jscpd run over
+  # the discovered repo set so clone pairs can span repo boundaries.
+  if ! command -v jscpd >/dev/null; then
+    fail_log "jscpd-cross skipped: jscpd not installed"
+    append_gap_record "gap-cross-repo-dup" "duplication" "not_assessed" \
+      "--cross-repo-dup requested but jscpd is not installed" \
+      "harness/recipes/duplication-jscpd.md"
+    return 0
+  fi
+  local repos
+  mapfile -t repos < <(discover_repos)
+  if [[ ${#repos[@]} -lt 2 ]]; then
+    log "jscpd-cross: single repo landscape; skipping cross pass"
+    return 0
+  fi
+  local out="$PRODUCERS_DIR/jscpd-cross"
+  mkdir -p "$out"
+  log "jscpd-cross: ${#repos[@]} repos in one pass (${JSCPD_MEMORY_MB}MB cap, ${SHARD_TIMEOUT}s timeout)"
+  NODE_OPTIONS="--max-old-space-size=${JSCPD_MEMORY_MB}" \
+    run_shard jscpd-cross "$TARGET_ROOT" \
+    jscpd "${repos[@]}" \
+      --reporters json \
+      --output "$out" \
+      --min-lines 5 \
+      --min-tokens 50 \
+      --threshold 999999 \
+      --noSymlinks \
+      --gitignore \
+      --ignore "$JSCPD_IGNORE_GLOBS" \
+      2>>"$FAILURES_LOG" || true
+  if ! find "$out" -type f -name '*.json' 2>/dev/null | grep -q .; then
+    append_gap_record "gap-cross-repo-dup" "duplication" "cannot_verify" \
+      "cross-repo jscpd pass produced no report (OOM/timeout/failure)" \
+      "harness/recipes/duplication-jscpd.md"
+  fi
+}
+
 run_syft() {
   command -v syft >/dev/null || { log "syft not available"; return 1; }
   mkdir -p "$PRODUCERS_DIR/syft"
@@ -376,6 +417,10 @@ elif has_producer ctags; then
   append_gap_record "gap-ctags" "symbols" "not_assessed" \
     "ctags not installed; see harness/recipes/symbols-ctags.md" \
     "harness/recipes/symbols-ctags.md"
+fi
+
+if [[ "$CROSS_REPO_DUP" -eq 1 ]]; then
+  run_jscpd_cross || true
 fi
 
 export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
