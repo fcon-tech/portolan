@@ -70,8 +70,12 @@ else
 fi
 
 # --- repo-profiles.json (spec 104) ---
+# drop any stale profiles first: a failed producer must leave no previous-run
+# artifact behind while the gap says cannot_verify
+rm -f "$BUNDLE_DIR/repo-profiles.json"
 if ! "$SCRIPT_DIR/scan-repo-profiles.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
   echo "warn: scan-repo-profiles failed; recording gap" >&2
+  rm -f "$BUNDLE_DIR/repo-profiles.json"
   PROFILE_GAP=1
 else
   PROFILE_GAP=0

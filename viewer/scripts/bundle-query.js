@@ -227,12 +227,17 @@ function queryHotspots(bundlePath, opts = {}) {
   const text = (opts.text || opts.q || '').trim().toLowerCase();
   const repoId = (opts.repo || '').trim();
   let repoPrefixes = null;
+  let repoUnknown = false;
   if (repoId) {
     repoPrefixes = repoPathPrefixes(bundlePath, repoId);
-    if (!repoPrefixes) warnings.push(`repo not found in repos.json: ${repoId}`);
+    if (!repoPrefixes) {
+      // unknown repo must not silently widen the answer to the whole landscape
+      repoUnknown = true;
+      warnings.push(`repo not found in repos.json: ${repoId}; returning no records`);
+    }
   }
 
-  let matched = rows.filter((h) => {
+  let matched = repoUnknown ? [] : rows.filter((h) => {
     if (kind && h.kind !== kind) return false;
     if (severity && h.severity !== severity) return false;
     if (repoPrefixes && !(h.paths || []).some((p) => pathInRepo(p, repoPrefixes))) return false;
@@ -644,6 +649,9 @@ function queryRepos(bundlePath, opts = {}) {
     record_id: r.id,
     kind: 'repo-profile',
     evidence_state: r.purpose?.evidence_state || 'metadata-visible',
+    // record-level state describes the profile artifact; per-section states
+    // (activity may be unknown) must stay visible, not be flattened to observed
+    activity_evidence_state: r.activity?.evidence_state || 'unknown',
     status: 'observed',
     summary:
       r.purpose?.readme_title ||
@@ -749,10 +757,21 @@ function queryClaims(bundlePath, opts = {}) {
     );
   }
 
+  const VALID_TIERS = ['analytical', 'synthetic', 'speculative'];
+  if (tier && !VALID_TIERS.includes(tier)) {
+    warnings.push(`unknown tier filter: ${tier} (expected ${VALID_TIERS.join(' | ')}); returning no records`);
+  }
+
   const rows = readJSONL(claimsPath);
   const matched = rows.filter((c) => {
     if (tier && (c.claim_tier || '').toLowerCase() !== tier) return false;
-    if (subject && !(c.subject || '').toLowerCase().includes(subject)) return false;
+    if (subject) {
+      // exact subject match; "repo:" / "path:" prefix filters all of that scheme.
+      // Substring matching would let repo:foo answer for repo:foo-bar.
+      const s = (c.subject || '').toLowerCase();
+      const schemeOnly = subject === 'repo:' || subject === 'path:';
+      if (schemeOnly ? !s.startsWith(subject) : s !== subject) return false;
+    }
     return true;
   });
 

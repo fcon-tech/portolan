@@ -36,11 +36,22 @@ json_str_or_null() {
   if [[ -z "$v" ]]; then echo 'null'; else jq -n --arg v "$v" '$v'; fi
 }
 
+repo_file() {
+  # true iff <root>/<rel> is a regular file whose canonical path stays under
+  # the repo root: a symlinked README/manifest must not pull outside content
+  # into the bundle (jscpd shards use --noSymlinks; same posture here)
+  local root=$1 rel=$2 rootreal absreal
+  [[ -f "$root/$rel" ]] || return 1
+  rootreal=$(readlink -f -- "$root" 2>/dev/null) || return 1
+  absreal=$(readlink -f -- "$root/$rel" 2>/dev/null) || return 1
+  [[ "$absreal" == "$rootreal"/* ]]
+}
+
 first_readme() {
   local root=$1
   local f
   for f in README.md README.MD Readme.md readme.md README README.rst README.txt; do
-    [[ -f "$root/$f" ]] && { echo "$f"; return 0; }
+    repo_file "$root" "$f" && { echo "$f"; return 0; }
   done
   return 1
 }
@@ -129,7 +140,10 @@ compose_services_json() {
 profiles='[]'
 
 while IFS=$'\t' read -r rid rpath rname; do
-  [[ -z "$rpath" || ! -d "$rpath" ]] && continue
+  if [[ -z "$rpath" || ! -d "$rpath" ]]; then
+    echo "warn: repo path missing on disk, profile skipped: ${rid} (${rpath})" >&2
+    continue
+  fi
 
   files_tmp=$(mktemp)
   list_files "$rpath" >"$files_tmp"
@@ -164,7 +178,7 @@ while IFS=$'\t' read -r rid rpath rname; do
   }
   add_deps_json() { declared_deps=$(jq -c --argjson d "$1" '. + $d | unique' <<<"$declared_deps"); }
 
-  if [[ -f "$rpath/package.json" ]] && jq -e . "$rpath/package.json" >/dev/null 2>&1; then
+  if repo_file "$rpath" package.json && jq -e . "$rpath/package.json" >/dev/null 2>&1; then
     nm_name=$(jq -r '.name // empty' "$rpath/package.json")
     nm_desc=$(jq -r '.description // empty' "$rpath/package.json")
     add_manifest "$(jq -nc --arg p package.json --arg n "$nm_name" --arg d "$nm_desc" \
@@ -172,14 +186,14 @@ while IFS=$'\t' read -r rid rpath rname; do
     add_module_id "$nm_name"
     add_deps_json "$(jq -c '[(.dependencies // {}), (.devDependencies // {})] | map(keys) | add' "$rpath/package.json")"
   fi
-  if [[ -f "$rpath/go.mod" ]]; then
+  if repo_file "$rpath" go.mod; then
     gomod=$(grep -m1 -E '^module ' "$rpath/go.mod" | awk '{print $2}' || true)
     add_manifest "$(jq -nc --arg p go.mod --arg m "$gomod" '{type:"gomod",path:$p,module:(if $m=="" then null else $m end)}')"
     add_module_id "$gomod"
     add_deps_json "$(awk '/^require \(/{r=1;next} /^\)/{r=0} r && NF{print $1} /^require [^(]/{print $2}' "$rpath/go.mod" 2>/dev/null |
       jq -Rsc 'split("\n") | map(select(length>0))')"
   fi
-  if [[ -f "$rpath/pom.xml" ]]; then
+  if repo_file "$rpath" pom.xml; then
     mv_artifact=$(xml_first_tag "$rpath/pom.xml" artifactId || true)
     mv_name=$(xml_first_tag "$rpath/pom.xml" name || true)
     mv_desc=$(xml_first_tag "$rpath/pom.xml" description || true)
@@ -187,7 +201,7 @@ while IFS=$'\t' read -r rid rpath rname; do
       '{type:"maven",path:$p,artifact_id:(if $a=="" then null else $a end),name:(if $n=="" then null else $n end),description:(if $d=="" then null else $d end)}')"
     add_module_id "$mv_artifact"
   fi
-  if [[ -f "$rpath/Cargo.toml" ]]; then
+  if repo_file "$rpath" Cargo.toml; then
     cg_name=$(toml_field "$rpath/Cargo.toml" package name || true)
     cg_desc=$(toml_field "$rpath/Cargo.toml" package description || true)
     add_manifest "$(jq -nc --arg p Cargo.toml --arg n "$cg_name" --arg d "$cg_desc" \
@@ -195,14 +209,14 @@ while IFS=$'\t' read -r rid rpath rname; do
     add_module_id "$cg_name"
     add_deps_json "$(toml_dep_keys "$rpath/Cargo.toml" dependencies | jq -Rsc 'split("\n") | map(select(length>0))')"
   fi
-  if [[ -f "$rpath/pyproject.toml" ]]; then
+  if repo_file "$rpath" pyproject.toml; then
     py_name=$(toml_field "$rpath/pyproject.toml" project name || true)
     py_desc=$(toml_field "$rpath/pyproject.toml" project description || true)
     add_manifest "$(jq -nc --arg p pyproject.toml --arg n "$py_name" --arg d "$py_desc" \
       '{type:"python",path:$p,name:(if $n=="" then null else $n end),description:(if $d=="" then null else $d end)}')"
     add_module_id "$py_name"
   fi
-  if [[ -f "$rpath/composer.json" ]] && jq -e . "$rpath/composer.json" >/dev/null 2>&1; then
+  if repo_file "$rpath" composer.json && jq -e . "$rpath/composer.json" >/dev/null 2>&1; then
     cp_name=$(jq -r '.name // empty' "$rpath/composer.json")
     cp_desc=$(jq -r '.description // empty' "$rpath/composer.json")
     add_manifest "$(jq -nc --arg p composer.json --arg n "$cp_name" --arg d "$cp_desc" \
@@ -210,8 +224,8 @@ while IFS=$'\t' read -r rid rpath rname; do
     add_module_id "$cp_name"
     add_deps_json "$(jq -c '[(.require // {})] | map(keys) | add' "$rpath/composer.json")"
   fi
-  if [[ -f "$rpath/settings.gradle" || -f "$rpath/settings.gradle.kts" ]]; then
-    sg_file="settings.gradle"; [[ -f "$rpath/settings.gradle.kts" ]] && sg_file="settings.gradle.kts"
+  if repo_file "$rpath" settings.gradle || repo_file "$rpath" settings.gradle.kts; then
+    sg_file="settings.gradle"; repo_file "$rpath" settings.gradle.kts && sg_file="settings.gradle.kts"
     gr_name=$(grep -m1 -E 'rootProject\.name' "$rpath/$sg_file" 2>/dev/null |
       sed -E "s/.*rootProject\.name[ \t]*=?[ \t]*[\"']([^\"']+)[\"'].*/\1/" || true)
     add_manifest "$(jq -nc --arg p "$sg_file" --arg n "$gr_name" '{type:"gradle",path:$p,name:(if $n=="" then null else $n end)}')"
@@ -226,14 +240,14 @@ while IFS=$'\t' read -r rid rpath rname; do
   compose_files=$({ grep -iE '(^|/)(docker-)?compose[^/]*\.ya?ml$' "$files_tmp" || true; } | head -5)
   compose_services='[]'
   while IFS= read -r cf; do
-    [[ -z "$cf" || ! -f "$rpath/$cf" ]] && continue
+    { [[ -z "$cf" ]] || ! repo_file "$rpath" "$cf"; } && continue
     svc=$(compose_services_json "$rpath/$cf")
     compose_services=$(jq -c --arg f "$cf" --argjson s "$svc" '. + [{file:$f,services:$s}]' <<<"$compose_services")
   done <<<"$compose_files"
 
   docker_directives='[]'
   while IFS= read -r df; do
-    [[ -z "$df" || ! -f "$rpath/$df" ]] && continue
+    { [[ -z "$df" ]] || ! repo_file "$rpath" "$df"; } && continue
     dd=$({ grep -E '^(EXPOSE|CMD|ENTRYPOINT) ' "$rpath/$df" 2>/dev/null || true; } |
       jq -Rsc --arg f "$df" 'split("\n") | map(select(length>0)) | {file:$f,directives:.}')
     docker_directives=$(jq -c --argjson d "$dd" '. + [$d]' <<<"$docker_directives")
@@ -245,7 +259,7 @@ while IFS=$'\t' read -r rid rpath rname; do
       { grep -E '^cmd/[^/]+/' "$files_tmp" || true; } | cut -d/ -f1-2 | sort -u | sed 's/^/go:/'
       [[ -f "$rpath/main.go" ]] && echo "go:main.go"
       [[ -f "$rpath/main.py" ]] && echo "python:main.py"
-      if [[ -f "$rpath/package.json" ]] && jq -e . "$rpath/package.json" >/dev/null 2>&1; then
+      if repo_file "$rpath" package.json && jq -e . "$rpath/package.json" >/dev/null 2>&1; then
         jq -r '(.bin // {}) | if type == "object" then keys[] elif type == "string" then "." else empty end' \
           "$rpath/package.json" 2>/dev/null | sed 's/^/npm-bin:/' || true
         jq -e '.scripts.start' "$rpath/package.json" >/dev/null 2>&1 && echo "npm:scripts.start"

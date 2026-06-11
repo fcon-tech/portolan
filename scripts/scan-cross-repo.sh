@@ -163,9 +163,10 @@ while IFS= read -r jfile; do
   done
 done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' 2>/dev/null)
 
-# stable order: type, then from/repos
+# stable order: type, then from/repos; dedup by id (multiple producer report
+# files for the same pair must not emit ambiguous duplicate edges)
 if [[ -s "$edges_tmp" ]]; then
-  jq -sc 'sort_by([.type, (.from_repo // ""), (.to_repo // ""), .id])[]' "$edges_tmp" >"$OUT"
+  jq -sc 'unique_by(.id) | sort_by([.type, (.from_repo // ""), (.to_repo // ""), .id])[]' "$edges_tmp" >"$OUT"
 fi
 rm -f "$edges_tmp"
 

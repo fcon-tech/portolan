@@ -220,18 +220,25 @@ function repoForPath(p) {
   const norm = normalizeDisplayPath(p);
   if (!norm) return null;
   if (norm.startsWith('/')) {
+    // longest-prefix wins so nested checkouts attribute to the inner repo
+    let best = null;
+    let bestLen = -1;
     for (const r of repos) {
       const root = r.path.replace(/\\/g, '/');
-      if (norm === root || norm.startsWith(root + '/')) return r.id;
+      if ((norm === root || norm.startsWith(root + '/')) && root.length > bestLen) {
+        best = r.id;
+        bestLen = root.length;
+      }
     }
-    return null;
+    return best;
   }
   if (repos.length === 1) return repos[0].id;
   for (const r of repos) {
     const name = r.name || r.id;
     if (norm.startsWith(name + '/')) return r.id;
   }
-  return repos[0]?.id ?? null;
+  // multi-repo relative path with no prefix match: unattributed beats wrong
+  return null;
 }
 
 function hotspotRepo(h) {
@@ -1152,6 +1159,14 @@ function renderRepoDrill() {
   const rid = selectedRepoId;
   const repo = repos.find((r) => r.id === rid);
   const p = profileById(rid);
+  if (!repo && !p) {
+    // stale id (e.g. relationship edge naming a repo absent from this bundle)
+    el.innerHTML = `
+      <p class="empty-title">Unknown repository: ${escapeHtml(rid)}</p>
+      <p class="empty-hint">This id is not present in repos.json or repo-profiles.json for the loaded bundle.</p>
+    `;
+    return;
+  }
   const purpose = p?.purpose || {};
   const sev = repoSeverityCounts(rid);
   const repoRels = relationshipsForRepo(rid);
