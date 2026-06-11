@@ -12,6 +12,7 @@ JSCPD_IGNORE_GLOBS="**/.git/**,**/.portolan/**,**/.codex-subagents/**,**/.cursor
 YES=0
 SKIP_INSTALL=0
 NO_VIEWER=0
+WITH_MAP_BRIDGE=0
 PORT=4173
 LIMIT_REPOS=0
 PRODUCERS="config,jscpd,semgrep,syft,ctags"
@@ -27,6 +28,7 @@ Options:
   --yes              Auto-approve tool installs
   --skip-install     Never install missing tools (gaps only)
   --no-viewer        Build bundle only; do not start viewer
+  --with-map-bridge  After bundle build, run portolan map + map-bridge sidecar (opt-in)
   --port N           Viewer port (default 4173)
   --limit-repos N    Cap discovered git repos for sharded producers
   --producers LIST   Comma-separated: config,jscpd,semgrep,syft,ctags (default all five)
@@ -55,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     --yes) YES=1; shift ;;
     --skip-install) SKIP_INSTALL=1; shift ;;
     --no-viewer) NO_VIEWER=1; shift ;;
+    --with-map-bridge) WITH_MAP_BRIDGE=1; shift ;;
     --port) require_opt_value --port "${2:-}"; PORT="$2"; shift 2 ;;
     --limit-repos) require_opt_value --limit-repos "${2:-}"; LIMIT_REPOS="$2"; shift 2 ;;
     --producers) require_opt_value --producers "${2:-}"; PRODUCERS="$2"; shift 2 ;;
@@ -377,6 +380,46 @@ fi
 
 export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
 "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
+
+append_bundle_gap() {
+  local id=$1 surface=$2 status=$3 summary=$4 recipe=${5:-}
+  jq -nc \
+    --arg id "$id" --arg surface "$surface" --arg status "$status" \
+    --arg summary "$summary" --arg recipe "$recipe" \
+    '{id:$id,surface:$surface,status:$status,summary:$summary} + (if $recipe != "" then {recipe:$recipe} else {} end)' \
+    >>"$BUNDLE_DIR/gaps.jsonl"
+  if [[ -f "$BUNDLE_DIR/manifest.json" ]]; then
+    local gc tmp
+    gc=$(wc -l <"$BUNDLE_DIR/gaps.jsonl" | tr -d ' ')
+    tmp=$(mktemp)
+    jq --argjson gc "$gc" '.gap_count = $gc' "$BUNDLE_DIR/manifest.json" >"$tmp"
+    mv "$tmp" "$BUNDLE_DIR/manifest.json"
+  fi
+}
+
+run_map_bridge() {
+  local map_out="$BUNDLE_DIR/map"
+  log "map-bridge: portolan map → $map_out"
+  if ! (cd "$ROOT" && go run ./cmd/portolan map --root "$TARGET_ROOT" --out "$map_out" --force); then
+    fail_log "map-bridge: portolan map failed"
+    append_bundle_gap "gap-map-bridge" "map" "cannot_verify" \
+      "portolan map failed during --with-map-bridge scan" \
+      "harness/SKILL.md"
+    return 0
+  fi
+  if ! "$ROOT/scripts/build-map-bridge.sh" "$map_out" "$BUNDLE_DIR"; then
+    fail_log "map-bridge: build-map-bridge.sh failed"
+    append_bundle_gap "gap-map-bridge-copy" "map" "cannot_verify" \
+      "map output present but map-bridge sidecar copy failed" \
+      "scripts/build-map-bridge.sh"
+    return 0
+  fi
+  log "map-bridge: sidecar at $BUNDLE_DIR/map-bridge"
+}
+
+if [[ "$WITH_MAP_BRIDGE" -eq 1 ]]; then
+  run_map_bridge || true
+fi
 
 log "--- summary ---"
 if [[ -f "$BUNDLE_DIR/manifest.json" ]]; then

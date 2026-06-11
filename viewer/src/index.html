@@ -31,6 +31,16 @@
   <main>
     <section id="tab-overview" class="tab-panel active">
       <div id="report-overview" class="report-overview">
+        <details id="control-guide" class="control-guide">
+          <summary>How to use this report</summary>
+          <div class="control-guide-body">
+            <p><strong>Tabs:</strong> Overview (landscape + where to start), Findings (ranked pain by folder/list), Gaps (layers not run), Graph hints (optional <code>portolan map</code> sidecar).</p>
+            <p><strong>Search</strong> in the header queries the local code index — not an LLM.</p>
+            <p><strong>Findings tab</strong> — pick a <em>view</em> (Tour, Code pain, Config), filter by kind/severity, click a row for tool-backed detail and source preview.</p>
+            <p><strong>Graph hints</strong> — populated only when the scan included <code>--with-map-bridge</code> or you ran map + <code>build-map-bridge.sh</code> manually; empty state is honest, not missing findings.</p>
+          </div>
+        </details>
+        <div id="rank-explainer" class="rank-explainer"></div>
         <div id="landscape-card" class="landscape-card"></div>
         <div id="overview-blocks" class="overview-blocks"></div>
         <div id="findings-scale" class="findings-scale"></div>

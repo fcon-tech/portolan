@@ -93,7 +93,7 @@ fixtures are preflight evidence only.
 | P3-019 | `docs/specs/019-portolan-scope-pruning/` | Prepared-landscape and Bigtop-specific affordances are demoted from primary product workflow; misleading or redundant surfaces are pruned safely. | Implemented for docs/help pruning |
 | P3-021 | `docs/specs/021-product-hypothesis-validation/` | Product hypotheses are falsifiable and tested as Cursor/agent augmentation instead of standalone reporting. | Headless Cursor Agent accepted evidence-index and bounded map workflow on a 30-repo real local landscape; UI Cursor/Composer is outside the current required acceptance scope; semantic search remains not_assessed |
 | P3-028 | `docs/specs/028-large-findings-jsonl/` | Map rendering handles large valid JSONL finding lines from real multi-repo landscapes without `bufio.Scanner` token failures. | Implemented |
-| P3-016 | future | MCP tool surface for agents that prefer tool calls over shell commands. | Idea |
+| P3-016 | `docs/specs/098-bundle-query-mcp/` | MCP tool surface for agents that prefer tool calls over shell commands. | Implemented via PR #68 (optional; SKILL + shell primary) |
 | P3-017 | future | LSP or local index surface for large-repo targeted lookups. | Idea |
 | P3-018 | `docs/specs/031-oss-adapter-contract/` | Published adapter contract, validation command, and fixtures for third-party scanner outputs. | Implemented |
 | P3-022 | future | Optional export formats for SDP Trace, Backstage, or graph databases. | Idea |
@@ -194,6 +194,14 @@ fixtures are preflight evidence only.
 **MVP path:** `scripts/portolan-scan.sh` (or `harness/SKILL.md` → recipes → `build-portolan-bundle.sh`) → `viewer/`.
 
 **Frozen from P7 MVP:** Bigtop enterprise parity (076), runtime capture chain (061–065), new Go `contextprep` features.
+
+## P8: Navigation on Real Targets (active)
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P8-101 | `docs/specs/101-real-target-query-eval/` | Query eval lane A vs B on real self-target portolan-scan bundle. | Implemented (branch codex/101-103-p8-navigation) |
+| P8-102 | `docs/specs/102-map-bridge-scan-workflow/` | Optional `--with-map-bridge` on portolan-scan for Graph hints tab. | Implemented (branch codex/101-103-p8-navigation) |
+| P8-103 | `docs/specs/103-viewer-pain-ranking-ux/` | Rank/control explainers and detail CTAs in viewer; self-target demo bar. | Implemented (branch codex/101-103-p8-navigation) |
 
 ## Backlog Rules
 
