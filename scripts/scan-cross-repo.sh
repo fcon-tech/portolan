@@ -161,7 +161,7 @@ while IFS= read -r jfile; do
         evidence_state:"metadata-visible",producer:"jscpd",
         producer_ref:$ref}' >>"$edges_tmp"
   done
-done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' 2>/dev/null)
+done < <(find "$PRODUCERS_DIR/jscpd-cross" -type f -name '*.json' ! -name '_scan.json' 2>/dev/null)
 
 # stable order: type, then from/repos; dedup by id (multiple producer report
 # files for the same pair must not emit ambiguous duplicate edges)
