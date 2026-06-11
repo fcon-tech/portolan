@@ -121,6 +121,7 @@ else
   done < <(find "$TARGET_ROOT" -maxdepth 4 -type d -name .git 2>/dev/null)
   [[ $repo_count -gt 1 ]] && monorepo=true
 fi
+[[ $repo_count -eq 0 ]] && repo_count=1
 
 build_system=null
 for f in go.mod package.json Cargo.toml pom.xml build.gradle; do

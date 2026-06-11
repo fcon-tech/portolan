@@ -781,6 +781,57 @@ function boolBadge(val, yes, no) {
   return `<span class="badge unknown">unknown</span>`;
 }
 
+function formatLanguageEntry(lang, data) {
+  if (data && typeof data === 'object' && data.files != null) {
+    const files = Number(data.files) || 0;
+    const pct =
+      data.ratio != null && !Number.isNaN(Number(data.ratio))
+        ? `, ${Math.round(Number(data.ratio) * 100)}%`
+        : '';
+    return `${lang} (${files} file${files === 1 ? '' : 's'}${pct})`;
+  }
+  if (typeof data === 'number') return `${lang} (${data})`;
+  return lang;
+}
+
+function formatLanguagesSummary(languages, primaryLanguage) {
+  if (!languages || typeof languages !== 'object' || !Object.keys(languages).length) {
+    return primaryLanguage || 'unknown';
+  }
+  return Object.entries(languages)
+    .sort((a, b) => {
+      const af = typeof a[1] === 'object' ? Number(a[1].files) || 0 : Number(a[1]) || 0;
+      const bf = typeof b[1] === 'object' ? Number(b[1].files) || 0 : Number(b[1]) || 0;
+      return bf - af;
+    })
+    .slice(0, 4)
+    .map(([lang, data]) => formatLanguageEntry(lang, data))
+    .join(' · ');
+}
+
+function findingsGroupsFromHotspots(hotspots) {
+  const byKind = new Map();
+  for (const h of hotspots) {
+    if (!byKind.has(h.kind)) byKind.set(h.kind, []);
+    byKind.get(h.kind).push(h);
+  }
+  return [...byKind.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([kind, items]) => ({
+      kind,
+      count: items.length,
+      items: [...items]
+        .sort((a, b) => a.rank - b.rank)
+        .map((h) => ({
+          id: h.id,
+          rank: h.rank,
+          summary: h.summary,
+          severity: h.severity,
+          evidence_ref: `hotspot:${h.id}`,
+        })),
+    }));
+}
+
 function renderOverview() {
   const cardEl = document.getElementById('landscape-card');
   const scaleEl = document.getElementById('findings-scale');
@@ -795,20 +846,14 @@ function renderOverview() {
   const maturity = card.maturity || {};
   const health = card.health_signals || {};
 
-  const langs = id.languages && typeof id.languages === 'object'
-    ? Object.entries(id.languages)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 4)
-        .map(([l, n]) => `${l} (${n})`)
-        .join(' · ')
-    : id.primary_language || 'unknown';
+  const langs = formatLanguagesSummary(id.languages, id.primary_language);
 
   cardEl.innerHTML = `
     <h2>${escapeHtml(id.name || 'Landscape')}</h2>
     <div class="card-grid">
       <div class="card-stat"><span class="label">Language</span><span class="value">${escapeHtml(String(langs))}</span></div>
       <div class="card-stat"><span class="label">Files</span><span class="value">${scale.total_files != null ? escapeHtml(String(scale.total_files)) : 'unknown'}</span></div>
-      <div class="card-stat"><span class="label">LOC (approx)</span><span class="value">${scale.total_loc != null ? escapeHtml(String(scale.total_loc)) : 'unknown'}</span></div>
+      ${scale.total_loc != null ? `<div class="card-stat"><span class="label">LOC (approx)</span><span class="value">${escapeHtml(String(scale.total_loc))}</span></div>` : ''}
       <div class="card-stat"><span class="label">Repos</span><span class="value">${repos.length || '—'}</span></div>
       <div class="card-stat"><span class="label">Last commit</span><span class="value">${escapeHtml(activity.last_commit || 'unknown')}</span></div>
       <div class="card-stat"><span class="label">Contributors</span><span class="value">${activity.contributors != null ? escapeHtml(String(activity.contributors)) : 'unknown'}</span></div>
@@ -889,7 +934,7 @@ function renderGapsTab() {
     <tbody>${gaps
       .map(
         (g) =>
-          `<tr><td>${escapeHtml(g.surface || '')}</td><td><span class="badge">${escapeHtml(g.status || '')}</span></td><td>${escapeHtml(g.summary || '')}</td><td class="mono">${escapeHtml(g.recipe_ref || g.producer_ref || '—')}</td></tr>`
+          `<tr><td>${escapeHtml(g.surface || '')}</td><td><span class="badge">${escapeHtml(g.status || '')}</span></td><td>${escapeHtml(g.summary || '')}</td><td class="mono">${escapeHtml(g.recipe || g.recipe_ref || g.producer_ref || '—')}</td></tr>`
       )
       .join('')}</tbody></table>
   `;
@@ -897,8 +942,7 @@ function renderGapsTab() {
 
 function renderFindingsSections() {
   const el = document.getElementById('findings-sections');
-  const section = landscapeReport?.sections?.find((s) => s.id === 'findings_by_kind');
-  const groups = section?.groups || [];
+  const groups = findingsGroupsFromHotspots(allHotspots);
   if (!groups.length) {
     el.innerHTML = '';
     return;
