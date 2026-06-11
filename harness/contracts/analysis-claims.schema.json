@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "portolan-analysis-claims",
+  "title": "Portolan agent analysis claim (claims.jsonl line, spec 106)",
+  "description": "LLM-authored analysis enters the bundle only through import-analysis-claims.sh. Tiers: analytical (B) and synthetic (C) require cited refs that resolve in this bundle; speculative (D) requires labeling only. evidence_state is always claim-only; the importer never raises a tier.",
+  "type": "object",
+  "required": ["id", "claim_tier", "statement", "subject", "cited_refs", "agent", "evidence_state"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "claim_tier": { "enum": ["analytical", "synthetic", "speculative"] },
+    "statement": { "type": "string", "minLength": 1 },
+    "subject": {
+      "type": "string",
+      "minLength": 1,
+      "description": "landscape | repo:<repo-id> | path:<repo-relative-path>"
+    },
+    "cited_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(hotspot|gap|relationship|repo|path|producer_ref):.+$"
+      },
+      "description": "Refs must resolve in the target bundle. Required (>=1) for analytical and synthetic."
+    },
+    "agent": { "type": "string", "minLength": 1, "description": "Agent/model identifier." },
+    "created_at": { "type": "string" },
+    "imported_at": { "type": "string" },
+    "evidence_state": { "const": "claim-only" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "claim_tier": { "enum": ["analytical", "synthetic"] } } },
+      "then": { "properties": { "cited_refs": { "minItems": 1 } } }
+    }
+  ]
+}

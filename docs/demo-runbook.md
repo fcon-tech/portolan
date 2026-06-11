@@ -26,6 +26,24 @@ scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-bigtop 
   --yes --limit-repos 3 --producers semgrep,syft
 ```
 
+**CTO multi-repo demo (bigtop-10, spec 108):**
+
+```bash
+scripts/portolan-scan.sh ~/projects/bigtop-landscape/repos /tmp/portolan-bigtop10 \
+  --limit-repos 10 --cross-repo-dup --yes --no-viewer
+```
+
+`--cross-repo-dup` runs **pairwise bounded** jscpd across every repo pair. Completion
+is recorded in `producers/jscpd-cross/_scan.json`; proven zero cross-repo clones
+after a complete scan is tier-A evidence (manifest `cross_repo_duplication.status=complete`).
+`gap-cross-repo-dup` appears only when one or more pairs fail—not as opt-in degradation.
+
+Strict bigtop-10 acceptance (not default CI):
+
+```bash
+scripts/harness-bigtop10-acceptance.sh /tmp/portolan-bigtop10
+```
+
 **Full landscape stress (18 repos, spec 091):**
 
 ```bash
@@ -83,6 +101,31 @@ Use **`/tmp/portolan-self`** (real self-target scan). Operator answers without e
 **Agent query eval (Lane B):** `scripts/run-query-eval.sh --self --run` after self-scan.
 
 Compare with `docs/test-corpora/apache-bigtop/examples/map-excerpt.md` for section parity.
+
+## CTO scenario (multi-repo, spec 108)
+
+Use **`/tmp/portolan-bigtop10`** (10 repos, `--cross-repo-dup`). The concerned-CTO
+walkthrough — every answer states which tier the knowledge is:
+
+| CTO question | Where | Tier |
+| --- | --- | --- |
+| What repos do I have and what does each do? | Repos tab → cards (langs, activity, maturity, purpose line) | A from manifests/README; purpose one-liner may be a labeled B claim |
+| How are they connected? | Repos tab → «Connections between repos» (depends-on, uses-image, shared-dependency) | A (metadata-visible); **not** runtime topology |
+| Do teams copy code between repos? | Findings → cross-repo duplicates (high severity); Repos → connections `cross-repo-duplication` | A (jscpd cross pass, opt-in) |
+| Which repo is riskiest? | Overview → «Findings by repository» severity columns; click → drill-down top findings | A (tool findings only) |
+| What does the agent *think* it means? | Repo drill-down → «Agent analysis» B/C/D blocks; Overview → landscape claims | B/C/D — labeled, never mixed into ranked findings |
+| What was not checked? | Gaps tab (+ rejected claims in `claims-import-report.json`) | honesty layer |
+
+Agent analysis pass (full cycle, including a rejected negative case):
+
+```bash
+# agent writes claims per harness/SKILL.md + harness/guardrails/analysis-claims.md
+scripts/import-analysis-claims.sh /tmp/portolan-bigtop10 /tmp/bigtop10-claims.jsonl
+jq '.rejected' /tmp/portolan-bigtop10/claims-import-report.json   # broken refs listed with reasons
+```
+
+**CTO query eval:** `scripts/run-query-eval.sh --run /tmp/portolan-bigtop10` (C1–C5
+cover repos, relationships, cross-repo duplication, per-repo risk, claims).
 
 ## Talking points
 

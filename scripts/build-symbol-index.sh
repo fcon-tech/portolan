@@ -20,15 +20,24 @@ count=0
 if [[ -d "$PRODUCERS" ]]; then
   while IFS= read -r tags_file; do
     [[ -f "$tags_file" ]] || continue
-    while IFS= read -r row; do
-      [[ -z "$row" ]] && continue
-      echo "$row" | jq -c \
+    before=$(wc -l <"$OUT" | tr -d ' ')
+    ctags_jq='select((._type == "tag" or (._type == null and .name != null)) and .name and .path) |
+      {name, path, kind: (.kind // ""), line: (.line // 1), producer: $producer, resolution_limit: $resolution_limit, evidence_state: $evidence_state}'
+    if jq -e 'type == "array"' "$tags_file" >/dev/null 2>&1; then
+      jq -c --arg producer "ctags" \
+        --arg resolution_limit "definition-only; not a full call graph" \
+        --arg evidence_state "metadata-visible" \
+        ".[] | $ctags_jq" "$tags_file" >>"$OUT" 2>/dev/null || true
+    else
+      jq -c -R \
         --arg producer "ctags" \
         --arg resolution_limit "definition-only; not a full call graph" \
         --arg evidence_state "metadata-visible" \
-        '. + {producer:$producer,resolution_limit:$resolution_limit,evidence_state:$evidence_state}' >>"$OUT"
-      count=$((count + 1))
-    done < <(jq -c '.[] | select(.name and .path) | {name, path, kind, line: (.line // 1)}' "$tags_file" 2>/dev/null || true)
+        "fromjson? | select(type == \"object\") | $ctags_jq" \
+        "$tags_file" >>"$OUT" 2>/dev/null || true
+    fi
+    after=$(wc -l <"$OUT" | tr -d ' ')
+    count=$((count + after - before))
   done < <(find "$PRODUCERS" -name 'tags.json' 2>/dev/null)
 fi
 

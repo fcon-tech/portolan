@@ -21,6 +21,7 @@
     </div>
     <nav id="tab-bar" class="tab-bar" aria-label="Report sections">
       <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
+      <button type="button" class="tab-btn" data-tab="repos">Repos</button>
       <button type="button" class="tab-btn" data-tab="findings">Findings</button>
       <button type="button" class="tab-btn" data-tab="gaps">Gaps</button>
       <button type="button" class="tab-btn" data-tab="graph-hints">Graph hints</button>
@@ -34,9 +35,10 @@
         <details id="control-guide" class="control-guide">
           <summary>How to use this report</summary>
           <div class="control-guide-body">
-            <p><strong>Tabs:</strong> Overview (landscape + where to start), Findings (ranked pain by folder/list), Gaps (layers not run), Graph hints (optional <code>portolan map</code> sidecar).</p>
+            <p><strong>Tabs:</strong> Overview (landscape + where to start), Repos (per-repo profiles, connections, drill-down), Findings (ranked pain by folder/list), Gaps (layers not run), Graph hints (optional <code>portolan map</code> sidecar).</p>
             <p><strong>Search</strong> in the header queries the local code index — not an LLM.</p>
-            <p><strong>Findings tab</strong> — pick a <em>view</em> (Tour, Code pain, Config), filter by kind/severity, click a row for tool-backed detail and source preview.</p>
+            <p><strong>Repos tab</strong> — click a card for the evidence ladder: tier A tool facts first (profile, connections, findings), then tier-labeled agent analysis (B analytical / C synthetic / D speculative) if imported.</p>
+            <p><strong>Findings tab</strong> — pick a <em>view</em> (Tour, Code pain, Config), filter by kind/severity, click a row for tool-backed detail and source preview. Ranked findings are tier A only — agent claims never mix in.</p>
             <p><strong>Graph hints</strong> — populated only when the scan included <code>--with-map-bridge</code> or you ran map + <code>build-map-bridge.sh</code> manually; empty state is honest, not missing findings.</p>
           </div>
         </details>
@@ -45,8 +47,26 @@
         <div id="overview-blocks" class="overview-blocks"></div>
         <div id="findings-scale" class="findings-scale"></div>
         <div id="repo-matrix" class="repo-matrix"></div>
+        <div id="overview-claims" class="overview-claims"></div>
         <div id="kind-summary" class="kind-summary"></div>
         <div id="next-steps" class="next-steps"></div>
+      </div>
+    </section>
+
+    <section id="tab-repos" class="tab-panel">
+      <div class="repos-head">
+        <h2>Repositories</h2>
+        <p class="panel-hint">Tier A profiles from local extraction (manifests, README, compose, git). Agent analysis appears only as labeled B/C/D claims.</p>
+      </div>
+      <div class="repos-layout">
+        <div class="repos-main">
+          <div id="repos-cards" class="repos-cards"></div>
+          <div id="relationships-view" class="relationships-view"></div>
+        </div>
+        <aside id="repo-drill" class="repo-drill">
+          <p class="empty-title">Select a repository</p>
+          <p class="empty-hint">Cards show tool-extracted profile; drill-down adds connections, findings, and tier-labeled agent claims.</p>
+        </aside>
       </div>
     </section>
 

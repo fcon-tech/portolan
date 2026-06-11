@@ -22,6 +22,30 @@ fact is present in the graph and how directly it was observed.
 - Derived summaries must preserve the weakest relevant evidence state.
 - Human-readable packets must be generated from the same graph as machine output.
 
+## Claim Tiers (claim-only subtypes, spec 106)
+
+Agent (LLM) analysis enters the bundle only through
+`scripts/import-analysis-claims.sh` as tier-labeled claims. All tiers below are
+`claim-only`; the tier records how the claim was produced and what Portolan
+checked at import time.
+
+| Tier | `claim_tier` | Produced by | Portolan verifies at import |
+| --- | --- | --- | --- |
+| A | — (not a claim) | tools (jscpd, semgrep, syft, ctags, producers) | the fact itself; lives outside `claims.jsonl` |
+| B | `analytical` | agent aggregation over cited evidence | every `cited_refs[]` resolves in the bundle |
+| C | `synthetic` | agent inference on top of cited evidence | refs resolve; the conclusion is not verified |
+| D | `speculative` | agent hypothesis | labeling only; refs optional |
+
+Rules:
+
+- Analytical/synthetic claims with zero or unresolvable refs are rejected with
+  a reason (`claims-import-report.json`); there is no silent downgrade.
+- The importer never raises a tier, and viewers must keep tier badges visible.
+- Claims never mix into ranked findings; sufficiency of B/C/D knowledge is the
+  user's decision.
+- Claims bind to a bundle snapshot; refs that stop resolving after a re-scan
+  invalidate the claim at re-import.
+
 ## Relationship Evidence Taxonomy
 
 Relationship claims have two separate axes: what relationship is being claimed,

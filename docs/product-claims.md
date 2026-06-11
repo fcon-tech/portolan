@@ -67,6 +67,7 @@ record, not the product narrative.
 | Portolan replaces Cursor, coding harnesses, enterprise code intelligence, service catalogs, observability, modernization, or readiness tools. | `rejected` | Say Portolan is a local landscape-navigation harness and evidence-preparation complement for agents. |
 | Portolan can safely support claims about UI Cursor/Composer behavior. | `rejected` | UI Cursor/Composer is outside the current required acceptance scope. Use only Cursor Agent CLI / Composer 2.5 wording until UI-specific evidence exists. |
 | Portolan defines a blind acceptance matrix contract across multiple agent harnesses and target shapes. | `narrowed` | The matrix contract exists, with selected Codex, OpenCode, and Cursor Agent CLI lanes verified on named local targets. Cursor UI/Composer is outside current required acceptance scope. Arbitrary external targets remain unproven. OpenCode default-permission external-output behavior failed. |
+| Portolan accepts LLM-authored analysis as tier-labeled claims (analytical / synthetic / speculative). | `narrowed` | Safe only as described by spec 106: claims enter the bundle through `import-analysis-claims.sh`, stay `claim-only`, carry a mandatory `claim_tier`, and analytical/synthetic claims are rejected unless every cited ref resolves in that bundle. Portolan validates citations and labeling, never the truth of the conclusion. Claims are never mixed into ranked findings or presented as tool evidence. |
 
 ## Limits That Must Stay Visible
 
@@ -98,6 +99,9 @@ record, not the product narrative.
 - Output quality depends on the local evidence supplied to Portolan. Missing,
   stale, or incomplete inputs must stay visible as gaps, not be hidden as
   product success.
+- Imported agent claims (tiers B/C/D) are validated for citation resolution and
+  labeling only. Ref validity is per-bundle: a rescan invalidates prior claims,
+  and Portolan never upgrades a claim tier or verifies the conclusion itself.
 
 ## Evidence
 
