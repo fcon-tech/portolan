@@ -77,6 +77,9 @@ let landscapeCard = null;
 let landscapeReport = null;
 let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
 let searchQuery = '';
+let searchCodeHits = [];
+let searchFetchTimer = null;
+let searchFetchGen = 0;
 let selectedId = null;
 let expandedDirs = new Set();
 /** @type {'overview' | 'findings' | 'gaps'} */
@@ -264,6 +267,86 @@ function filteredHotspots() {
   return allHotspots
     .filter((h) => matchesSearch(h, q) && matchesView(h) && matchesFilters(h))
     .sort((a, b) => a.rank - b.rank);
+}
+
+async function fetchSearchCodeHits(q) {
+  const trimmed = q.trim();
+  const gen = ++searchFetchGen;
+  if (trimmed.length < 2) {
+    searchCodeHits = [];
+    renderSearchCodeResults();
+    return;
+  }
+  try {
+    const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}&limit=12`);
+    if (gen !== searchFetchGen || trimmed !== searchQuery.trim()) return;
+    if (!res.ok) {
+      searchCodeHits = [];
+      renderSearchCodeResults();
+      return;
+    }
+    const body = await res.json();
+    if (gen !== searchFetchGen || trimmed !== searchQuery.trim()) return;
+    searchCodeHits = body.records || [];
+    renderSearchCodeResults();
+  } catch {
+    if (gen !== searchFetchGen) return;
+    searchCodeHits = [];
+    renderSearchCodeResults();
+  }
+}
+
+function scheduleSearchCodeFetch(q) {
+  if (searchFetchTimer) clearTimeout(searchFetchTimer);
+  searchFetchTimer = setTimeout(() => fetchSearchCodeHits(q), 200);
+}
+
+function renderSearchCodeResults() {
+  const el = document.getElementById('search-code-results');
+  if (!el) return;
+  const q = searchQuery.trim();
+  if (!q || q.length < 2 || !searchCodeHits.length) {
+    el.innerHTML = '';
+    el.classList.add('hidden');
+    return;
+  }
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <p class="search-code-label">Code index (${searchCodeHits.length} shown)</p>
+    <ul class="search-code-list">
+      ${searchCodeHits
+        .map(
+          (hit) =>
+            `<li><button type="button" class="search-code-hit" data-path="${escapeAttr(hit.path || '')}" data-line="${safeRank(hit.line)}">
+              <span class="mono">${escapeHtml(shortPath(hit.path || ''))}:${safeRank(hit.line)}</span>
+              <span class="search-code-text">${escapeHtml((hit.summary || '').slice(0, 120))}</span>
+            </button></li>`
+        )
+        .join('')}
+    </ul>`;
+  el.querySelectorAll('.search-code-hit').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const p = btn.dataset.path;
+      const line = btn.dataset.line || '1';
+      if (!p) return;
+      switchTab('findings');
+      loadSourcePreview({ paths: [p], id: null, summary: p }, p, line);
+      el.classList.add('hidden');
+    });
+  });
+}
+
+function applyHashDeepLink() {
+  const hash = window.location.hash.replace(/^#/, '');
+  if (!hash) return;
+  if (hash.startsWith('hotspot=')) {
+    const id = decodeURIComponent(hash.slice('hotspot='.length));
+    const h = allHotspots.find((x) => x.id === id);
+    if (h) {
+      switchTab('findings');
+      selectHotspot(h);
+    }
+  }
 }
 
 function kindCounts(hotspots) {
@@ -695,7 +778,7 @@ function renderTree(hotspots) {
   }
 }
 
-async function loadSourcePreview(h, pathOverride) {
+async function loadSourcePreview(h, pathOverride, lineOverride) {
   const preview = document.getElementById('source-preview');
   const code = document.getElementById('source-code');
   const pathLabel = document.getElementById('source-path');
@@ -704,10 +787,11 @@ async function loadSourcePreview(h, pathOverride) {
     preview.classList.add('hidden');
     return;
   }
+  const line = lineOverride != null && lineOverride !== '' ? String(lineOverride) : '1';
   pathLabel.textContent = shortPath(path);
   pathLabel.title = normalizeDisplayPath(path);
   try {
-    const params = new URLSearchParams({ path, line: '1' });
+    const params = new URLSearchParams({ path, line });
     const res = await fetch(`/source?${params}`);
     if (!res.ok) {
       preview.classList.remove('hidden');
@@ -800,6 +884,9 @@ function renderDetail(h) {
 
 function selectHotspot(h) {
   selectedId = h?.id ?? null;
+  if (h?.id) {
+    window.location.hash = `hotspot=${encodeURIComponent(h.id)}`;
+  }
   renderDetail(h);
   render();
   requestAnimationFrame(() => {
@@ -1106,10 +1193,12 @@ async function main() {
   document.getElementById('load-all-btn').addEventListener('click', () => loadFullHotspots());
   document.getElementById('search-input').addEventListener('input', (e) => {
     searchQuery = e.target.value;
+    scheduleSearchCodeFetch(searchQuery);
     if (activeTab === 'findings') renderFindingsTab();
   });
 
   switchTab('overview');
+  applyHashDeepLink();
 }
 
 main().catch((e) => {

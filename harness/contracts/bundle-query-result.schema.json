@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/bundle-query-result.schema.json",
+  "title": "Portolan Bundle Query Result",
+  "type": "object",
+  "required": ["schema_version", "query", "records", "total_records", "truncated", "truncated_records"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "query": {
+      "type": "object",
+      "required": ["family", "bundle_path"],
+      "properties": {
+        "family": {
+          "type": "string",
+          "enum": ["hotspots", "gaps", "landscape", "search", "symbol", "source", "evidence-index"]
+        },
+        "bundle_path": { "type": "string" },
+        "limit": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "reference", "bundle_path", "artifact", "record_id", "kind", "evidence_state"],
+        "additionalProperties": true
+      }
+    },
+    "total_records": { "type": "integer", "minimum": 0 },
+    "truncated": { "type": "boolean" },
+    "truncated_records": { "type": "integer", "minimum": 0 },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
