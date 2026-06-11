@@ -21,7 +21,7 @@ Evidence: `docs/specs/108-cto-demo-eval/reviews/bigtop10-cto-eval.md`,
 - Implementation: P9 + P9.1 producer hardening on branch
 - Local verification: baseline smokes + strict bigtop acceptance **verified**
 - Review evidence: OpenCode lanes assessed; prior P9 Cursor lanes remain valid
-- PR state: **ready-for-review** (merge still requires explicit approval)
-- GitHub checks: run on push; absent/failed checks = `not_assessed` until green
-- Merge readiness: **not ready-to-merge** (awaiting human/GitHub approval)
-- Stop reason: ready-for-review PR; merge blocked until explicit user approval
+- PR state: **MERGED** (2026-06-11T15:14:03Z, commit `43e0249`)
+- GitHub checks: Baseline pass after `a836bdc` CI fix
+- Merge readiness: **merged** per explicit user authorization
+- Closeout: `merge-closeout-2026-06-11.md`
