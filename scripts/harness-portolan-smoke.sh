@@ -122,5 +122,8 @@ test "$SYMLINK_CODE" = "403"
 
 curl -sf "$BASE/bundle/landscape-card.json" | jq -e '.identity.name' >/dev/null
 curl -sf "$BASE/bundle/landscape-report.json" | jq -e '.sections | length >= 1' >/dev/null
+curl -sf "$BASE/api/hotspots?limit=3" | jq -e '.schema_version and (.records | length) >= 1' >/dev/null
+
+"$ROOT/scripts/harness-bundle-query-smoke.sh"
 
 echo "harness-portolan-smoke: ok"

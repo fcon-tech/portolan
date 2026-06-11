@@ -51,6 +51,15 @@ See [`docs/demo-runbook.md`](docs/demo-runbook.md).
 Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from
 [`harness/recipes/`](harness/recipes/), then `scripts/build-portolan-bundle.sh`.
 
+Query the harness bundle at answer time (agent-first; no pre-built Q&A pack):
+
+```bash
+scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --kind duplication --limit 20
+scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "auth" --limit 30
+```
+
+The local viewer exposes the same contract at `/api/hotspots`, `/api/search`, etc.
+
 See [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md) for
 legacy Go CLI status.
 

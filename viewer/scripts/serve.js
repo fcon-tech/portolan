@@ -3,6 +3,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { URL } = require('url');
+const bundleQuery = require('./bundle-query');
 
 const args = process.argv.slice(2);
 let bundlePath = '';
@@ -29,106 +30,44 @@ const mime = {
   '.jsonl': 'application/json',
 };
 
-let repoRoots = [];
-function loadRepoRoots() {
-  const reposFile = path.join(bundlePath, 'repos.json');
-  if (!fs.existsSync(reposFile)) return [];
-  try {
-    const repos = JSON.parse(fs.readFileSync(reposFile, 'utf8'));
-    return repos.map((r) => path.resolve(r.path));
-  } catch {
-    return [];
-  }
-}
-repoRoots = loadRepoRoots();
+const repoRoots = bundleQuery.loadRepoRoots(bundlePath);
 
-function isPathUnderRoot(filePath, root) {
-  const resolvedRoot = path.resolve(root);
-  const resolved = path.resolve(filePath);
-  return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep);
-}
-
-function isUnderRepoRoot(filePath) {
-  const resolved = path.resolve(filePath);
-  return repoRoots.some((root) => isPathUnderRoot(resolved, root));
-}
-
-function isReadableRepoFile(filePath) {
-  let stats;
-  try {
-    stats = fs.lstatSync(filePath);
-  } catch {
-    return false;
-  }
-  if (stats.isSymbolicLink()) return false;
-  if (!stats.isFile()) return false;
-  let realPath;
-  try {
-    realPath = fs.realpathSync(filePath);
-  } catch {
-    return false;
-  }
-  return isUnderRepoRoot(realPath);
-}
-
-function resolveSourcePath(requestPath) {
-  if (!requestPath || typeof requestPath !== 'string') return null;
-  const raw = requestPath.trim();
-  if (!raw || raw.includes('\0')) return null;
-
-  if (path.isAbsolute(raw)) {
-    const resolved = path.resolve(raw);
-    if (!isUnderRepoRoot(resolved)) return null;
-    return isReadableRepoFile(resolved) ? resolved : null;
-  }
-
-  for (const root of repoRoots) {
-    const candidate = path.resolve(root, raw);
-    if (!isPathUnderRoot(candidate, root)) continue;
-    if (isReadableRepoFile(candidate)) {
-      return candidate;
-    }
-  }
-  return null;
-}
-
-function readSourceSnippet(filePath, lineNum) {
-  const content = fs.readFileSync(filePath, 'utf8');
-  const lines = content.split('\n');
-  const total = lines.length;
-  const center = Math.min(Math.max(parseInt(lineNum, 10) || 1, 1), total || 1);
-  const radius = 20;
-  const start = Math.max(1, center - radius);
-  const end = Math.min(total, center + radius);
-  const snippet = [];
-  for (let i = start; i <= end; i++) {
-    snippet.push({
-      no: i,
-      text: lines[i - 1] ?? '',
-      highlight: i === center,
-    });
-  }
-  return { path: filePath, line: center, startLine: start, endLine: end, totalLines: total, lines: snippet };
+function sendJson(res, status, body) {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(body));
 }
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${port}`);
 
+  if (url.pathname.startsWith('/api/')) {
+    try {
+      const result = bundleQuery.handleHttpPath(url.pathname, url.searchParams, bundlePath);
+      if (!result) {
+        sendJson(res, 404, { error: 'unknown api path' });
+        return;
+      }
+      sendJson(res, 200, result);
+    } catch (err) {
+      sendJson(res, 500, { error: err.message || 'query failed' });
+    }
+    return;
+  }
+
   if (url.pathname === '/source') {
-    const filePath = resolveSourcePath(url.searchParams.get('path') || '');
+    const filePath = bundleQuery.resolveSourcePath(url.searchParams.get('path') || '', repoRoots);
     if (!filePath) {
-      res.writeHead(403, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: 'forbidden or not found' }));
+      sendJson(res, 403, { error: 'forbidden or not found' });
+      return;
     }
     try {
       const line = url.searchParams.get('line') || '1';
-      const body = readSourceSnippet(filePath, line);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify(body));
+      const body = bundleQuery.readSourceSnippet(filePath, line);
+      sendJson(res, 200, body);
     } catch {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: 'read failed' }));
+      sendJson(res, 500, { error: 'read failed' });
     }
+    return;
   }
 
   if (url.pathname === '/bundle/manifest.json') {
@@ -154,6 +93,12 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === '/bundle/landscape-report.json') {
     return sendFile(path.join(bundlePath, 'landscape-report.json'), res);
+  }
+  if (url.pathname === '/bundle/search-index.jsonl') {
+    return sendFile(path.join(bundlePath, 'search-index.jsonl'), res);
+  }
+  if (url.pathname === '/bundle/symbol-index.jsonl') {
+    return sendFile(path.join(bundlePath, 'symbol-index.jsonl'), res);
   }
 
   const distResolved = path.resolve(distDir) + path.sep;

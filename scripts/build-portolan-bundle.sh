@@ -478,4 +478,8 @@ jq -n \
   ' >"$BUNDLE_DIR/landscape-report.json"
 
 rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
+
+"$SCRIPT_DIR/build-symbol-index.sh" "$BUNDLE_DIR" || true
+"$SCRIPT_DIR/build-search-index.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+
 echo "Portolan bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"

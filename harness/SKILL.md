@@ -77,7 +77,28 @@ Read in order:
 
 Cite `hotspot.id` and `producer_ref` for every material claim.
 
-Guardrails: `harness/guardrails/`.
+### Query the bundle (agent Q&A — no pre-built answers)
+
+Portolan does **not** guess user questions. Query at answer time:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --kind duplication --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 30
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE_DIR" --name "Run" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --path sample.go --line 4
+```
+
+Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`, `/api/symbol`, `/api/source`.
+
+Optional map-bridge (after `portolan map`):
+
+```bash
+"$PORTOLAN_PATH/scripts/build-map-bridge.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" evidence-index --bundle "$BUNDLE_DIR" --limit 20
+```
+
+Guardrails: `harness/guardrails/` including `bundle-query.md`.
 
 ## Legacy bridge (optional)
 
