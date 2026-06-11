@@ -226,7 +226,7 @@ ensure_tools() {
       missing=1
     fi
   fi
-  if [[ "$missing" -ne 0 && "$YES" -eq 1 ]]; then
+  if [[ "$missing" -ne 0 && "$YES" -eq 1 && "$SKIP_INSTALL" -eq 0 ]]; then
     log "required producer tool(s) missing after install attempts; aborting (--yes)"
     exit 2
   fi
@@ -553,7 +553,7 @@ elif has_producer ctags; then
   append_gap_record "gap-ctags" "symbols" "cannot_verify" \
     "ctags required but not installed after preflight; see harness/recipes/symbols-ctags.md" \
     "harness/recipes/symbols-ctags.md"
-  if [[ "$YES" -eq 1 ]]; then
+  if [[ "$YES" -eq 1 && "$SKIP_INSTALL" -eq 0 ]]; then
     log "aborting: ctags required (--yes)"
     exit 2
   fi
