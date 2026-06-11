@@ -181,10 +181,10 @@ fixtures are preflight evidence only.
 | P7-091 | `docs/specs/091-landscape-scale/` | Full bigtop scale: bounded jscpd shards, shard gaps, kind-quota budget, hotspots-full.jsonl. | Implemented |
 | P7-092 | `docs/specs/092-orient-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh; gitignore hardening. | Implemented via PR #65 |
 | P7-093 | `docs/specs/093-viewer-landscape-ux/` | Landscape report viewer: `portolan-scan`, landscape-card/report bundle, tabbed Overview/Findings/Gaps (report-first, map.md sections). | Implemented via PR #66 |
-| P7-094 | `docs/specs/094-map-bridge-sidecar/` | Optional `map-bridge/` sidecar from legacy `portolan map` for evidence-index queries. | Implemented |
-| P7-095 | `docs/specs/095-bundle-query-surface/` | Read-only bundle query CLI + viewer `/api/*` for agent-first Q&A at question time. | Implemented |
-| P7-096 | `docs/specs/096-search-symbol-index/` | Build-time search/symbol indexes + viewer unified search. | Implemented |
-| P7-097 | `docs/specs/097-ast-index-import/` | Import-only ast-index JSON into symbol-index. | Implemented |
+| P7-094 | `docs/specs/094-map-bridge-sidecar/` | Optional `map-bridge/` sidecar from legacy `portolan map` for evidence-index queries. | Implemented via PR #67 |
+| P7-095 | `docs/specs/095-bundle-query-surface/` | Read-only bundle query CLI + viewer `/api/*` for agent-first Q&A at question time. | Implemented via PR #67 |
+| P7-096 | `docs/specs/096-search-symbol-index/` | Build-time search/symbol indexes + viewer unified search. | Implemented via PR #67 |
+| P7-097 | `docs/specs/097-ast-index-import/` | Import-only ast-index JSON into symbol-index. | Implemented via PR #67 |
 | P7-086 | `docs/specs/086-evidence-navigation-ux-patterns/` | Local Portolan viewer (UA-inspired) over evidence hotspots. | Demo-ready in `viewer/` (spec 090) |
 | P7-ADR | `docs/adr/001-go-cli-fate.md` | Go CLI maintenance-mode decision after harness smoke. | Provisional ADR recorded |
 
