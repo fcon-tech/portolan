@@ -14,7 +14,9 @@
 | `scripts/harness-portolan-smoke.sh` | verified |
 | `scripts/harness-bundle-query-smoke.sh` | verified |
 | `git diff --check` | verified |
-| GitHub Baseline + CodeQL | not_assessed — pending PR push |
+| GitHub Baseline | verified (PR #67 push) |
+| CodeQL Analyze (go/js/py/actions) | verified |
+| CodeQL aggregate | skipping (repo policy) |
 
 ## Review lanes (iteration 2 — post blocker fixes)
 
