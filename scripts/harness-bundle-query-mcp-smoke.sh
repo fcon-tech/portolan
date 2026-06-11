@@ -14,9 +14,9 @@ cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$FIXTURE_BUNDLE
 node "$ROOT/viewer/scripts/bundle-query-mcp-smoke-client.js" "$FIXTURE_BUNDLE" \
   | grep -q 'bundle-query-mcp-smoke-client: ok'
 
-# --list-tools (spec 098 base families + claims from spec 106)
+# --list-tools (spec 098 base + claims 106 + repos/relationships 107)
 PORTOLAN_BUNDLE_DIR="$FIXTURE_BUNDLE" node "$ROOT/viewer/scripts/bundle-query-mcp.js" --list-tools \
-  | jq -e 'length == 8' >/dev/null
+  | jq -e 'length == 10' >/dev/null
 
 # claims family: missing claims.jsonl must warn, not fail
 node "$ROOT/viewer/scripts/bundle-query-cli.js" claims --bundle "$FIXTURE_BUNDLE" \

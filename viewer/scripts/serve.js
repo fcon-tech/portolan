@@ -103,6 +103,18 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/map-bridge/evidence-index.jsonl') {
     return sendFile(path.join(bundlePath, 'map-bridge', 'evidence-index.jsonl'), res);
   }
+  if (url.pathname === '/bundle/repo-profiles.json') {
+    return sendFile(path.join(bundlePath, 'repo-profiles.json'), res);
+  }
+  if (url.pathname === '/bundle/relationships.jsonl') {
+    return sendFile(path.join(bundlePath, 'relationships.jsonl'), res);
+  }
+  if (url.pathname === '/bundle/claims.jsonl') {
+    return sendFile(path.join(bundlePath, 'claims.jsonl'), res);
+  }
+  if (url.pathname === '/bundle/claims-import-report.json') {
+    return sendFile(path.join(bundlePath, 'claims-import-report.json'), res);
+  }
 
   const distResolved = path.resolve(distDir) + path.sep;
   let filePath = path.resolve(
