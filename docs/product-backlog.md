@@ -203,15 +203,15 @@ fixtures are preflight evidence only.
 | P8-102 | `docs/specs/102-map-bridge-scan-workflow/` | Optional `--with-map-bridge` on portolan-scan for Graph hints tab. | Implemented via PR #70 |
 | P8-103 | `docs/specs/103-viewer-pain-ranking-ux/` | Rank/control explainers and detail CTAs in viewer; self-target demo bar. | Implemented via PR #70 |
 
-## P9: CTO Landscape Understanding (active)
+## P9: CTO Landscape Understanding (merged)
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P9-104 | `docs/specs/104-repo-profiles/` | Per-repo tier-A profiles (purpose surfaces, activity, maturity); slug-safe repo ids. | Implemented on branch; profiles producer + schema + slug ids landed with smokes |
-| P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Implemented on branch; relationships producer + --cross-repo-dup landed with smokes |
-| P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Implemented on branch; claims contract + ref-validating importer + SKILL/guardrail landed with negative-case smokes |
-| P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Implemented on branch; Repos tab + drill-down ladder + relationships view + bundle-query families landed |
-| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Implemented on branch; bigtop-10 run + agent claims pass + eval artifact recorded |
+| P9-104 | `docs/specs/104-repo-profiles/` | Per-repo tier-A profiles (purpose surfaces, activity, maturity); slug-safe repo ids. | Merged via PR #71 |
+| P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Merged via PR #71 |
+| P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Merged via PR #71 |
+| P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Merged via PR #71 |
+| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Merged via PR #71; strict bigtop acceptance in P9.1 |
 
 ## Backlog Rules
 
