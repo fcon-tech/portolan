@@ -60,6 +60,8 @@ scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "auth" --limit
 
 The local viewer exposes the same contract at `/api/hotspots`, `/api/search`, etc.
 
+**MCP (Cursor/Codex):** `PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh` — see [`harness/recipes/bundle-query-mcp.md`](harness/recipes/bundle-query-mcp.md).
+
 See [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md) for
 legacy Go CLI status.
 

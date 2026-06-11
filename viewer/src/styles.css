@@ -798,7 +798,33 @@ main { padding: 1rem 1.5rem 2rem; }
 }
 
 .gaps-panel h2 { margin: 0 0 0.35rem; }
+.graph-hints-panel h2 { margin: 0 0 0.35rem; }
 .panel-hint { color: var(--muted); font-size: 0.88rem; margin: 0 0 1rem; }
+
+.overview-blocks {
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2, rgba(255, 255, 255, 0.04));
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+}
+.overview-blocks:empty { display: none; }
+.overview-block { margin: 0.35rem 0; color: var(--muted); font-size: 0.9rem; }
+
+.graph-hints-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.graph-hints-list li {
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: var(--surface-2, rgba(255, 255, 255, 0.03));
+}
 
 .findings-toolbar {
   display: flex;
