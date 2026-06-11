@@ -976,12 +976,16 @@ function claimsForSubject(subject) {
 }
 
 function repoPurpose(rid) {
-  // Tier B claim wins (with badge); otherwise tier-A manifest description / README title.
+  // Tier B claim wins (with badge); otherwise tier-A manifest description /
+  // manifest name / README title.
   const claim = claimsForSubject(`repo:${rid}`).find((c) => c.claim_tier === 'analytical');
   if (claim) return { text: claim.statement, tier: claim.claim_tier };
   const p = profileById(rid);
-  const desc = (p?.purpose?.manifests || []).map((m) => m.description).find(Boolean);
+  const manifests = p?.purpose?.manifests || [];
+  const desc = manifests.map((m) => m.description).find(Boolean);
   if (desc) return { text: desc, tier: null };
+  const mname = manifests.map((m) => m.name).find(Boolean);
+  if (mname) return { text: mname, tier: null };
   if (p?.purpose?.readme_title) return { text: p.purpose.readme_title, tier: null };
   return { text: '', tier: null };
 }
