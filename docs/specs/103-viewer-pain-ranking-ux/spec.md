@@ -1,6 +1,6 @@
 # Feature Specification: Viewer Pain & Ranking UX (103)
 
-**Status**: Ready for implementation
+**Status**: Implemented via PR #70
 
 **Input**: Clearer rank semantics, control guide, detail CTAs — evidence-backed, no LLM.
 
