@@ -24,8 +24,8 @@
 
 ## PR state
 
-- Draft PR pending push
-- GitHub CI: not_assessed until push
+- PR: https://github.com/fcon-tech/portolan/pull/70 (ready-for-review)
+- GitHub CI: verified green (Baseline, CodeQL, Analyze)
 
 ## Merge
 
