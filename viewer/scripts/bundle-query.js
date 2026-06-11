@@ -571,6 +571,67 @@ function queryEvidenceIndex(bundlePath, opts = {}) {
   );
 }
 
+function queryClaims(bundlePath, opts = {}) {
+  const limit = parseLimit(opts.limit);
+  const tier = (opts.tier || '').trim().toLowerCase();
+  const subject = (opts.subject || '').trim().toLowerCase();
+  const claimsPath = path.join(bundlePath, 'claims.jsonl');
+  const warnings = [];
+
+  if (!fs.existsSync(claimsPath)) {
+    return wrapResult(
+      { family: 'claims', tier: tier || undefined, subject: subject || undefined, limit, bundle_path: path.resolve(bundlePath) },
+      [],
+      0,
+      limit,
+      ['claims.jsonl missing; no agent analysis imported (see scripts/import-analysis-claims.sh and harness/guardrails/analysis-claims.md)']
+    );
+  }
+
+  const rows = readJSONL(claimsPath);
+  const matched = rows.filter((c) => {
+    if (tier && (c.claim_tier || '').toLowerCase() !== tier) return false;
+    if (subject && !(c.subject || '').toLowerCase().includes(subject)) return false;
+    return true;
+  });
+
+  const records = matched.map((c) => ({
+    id: c.id,
+    reference: makeRef(bundlePath, 'claims.jsonl', c.id),
+    bundle_path: path.resolve(bundlePath),
+    artifact: 'claims.jsonl',
+    record_id: c.id,
+    kind: 'analysis-claim',
+    claim_tier: c.claim_tier || 'speculative',
+    evidence_state: 'claim-only',
+    status: 'imported',
+    summary: c.statement || '',
+    statement: c.statement || '',
+    subject: c.subject || '',
+    cited_refs: c.cited_refs || [],
+    agent: c.agent || '',
+    imported_at: c.imported_at || '',
+    resolution_limit:
+      'LLM-authored analysis (tier ' +
+      (c.claim_tier === 'analytical' ? 'B' : c.claim_tier === 'synthetic' ? 'C' : 'D') +
+      '); refs resolved at import time, conclusion not tool-verified',
+  }));
+
+  return wrapResult(
+    {
+      family: 'claims',
+      tier: tier || undefined,
+      subject: subject || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+    },
+    records,
+    matched.length,
+    limit,
+    warnings
+  );
+}
+
 function dispatch(bundlePath, family, opts) {
   const resolved = path.resolve(bundlePath);
   if (!fs.existsSync(resolved)) {
@@ -591,6 +652,8 @@ function dispatch(bundlePath, family, opts) {
       return querySource(resolved, opts);
     case 'evidence-index':
       return queryEvidenceIndex(resolved, opts);
+    case 'claims':
+      return queryClaims(resolved, opts);
     default:
       throw new Error(`unknown query family ${family}`);
   }
@@ -645,6 +708,13 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
       limit: searchParams.get('limit'),
     });
   }
+  if (p === '/api/claims') {
+    return dispatch(bundlePath, 'claims', {
+      tier: searchParams.get('tier'),
+      subject: searchParams.get('subject'),
+      limit: searchParams.get('limit'),
+    });
+  }
   return null;
 }
 
@@ -664,4 +734,5 @@ module.exports = {
   querySymbol,
   querySource,
   queryEvidenceIndex,
+  queryClaims,
 };
