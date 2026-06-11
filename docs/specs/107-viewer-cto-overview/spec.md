@@ -1,6 +1,6 @@
 # Feature Specification: Viewer CTO Overview & Repo Drill-Down (107)
 
-**Status**: Ready for implementation
+**Status**: Implemented (branch codex/104-108-p9-cto-landscape, pending PR review)
 
 **Input**: CTO answers «что за репо, как связаны, какого tier'а знание» inside the viewer, без внешних docs.
 

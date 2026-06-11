@@ -207,11 +207,11 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P9-104 | `docs/specs/104-repo-profiles/` | Per-repo tier-A profiles (purpose surfaces, activity, maturity); slug-safe repo ids. | Ready for implementation |
-| P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Ready for implementation |
-| P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Ready for implementation |
-| P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Ready for implementation |
-| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Ready for implementation |
+| P9-104 | `docs/specs/104-repo-profiles/` | Per-repo tier-A profiles (purpose surfaces, activity, maturity); slug-safe repo ids. | Implemented on branch; profiles producer + schema + slug ids landed with smokes |
+| P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Implemented on branch; relationships producer + --cross-repo-dup landed with smokes |
+| P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Implemented on branch; claims contract + ref-validating importer + SKILL/guardrail landed with negative-case smokes |
+| P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Implemented on branch; Repos tab + drill-down ladder + relationships view + bundle-query families landed |
+| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Implemented on branch; bigtop-10 run + agent claims pass + eval artifact recorded |
 
 ## Backlog Rules
 

@@ -1,6 +1,6 @@
 # Feature Specification: Agent Analysis Claims Layer (106)
 
-**Status**: Ready for implementation
+**Status**: Implemented (branch codex/104-108-p9-cto-landscape, pending PR review)
 
 **Input**: Legal path for LLM analysis into the bundle as tier-labeled claims. Direct tool evidence stays tier A; LLM output enters only as B/C/D.
 

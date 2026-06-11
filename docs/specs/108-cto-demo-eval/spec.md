@@ -1,6 +1,6 @@
 # Feature Specification: CTO Demo Bar & Eval on bigtop-10 (108)
 
-**Status**: Ready for implementation
+**Status**: Implemented (branch codex/104-108-p9-cto-landscape, pending PR review)
 
 **Input**: Product proof of the CTO scenario on a real 10-repo landscape.
 
