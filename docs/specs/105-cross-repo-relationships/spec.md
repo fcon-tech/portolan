@@ -1,6 +1,6 @@
 # Feature Specification: Cross-Repo Relationships Producer (105)
 
-**Status**: Ready for implementation
+**Status**: Implemented (branch codex/104-108-p9-cto-landscape, pending PR review)
 
 **Input**: Tier-A answer to «как связаны репозитории»: internal deps, shared external deps, cross-repo duplication.
 

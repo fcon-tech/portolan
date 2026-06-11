@@ -1,6 +1,6 @@
 # Feature Specification: Repo Profiles Producer (104)
 
-**Status**: Ready for implementation
+**Status**: Implemented (branch codex/104-108-p9-cto-landscape, pending PR review)
 
 **Input**: Per-repo tier-A profile so an operator/agent can answer «что это за репо» without external docs.
 
