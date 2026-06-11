@@ -109,6 +109,17 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
+function escapeAttr(s) {
+  return escapeHtml(s)
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeRank(rank) {
+  const n = Number(rank);
+  return Number.isFinite(n) ? String(n) : '?';
+}
+
 function sevRank(s) {
   return SEV_RANK[s] ?? 5;
 }
@@ -118,11 +129,46 @@ function maxSeverity(sevs) {
 }
 
 function sevClass(s) {
-  return `sev-${s || 'info'}`;
+  if (s && Object.prototype.hasOwnProperty.call(SEV_RANK, s)) return `sev-${s}`;
+  return 'sev-info';
+}
+
+function safeKindClass(kind) {
+  if (kind && Object.prototype.hasOwnProperty.call(KIND_LABELS, kind)) return kind;
+  return 'unknown-kind';
 }
 
 function kindLabel(kind) {
   return KIND_LABELS[kind] || kind;
+}
+
+const KIND_SECTION_ORDER = [
+  'duplication',
+  'static-finding',
+  'config',
+  'debt-candidate',
+  'dep-hub',
+];
+
+function findingsShownCount() {
+  if (usingFullHotspots) return allHotspots.length;
+  return manifest?.hotspot_count ?? allHotspots.length;
+}
+
+function findingsTotalCount() {
+  if (usingFullHotspots) return allHotspots.length;
+  return manifest?.hotspots_total ?? allHotspots.length;
+}
+
+function updateManifestFooter() {
+  const el = document.getElementById('manifest-info');
+  if (!manifest) {
+    el.textContent = 'no manifest';
+    return;
+  }
+  const targetShort = shortPath(manifest.target_root) || manifest.target_root;
+  el.textContent =
+    `${targetShort} · ${findingsShownCount()}/${findingsTotalCount()} findings · ${manifest.gap_count} gaps`;
 }
 
 function normalizeDisplayPath(p) {
@@ -320,7 +366,7 @@ function renderKindGuide() {
     .map((k) => {
       const h = KIND_HELP[k];
       return `<div class="guide-item">
-        <h4><span class="kind-pill ${k}">${escapeHtml(kindLabel(k))}</span></h4>
+        <h4><span class="kind-pill ${safeKindClass(k)}">${escapeHtml(kindLabel(k))}</span></h4>
         <p>${escapeHtml(h.why)}</p>
         <p class="guide-meta">Tool: <code>${escapeHtml(h.tool)}</code> · ${escapeHtml(h.limit)}</p>
       </div>`;
@@ -473,7 +519,7 @@ function makeChipGroup(label, values, activeSet, onChange, labelFn = (v) => v, c
 function renderBanner() {
   const el = document.getElementById('status-banner');
   const parts = [];
-  if (manifest?.hotspots_truncated) {
+  if (manifest?.hotspots_truncated && !usingFullHotspots) {
     parts.push(
       `<span class="status-banner truncation">Bundle truncated: <strong>${manifest.hotspot_count}</strong> of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget}). Full list: <code>hotspots-full.jsonl</code>.</span>`
     );
@@ -526,13 +572,13 @@ function renderTour(hotspots) {
     btn.className = 'hotspot-card' + (h.id === selectedId ? ' active' : '');
     const path = primaryPath(h);
     const pathHtml = path
-      ? `<div class="card-path" title="${escapeHtml(normalizeDisplayPath(path))}">${escapeHtml(shortPath(path))}</div>`
+      ? `<div class="card-path" title="${escapeAttr(normalizeDisplayPath(path))}">${escapeHtml(shortPath(path))}</div>`
       : '';
     btn.innerHTML = `
       <div class="card-top">
-        <span class="card-rank" title="Bundle sort position">#${h.rank}</span>
-        <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
-        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
+        <span class="card-rank" title="Bundle sort position">#${safeRank(h.rank)}</span>
+        <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
+        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity in SEV_RANK ? h.severity : 'info')}</span>
       </div>
       <p class="card-summary">${escapeHtml(h.summary)}</p>
       <p class="card-why">${escapeHtml(kindWhyLine(h.kind))}</p>
@@ -708,7 +754,7 @@ function renderDetail(h) {
     ? paths
         .map(
           (p, i) =>
-            `<button type="button" class="path-chip${i === 0 ? ' primary' : ''}" data-path="${escapeHtml(normalizeDisplayPath(p))}" title="${escapeHtml(normalizeDisplayPath(p))}">${escapeHtml(shortPath(p))}</button>`
+            `<button type="button" class="path-chip${i === 0 ? ' primary' : ''}" data-path="${escapeAttr(normalizeDisplayPath(p))}" title="${escapeAttr(normalizeDisplayPath(p))}">${escapeHtml(shortPath(p))}</button>`
         )
         .join('')
     : '<p class="path">No file paths (landscape-level hotspot).</p>';
@@ -716,10 +762,10 @@ function renderDetail(h) {
   el.innerHTML = `
     <div class="detail-header">
       <div class="detail-meta">
-        <span class="kind-pill ${escapeHtml(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
-        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity)}</span>
+        <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
+        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity in SEV_RANK ? h.severity : 'info')}</span>
         ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
-        <span class="badge" title="Bundle sort position">rank #${h.rank}</span>
+        <span class="badge" title="Bundle sort position">rank #${safeRank(h.rank)}</span>
       </div>
       <h2 class="detail-title">${escapeHtml(h.summary)}</h2>
     </div>
@@ -816,7 +862,14 @@ function findingsGroupsFromHotspots(hotspots) {
     byKind.get(h.kind).push(h);
   }
   return [...byKind.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
+    .sort((a, b) => {
+      const ia = KIND_SECTION_ORDER.indexOf(a[0]);
+      const ib = KIND_SECTION_ORDER.indexOf(b[0]);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a[0].localeCompare(b[0]);
+    })
     .map(([kind, items]) => ({
       kind,
       count: items.length,
@@ -867,30 +920,41 @@ function renderOverview() {
     ${health.staleness || health.test_coverage_hint ? `<p class="health-hint">Staleness: ${escapeHtml(health.staleness || 'unknown')} · Test hint: ${escapeHtml(health.test_coverage_hint || 'unknown')}</p>` : ''}
   `;
 
-  const shown = manifest?.hotspot_count ?? allHotspots.length;
-  const total = manifest?.hotspots_total ?? shown;
+  const shown = findingsShownCount();
+  const total = findingsTotalCount();
+  const truncated = manifest?.hotspots_truncated && !usingFullHotspots;
   scaleEl.innerHTML = `
-    <p class="scale-line">Scan found <strong>${total}</strong> findings; this bundle shows <strong>${shown}</strong>${manifest?.hotspots_truncated ? ' (budget truncated)' : ''}.</p>
-    ${manifest?.hotspots_truncated ? '<p class="scale-hint">Open the <strong>Findings</strong> tab and use <em>Show all findings from scan</em> to load the full list.</p>' : ''}
+    <p class="scale-line">Scan found <strong>${total}</strong> findings; this bundle shows <strong>${shown}</strong>${truncated ? ' (budget truncated)' : ''}.</p>
+    ${truncated ? '<p class="scale-hint">Open the <strong>Findings</strong> tab and use <em>Show all findings from scan</em> to load the full list.</p>' : ''}
+    ${usingFullHotspots && shown === total ? '<p class="scale-hint">Showing all findings from scan.</p>' : ''}
   `;
 
   if (repos.length) {
     repoEl.innerHTML = `
       <h3>Repositories</h3>
       <table class="repo-table"><thead><tr><th>Name</th><th>Path</th></tr></thead>
-      <tbody>${repos.map((r) => `<tr><td>${escapeHtml(r.name || r.id)}</td><td class="mono" title="${escapeHtml(r.path)}">${escapeHtml(shortPath(r.path))}</td></tr>`).join('')}</tbody></table>
+      <tbody>${repos.map((r) => `<tr><td>${escapeHtml(r.name || r.id)}</td><td class="mono" title="${escapeAttr(r.path)}">${escapeHtml(shortPath(r.path))}</td></tr>`).join('')}</tbody></table>
     `;
   } else {
     repoEl.innerHTML = '';
   }
 
-  const kc = manifest?.kind_counts || kindCounts(allHotspots);
-  const kcTotal = manifest?.kind_counts_total || kc;
+  const kc = usingFullHotspots ? kindCounts(allHotspots) : manifest?.kind_counts || kindCounts(allHotspots);
+  const kcTotal = usingFullHotspots
+    ? kindCounts(allHotspots)
+    : manifest?.kind_counts_total || kindCounts(allHotspots);
   kindEl.innerHTML = `
     <h3>Findings by kind (shown / scan total)</h3>
     <ul class="kind-list">${Object.keys({ ...kcTotal, ...kc })
-      .sort()
-      .map((k) => `<li><span class="kind-pill ${escapeHtml(k)}">${escapeHtml(kindLabel(k))}</span> ${kc[k] ?? 0} / ${kcTotal[k] ?? kc[k] ?? 0}</li>`)
+      .sort((a, b) => {
+        const ia = KIND_SECTION_ORDER.indexOf(a);
+        const ib = KIND_SECTION_ORDER.indexOf(b);
+        if (ia !== -1 && ib !== -1) return ia - ib;
+        if (ia !== -1) return -1;
+        if (ib !== -1) return 1;
+        return a.localeCompare(b);
+      })
+      .map((k) => `<li><span class="kind-pill ${safeKindClass(k)}">${escapeHtml(kindLabel(k))}</span> ${kc[k] ?? 0} / ${kcTotal[k] ?? kc[k] ?? 0}</li>`)
       .join('')}</ul>
   `;
 
@@ -906,7 +970,7 @@ function renderOverview() {
     <ol class="next-list">${items
       .map(
         (it) =>
-          `<li><button type="button" class="next-link" data-ref="${escapeHtml(it.evidence_ref || '')}"><span class="card-rank">#${it.rank ?? '?'}</span> <span class="kind-pill ${escapeHtml(it.kind || '')}">${escapeHtml(kindLabel(it.kind || ''))}</span> ${escapeHtml(it.summary || '')}</button></li>`
+          `<li><button type="button" class="next-link" data-ref="${escapeAttr(it.evidence_ref || '')}"><span class="card-rank">#${safeRank(it.rank)}</span> <span class="kind-pill ${safeKindClass(it.kind || '')}">${escapeHtml(kindLabel(it.kind || ''))}</span> ${escapeHtml(it.summary || '')}</button></li>`
       )
       .join('')}</ol>
   `;
@@ -942,7 +1006,7 @@ function renderGapsTab() {
 
 function renderFindingsSections() {
   const el = document.getElementById('findings-sections');
-  const groups = findingsGroupsFromHotspots(allHotspots);
+  const groups = findingsGroupsFromHotspots(filteredHotspots());
   if (!groups.length) {
     el.innerHTML = '';
     return;
@@ -953,14 +1017,14 @@ function renderFindingsSections() {
       .map(
         (g) => `
       <details class="section-block" open>
-        <summary><span class="kind-pill ${escapeHtml(g.kind)}">${escapeHtml(kindLabel(g.kind))}</span> ${g.count ?? (g.items?.length ?? 0)}</summary>
+        <summary><span class="kind-pill ${safeKindClass(g.kind)}">${escapeHtml(kindLabel(g.kind))}</span> ${g.count ?? (g.items?.length ?? 0)}</summary>
         <ul>${(g.items || [])
           .slice(0, 8)
           .map(
             (it) =>
-              `<li><button type="button" class="section-link" data-id="${escapeHtml(it.id)}">#${it.rank ?? '?'} ${escapeHtml(it.summary || '')}</button></li>`
+              `<li><button type="button" class="section-link" data-id="${escapeAttr(it.id)}">#${safeRank(it.rank)} ${escapeHtml(it.summary || '')}</button></li>`
           )
-          .join('')}${(g.items?.length ?? 0) > 8 ? `<li class="more">+${g.items.length - 8} more in list above</li>` : ''}</ul>
+          .join('')}${(g.items?.length ?? 0) > 8 ? `<li class="more">+${g.items.length - 8} more in ranked list</li>` : ''}</ul>
       </details>`
       )
       .join('')}</div>
@@ -993,7 +1057,10 @@ async function loadFullHotspots() {
   if (!full.length) return;
   allHotspots = full;
   usingFullHotspots = true;
+  updateManifestFooter();
+  renderFilters();
   updateLoadAllButton();
+  if (activeTab === 'overview') renderOverview();
   renderFindingsTab();
 }
 
@@ -1026,12 +1093,7 @@ async function main() {
   landscapeCard = await loadJSON('/bundle/landscape-card.json');
   landscapeReport = await loadJSON('/bundle/landscape-report.json');
 
-  const targetShort = manifest?.target_root
-    ? shortPath(manifest.target_root) || manifest.target_root
-    : '';
-  document.getElementById('manifest-info').textContent = manifest
-    ? `${targetShort} · ${manifest.hotspot_count}/${manifest.hotspots_total ?? manifest.hotspot_count} findings · ${manifest.gap_count} gaps`
-    : 'no manifest';
+  updateManifestFooter();
 
   renderKindGuide();
   renderViewBar();

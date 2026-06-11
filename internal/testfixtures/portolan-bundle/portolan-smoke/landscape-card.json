@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "scanned_at": "2026-06-11T05:46:32Z",
+  "scanned_at": "2026-06-11T06:31:47Z",
   "identity": {
     "name": "target",
     "primary_language": "go",
@@ -16,7 +16,7 @@
     },
     "monorepo": false,
     "build_system": null,
-    "repo_count": 0
+    "repo_count": 1
   },
   "scale": {
     "total_files": 3,
