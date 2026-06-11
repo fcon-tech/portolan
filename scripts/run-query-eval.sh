@@ -1,14 +1,41 @@
 #!/usr/bin/env bash
-# Scaffold for query eval rubric (spec 100): prints Lane B query commands per question.
+# Scaffold for query eval rubric (spec 100/101): prints Lane B query commands per question.
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-  echo "usage: $0 <bundle-dir>" >&2
+SELF=0
+RUN=0
+POSITIONAL=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --self) SELF=1; shift ;;
+    --run) RUN=1; shift ;;
+    -h|--help)
+      cat <<'EOF'
+usage: run-query-eval.sh [--self] [--run] <bundle-dir>
+
+  --self   Use /tmp/portolan-self (real-target eval preset, spec 101)
+  --run    Execute Lane B commands and print JSON summaries (for eval artifact)
+EOF
+      exit 0
+      ;;
+    --) shift; POSITIONAL+=("$@"); break ;;
+    -*) echo "unknown option: $1" >&2; exit 2 ;;
+    *) POSITIONAL+=("$1"); shift ;;
+  esac
+done
+
+if [[ $SELF -eq 1 ]]; then
+  POSITIONAL=("/tmp/portolan-self")
+fi
+
+if [[ ${#POSITIONAL[@]} -lt 1 ]]; then
+  echo "usage: $0 [--self] [--run] <bundle-dir>" >&2
   echo "See docs/specs/095-bundle-query-surface/reviews/query-eval-rubric.md" >&2
   exit 2
 fi
 
-BUNDLE=$(cd "$1" && pwd)
+BUNDLE=$(cd "${POSITIONAL[0]}" && pwd)
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 Q="$ROOT/scripts/portolan-bundle-query.sh"
 
@@ -49,3 +76,27 @@ Q10 reduce unknowns:
   $Q landscape --bundle "$BUNDLE" --section next_steps
 
 EOF
+
+if [[ "$RUN" -eq 0 ]]; then
+  exit 0
+fi
+
+run_q() {
+  local label=$1
+  shift
+  echo "--- $label ---"
+  "$@" 2>/dev/null | head -c 8000
+  echo
+}
+
+run_q "Q1 duplication" "$Q" hotspots --bundle "$BUNDLE" --kind duplication --limit 5
+run_q "Q2 config" "$Q" hotspots --bundle "$BUNDLE" --kind config --limit 20
+run_q "Q3 gaps" "$Q" gaps --bundle "$BUNDLE" --limit 30
+run_q "Q4 debt-candidate" "$Q" hotspots --bundle "$BUNDLE" --kind debt-candidate --limit 5
+run_q "Q5 search package" "$Q" search --bundle "$BUNDLE" --q package --limit 10
+run_q "Q6 symbol Run" "$Q" symbol --bundle "$BUNDLE" --name Run --limit 5
+run_q "Q7 top hotspot" "$Q" hotspots --bundle "$BUNDLE" --limit 1
+run_q "Q8 dep-hub" "$Q" hotspots --bundle "$BUNDLE" --kind dep-hub --limit 10
+run_q "Q9 static-finding" "$Q" hotspots --bundle "$BUNDLE" --kind static-finding --limit 10
+run_q "Q10 gaps+next_steps" "$Q" gaps --bundle "$BUNDLE" --limit 20
+run_q "Q10 landscape" "$Q" landscape --bundle "$BUNDLE" --section next_steps

@@ -4,10 +4,19 @@ Live demo for a newcomer: **landscape report in 10 seconds** → **findings by s
 
 ## Setup
 
-**Single repo (portolan):**
+**Single repo (portolan) — recommended for demo bar / query eval:**
 
 ```bash
-scripts/portolan-scan.sh . /tmp/portolan-portolan --yes
+scripts/portolan-scan.sh . /tmp/portolan-self --no-viewer --yes
+# optional Graph hints tab:
+scripts/portolan-scan.sh . /tmp/portolan-self --yes --with-map-bridge
+```
+
+Viewer on self bundle:
+
+```bash
+cd viewer && node scripts/build-static.js
+node scripts/serve.js --bundle /tmp/portolan-self --port 4173
 ```
 
 **Bounded multi-repo (bigtop quick sample):**
@@ -58,14 +67,20 @@ If bundle is truncated, use **Show all findings from scan** on the Findings tab.
 
 ## Demo bar (acceptance)
 
-Operator answers without external docs:
+Use **`/tmp/portolan-self`** (real self-target scan). Operator answers without external docs:
 
 | Question | Where in viewer |
 | --- | --- |
 | What is this target? | Overview → landscape card |
+| How is rank computed? | Overview → rank explainer; Findings → Tour view |
+| How do I navigate? | Overview → «How to use this report» |
 | How many repos? | Overview → repo table |
 | Top problems? | Overview → next steps; Findings → sections |
+| Why is this finding pain? | Findings → click row → «Why is this here?» + severity |
 | What was not checked? | Gaps tab |
+| Optional relationships? | Graph hints tab (only with `--with-map-bridge`) |
+
+**Agent query eval (Lane B):** `scripts/run-query-eval.sh --self --run` after self-scan.
 
 Compare with `docs/test-corpora/apache-bigtop/examples/map-excerpt.md` for section parity.
 

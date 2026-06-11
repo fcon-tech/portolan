@@ -32,6 +32,7 @@ Useful flags:
 | `--shard-timeout SEC` | Per-repo producer timeout (default 600) |
 | `--jscpd-memory-mb N` | Node heap cap per jscpd shard (default 2048) |
 | `--hotspot-budget N` | Max hotspots in bundle; kind quotas apply when truncated |
+| `--with-map-bridge` | After bundle build, run `portolan map` + `build-map-bridge.sh` (Graph hints tab; failures → gap, scan still succeeds) |
 
 Shard failures are recorded in `producers/_gaps.jsonl` and merged into `gaps.jsonl`.
 Full hotspot list (pre-budget) is written to `hotspots-full.jsonl` for agents.
@@ -91,9 +92,16 @@ Portolan does **not** guess user questions. Query at answer time:
 
 Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`, `/api/symbol`, `/api/source`.
 
-Optional map-bridge (after `portolan map`):
+Optional map-bridge (Graph hints tab — opt-in on scan):
 
 ```bash
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_PATH" "$BUNDLE_DIR" --yes --with-map-bridge
+```
+
+Or manually after `portolan map`:
+
+```bash
+go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_PATH" --out "$BUNDLE_DIR/map" --force
 "$PORTOLAN_PATH/scripts/build-map-bridge.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
 "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" evidence-index --bundle "$BUNDLE_DIR" --limit 20
 ```
