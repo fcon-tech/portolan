@@ -46,11 +46,14 @@ first_readme() {
 }
 
 readme_title() {
+  # First markdown heading; fallback to first prose line. Badge images,
+  # raw HTML, and comment lines are noise, not a title.
   local file=$1
   local t
-  t=$(grep -m1 -E '^# ' "$file" 2>/dev/null | sed 's/^# *//' || true)
+  t=$(grep -m1 -E '^#{1,2} ' "$file" 2>/dev/null | sed 's/^#\{1,2\} *//' || true)
   if [[ -z "$t" ]]; then
-    t=$(grep -m1 -E '\S' "$file" 2>/dev/null | sed 's/^[#= ]*//' || true)
+    t=$(grep -m1 -E '\S' <(grep -ivE '(^\s*(\[!\[|!\[|<|=|-|\*|\||:::|\{%)|licen[sc]e|copyright|this work for additional|to you under|apache\.org/licenses|unless required by|applicable law|express or implied|warranties or conditions|specific language governing|limitations under)' "$file" 2>/dev/null || true) 2>/dev/null |
+      sed 's/^[#= ]*//' || true)
   fi
   printf '%s' "$t"
 }
@@ -155,7 +158,10 @@ while IFS=$'\t' read -r rid rpath rname; do
   declared_deps='[]'
 
   add_manifest() { manifests=$(jq -c --argjson m "$1" '. + [$m]' <<<"$manifests"); }
-  add_module_id() { [[ -n "$1" ]] && module_ids=$(jq -c --arg v "$1" '. + [$v] | unique' <<<"$module_ids"); }
+  add_module_id() {
+    [[ -z "${1:-}" ]] && return 0
+    module_ids=$(jq -c --arg v "$1" '. + [$v] | unique' <<<"$module_ids")
+  }
   add_deps_json() { declared_deps=$(jq -c --argjson d "$1" '. + $d | unique' <<<"$declared_deps"); }
 
   if [[ -f "$rpath/package.json" ]] && jq -e . "$rpath/package.json" >/dev/null 2>&1; then

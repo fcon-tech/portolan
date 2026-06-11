@@ -41,15 +41,23 @@ producer_repo_slug() {
 }
 
 # --- repos.json (slug ids: basename + path hash, collision-safe; spec 104) ---
+# PORTOLAN_LIMIT_REPOS keeps the bundle repo set consistent with the
+# --limit-repos cap applied to sharded producers in portolan-scan.sh.
+LIMIT_REPOS="${PORTOLAN_LIMIT_REPOS:-0}"
 if [[ -d "$TARGET_ROOT/.git" ]]; then
   jq -n --arg id "$(producer_repo_slug "$TARGET_ROOT")" \
     --arg path "$TARGET_ROOT" --arg name "$(basename "$TARGET_ROOT")" \
     '[{id: $id, path: $path, name: $name}]' >"$BUNDLE_DIR/repos.json"
 else
   repos='[]'
+  repo_seen=0
   while IFS= read -r gitdir; do
     repo=$(dirname "$gitdir")
     name=$(basename "$repo")
+    if [[ "$LIMIT_REPOS" -gt 0 && "$repo_seen" -ge "$LIMIT_REPOS" ]]; then
+      break
+    fi
+    repo_seen=$((repo_seen + 1))
     repos=$(echo "$repos" | jq --arg id "$(producer_repo_slug "$repo")" --arg path "$repo" --arg name "$name" \
       '. + [{id: $id, path: $path, name: $name}]')
   done < <(find "$TARGET_ROOT" -name .git -type d 2>/dev/null | sort || true)

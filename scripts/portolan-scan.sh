@@ -128,8 +128,9 @@ run_shard() {
   shift 2
   local slug
   slug=$(repo_slug "$repo")
-  if ! timeout "$SHARD_TIMEOUT" "$@"; then
-    local code=$?
+  local code=0
+  timeout "$SHARD_TIMEOUT" "$@" || code=$?
+  if [[ $code -ne 0 ]]; then
     if [[ $code -eq 124 ]]; then
       append_shard_gap "shard-${producer}-${slug}" "$producer" "cannot_verify" \
         "${producer} timed out after ${SHARD_TIMEOUT}s on ${slug}" "$repo"
@@ -426,6 +427,7 @@ if [[ "$CROSS_REPO_DUP" -eq 1 ]]; then
 fi
 
 export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
+export PORTOLAN_LIMIT_REPOS="$LIMIT_REPOS"
 "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
 
 append_bundle_gap() {
