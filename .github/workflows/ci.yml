@@ -30,6 +30,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: viewer/package-lock.json
+
+      - name: Install viewer deps (MCP)
+        run: npm ci --prefix viewer
 
       - name: Go vet
         run: go vet ./...

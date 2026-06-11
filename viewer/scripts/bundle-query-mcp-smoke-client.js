@@ -9,6 +9,10 @@ function rpc(id, method, params) {
   return JSON.stringify({ jsonrpc: '2.0', id, method, params });
 }
 
+function notification(method, params) {
+  return JSON.stringify({ jsonrpc: '2.0', method, params });
+}
+
 function runSmoke(bundleDir) {
   return new Promise((resolve, reject) => {
     const serverPath = path.join(__dirname, 'bundle-query-mcp.js');
@@ -29,7 +33,14 @@ function runSmoke(bundleDir) {
       child.stdin.write(`${line}\n`);
     };
 
-    send(rpc(1, 'initialize', { protocolVersion: '2024-11-05', capabilities: {} }));
+    send(
+      rpc(1, 'initialize', {
+        protocolVersion: '2024-11-05',
+        capabilities: {},
+        clientInfo: { name: 'portolan-mcp-smoke', version: '0.1.0' },
+      })
+    );
+    send(notification('notifications/initialized', {}));
     send(rpc(2, 'tools/list', {}));
     send(
       rpc(3, 'tools/call', {

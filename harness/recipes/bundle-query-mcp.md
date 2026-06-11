@@ -5,7 +5,7 @@ Read-only MCP tools over an existing Portolan scan bundle. No LLM, no network.
 ## Prerequisites
 
 - Bundle from `scripts/portolan-scan.sh` or `build-portolan-bundle.sh`
-- Node.js on PATH
+- Node.js on PATH; viewer deps: `scripts/npm-wsl.sh ci --prefix viewer` (see `viewer/README.md` for WSL PATH)
 
 ## Cursor (`mcp.json`)
 

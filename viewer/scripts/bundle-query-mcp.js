@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 /**
  * stdio MCP server for Portolan bundle queries (spec 098).
- * Zero runtime deps: JSON-RPC over stdin/stdout. Delegates to bundle-query.js.
+ * Uses @modelcontextprotocol/sdk; delegates queries to bundle-query.js.
  */
-const readline = require('readline');
+const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
+const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
+const {
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+} = require('@modelcontextprotocol/sdk/types.js');
 const bundleQuery = require('./bundle-query');
 
 const SERVER_NAME = 'portolan-bundle-query';
 const SERVER_VERSION = '0.1.0';
-const PROTOCOL_VERSION = '2024-11-05';
 
 function resolveBundlePath(argv) {
   const env = process.env.PORTOLAN_BUNDLE_DIR || process.env.PORTOLAN_BUNDLE;
@@ -169,65 +173,33 @@ function runTool(name, args) {
   return bundleQuery.dispatch(BUNDLE_PATH, def.family, familyOpts(def.family, args || {}));
 }
 
-function send(msg) {
-  process.stdout.write(`${JSON.stringify(msg)}\n`);
-}
+async function startMcpServer() {
+  const server = new Server(
+    { name: SERVER_NAME, version: SERVER_VERSION },
+    { capabilities: { tools: {} } }
+  );
 
-function handleRequest(req) {
-  const { id, method, params } = req;
-  try {
-    if (method === 'initialize') {
-      send({
-        jsonrpc: '2.0',
-        id,
-        result: {
-          protocolVersion: PROTOCOL_VERSION,
-          capabilities: { tools: {} },
-          serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
-        },
-      });
-      return;
-    }
-    if (method === 'notifications/initialized' || method === 'initialized') {
-      return;
-    }
-    if (method === 'ping') {
-      send({ jsonrpc: '2.0', id, result: {} });
-      return;
-    }
-    if (method === 'tools/list') {
-      send({ jsonrpc: '2.0', id, result: { tools: mcpToolsList() } });
-      return;
-    }
-    if (method === 'tools/call') {
-      const toolName = params?.name;
-      const toolArgs = params?.arguments || {};
-      const result = runTool(toolName, toolArgs);
-      send({
-        jsonrpc: '2.0',
-        id,
-        result: {
-          content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-          isError: false,
-        },
-      });
-      return;
-    }
-    send({
-      jsonrpc: '2.0',
-      id,
-      error: { code: -32601, message: `Method not found: ${method}` },
-    });
-  } catch (err) {
-    send({
-      jsonrpc: '2.0',
-      id,
-      result: {
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: mcpToolsList(),
+  }));
+
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    try {
+      const result = runTool(request.params.name, request.params.arguments || {});
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+        isError: false,
+      };
+    } catch (err) {
+      return {
         content: [{ type: 'text', text: err.message || String(err) }],
         isError: true,
-      },
-    });
-  }
+      };
+    }
+  });
+
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }
 
 function main() {
@@ -242,21 +214,9 @@ function main() {
     process.exit(0);
   }
 
-  const rl = readline.createInterface({ input: process.stdin, terminal: false });
-  rl.on('line', (line) => {
-    const trimmed = line.trim();
-    if (!trimmed) return;
-    let req;
-    try {
-      req = JSON.parse(trimmed);
-    } catch {
-      return;
-    }
-    if (Array.isArray(req)) {
-      req.forEach(handleRequest);
-    } else {
-      handleRequest(req);
-    }
+  startMcpServer().catch((err) => {
+    process.stderr.write(`${err.message || err}\n`);
+    process.exit(1);
   });
 }
 

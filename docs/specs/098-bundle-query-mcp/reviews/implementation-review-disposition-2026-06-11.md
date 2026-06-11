@@ -15,7 +15,7 @@
 
 | Lane | Verdict |
 | --- | --- |
-| Local implementation review | LGTM (zero-dep MCP JSON-RPC; viewer graph hints; eval PASS) |
+| Local implementation review | LGTM (MCP via @modelcontextprotocol/sdk; viewer graph hints; eval PASS) |
 
 ## Scope delivered
 
@@ -25,5 +25,5 @@
 
 ## Residuals
 
-- MCP uses zero-dep JSON-RPC (not `@modelcontextprotocol/sdk`) — npm unavailable in dev env; protocol-compatible
+- WSL dev shells may resolve `npm` to Windows `Program Files` shim; use `scripts/npm-wsl.sh` or `viewer/README.md`
 - Eval on fixture target, not full self-scan of portolan repo (time); reproducible via scaffold
