@@ -69,12 +69,23 @@ const KIND_HELP = {
   },
 };
 
+/** Tier ladder labels for agent analysis claims (spec 106/107). */
+const TIER_META = {
+  analytical: { letter: 'B', label: 'Analytical', hint: 'agent aggregated from cited evidence; refs resolved at import' },
+  synthetic: { letter: 'C', label: 'Synthetic', hint: 'agent inference over cited evidence; conclusion not tool-verified' },
+  speculative: { letter: 'D', label: 'Speculative', hint: 'agent hypothesis; labeling only' },
+};
+
 let allHotspots = [];
 let repos = [];
 let manifest = null;
 let gaps = [];
 let landscapeCard = null;
 let landscapeReport = null;
+let repoProfiles = [];
+let relationships = [];
+let claims = [];
+let selectedRepoId = null;
 let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
 let searchQuery = '';
 let searchCodeHits = [];
@@ -82,7 +93,7 @@ let searchFetchTimer = null;
 let searchFetchGen = 0;
 let selectedId = null;
 let expandedDirs = new Set();
-/** @type {'overview' | 'findings' | 'gaps'} */
+/** @type {'overview' | 'repos' | 'findings' | 'gaps'} */
 let activeTab = 'overview';
 let usingFullHotspots = false;
 /** @type {keyof VIEWS | 'custom'} */
@@ -944,9 +955,333 @@ function switchTab(tab) {
     panel.classList.toggle('active', panel.id === `tab-${tab}`);
   });
   if (tab === 'overview') renderOverview();
+  else if (tab === 'repos') renderReposTab();
   else if (tab === 'gaps') renderGapsTab();
   else if (tab === 'graph-hints') renderGraphHintsTab();
   else renderFindingsTab();
+}
+
+function tierBadge(tier) {
+  const meta = TIER_META[tier];
+  if (!meta) return `<span class="tier-badge tier-d" title="agent claim">?</span>`;
+  return `<span class="tier-badge tier-${meta.letter.toLowerCase()}" title="${escapeAttr(meta.hint)}">${meta.letter} · ${escapeHtml(meta.label)}</span>`;
+}
+
+function profileById(rid) {
+  return repoProfiles.find((p) => p.id === rid) || null;
+}
+
+function claimsForSubject(subject) {
+  return claims.filter((c) => (c.subject || '') === subject);
+}
+
+function repoPurpose(rid) {
+  // Tier B claim wins (with badge); otherwise tier-A manifest description / README title.
+  const claim = claimsForSubject(`repo:${rid}`).find((c) => c.claim_tier === 'analytical');
+  if (claim) return { text: claim.statement, tier: claim.claim_tier };
+  const p = profileById(rid);
+  const desc = (p?.purpose?.manifests || []).map((m) => m.description).find(Boolean);
+  if (desc) return { text: desc, tier: null };
+  if (p?.purpose?.readme_title) return { text: p.purpose.readme_title, tier: null };
+  return { text: '', tier: null };
+}
+
+function repoSeverityCounts(rid) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+  for (const h of allHotspots) {
+    if (hotspotRepo(h) !== rid) continue;
+    if (counts[h.severity] != null) counts[h.severity] += 1;
+  }
+  return counts;
+}
+
+function relationshipsForRepo(rid) {
+  return relationships.filter(
+    (r) => r.from_repo === rid || r.to_repo === rid || (r.repos || []).includes(rid)
+  );
+}
+
+function repoLabelById(rid) {
+  return repos.find((r) => r.id === rid)?.name || rid;
+}
+
+function relEndpointsHtml(r) {
+  if (r.from_repo && r.to_repo) {
+    return `<button type="button" class="repo-link" data-repo="${escapeAttr(r.from_repo)}">${escapeHtml(repoLabelById(r.from_repo))}</button> → <button type="button" class="repo-link" data-repo="${escapeAttr(r.to_repo)}">${escapeHtml(repoLabelById(r.to_repo))}</button>`;
+  }
+  return (r.repos || [])
+    .map((id) => `<button type="button" class="repo-link" data-repo="${escapeAttr(id)}">${escapeHtml(repoLabelById(id))}</button>`)
+    .join(', ');
+}
+
+function wireRepoLinks(rootEl) {
+  rootEl.querySelectorAll('.repo-link').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      selectedRepoId = btn.dataset.repo;
+      if (activeTab !== 'repos') switchTab('repos');
+      else renderReposTab();
+    });
+  });
+}
+
+function renderReposTab() {
+  const cardsEl = document.getElementById('repos-cards');
+  if (!cardsEl) return;
+
+  if (!repos.length) {
+    cardsEl.innerHTML = '<p class="empty-hint">repos.json missing or empty in this bundle.</p>';
+    return;
+  }
+
+  cardsEl.innerHTML = repos
+    .map((r) => {
+      const p = profileById(r.id);
+      const purpose = repoPurpose(r.id);
+      const sev = repoSeverityCounts(r.id);
+      const langs = (p?.languages || [])
+        .slice(0, 3)
+        .map((l) => `${l.ext} ${l.files}`)
+        .join(' · ');
+      const activity = p?.activity || {};
+      const maturity = p?.maturity || {};
+      const relCount = relationshipsForRepo(r.id).length;
+      const sevBits = ['critical', 'high', 'medium']
+        .filter((s) => sev[s] > 0)
+        .map((s) => `<span class="sev-pill sev-${s}">${sev[s]} ${s}</span>`)
+        .join(' ');
+      return `
+        <button type="button" class="repo-card ${selectedRepoId === r.id ? 'selected' : ''}" data-repo="${escapeAttr(r.id)}">
+          <span class="repo-card-name">${escapeHtml(r.name || r.id)}</span>
+          ${purpose.text ? `<span class="repo-card-purpose">${purpose.tier ? tierBadge(purpose.tier) : ''} ${escapeHtml(purpose.text)}</span>` : '<span class="repo-card-purpose dim">no manifest description / README title found</span>'}
+          <span class="repo-card-meta">
+            ${langs ? `<span>${escapeHtml(langs)}</span>` : ''}
+            ${activity.commits_30d != null ? `<span>${escapeHtml(String(activity.commits_30d))} commits/30d</span>` : ''}
+            ${relCount ? `<span>${relCount} connection${relCount === 1 ? '' : 's'}</span>` : ''}
+          </span>
+          <span class="repo-card-badges">
+            ${boolBadge(maturity.has_readme, 'README', 'no README')}
+            ${boolBadge(maturity.has_ci, 'CI', 'no CI')}
+            ${boolBadge(maturity.has_tests, 'tests', 'no tests')}
+            ${sevBits}
+          </span>
+        </button>`;
+    })
+    .join('');
+
+  cardsEl.querySelectorAll('.repo-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      selectedRepoId = card.dataset.repo;
+      renderReposTab();
+    });
+  });
+
+  renderRelationshipsView();
+  renderRepoDrill();
+}
+
+function renderRelationshipsView() {
+  const el = document.getElementById('relationships-view');
+  if (!el) return;
+  if (!relationships.length) {
+    el.innerHTML = `
+      <h3>Connections between repos</h3>
+      <p class="empty-hint">No relationship edges in this bundle. Single-repo landscape, bundle built before spec 105, or detectors found nothing — check the Gaps tab before assuming isolation.</p>
+    `;
+    return;
+  }
+  el.innerHTML = `
+    <h3>Connections between repos</h3>
+    <p class="panel-hint">Tool-derived edges (tier A, metadata-visible): manifests, SBOM intersection, opt-in cross-repo duplication. Not runtime topology.</p>
+    <table class="rel-table">
+      <thead><tr><th>Type</th><th>Repos</th><th>Evidence</th><th>Detail</th></tr></thead>
+      <tbody>
+        ${relationships
+          .map(
+            (r) => `
+          <tr id="rel-${escapeAttr(r.id)}">
+            <td><span class="rel-type rel-${escapeAttr((r.type || '').replace(/[^a-z-]/g, ''))}">${escapeHtml(r.type || '')}</span></td>
+            <td>${relEndpointsHtml(r)}</td>
+            <td><span class="badge">${escapeHtml(r.evidence_state || '')}</span> <span class="mono dim">${escapeHtml(r.producer || '')}</span></td>
+            <td class="rel-summary">${escapeHtml(r.summary || '')}</td>
+          </tr>`
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `;
+  wireRepoLinks(el);
+}
+
+async function loadReadmeInto(el, repoPath, readmePath) {
+  el.innerHTML = '<p class="empty-hint">Loading README…</p>';
+  try {
+    const abs = `${repoPath.replace(/\/$/, '')}/${readmePath}`;
+    const res = await fetch(`/api/source?path=${encodeURIComponent(abs)}&full=1`);
+    if (res.ok) {
+      const data = await res.json();
+      const payload = data.records?.[0]?.payload;
+      if (payload?.lines?.length) {
+        const text = payload.lines.map((l) => l.text).join('\n');
+        el.innerHTML = `
+          <pre class="readme-text">${escapeHtml(text)}</pre>
+          ${payload.truncated ? `<p class="guide-meta">Truncated at line ${payload.endLine} of ${payload.totalLines}.</p>` : ''}
+        `;
+        return;
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+  el.innerHTML = '<p class="empty-hint">README could not be read via the source API (static bundle mode?). Open it in your editor instead.</p>';
+}
+
+function renderRepoDrill() {
+  const el = document.getElementById('repo-drill');
+  if (!el) return;
+  if (!selectedRepoId) {
+    el.innerHTML = `
+      <p class="empty-title">Select a repository</p>
+      <p class="empty-hint">Cards show tool-extracted profile; drill-down adds connections, findings, and tier-labeled agent claims.</p>
+    `;
+    return;
+  }
+  const rid = selectedRepoId;
+  const repo = repos.find((r) => r.id === rid);
+  const p = profileById(rid);
+  const purpose = p?.purpose || {};
+  const sev = repoSeverityCounts(rid);
+  const repoRels = relationshipsForRepo(rid);
+  const repoClaims = claimsForSubject(`repo:${rid}`);
+  const topFindings = allHotspots.filter((h) => hotspotRepo(h) === rid).slice(0, 5);
+
+  const manifestRows = (purpose.manifests || [])
+    .map(
+      (m) => `<tr><td class="mono">${escapeHtml(m.path || m.type || '')}</td><td>${escapeHtml(m.description || m.module || m.name || '—')}</td></tr>`
+    )
+    .join('');
+  const composeRows = (purpose.compose || [])
+    .flatMap((cf) =>
+      (cf.services || []).map(
+        (s) =>
+          `<li><span class="mono">${escapeHtml(s.name)}</span>${s.image ? ` · image <span class="mono">${escapeHtml(s.image)}</span>` : ' · local build'}${(s.depends_on || []).length ? ` · depends on ${escapeHtml(s.depends_on.join(', '))}` : ''}</li>`
+      )
+    )
+    .join('');
+  const entryItems = (purpose.entrypoints || []).map((e) => `<li class="mono">${escapeHtml(e)}</li>`).join('');
+  const tierGroups = ['analytical', 'synthetic', 'speculative']
+    .map((tier) => ({ tier, items: repoClaims.filter((c) => c.claim_tier === tier) }))
+    .filter((g) => g.items.length);
+
+  el.innerHTML = `
+    <div class="drill-head">
+      <h3>${escapeHtml(repo?.name || rid)}</h3>
+      <span class="mono dim" title="${escapeAttr(repo?.path || '')}">${escapeHtml(shortPath(repo?.path || ''))}</span>
+    </div>
+
+    <div class="drill-section">
+      <h4>Tier A — tool-extracted profile <span class="badge ok">direct evidence</span></h4>
+      ${p ? `
+        <p class="drill-facts">
+          ${p.scale?.file_count != null ? `${p.scale.file_count} files (${escapeHtml(p.scale.evidence_state || '')})` : ''}
+          ${(p.languages || []).length ? ` · ${p.languages.slice(0, 4).map((l) => `${escapeHtml(l.ext)} ${l.files}`).join(' · ')}` : ''}
+        </p>
+        <p class="drill-facts">
+          ${p.activity?.last_commit ? `Last commit ${escapeHtml(p.activity.last_commit)}` : 'Activity unknown'}
+          ${p.activity?.commits_30d != null ? ` · ${p.activity.commits_30d} commits/30d` : ''}
+          ${p.activity?.contributors != null ? ` · ${p.activity.contributors} contributor(s)` : ''}
+        </p>
+        <div class="maturity-row">
+          ${boolBadge(p.maturity?.has_readme, 'README', 'no README')}
+          ${boolBadge(p.maturity?.has_ci, 'CI', 'no CI')}
+          ${boolBadge(p.maturity?.has_tests, 'tests', 'no tests')}
+          ${boolBadge(p.maturity?.has_docker, 'Docker', 'no Docker')}
+        </div>
+        ${manifestRows ? `<table class="drill-table"><thead><tr><th>Manifest</th><th>Describes</th></tr></thead><tbody>${manifestRows}</tbody></table>` : '<p class="empty-hint">No root manifests found.</p>'}
+        ${entryItems ? `<p class="drill-label">Entrypoints</p><ul class="drill-list">${entryItems}</ul>` : ''}
+        ${composeRows ? `<p class="drill-label">Compose services</p><ul class="drill-list">${composeRows}</ul>` : ''}
+        ${(purpose.api_specs || []).length ? `<p class="drill-label">API specs</p><ul class="drill-list">${purpose.api_specs.map((a) => `<li class="mono">${escapeHtml(a)}</li>`).join('')}</ul>` : ''}
+        ${purpose.readme_path ? `<button type="button" class="detail-cta" id="drill-readme-btn">Read full README (${escapeHtml(purpose.readme_path)})</button><div id="drill-readme"></div>` : ''}
+      ` : '<p class="empty-hint">No profile for this repo — bundle built before spec 104 or scan-repo-profiles failed (see Gaps).</p>'}
+    </div>
+
+    <div class="drill-section">
+      <h4>Connections (tier A)</h4>
+      ${repoRels.length ? `<ul class="drill-list">${repoRels
+        .map((r) => `<li><span class="rel-type">${escapeHtml(r.type)}</span> ${relEndpointsHtml(r)} <span class="dim">— ${escapeHtml(r.summary || '')}</span></li>`)
+        .join('')}</ul>` : '<p class="empty-hint">No detected edges for this repo.</p>'}
+    </div>
+
+    <div class="drill-section">
+      <h4>Top findings in this repo (tier A)</h4>
+      ${topFindings.length ? `<ul class="drill-list">${topFindings
+        .map(
+          (h) => `<li><button type="button" class="drill-finding" data-id="${escapeAttr(h.id)}">#${safeRank(h.rank)} <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span> ${escapeHtml(h.summary)}</button></li>`
+        )
+        .join('')}</ul>
+        <button type="button" class="inline-link" id="drill-all-findings">All findings of this repo →</button>` : `<p class="empty-hint">No findings attributed to this repo in the shown bundle (severity counts: ${sev.critical} critical / ${sev.high} high / ${sev.medium} medium).</p>`}
+    </div>
+
+    <div class="drill-section claims-section">
+      <h4>Agent analysis — labeled claims (B/C/D)</h4>
+      ${tierGroups.length ? tierGroups
+        .map(
+          (g) => `
+          <div class="claims-group">
+            ${g.items
+              .map(
+                (c) => `
+              <div class="claim-item">
+                ${tierBadge(c.claim_tier)}
+                <p class="claim-statement">${escapeHtml(c.statement || '')}</p>
+                ${(c.cited_refs || []).length ? `<details class="claim-refs"><summary>${c.cited_refs.length} cited ref(s)</summary><ul>${c.cited_refs
+                  .map((ref) => {
+                    if (ref.startsWith('hotspot:')) {
+                      return `<li><button type="button" class="ref-chip" data-ref="${escapeAttr(ref)}">${escapeHtml(ref)}</button></li>`;
+                    }
+                    return `<li><span class="mono">${escapeHtml(ref)}</span></li>`;
+                  })
+                  .join('')}</ul></details>` : '<p class="guide-meta">No refs (speculative).</p>'}
+                <p class="guide-meta">claim-only · agent: <span class="mono">${escapeHtml(c.agent || 'unknown')}</span></p>
+              </div>`
+              )
+              .join('')}
+          </div>`
+        )
+        .join('') : '<p class="empty-hint">No agent analysis imported for this repo. Tiers B/C/D are empty — run an agent per <span class="mono">harness/SKILL.md</span> and import via <span class="mono">import-analysis-claims.sh</span>.</p>'}
+    </div>
+  `;
+
+  wireRepoLinks(el);
+  const readmeBtn = el.querySelector('#drill-readme-btn');
+  if (readmeBtn && repo && p?.purpose?.readme_path) {
+    readmeBtn.addEventListener('click', () => {
+      loadReadmeInto(el.querySelector('#drill-readme'), repo.path, p.purpose.readme_path);
+      readmeBtn.disabled = true;
+    });
+  }
+  el.querySelectorAll('.drill-finding').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const h = allHotspots.find((x) => x.id === btn.dataset.id);
+      if (h) {
+        switchTab('findings');
+        selectHotspot(h);
+      }
+    });
+  });
+  el.querySelector('#drill-all-findings')?.addEventListener('click', () => {
+    filters.repoIds = new Set([rid]);
+    switchTab('findings');
+  });
+  el.querySelectorAll('.ref-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const hid = (btn.dataset.ref || '').replace(/^hotspot:/, '');
+      const h = allHotspots.find((x) => x.id === hid);
+      if (h) {
+        switchTab('findings');
+        selectHotspot(h);
+      }
+    });
+  });
 }
 
 function boolBadge(val, yes, no) {
@@ -1080,12 +1415,45 @@ function renderOverview() {
 
   if (repos.length) {
     repoEl.innerHTML = `
-      <h3>Repositories</h3>
-      <table class="repo-table"><thead><tr><th>Name</th><th>Path</th></tr></thead>
-      <tbody>${repos.map((r) => `<tr><td>${escapeHtml(r.name || r.id)}</td><td class="mono" title="${escapeAttr(r.path)}">${escapeHtml(shortPath(r.path))}</td></tr>`).join('')}</tbody></table>
+      <h3>Findings by repository</h3>
+      <p class="panel-hint">Click a repo for profile, connections, and tier-labeled agent analysis.</p>
+      <table class="repo-table">
+        <thead><tr><th>Name</th><th>Path</th><th>crit</th><th>high</th><th>med</th><th>low+info</th></tr></thead>
+        <tbody>${repos
+          .map((r) => {
+            const sev = repoSeverityCounts(r.id);
+            return `<tr class="repo-row" data-repo="${escapeAttr(r.id)}">
+              <td><button type="button" class="repo-link" data-repo="${escapeAttr(r.id)}">${escapeHtml(r.name || r.id)}</button></td>
+              <td class="mono" title="${escapeAttr(r.path)}">${escapeHtml(shortPath(r.path))}</td>
+              <td class="${sev.critical ? 'sev-num sev-critical' : 'dim'}">${sev.critical}</td>
+              <td class="${sev.high ? 'sev-num sev-high' : 'dim'}">${sev.high}</td>
+              <td class="${sev.medium ? 'sev-num sev-medium' : 'dim'}">${sev.medium}</td>
+              <td class="dim">${sev.low + sev.info}</td>
+            </tr>`;
+          })
+          .join('')}</tbody></table>
     `;
+    wireRepoLinks(repoEl);
   } else {
     repoEl.innerHTML = '';
+  }
+
+  const landscapeClaims = claimsForSubject('landscape');
+  const claimsBlockEl = document.getElementById('overview-claims');
+  if (claimsBlockEl) {
+    claimsBlockEl.innerHTML = landscapeClaims.length
+      ? `
+      <h3>Agent analysis of the landscape (labeled claims)</h3>
+      <p class="panel-hint">Imported via <span class="mono">import-analysis-claims.sh</span>; never mixed into ranked findings.</p>
+      ${landscapeClaims
+        .slice(0, 5)
+        .map(
+          (c) => `<div class="claim-item">${tierBadge(c.claim_tier)}<p class="claim-statement">${escapeHtml(c.statement || '')}</p><p class="guide-meta">claim-only · ${(c.cited_refs || []).length} ref(s) · agent: <span class="mono">${escapeHtml(c.agent || 'unknown')}</span></p></div>`
+        )
+        .join('')}
+      ${landscapeClaims.length > 5 ? `<p class="guide-meta">${landscapeClaims.length - 5} more in repo drill-downs and bundle-query claims.</p>` : ''}
+    `
+      : '';
   }
 
   const kc = usingFullHotspots ? kindCounts(allHotspots) : manifest?.kind_counts || kindCounts(allHotspots);
@@ -1274,6 +1642,7 @@ function renderFindingsTab() {
 
 function render() {
   if (activeTab === 'overview') renderOverview();
+  else if (activeTab === 'repos') renderReposTab();
   else if (activeTab === 'gaps') renderGapsTab();
   else if (activeTab === 'graph-hints') renderGraphHintsTab();
   else renderFindingsTab();
@@ -1286,6 +1655,9 @@ async function main() {
   repos = (await loadJSON('/bundle/repos.json')) || [];
   landscapeCard = await loadJSON('/bundle/landscape-card.json');
   landscapeReport = await loadJSON('/bundle/landscape-report.json');
+  repoProfiles = (await loadJSON('/bundle/repo-profiles.json'))?.repos || [];
+  relationships = await loadJSONL('/bundle/relationships.jsonl');
+  claims = await loadJSONL('/bundle/claims.jsonl');
 
   updateManifestFooter();
 

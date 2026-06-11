@@ -288,6 +288,7 @@ run_jscpd() {
       run_shard jscpd "$repo" \
       jscpd "$repo" \
         --reporters json \
+        --absolute \
         --output "$out" \
         --min-lines 5 \
         --min-tokens 50 \
@@ -358,6 +359,7 @@ run_jscpd_cross() {
     run_shard jscpd-cross "$TARGET_ROOT" \
     jscpd "${repos[@]}" \
       --reporters json \
+      --absolute \
       --output "$out" \
       --min-lines 5 \
       --min-tokens 50 \

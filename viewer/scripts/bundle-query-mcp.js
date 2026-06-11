@@ -38,6 +38,7 @@ const TOOL_DEFS = [
         severity: { type: 'string' },
         path: { type: 'string', description: 'Path prefix filter' },
         text: { type: 'string', description: 'Substring in summary' },
+        repo: { type: 'string', description: 'Repo id from repos family' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
         full: { type: 'boolean', description: 'Use hotspots-full.jsonl when truncated' },
       },
@@ -138,6 +139,34 @@ const TOOL_DEFS = [
       },
     },
   },
+  {
+    name: 'portolan_query_repos',
+    description:
+      'Per-repo tier-A profiles: identity, language mix, purpose surfaces (manifests, README title, compose, entrypoints), module ids, declared deps, activity, maturity.',
+    family: 'repos',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        repo: { type: 'string', description: 'Exact repo id' },
+        text: { type: 'string', description: 'Substring in name/title/manifest descriptions' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
+    name: 'portolan_query_relationships',
+    description:
+      'Cross-repo relationship edges: depends-on, uses-image, shared-dependency, cross-repo-duplication. Metadata-visible tool evidence, not runtime topology.',
+    family: 'relationships',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Edge type filter' },
+        repo: { type: 'string', description: 'Repo id participating in the edge' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
 ];
 
 const TOOL_BY_NAME = Object.fromEntries(TOOL_DEFS.map((t) => [t.name, t]));
@@ -158,6 +187,7 @@ function familyOpts(family, args) {
         severity: args.severity,
         path: args.path,
         text: args.text,
+        repo: args.repo,
         limit: args.limit,
         full: args.full,
       };
@@ -175,6 +205,10 @@ function familyOpts(family, args) {
       return { family: args.family, limit: args.limit };
     case 'claims':
       return { tier: args.tier, subject: args.subject, limit: args.limit };
+    case 'repos':
+      return { repo: args.repo, text: args.text, limit: args.limit };
+    case 'relationships':
+      return { type: args.type, repo: args.repo, limit: args.limit };
     default:
       throw new Error(`unknown family ${family}`);
   }

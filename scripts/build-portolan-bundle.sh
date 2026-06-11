@@ -191,7 +191,7 @@ while IFS= read -r jfile; do
   jq -e '.duplicates' "$jfile" >/dev/null 2>&1 || continue
   jscpd_found=1
   process_jscpd_file "$jfile"
-done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$PRODUCERS_DIR" -maxdepth 2 -name 'jscpd-report.json' 2>/dev/null)
+done < <(find "$PRODUCERS_DIR/jscpd" -type f -name '*.json' 2>/dev/null; find "$PRODUCERS_DIR" -maxdepth 2 -name 'jscpd-report.json' -not -path '*/jscpd-cross/*' 2>/dev/null)
 
 [[ "$jscpd_found" -eq 1 ]] || append_gap "gap-duplication" "duplication" "not_assessed" \
   "No jscpd producer output found." "harness/recipes/duplication-jscpd.md"
