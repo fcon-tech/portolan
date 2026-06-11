@@ -197,6 +197,7 @@ jq empty harness/contracts/portolan-bundle.schema.json
 jq empty harness/contracts/bundle-query-result.schema.json
 scripts/harness-portolan-smoke.sh
 scripts/harness-bundle-query-smoke.sh
+scripts/harness-bundle-query-mcp-smoke.sh
 scripts/portolan-scan.sh --help
 jq empty harness/contracts/landscape-card.schema.json
 jq empty harness/contracts/landscape-report.schema.json

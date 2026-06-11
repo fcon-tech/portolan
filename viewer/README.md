@@ -1,26 +1,28 @@
-# Portolan Viewer
+# Portolan viewer
 
-Local UI for ranked scanner hotspots and a folder tree. Loads a Portolan bundle
-(`manifest.json`, `hotspots.jsonl`, …) only — no LLM-generated graphs.
+Local static UI + `serve.js` for Portolan scan bundles.
 
-## Build and serve
+## Dependencies (MCP server only)
+
+```bash
+# From repo root — use nvm node npm, not Windows npm on WSL PATH:
+scripts/npm-wsl.sh install --prefix viewer
+# Or: cd viewer && ../scripts/npm-wsl.sh install
+```
+
+`@modelcontextprotocol/sdk` is required for `scripts/portolan-bundle-query-mcp.sh`.
+
+## WSL PATH note
+
+If `npm` fails with `Could not determine Node.js install directory`, your shell
+likely resolves `npm` to `/mnt/c/Program Files/nodejs/npm`. Prefer:
+
+- `scripts/npm-wsl.sh` (uses npm next to `node` on PATH), or
+- `node "$(dirname "$(dirname "$(command -v node)")")/lib/node_modules/npm/bin/npm-cli.js" …`
+
+## Commands
 
 ```bash
 node scripts/build-static.js
-node scripts/serve.js --bundle /path/to/bundle
+node scripts/serve.js --bundle /path/to/bundle --port 4173
 ```
-
-Or with npm when available: `npm run build && npm run serve -- --bundle /path/to/bundle`
-
-Open http://127.0.0.1:4173/
-
-## Fixture smoke
-
-```bash
-npm run build
-npm run serve -- --bundle ../internal/testfixtures/portolan-bundle/portolan-smoke
-```
-
-Bundle from `build-portolan-bundle.sh` also includes `landscape-card.json` and `landscape-report.json` for the Overview tab.
-
-Read-only, local-only, stops when the server process exits.

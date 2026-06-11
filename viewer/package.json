@@ -7,5 +7,8 @@
     "build": "node scripts/build-static.js",
     "serve": "node scripts/serve.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  }
 }

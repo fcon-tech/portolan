@@ -100,6 +100,9 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/symbol-index.jsonl') {
     return sendFile(path.join(bundlePath, 'symbol-index.jsonl'), res);
   }
+  if (url.pathname === '/bundle/map-bridge/evidence-index.jsonl') {
+    return sendFile(path.join(bundlePath, 'map-bridge', 'evidence-index.jsonl'), res);
+  }
 
   const distResolved = path.resolve(distDir) + path.sep;
   let filePath = path.resolve(

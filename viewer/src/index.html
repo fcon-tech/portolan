@@ -23,6 +23,7 @@
       <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
       <button type="button" class="tab-btn" data-tab="findings">Findings</button>
       <button type="button" class="tab-btn" data-tab="gaps">Gaps</button>
+      <button type="button" class="tab-btn" data-tab="graph-hints">Graph hints</button>
     </nav>
     <div id="status-banner" class="status-banner hidden" role="status"></div>
   </header>
@@ -31,6 +32,7 @@
     <section id="tab-overview" class="tab-panel active">
       <div id="report-overview" class="report-overview">
         <div id="landscape-card" class="landscape-card"></div>
+        <div id="overview-blocks" class="overview-blocks"></div>
         <div id="findings-scale" class="findings-scale"></div>
         <div id="repo-matrix" class="repo-matrix"></div>
         <div id="kind-summary" class="kind-summary"></div>
@@ -87,6 +89,16 @@
         <h2>Not assessed in this scan</h2>
         <p class="panel-hint">These layers were not run, failed, or returned empty — they are not hidden findings.</p>
         <div id="gaps-table"></div>
+      </div>
+    </section>
+
+    <section id="tab-graph-hints" class="tab-panel">
+      <div id="graph-hints-panel" class="graph-hints-panel">
+        <h2>Graph hints</h2>
+        <p class="panel-hint">Relationship hints from optional <code>portolan map</code> sidecar — not a call graph or LLM architecture diagram.</p>
+        <div id="graph-hints-body" class="graph-hints-body">
+          <p class="empty-hint">Loading…</p>
+        </div>
       </div>
     </section>
   </main>
