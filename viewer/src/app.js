@@ -626,6 +626,31 @@ function renderBanner() {
   }
 }
 
+const SEV_MATTERS = {
+  critical: 'Highest priority in the ranked list — address before lower severities.',
+  high: 'High priority — likely user-visible pain or strong tool signal.',
+  medium: 'Worth a look when higher-severity items are understood.',
+  low: 'Informational or weaker signal; still evidence-backed.',
+  info: 'Inventory or context — not a severity claim by itself.',
+};
+
+function severityMatters(sev) {
+  return SEV_MATTERS[sev] || 'Ranked using bundle severity ordering.';
+}
+
+function gapRecipeForProducer(producer) {
+  if (!producer || !gaps.length) return null;
+  const p = String(producer).toLowerCase();
+  const match = gaps.find(
+    (g) =>
+      (g.recipe || g.recipe_ref) &&
+      (String(g.surface || '').toLowerCase().includes(p) ||
+        String(g.summary || '').toLowerCase().includes(p) ||
+        String(g.producer_ref || '').toLowerCase().includes(p))
+  );
+  return match?.recipe || match?.recipe_ref || null;
+}
+
 function kindWhyLine(kind) {
   const h = KIND_HELP[kind];
   return h ? h.why : 'Flagged by a local scanner in this Portolan bundle.';
@@ -833,6 +858,8 @@ function renderDetail(h) {
   const rid = hotspotRepo(h);
   const repoLabel = rid ? repos.find((r) => r.id === rid)?.name || rid : '';
   const symCount = h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
+  const recipeRef = gapRecipeForProducer(h.producer);
+  const primaryPath = (h.paths || []).find((p) => p && p !== '(dependency-hub)');
   const paths = (h.paths || []).filter((p) => p && p !== '(dependency-hub)');
   const pathHtml = paths.length
     ? paths
@@ -856,9 +883,15 @@ function renderDetail(h) {
     <div class="detail-section why-section">
       <h3>Why is this here?</h3>
       <p>${escapeHtml(help.why || kindWhyLine(h.kind))}</p>
+      <p class="why-matters"><strong>Why it matters:</strong> ${escapeHtml(severityMatters(h.severity))}</p>
       ${help.limit ? `<p class="guide-meta">${escapeHtml(help.limit)}</p>` : ''}
       ${symCount ? `<p>Symbol count in file: <strong>${escapeHtml(symCount)}</strong> (ctags).</p>` : ''}
       <p class="guide-meta">Tool: <code>${escapeHtml(h.producer)}</code> · Evidence: ${escapeHtml(h.evidence_state)}</p>
+      ${h.producer_ref ? `<p class="guide-meta">Producer ref: <code>${escapeHtml(h.producer_ref)}</code></p>` : ''}
+    </div>
+    <div class="detail-actions">
+      ${primaryPath ? `<button type="button" class="detail-cta" id="detail-open-source">Open source preview</button>` : ''}
+      ${recipeRef ? `<button type="button" class="detail-cta secondary" id="detail-gap-recipe">See gap recipe</button>` : ''}
     </div>
     <div class="detail-section">
       <h3>Paths</h3>
@@ -877,6 +910,13 @@ function renderDetail(h) {
     chip.addEventListener('click', () => {
       loadSourcePreview(h, chip.dataset.path);
     });
+  });
+
+  el.querySelector('#detail-open-source')?.addEventListener('click', () => {
+    if (primaryPath) loadSourcePreview(h, primaryPath);
+  });
+  el.querySelector('#detail-gap-recipe')?.addEventListener('click', () => {
+    switchTab('gaps');
   });
 
   loadSourcePreview(h);
@@ -974,6 +1014,19 @@ function findingsGroupsFromHotspots(hotspots) {
 }
 
 function renderOverview() {
+  const rankEl = document.getElementById('rank-explainer');
+  if (rankEl) {
+    rankEl.innerHTML = `
+      <p><strong>Rank</strong> = severity first, then kind quotas when the bundle is truncated.
+        Open <button type="button" class="inline-link" id="goto-tour-view">Findings → Tour view</button> for the full ranked list.</p>
+    `;
+    rankEl.querySelector('#goto-tour-view')?.addEventListener('click', () => {
+      switchTab('findings');
+      const tourBtn = document.querySelector('.view-btn[data-view="tour"]');
+      tourBtn?.click();
+    });
+  }
+
   const cardEl = document.getElementById('landscape-card');
   const scaleEl = document.getElementById('findings-scale');
   const repoEl = document.getElementById('repo-matrix');
