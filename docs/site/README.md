@@ -30,7 +30,7 @@ Portolan copy must stay within these maintained repository surfaces:
 - `docs/demo.md`
 - `docs/demo-runbook.md`
 - `docs/release.md`
-- `docs/releases/v0.1.0.md`
+- `docs/releases/installable-atlas.md`
 - `CONTRIBUTING.md`
 - `SECURITY.md`
 - `SUPPORT.md`

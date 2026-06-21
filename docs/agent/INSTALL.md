@@ -72,26 +72,15 @@ checks, viewer build checks, and diff whitespace. Omit
 `not_assessed` instead of failing the check.
 
 ## Legacy Go Binary
-### Installed Binary
 
-For the public `v0.1.0` source-first legacy CLI release, the Go install route is:
-
-```bash
-# Requires the published v0.1.0 tag. If this fails, use the source-checkout
-# route below until the tag is available.
-go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
-portolan --version
-```
-
-Check whether `portolan` is already available:
+Check whether a legacy `portolan` binary is already available:
 
 ```bash
 portolan --version
 ```
 
-If this works, use `portolan` directly in the quickstart commands.
-
-### Source Checkout
+If this works and the operator explicitly asked for legacy map/context
+artifacts, use that binary directly. Otherwise use the atlas wrappers above.
 
 From the Portolan repository root:
 

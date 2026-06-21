@@ -87,10 +87,12 @@ run_public_surface_checks() {
   local help_file
   local banned_internal
   local banned_public
+  local banned_release_route
   local banned_viewer
   local banned_source_route
   banned_internal='install-agent''-harness\.sh'
   banned_public='prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
+  banned_release_route='go install github\.com/fcon-tech/portolan/cmd/portolan@v0\.1\.0|source-first|source checkout bootstrap|docs/releases/v0\.1\.0\.md|v0\.1\.0 release surface'
   banned_viewer='prototype|прототип|demo cockpit|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
   banned_source_route='\$PORTOLAN_PATH/scripts/portolan-scan\.sh|\$PORTOLAN_PATH/scripts/portolan-bundle-query\.sh|PORTOLAN_PATH/harness|Read PORTOLAN_PATH|scripts/portolan-scan\.sh <target|scripts/portolan-bundle-query\.sh'
   require_cmd rg
@@ -113,6 +115,8 @@ run_public_surface_checks() {
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/product-maturity.md" \
+    "$ROOT/docs/release.md" \
+    "$ROOT/docs/releases" \
     "$ROOT/docs/ru/README.md" \
     "$ROOT/docs/site" \
     "$ROOT/harness/SKILL.md" \
@@ -140,6 +144,8 @@ run_public_surface_checks() {
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/product-maturity.md" \
+    "$ROOT/docs/release.md" \
+    "$ROOT/docs/releases" \
     "$ROOT/docs/ru/README.md" \
     "$ROOT/docs/site" \
     "$ROOT/harness/SKILL.md" \
@@ -149,6 +155,20 @@ run_public_surface_checks() {
     "$ROOT/viewer/src" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose old source-checkout scan/query route" >&2
+    exit 1
+  fi
+  echo "==> public release route wording" >&2
+  if rg -n \
+    -e "$banned_release_route" \
+    "$ROOT/README.md" \
+    "$ROOT/docs/agent/INSTALL.md" \
+    "$ROOT/docs/agent/INSTALL.ru.md" \
+    "$ROOT/docs/release.md" \
+    "$ROOT/docs/releases" \
+    "$ROOT/docs/ru/README.md" \
+    "$ROOT/docs/site" \
+    --glob '!**/node_modules/**'; then
+    echo "public surfaces expose old versioned Go/source-first release route" >&2
     exit 1
   fi
 }

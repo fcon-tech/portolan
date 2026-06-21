@@ -102,7 +102,6 @@ whitespace. Убирай `--require-agent-runtime` только когда не�
 map artifacts:
 
 ```bash
-go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```
