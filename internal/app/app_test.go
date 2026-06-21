@@ -65,21 +65,24 @@ func TestCanonicalPublicIdentityIsPresent(t *testing.T) {
 			"module github.com/fcon-tech/portolan",
 		},
 		"README.md": {
-			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
 			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
 		},
 		"docs/release.md": {
-			"github.com/fcon-tech/portolan/internal/app.Version",
+			"scripts/portolan-product-acceptance.sh --require-agent-runtime",
+			"docs/releases/installable-atlas.md",
 		},
 		"docs/ru/README.md": {
-			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
 			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
 		},
 		"docs/agent/INSTALL.md": {
-			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"<target-root>/.portolan/bin/portolan-scan.sh",
 		},
 		"docs/agent/INSTALL.ru.md": {
-			"go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"<target-root>/.portolan/bin/portolan-scan.sh",
 		},
 	}
 	for path, wants := range checks {
@@ -185,16 +188,15 @@ func TestCIWorkflowRunsReleaseEnvelopeBaseline(t *testing.T) {
 func TestReleaseDocsPreserveCurrentProductClaimLimits(t *testing.T) {
 	data := mustReadRepoFile(t, "docs/release.md")
 	for _, want := range []string{
-		"UI Cursor/Composer behavior is outside the current required acceptance scope",
-		"OpenCode default-permission execution is verified only when `OUTPUT_PATH`",
+		"Cursor/OpenCode runtime support is limited to the verified headless CLI lanes",
 		"Complete inherited-estate coverage is not proven by repository count.",
 		"complete service topology remains `not_assessed`",
 		"local Semgrep output",
 		"raw Graphify",
 		"source/redaction",
 		"semantics remain",
-		"sha256sum",
-		"PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1",
+		"scripts/portolan-product-acceptance.sh --require-agent-runtime",
+		"docs/releases/installable-atlas.md",
 	} {
 		if !strings.Contains(data, want) {
 			t.Fatalf("release docs missing %q:\n%s", want, data)

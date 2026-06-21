@@ -112,8 +112,10 @@ artifacts. See [`docs/agent/INSTALL.md`](docs/agent/INSTALL.md) and
 Canonical source identity for that compatibility route:
 
 ```bash
-go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
 git clone https://github.com/fcon-tech/portolan.git
+cd portolan
+scripts/bootstrap-portolan
+.portolan/bin/portolan --version
 ```
 
 ## Documentation Route
@@ -203,9 +205,9 @@ detector is not implemented.
 ## Current Boundaries
 
 Current safe product wording lives in [Product Claims](docs/product-claims.md).
-The `v0.1.0` release surface is ready for public testing when local checks pass;
-it does not imply GitHub popularity, external adoption, merge approval, or broad
-ecosystem validation.
+The installable atlas route is ready for review when the product acceptance gate
+passes; that does not imply GitHub popularity, external adoption, merge
+approval, or broad ecosystem validation.
 
 Important limits:
 

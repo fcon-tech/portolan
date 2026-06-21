@@ -113,17 +113,14 @@ scripts/portolan-product-acceptance.sh --require-agent-runtime
 ## Legacy Go CLI
 
 Используй этот путь только для старых `context prepare` / `map` workflows.
-После публикации тега `v0.1.0` legacy CLI можно собрать через Go:
+Если legacy binary уже доступен, проверь его:
 
 ```bash
-# Требуется опубликованный тег v0.1.0. Если команда падает, используй
-# source-checkout route ниже, пока тег не доступен.
-go install github.com/fcon-tech/portolan/cmd/portolan@v0.1.0
 portolan --version
 ```
 
-Пока тега нет, либо если нельзя или не нужно получать modules через
-`go install`, склонируй source checkout и собери repo-local binary:
+Если binary нет или нужен воспроизводимый repo-local запуск, собери его из
+source checkout:
 
 ```bash
 git clone https://github.com/fcon-tech/portolan.git
