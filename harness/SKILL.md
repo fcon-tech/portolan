@@ -4,25 +4,44 @@ Use this skill when the user wants an AI coding agent to build and use a local
 software landscape atlas: visible repos/components, relationships, code pain,
 configuration surfaces, gaps, drill-down source routes, and bounded query tools.
 
-Portolan is a **harness supplement**: recipes + guardrails + evidence bundle +
-local atlas viewer. The legacy Go CLI is optional (see
-`docs/harness/GO-FREEZE-POLICY.md`).
+Portolan is an installable **harness supplement**: target-local wrappers,
+recipes, guardrails, evidence bundle, and local atlas viewer. The legacy Go CLI
+is optional (see `docs/harness/GO-FREEZE-POLICY.md`).
 
 ## Inputs
 
-- `TARGET_ROOT` — absolute path to repo or landscape root (read-only).
-- `TARGET_PATH` — accepted alias for `TARGET_ROOT` in older prompts.
-- `BUNDLE_DIR` — absolute empty output directory for the Portolan bundle (convention: any empty dir).
-- `PORTOLAN_PATH` — absolute path to this Portolan checkout.
+- `PORTOLAN_PATH` - absolute path to this Portolan checkout.
+- `TARGET_ROOT` - absolute path to repo or landscape root (read-only).
+- `TARGET_PATH` - accepted alias for `TARGET_ROOT` in older prompts.
+- `BUNDLE_DIR` - absolute empty output directory for the Portolan bundle
+  (default convention: `<target-root>/.portolan/atlas`).
 
-## Workflow (recommended: portolan scan)
+Do not clone, fetch, install tools, start daemons, or mutate target source files
+unless the operator explicitly approves it. Portolan writes installed harness
+metadata under the target plus bundle artifacts under `BUNDLE_DIR`.
 
-One command checks tools, runs producers (with consent-gated install), builds the
-bundle, and prints a summary. Build first, then open the viewer separately so
-the agent can continue querying the bundle:
+## Workflow
+
+Install target-local wrappers first. Cursor, OpenCode, Codex, Kimi, Zed, and
+other harnesses should then use `<target-root>/.portolan/bin` as the active
+Portolan interface.
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-scan.sh" "${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+TARGET_ROOT="${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}"
+"$PORTOLAN_PATH/scripts/portolan-install.sh" \
+  "$TARGET_ROOT" \
+  --harness all \
+  --bundle-dir "$BUNDLE_DIR"
+```
+
+Build the atlas through the installed wrapper. Build first, then open the
+viewer separately so the agent can continue querying the bundle:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" \
+  "$TARGET_ROOT" \
+  "$BUNDLE_DIR" \
+  --yes --skip-install --no-viewer
 ```
 
 Useful flags:
@@ -36,16 +55,18 @@ Useful flags:
 | `--shard-timeout SEC` | Per-repo producer timeout (default 600) |
 | `--jscpd-memory-mb N` | Node heap cap per jscpd shard (default 2048) |
 | `--hotspot-budget N` | Max hotspots in bundle; kind quotas apply when truncated |
-| `--with-map-bridge` | After bundle build, run `portolan map` + `build-map-bridge.sh` (Edges evidence graph; failures → gap, scan still succeeds) |
+| `--with-map-bridge` | After bundle build, run the legacy map bridge sidecar (Edges evidence graph; failures become gaps) |
 
-Shard failures are recorded in `producers/_gaps.jsonl` and merged into `gaps.jsonl`.
-Full hotspot list (pre-budget) is written to `hotspots-full.jsonl` for agents.
-Producers respect `.gitignore` (jscpd `--gitignore`, ctags via `git ls-files`, config
-scan via `git check-ignore`; bundle build drops any ignored paths that slip through).
+Remove `--skip-install` only after explicit operator approval to install missing
+local OSS tools. Shard failures are recorded in `producers/_gaps.jsonl` and
+merged into `gaps.jsonl`. Full hotspot list (pre-budget) is written to
+`hotspots-full.jsonl` for agents. Producers respect `.gitignore` where the
+underlying tool supports it.
 
 ### Manual fallback (recipes)
 
-When you need fine-grained control, run individual recipes from `harness/recipes/`:
+When you need fine-grained producer control, run individual recipes from
+`harness/recipes/` and write outputs under `$BUNDLE_DIR/producers/`:
 
 | User question | Recipe |
 | --- | --- |
@@ -55,25 +76,22 @@ When you need fine-grained control, run individual recipes from `harness/recipes
 | Config / deploy surfaces? | `config-surfaces.md` |
 | Symbol-dense files (optional) | `symbols-ctags.md` |
 
-Write outputs under `$BUNDLE_DIR/producers/`, then:
+Then rebuild the bundle from the local producer outputs:
 
 ```bash
-"$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}" "$BUNDLE_DIR"
+"$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
 ```
 
 ### Open atlas viewer (human)
 
 ```bash
-"${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}/.portolan/bin/portolan-viewer.sh"
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh" --bundle "$BUNDLE_DIR"
 ```
 
-If Portolan was not installed into the target, use the source-checkout fallback:
-`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
-
-Viewer features: Bigtop-grade landscape overview, component map, relationship
-and source drill-down, ranked hotspots, search, filters, gaps, agent handoff
-commands, and read-only source preview via `/source` (path-guarded).
-Operator runbook: [`docs/demo-runbook.md`](../docs/demo-runbook.md).
+Viewer features: landscape overview, component map, relationship and source
+drill-down, ranked hotspots, search, filters, gaps, agent handoff commands, and
+read-only source preview via `/source` (path-guarded). Operator runbook:
+`docs/demo-runbook.md`.
 
 ### Agent navigation
 
@@ -84,29 +102,31 @@ Read in order:
 3. `$BUNDLE_DIR/repo-profiles.json` (repo purpose, languages, config/CI/test surfaces)
 4. `$BUNDLE_DIR/relationships.jsonl` (visible cross-repo relationships)
 5. `$BUNDLE_DIR/hotspots.jsonl` and `$BUNDLE_DIR/hotspots-full.jsonl` (ranked pain points)
-6. `$BUNDLE_DIR/gaps.jsonl` (missing evidence — do not invent)
+6. `$BUNDLE_DIR/gaps.jsonl` (missing evidence - do not invent)
 
 Cite `repo.id`, `relationship.id`, `hotspot.id`, `gap.id`, source paths, and
 `producer_ref` for every material claim.
 
-### Query the bundle (agent Q&A — no pre-built answers)
+### Query the bundle (agent Q&A)
 
-Portolan does **not** guess user questions. Query at answer time:
+Portolan does not guess user questions. Query at answer time through the
+installed wrapper:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --kind duplication --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 30
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE_DIR" --name "Run" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path sample.go --line 4
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" claims --bundle "$BUNDLE_DIR" --tier analytical --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --type cross-repo-duplication --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo <repo-id> --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --full
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --kind duplication --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 30
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" symbol --bundle "$BUNDLE_DIR" --name "Run" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path sample.go --line 4
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" claims --bundle "$BUNDLE_DIR" --tier analytical --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --type cross-repo-duplication --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo <repo-id> --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --full
 ```
 
-Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`, `/api/symbol`, `/api/source`, `/api/claims`, `/api/repos`, `/api/relationships`.
+Viewer HTTP (same contract): `GET /api/hotspots`, `/api/gaps`, `/api/search`,
+`/api/symbol`, `/api/source`, `/api/claims`, `/api/repos`, `/api/relationships`.
 
 ### Selected code / active file workflow
 
@@ -118,8 +138,7 @@ OpenCode, Codex, Kimi, Zed, Claude, or another coding-agent harness:
 3. Call `symbol` for the selected symbol when `symbol-index.jsonl` exists.
 4. Call `search` for the selected path/name to find nearby indexed mentions.
 5. Call `hotspots --repo <repo-id>` to show local pain around that repo.
-6. Call `relationships` to show visible repo-to-repo or shared-dependency
-   context.
+6. Call `relationships` to show visible repo-to-repo or shared-dependency context.
 7. State whether runtime/config/vendor relationships are `runtime-visible`,
    `metadata-visible`, `source-visible`, `not_assessed`, `unknown`, or
    `cannot_verify`.
@@ -127,9 +146,9 @@ OpenCode, Codex, Kimi, Zed, Claude, or another coding-agent harness:
 The selected-code result is a navigation aid. Do not claim a full call graph or
 runtime topology unless the bundle has direct evidence for that surface.
 
-### Agent analysis claims (tiers B/C/D — spec 106)
+### Agent analysis claims (tiers B/C/D)
 
-LLM analysis may enter the bundle **only** as tier-labeled claims through the
+LLM analysis may enter the bundle only as tier-labeled claims through the
 importer. Tier A (tool evidence) is never authored by an agent.
 
 | Tier | `claim_tier` | Meaning | Portolan verifies |
@@ -143,48 +162,58 @@ Workflow:
 1. Analyze the bundle through `bundle-query` families (hotspots, gaps,
    relationships, repos, search, source).
 2. Write `claims.jsonl` lines per `harness/contracts/analysis-claims.schema.json`:
-   `{id, claim_tier, statement, subject, cited_refs[], agent}`.
-   Subject: `landscape` | `repo:<id>` | `path:<rel>`. Ref formats:
-   `hotspot:<id>`, `gap:<id>`, `relationship:<id>`, `repo:<id>`,
-   `path:<rel>[:line]`, `producer_ref:<path>`.
-3. Import: `"$PORTOLAN_PATH/scripts/import-analysis-claims.sh" "$BUNDLE_DIR" claims.jsonl`.
+   `{id, claim_tier, statement, subject, cited_refs[], agent}`. Subject:
+   `landscape` | `repo:<id>` | `path:<rel>`. Ref formats: `hotspot:<id>`,
+   `gap:<id>`, `relationship:<id>`, `repo:<id>`, `path:<rel>[:line]`,
+   `producer_ref:<path>`.
+3. Import through the installed wrapper:
+   `"$TARGET_ROOT/.portolan/bin/portolan-import-analysis-claims.sh" "$BUNDLE_DIR" claims.jsonl`.
    Analytical/synthetic claims with zero or broken refs are rejected with a
-   reason in `claims-import-report.json` — fix the refs or downgrade the tier
-   yourself; the importer never up- or downgrades.
+   reason in `claims-import-report.json`; fix the refs or downgrade the tier.
 4. Claims are bundle-snapshot-scoped: after a re-scan, re-run the import; refs
    that no longer resolve invalidate the claim (recorded in the report).
 
 Guardrail: `harness/guardrails/analysis-claims.md`.
 
-Optional map-bridge (Edges evidence graph — opt-in on scan):
+### Optional map bridge
+
+Use this only when the user wants the legacy Edges evidence graph sidecar:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-scan.sh" "${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}" "$BUNDLE_DIR" --yes --skip-install --no-viewer --with-map-bridge
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" \
+  "$TARGET_ROOT" \
+  "$BUNDLE_DIR" \
+  --yes --skip-install --no-viewer --with-map-bridge
 ```
 
-Or manually after `portolan map`:
+Or manually after a legacy map run:
 
 ```bash
-go run "$PORTOLAN_PATH/cmd/portolan" map --root "${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}" --out "$BUNDLE_DIR/map" --force
+go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_ROOT" --out "$BUNDLE_DIR/map" --force
 "$PORTOLAN_PATH/scripts/build-map-bridge.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" evidence-index --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" evidence-index --bundle "$BUNDLE_DIR" --limit 20
 ```
 
 Guardrails: `harness/guardrails/` including `bundle-query.md`.
 
 ### MCP (agent harnesses preferring tools over shell)
 
+MCP is optional. Configure it only after a local bundle exists:
+
 ```bash
 export PORTOLAN_BUNDLE_DIR="$BUNDLE_DIR"
 "$PORTOLAN_PATH/scripts/portolan-bundle-query-mcp.sh"
 ```
 
-Recipe: `harness/recipes/bundle-query-mcp.md` (Cursor `mcp.json` example). Tools mirror CLI families; results are `bundle-query-result` JSON.
+Recipe: `harness/recipes/bundle-query-mcp.md` (Cursor `mcp.json` example).
+Tools mirror CLI families; results are `bundle-query-result` JSON.
 
 ## Legacy bridge (optional)
 
+Use only when the operator explicitly needs old map artifacts:
+
 ```bash
-go run "$PORTOLAN_PATH/cmd/portolan" map --root "${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}" --out "$BUNDLE_DIR/map" --force
+go run "$PORTOLAN_PATH/cmd/portolan" map --root "$TARGET_ROOT" --out "$BUNDLE_DIR/map" --force
 "$PORTOLAN_PATH/scripts/portolan-export-from-map.sh" "$BUNDLE_DIR/map" "$BUNDLE_DIR"
 ```
 

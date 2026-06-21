@@ -92,7 +92,7 @@ run_public_surface_checks() {
   banned_internal='install-agent''-harness\.sh'
   banned_public='prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
   banned_viewer='prototype|прототип|demo cockpit|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
-  banned_source_route='\$PORTOLAN_PATH/scripts/portolan-scan|\$PORTOLAN_PATH/scripts/portolan-bundle-query|PORTOLAN_PATH/harness|Read PORTOLAN_PATH|scripts/portolan-scan\.sh <target|scripts/portolan-bundle-query\.sh'
+  banned_source_route='\$PORTOLAN_PATH/scripts/portolan-scan\.sh|\$PORTOLAN_PATH/scripts/portolan-bundle-query\.sh|PORTOLAN_PATH/harness|Read PORTOLAN_PATH|scripts/portolan-scan\.sh <target|scripts/portolan-bundle-query\.sh'
   require_cmd rg
   help_file=$(mktemp)
   echo "==> public install help" >&2
@@ -112,7 +112,9 @@ run_public_surface_checks() {
     "$ROOT/docs/demo.md" \
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/product-maturity.md" \
     "$ROOT/docs/ru/README.md" \
+    "$ROOT/docs/site" \
     "$ROOT/harness/SKILL.md" \
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
@@ -137,7 +139,10 @@ run_public_surface_checks() {
     "$ROOT/docs/demo.md" \
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/product-maturity.md" \
     "$ROOT/docs/ru/README.md" \
+    "$ROOT/docs/site" \
+    "$ROOT/harness/SKILL.md" \
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
     "$ROOT/harness/codex-claude" \
