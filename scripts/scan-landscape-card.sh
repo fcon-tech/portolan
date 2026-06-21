@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Emit landscape-card.json (standalone Portolan contract; no sdp_lab runtime).
+# Emit landscape-card.json (standalone Portolan contract; no external runtime).
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "usage: $0 <target-root> <out.json>" >&2
+  echo "usage: $0 <target-root> <out.json> [repos.json]" >&2
   exit 2
 fi
 
 TARGET_ROOT=$(cd "$1" && pwd)
 OUT=$2
+REPOS_JSON=${3:-}
 
 command -v jq >/dev/null || { echo "jq required" >&2; exit 1; }
 
@@ -113,7 +114,10 @@ has_docker=false
 
 monorepo=false
 repo_count=0
-if [[ -d "$TARGET_ROOT/.git" ]]; then
+if [[ -n "$REPOS_JSON" && -f "$REPOS_JSON" ]]; then
+  repo_count=$(jq 'if type == "array" then length else 0 end' "$REPOS_JSON")
+  [[ $repo_count -gt 1 ]] && monorepo=true
+elif [[ -d "$TARGET_ROOT/.git" ]]; then
   repo_count=1
 else
   while IFS= read -r gitdir; do

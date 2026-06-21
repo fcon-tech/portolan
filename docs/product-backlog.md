@@ -65,7 +65,7 @@ fixtures are preflight evidence only.
 | P1-015 | `docs/specs/015-blind-agent-acceptance/` | Cursor + Composer 2.5 and other agents can run a target-agnostic acceptance protocol without Bigtop-specific scaffolding. | Cursor Agent blind runs recorded as degraded for Bigtop and non-Bigtop control |
 | P1-016 | `docs/specs/016-landscape-map-orchestration/` | A CTO or agent can run Portolan against a complete local multi-repo software landscape selection and receive one evidence-backed artifact bundle with coverage, graph, findings, packet, and OSS tool-output normalization. | Implemented and merged via PR #13; full Bigtop corpus selection and local map run verified; GitHub checks not_assessed |
 | P1-017 | `docs/specs/017-landscape-root-discovery/` | An agent can map a normal local ecosystem directory without being handed a Portolan-specific selection file. | Implemented; local Bigtop root smoke verified without selection.json |
-| P1-018 | `docs/specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented |
+| P1-018 | `docs/specs/018-oss-agent-context-assembly/` | Cursor and other agents receive a compact context pack with discovered repositories, OSS/tool-output candidates, query plan, and honest gaps before answering CTO-level questions. | Implemented as legacy compatibility; current primary agent path is installable atlas wrappers and bundle-query |
 | P1-020 | `docs/specs/020-cursor-agent-skill-set/` | Cursor rules and portable skills teach the agent to use Portolan context preparation before making landscape claims. | Implemented; blind Cursor Agent discovery degraded but verified |
 | P1-022 | `docs/specs/022-oss-tool-output-assembly/` | Context preparation summarizes local jscpd and CycloneDX/Syft outputs so Cursor sees OSS evidence candidates, not just filenames. | Implemented |
 | P1-023 | `docs/specs/023-relationship-surface-assembly/` | Context preparation summarizes local Backstage, OpenAPI, AsyncAPI, and Structurizr files as relationship surface evidence candidates. | Implemented |
@@ -78,7 +78,7 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P2-009 | `docs/specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Implemented |
+| P2-009 | `docs/specs/009-map-command-artifacts/` | `portolan map --root . --out .portolan/run` produces an agent-consumable artifact bundle with graph, findings, run metadata, and packet output. | Implemented as legacy compatibility; current primary bundle path is `portolan-scan.sh` atlas output |
 | P2-010 | `docs/specs/010-relationship-detection/` | Portolan detects source, metadata, runtime, and claim-backed relationships across a codebase. | Implemented |
 | P2-011 | `docs/specs/011-duplication-detection/` | Portolan reports duplicate code, duplicated config, and repeated wrappers as evidence-backed finding clusters. | Implemented only for selected local duplication tool-output normalization; native exact duplicate detection removed; absent jscpd/CPD-style evidence remains `not_assessed` |
 | P2-012 | `docs/specs/012-configuration-surfaces/` | Portolan maps env vars, ports, manifests, CI/CD, feature flags, and secret references without exposing secret values. | Implemented for native file-based surface inventory; semantic config/IaC analysis remains OSS/Semgrep-backed |
@@ -211,7 +211,7 @@ fixtures are preflight evidence only.
 | P9-105 | `docs/specs/105-cross-repo-relationships/` | relationships.jsonl: internal deps, shared deps, opt-in cross-repo duplication. | Merged via PR #71 |
 | P9-106 | `docs/specs/106-analysis-claims/` | Tier-labeled LLM claims (analytical/synthetic/speculative) with ref-validating importer + agent SKILL instructions. | Merged via PR #71 |
 | P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Merged via PR #71 |
-| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on bigtop-10 incl. agent claims pass. | Merged via PR #71; strict bigtop acceptance in P9.1 |
+| P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on Apache Bigtop corpus incl. agent claims pass. | Merged via PR #71; old 10-repo slice is superseded by full-corpus Bigtop acceptance in PR #72 |
 
 ## Backlog Rules
 

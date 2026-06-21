@@ -978,7 +978,7 @@ func TestRunImportCycloneDXKeepsUnknownDependencyRefsCannotVerify(t *testing.T) 
 		}
 	}
 	if !foundMissing {
-		t.Fatalf("nodes = %#v, want missing dependency placeholder", result["nodes"])
+		t.Fatalf("nodes = %#v, want missing dependency node", result["nodes"])
 	}
 	for _, item := range result["edges"].([]any) {
 		edge := item.(map[string]any)
@@ -2539,7 +2539,7 @@ func TestRunContextPrepareSurfacesProducerRunRecords(t *testing.T) {
 	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "compose.json"), `{"services":{"bigtop":{}}}`)
 	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "monitor.yaml"), "kind: Deployment\n")
 	mustWrite(t, filepath.Join(root, ".portolan", "stress", "tool-outputs", "grpc.pb"), "descriptor")
-	mustWrite(t, filepath.Join(root, ".portolan", "producer-runs.jsonl"), strings.ReplaceAll(`{"record_type":"producer-run","id":"producer-run-bigtop-compose","producer_family":"deployment-model","producer_tool":"docker-compose","command":"DOCKER_IMAGE=placeholder MEM_LIMIT=1g docker compose -f repos/apache-bigtop-repo/provisioner/docker/docker-compose.yml config --format json","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/compose.json","output_format":"json","scope":{"repository":"apache-bigtop-repo","directory":"provisioner/docker","covered_units":["service:bigtop","network:default"]},"freshness":"2026-06-01T20:25:23Z","status":"verified","evidence_state":"metadata-visible","limitations":["static deployment model only","not runtime topology"],"privacy_review":"not_assessed"}
+		mustWrite(t, filepath.Join(root, ".portolan", "producer-runs.jsonl"), strings.ReplaceAll(`{"record_type":"producer-run","id":"producer-run-bigtop-compose","producer_family":"deployment-model","producer_tool":"docker-compose","command":"DOCKER_IMAGE=example MEM_LIMIT=1g docker compose -f repos/apache-bigtop-repo/provisioner/docker/docker-compose.yml config --format json","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/compose.json","output_format":"json","scope":{"repository":"apache-bigtop-repo","directory":"provisioner/docker","covered_units":["service:bigtop","network:default"]},"freshness":"2026-06-01T20:25:23Z","status":"verified","evidence_state":"metadata-visible","limitations":["static deployment model only","not runtime topology"],"privacy_review":"not_assessed"}
 {"record_type":"producer-run","id":"producer-run-alluxio-helm-monitor","producer_family":"deployment-model","producer_tool":"helm","command":"helm template alluxio-monitor repos/alluxio/integration/kubernetes/helm-chart/monitor","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/monitor.yaml","output_format":"yaml","scope":{"repository":"alluxio","directory":"integration/kubernetes/helm-chart/monitor","covered_units":["kind:Deployment","kind:Service"]},"freshness":"2026-06-01T20:26:00Z","status":"verified","evidence_state":"metadata-visible","limitations":["static Kubernetes manifests only","not runtime topology"],"privacy_review":"not_assessed"}
 {"record_type":"producer-run","id":"producer-run-alluxio-grpc-descriptor","producer_family":"api-catalog","producer_tool":"protoc","command":"protoc --include_imports --descriptor_set_out=.portolan/stress/tool-outputs/grpc.pb repos/alluxio/core/transport/src/main/proto/grpc/common.proto","target_root":"$ROOT","output_path":".portolan/stress/tool-outputs/grpc.pb","output_format":"protobuf-descriptor","scope":{"repository":"alluxio","directory":"core/transport/src/main/proto","covered_units":["grpc/common.proto"]},"freshness":"2026-06-01T20:27:00Z","status":"verified","evidence_state":"metadata-visible","limitations":["bounded protobuf descriptor only","not full API catalog"],"privacy_review":"not_assessed"}
 {"record_type":"producer-run","id":"producer-run-bigtop-runtime-not-assessed","producer_family":"runtime-observation","producer_tool":"runtime-observation-export","command":"operator did not provide a runtime observation export","target_root":"$ROOT","scope":{"repository":"apache-bigtop-repo"},"status":"not_assessed","evidence_state":"not_assessed","limitations":["no runtime-visible local observation supplied"],"privacy_review":"not_assessed"}`, "$ROOT", root))
@@ -3442,7 +3442,7 @@ func TestRunMapDetectsGoModDependencyRelationships(t *testing.T) {
 	}
 }
 
-func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
+func TestRunMapRelationshipFindingsReplaceFallback(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "run")
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
@@ -3457,7 +3457,7 @@ func TestRunMapRelationshipFindingsReplacePlaceholder(t *testing.T) {
 	seenManifestObserved := false
 	for _, finding := range findings {
 		if finding["id"] == "finding-relationships-not-assessed" {
-			t.Fatalf("relationship placeholder was not replaced: %#v", finding)
+			t.Fatalf("fallback relationship finding was not replaced: %#v", finding)
 		}
 		if finding["id"] == "finding-relationships-source-imports-observed" {
 			seenSourceObserved = true

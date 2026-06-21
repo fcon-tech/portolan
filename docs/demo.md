@@ -86,20 +86,20 @@ is missing or bounded.
 ## Local Acceptance Evidence
 
 The maintained product check is `scripts/portolan-product-acceptance.sh`. When
-given a prepared Bigtop-10 bundle, it validates the installable wrapper route,
+given a prepared Bigtop corpus bundle, it validates the installable wrapper route,
 live Cursor/OpenCode runtime lanes, the viewer, bundle queries, schema checks,
 and strict Bigtop acceptance:
 
 ```bash
 scripts/portolan-product-acceptance.sh \
   --require-agent-runtime \
-  --bigtop-bundle <bigtop-10-bundle-dir>
+  --bigtop-bundle <bigtop-bundle-dir>
 ```
 
-Strict Bigtop-10 acceptance can also be run directly:
+Strict Bigtop corpus acceptance can also be run directly:
 
 ```bash
-scripts/harness-bigtop10-acceptance.sh <bigtop-10-bundle-dir>
+scripts/harness-bigtop-acceptance.sh <bigtop-bundle-dir>
 ```
 
 These checks are local machine observations, not a promise that every machine or

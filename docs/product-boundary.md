@@ -56,9 +56,10 @@ gates, use [Product Quality Boundary](product-quality-boundary.md) and
 
 ## Relationship To SDP
 
-Portolan was shaped from SDP discovery work, but it should stand alone as an
-open-source scout. It may later emit data that SDP tools consume, but it should
-not require `sdp_lab`, Beads, or a specific agent harness to be useful.
+Portolan was shaped from SDP discovery work, but it should stand alone as a
+local-first discovery substrate. It may later emit data that SDP tools consume,
+but it should not require any SDP repository, Beads, or a specific agent
+harness to be useful.
 
 ## OSS As Part Of The Solution
 

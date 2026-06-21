@@ -46,7 +46,7 @@ scripts/portolan-scan.sh <landscape-root> <bundle-dir> --yes --producers jscpd
 ```
 
 Failed shards record `shard-jscpd-<slug>` gaps; strict CTO acceptance requires **zero**
-such gaps on the reference bigtop-10 demo.
+such gaps on the reference Bigtop corpus demo.
 
 ## Cross-repo (pairwise, spec 110)
 

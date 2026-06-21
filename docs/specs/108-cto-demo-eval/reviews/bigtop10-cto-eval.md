@@ -1,5 +1,10 @@
 # CTO Query Eval — bigtop-10 (Lane B, spec 108 / P9.1 strict)
 
+Archival note: this file records the PR #71 bounded 10-repo experiment. It is
+not the current product acceptance route. Current CTO acceptance uses the full
+Bigtop corpus route in `docs/demo-runbook.md` and
+`scripts/harness-bigtop-acceptance.sh`.
+
 Date: 2026-06-11. Bundle: `/tmp/portolan-bigtop10-p91` (not committed; reproduce below).
 
 ## Reproduce

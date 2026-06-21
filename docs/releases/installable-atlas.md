@@ -38,8 +38,9 @@ OSS tools. Missing producers stay visible as gaps.
 - Clean source-copy install, scan, query, claim import, and viewer wrapper smoke.
 - Atlas artifacts, schema validation, bundle-query, MCP query smoke, and viewer
   static build.
-- Bigtop-10 strict acceptance against a prepared local bundle, including
-  `repos=10` and `cross_repo_duplication.status=complete`.
+- Bigtop corpus acceptance against a prepared local bundle, including consistent
+  `manifest.json`, `repos.json`, and `landscape-card.json` repo counts plus
+  `cross_repo_duplication.status=complete`.
 - Current product claims and limitations governed by `docs/product-claims.md`.
 
 ## Example Route

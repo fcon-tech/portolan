@@ -1,7 +1,7 @@
 # Product Claims
 
 This page is the repo-level claim boundary for Portolan. Start here before
-writing README copy, a client answer, a proposal, a demo script, or an agent
+writing README copy, a client answer, a proposal, a demo walkthrough, or an agent
 instruction that says what Portolan can do.
 
 Use [Product Quality Boundary](product-quality-boundary.md) for guarantees,
@@ -18,9 +18,11 @@ Portolan helps engineers and agents find where local code pain is visible:
 duplication clusters, static findings, dependency hubs, and configuration
 hotspots — then navigate there through a harness workflow and the local viewer.
 
-The primary product path is harness-first: follow [`harness/SKILL.md`](../harness/SKILL.md),
-run documented OSS recipes, build an Portolan bundle, and open the local viewer.
-The legacy Go CLI (`context prepare`, `map`) remains an optional bridge.
+The primary product path is install-first: run `scripts/portolan-install.sh`,
+use the target-local wrappers under `<target-root>/.portolan/bin`, build a
+Portolan atlas bundle, query it through `portolan-bundle-query.sh`, and open the
+local viewer. The legacy Go CLI (`context prepare`, `map`) remains an optional
+compatibility bridge.
 
 Evidence discipline is a **secondary** (B2B) value: hotspots and viewer nodes
 cite `producer_ref` and evidence states; unknowns stay visible without blocking
@@ -39,11 +41,12 @@ not as their replacement.
 
 The agent acceptance matrix is defined for named harness and target shapes.
 Codex, OpenCode, and Cursor Agent CLI lanes have been run on selected local
-targets. That evidence shows the blind acceptance and install-prompt protocols
-can produce and score Portolan context and map artifacts in those specific
-local runs. It does not validate UI Cursor/Composer, arbitrary external
-targets, arbitrary customer metadata/runtime formats, or all OpenCode
-permission modes.
+targets. Current installable-atlas evidence shows Cursor/OpenCode can install
+target-local wrappers, build and query a local atlas, and preserve gaps in
+those specific local runs. Older evidence records may mention context/map
+artifacts; do not treat those legacy artifacts as the current product path.
+This evidence does not validate UI Cursor/Composer, arbitrary external targets,
+arbitrary customer metadata/runtime formats, or all OpenCode permission modes.
 
 In one named local Bigtop headless Cursor comparison, the Portolan-assisted
 lane reduced unsupported claims from 12 to 0 and produced equal or better next
@@ -56,7 +59,7 @@ record, not the product narrative.
 | --- | --- | --- |
 | Portolan helps an agent answer CTO-level questions with fewer unsupported claims than an unaided agent on the same local target. | `narrowed` | Proven only for named comparison lanes. Do not generalize to UI Cursor/Composer or arbitrary targets. |
 | Portolan is a harness for agent navigation across local software landscapes. | `accepted` | Safe when "harness" means bounded evidence routing, artifact contracts, gap labeling, and OSS-output import for agent use. Do not describe it as a coding harness or autonomous development runtime. |
-| Portolan provides a local, read-only context pack and optional evidence-backed map before agents answer. | `accepted` | Safe as a capability claim for the current CLI and artifact workflow. |
+| Portolan provides a local, read-only atlas bundle and viewer before agents answer. | `accepted` | Safe for the installed wrapper workflow and bundle artifacts. Legacy context/map artifacts are compatibility routes only. |
 | Portolan can map a normal local repository or landscape root without a generated selection file. | `narrowed` | Verified on named local targets. It reports visible local scope and weak states; it does not prove complete ecosystem coverage. |
 | Portolan understands a complete inherited software estate from a local target. | `rejected` | Say local visible scope unless a supplied inventory verifies completeness. A curated manifest can narrow scope for that manifest only; global external ecosystem completeness remains unproven. |
 | Portolan can provide full runtime service topology. | `not_assessed` | Runtime-visible observations can be represented from supported local files, but partial observations do not prove complete topology. Service-topology inference remains `not_assessed`. |
@@ -80,10 +83,9 @@ record, not the product narrative.
   Cursor evidence is for headless Cursor Agent CLI on named local targets only.
 - Cross-harness acceptance is narrow: selected Codex, OpenCode, and Cursor
   Agent CLI lanes are verified only for the target shapes named in the evidence
-  records. OpenCode default-permission execution is verified only when
-  `OUTPUT_PATH` stays inside the Portolan checkout; external output paths are
-  `failed` without permission bypass. Arbitrary external targets remain
-  unproven.
+  records. Current OpenCode acceptance uses a target-local bundle path under
+  `.portolan/atlas`; arbitrary external output paths and future permission modes
+  remain unproven unless named evidence is added.
 - Apache Bigtop evidence is a stress example. It must stay named as Bigtop
   evidence and must not become the default product narrative.
 - Complete inherited-estate coverage is not proven by repository count.

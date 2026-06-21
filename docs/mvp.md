@@ -3,8 +3,9 @@
 The MVP should prove one narrow product promise:
 
 > An AI agent can run Portolan locally against a repository or software
-> landscape and receive a context pack plus optional evidence-backed map before
-> answering CTO-level questions, without turning guesses into facts.
+> landscape, install target-local Cursor/OpenCode atlas wrappers, build a
+> queryable atlas bundle plus viewer, and answer CTO-level questions from that
+> local bundle without turning guesses into facts.
 
 ## Phase 0: Bootstrap
 
@@ -12,14 +13,15 @@ The MVP should prove one narrow product promise:
 - Product boundary documents.
 - Draft evidence graph schema.
 
-## Phase 1: Agent Context Preparation
+## Phase 1: Installable Atlas Pack
 
 - Accept a local target root.
-- Discover bounded local repositories.
-- Detect existing local OSS/tool-output candidates.
-- Emit `agent-brief.md`, `answer-contract.md`, `query-plan.md`,
-  `evidence-index.jsonl`, `repos.json`, `tool-registry.json`, `oss-plan.json`,
-  and `gaps.jsonl`.
+- Install target-local wrappers under `<target-root>/.portolan/bin`.
+- Install Cursor/OpenCode instructions that use those wrappers.
+- Build a first atlas bundle at `<target-root>/.portolan/atlas`.
+- Emit `manifest.json`, `repos.json`, `repo-profiles.json`,
+  `relationships.jsonl`, `hotspots*.jsonl`, `gaps.jsonl`, `atlas-facts.json`,
+  `atlas-surfaces.json`, and `atlas-surface-content.json`.
 - Preserve `unknown`, `cannot_verify`, and `not_assessed`.
 
 ## Phase 2: Agent Toolbox Entry Point
@@ -29,24 +31,24 @@ The MVP should prove one narrow product promise:
 
 ## Phase 3: Product Hypothesis Checks
 
-- Compare Cursor-alone with Cursor-plus-Portolan context preparation.
+- Compare Cursor/OpenCode without Portolan against Cursor/OpenCode with an
+  installed Portolan atlas.
 - Start with a non-Bigtop local target, then use Apache Bigtop as the larger
   stress target when local checkouts are available.
 - Record false claims, missing evidence, ignored gaps, and useful answers.
 
-## Phase 4: Map Command And Evidence Useful To Users
+## Phase 4: Atlas Evidence Useful To Users
 
-- Keep `portolan map --root . --out .portolan/run` as the direct map command;
-  it discovers the root, direct child Git repositories, and `repos/*` Git
-  repositories under a bounded local policy.
-- Use `portolan map --selection selection.json --out .portolan/run` for curated
-  local inventories. A local inventory can validate represented, missing,
-  blocked, and extra scope records, but repository counts alone never prove
-  complete inherited-estate coverage.
-- Emit a stable artifact bundle: `run.json`, `coverage.json`, `summary.json`,
-  `graph-index.json`, `graph.json`, `findings.jsonl`, and `map.md`.
-- Provide bounded graph drill-down with `portolan graph slice` before agents
-  need full `graph.json`.
+- Keep `scripts/portolan-install.sh` and the installed
+  `<target-root>/.portolan/bin/portolan-scan.sh` wrapper as the direct product
+  path.
+- Discover the root, direct child Git repositories, and `repos/*` Git
+  repositories under a bounded local policy. If a complete inventory is
+  required, ask for a local manifest or explicit target set; repository counts
+  alone never prove complete inherited-estate coverage.
+- Emit a stable atlas bundle for viewer and agent queries.
+- Provide bounded drill-down through `portolan-bundle-query.sh` before agents
+  need large JSONL files.
 - Validate new OSS/tool-output inputs through `portolan adapter validate` before
   adding them to the agent workflow.
 
@@ -77,6 +79,8 @@ The MVP should prove one narrow product promise:
 - Keep corpus preparation separate from default map/scan execution so Bigtop
   does not introduce surprise network access, cloning, or heavyweight setup into
   the MVP path.
+- Keep legacy `context prepare` and `map` as compatibility routes only, not the
+  primary MVP path.
 
 ## Non-Goals For MVP
 

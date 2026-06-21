@@ -38,9 +38,9 @@ OSS output is generated, preserved, normalized, and recorded.
 
 | Component | Current state | Evidence boundary |
 | --- | --- | --- |
-| Syft / CycloneDX | `verified` narrowly | Syft produced a local CycloneDX SBOM for one named stress target; Portolan preserved it in the context pack and recorded CycloneDX as `metadata-visible`. This supports component identity evidence only. |
+| Syft / CycloneDX | `verified` narrowly | Syft produced local CycloneDX SBOM output for named stress targets; current atlas scans preserve it under bundle producers and normalize dependency evidence as `metadata-visible`. This supports component identity and shared-dependency evidence only. |
 | jscpd | `narrowed` / mixed | A bounded jscpd run on the Portolan repository smoke target produced usable JSON and was preserved as `metadata-visible`. A separate large stress-target jscpd run failed before usable JSON output, so broad near-clone evidence remains unproven. |
-| Semgrep | `verified` as a local OSS output contract | Native Semgrep CLI output with a local config and explicit JSON output path can be preserved by `context prepare` as `metadata-visible`. Agents should use Semgrep's native CLI/skill/MCP surfaces when available; Portolan does not wrap Semgrep execution. Registry-backed configs, remote rules, and broad rule-value claims remain outside the default boundary. |
+| Semgrep | `verified` as a local OSS output contract | Native Semgrep CLI output with a local config and explicit JSON output path can be preserved by `portolan-scan` as `metadata-visible` atlas evidence. Agents should use Semgrep's native CLI/skill/MCP surfaces when available; Portolan does not claim registry-backed configs, remote rules, or broad rule-value coverage by default. |
 | Graphify | `verified` for raw node-link import and source-backed `EXTRACTED` verification | Native Graphify CLI/skill/MCP output can be imported when it produces local `graphify-out/graph.json` node-link data. The Graphify-style fixture validates confidence-to-evidence-state mapping. `portolan import graphify` normalizes raw `nodes`/`links` or `nodes`/`edges` outputs and can mark `EXTRACTED` facts `source-visible` when `--root` is supplied and `source_file` is readable inside that root. Graphify MCP/LLM behavior, PR dashboards, source-range hashing, and large-graph limits are still outside the importer contract. |
 | SCIP / Serena-style symbol indexes | `verified` narrowly for bounded JSON symbol-index import; SCIP CLI `verified` only | SCIP CLI help ran from the local snapshot, proving protocol tooling availability. `portolan import symbol-index` normalizes a local SCIP/Serena-style JSON export into document and symbol metadata. SCIP protobuf parsing, real SCIP indexer output, real Serena export, LSP/MCP daemon behavior, semantic correctness, and call-graph completeness remain unassessed. |
 | Repomix | `verified` as a file-inventory import path | Native Repomix CLI/skill/MCP output can be imported from an explicit local output path. `portolan import repomix` normalizes local packed-output file paths as `metadata-visible` inventory and marks disabled security-check packs as `cannot_verify`. Packed source parsing as architecture facts, redaction enforcement, and token/summary semantics remain unimplemented. |
@@ -60,9 +60,10 @@ adapter profiles:
 - `docs/adapter-contracts/symbol-index-profile.md`: SCIP and Serena-style
   symbol exports are accepted for bounded local JSON symbol-index import, not
   as SCIP protobuf parsing or LSP/MCP daemon behavior.
-- `docs/adapter-contracts/repomix-profile.md`: Repomix is accepted as a context
-  pack profile and bounded file-inventory import. Packed source content is
-  context, not architecture truth, and requires redaction before sharing.
+- `docs/adapter-contracts/repomix-profile.md`: Repomix is accepted as a
+  repository-pack profile and bounded file-inventory import. Packed source
+  content is navigation context, not architecture truth, and requires redaction
+  before sharing.
 
 The first-wave evaluation ledger is recorded in
 `docs/specs/042-agent-adapter-layer/reviews/oss-candidate-ledger-2026-05-27.md`.
