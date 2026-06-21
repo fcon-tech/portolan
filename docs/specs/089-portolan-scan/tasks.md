@@ -1,4 +1,4 @@
-# Tasks: Orient Wizard
+# Tasks: Portolan Scan
 
 - [x] T001 Spec 089 artifacts.
 - [x] T002 Implement portolan-scan.sh.

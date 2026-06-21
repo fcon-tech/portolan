@@ -1,40 +1,79 @@
 # Agent Troubleshooting
 
-## `portolan` Command Not Found
+## Installed Wrapper Not Found
 
-If you have a Portolan source checkout, build the local binary:
-
-```bash
-scripts/bootstrap-portolan
-.portolan/bin/portolan --version
-```
-
-Otherwise report that no Portolan binary is available.
-
-## Bootstrap Cannot Download Dependencies
-
-Default bootstrap avoids network access. If dependency download is required,
-ask the user before using:
+The primary agent interface is target-local:
 
 ```bash
-PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
+<target-root>/.portolan/bin/portolan-scan.sh
+<target-root>/.portolan/bin/portolan-bundle-query.sh
+<target-root>/.portolan/bin/portolan-viewer.sh
 ```
+
+If those files are missing, install the atlas pack again:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+```
+
+If an existing Cursor rule or OpenCode block blocks replacement, do not edit
+around it silently. Re-run with `--force` only after confirming the file/block is
+Portolan-managed and safe to replace.
+
+## Bundle Build Fails Or Writes Nowhere
+
+Run through the installed wrapper, not the external checkout:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+```
+
+If the harness blocks external writes, use `$TARGET_ROOT/.portolan/atlas` as the
+bundle directory.
 
 ## Output Directory Already Exists
 
 Do not overwrite silently. Either choose a fresh output directory or use
 `--force` only after the user accepts replacing that Portolan output.
 
-## The Map Is Too Large
+## Missing OSS Tools
 
-Read bounded artifacts first:
+Keep the default `--skip-install` for first runs. Missing jscpd, Semgrep, Syft,
+ctags, or similar tools should produce `not_assessed` / `cannot_verify` gaps,
+not invented evidence. Remove `--skip-install` only after operator approval.
+
+## The Atlas Is Too Large
+
+Use bundle-query instead of loading raw files into the chat:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+```
+
+Read bounded artifacts before raw full artifacts:
 
 - `summary.json`
-- `graph-index.json`
+- `manifest.json`
+- `repos.json`
 - `findings.jsonl`
-- `map.md`
+- `hotspots.jsonl`
+- `gaps.jsonl`
 
-Use `portolan graph slice` before loading full `graph.json`.
+Use `hotspots-full.jsonl` only through bundle-query or after narrowing.
+
+## Viewer Does Not Open
+
+Serve the bundle through the installed wrapper:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh" --bundle "$BUNDLE_DIR"
+```
+
+If the port is busy, pass `--port <free-port>`.
 
 ## The Target Has Missing Repositories
 
@@ -63,3 +102,9 @@ Semgrep output only when it exists or the user approves producing it.
 Stop and return to the artifacts. If a claim is not backed by Portolan output
 or another local source, label it `claim-only`, `unknown`, `cannot_verify`, or
 `not_assessed`.
+
+## Legacy Go CLI Needed
+
+Use legacy `portolan context prepare`, `portolan map`, and graph slicing only
+when the operator explicitly asks for older artifacts. The current atlas path is
+the installed wrapper flow above.

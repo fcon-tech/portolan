@@ -41,7 +41,7 @@
 
 - Full `landscape-report.json` overview block rendering (spec FR-002 partial)
 - Tight landscape JSON schemas + CI artifact validation
-- Spec folder slugs `088-orient-bundle-contract/` etc. (historical paths only)
+- Spec folder slugs for 088/089/092 have been renamed to Portolan/current-surface names.
 - Spec 094: bridge legacy `portolan map` bundle into viewer
 - OpenCode independent review lane retry (optional)
 

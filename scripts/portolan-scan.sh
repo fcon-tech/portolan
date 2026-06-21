@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-command Portolan scan: tool check → recipes → bundle → viewer.
-# See docs/specs/089-portolan-scan/ (superseded by portolan-scan) and harness/SKILL.md.
+# See docs/specs/089-portolan-scan/ and harness/SKILL.md.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

@@ -1,4 +1,4 @@
-# Tasks: Orient Bundle Contract
+# Tasks: Portolan Bundle Contract
 
 - [x] T001 Publish Portolan bundle schema.
 - [x] T002 Implement build-portolan-bundle.sh.
