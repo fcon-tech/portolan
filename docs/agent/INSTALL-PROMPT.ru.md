@@ -1,82 +1,73 @@
 # Prompt Для Установки Portolan Агентом
 
-Используй этот prompt, когда нужно сказать агенту "поставь Portolan" без
-скрытых подсказок.
+Используй этот prompt, когда нужно дать агенту Portolan как локальный atlas
+layer без скрытых подсказок.
 
-Скопируй агенту prompt block ниже. Если агент получает весь этот файл, а не
-только block, он должен выполнить block после подстановки трех переменных, а не
-спрашивать, что делать дальше.
-
-Замени три переменные на абсолютные локальные пути:
+Замени переменные на абсолютные локальные пути:
 
 ```text
-PORTOLAN_PATH=<absolute path to a Portolan checkout or installed portolan binary>
-TARGET_PATH=<absolute path to the local codebase or landscape to inspect>
-OUTPUT_PATH=<absolute path to an empty output directory>
+PORTOLAN_PATH=<absolute path to Portolan checkout>
+TARGET_ROOT=<absolute path to local repo or multi-repo landscape>
+BUNDLE_DIR=<absolute path to empty bundle output directory>
 ```
 
-Для OpenCode default-permission runs предпочитай `OUTPUT_PATH` внутри checkout
-Portolan, например `<portolan-checkout>/.portolan/runs/<target-name>`.
-Зафиксированный OpenCode external-output default-permission lane failed, когда
-harness отклонил внешний output path.
+Если нужно установить инструкции Cursor/OpenCode в target project:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all
+```
 
 Потом отправь агенту:
 
 ```text
-Поставь и используй Portolan для локальной read-only навигации по кодовой базе.
-Выполни эти шаги сейчас и отчитайся о результате. Не спрашивай, запускать ли
-их. Спроси только если обязательный локальный путь отсутствует.
+Используй Portolan как agent-installable atlas layer для TARGET_ROOT.
+Запиши bundle в BUNDLE_DIR. Выполняй сейчас; спрашивай только если путь
+отсутствует, BUNDLE_DIR небезопасно создать/заменить, или запуск/установка
+локального OSS tool требует подтверждения оператора.
 
-Inputs:
-- PORTOLAN_PATH=<absolute path to a Portolan checkout or installed portolan binary>
-- TARGET_PATH=<absolute path to the local target>
-- OUTPUT_PATH=<absolute path to an empty output directory>
+1. Прочитай PORTOLAN_PATH/harness/SKILL.md
+2. Сначала собери bundle:
+   "$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+   Убирай --skip-install только после явного разрешения установить
+   отсутствующие OSS tools; по умолчанию сохраняй missing tools как
+   not_assessed/cannot_verify gaps.
+3. Перед ответом прочитай atlas bundle:
+   - manifest.json
+   - atlas-facts.json
+   - repo-profiles.json
+   - relationships.jsonl
+   - hotspots.jsonl / hotspots-full.jsonl
+   - gaps.jsonl
+   - atlas-surface-content.json
+4. Не загружай весь bundle в чат. Запрашивай данные через bundle-query:
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section edges --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
+   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+5. Для выделенного кода свяжи файл/символ с atlas:
+   - найди repo-id в repos.json;
+   - query source/search/symbol для выбранного path/name;
+   - query hotspots --repo <repo-id>, gaps и relationships для окружающего контекста;
+   - дай ссылки на viewer/source routes.
 
-Правила:
-- Используй только эти локальные пути.
-- Не используй network access, credentials, clone, daemon или mutation target
-  без моего явного разрешения.
-- Если harness отклоняет запись в OUTPUT_PATH, один раз переключись на
-  repo-local `.portolan/runs/<target-name>` внутри checkout Portolan и запиши
-  исходную запись в OUTPUT_PATH как `failed`. Используй эту fallback
-  директорию как OUTPUT_PATH для остальных шагов.
-- Если используешь OpenCode с default permissions, предпочти этот repo-local
-  `.portolan/runs/<target-name>` output path до попытки писать во внешний
-  output path.
-- Если PORTOLAN_PATH указывает на бинарь, проверь его через `--version`.
-- Если PORTOLAN_PATH указывает на checkout Portolan, следуй
-  `docs/agent/INSTALL.ru.md` и собери repo-local binary через
-  `scripts/bootstrap-portolan`.
-- Подготовь context в `OUTPUT_PATH/context`.
-- Построй map в `OUTPUT_PATH/map`, если размер target разумный.
-- Если существует `TARGET_PATH/selection.json`, проверь его и для map шага
-  предпочти `map --selection TARGET_PATH/selection.json --out OUTPUT_PATH/map`.
-  Иначе используй `map --root TARGET_PATH --out OUTPUT_PATH/map`.
-- Если selection validation падает, запиши эту команду как `failed`, затем
-  используй `map --root TARGET_PATH --out OUTPUT_PATH/map`.
-- Читай bounded artifacts до большого `graph.json`:
-  - `context/agent-brief.md`
-  - `context/answer-contract.md`
-  - `context/evidence-index.jsonl`
-  - `context/gaps.jsonl`
-  - `map/summary.json`
-  - `map/graph-index.json`
-  - `map/findings.jsonl`
-  - `map/map.md`
-- Сохраняй `verified`, `failed`, `blocked`, `not_assessed`, `unknown` и
-  `cannot_verify`.
-- Для каждого важного claim указывай локальный artifact path.
-- Не заявляй complete estate coverage, runtime topology, ценность OSS scanner
-  или architecture facts, если локальные Portolan artifacts этого не доказывают.
+Если harness запрещает внешний output, используй
+TARGET_ROOT/.portolan/atlas как BUNDLE_DIR.
 
 Ответь:
-1. Какие команды запускались и какой статус у каждой: `verified`, `failed` или
-   `blocked`.
-2. Какие artifact paths созданы.
-3. Какой локальный scope виден и какие completeness limits остаются.
-4. Какие relationships, duplication, configuration surfaces и technical-debt
-   candidates подтверждены evidence.
-5. Какие поверхности остаются `unknown`, `cannot_verify` и `not_assessed`.
-6. Три полезных следующих локальных действия.
-7. Какие неподтвержденные claims ты избежал или случайно сделал.
+1. Scope: какие repos/components видны в atlas
+2. Landscape: ключевые relationships, hubs, surfaces
+3. Pain: top hotspots и почему они важны
+4. Gaps: unknown / cannot_verify / not_assessed surfaces
+5. Drill-down: source/report/viewer routes для существенных claims
+6. Agent handoff: точные bundle-query команды, которые использовал или
+   рекомендуешь следующему агенту
+7. Viewer URL/command:
+   cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"
 ```
+
+Legacy Go CLI используй только если оператор явно просит `context prepare` /
+`map`: [`docs/agent/INSTALL.ru.md`](INSTALL.ru.md).

@@ -39,6 +39,38 @@
       "note": "Contains packaging, deployment, test framework, smoke tests, Docker, and BOM source."
     },
     {
+      "id": "bigtop-issue-tracking",
+      "label": "Apache Bigtop issue tracking guide",
+      "type": "official-issue-tracker",
+      "url": "https://bigtop.apache.org/issue-tracking.html",
+      "evidence_state": "metadata-visible",
+      "note": "Official project page says Bigtop tracks bugs and enhancement requests in Apache JIRA."
+    },
+    {
+      "id": "bigtop-jira",
+      "label": "Apache Bigtop JIRA project",
+      "type": "official-issue-tracker",
+      "url": "https://issues.apache.org/jira/browse/BIGTOP",
+      "evidence_state": "metadata-visible",
+      "note": "Apache JIRA project used by Bigtop for bugs and enhancement requests."
+    },
+    {
+      "id": "bigtop-wiki",
+      "label": "Apache Bigtop Confluence wiki",
+      "type": "official-wiki",
+      "url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+      "evidence_state": "metadata-visible",
+      "note": "Official Confluence space with Bigtop overview, releases, support matrices, build, deployment, and contribution pages."
+    },
+    {
+      "id": "bigtop-mailing-lists",
+      "label": "Apache Bigtop mailing lists",
+      "type": "official-mailing-list",
+      "url": "https://bigtop.apache.org/mail-lists.html",
+      "evidence_state": "metadata-visible",
+      "note": "Official user, developer, commits, CI, announce, and issues mailing-list surface."
+    },
+    {
       "id": "apache-attic-oozie",
       "label": "Apache Attic entry for Oozie",
       "type": "official-attic",
@@ -122,6 +154,17 @@
         "bigtop-docker-images",
         "bigtop-ci"
       ]
+    },
+    {
+      "id": "community-and-tracking",
+      "label": "Community, tracker, and wiki surfaces",
+      "intent": "Keep non-code surfaces visible so the atlas can navigate issue history, release planning, documentation, and community signals without pretending they were source code.",
+      "default_evidence_state": "metadata-visible",
+      "target_ids": [
+        "apache-bigtop-jira",
+        "apache-bigtop-wiki",
+        "apache-bigtop-mailing-lists"
+      ]
     }
   ],
   "targets": [
@@ -134,7 +177,10 @@
       "evidence_state": "source-visible",
       "repository_url": "https://github.com/apache/bigtop",
       "project_url": "https://bigtop.apache.org/",
-      "notes": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata."
+      "notes": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.",
+      "tracker_url": "https://issues.apache.org/jira/browse/BIGTOP",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+      "mailing_list_url": "https://bigtop.apache.org/mail-lists.html"
     },
     {
       "id": "apache-bigtop-release-350",
@@ -155,7 +201,9 @@
       "evidence_state": "metadata-visible",
       "version": "2.5.4",
       "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
-      "depends_on": ["apache-bigtop-repo"],
+      "depends_on": [
+        "apache-bigtop-repo"
+      ],
       "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
     },
     {
@@ -167,7 +215,9 @@
       "evidence_state": "metadata-visible",
       "version": "1.4.0",
       "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
-      "depends_on": ["apache-bigtop-repo"],
+      "depends_on": [
+        "apache-bigtop-repo"
+      ],
       "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
     },
     {
@@ -179,7 +229,9 @@
       "evidence_state": "metadata-visible",
       "version": "3.5.0",
       "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
-      "depends_on": ["apache-bigtop-repo"],
+      "depends_on": [
+        "apache-bigtop-repo"
+      ],
       "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
     },
     {
@@ -191,7 +243,9 @@
       "evidence_state": "metadata-visible",
       "version": "3.5.0",
       "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
-      "depends_on": ["apache-bigtop-repo"],
+      "depends_on": [
+        "apache-bigtop-repo"
+      ],
       "notes": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target."
     },
     {
@@ -212,7 +266,9 @@
       "evidence_state": "source-visible",
       "version": "2.10.5",
       "repository_url": "https://github.com/apache/airflow",
-      "project_url": "https://airflow.apache.org/"
+      "project_url": "https://airflow.apache.org/",
+      "tracker_url": "https://github.com/apache/airflow/issues",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/AIRFLOW"
     },
     {
       "id": "alluxio",
@@ -224,8 +280,12 @@
       "version": "2.9.6",
       "repository_url": "https://github.com/Alluxio/alluxio",
       "project_url": "https://www.alluxio.io/",
-      "depends_on": ["apache-hadoop"],
-      "notes": "Included in the Bigtop release BOM but not an Apache project."
+      "depends_on": [
+        "apache-hadoop"
+      ],
+      "notes": "Included in the Bigtop release BOM but not an Apache project.",
+      "tracker_url": "https://github.com/Alluxio/alluxio/issues",
+      "wiki_url": "https://github.com/Alluxio/alluxio/wiki"
     },
     {
       "id": "apache-flink",
@@ -237,7 +297,11 @@
       "version": "1.20.1",
       "repository_url": "https://github.com/apache/flink",
       "project_url": "https://flink.apache.org/",
-      "depends_on": ["apache-hadoop"]
+      "depends_on": [
+        "apache-hadoop"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/FLINK",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/FLINK"
     },
     {
       "id": "apache-hadoop",
@@ -248,7 +312,9 @@
       "evidence_state": "source-visible",
       "version": "3.3.6",
       "repository_url": "https://github.com/apache/hadoop",
-      "project_url": "https://hadoop.apache.org/"
+      "project_url": "https://hadoop.apache.org/",
+      "tracker_url": "https://issues.apache.org/jira/browse/HADOOP",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/HADOOP"
     },
     {
       "id": "apache-hbase",
@@ -260,7 +326,15 @@
       "version": "2.6.2",
       "repository_url": "https://github.com/apache/hbase",
       "project_url": "https://hbase.apache.org/",
-      "depends_on": ["apache-hadoop", "apache-zookeeper"]
+      "depends_on": [
+        "apache-hadoop",
+        "apache-zookeeper"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/HBASE",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/HBASE/Home",
+      "wiki_evidence_state": "cannot_verify",
+      "wiki_note": "Confluence destination exists but redirects unauthenticated users to the Apache login page; public documentation is used as the readable fallback.",
+      "docs_url": "https://hbase.apache.org/book.html"
     },
     {
       "id": "apache-hive",
@@ -272,7 +346,12 @@
       "version": "4.0.1",
       "repository_url": "https://github.com/apache/hive",
       "project_url": "https://hive.apache.org/",
-      "depends_on": ["apache-hadoop", "apache-tez"]
+      "depends_on": [
+        "apache-hadoop",
+        "apache-tez"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/HIVE",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/HIVE"
     },
     {
       "id": "apache-kafka",
@@ -284,7 +363,11 @@
       "version": "3.4.1",
       "repository_url": "https://github.com/apache/kafka",
       "project_url": "https://kafka.apache.org/",
-      "depends_on": ["apache-zookeeper"]
+      "depends_on": [
+        "apache-zookeeper"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/KAFKA",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/KAFKA"
     },
     {
       "id": "apache-livy",
@@ -296,7 +379,15 @@
       "version": "0.8.0-incubating",
       "repository_url": "https://github.com/apache/incubator-livy",
       "project_url": "https://livy.apache.org/",
-      "depends_on": ["apache-spark", "apache-hadoop"]
+      "depends_on": [
+        "apache-spark",
+        "apache-hadoop"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/LIVY",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/LIVY",
+      "wiki_evidence_state": "cannot_verify",
+      "wiki_note": "Confluence destination redirects unauthenticated users to the Apache login page; public documentation is used as the readable fallback.",
+      "docs_url": "https://livy.apache.org/docs/latest/"
     },
     {
       "id": "apache-phoenix",
@@ -308,7 +399,16 @@
       "version": "5.2.1",
       "repository_url": "https://github.com/apache/phoenix",
       "project_url": "https://phoenix.apache.org/",
-      "depends_on": ["apache-hbase", "apache-hadoop", "apache-zookeeper"]
+      "depends_on": [
+        "apache-hbase",
+        "apache-hadoop",
+        "apache-zookeeper"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/PHOENIX",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/PHOENIX/Home",
+      "wiki_evidence_state": "cannot_verify",
+      "wiki_note": "Confluence destination exists but redirects unauthenticated users to the Apache login page; public documentation is used as the readable fallback.",
+      "docs_url": "https://phoenix.apache.org/resources.html"
     },
     {
       "id": "apache-ranger",
@@ -319,7 +419,9 @@
       "evidence_state": "source-visible",
       "version": "2.7.0",
       "repository_url": "https://github.com/apache/ranger",
-      "project_url": "https://ranger.apache.org/"
+      "project_url": "https://ranger.apache.org/",
+      "tracker_url": "https://issues.apache.org/jira/browse/RANGER",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/RANGER"
     },
     {
       "id": "apache-solr",
@@ -330,7 +432,9 @@
       "evidence_state": "source-visible",
       "version": "8.11.4",
       "repository_url": "https://github.com/apache/solr",
-      "project_url": "https://solr.apache.org/"
+      "project_url": "https://solr.apache.org/",
+      "tracker_url": "https://issues.apache.org/jira/browse/SOLR",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/SOLR"
     },
     {
       "id": "apache-spark",
@@ -342,7 +446,11 @@
       "version": "3.5.6",
       "repository_url": "https://github.com/apache/spark",
       "project_url": "https://spark.apache.org/",
-      "depends_on": ["apache-hadoop"]
+      "depends_on": [
+        "apache-hadoop"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/SPARK",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/SPARK"
     },
     {
       "id": "apache-tez",
@@ -354,7 +462,11 @@
       "version": "0.10.4",
       "repository_url": "https://github.com/apache/tez",
       "project_url": "https://tez.apache.org/",
-      "depends_on": ["apache-hadoop"]
+      "depends_on": [
+        "apache-hadoop"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/TEZ",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/TEZ"
     },
     {
       "id": "apache-zeppelin",
@@ -366,7 +478,13 @@
       "version": "0.11.2",
       "repository_url": "https://github.com/apache/zeppelin",
       "project_url": "https://zeppelin.apache.org/",
-      "depends_on": ["apache-spark", "apache-hive", "apache-hadoop"]
+      "depends_on": [
+        "apache-spark",
+        "apache-hive",
+        "apache-hadoop"
+      ],
+      "tracker_url": "https://issues.apache.org/jira/browse/ZEPPELIN",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/ZEPPELIN"
     },
     {
       "id": "apache-zookeeper",
@@ -377,7 +495,9 @@
       "evidence_state": "source-visible",
       "version": "3.8.4",
       "repository_url": "https://github.com/apache/zookeeper",
-      "project_url": "https://zookeeper.apache.org/"
+      "project_url": "https://zookeeper.apache.org/",
+      "tracker_url": "https://issues.apache.org/jira/browse/ZOOKEEPER",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/ZOOKEEPER"
     },
     {
       "id": "apache-oozie",
@@ -388,8 +508,12 @@
       "evidence_state": "metadata-visible",
       "repository_url": "https://github.com/apache/oozie",
       "project_url": "https://attic.apache.org/projects/oozie.html",
-      "depends_on": ["apache-hadoop"],
-      "notes": "Retired project used as a legacy control for lifecycle and evidence-state handling."
+      "depends_on": [
+        "apache-hadoop"
+      ],
+      "notes": "Retired project used as a legacy control for lifecycle and evidence-state handling.",
+      "tracker_url": "https://issues.apache.org/jira/browse/OOZIE",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/OOZIE"
     },
     {
       "id": "apache-sqoop",
@@ -400,8 +524,13 @@
       "evidence_state": "metadata-visible",
       "repository_url": "https://github.com/apache/sqoop",
       "project_url": "https://sqoop.apache.org/",
-      "depends_on": ["apache-hadoop", "apache-hive"],
-      "notes": "Retired project used as a legacy control for replacement and migration signals."
+      "depends_on": [
+        "apache-hadoop",
+        "apache-hive"
+      ],
+      "notes": "Retired project used as a legacy control for replacement and migration signals.",
+      "tracker_url": "https://issues.apache.org/jira/browse/SQOOP",
+      "wiki_url": "https://cwiki.apache.org/confluence/display/SQOOP"
     },
     {
       "id": "bigtop-binary-repos",
@@ -431,6 +560,36 @@
       "evidence_state": "metadata-visible",
       "reference_url": "https://ci.bigtop.apache.org/",
       "notes": "Upstream CI is context evidence, not a Portolan verification result."
+    },
+    {
+      "id": "apache-bigtop-jira",
+      "label": "Apache Bigtop JIRA",
+      "kind": "issue-tracker",
+      "lifecycle": "active",
+      "role": "issue-and-enhancement-tracking",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://issues.apache.org/jira/browse/BIGTOP",
+      "notes": "Official Bigtop tracker for bugs and enhancement requests."
+    },
+    {
+      "id": "apache-bigtop-wiki",
+      "label": "Apache Bigtop Confluence",
+      "kind": "wiki",
+      "lifecycle": "active",
+      "role": "project-documentation-and-release-planning",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+      "notes": "Official Bigtop wiki space with overview, releases, support matrix, build, deployment, and contribution pages."
+    },
+    {
+      "id": "apache-bigtop-mailing-lists",
+      "label": "Apache Bigtop mailing lists",
+      "kind": "mailing-list",
+      "lifecycle": "active",
+      "role": "community-support-and-notifications",
+      "evidence_state": "metadata-visible",
+      "reference_url": "https://bigtop.apache.org/mail-lists.html",
+      "notes": "Official user, developer, commits, CI, announce, and issues mailing lists."
     }
   ],
   "acceptance_checks": [

@@ -60,9 +60,12 @@ fi
 # Symbol query smoke (bundle-query)
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 if [[ -x "$ROOT/scripts/portolan-bundle-query.sh" ]]; then
-  sym_out=$("$ROOT/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE" --limit 3 2>/dev/null || true)
-  sym_n=$(printf '%s\n' "$sym_out" | jq -s 'length' 2>/dev/null || echo 0)
-  [[ "$sym_n" -ge 1 ]] || fail "bundle-query symbol returned 0 records"
+  [[ -s "$BUNDLE/symbol-index.jsonl" ]] || fail "symbol-index.jsonl missing or empty"
+  first_symbol=$(awk 'length($0) > 0 { print; exit }' "$BUNDLE/symbol-index.jsonl" | jq -r '.name // empty')
+  [[ -n "$first_symbol" ]] || fail "symbol-index has no queryable symbol names"
+  sym_out=$("$ROOT/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE" --name "$first_symbol" --limit 3 2>/dev/null || true)
+  sym_n=$(printf '%s\n' "$sym_out" | jq '.records | length' 2>/dev/null || echo 0)
+  [[ "$sym_n" -ge 1 ]] || fail "bundle-query symbol returned 0 records for '$first_symbol'"
 fi
 
 echo "harness-bigtop10-acceptance: ok (repos=$repo_count cross_edges=$cross_edges manifest_cross=$manifest_status)"

@@ -2,14 +2,14 @@
   "schema_version": "0.1.0",
   "nodes": [
     {
-      "id": "sym-e92eec1034e5",
+      "id": "semgrep-d1e57e314224",
       "type": "finding",
-      "label": "Symbol-dense file: sample.go (6 symbols)",
-      "kind": "debt-candidate",
+      "label": "Semgrep portolan-hardcoded-secret-pattern",
+      "kind": "static-finding",
       "severity": "medium",
       "rank": 1,
       "paths": [
-        "sample.go"
+        "config.env"
       ]
     },
     {
@@ -25,26 +25,25 @@
       ]
     },
     {
-      "id": "dup-916524ed4981",
+      "id": "sym-4cc434b72b1d",
       "type": "finding",
-      "label": "Duplicate block (~42 lines): pkg/a/util.go",
-      "kind": "duplication",
+      "label": "Symbol-dense file: sample.go (6 symbols)",
+      "kind": "debt-candidate",
       "severity": "medium",
       "rank": 3,
       "paths": [
-        "pkg/a/util.go",
-        "pkg/b/util.go"
+        "sample.go"
       ]
     },
     {
-      "id": "semgrep-d1e57e314224",
+      "id": "semgrep-47db41588c43",
       "type": "finding",
-      "label": "Semgrep portolan-hardcoded-secret-pattern",
+      "label": "Semgrep portolan-todo-fixme",
       "kind": "static-finding",
-      "severity": "medium",
+      "severity": "info",
       "rank": 4,
       "paths": [
-        "config.env"
+        "sample.go"
       ]
     },
     {
@@ -67,17 +66,6 @@
       "rank": 6,
       "paths": [
         "/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target/Dockerfile"
-      ]
-    },
-    {
-      "id": "semgrep-47db41588c43",
-      "type": "finding",
-      "label": "Semgrep portolan-todo-fixme",
-      "kind": "static-finding",
-      "severity": "info",
-      "rank": 7,
-      "paths": [
-        "sample.go"
       ]
     },
     {
@@ -119,33 +107,28 @@
   ],
   "edges": [
     {
-      "from": "path:sample.go",
-      "to": "sym-e92eec1034e5",
-      "kind": "finding_at"
-    },
-    {
-      "from": "path:pkg/a/util.go",
-      "to": "dup-916524ed4981",
-      "kind": "finding_at"
-    },
-    {
-      "from": "path:pkg/b/util.go",
-      "to": "dup-916524ed4981",
-      "kind": "finding_at"
-    },
-    {
-      "from": "path:pkg/a/util.go",
-      "to": "dup-916524ed4981",
-      "kind": "finding_at"
-    },
-    {
-      "from": "path:pkg/b/util.go",
-      "to": "dup-916524ed4981",
-      "kind": "finding_at"
-    },
-    {
       "from": "path:config.env",
       "to": "semgrep-d1e57e314224",
+      "kind": "finding_at"
+    },
+    {
+      "from": "path:pkg/a/util.go",
+      "to": "dup-916524ed4981",
+      "kind": "finding_at"
+    },
+    {
+      "from": "path:pkg/b/util.go",
+      "to": "dup-916524ed4981",
+      "kind": "finding_at"
+    },
+    {
+      "from": "path:sample.go",
+      "to": "sym-4cc434b72b1d",
+      "kind": "finding_at"
+    },
+    {
+      "from": "path:sample.go",
+      "to": "semgrep-47db41588c43",
       "kind": "finding_at"
     },
     {
@@ -156,11 +139,6 @@
     {
       "from": "path:/home/fall_out_bug/projects/sdp/portolan/internal/testfixtures/portolan-bundle/target/Dockerfile",
       "to": "cfg-41103ff5c511",
-      "kind": "finding_at"
-    },
-    {
-      "from": "path:sample.go",
-      "to": "semgrep-47db41588c43",
       "kind": "finding_at"
     }
   ]

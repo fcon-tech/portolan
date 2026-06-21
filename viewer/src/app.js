@@ -1,1705 +1,2247 @@
-/**
- * Portolan viewer — ranked hotspots and folder tree from /bundle/* (evidence only).
- */
+const app = document.getElementById('app');
 
-const SEV_RANK = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
-
-const KIND_LABELS = {
-  duplication: 'Duplication',
-  'static-finding': 'Static smell',
-  config: 'Config surface',
-  'debt-candidate': 'Symbol density',
-  'dep-hub': 'Dependency hub',
+const state = {
+  model: null,
+  selectedId: '',
+  selectedFindingId: '',
+  view: 'atlas',
+  query: '',
+  activeCluster: '',
+  activeTour: 'cto',
+  toast: '',
 };
 
-/** viewMode: preset id or 'custom' when user toggles kind chips */
-const VIEWS = {
-  all: {
-    label: 'All',
-    description: 'Every hotspot in this bundle (subject to search & severity filters).',
+const LAYERS = [
+  {
+    id: 'integration',
+    title: 'Integration',
+    subtitle: 'Packaging, governance, streams',
+    roles: ['ecosystem-integrator', 'security-governance', 'event-streaming'],
   },
-  top15: {
-    label: 'Tour · top 15',
-    description:
-      'Only ranks #1–#15. Rank is bundle sort order (severity first, then kind quotas) — a guided slice, not the full landscape.',
-    maxRank: 15,
+  {
+    id: 'foundation',
+    title: 'Foundation',
+    subtitle: 'Storage, coordination, search',
+    roles: [
+      'filesystem-yarn-mapreduce-foundation',
+      'distributed-nosql-store',
+      'coordination-service',
+      'search-index',
+      'distributed-cache-filesystem',
+    ],
   },
-  'code-pain': {
-    label: 'Code pain',
-    description: 'Duplication, semgrep smells, and symbol-dense files — typical refactor/review targets.',
-    kinds: ['duplication', 'static-finding', 'debt-candidate'],
+  {
+    id: 'compute',
+    title: 'Compute and SQL',
+    subtitle: 'Batch, stream, warehouse, execution',
+    roles: [
+      'stream-batch-processing',
+      'distributed-compute',
+      'sql-warehouse',
+      'dag-execution-engine',
+      'sql-over-hbase',
+    ],
   },
-  config: {
-    label: 'Config & deploy',
-    description: 'Docker, CI, compose, env, terraform inventory — where ops/config risk lives (informational).',
-    kinds: ['config'],
+  {
+    id: 'access',
+    title: 'Access',
+    subtitle: 'Workflow, notebooks, services',
+    roles: ['workflow-orchestration', 'spark-rest-service', 'notebook-analytics'],
   },
-  deps: {
-    label: 'Dependencies',
-    description: 'Packages with many dependents in the SBOM (Syft) — upgrade blast-radius hubs.',
-    kinds: ['dep-hub'],
+  {
+    id: 'legacy',
+    title: 'Legacy',
+    subtitle: 'Retired but still visible',
+    roles: ['legacy-hadoop-workflow-scheduler', 'legacy-rdbms-hadoop-transfer'],
   },
-};
+];
 
-const KIND_HELP = {
-  duplication: {
-    why: 'jscpd found a repeated code block. Copies drift apart when you change one copy and forget the other.',
-    tool: 'jscpd',
-    limit: 'Only near-identical fragments; not design-level duplication.',
+const IMPORTANT_QUESTIONS = [
+  {
+    label: 'How is the enterprise landscape shaped?',
+    answer: 'Use the layered map first: context -> domains -> components -> dependencies.',
+    target: 'map',
   },
-  'static-finding': {
-    why: 'Semgrep matched a local rule (TODO/FIXME, secret-like patterns, etc.).',
-    tool: 'semgrep',
-    limit: 'Rule-based; not a full security audit.',
+  {
+    label: 'Where should I inspect first?',
+    answer: 'Open risk clusters, then drill into components with high findings and missing docs/runtime evidence.',
+    target: 'risks',
   },
-  config: {
-    why: 'File is part of deploy/config surface (Dockerfile, workflow, .env, terraform…).',
-    tool: 'config scan',
-    limit: 'Inventory only — severity is info, not a vulnerability claim.',
+  {
+    label: 'What does Portolan really know?',
+    answer: 'Source, tracker, wiki, docs and imported cards are separated from unknown runtime topology.',
+    target: 'sources',
   },
-  'debt-candidate': {
-    why: 'File has many symbols (ctags). Dense files are harder to navigate — candidate for split or review.',
-    tool: 'universal-ctags',
-    limit: 'Symbol count ≠ complexity score; no AI judgment.',
+  {
+    label: 'Can I trust the architecture picture?',
+    answer: 'The map is static corpus evidence. Runtime calls and production ownership remain not_assessed.',
+    target: 'gaps',
   },
-  'dep-hub': {
-    why: 'Package has many dependency edges in the CycloneDX SBOM.',
-    tool: 'syft',
-    limit: 'Landscape-level; no file path attached.',
-  },
-};
+];
 
-/** Tier ladder labels for agent analysis claims (spec 106/107). */
-const TIER_META = {
-  analytical: { letter: 'B', label: 'Analytical', hint: 'agent aggregated from cited evidence; refs resolved at import' },
-  synthetic: { letter: 'C', label: 'Synthetic', hint: 'agent inference over cited evidence; conclusion not tool-verified' },
-  speculative: { letter: 'D', label: 'Speculative', hint: 'agent hypothesis; labeling only' },
-};
+const ATLAS_TOURS = [
+  {
+    id: 'cto',
+    title: 'CTO landscape briefing',
+    summary: 'Packaging, foundation, storage, SQL and interactive access in one route.',
+    steps: ['apache-bigtop-repo', 'apache-hadoop', 'apache-hbase', 'apache-hive', 'apache-spark', 'apache-zeppelin'],
+  },
+  {
+    id: 'agent',
+    title: 'Coding-agent bootstrap',
+    summary: 'The shortest path an agent should follow before making codebase claims.',
+    steps: ['apache-bigtop-repo', 'apache-hadoop', 'apache-hive', 'apache-ranger', 'apache-airflow'],
+  },
+  {
+    id: 'risk',
+    title: 'Risk and duplication sweep',
+    summary: 'Start with high-noise systems, then inspect shared dependency pressure.',
+    steps: ['apache-hive', 'apache-spark', 'apache-flink', 'apache-solr', 'apache-hadoop'],
+  },
+];
 
-let allHotspots = [];
-let repos = [];
-let manifest = null;
-let gaps = [];
-let landscapeCard = null;
-let landscapeReport = null;
-let repoProfiles = [];
-let relationships = [];
-let claims = [];
-let selectedRepoId = null;
-let filters = { kinds: new Set(), severities: new Set(), repoIds: new Set() };
-let searchQuery = '';
-let searchCodeHits = [];
-let searchFetchTimer = null;
-let searchFetchGen = 0;
-let selectedId = null;
-let expandedDirs = new Set();
-/** @type {'overview' | 'repos' | 'findings' | 'gaps'} */
-let activeTab = 'overview';
-let usingFullHotspots = false;
-/** @type {keyof VIEWS | 'custom'} */
-let viewMode = 'top15';
+const ATLAS_LOOP = [
+  ['Scan', 'local producers'],
+  ['Map', 'repos + relations'],
+  ['Ask', 'bounded query'],
+  ['Enrich', 'agent claims'],
+  ['Re-render', 'human atlas'],
+];
 
-async function loadJSONL(url) {
+init();
+
+async function init() {
+  try {
+    const [
+      atlasFacts,
+      surfaceContent,
+      repoProfiles,
+      hotspots,
+      relationships,
+      gaps,
+      claims,
+      claimsImportReport,
+      landscapeReport,
+      searchIndex,
+    ] =
+      await Promise.all([
+        fetchJson('/bundle/atlas-facts.json', {}),
+        fetchJson('/bundle/atlas-surface-content.json', {}),
+        fetchJson('/bundle/repo-profiles.json', {}),
+        fetchJsonl('/bundle/hotspots-full.jsonl'),
+        fetchJsonl('/bundle/relationships.jsonl'),
+        fetchJsonl('/bundle/gaps.jsonl'),
+        fetchJsonl('/bundle/claims.jsonl'),
+        fetchJson('/bundle/claims-import-report.json', {}),
+        fetchJson('/bundle/landscape-report.json', {}),
+        fetchJsonl('/bundle/search-index.jsonl'),
+      ]);
+    state.model = buildModel({
+      atlasFacts,
+      surfaceContent,
+      repoProfiles,
+      hotspots,
+      relationships,
+      gaps,
+      claims,
+      claimsImportReport,
+      landscapeReport,
+      searchIndex,
+    });
+    state.selectedId = chooseDefaultComponent(state.model);
+    routeFromHash();
+    ensureSelectedFinding();
+    render();
+  } catch (err) {
+    app.innerHTML = `
+      <main class="loading-screen loading-screen--error">
+        <div class="loading-mark">Portolan</div>
+        <p>Could not load bundle.</p>
+        <pre>${escapeHtml(err && err.message ? err.message : String(err))}</pre>
+      </main>
+    `;
+  }
+}
+
+async function fetchJson(url, fallback) {
+  const res = await fetch(url);
+  if (!res.ok) return fallback;
+  return res.json();
+}
+
+async function fetchJsonl(url) {
   const res = await fetch(url);
   if (!res.ok) return [];
   const text = await res.text();
   return text
-    .split('\n')
-    .map((l) => l.trim())
+    .split(/\r?\n/)
+    .map((line) => line.trim())
     .filter(Boolean)
-    .map((l) => JSON.parse(l));
+    .map((line) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean);
 }
 
-async function loadJSON(url) {
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  return res.json();
+function buildModel({
+  atlasFacts,
+  surfaceContent,
+  repoProfiles,
+  hotspots,
+  relationships,
+  gaps,
+  claims,
+  claimsImportReport,
+  landscapeReport,
+  searchIndex,
+}) {
+  const components = normalizeComponents(atlasFacts, repoProfiles);
+  const componentByTarget = new Map(components.map((component) => [component.targetId, component]));
+  const componentByRepo = new Map(components.map((component) => [component.repoId, component]));
+
+  attachSurfaceContent(components, surfaceContent);
+  attachFindings(components, hotspots);
+  attachRelationships(components, relationships);
+  const landscapeClaims = attachClaims(components, claims);
+
+  const findingById = new Map((hotspots || []).filter((finding) => finding.id).map((finding) => [finding.id, finding]));
+  const edges = (atlasFacts.edges || []).filter((edge) => edge.kind === 'manifest-dependency');
+  const relationshipEdges = (atlasFacts.edges || []).filter((edge) => edge.kind !== 'manifest-dependency');
+  const graphPositions = positionComponents(components);
+  const clusters = buildFindingClusters(hotspots, components);
+  const sharedDependencies = relationships
+    .filter((item) => item.type === 'shared-dependency')
+    .sort((a, b) => (b.repos || []).length - (a.repos || []).length)
+    .slice(0, 12);
+
+  const coverage = atlasFacts.coverage || {};
+  const runtimeGap = (atlasFacts.gaps || gaps || []).find((gap) =>
+    String(gap.subject || gap.layer || '').toLowerCase().includes('runtime')
+  );
+
+  const mergedGaps = mergeGaps(atlasFacts.gaps || [], gaps || []);
+  if (
+    numberFrom(coverage.cannot_verify_surface_routes, 0) > 0 &&
+    !mergedGaps.some((gap) => String(gap.surface || gap.subject || '').includes('public wiki'))
+  ) {
+    mergedGaps.push({
+      id: 'atlas-facts-public-wiki-readability',
+      surface: 'public wiki readability',
+      status: 'cannot_verify',
+      summary: `${coverage.cannot_verify_surface_routes} public wiki route(s) exist but unauthenticated readability is not proven by this local bundle.`,
+      source: 'atlas-facts',
+    });
+  }
+  const reportSections = Array.isArray(landscapeReport.sections) ? landscapeReport.sections : [];
+  const nextSteps = (reportSections.find((section) => section.id === 'next_steps')?.items || []).slice(0, 8);
+  const insights = buildExecutiveInsights({
+    components,
+    coverage,
+    edges,
+    sharedDependencies,
+    gaps: mergedGaps,
+    nextSteps,
+    findingById,
+  });
+
+  return {
+    corpus: atlasFacts.corpus || surfaceContent.corpus || {},
+    coverage,
+    components,
+    componentByTarget,
+    componentByRepo,
+    edges,
+    relationshipEdges,
+    graphPositions,
+    clusters,
+    sharedDependencies,
+    surfaceContent,
+    relationships,
+    claims: claims || [],
+    landscapeClaims,
+    rejectedClaims: Array.isArray(claimsImportReport.rejected) ? claimsImportReport.rejected : [],
+    searchIndex: Array.isArray(searchIndex) ? searchIndex.slice(0, 5000) : [],
+    findingById,
+    reportSections,
+    insights,
+    gaps: mergedGaps,
+    hotspots,
+    runtimeGap,
+    generatedAt: atlasFacts.generated_at || surfaceContent.generated_at || '',
+  };
 }
 
-function escapeHtml(s) {
-  return String(s)
+function buildExecutiveInsights({ components, coverage, edges, sharedDependencies, gaps, nextSteps, findingById }) {
+  const layerGroups = groupBy(components, (component) => component.layer);
+  const layerShape = LAYERS.map((layer) => {
+    const list = layerGroups.get(layer.id) || [];
+    return {
+      id: layer.id,
+      title: layer.title,
+      count: list.length,
+      findings: list.reduce((sum, component) => sum + component.findings, 0),
+    };
+  });
+  const anchors = [...components]
+    .sort((a, b) =>
+      (b.depsIn + b.relationshipRecords + b.depsOut) -
+      (a.depsIn + a.relationshipRecords + a.depsOut)
+    )
+    .slice(0, 5);
+  const pressure = [...components]
+    .sort((a, b) => b.medium - a.medium || b.findings - a.findings)
+    .slice(0, 5);
+  const routes = numberFrom(coverage.surface_route_count, 0);
+  const cannotVerifyRoutes = numberFrom(coverage.cannot_verify_surface_routes, 0);
+  return {
+    layerShape,
+    anchors,
+    pressure,
+    nextSteps,
+    nextStepGroups: buildNextStepGroups(nextSteps, findingById, components),
+    sharedDependencies: sharedDependencies.slice(0, 5),
+    gaps: gaps.slice(0, 4),
+    evidenceSummary: [
+      `${formatNumber(components.length)} repos`,
+      `${formatNumber(edges.length)} manifest edges`,
+      `${formatNumber(routes)} mapped surfaces`,
+      `${formatNumber(cannotVerifyRoutes)} cannot_verify surface routes`,
+    ],
+  };
+}
+
+function buildNextStepGroups(nextSteps, findingById, components) {
+  const byTarget = new Map(components.map((component) => [component.targetId, component]));
+  const groups = new Map();
+  for (const item of nextSteps || []) {
+    const findingId = findingIdFromEvidenceRef(item.evidence_ref);
+    const finding = findingId ? findingById.get(findingId) : null;
+    const summary = cleanFindingSummary(item.summary || finding?.summary || item.kind || 'next step');
+    const kind = item.kind || finding?.kind || 'finding';
+    const severity = finding?.severity || item.severity || '';
+    const key = `${kind}|${summary}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        summary,
+        kind,
+        severity,
+        count: 0,
+        repos: new Set(),
+        samples: [],
+      });
+    }
+    const group = groups.get(key);
+    group.count += 1;
+    const component = finding?.targetId ? byTarget.get(finding.targetId) : null;
+    if (component) group.repos.add(component.label);
+    if (finding && group.samples.length < 4) {
+      group.samples.push({
+        findingId: finding.id,
+        repo: component?.label || finding.repoId || '',
+        path: (finding.paths || [])[0] || '',
+      });
+    }
+  }
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      repos: [...group.repos],
+      findingId: group.samples[0]?.findingId || '',
+    }))
+    .sort((a, b) => b.count - a.count || b.repos.length - a.repos.length);
+}
+
+function normalizeComponents(atlasFacts, repoProfiles) {
+  const profiles = new Map((repoProfiles.repos || []).map((repo) => [repo.id, repo]));
+  const components = (atlasFacts.components || []).map((component) => {
+    const profile = profiles.get(component.repo_id) || {};
+    const counts = component.counts || {};
+    const surfaces = component.surfaces || {};
+    const surfaceRoutes = component.surface_routes || [];
+    const layer = inferLayer(component.role);
+    return {
+      id: component.id || component.target_id,
+      targetId: component.target_id || component.id,
+      repoId: component.repo_id || profile.id || component.target_id,
+      name: profile.name || component.target_id || component.label,
+      label: component.label || profile.name || component.target_id,
+      role: component.role || 'component',
+      layer,
+      lifecycle: component.lifecycle || 'active',
+      summary: component.summary || profile.purpose?.readme_title || '',
+      evidenceState: component.evidence_state || profile.scale?.evidence_state || 'unknown',
+      profile,
+      counts,
+      surfaces,
+      surfaceRoutes,
+      facts: component.facts || [],
+      signals: component.signals || { good: [], needs_attention: [], unknown: [] },
+      files: numberFrom(component.profile?.file_count, profile.scale?.file_count),
+      findings: numberFrom(counts.findings, 0),
+      medium: numberFrom(counts.severities?.medium, 0),
+      low: numberFrom(counts.severities?.low, 0),
+      info: numberFrom(counts.severities?.info, 0),
+      depsIn: numberFrom(counts.inbound_manifest_deps, 0),
+      depsOut: numberFrom(counts.outbound_manifest_deps, 0),
+      relationshipRecords: numberFrom(counts.relationship_records, 0),
+      languages: component.profile?.primary_languages || profile.languages || [],
+      contentRoutes: [],
+      contentCards: [],
+      findingsList: [],
+      relationships: [],
+      claims: [],
+    };
+  });
+
+  return components.sort((a, b) => {
+    const layerDelta = LAYERS.findIndex((layer) => layer.id === a.layer) -
+      LAYERS.findIndex((layer) => layer.id === b.layer);
+    if (layerDelta !== 0) return layerDelta;
+    return b.findings - a.findings;
+  });
+}
+
+function attachSurfaceContent(components, surfaceContent) {
+  const routesByTarget = new Map();
+  for (const route of surfaceContent.routes || []) {
+    if (!routesByTarget.has(route.target_id)) routesByTarget.set(route.target_id, []);
+    routesByTarget.get(route.target_id).push(route);
+  }
+  for (const component of components) {
+    const routes = routesByTarget.get(component.targetId) || [];
+    component.contentRoutes = routes;
+    component.contentCards = routes.flatMap((route) => route.cards || []);
+  }
+}
+
+function attachFindings(components, hotspots) {
+  for (const finding of hotspots || []) {
+    const matched = new Map();
+    for (const itemPath of finding.paths || []) {
+      const component = detectComponentForPath(itemPath, components);
+      if (component) matched.set(component.targetId, component);
+    }
+    const first = [...matched.values()][0];
+    if (!first) continue;
+    finding.repoId = first.repoId;
+    finding.targetId = first.targetId;
+    for (const component of matched.values()) {
+      component.findingsList.push(finding);
+    }
+  }
+}
+
+function attachRelationships(components, relationships) {
+  const byRepo = new Map(components.map((component) => [component.repoId, component]));
+  for (const relationship of relationships || []) {
+    const repoIds = [
+      relationship.from_repo,
+      relationship.to_repo,
+      ...(relationship.repos || []),
+    ].filter(Boolean);
+    for (const repoId of repoIds) {
+      const component = byRepo.get(repoId);
+      if (component) component.relationships.push(relationship);
+    }
+  }
+}
+
+function attachClaims(components, claims) {
+  const byRepo = new Map(components.map((component) => [component.repoId, component]));
+  const byTarget = new Map(components.map((component) => [component.targetId, component]));
+  const landscapeClaims = [];
+  for (const claim of claims || []) {
+    const subject = String(claim.subject || '');
+    const repoMatch = subject.match(/^repo:(.+)$/);
+    const pathMatch = subject.match(/^path:(.+)$/);
+    const component =
+      (repoMatch && byRepo.get(repoMatch[1])) ||
+      (repoMatch && byTarget.get(repoMatch[1])) ||
+      (pathMatch && detectComponentForPath(pathMatch[1], components)) ||
+      null;
+    if (component) component.claims.push(claim);
+    else landscapeClaims.push(claim);
+  }
+  return landscapeClaims;
+}
+
+function mergeGaps(primary, secondary) {
+  const seen = new Set();
+  return [...primary, ...secondary].filter((gap) => {
+    const key = [gap.layer, gap.subject, gap.summary, gap.evidence_state].join('|');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function inferLayer(role) {
+  for (const layer of LAYERS) {
+    if (layer.roles.includes(role)) return layer.id;
+  }
+  return 'integration';
+}
+
+function positionComponents(components) {
+  const grouped = groupBy(components, (component) => component.layer);
+  const positions = new Map();
+  const xByLayer = {
+    integration: 10,
+    foundation: 31,
+    compute: 53,
+    access: 74,
+    legacy: 90,
+  };
+  for (const layer of LAYERS) {
+    const list = grouped.get(layer.id) || [];
+    const count = Math.max(1, list.length);
+    list.forEach((component, index) => {
+      const y = count === 1 ? 52 : 30 + index * (54 / (count - 1));
+      positions.set(component.targetId, { x: xByLayer[layer.id], y });
+    });
+  }
+  return positions;
+}
+
+function buildFindingClusters(hotspots, components) {
+  const componentByTarget = new Map(components.map((component) => [component.targetId, component]));
+  const map = new Map();
+  for (const finding of hotspots || []) {
+    const key = `${finding.kind || 'finding'}|${finding.summary || 'Unknown finding'}`;
+    if (!map.has(key)) {
+      map.set(key, {
+        id: `cluster-${map.size + 1}`,
+        kind: finding.kind || 'finding',
+        summary: finding.summary || 'Unknown finding',
+        severity: finding.severity || 'unknown',
+        producer: finding.producer || 'tool',
+        count: 0,
+        repos: new Set(),
+        samples: [],
+      });
+    }
+    const cluster = map.get(key);
+    cluster.count += 1;
+    if (finding.targetId) cluster.repos.add(finding.targetId);
+    if (cluster.samples.length < 6) cluster.samples.push(finding);
+  }
+  return [...map.values()]
+    .map((cluster) => ({
+      ...cluster,
+      repos: [...cluster.repos].map((id) => componentByTarget.get(id)).filter(Boolean),
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function chooseDefaultComponent(model) {
+  const loaded = model.components.filter((component) => component.profile?.path);
+  const preferred = loaded.find((component) => component.targetId === 'apache-hive');
+  if (preferred) return preferred.targetId;
+  return [...(loaded.length ? loaded : model.components)].sort((a, b) => b.findings - a.findings)[0]?.targetId || '';
+}
+
+function detectComponentForPath(path, components) {
+  if (!path) return null;
+  const normalized = String(path).replace(/\\/g, '/');
+  return components.find((component) => {
+    const root = String(component.profile?.path || '').replace(/\\/g, '/');
+    return root && (normalized === root || normalized.startsWith(`${root}/`));
+  }) ||
+    components.find((component) => normalized.includes(`/repos/${component.name}/`)) ||
+    components.find((component) => normalized.includes(`/repos/${component.targetId}/`)) ||
+    components.find((component) => normalized.includes(component.name));
+}
+
+function routeFromHash() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const view = params.get('view');
+  const component = params.get('component');
+  const finding = params.get('finding');
+  const tour = params.get('tour');
+  if (view && ['atlas', 'risks', 'sources', 'agent', 'graph'].includes(view)) state.view = view;
+  if (component && state.model.componentByTarget.has(component)) state.selectedId = component;
+  if (finding && state.model.findingById.has(finding)) selectFinding(finding);
+  if (tour && ATLAS_TOURS.some((item) => item.id === tour)) state.activeTour = tour;
+}
+
+function updateHash() {
+  const params = new URLSearchParams();
+  params.set('view', state.view);
+  if (state.selectedId) params.set('component', state.selectedId);
+  if (state.selectedFindingId) params.set('finding', state.selectedFindingId);
+  if (state.activeTour) params.set('tour', state.activeTour);
+  history.replaceState(null, '', `#${params.toString()}`);
+}
+
+function render() {
+  if (!state.model) return;
+  ensureSelectedFinding();
+  const selected = selectedComponent();
+  app.innerHTML = `
+    <header class="topbar">
+      ${renderBrand()}
+      ${renderSearch()}
+      ${renderNav()}
+    </header>
+    <main class="workspace">
+      ${renderHero(selected)}
+      ${renderView(selected)}
+    </main>
+    <footer class="footer">
+      <span>${escapeHtml(shortPath(state.model.corpus.manifest_path || state.model.corpus.id || 'local bundle'))}</span>
+      <span>${state.model.generatedAt ? `Generated ${escapeHtml(formatDate(state.model.generatedAt))}` : 'Local-first bundle'}</span>
+    </footer>
+    ${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ''}
+  `;
+  bindEvents();
+  updateHash();
+}
+
+function renderBrand() {
+  return `
+    <div class="brand-lockup">
+      <div class="brand-mark" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div>
+        <div class="brand-title">Portolan</div>
+        <div class="brand-subtitle">Enterprise landscape atlas</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSearch() {
+  const results = state.query ? searchResults(state.query).slice(0, 8) : [];
+  return `
+    <div class="command-center">
+      <label class="sr-only" for="global-search">Search landscape</label>
+      <input id="global-search" type="search" value="${escapeAttr(state.query)}"
+        placeholder="Search component, issue, wiki, finding..."
+        autocomplete="off">
+      ${state.query ? `
+        <div class="search-popover" role="listbox" aria-label="Landscape search results">
+          ${results.length ? results.map(renderSearchResult).join('') : '<div class="empty-row">No landscape result</div>'}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderSearchResult(result) {
+  return `
+    <button type="button" class="search-result" data-action="${result.action}"
+      ${result.target ? `data-target="${escapeAttr(result.target)}"` : ''}
+      ${result.repo ? `data-repo="${escapeAttr(result.repo)}"` : ''}
+      ${result.path ? `data-path="${escapeAttr(result.path)}"` : ''}
+      ${result.line ? `data-line="${escapeAttr(result.line)}"` : ''}
+      ${result.view ? `data-view="${escapeAttr(result.view)}"` : ''}>
+      <span class="search-kind">${escapeHtml(result.kind)}</span>
+      <strong>${highlight(result.title, state.query)}</strong>
+      <span>${highlight(result.meta || '', state.query)}</span>
+    </button>
+  `;
+}
+
+function renderNav() {
+  const views = [
+    ['atlas', 'Atlas'],
+    ['risks', 'Risks'],
+    ['sources', 'Sources'],
+    ['agent', 'Agent loop'],
+    ['graph', 'Edges'],
+  ];
+  return `
+    <nav class="view-nav" aria-label="Viewer sections">
+      ${views.map(([id, label]) => `
+        <button type="button" class="view-tab ${state.view === id ? 'is-active' : ''}" data-action="view" data-view="${id}">
+          ${label}
+        </button>
+      `).join('')}
+    </nav>
+  `;
+}
+
+function renderHero(selected) {
+  const model = state.model;
+  const coverage = model.coverage;
+  const gapCount =
+    (numberFrom(coverage.cannot_verify_surface_routes, 0) > 0 ? 1 : 0) +
+    (coverage.runtime_topology === 'not_assessed' ? 1 : 0);
+  return `
+    <section class="hero-panel">
+      <div class="hero-copy">
+        <p class="product-line">${escapeHtml(landscapeLabel(model))}</p>
+        <h1>One atlas for people and coding agents.</h1>
+        <p>
+          The loaded landscape is normalized into a local atlas: source code, trackers, wiki, docs,
+          dependencies, findings, gaps and agent-authored claims round-trip through one bundle.
+        </p>
+      </div>
+      <div class="hero-metrics" aria-label="Bundle coverage">
+        ${metric('Repos', coverage.repo_count || model.components.length, 'source-visible')}
+        ${metric('Surfaces', coverage.surface_route_count || 0, 'routes')}
+        ${metric('Relations', coverage.relationship_count || model.relationships.length, 'repo + deps')}
+        ${metric('Findings', coverage.hotspot_count || state.model.hotspots.length, 'clustered')}
+        ${metric('Limits', gapCount, 'kept explicit')}
+      </div>
+      <div class="hero-selected">
+        <span>Selected component</span>
+        <strong>${escapeHtml(selected.label)}</strong>
+        <em>${escapeHtml(selected.role)}</em>
+      </div>
+    </section>
+  `;
+}
+
+function metric(label, value, sublabel) {
+  return `
+    <div class="metric-card">
+      <span>${escapeHtml(label)}</span>
+      <strong>${formatNumber(value)}</strong>
+      <em>${escapeHtml(sublabel)}</em>
+    </div>
+  `;
+}
+
+function renderView(selected) {
+  if (state.view === 'risks') return renderRisksView(selected);
+  if (state.view === 'sources') return renderSourcesView(selected);
+  if (state.view === 'agent') return renderAgentView(selected);
+  if (state.view === 'graph') return renderGraphView(selected);
+  return renderAtlasView(selected);
+}
+
+function renderAtlasView(selected) {
+  return `
+    ${renderExecutiveBriefing(selected)}
+    ${renderAtlasCockpit(selected)}
+    <section class="atlas-grid">
+      <aside class="left-rail">
+        ${renderGuidedTour()}
+        ${renderAtlasLoop()}
+        ${renderQuestionStack()}
+      </aside>
+      <section id="atlas-map-stage" class="canvas-stage" aria-label="Landscape map">
+        <div class="stage-head">
+          <div>
+            <p class="section-kicker">C1 -> C2 -> C3</p>
+            <h2>Static architecture landscape</h2>
+          </div>
+          <div class="stage-legend">
+            <span><i class="dot dot-source"></i> source</span>
+            <span><i class="dot dot-meta"></i> metadata</span>
+            <span><i class="dot dot-gap"></i> gap</span>
+          </div>
+        </div>
+        ${renderMapIntelligence(selected)}
+        ${renderLandscapeMap()}
+      </section>
+      <aside class="inspector">
+        ${renderInspector(selected)}
+      </aside>
+    </section>
+  `;
+}
+
+function renderExecutiveBriefing(selected) {
+  const insights = state.model.insights;
+  const briefActions = executiveBriefActions(insights);
+  const maxLayerFindings = Math.max(...insights.layerShape.map((item) => item.findings), 1);
+  const maxPressure = Math.max(...insights.pressure.map((item) => item.medium), 1);
+  return `
+    <section class="briefing-board" aria-label="Executive landscape briefing">
+      <article class="brief-card brief-card--shape">
+        <div class="brief-head">
+          <span class="section-kicker">Executive brief</span>
+          <h2>What the atlas says first</h2>
+        </div>
+        <div class="evidence-chips">
+          ${insights.evidenceSummary.map((item) => `<span>${escapeHtml(item)}</span>`).join('')}
+        </div>
+        <p>The current view is derived from local bundle artifacts. Runtime topology and live ownership stay outside the claim until captured.</p>
+        ${briefActions.length ? `
+          <div class="brief-next">
+            ${briefActions.map((item) => {
+              return `
+              <button type="button" data-action="${escapeAttr(item.action)}" data-view="${escapeAttr(item.view)}"
+                ${item.findingId ? `data-finding="${escapeAttr(item.findingId)}"` : ''}>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${escapeHtml(item.meta)}</span>
+                <em>${escapeHtml(item.detail)}</em>
+              </button>
+            `;
+            }).join('')}
+          </div>
+        ` : ''}
+      </article>
+      <article class="brief-card">
+        <div class="section-row">
+          <h3>System shape</h3>
+          <span>${formatNumber(state.model.components.length)} repos</span>
+        </div>
+        <div class="shape-bars">
+          ${insights.layerShape.map((layer) => `
+            <div>
+              <span>${escapeHtml(layer.title)}</span>
+              <i><b style="width:${Math.max(6, (layer.findings / maxLayerFindings) * 100)}%"></b></i>
+              <strong>${layer.count}</strong>
+            </div>
+          `).join('')}
+        </div>
+      </article>
+      <article class="brief-card">
+        <div class="section-row">
+          <h3>Architecture anchors</h3>
+          <span>deps + relations</span>
+        </div>
+        <div class="brief-list">
+          ${insights.anchors.slice(0, 4).map((component) => `
+            <button type="button" data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+              <strong>${escapeHtml(component.label)}</strong>
+              <span>${component.depsIn}/${component.depsOut} deps, ${component.relationshipRecords} relations</span>
+            </button>
+          `).join('')}
+        </div>
+      </article>
+      <article class="brief-card">
+        <div class="section-row">
+          <h3>Inspection pressure</h3>
+          <span>medium findings</span>
+        </div>
+        <div class="pressure-list">
+          ${insights.pressure.slice(0, 4).map((component) => `
+            <button type="button" class="${component.targetId === selected.targetId ? 'is-active' : ''}"
+              data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+              <span>${escapeHtml(component.label)}</span>
+              <i><b style="width:${Math.max(6, (component.medium / maxPressure) * 100)}%"></b></i>
+              <strong>${formatNumber(component.medium)}</strong>
+            </button>
+          `).join('')}
+        </div>
+      </article>
+    </section>
+  `;
+}
+
+function executiveBriefActions(insights) {
+  const actions = [];
+  for (const group of (insights.nextStepGroups || []).slice(0, 2)) {
+    const repoText = group.repos.length ? ` / ${group.repos.slice(0, 3).join(', ')}` : '';
+    actions.push({
+      action: group.findingId && state.model.findingById.has(group.findingId) ? 'select-finding' : 'view',
+      view: 'risks',
+      findingId: group.findingId || '',
+      title: group.summary,
+      meta: `${formatNumber(group.count)} report samples${repoText}`,
+      detail: group.severity ? `${group.kind} / ${group.severity}` : group.kind,
+    });
+  }
+
+  if (state.model.coverage.runtime_topology === 'not_assessed') {
+    actions.push({
+      action: 'view',
+      view: 'graph',
+      findingId: '',
+      title: 'Runtime topology not assessed',
+      meta: 'service calls and production deployment are not in this local bundle',
+      detail: 'visibility gap',
+    });
+  }
+
+  const cannotVerifyRoutes = numberFrom(state.model.coverage.cannot_verify_surface_routes, 0);
+  if (cannotVerifyRoutes > 0) {
+    actions.push({
+      action: 'view',
+      view: 'sources',
+      findingId: '',
+      title: 'Public surface readability is partial',
+      meta: `${formatNumber(cannotVerifyRoutes)} route(s) remain cannot_verify`,
+      detail: 'surface gap',
+    });
+  }
+
+  if (actions.length < 3 && (insights.sharedDependencies || []).length) {
+    const hub = insights.sharedDependencies[0];
+    actions.push({
+      action: 'view',
+      view: 'risks',
+      findingId: '',
+      title: 'Shared dependency pressure',
+      meta: `${formatNumber((hub.repos || []).length)} repos touch ${hub.detail?.component || hub.summary || hub.id}`,
+      detail: 'relationship hub',
+    });
+  }
+
+  return actions.slice(0, 3);
+}
+
+function renderMapIntelligence(selected) {
+  const depsIn = state.model.edges.filter((edge) => edge.to_target === selected.targetId);
+  const depsOut = state.model.edges.filter((edge) => edge.from_target === selected.targetId);
+  const relationshipCorridor = selectedRelationshipCorridor(selected).slice(0, 5);
+  const layerShape = state.model.insights.layerShape || [];
+  const activeLayer = layerShape.find((layer) => layer.id === selected.layer);
+  const maxLayerFindings = Math.max(...layerShape.map((layer) => layer.findings), 1);
+  const neighborEdges = [...depsOut.slice(0, 3), ...depsIn.slice(0, 2)];
+  return `
+    <section class="map-intel-strip" aria-label="Selected map context">
+      <article class="map-intel-card map-intel-card--selected">
+        <span>Selected node</span>
+        <strong>${escapeHtml(selected.label)}</strong>
+        <em>${escapeHtml(selected.role)} / ${escapeHtml(selected.evidenceState)}</em>
+        <div class="map-intel-metrics">
+          ${smallInlineMetric('Layer', compactLayerTitle(activeLayer?.title || selected.layer))}
+          ${smallInlineMetric('Findings', formatNumber(selected.findings))}
+          ${smallInlineMetric('Deps', `${selected.depsIn}/${selected.depsOut}`)}
+        </div>
+      </article>
+      <article class="map-intel-card">
+        <span>Dependency corridor</span>
+        <strong>${depsIn.length} inbound / ${depsOut.length} outbound</strong>
+        <div class="map-neighbor-list">
+          ${neighborEdges.length ? neighborEdges.map((edge) => renderMapNeighbor(edge, selected)).join('') :
+            '<p class="empty-copy">No manifest edge recorded for this node.</p>'}
+        </div>
+      </article>
+      <article class="map-intel-card">
+        <span>Relationship corridor</span>
+        <strong>${formatNumber(selected.relationships.length)} records</strong>
+        <div class="map-neighbor-list">
+          ${relationshipCorridor.length ? relationshipCorridor.map((edge) => renderMapNeighbor(edge, selected)).join('') :
+            '<p class="empty-copy">No shared-dependency or cross-repo relationship recorded for this node.</p>'}
+        </div>
+      </article>
+      <article class="map-intel-card">
+        <span>Layer pressure</span>
+        <strong>${escapeHtml(activeLayer?.title || selected.layer)}</strong>
+        <div class="map-layer-bars">
+          ${layerShape.map((layer) => `
+            <button type="button" class="${layer.id === selected.layer ? 'is-active' : ''}"
+              data-action="layer-focus" data-layer="${escapeAttr(layer.id)}">
+              <span>${escapeHtml(layer.title)}</span>
+              <i><b style="width:${Math.max(5, (layer.findings / maxLayerFindings) * 100)}%"></b></i>
+              <em>${formatNumber(layer.count)}</em>
+            </button>
+          `).join('')}
+        </div>
+      </article>
+    </section>
+  `;
+}
+
+function renderMapNeighbor(edge, selected) {
+  const outbound = edge.from_target === selected.targetId;
+  const targetId = outbound ? edge.to_target : edge.from_target;
+  const component = state.model.componentByTarget.get(targetId);
+  if (!component) return '';
+  return `
+    <button type="button" data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+      <span>${outbound ? 'out' : 'in'}</span>
+      <strong>${escapeHtml(component.label)}</strong>
+      <em>${escapeHtml(edge.evidence_state || edge.kind || 'edge')}</em>
+    </button>
+  `;
+}
+
+function smallInlineMetric(label, value) {
+  return `
+    <div>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+    </div>
+  `;
+}
+
+function compactLayerTitle(value) {
+  return String(value || '')
+    .replace('Compute and SQL', 'Compute SQL')
+    .replace('Integration', 'Integrate');
+}
+
+function renderAtlasCockpit(selected) {
+  const finding = activeFindingFor(selected);
+  const sourcePath = finding ? (finding.paths || [])[0] || '' : '';
+  return `
+    <section class="cockpit-strip" aria-label="Demo cockpit">
+      <article class="cockpit-card">
+        <span>1. Brief</span>
+        <strong>Read the enterprise shape</strong>
+        <em>${escapeHtml(state.model.insights.evidenceSummary.join(' / '))}</em>
+      </article>
+      <button type="button" class="cockpit-card cockpit-card--button" data-action="scroll"
+        data-view="atlas" data-scroll-target="#atlas-map-stage">
+        <span>2. Map</span>
+        <strong>${escapeHtml(selected.label)}</strong>
+        <em>${escapeHtml(selected.layer)} / ${formatNumber(selected.findings)} findings</em>
+      </button>
+      <button type="button" class="cockpit-card cockpit-card--button" data-action="${finding ? 'select-finding' : 'view'}"
+        data-view="risks" ${finding ? `data-finding="${escapeAttr(finding.id)}"` : ''}>
+        <span>3. Evidence</span>
+        <strong>${finding ? escapeHtml(cleanFindingSummary(finding.summary || finding.id)) : 'No linked finding'}</strong>
+        <em>${escapeHtml(sourcePath ? shortPath(sourcePath) : 'open risks for corpus-level clusters')}</em>
+      </button>
+      <button type="button" class="cockpit-card cockpit-card--button" data-action="view" data-view="agent">
+        <span>4. Agent handoff</span>
+        <strong>Open agent loop</strong>
+        <em>repo, hotspots, source and claim-import commands</em>
+      </button>
+    </section>
+  `;
+}
+
+function renderGuidedTour() {
+  const active = ATLAS_TOURS.find((tour) => tour.id === state.activeTour) || ATLAS_TOURS[0];
+  return `
+    <section class="rail-card">
+      <div class="rail-head">
+        <span class="section-kicker">Guided routes</span>
+        <strong>${escapeHtml(active.title)}</strong>
+        <em>${escapeHtml(active.summary)}</em>
+      </div>
+      <div class="tour-switcher">
+        ${ATLAS_TOURS.map((tour) => `
+          <button type="button" class="${tour.id === state.activeTour ? 'is-active' : ''}"
+            data-action="tour" data-tour="${escapeAttr(tour.id)}">${escapeHtml(tour.id)}</button>
+        `).join('')}
+      </div>
+      <ol class="tour-list">
+        ${active.steps.map((target, index) => {
+          const component = state.model.componentByTarget.get(target);
+          if (!component) return '';
+          return `
+          <li>
+            <button type="button" class="${state.selectedId === target ? 'is-active' : ''}"
+              data-action="select-component" data-target="${target}">
+              <span>${index + 1}</span>
+              <strong>${escapeHtml(component.label)}</strong>
+              <em>${escapeHtml(component.summary || component.role)}</em>
+            </button>
+          </li>
+        `;
+        }).join('')}
+      </ol>
+    </section>
+  `;
+}
+
+function renderAtlasLoop() {
+  return `
+    <section class="rail-card rail-card--loop">
+      <div class="rail-head">
+        <span class="section-kicker">Atlas loop</span>
+        <strong>Human map, agent memory</strong>
+      </div>
+      <div class="loop-steps">
+        ${ATLAS_LOOP.map(([title, text], index) => `
+          <div>
+            <span>${index + 1}</span>
+            <strong>${escapeHtml(title)}</strong>
+            <em>${escapeHtml(text)}</em>
+          </div>
+        `).join('')}
+      </div>
+      <button type="button" class="primary-inline" data-action="view" data-view="agent">Open agent loop</button>
+    </section>
+  `;
+}
+
+function renderQuestionStack() {
+  return `
+    <section class="rail-card rail-card--questions">
+      <div class="rail-head">
+        <span class="section-kicker">Questions</span>
+        <strong>What this report answers</strong>
+      </div>
+      <div class="question-stack">
+        ${IMPORTANT_QUESTIONS.map((item) => `
+          <button type="button" data-action="question" data-target="${item.target}">
+            <strong>${escapeHtml(item.label)}</strong>
+            <span>${escapeHtml(item.answer)}</span>
+          </button>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderLandscapeMap() {
+  const model = state.model;
+  const positions = model.graphPositions;
+  const manifestEdges = model.edges.slice(0, 34);
+  const selected = selectedComponent();
+  const relationshipEdges = selectedRelationshipCorridor(selected).slice(0, 24);
+  return `
+    <div class="map-canvas atlas-network">
+      <div class="map-orbit" aria-hidden="true"></div>
+      <div class="context-node network-context">
+        <span>C1 enterprise landscape</span>
+        <strong>${escapeHtml(landscapeLabel(model))}</strong>
+        <em>${escapeHtml(model.corpus.purpose || 'Local multi-repo corpus with code, metadata and runtime surface gaps.')}</em>
+      </div>
+      <div class="domain-lanes" aria-hidden="true">
+        ${LAYERS.map((layer) => `
+          <div class="domain-lane lane-${layer.id}">
+            <span>${escapeHtml(layer.title)}</span>
+          </div>
+        `).join('')}
+      </div>
+      <svg class="dependency-svg network-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        ${manifestEdges.map((edge) => renderEdge(edge, positions)).join('')}
+        ${relationshipEdges.map((edge) => renderEdge(edge, positions, 'relationship-edge')).join('')}
+      </svg>
+      <div class="network-nodes">
+        ${model.components.map(renderComponentNode).join('')}
+      </div>
+      <div class="map-status">
+        <span>${formatNumber(model.edges.length)} manifest edges</span>
+        <span>${formatNumber(model.relationships.length)} relationship records</span>
+        <span>runtime topology ${escapeHtml(model.coverage.runtime_topology || 'not_assessed')}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderEdge(edge, positions, extraClass = '') {
+  const from = positions.get(edge.from_target);
+  const to = positions.get(edge.to_target);
+  if (!from || !to) return '';
+  const midX = (from.x + to.x) / 2;
+  const selected = [edge.from_target, edge.to_target].includes(state.selectedId);
+  return `
+    <path class="${[selected ? 'is-selected' : '', extraClass].filter(Boolean).join(' ')}"
+      d="M ${from.x} ${from.y} C ${midX} ${from.y - 6}, ${midX} ${to.y + 6}, ${to.x} ${to.y}"
+      vector-effect="non-scaling-stroke">
+      <title>${escapeHtml(edge.label || '')}</title>
+    </path>
+  `;
+}
+
+function renderComponentNode(component) {
+  const selected = state.selectedId === component.targetId;
+  const missingDocs = (component.surfaceRoutes || []).some((route) => route.slot === 'docs' && route.state === 'missing');
+  const stateClass = component.evidenceState === 'source-visible' ? 'dot-source' : 'dot-meta';
+  const pos = state.model.graphPositions.get(component.targetId) || { x: 50, y: 50 };
+  const tone = component.findings > 350 ? 'hot' : component.findings > 150 ? 'warm' : 'calm';
+  return `
+    <button type="button" class="component-node node-${tone} ${selected ? 'is-selected' : ''}"
+      style="--x:${pos.x}; --y:${pos.y};"
+      data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+      <span class="node-title">${escapeHtml(shortComponentLabel(component.label))}</span>
+      <span class="node-role">${escapeHtml(component.role)}</span>
+      <span class="node-stats">
+        <i class="dot ${stateClass}"></i>
+        <i class="dot ${component.findings > 150 ? 'dot-risk' : 'dot-ok'}"></i>
+        <i class="dot ${missingDocs ? 'dot-gap' : 'dot-meta'}"></i>
+      </span>
+      <em>${formatNumber(component.findings)} findings / ${component.depsIn}:${component.depsOut} deps</em>
+    </button>
+  `;
+}
+
+function renderInspector(component) {
+  const topCards = component.contentCards.slice(0, 4);
+  const topFindings = component.findingsList.slice(0, 4);
+  const activeFinding = activeFindingFor(component);
+  const depsOut = state.model.edges.filter((edge) => edge.from_target === component.targetId);
+  const depsIn = state.model.edges.filter((edge) => edge.to_target === component.targetId);
+  const relationshipCorridor = selectedRelationshipCorridor(component).slice(0, 5);
+  return `
+    <section class="inspector-card">
+      <div class="inspector-header">
+        <span class="section-kicker">Component drill-down</span>
+        <h2>${escapeHtml(component.label)}</h2>
+        <p>${escapeHtml(component.summary || component.role)}</p>
+      </div>
+      <div class="fact-grid">
+        ${smallFact('Files', component.files)}
+        ${smallFact('Findings', component.findings)}
+        ${smallFact('Deps in/out', `${component.depsIn}/${component.depsOut}`)}
+        ${smallFact('Relations', component.relationshipRecords)}
+      </div>
+      ${renderRepoEvidenceBrief(component)}
+      <div class="signal-columns">
+        ${renderSignals('Good', component.signals.good || [], 'good')}
+        ${renderSignals('Needs attention', component.signals.needs_attention || component.signals.attention || [], 'watch')}
+        ${renderSignals('Unknown', component.signals.unknown || [], 'unknown')}
+      </div>
+      ${renderDrilldownLadder(component)}
+      ${renderAgentContextCard(component)}
+      <div class="inspector-section">
+        <div class="section-row">
+          <h3>Evidence surfaces</h3>
+          <button type="button" class="link-button" data-action="view" data-view="sources">Open sources</button>
+        </div>
+        <div class="surface-strip">
+          ${(component.surfaceRoutes || []).map(renderSurfacePill).join('')}
+        </div>
+      </div>
+      <div class="inspector-section">
+        <div class="section-row">
+          <h3>Recent tracker/wiki cards</h3>
+          <span>${topCards.length}/${component.contentCards.length}</span>
+        </div>
+        <div class="mini-card-list">
+          ${topCards.length ? topCards.map(renderContentMiniCard).join('') : '<p class="empty-copy">No imported cards for this surface.</p>'}
+        </div>
+      </div>
+      ${component.claims.length ? `
+        <div class="inspector-section">
+          <div class="section-row">
+            <h3>Agent claims</h3>
+            <span>${component.claims.length}</span>
+          </div>
+          <div class="mini-card-list">
+            ${component.claims.slice(0, 3).map(renderClaimMini).join('')}
+          </div>
+        </div>
+      ` : ''}
+      <div class="inspector-section">
+        <div class="section-row">
+          <h3>Dependency paths</h3>
+          <span>${depsIn.length} in / ${depsOut.length} out</span>
+        </div>
+        <div class="dependency-list">
+          ${[...depsIn.slice(0, 3), ...depsOut.slice(0, 3)].map((edge) => `
+            <button type="button" data-action="select-component" data-target="${edge.from_target === component.targetId ? edge.to_target : edge.from_target}">
+              ${escapeHtml(edge.label || edge.id)}
+            </button>
+          `).join('') || '<p class="empty-copy">No manifest dependency edge in this bundle.</p>'}
+        </div>
+      </div>
+      <div class="inspector-section">
+        <div class="section-row">
+          <h3>Relationship records</h3>
+          <span>${relationshipCorridor.length}/${component.relationships.length}</span>
+        </div>
+        <div class="mini-card-list">
+          ${relationshipCorridor.length ? relationshipCorridor.map((edge) => {
+            const target = state.model.componentByTarget.get(edge.to_target);
+            return `
+              <button type="button" class="mini-card mini-card--finding" data-action="select-component"
+                data-target="${escapeAttr(edge.to_target)}">
+                <span>${escapeHtml(edge.kind || 'relationship')}</span>
+                <strong>${escapeHtml(edge.label || edge.id)}</strong>
+                <em>${escapeHtml(target ? `${target.label} / ${edge.evidence_state || 'metadata-visible'}` : edge.evidence_state || 'metadata-visible')}</em>
+              </button>
+            `;
+          }).join('') : '<p class="empty-copy">No relationship record linked to this component.</p>'}
+        </div>
+      </div>
+      <div class="inspector-section">
+        <div class="section-row">
+          <h3>Top findings</h3>
+          <button type="button" class="link-button" data-action="view" data-view="risks">Open risks</button>
+        </div>
+        <div class="mini-card-list">
+          ${topFindings.length ? topFindings.map(renderFindingMini).join('') : '<p class="empty-copy">No findings linked to this component.</p>'}
+        </div>
+      </div>
+      ${renderEvidenceDrawer(component, activeFinding)}
+    </section>
+  `;
+}
+
+function renderDrilldownLadder(component) {
+  return `
+    <div class="drill-ladder" aria-label="Drill-down ladder">
+      ${[
+        ['C2', 'system', component.layer],
+        ['C3', 'repo', component.repoId],
+        ['C4', 'surfaces', `${component.surfaceRoutes.length} routes`],
+        ['C5', 'work', `${formatNumber(component.findings)} findings`],
+      ].map(([step, label, value]) => `
+        <div>
+          <span>${escapeHtml(step)}</span>
+          <strong>${escapeHtml(label)}</strong>
+          <em>${escapeHtml(value)}</em>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderAgentContextCard(component) {
+  const commands = agentCommands(component);
+  return `
+    <div class="agent-card">
+      <div class="section-row">
+        <h3>Agent handoff</h3>
+        <button type="button" class="link-button" data-action="view" data-view="agent">Open loop</button>
+      </div>
+      <p>Bounded queries for the selected node. The coding agent reads the same atlas the viewer renders.</p>
+      <div class="command-list">
+        ${commands.slice(0, 3).map((command) => `
+          <button type="button" data-action="copy" data-copy="${escapeAttr(command.command)}">
+            <span>${escapeHtml(command.label)}</span>
+            <code>${escapeHtml(command.command)}</code>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderClaimMini(claim) {
+  return `
+    <details class="mini-card claim-card">
+      <summary>
+        <span>${escapeHtml(claim.claim_tier || 'claim')}</span>
+        <strong>${escapeHtml(claim.statement || claim.id)}</strong>
+      </summary>
+      <em>${escapeHtml((claim.cited_refs || []).slice(0, 5).join(', ') || 'no cited refs')}</em>
+      ${claim.agent ? `<code>${escapeHtml(claim.agent)}</code>` : ''}
+    </details>
+  `;
+}
+
+function renderRejectedClaimMini(claim) {
+  const id = claim.id || claim.claim?.id || 'rejected-claim';
+  const reason = claim.reason || claim.error || claim.message || 'rejected by importer';
+  const refs = claim.cited_refs || claim.claim?.cited_refs || [];
+  return `
+    <details class="mini-card claim-card claim-card--rejected">
+      <summary>
+        <span>rejected</span>
+        <strong>${escapeHtml(id)}</strong>
+      </summary>
+      <em>${escapeHtml(reason)}</em>
+      ${refs.length ? `<code>${escapeHtml(refs.slice(0, 5).join(', '))}</code>` : ''}
+    </details>
+  `;
+}
+
+function renderRelationshipMini(rel, selected) {
+  const edge = relationshipToDisplayEdge(rel, selected);
+  return `
+    <button type="button" class="mini-card mini-card--finding"
+      data-action="select-component" data-target="${escapeAttr(edge?.to_target || selected.targetId)}">
+      <span>${escapeHtml(rel.type || 'relationship')}</span>
+      <strong>${escapeHtml(rel.summary || rel.id)}</strong>
+      <em>${escapeHtml(`${rel.type || 'relationship'} / ${rel.evidence_state || 'metadata-visible'}`)}</em>
+    </button>
+  `;
+}
+
+function renderRepoEvidenceBrief(component) {
+  const purpose = component.profile?.purpose || {};
+  const languages = component.languages || [];
+  const manifests = purpose.manifests || [];
+  const compose = purpose.compose || [];
+  const docker = purpose.docker || [];
+  const firstCompose = compose[0];
+  const services = firstCompose?.services || [];
+  return `
+    <div class="repo-evidence-brief">
+      <div class="repo-purpose">
+        <span class="section-kicker">Repo facts</span>
+        <strong>${escapeHtml(purpose.readme_title || component.summary || component.role)}</strong>
+        <em>${escapeHtml(shortPath(component.profile?.path || component.repoId))}</em>
+      </div>
+      <div class="repo-fact-columns">
+        <div>
+          <span>Languages</span>
+          <strong>${languages.slice(0, 4).map((item) => escapeHtml(item.ext || item.name || '')).filter(Boolean).join(' ') || 'not_assessed'}</strong>
+        </div>
+        <div>
+          <span>Manifests</span>
+          <strong>${manifests.length ? manifests.slice(0, 2).map((item) => escapeHtml(item.type || item.path)).join(', ') : 'none visible'}</strong>
+        </div>
+        <div>
+          <span>Deploy model</span>
+          <strong>${compose.length ? `${compose.length} compose / ${services.length} services` : `${docker.length} docker files`}</strong>
+        </div>
+      </div>
+      ${services.length ? `
+        <div class="service-strip">
+          ${services.slice(0, 6).map((service) => `
+            <span>${escapeHtml(service.name)}${(service.ports || []).length ? ` : ${escapeHtml((service.ports || []).join(', '))}` : ''}</span>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function smallFact(label, value) {
+  return `
+    <div class="small-fact">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+    </div>
+  `;
+}
+
+function renderSignals(title, items, tone) {
+  return `
+    <div class="signal-column signal-${tone}">
+      <strong>${escapeHtml(title)}</strong>
+      <ul>
+        ${(items || []).slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join('') ||
+          '<li>None recorded</li>'}
+      </ul>
+    </div>
+  `;
+}
+
+function renderSurfacePill(route) {
+  const state = route.evidence_state || route.route_state || route.state || 'unknown';
+  return `
+    <a class="surface-pill surface-${cssState(state)}" href="${escapeAttr(route.url || '#')}" target="_blank" rel="noreferrer">
+      <span>${escapeHtml(route.label || route.route_label || route.slot)}</span>
+      <strong>${escapeHtml(state)}</strong>
+    </a>
+  `;
+}
+
+function renderContentMiniCard(card) {
+  return `
+    <a class="mini-card" href="${escapeAttr(card.url || '#')}" target="_blank" rel="noreferrer">
+      <span>${escapeHtml(card.slot || (card.tags || [])[0] || 'content')}</span>
+      <strong>${escapeHtml(card.title || card.id)}</strong>
+      <em>${escapeHtml(card.summary || card.source || '')}</em>
+    </a>
+  `;
+}
+
+function renderFindingMini(finding) {
+  const active = state.selectedFindingId === finding.id;
+  return `
+    <button type="button" class="mini-card mini-card--finding ${active ? 'is-active' : ''}"
+      data-action="select-finding" data-finding="${escapeAttr(finding.id)}">
+      <span>${escapeHtml(finding.kind || 'finding')} / ${escapeHtml(finding.severity || 'unknown')}</span>
+      <strong>${escapeHtml(cleanFindingSummary(finding.summary || finding.id))}</strong>
+      <em>${escapeHtml(shortPath((finding.paths || [])[0] || ''))}</em>
+    </button>
+  `;
+}
+
+function renderEvidenceDrawer(component, finding) {
+  if (!finding) {
+    return `
+      <div class="evidence-drawer">
+        <div class="section-row">
+          <h3>Evidence drill-down</h3>
+          <span>no linked finding</span>
+        </div>
+        <p class="empty-copy">This component has no hotspot row in the loaded bundle. Use Sources or Graph for its available surfaces.</p>
+      </div>
+    `;
+  }
+  const path = (finding.paths || [])[0] || '';
+  const line = evidenceLine(finding, path);
+  const producerRef = finding.producer_ref || finding.producerRef || '';
+  const sourceHref = path ? sourceHrefFor(path, line, component.repoId) : '';
+  const commands = findingCommands(component, finding);
+  return `
+    <div class="evidence-drawer">
+      <div class="section-row">
+        <h3>Evidence drill-down</h3>
+        <span>${escapeHtml(finding.id || 'hotspot')}</span>
+      </div>
+      <div class="evidence-summary">
+        <span>${escapeHtml(finding.kind || 'finding')}</span>
+        <strong>${escapeHtml(cleanFindingSummary(finding.summary || finding.id))}</strong>
+        <em>${escapeHtml(finding.evidence_state || 'unknown')} / ${escapeHtml(finding.producer || 'producer unknown')}</em>
+      </div>
+      <dl class="evidence-facts">
+        <div>
+          <dt>Source path</dt>
+          <dd>${path ? `<code>${escapeHtml(shortPath(path))}</code>` : 'not recorded'}</dd>
+        </div>
+        <div>
+          <dt>Producer ref</dt>
+          <dd>${producerRef ? `<code>${escapeHtml(shortPath(producerRef))}</code>` : 'not recorded'}</dd>
+        </div>
+      </dl>
+      <div class="evidence-actions">
+        ${sourceHref ? `<a href="${escapeAttr(sourceHref)}" target="_blank" rel="noreferrer">Open source snippet</a>` : ''}
+        <button type="button" data-action="view" data-view="agent">Open agent loop</button>
+      </div>
+      <div class="command-list">
+        ${commands.map((command) => `
+          <button type="button" data-action="copy" data-copy="${escapeAttr(command.command)}">
+            <span>${escapeHtml(command.label)}</span>
+            <code>${escapeHtml(command.command)}</code>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderRisksView(selected) {
+  return `
+    <section class="wide-view">
+      <div class="view-heading">
+        <span class="section-kicker">Risk clusters</span>
+        <h2>Collapse scanner noise into decisions.</h2>
+        <p>Repeated findings are grouped by rule and sample paths. This makes the report explain where to inspect, not just how many rows a scanner emitted.</p>
+      </div>
+      <div class="risk-layout">
+        <section class="cluster-board">
+          ${state.model.clusters.slice(0, 10).map(renderClusterCard).join('')}
+        </section>
+        <aside class="risk-aside">
+          ${renderEvidenceDrawer(selected, activeFindingFor(selected))}
+          ${renderComponentHeat(selected)}
+          ${renderSharedDependencies()}
+        </aside>
+      </div>
+    </section>
+  `;
+}
+
+function renderClusterCard(cluster) {
+  const active = state.activeCluster === cluster.id;
+  const repos = cluster.repos.slice(0, 5);
+  return `
+    <article class="cluster-card ${active ? 'is-active' : ''}">
+      <button type="button" class="cluster-main" data-action="cluster" data-cluster="${cluster.id}">
+        <span>${escapeHtml(cluster.kind)} / ${escapeHtml(cluster.severity)}</span>
+        <strong>${escapeHtml(cleanFindingSummary(cluster.summary))}</strong>
+        <em>${formatNumber(cluster.count)} findings across ${formatNumber(cluster.repos.length)} repos</em>
+      </button>
+      <div class="cluster-repos">
+        ${repos.map((component) => `
+          <button type="button" data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+            ${escapeHtml(component.label)}
+          </button>
+        `).join('')}
+      </div>
+      <div class="cluster-samples">
+        ${cluster.samples.slice(0, active ? 6 : 2).map((finding) => `
+          <button type="button" data-action="select-finding" data-finding="${escapeAttr(finding.id || '')}">
+            <span>${escapeHtml(finding.producer || cluster.producer)}</span>
+            <code>${escapeHtml(shortPath((finding.paths || [])[0] || ''))}</code>
+          </button>
+        `).join('')}
+      </div>
+    </article>
+  `;
+}
+
+function renderComponentHeat(selected) {
+  const components = [...state.model.components].sort((a, b) => b.findings - a.findings);
+  const max = Math.max(...components.map((component) => component.findings), 1);
+  return `
+    <section class="side-card">
+      <div class="section-row">
+        <h3>Component heat</h3>
+        <span>findings</span>
+      </div>
+      <div class="heat-list">
+        ${components.map((component) => `
+          <button type="button" class="${component.targetId === selected.targetId ? 'is-active' : ''}"
+            data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+            <span>${escapeHtml(component.label)}</span>
+            <i><b style="width:${Math.max(5, (component.findings / max) * 100)}%"></b></i>
+            <strong>${formatNumber(component.findings)}</strong>
+          </button>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderSharedDependencies() {
+  return `
+    <section class="side-card">
+      <div class="section-row">
+        <h3>Shared dependency pressure</h3>
+        <span>${state.model.sharedDependencies.length} hubs</span>
+      </div>
+      <div class="dependency-hubs">
+        ${state.model.sharedDependencies.slice(0, 8).map((rel) => `
+          <div>
+            <strong>${escapeHtml(rel.detail?.component || rel.summary || rel.id)}</strong>
+            <span>${formatNumber((rel.repos || []).length)} repos</span>
+          </div>
+        `).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderSourcesView(selected) {
+  return `
+    <section class="wide-view">
+      <div class="view-heading">
+        <span class="section-kicker">Source directory</span>
+        <h2>Every component has a fact trail.</h2>
+        <p>Repositories, trackers, wiki and docs stay separated by evidence state. Imported tracker/wiki cards are visible from the same row.</p>
+      </div>
+      <div class="source-grid">
+        ${state.model.components.map((component) => renderSourceRow(component, component.targetId === selected.targetId)).join('')}
+      </div>
+    </section>
+  `;
+}
+
+function renderSourceRow(component, active) {
+  const cards = component.contentCards.slice(0, 3);
+  return `
+    <article class="source-row ${active ? 'is-active' : ''}">
+      <button type="button" class="source-title" data-action="select-component" data-target="${escapeAttr(component.targetId)}">
+        <strong>${escapeHtml(component.label)}</strong>
+        <span>${escapeHtml(component.role)}</span>
+      </button>
+      <div class="source-surfaces">
+        ${(component.surfaceRoutes || []).slice(0, 5).map(renderSurfacePill).join('')}
+      </div>
+      <div class="source-cards">
+        ${cards.length ? cards.map(renderContentMiniCard).join('') : '<span class="empty-copy">No imported tracker/wiki card</span>'}
+      </div>
+    </article>
+  `;
+}
+
+function renderAgentView(selected) {
+  const commands = agentCommands(selected);
+  const activeFinding = activeFindingFor(selected);
+  const selectedEdges = [
+    ...state.model.edges.filter((edge) => edge.from_target === selected.targetId || edge.to_target === selected.targetId),
+    ...selectedRelationshipCorridor(selected).slice(0, 8),
+  ];
+  return `
+    <section class="wide-view agent-view">
+      <div class="view-heading">
+        <span class="section-kicker">Agent loop</span>
+        <h2>Map once, then let agents navigate the same atlas.</h2>
+        <p>Cursor, OpenCode or Codex can run the scan, query the bundle, import cited analysis claims, and reopen the viewer without turning prose into truth.</p>
+      </div>
+      <div class="agent-layout">
+        <section class="agent-primary">
+          <div class="agent-panel agent-selected">
+            <div>
+              <span class="section-kicker">Selected context</span>
+              <h3>${escapeHtml(selected.label)}</h3>
+              <p>${escapeHtml(selected.summary || selected.role)}</p>
+            </div>
+            <div class="agent-kpis">
+              ${smallFact('Repo id', selected.repoId)}
+              ${smallFact('Hotspots', selected.findings)}
+              ${smallFact('Relations', selected.relationshipRecords)}
+              ${smallFact('Claims', selected.claims.length)}
+            </div>
+          </div>
+          <div class="agent-panel">
+            <div class="section-row">
+              <h3>Bounded commands</h3>
+              <span>copy into Cursor/OpenCode</span>
+            </div>
+            <div class="command-list command-list--large">
+              ${commands.map((command) => `
+                <button type="button" data-action="copy" data-copy="${escapeAttr(command.command)}">
+                  <span>${escapeHtml(command.label)}</span>
+                  <code>${escapeHtml(command.command)}</code>
+                </button>
+              `).join('')}
+            </div>
+          </div>
+          ${renderEvidenceHandoffPanel(selected, activeFinding)}
+          ${renderClaimsPanel(selected)}
+          <div class="agent-panel">
+            <div class="section-row">
+              <h3>Edges to inspect</h3>
+              <span>${selectedEdges.length}</span>
+            </div>
+            <div class="edge-list edge-list--compact">
+              ${selectedEdges.map((edge) => `
+                <button type="button" data-action="select-component"
+                  data-target="${escapeAttr(edge.from_target === selected.targetId ? edge.to_target : edge.from_target)}">
+                  <span>${escapeHtml(edge.kind)}</span>
+                  <strong>${escapeHtml(edge.label || edge.id)}</strong>
+                  <em>${escapeHtml(edge.evidence_state || 'unknown')}</em>
+                </button>
+              `).join('') || '<p class="empty-copy">No selected dependency edge.</p>'}
+            </div>
+          </div>
+        </section>
+        <aside class="agent-side">
+          <section class="agent-panel">
+            <h3>Runbook</h3>
+            <div class="runbook-steps">
+              ${[
+                ['1', 'Scan', 'Run local producers against the landscape root.'],
+                ['2', 'Query', 'Use repos, relationships, hotspots, search and source families.'],
+                ['3', 'Enrich', 'Write claims.jsonl with cited refs only.'],
+                ['4', 'Import', 'Run import-analysis-claims; broken refs are rejected.'],
+                ['5', 'Review', 'Open Atlas; claims and gaps stay visible.'],
+              ].map(([num, title, text]) => `
+                <div>
+                  <span>${num}</span>
+                  <strong>${escapeHtml(title)}</strong>
+                  <em>${escapeHtml(text)}</em>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+          <section class="agent-panel">
+            <h3>Bundle contract</h3>
+            <div class="artifact-list">
+              ${[
+                ['manifest.json', 'bundle budget and target root'],
+                ['atlas-facts.json', 'map nodes, edges, coverage'],
+                ['relationships.jsonl', 'cross-repo relationships'],
+                ['hotspots-full.jsonl', 'full ranked findings'],
+                ['claims.jsonl', `${state.model.claims.length} imported / ${state.model.rejectedClaims.length} rejected`],
+              ].map(([name, text]) => `
+                <div>
+                  <strong>${escapeHtml(name)}</strong>
+                  <span>${escapeHtml(text)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  `;
+}
+
+function renderClaimsPanel(selected) {
+  const landscapeClaims = state.model.landscapeClaims || [];
+  const rejected = state.model.rejectedClaims || [];
+  const selectedClaims = selected.claims || [];
+  return `
+    <div class="agent-panel">
+      <div class="section-row">
+        <h3>Agent analysis claims</h3>
+        <span>${selectedClaims.length} selected / ${landscapeClaims.length} landscape / ${rejected.length} rejected</span>
+      </div>
+      <p>Claims are agent-authored and stay claim-only. Analytical and synthetic claims must carry refs that resolved during import.</p>
+      <div class="mini-card-list">
+        ${[
+          ...selectedClaims.slice(0, 3).map(renderClaimMini),
+          ...landscapeClaims.slice(0, 2).map(renderClaimMini),
+          ...rejected.slice(0, 2).map(renderRejectedClaimMini),
+        ].join('') || '<p class="empty-copy">No imported claims in this bundle.</p>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderEvidenceHandoffPanel(component, finding) {
+  const commands = finding ? findingCommands(component, finding) : [];
+  return `
+    <div class="agent-panel">
+      <div class="section-row">
+        <h3>Evidence handoff</h3>
+        <span>${finding ? escapeHtml(finding.id) : 'none selected'}</span>
+      </div>
+      ${finding ? `
+        <p>${escapeHtml(cleanFindingSummary(finding.summary || finding.id))}</p>
+        <div class="command-list command-list--large">
+          ${commands.map((command) => `
+            <button type="button" data-action="copy" data-copy="${escapeAttr(command.command)}">
+              <span>${escapeHtml(command.label)}</span>
+              <code>${escapeHtml(command.command)}</code>
+            </button>
+          `).join('')}
+        </div>
+      ` : '<p>No selected hotspot for this component. Start with repo profile and relationship commands.</p>'}
+    </div>
+  `;
+}
+
+function renderGraphView(selected) {
+  const selectedEdges = state.model.edges.filter((edge) =>
+    edge.from_target === selected.targetId || edge.to_target === selected.targetId
+  );
+  return `
+    <section class="wide-view graph-view">
+      <div class="view-heading">
+        <span class="section-kicker">Evidence graph</span>
+        <h2>Trace dependency edges and visibility gaps.</h2>
+        <p>Use this when the map raises a question: which manifest edge connects two repos, and which surfaces remain outside the local bundle.</p>
+      </div>
+      <div class="graph-columns">
+        <section class="side-card">
+          <h3>Selected dependency edges for ${escapeHtml(selected.label)}</h3>
+          <div class="edge-list">
+            ${selectedEdges.map((edge) => `
+              <button type="button" data-action="select-component"
+                data-target="${escapeAttr(edge.from_target === selected.targetId ? edge.to_target : edge.from_target)}">
+                <span>${escapeHtml(edge.kind)}</span>
+                <strong>${escapeHtml(edge.label || edge.id)}</strong>
+                <em>${escapeHtml(edge.evidence_state || 'unknown')}</em>
+              </button>
+            `).join('') || '<p class="empty-copy">No selected dependency edge.</p>'}
+          </div>
+        </section>
+        <section class="side-card">
+          <h3>Known visibility gaps</h3>
+          <div class="gap-list">
+            ${state.model.gaps.map((gap) => `
+              <div>
+                <span>${escapeHtml(gap.evidence_state || gap.status || gap.state || 'unknown')}</span>
+                <strong>${escapeHtml(gap.subject || gap.surface || gap.layer || 'gap')}</strong>
+                <p>${escapeHtml(gap.summary || gap.detail || '')}</p>
+              </div>
+            `).join('')}
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+function bindEvents() {
+  const search = document.getElementById('global-search');
+  if (search) {
+    search.addEventListener('input', (event) => {
+      state.query = event.target.value;
+      render();
+      const next = document.getElementById('global-search');
+      if (next) {
+        next.focus();
+        next.setSelectionRange(state.query.length, state.query.length);
+      }
+    });
+  }
+
+  app.querySelectorAll('[data-action]').forEach((element) => {
+    element.addEventListener('click', async (event) => {
+      const target = event.currentTarget;
+      const action = target.dataset.action;
+      let scrollTarget = '';
+      if (action === 'view') {
+        state.view = target.dataset.view || 'atlas';
+      } else if (action === 'select-component') {
+        selectComponent(target.dataset.target);
+      } else if (action === 'select-finding') {
+        selectFinding(target.dataset.finding);
+        if (target.dataset.view) state.view = target.dataset.view;
+      } else if (action === 'open-source') {
+        if (target.dataset.target) selectComponent(target.dataset.target);
+        const repo = target.dataset.repo || (target.dataset.target ? selectedComponent()?.repoId || '' : '');
+        const href = sourceHrefFor(target.dataset.path || '', target.dataset.line || 1, repo);
+        if (href) window.open(href, '_blank', 'noopener,noreferrer');
+      } else if (action === 'scroll') {
+        state.view = target.dataset.view || state.view;
+        scrollTarget = target.dataset.scrollTarget || '';
+      } else if (action === 'layer-focus') {
+        focusLayer(target.dataset.layer);
+        scrollTarget = '#atlas-map-stage';
+      } else if (action === 'open-component') {
+        selectComponent(target.dataset.target);
+      } else if (action === 'tour') {
+        state.activeTour = target.dataset.tour || state.activeTour;
+        const nextTour = ATLAS_TOURS.find((tour) => tour.id === state.activeTour);
+        if (nextTour?.steps?.[0]) selectComponent(nextTour.steps[0]);
+      } else if (action === 'question') {
+        const questionTarget = target.dataset.target;
+        if (questionTarget === 'risks') state.view = 'risks';
+        if (questionTarget === 'sources') state.view = 'sources';
+        if (questionTarget === 'gaps') state.view = 'graph';
+        if (questionTarget === 'map') state.view = 'atlas';
+      } else if (action === 'cluster') {
+        state.activeCluster = state.activeCluster === target.dataset.cluster ? '' : target.dataset.cluster;
+      } else if (action === 'copy') {
+        await copyText(target.dataset.copy || '');
+        state.toast = 'Copied command';
+        setTimeout(() => {
+          state.toast = '';
+          render();
+        }, 1200);
+      }
+      state.query = action === 'select-component' || action === 'open-component' || action === 'select-finding' || action === 'open-source' ? '' : state.query;
+      render();
+      if (scrollTarget) {
+        requestAnimationFrame(() => {
+          document.querySelector(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    });
+  });
+}
+
+async function copyText(text) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', 'true');
+    area.style.position = 'fixed';
+    area.style.opacity = '0';
+    document.body.appendChild(area);
+    area.select();
+    document.execCommand('copy');
+    document.body.removeChild(area);
+  }
+}
+
+function selectComponent(targetId) {
+  if (targetId && state.model.componentByTarget.has(targetId)) {
+    state.selectedId = targetId;
+    ensureSelectedFinding();
+  }
+}
+
+function focusLayer(layerId) {
+  if (!layerId) return;
+  const component = state.model.components
+    .filter((item) => item.layer === layerId)
+    .sort((a, b) => b.findings - a.findings || b.relationshipRecords - a.relationshipRecords)[0];
+  if (component) selectComponent(component.targetId);
+}
+
+function selectFinding(findingId) {
+  const finding = findingId ? state.model.findingById.get(findingId) : null;
+  if (!finding) return;
+  if (finding.targetId && state.model.componentByTarget.has(finding.targetId)) {
+    state.selectedId = finding.targetId;
+  }
+  state.selectedFindingId = finding.id;
+}
+
+function ensureSelectedFinding() {
+  if (!state.model) return;
+  const component = selectedComponent();
+  if (component.findingsList.some((finding) => finding.id === state.selectedFindingId)) return;
+  state.selectedFindingId = component.findingsList[0]?.id || '';
+}
+
+function selectedComponent() {
+  return state.model.componentByTarget.get(state.selectedId) || state.model.components[0];
+}
+
+function activeFindingFor(component) {
+  if (!component) return null;
+  return component.findingsList.find((finding) => finding.id === state.selectedFindingId) ||
+    component.findingsList[0] ||
+    null;
+}
+
+function searchResults(query) {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  const results = [];
+
+  for (const component of state.model.components) {
+    const haystack = [
+      component.label,
+      component.name,
+      component.role,
+      component.summary,
+      component.evidenceState,
+    ].join(' ').toLowerCase();
+    if (haystack.includes(q)) {
+      results.push({
+        kind: 'component',
+        title: component.label,
+        meta: `${component.role} / ${formatNumber(component.findings)} findings`,
+        action: 'open-component',
+        target: component.targetId,
+      });
+    }
+  }
+
+  for (const component of state.model.components) {
+    for (const card of component.contentCards) {
+      const haystack = [card.title, card.summary, card.source, ...(card.tags || [])].join(' ').toLowerCase();
+      if (haystack.includes(q)) {
+        results.push({
+          kind: card.slot || 'surface',
+          title: card.title || card.id,
+          meta: `${component.label} / ${card.source || 'content'}`,
+          action: 'open-component',
+          target: component.targetId,
+        });
+      }
+    }
+  }
+
+  for (const cluster of state.model.clusters) {
+    const haystack = [cluster.summary, cluster.kind, cluster.producer].join(' ').toLowerCase();
+    if (haystack.includes(q)) {
+      results.push({
+        kind: 'risk',
+        title: cleanFindingSummary(cluster.summary),
+        meta: `${formatNumber(cluster.count)} findings / ${cluster.kind}`,
+        action: 'view',
+        view: 'risks',
+        target: '',
+      });
+    }
+  }
+
+  for (const rel of state.model.relationships || []) {
+    const haystack = [rel.summary, rel.type, rel.producer, rel.detail?.component, ...(rel.repos || [])].join(' ').toLowerCase();
+    if (haystack.includes(q)) {
+      const edge = relationshipToDisplayEdge(rel, selectedComponent());
+      results.push({
+        kind: rel.type || 'relationship',
+        title: rel.summary || rel.id,
+        meta: `${rel.evidence_state || 'metadata-visible'} / ${(rel.repos || []).length || 'binary'} repos`,
+        action: edge?.to_target ? 'select-component' : 'view',
+        target: edge?.to_target || '',
+        view: edge?.to_target ? '' : 'graph',
+      });
+    }
+  }
+
+  for (const claim of state.model.claims || []) {
+    const haystack = [claim.statement, claim.subject, claim.claim_tier, ...(claim.cited_refs || [])].join(' ').toLowerCase();
+    if (haystack.includes(q)) {
+      const subject = String(claim.subject || '');
+      const repoId = subject.startsWith('repo:') ? subject.slice(5) : '';
+      const component = repoId ? state.model.componentByRepo.get(repoId) || state.model.componentByTarget.get(repoId) : null;
+      results.push({
+        kind: claim.claim_tier || 'claim',
+        title: claim.statement || claim.id,
+        meta: `${claim.subject || 'landscape'} / claim-only`,
+        action: component ? 'select-component' : 'view',
+        target: component?.targetId || '',
+        view: component ? '' : 'agent',
+      });
+    }
+  }
+
+  for (const row of state.model.searchIndex || []) {
+    const haystack = [row.path, row.text].join(' ').toLowerCase();
+    if (haystack.includes(q)) {
+      const component = detectComponentForPath(row.path, state.model.components);
+      const repoComponent = row.repo_id ? state.model.componentByRepo.get(row.repo_id) : null;
+      results.push({
+        kind: 'source',
+        title: row.text || row.path,
+        meta: `${repoComponent?.label || row.repo_id || 'source'} / ${shortPath(row.path)}:${row.line || 1}`,
+        action: 'open-source',
+        target: repoComponent?.targetId || component?.targetId || '',
+        repo: row.repo_id || '',
+        path: row.path,
+        line: row.line || 1,
+      });
+    }
+    if (results.length > 40) break;
+  }
+
+  return results;
+}
+
+function agentCommands(component) {
+  const repo = component.repoId;
+  const repoArg = quoteArg(repo);
+  const labelArg = quoteArg(component.label);
+  return [
+    {
+      label: 'Find this repo profile',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 1`,
+    },
+    {
+      label: 'Get selected repo hotspots',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20 --full`,
+    },
+    {
+      label: 'Inspect repo relationships',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20`,
+    },
+    {
+      label: 'Search selected concept',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q ${labelArg} --limit 30`,
+    },
+    {
+      label: 'Query selected atlas component',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --repo ${repoArg} --limit 5`,
+    },
+    {
+      label: 'Import cited agent claims',
+      command: `"$PORTOLAN_PATH/scripts/import-analysis-claims.sh" "$BUNDLE_DIR" claims.jsonl`,
+    },
+  ];
+}
+
+function findingCommands(component, finding) {
+  if (!finding) return [];
+  const repo = component.repoId;
+  const path = (finding.paths || [])[0] || '';
+  const line = evidenceLine(finding, path);
+  const summary = cleanFindingSummary(finding.summary || finding.id);
+  return [
+    {
+      label: 'Query matching hotspots',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo ${repo} --text ${quoteArg(summary)} --limit 10 --full`,
+    },
+    path ? {
+      label: 'Read source snippet',
+      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo ${repo} --path ${quoteArg(path)} --line ${line} --radius 24`,
+    } : null,
+    finding.producer_ref ? {
+      label: 'Inspect producer JSON',
+      command: `jq '.results? // .' ${quoteArg(finding.producer_ref)} | head -n 80`,
+    } : null,
+  ].filter(Boolean);
+}
+
+function findingIdFromEvidenceRef(value) {
+  const match = String(value || '').match(/^hotspot:(.+)$/);
+  return match ? match[1] : '';
+}
+
+function landscapeLabel(model) {
+  return model.corpus?.label ||
+    model.reportSections?.find((section) => section.id === 'overview')?.blocks?.find((block) => block.type === 'text')?.text ||
+    model.coverage?.target_root ||
+    'Local software landscape';
+}
+
+function selectedRelationshipCorridor(component) {
+  if (!component) return [];
+  const out = [];
+  for (const edge of state.model.relationshipEdges || []) {
+    if (edge.from_target || edge.to_target) {
+      if (edge.from_target === component.targetId || edge.to_target === component.targetId) {
+        out.push(edge);
+      }
+      continue;
+    }
+    const repoIds = edge.repo_ids || edge.repos || [];
+    if (!repoIds.includes(component.repoId)) continue;
+    for (const repoId of repoIds) {
+      if (repoId === component.repoId) continue;
+      const target = state.model.componentByRepo.get(repoId);
+      if (!target) continue;
+      out.push({
+        id: `${edge.id || edge.label}:${component.targetId}->${target.targetId}`,
+        kind: edge.kind || edge.type || 'relationship',
+        from_target: component.targetId,
+        to_target: target.targetId,
+        from_repo: component.repoId,
+        to_repo: target.repoId,
+        label: edge.label || edge.summary || edge.id,
+        evidence_state: edge.evidence_state || 'metadata-visible',
+        source: edge.source || edge.producer || '',
+      });
+      if (out.length >= 18) break;
+    }
+  }
+  return out.sort((a, b) => (a.kind || '').localeCompare(b.kind || '') || (a.label || '').localeCompare(b.label || ''));
+}
+
+function relationshipToDisplayEdge(rel, selected) {
+  if (!rel || !selected) return null;
+  if (rel.from_repo || rel.to_repo) {
+    const from = state.model.componentByRepo.get(rel.from_repo);
+    const to = state.model.componentByRepo.get(rel.to_repo);
+    if (from && to) {
+      if (from.targetId === selected.targetId) return { from_target: from.targetId, to_target: to.targetId };
+      if (to.targetId === selected.targetId) return { from_target: to.targetId, to_target: from.targetId };
+      return { from_target: selected.targetId, to_target: to.targetId };
+    }
+  }
+  const repos = rel.repos || rel.repo_ids || [];
+  const otherRepo = repos.find((repoId) => repoId !== selected.repoId);
+  const other = otherRepo ? state.model.componentByRepo.get(otherRepo) : null;
+  return other ? { from_target: selected.targetId, to_target: other.targetId } : null;
+}
+
+function evidenceLine(finding, sourcePath = '') {
+  const direct = numberFrom(finding?.line, finding?.start_line);
+  if (direct > 0) return direct;
+  const locations = finding?.locations || [];
+  const match = locations.find((location) => !sourcePath || location.path === sourcePath);
+  const line = numberFrom(match?.line, match?.start_line);
+  return line > 0 ? line : 1;
+}
+
+function sourceHrefFor(pathValue, line = 1, repoId = '') {
+  if (!pathValue) return '';
+  const params = new URLSearchParams();
+  params.set('path', pathValue);
+  params.set('line', String(line || 1));
+  if (repoId) params.set('repo', repoId);
+  return `/source?${params.toString()}`;
+}
+
+function groupBy(items, keyFn) {
+  const map = new Map();
+  for (const item of items) {
+    const key = keyFn(item);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(item);
+  }
+  return map;
+}
+
+function numberFrom(...values) {
+  for (const value of values) {
+    const num = Number(value);
+    if (Number.isFinite(num)) return num;
+  }
+  return 0;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('en-US').format(numberFrom(value));
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
+}
+
+function shortPath(value) {
+  if (!value) return '';
+  return String(value)
+    .replace(/^.*\/repos\//, '')
+    .replace(/^.*\/bundle\//, 'bundle/')
+    .slice(0, 96);
+}
+
+function shortComponentLabel(value) {
+  return String(value || '')
+    .replace(/^Apache\s+/i, '')
+    .replace(/^apache-/i, '')
+    .replace(/\s+Repository$/i, '')
+    .trim() || String(value || '');
+}
+
+function cleanFindingSummary(value) {
+  return String(value || '')
+    .replace(/^Semgrep harness\.recipes\.semgrep-rules\./, 'Semgrep ')
+    .replace(/portolan-/g, '')
+    .replace(/-/g, ' ');
+}
+
+function quoteArg(value) {
+  return `"${String(value || '').replace(/(["\\$`])/g, '\\$1')}"`;
+}
+
+function cssState(value) {
+  return String(value || 'unknown').replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+}
+
+function highlight(text, query) {
+  const escaped = escapeHtml(text || '');
+  if (!query) return escaped;
+  const idx = escaped.toLowerCase().indexOf(escapeHtml(query).toLowerCase());
+  if (idx < 0) return escaped;
+  return `${escaped.slice(0, idx)}<mark>${escaped.slice(idx, idx + query.length)}</mark>${escaped.slice(idx + query.length)}`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function escapeAttr(s) {
-  return escapeHtml(s)
+    .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
 
-function safeRank(rank) {
-  const n = Number(rank);
-  return Number.isFinite(n) ? String(n) : '?';
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/`/g, '&#96;');
 }
 
-function sevRank(s) {
-  return SEV_RANK[s] ?? 5;
-}
-
-function maxSeverity(sevs) {
-  return sevs.reduce((best, s) => (sevRank(s) < sevRank(best) ? s : best), 'info');
-}
-
-function sevClass(s) {
-  if (s && Object.prototype.hasOwnProperty.call(SEV_RANK, s)) return `sev-${s}`;
-  return 'sev-info';
-}
-
-function safeKindClass(kind) {
-  if (kind && Object.prototype.hasOwnProperty.call(KIND_LABELS, kind)) return kind;
-  return 'unknown-kind';
-}
-
-function kindLabel(kind) {
-  return KIND_LABELS[kind] || kind;
-}
-
-const KIND_SECTION_ORDER = [
-  'duplication',
-  'static-finding',
-  'config',
-  'debt-candidate',
-  'dep-hub',
-];
-
-function findingsShownCount() {
-  if (usingFullHotspots) return allHotspots.length;
-  return manifest?.hotspot_count ?? allHotspots.length;
-}
-
-function findingsTotalCount() {
-  if (usingFullHotspots) return allHotspots.length;
-  return manifest?.hotspots_total ?? allHotspots.length;
-}
-
-function updateManifestFooter() {
-  const el = document.getElementById('manifest-info');
-  if (!manifest) {
-    el.textContent = 'no manifest';
-    return;
-  }
-  const targetShort = shortPath(manifest.target_root) || manifest.target_root;
-  el.textContent =
-    `${targetShort} · ${findingsShownCount()}/${findingsTotalCount()} findings · ${manifest.gap_count} gaps`;
-}
-
-function normalizeDisplayPath(p) {
-  if (!p) return '';
-  return p.replace(/\\/g, '/');
-}
-
-function shortPath(p) {
-  const norm = normalizeDisplayPath(p);
-  if (!norm || norm === '(dependency-hub)') return norm;
-  if (norm.startsWith('/')) {
-    for (const r of repos) {
-      const root = r.path.replace(/\\/g, '/');
-      if (norm === root || norm.startsWith(root + '/')) {
-        const rel = norm.slice(root.length).replace(/^\//, '');
-        return rel || r.name || r.id;
-      }
-    }
-    const parts = norm.split('/').filter(Boolean);
-    if (parts.length <= 2) return parts.join('/');
-    return '…/' + parts.slice(-2).join('/');
-  }
-  const parts = norm.split('/').filter(Boolean);
-  if (parts.length <= 3) return norm;
-  return '…/' + parts.slice(-2).join('/');
-}
-
-function primaryPath(h) {
-  const paths = h.paths || [];
-  if (!paths.length) return null;
-  return paths.find((p) => p && p !== '(dependency-hub)') || paths[0];
-}
-
-function repoForPath(p) {
-  const norm = normalizeDisplayPath(p);
-  if (!norm) return null;
-  if (norm.startsWith('/')) {
-    // longest-prefix wins so nested checkouts attribute to the inner repo
-    let best = null;
-    let bestLen = -1;
-    for (const r of repos) {
-      const root = r.path.replace(/\\/g, '/');
-      if ((norm === root || norm.startsWith(root + '/')) && root.length > bestLen) {
-        best = r.id;
-        bestLen = root.length;
-      }
-    }
-    return best;
-  }
-  if (repos.length === 1) return repos[0].id;
-  for (const r of repos) {
-    const name = r.name || r.id;
-    if (norm.startsWith(name + '/')) return r.id;
-  }
-  // multi-repo relative path with no prefix match: unattributed beats wrong
-  return null;
-}
-
-function hotspotRepo(h) {
-  for (const p of h.paths || []) {
-    const rid = repoForPath(p);
-    if (rid) return rid;
-  }
-  return repos.length === 1 ? repos[0].id : null;
-}
-
-function matchesSearch(h, q) {
-  if (!q) return true;
-  const hay = [h.summary, h.id, h.kind, h.severity, kindLabel(h.kind), ...(h.paths || [])]
-    .join(' ')
-    .toLowerCase();
-  return hay.includes(q);
-}
-
-function matchesView(h) {
-  if (viewMode === 'custom') {
-    if (filters.kinds.size && !filters.kinds.has(h.kind)) return false;
-    return true;
-  }
-  const view = VIEWS[viewMode];
-  if (!view) return true;
-  if (view.kinds && !view.kinds.includes(h.kind)) return false;
-  if (view.maxRank != null && h.rank > view.maxRank) return false;
-  return true;
-}
-
-function matchesFilters(h) {
-  if (filters.severities.size && !filters.severities.has(h.severity)) return false;
-  if (filters.repoIds.size) {
-    if (h.kind !== 'dep-hub') {
-      const rid = hotspotRepo(h);
-      if (!rid || !filters.repoIds.has(rid)) return false;
-    }
-  }
-  return true;
-}
-
-function filteredHotspots() {
-  const q = searchQuery.trim().toLowerCase();
-  return allHotspots
-    .filter((h) => matchesSearch(h, q) && matchesView(h) && matchesFilters(h))
-    .sort((a, b) => a.rank - b.rank);
-}
-
-async function fetchSearchCodeHits(q) {
-  const trimmed = q.trim();
-  const gen = ++searchFetchGen;
-  if (trimmed.length < 2) {
-    searchCodeHits = [];
-    renderSearchCodeResults();
-    return;
-  }
-  try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}&limit=12`);
-    if (gen !== searchFetchGen || trimmed !== searchQuery.trim()) return;
-    if (!res.ok) {
-      searchCodeHits = [];
-      renderSearchCodeResults();
-      return;
-    }
-    const body = await res.json();
-    if (gen !== searchFetchGen || trimmed !== searchQuery.trim()) return;
-    searchCodeHits = body.records || [];
-    renderSearchCodeResults();
-  } catch {
-    if (gen !== searchFetchGen) return;
-    searchCodeHits = [];
-    renderSearchCodeResults();
-  }
-}
-
-function scheduleSearchCodeFetch(q) {
-  if (searchFetchTimer) clearTimeout(searchFetchTimer);
-  searchFetchTimer = setTimeout(() => fetchSearchCodeHits(q), 200);
-}
-
-function renderSearchCodeResults() {
-  const el = document.getElementById('search-code-results');
-  if (!el) return;
-  const q = searchQuery.trim();
-  if (!q || q.length < 2 || !searchCodeHits.length) {
-    el.innerHTML = '';
-    el.classList.add('hidden');
-    return;
-  }
-  el.classList.remove('hidden');
-  el.innerHTML = `
-    <p class="search-code-label">Code index (${searchCodeHits.length} shown)</p>
-    <ul class="search-code-list">
-      ${searchCodeHits
-        .map(
-          (hit) =>
-            `<li><button type="button" class="search-code-hit" data-path="${escapeAttr(hit.path || '')}" data-line="${safeRank(hit.line)}">
-              <span class="mono">${escapeHtml(shortPath(hit.path || ''))}:${safeRank(hit.line)}</span>
-              <span class="search-code-text">${escapeHtml((hit.summary || '').slice(0, 120))}</span>
-            </button></li>`
-        )
-        .join('')}
-    </ul>`;
-  el.querySelectorAll('.search-code-hit').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const p = btn.dataset.path;
-      const line = btn.dataset.line || '1';
-      if (!p) return;
-      switchTab('findings');
-      loadSourcePreview({ paths: [p], id: null, summary: p }, p, line);
-      el.classList.add('hidden');
-    });
-  });
-}
-
-function applyHashDeepLink() {
-  const hash = window.location.hash.replace(/^#/, '');
-  if (!hash) return;
-  if (hash.startsWith('hotspot=')) {
-    const id = decodeURIComponent(hash.slice('hotspot='.length));
-    const h = allHotspots.find((x) => x.id === id);
-    if (h) {
-      switchTab('findings');
-      selectHotspot(h);
-    }
-  }
-}
-
-function kindCounts(hotspots) {
-  const counts = {};
-  for (const h of hotspots) {
-    counts[h.kind] = (counts[h.kind] || 0) + 1;
-  }
-  return counts;
-}
-
-function setView(mode) {
-  viewMode = mode;
-  filters.kinds.clear();
-  renderViewBar();
-  renderFilterExplainer();
-  renderFilters();
+window.addEventListener('hashchange', () => {
+  routeFromHash();
   render();
-}
-
-function enterCustomKindFilter(kind) {
-  viewMode = 'custom';
-  filters.kinds.clear();
-  filters.kinds.add(kind);
-  renderViewBar();
-  renderFilterExplainer();
-  renderFilters();
-  render();
-}
-
-function toggleCustomKind(kind) {
-  if (filters.kinds.has(kind)) filters.kinds.delete(kind);
-  else filters.kinds.add(kind);
-  renderFilterExplainer();
-  renderFilters();
-  render();
-}
-
-function kindChipState(kind) {
-  if (viewMode === 'custom') {
-    if (filters.kinds.size === 0) return 'inactive';
-    return filters.kinds.has(kind) ? 'active' : 'inactive';
-  }
-  const view = VIEWS[viewMode];
-  if (view?.kinds) {
-    return view.kinds.includes(kind) ? 'locked' : 'inactive';
-  }
-  return 'inactive';
-}
-
-function renderViewBar() {
-  const el = document.getElementById('view-bar');
-  el.innerHTML = '';
-  for (const [id, view] of Object.entries(VIEWS)) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'view-btn' + (viewMode === id ? ' active' : '');
-    btn.textContent = view.label;
-    btn.title = view.description;
-    btn.addEventListener('click', () => setView(id));
-    el.appendChild(btn);
-  }
-  if (viewMode === 'custom') {
-    const custom = document.createElement('span');
-    custom.className = 'view-btn active custom-tag';
-    custom.textContent = 'Custom kind filter';
-    el.appendChild(custom);
-  }
-}
-
-function renderFilterExplainer() {
-  const el = document.getElementById('filter-explainer');
-  const shown = filteredHotspots().length;
-  const total = allHotspots.length;
-  let main = '';
-  if (viewMode === 'custom') {
-    const kinds =
-      filters.kinds.size === 0
-        ? 'all kinds'
-        : [...filters.kinds].map(kindLabel).join(', ');
-    main = `<strong>Custom filter</strong> — kinds: ${escapeHtml(kinds)}. Click kind chips below to add/remove. Pick a view above to reset.`;
-  } else {
-    const view = VIEWS[viewMode];
-    main = view
-      ? `<strong>${escapeHtml(view.label)}</strong> — ${escapeHtml(view.description)}`
-      : '';
-  }
-  el.innerHTML = `
-    <p class="explainer-main">${main}</p>
-    <p class="explainer-meta">Showing <strong>${shown}</strong> of ${total} hotspots in bundle.
-      Rank #n = sort position (severity + per-kind budget).
-      Only tools that ran in this scan appear; missing layers are gaps, not hidden hotspots.</p>
-  `;
-}
-
-function renderKindGuide() {
-  const el = document.getElementById('kind-guide-body');
-  const order = ['duplication', 'static-finding', 'debt-candidate', 'config', 'dep-hub'];
-  el.innerHTML = order
-    .filter((k) => KIND_HELP[k])
-    .map((k) => {
-      const h = KIND_HELP[k];
-      return `<div class="guide-item">
-        <h4><span class="kind-pill ${safeKindClass(k)}">${escapeHtml(kindLabel(k))}</span></h4>
-        <p>${escapeHtml(h.why)}</p>
-        <p class="guide-meta">Tool: <code>${escapeHtml(h.tool)}</code> · ${escapeHtml(h.limit)}</p>
-      </div>`;
-    })
-    .join('');
-}
-
-function buildTree(hotspots) {
-  const root = {
-    name: '',
-    pathKey: '',
-    children: new Map(),
-    hotspotIds: new Set(),
-    isFile: false,
-  };
-
-  function ensureChild(parent, name, pathKey, isFile) {
-    if (!parent.children.has(name)) {
-      parent.children.set(name, {
-        name,
-        pathKey,
-        children: new Map(),
-        hotspotIds: new Set(),
-        isFile,
-      });
-    }
-    return parent.children.get(name);
-  }
-
-  function addPath(pathStr, h) {
-    const norm = normalizeDisplayPath(pathStr);
-    if (!norm || norm === '(dependency-hub)') {
-      const node = ensureChild(root, '(dependency-hubs)', '(dependency-hubs)', false);
-      node.hotspotIds.add(h.id);
-      return;
-    }
-    let rel = norm;
-    if (norm.startsWith('/')) {
-      rel = shortPath(norm);
-      if (rel.startsWith('…/')) rel = norm.split('/').pop() || norm;
-    }
-    const parts = rel.split('/').filter(Boolean);
-    let node = root;
-    let built = '';
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      built = built ? `${built}/${part}` : part;
-      const isFile = i === parts.length - 1;
-      node = ensureChild(node, part, built, isFile);
-      node.hotspotIds.add(h.id);
-    }
-  }
-
-  for (const h of hotspots) {
-    if (!h.paths || h.paths.length === 0) {
-      addPath('(dependency-hub)', h);
-    } else {
-      for (const p of h.paths) addPath(p, h);
-    }
-  }
-  return root;
-}
-
-function treeStats(node, hotspotById) {
-  const ids = [...node.hotspotIds];
-  const sevs = ids.map((id) => hotspotById.get(id)?.severity).filter(Boolean);
-  return { count: ids.length, maxSeverity: maxSeverity(sevs.length ? sevs : ['info']) };
-}
-
-function renderFilters() {
-  const bar = document.getElementById('filter-bar');
-  bar.innerHTML = '';
-  const counts = kindCounts(allHotspots);
-  const kinds = [...new Set(allHotspots.map((h) => h.kind))].sort();
-  const severities = [...new Set(allHotspots.map((h) => h.severity))].sort(
-    (a, b) => sevRank(a) - sevRank(b)
-  );
-
-  const kindWrap = document.createElement('div');
-  kindWrap.className = 'filter-group';
-  const kindLbl = document.createElement('span');
-  kindLbl.className = 'filter-label';
-  kindLbl.textContent = viewMode === 'custom' ? 'Kind (custom)' : 'Kind (click to customize)';
-  kindWrap.appendChild(kindLbl);
-  for (const v of kinds) {
-    const state = kindChipState(v);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip ' + state;
-    btn.innerHTML =
-      escapeHtml(kindLabel(v)) + `<span class="chip-count">${counts[v] ?? 0}</span>`;
-    if (state === 'locked') {
-      btn.title = 'Set by current view. Click to switch to custom filter for this kind only.';
-    } else if (state === 'inactive') {
-      btn.title = 'Click to filter by this kind only (switches to custom filter).';
-    }
-    btn.addEventListener('click', () => {
-      if (viewMode !== 'custom') {
-        enterCustomKindFilter(v);
-      } else {
-        toggleCustomKind(v);
-      }
-    });
-    kindWrap.appendChild(btn);
-  }
-  bar.appendChild(kindWrap);
-
-  bar.appendChild(
-    makeChipGroup('Severity', severities, filters.severities, () => render(), (v) => v, null)
-  );
-  if (repos.length > 1) {
-    const repoLabels = repos.map((r) => ({ id: r.id, label: r.name || r.id }));
-    bar.appendChild(
-      makeChipGroup(
-        'Repo',
-        repoLabels.map((r) => r.id),
-        filters.repoIds,
-        () => render(),
-        (id) => repoLabels.find((r) => r.id === id)?.label || id,
-        null
-      )
-    );
-  }
-}
-
-function makeChipGroup(label, values, activeSet, onChange, labelFn = (v) => v, counts = null) {
-  const wrap = document.createElement('div');
-  wrap.className = 'filter-group';
-  const lbl = document.createElement('span');
-  lbl.className = 'filter-label';
-  lbl.textContent = label;
-  wrap.appendChild(lbl);
-  for (const v of values) {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'chip' + (activeSet.has(v) ? ' active' : '');
-    const count = counts?.[v];
-    btn.innerHTML =
-      escapeHtml(labelFn(v)) + (count != null ? `<span class="chip-count">${count}</span>` : '');
-    btn.addEventListener('click', () => {
-      if (activeSet.has(v)) activeSet.delete(v);
-      else activeSet.add(v);
-      onChange();
-    });
-    wrap.appendChild(btn);
-  }
-  return wrap;
-}
-
-function renderBanner() {
-  const el = document.getElementById('status-banner');
-  const parts = [];
-  if (manifest?.hotspots_truncated && !usingFullHotspots) {
-    parts.push(
-      `<span class="status-banner truncation">Bundle truncated: <strong>${manifest.hotspot_count}</strong> of ${manifest.hotspots_total} hotspots (budget ${manifest.hotspot_budget}). Full list: <code>hotspots-full.jsonl</code>.</span>`
-    );
-  }
-  if (gaps.length) {
-    const items = gaps
-      .slice(0, 4)
-      .map((g) => `${escapeHtml(g.surface)}: ${escapeHtml(g.status)}`)
-      .join(' · ');
-    const more = gaps.length > 4 ? ` (+${gaps.length - 4} more)` : '';
-    parts.push(
-      `<span class="status-banner gaps">Layers not run or empty: ${items}${more}. These are not hidden hotspots — they were <em>not assessed</em> in this run.</span>`
-    );
-  }
-  if (parts.length) {
-    el.innerHTML = parts.join(' ');
-    el.classList.remove('hidden');
-  } else {
-    el.innerHTML = '';
-    el.classList.add('hidden');
-  }
-}
-
-const SEV_MATTERS = {
-  critical: 'Highest priority in the ranked list — address before lower severities.',
-  high: 'High priority — likely user-visible pain or strong tool signal.',
-  medium: 'Worth a look when higher-severity items are understood.',
-  low: 'Informational or weaker signal; still evidence-backed.',
-  info: 'Inventory or context — not a severity claim by itself.',
-};
-
-function severityMatters(sev) {
-  return SEV_MATTERS[sev] || 'Ranked using bundle severity ordering.';
-}
-
-function gapRecipeForProducer(producer) {
-  if (!producer || !gaps.length) return null;
-  const p = String(producer).toLowerCase();
-  const match = gaps.find(
-    (g) =>
-      (g.recipe || g.recipe_ref) &&
-      (String(g.surface || '').toLowerCase().includes(p) ||
-        String(g.summary || '').toLowerCase().includes(p) ||
-        String(g.producer_ref || '').toLowerCase().includes(p))
-  );
-  return match?.recipe || match?.recipe_ref || null;
-}
-
-function kindWhyLine(kind) {
-  const h = KIND_HELP[kind];
-  return h ? h.why : 'Flagged by a local scanner in this Portolan bundle.';
-}
-
-function renderTour(hotspots) {
-  const list = document.getElementById('hotspot-list');
-  list.innerHTML = '';
-  document.getElementById('tour-count').textContent =
-    hotspots.length === allHotspots.length
-      ? `${hotspots.length} shown`
-      : `${hotspots.length} of ${allHotspots.length}`;
-
-  if (!hotspots.length) {
-    const empty = document.createElement('li');
-    empty.className = 'detail-empty';
-    empty.innerHTML =
-      '<p class="empty-title">No matches</p><p class="empty-hint">Try view <strong>All</strong> or clear severity filters.</p>';
-    list.appendChild(empty);
-    return;
-  }
-
-  for (const h of hotspots) {
-    const li = document.createElement('li');
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'hotspot-card' + (h.id === selectedId ? ' active' : '');
-    const path = primaryPath(h);
-    const pathHtml = path
-      ? `<div class="card-path" title="${escapeAttr(normalizeDisplayPath(path))}">${escapeHtml(shortPath(path))}</div>`
-      : '';
-    btn.innerHTML = `
-      <div class="card-top">
-        <span class="card-rank" title="Bundle sort position">#${safeRank(h.rank)}</span>
-        <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
-        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity in SEV_RANK ? h.severity : 'info')}</span>
-      </div>
-      <p class="card-summary">${escapeHtml(h.summary)}</p>
-      <p class="card-why">${escapeHtml(kindWhyLine(h.kind))}</p>
-      ${pathHtml}
-    `;
-    btn.addEventListener('click', () => selectHotspot(h));
-    li.appendChild(btn);
-    list.appendChild(li);
-  }
-}
-
-function renderTreeNode(node, hotspotById, parentEl, depth = 0) {
-  const entries = [...node.children.entries()].sort((a, b) => {
-    if (a[1].isFile !== b[1].isFile) return a[1].isFile ? 1 : -1;
-    return a[0].localeCompare(b[0]);
-  });
-
-  for (const [, child] of entries) {
-    const stats = treeStats(child, hotspotById);
-    const hasChildren = child.children.size > 0;
-    const isExpanded = expandedDirs.has(child.pathKey) || depth < 1;
-
-    const row = document.createElement('div');
-    row.className = 'tree-node';
-
-    const line = document.createElement('div');
-    line.className = 'tree-row';
-    const toggle = document.createElement('span');
-    toggle.className = 'tree-toggle' + (hasChildren ? '' : ' empty');
-    toggle.textContent = hasChildren ? (isExpanded ? '▾' : '▸') : '';
-    const bar = document.createElement('span');
-    bar.className = `sev-bar ${sevClass(stats.maxSeverity)}`;
-    const name = document.createElement('span');
-    name.className = 'tree-name';
-    name.textContent = child.name;
-    const meta = document.createElement('span');
-    meta.className = 'tree-meta';
-    meta.textContent = `${stats.count}`;
-    line.appendChild(toggle);
-    line.appendChild(bar);
-    line.appendChild(name);
-    line.appendChild(meta);
-
-    if (hasChildren) {
-      toggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (expandedDirs.has(child.pathKey)) expandedDirs.delete(child.pathKey);
-        else expandedDirs.add(child.pathKey);
-        render();
-      });
-    }
-
-    row.appendChild(line);
-
-    if (child.isFile) {
-      const fileHotspots = [...child.hotspotIds]
-        .map((id) => hotspotById.get(id))
-        .filter(Boolean)
-        .sort((a, b) => a.rank - b.rank);
-      for (const h of fileHotspots) {
-        const hs = document.createElement('div');
-        hs.className = 'tree-hotspot' + (h.id === selectedId ? ' active' : '');
-        hs.textContent = `#${h.rank} ${kindLabel(h.kind)}`;
-        hs.title = h.summary;
-        hs.addEventListener('click', () => selectHotspot(h));
-        row.appendChild(hs);
-      }
-    }
-
-    const childWrap = document.createElement('div');
-    childWrap.className = 'tree-children' + (isExpanded ? '' : ' collapsed');
-    if (hasChildren) renderTreeNode(child, hotspotById, childWrap, depth + 1);
-    row.appendChild(childWrap);
-    parentEl.appendChild(row);
-  }
-}
-
-function renderTree(hotspots) {
-  const treeEl = document.getElementById('heat-tree');
-  const countEl = document.getElementById('tree-count');
-  treeEl.innerHTML = '';
-  if (countEl) {
-    countEl.textContent =
-      hotspots.length === allHotspots.length
-        ? `${hotspots.length} hotspots`
-        : `${hotspots.length} of ${allHotspots.length}`;
-  }
-  const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
-  const root = buildTree(hotspots);
-
-  if (root.children.has('(dependency-hubs)')) {
-    const depNode = root.children.get('(dependency-hubs)');
-    const stats = treeStats(depNode, hotspotById);
-    const row = document.createElement('div');
-    row.className = 'tree-row';
-    row.innerHTML = `<span class="tree-toggle empty"></span><span class="sev-bar sev-low"></span><span class="tree-name">(dependency-hubs)</span><span class="tree-meta">${stats.count}</span>`;
-    treeEl.appendChild(row);
-    for (const id of depNode.hotspotIds) {
-      const h = hotspotById.get(id);
-      if (!h) continue;
-      const hs = document.createElement('div');
-      hs.className = 'tree-hotspot' + (h.id === selectedId ? ' active' : '');
-      hs.textContent = `#${h.rank} ${kindLabel(h.kind)}`;
-      hs.title = h.summary;
-      hs.addEventListener('click', () => selectHotspot(h));
-      treeEl.appendChild(hs);
-    }
-    root.children.delete('(dependency-hubs)');
-  }
-
-  renderTreeNode(root, hotspotById, treeEl);
-  if (!treeEl.children.length) {
-    treeEl.innerHTML = '<p class="path">No paths match filters.</p>';
-  }
-}
-
-async function loadSourcePreview(h, pathOverride, lineOverride) {
-  const preview = document.getElementById('source-preview');
-  const code = document.getElementById('source-code');
-  const pathLabel = document.getElementById('source-path');
-  const path = pathOverride || primaryPath(h);
-  if (!path || path === '(dependency-hub)') {
-    preview.classList.add('hidden');
-    return;
-  }
-  const line = lineOverride != null && lineOverride !== '' ? String(lineOverride) : '1';
-  pathLabel.textContent = shortPath(path);
-  pathLabel.title = normalizeDisplayPath(path);
-  try {
-    const params = new URLSearchParams({ path, line });
-    const res = await fetch(`/source?${params}`);
-    if (!res.ok) {
-      preview.classList.remove('hidden');
-      code.textContent = `Source unavailable (${res.status})`;
-      return;
-    }
-    const data = await res.json();
-    preview.classList.remove('hidden');
-    code.innerHTML = data.lines
-      .map(
-        (ln) =>
-          `<span class="line${ln.highlight ? ' highlight' : ''}"><span class="lineno">${ln.no}</span>${escapeHtml(ln.text)}</span>`
-      )
-      .join('\n');
-  } catch (e) {
-    preview.classList.remove('hidden');
-    code.textContent = `Failed to load source: ${e.message}`;
-  }
-}
-
-function symbolCountFromSummary(summary) {
-  const m = String(summary || '').match(/\((\d+) symbols\)/);
-  return m ? m[1] : null;
-}
-
-function renderDetail(h) {
-  const el = document.getElementById('detail-body');
-  if (!h) {
-    el.className = 'detail-empty';
-    el.innerHTML = `
-      <p class="empty-title">Select a hotspot</p>
-      <p class="empty-hint">Choose a <strong>view</strong> above, then click a row. This panel explains why the tool flagged it.</p>
-    `;
-    document.getElementById('source-preview').classList.add('hidden');
-    return;
-  }
-  el.className = '';
-  const help = KIND_HELP[h.kind] || {};
-  const rid = hotspotRepo(h);
-  const repoLabel = rid ? repos.find((r) => r.id === rid)?.name || rid : '';
-  const symCount = h.kind === 'debt-candidate' ? symbolCountFromSummary(h.summary) : null;
-  const recipeRef = gapRecipeForProducer(h.producer);
-  const primaryPath = (h.paths || []).find((p) => p && p !== '(dependency-hub)');
-  const paths = (h.paths || []).filter((p) => p && p !== '(dependency-hub)');
-  const pathHtml = paths.length
-    ? paths
-        .map(
-          (p, i) =>
-            `<button type="button" class="path-chip${i === 0 ? ' primary' : ''}" data-path="${escapeAttr(normalizeDisplayPath(p))}" title="${escapeAttr(normalizeDisplayPath(p))}">${escapeHtml(shortPath(p))}</button>`
-        )
-        .join('')
-    : '<p class="path">No file paths (landscape-level hotspot).</p>';
-
-  el.innerHTML = `
-    <div class="detail-header">
-      <div class="detail-meta">
-        <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span>
-        <span class="badge ${sevClass(h.severity)}">${escapeHtml(h.severity in SEV_RANK ? h.severity : 'info')}</span>
-        ${repoLabel ? `<span class="badge">${escapeHtml(repoLabel)}</span>` : ''}
-        <span class="badge" title="Bundle sort position">rank #${safeRank(h.rank)}</span>
-      </div>
-      <h2 class="detail-title">${escapeHtml(h.summary)}</h2>
-    </div>
-    <div class="detail-section why-section">
-      <h3>Why is this here?</h3>
-      <p>${escapeHtml(help.why || kindWhyLine(h.kind))}</p>
-      <p class="why-matters"><strong>Why it matters:</strong> ${escapeHtml(severityMatters(h.severity))}</p>
-      ${help.limit ? `<p class="guide-meta">${escapeHtml(help.limit)}</p>` : ''}
-      ${symCount ? `<p>Symbol count in file: <strong>${escapeHtml(symCount)}</strong> (ctags).</p>` : ''}
-      <p class="guide-meta">Tool: <code>${escapeHtml(h.producer)}</code> · Evidence: ${escapeHtml(h.evidence_state)}</p>
-      ${h.producer_ref ? `<p class="guide-meta">Producer ref: <code>${escapeHtml(h.producer_ref)}</code></p>` : ''}
-    </div>
-    <div class="detail-actions">
-      ${primaryPath ? `<button type="button" class="detail-cta" id="detail-open-source">Open source preview</button>` : ''}
-      ${recipeRef ? `<button type="button" class="detail-cta secondary" id="detail-gap-recipe">See gap recipe</button>` : ''}
-    </div>
-    <div class="detail-section">
-      <h3>Paths</h3>
-      ${pathHtml}
-    </div>
-    <details class="evidence-toggle">
-      <summary>Raw provenance</summary>
-      <div class="evidence-body">
-        <p>id: <code>${escapeHtml(h.id)}</code></p>
-        <p>producer_ref: ${escapeHtml(h.producer_ref || '')}</p>
-      </div>
-    </details>
-  `;
-
-  el.querySelectorAll('.path-chip').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      loadSourcePreview(h, chip.dataset.path);
-    });
-  });
-
-  el.querySelector('#detail-open-source')?.addEventListener('click', () => {
-    if (primaryPath) loadSourcePreview(h, primaryPath);
-  });
-  el.querySelector('#detail-gap-recipe')?.addEventListener('click', () => {
-    switchTab('gaps');
-  });
-
-  loadSourcePreview(h);
-}
-
-function selectHotspot(h) {
-  selectedId = h?.id ?? null;
-  if (h?.id) {
-    window.location.hash = `hotspot=${encodeURIComponent(h.id)}`;
-  }
-  renderDetail(h);
-  render();
-  requestAnimationFrame(() => {
-    const active = document.querySelector('.hotspot-card.active');
-    active?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  });
-}
-
-function switchTab(tab) {
-  activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
-  document.querySelectorAll('.tab-panel').forEach((panel) => {
-    panel.classList.toggle('active', panel.id === `tab-${tab}`);
-  });
-  if (tab === 'overview') renderOverview();
-  else if (tab === 'repos') renderReposTab();
-  else if (tab === 'gaps') renderGapsTab();
-  else if (tab === 'graph-hints') renderGraphHintsTab();
-  else renderFindingsTab();
-}
-
-function tierBadge(tier) {
-  const meta = TIER_META[tier];
-  if (!meta) return `<span class="tier-badge tier-d" title="agent claim">?</span>`;
-  return `<span class="tier-badge tier-${meta.letter.toLowerCase()}" title="${escapeAttr(meta.hint)}">${meta.letter} · ${escapeHtml(meta.label)}</span>`;
-}
-
-function profileById(rid) {
-  return repoProfiles.find((p) => p.id === rid) || null;
-}
-
-function claimsForSubject(subject) {
-  return claims.filter((c) => (c.subject || '') === subject);
-}
-
-function repoPurpose(rid) {
-  // Tier B claim wins (with badge); otherwise tier-A manifest description /
-  // manifest name / README title.
-  const claim = claimsForSubject(`repo:${rid}`).find((c) => c.claim_tier === 'analytical');
-  if (claim) return { text: claim.statement, tier: claim.claim_tier };
-  const p = profileById(rid);
-  const manifests = p?.purpose?.manifests || [];
-  const desc = manifests.map((m) => m.description).find(Boolean);
-  if (desc) return { text: desc, tier: null };
-  const mname = manifests.map((m) => m.name).find(Boolean);
-  if (mname) return { text: mname, tier: null };
-  if (p?.purpose?.readme_title) return { text: p.purpose.readme_title, tier: null };
-  return { text: '', tier: null };
-}
-
-function repoSeverityCounts(rid) {
-  const counts = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-  for (const h of allHotspots) {
-    if (hotspotRepo(h) !== rid) continue;
-    if (counts[h.severity] != null) counts[h.severity] += 1;
-  }
-  return counts;
-}
-
-function relationshipsForRepo(rid) {
-  return relationships.filter(
-    (r) => r.from_repo === rid || r.to_repo === rid || (r.repos || []).includes(rid)
-  );
-}
-
-function repoLabelById(rid) {
-  return repos.find((r) => r.id === rid)?.name || rid;
-}
-
-function relEndpointsHtml(r) {
-  if (r.from_repo && r.to_repo) {
-    return `<button type="button" class="repo-link" data-repo="${escapeAttr(r.from_repo)}">${escapeHtml(repoLabelById(r.from_repo))}</button> → <button type="button" class="repo-link" data-repo="${escapeAttr(r.to_repo)}">${escapeHtml(repoLabelById(r.to_repo))}</button>`;
-  }
-  return (r.repos || [])
-    .map((id) => `<button type="button" class="repo-link" data-repo="${escapeAttr(id)}">${escapeHtml(repoLabelById(id))}</button>`)
-    .join(', ');
-}
-
-function wireRepoLinks(rootEl) {
-  rootEl.querySelectorAll('.repo-link').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      selectedRepoId = btn.dataset.repo;
-      if (activeTab !== 'repos') switchTab('repos');
-      else renderReposTab();
-    });
-  });
-}
-
-function renderReposTab() {
-  const cardsEl = document.getElementById('repos-cards');
-  if (!cardsEl) return;
-
-  if (!repos.length) {
-    cardsEl.innerHTML = '<p class="empty-hint">repos.json missing or empty in this bundle.</p>';
-    return;
-  }
-
-  cardsEl.innerHTML = repos
-    .map((r) => {
-      const p = profileById(r.id);
-      const purpose = repoPurpose(r.id);
-      const sev = repoSeverityCounts(r.id);
-      const langs = (p?.languages || [])
-        .slice(0, 3)
-        .map((l) => `${l.ext} ${l.files}`)
-        .join(' · ');
-      const activity = p?.activity || {};
-      const maturity = p?.maturity || {};
-      const relCount = relationshipsForRepo(r.id).length;
-      const sevBits = ['critical', 'high', 'medium']
-        .filter((s) => sev[s] > 0)
-        .map((s) => `<span class="sev-pill sev-${s}">${sev[s]} ${s}</span>`)
-        .join(' ');
-      return `
-        <button type="button" class="repo-card ${selectedRepoId === r.id ? 'selected' : ''}" data-repo="${escapeAttr(r.id)}">
-          <span class="repo-card-name">${escapeHtml(r.name || r.id)}</span>
-          ${purpose.text ? `<span class="repo-card-purpose">${purpose.tier ? tierBadge(purpose.tier) : ''} ${escapeHtml(purpose.text)}</span>` : '<span class="repo-card-purpose dim">no manifest description / README title found</span>'}
-          <span class="repo-card-meta">
-            ${langs ? `<span>${escapeHtml(langs)}</span>` : ''}
-            ${activity.commits_30d != null ? `<span>${escapeHtml(String(activity.commits_30d))} commits/30d</span>` : ''}
-            ${relCount ? `<span>${relCount} connection${relCount === 1 ? '' : 's'}</span>` : ''}
-          </span>
-          <span class="repo-card-badges">
-            ${boolBadge(maturity.has_readme, 'README', 'no README')}
-            ${boolBadge(maturity.has_ci, 'CI', 'no CI')}
-            ${boolBadge(maturity.has_tests, 'tests', 'no tests')}
-            ${sevBits}
-          </span>
-        </button>`;
-    })
-    .join('');
-
-  cardsEl.querySelectorAll('.repo-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      selectedRepoId = card.dataset.repo;
-      renderReposTab();
-    });
-  });
-
-  renderRelationshipsView();
-  renderRepoDrill();
-}
-
-function renderRelationshipsView() {
-  const el = document.getElementById('relationships-view');
-  if (!el) return;
-  if (!relationships.length) {
-    el.innerHTML = `
-      <h3>Connections between repos</h3>
-      <p class="empty-hint">No relationship edges in this bundle. Single-repo landscape, bundle built before spec 105, or detectors found nothing — check the Gaps tab before assuming isolation.</p>
-    `;
-    return;
-  }
-  el.innerHTML = `
-    <h3>Connections between repos</h3>
-    <p class="panel-hint">Tool-derived edges (tier A, metadata-visible): manifests, SBOM intersection, opt-in cross-repo duplication. Not runtime topology.</p>
-    <table class="rel-table">
-      <thead><tr><th>Type</th><th>Repos</th><th>Evidence</th><th>Detail</th></tr></thead>
-      <tbody>
-        ${relationships
-          .map(
-            (r) => `
-          <tr id="rel-${escapeAttr(r.id)}">
-            <td><span class="rel-type rel-${escapeAttr((r.type || '').replace(/[^a-z-]/g, ''))}">${escapeHtml(r.type || '')}</span></td>
-            <td>${relEndpointsHtml(r)}</td>
-            <td><span class="badge">${escapeHtml(r.evidence_state || '')}</span> <span class="mono dim">${escapeHtml(r.producer || '')}</span></td>
-            <td class="rel-summary">${escapeHtml(r.summary || '')}</td>
-          </tr>`
-          )
-          .join('')}
-      </tbody>
-    </table>
-  `;
-  wireRepoLinks(el);
-}
-
-async function loadReadmeInto(el, repoPath, readmePath) {
-  el.innerHTML = '<p class="empty-hint">Loading README…</p>';
-  try {
-    const abs = `${repoPath.replace(/\/$/, '')}/${readmePath}`;
-    const res = await fetch(`/api/source?path=${encodeURIComponent(abs)}&full=1`);
-    if (res.ok) {
-      const data = await res.json();
-      const payload = data.records?.[0]?.payload;
-      if (payload?.lines?.length) {
-        const text = payload.lines.map((l) => l.text).join('\n');
-        el.innerHTML = `
-          <pre class="readme-text">${escapeHtml(text)}</pre>
-          ${payload.truncated ? `<p class="guide-meta">Truncated at line ${payload.endLine} of ${payload.totalLines}.</p>` : ''}
-        `;
-        return;
-      }
-    }
-  } catch {
-    /* fall through */
-  }
-  el.innerHTML = '<p class="empty-hint">README could not be read via the source API (static bundle mode?). Open it in your editor instead.</p>';
-}
-
-function renderRepoDrill() {
-  const el = document.getElementById('repo-drill');
-  if (!el) return;
-  if (!selectedRepoId) {
-    el.innerHTML = `
-      <p class="empty-title">Select a repository</p>
-      <p class="empty-hint">Cards show tool-extracted profile; drill-down adds connections, findings, and tier-labeled agent claims.</p>
-    `;
-    return;
-  }
-  const rid = selectedRepoId;
-  const repo = repos.find((r) => r.id === rid);
-  const p = profileById(rid);
-  if (!repo && !p) {
-    // stale id (e.g. relationship edge naming a repo absent from this bundle)
-    el.innerHTML = `
-      <p class="empty-title">Unknown repository: ${escapeHtml(rid)}</p>
-      <p class="empty-hint">This id is not present in repos.json or repo-profiles.json for the loaded bundle.</p>
-    `;
-    return;
-  }
-  const purpose = p?.purpose || {};
-  const sev = repoSeverityCounts(rid);
-  const repoRels = relationshipsForRepo(rid);
-  const repoClaims = claimsForSubject(`repo:${rid}`);
-  const topFindings = allHotspots.filter((h) => hotspotRepo(h) === rid).slice(0, 5);
-
-  const manifestRows = (purpose.manifests || [])
-    .map(
-      (m) => `<tr><td class="mono">${escapeHtml(m.path || m.type || '')}</td><td>${escapeHtml(m.description || m.module || m.name || '—')}</td></tr>`
-    )
-    .join('');
-  const composeRows = (purpose.compose || [])
-    .flatMap((cf) =>
-      (cf.services || []).map(
-        (s) =>
-          `<li><span class="mono">${escapeHtml(s.name)}</span>${s.image ? ` · image <span class="mono">${escapeHtml(s.image)}</span>` : ' · local build'}${(s.depends_on || []).length ? ` · depends on ${escapeHtml(s.depends_on.join(', '))}` : ''}</li>`
-      )
-    )
-    .join('');
-  const entryItems = (purpose.entrypoints || []).map((e) => `<li class="mono">${escapeHtml(e)}</li>`).join('');
-  const tierGroups = ['analytical', 'synthetic', 'speculative']
-    .map((tier) => ({ tier, items: repoClaims.filter((c) => c.claim_tier === tier) }))
-    .filter((g) => g.items.length);
-
-  el.innerHTML = `
-    <div class="drill-head">
-      <h3>${escapeHtml(repo?.name || rid)}</h3>
-      <span class="mono dim" title="${escapeAttr(repo?.path || '')}">${escapeHtml(shortPath(repo?.path || ''))}</span>
-    </div>
-
-    <div class="drill-section">
-      <h4>Tier A — tool-extracted profile <span class="badge ok">direct evidence</span></h4>
-      ${p ? `
-        <p class="drill-facts">
-          ${p.scale?.file_count != null ? `${p.scale.file_count} files (${escapeHtml(p.scale.evidence_state || '')})` : ''}
-          ${(p.languages || []).length ? ` · ${p.languages.slice(0, 4).map((l) => `${escapeHtml(l.ext)} ${l.files}`).join(' · ')}` : ''}
-        </p>
-        <p class="drill-facts">
-          ${p.activity?.last_commit ? `Last commit ${escapeHtml(p.activity.last_commit)}` : 'Activity unknown'}
-          ${p.activity?.commits_30d != null ? ` · ${p.activity.commits_30d} commits/30d` : ''}
-          ${p.activity?.contributors != null ? ` · ${p.activity.contributors} contributor(s)` : ''}
-        </p>
-        <div class="maturity-row">
-          ${boolBadge(p.maturity?.has_readme, 'README', 'no README')}
-          ${boolBadge(p.maturity?.has_ci, 'CI', 'no CI')}
-          ${boolBadge(p.maturity?.has_tests, 'tests', 'no tests')}
-          ${boolBadge(p.maturity?.has_docker, 'Docker', 'no Docker')}
-        </div>
-        ${manifestRows ? `<table class="drill-table"><thead><tr><th>Manifest</th><th>Describes</th></tr></thead><tbody>${manifestRows}</tbody></table>` : '<p class="empty-hint">No root manifests found.</p>'}
-        ${entryItems ? `<p class="drill-label">Entrypoints</p><ul class="drill-list">${entryItems}</ul>` : ''}
-        ${composeRows ? `<p class="drill-label">Compose services</p><ul class="drill-list">${composeRows}</ul>` : ''}
-        ${(purpose.api_specs || []).length ? `<p class="drill-label">API specs</p><ul class="drill-list">${purpose.api_specs.map((a) => `<li class="mono">${escapeHtml(a)}</li>`).join('')}</ul>` : ''}
-        ${purpose.readme_path ? `<button type="button" class="detail-cta" id="drill-readme-btn">Read full README (${escapeHtml(purpose.readme_path)})</button><div id="drill-readme"></div>` : ''}
-      ` : '<p class="empty-hint">No profile for this repo — bundle built before spec 104 or scan-repo-profiles failed (see Gaps).</p>'}
-    </div>
-
-    <div class="drill-section">
-      <h4>Connections (tier A)</h4>
-      ${repoRels.length ? `<ul class="drill-list">${repoRels
-        .map((r) => `<li><span class="rel-type">${escapeHtml(r.type)}</span> ${relEndpointsHtml(r)} <span class="dim">— ${escapeHtml(r.summary || '')}</span></li>`)
-        .join('')}</ul>` : '<p class="empty-hint">No detected edges for this repo.</p>'}
-    </div>
-
-    <div class="drill-section">
-      <h4>Top findings in this repo (tier A)</h4>
-      ${topFindings.length ? `<ul class="drill-list">${topFindings
-        .map(
-          (h) => `<li><button type="button" class="drill-finding" data-id="${escapeAttr(h.id)}">#${safeRank(h.rank)} <span class="kind-pill ${safeKindClass(h.kind)}">${escapeHtml(kindLabel(h.kind))}</span> ${escapeHtml(h.summary)}</button></li>`
-        )
-        .join('')}</ul>
-        <button type="button" class="inline-link" id="drill-all-findings">All findings of this repo →</button>` : `<p class="empty-hint">No findings attributed to this repo in the shown bundle (severity counts: ${sev.critical} critical / ${sev.high} high / ${sev.medium} medium).</p>`}
-    </div>
-
-    <div class="drill-section claims-section">
-      <h4>Agent analysis — labeled claims (B/C/D)</h4>
-      ${tierGroups.length ? tierGroups
-        .map(
-          (g) => `
-          <div class="claims-group">
-            ${g.items
-              .map(
-                (c) => `
-              <div class="claim-item">
-                ${tierBadge(c.claim_tier)}
-                <p class="claim-statement">${escapeHtml(c.statement || '')}</p>
-                ${(c.cited_refs || []).length ? `<details class="claim-refs"><summary>${c.cited_refs.length} cited ref(s)</summary><ul>${c.cited_refs
-                  .map((ref) => {
-                    if (ref.startsWith('hotspot:')) {
-                      return `<li><button type="button" class="ref-chip" data-ref="${escapeAttr(ref)}">${escapeHtml(ref)}</button></li>`;
-                    }
-                    return `<li><span class="mono">${escapeHtml(ref)}</span></li>`;
-                  })
-                  .join('')}</ul></details>` : '<p class="guide-meta">No refs (speculative).</p>'}
-                <p class="guide-meta">claim-only · agent: <span class="mono">${escapeHtml(c.agent || 'unknown')}</span></p>
-              </div>`
-              )
-              .join('')}
-          </div>`
-        )
-        .join('') : '<p class="empty-hint">No agent analysis imported for this repo. Tiers B/C/D are empty — run an agent per <span class="mono">harness/SKILL.md</span> and import via <span class="mono">import-analysis-claims.sh</span>.</p>'}
-    </div>
-  `;
-
-  wireRepoLinks(el);
-  const readmeBtn = el.querySelector('#drill-readme-btn');
-  if (readmeBtn && repo && p?.purpose?.readme_path) {
-    readmeBtn.addEventListener('click', () => {
-      loadReadmeInto(el.querySelector('#drill-readme'), repo.path, p.purpose.readme_path);
-      readmeBtn.disabled = true;
-    });
-  }
-  el.querySelectorAll('.drill-finding').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const h = allHotspots.find((x) => x.id === btn.dataset.id);
-      if (h) {
-        switchTab('findings');
-        selectHotspot(h);
-      }
-    });
-  });
-  el.querySelector('#drill-all-findings')?.addEventListener('click', () => {
-    filters.repoIds = new Set([rid]);
-    switchTab('findings');
-  });
-  el.querySelectorAll('.ref-chip').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const hid = (btn.dataset.ref || '').replace(/^hotspot:/, '');
-      const h = allHotspots.find((x) => x.id === hid);
-      if (h) {
-        switchTab('findings');
-        selectHotspot(h);
-      }
-    });
-  });
-}
-
-function boolBadge(val, yes, no) {
-  if (val === true) return `<span class="badge ok">${escapeHtml(yes)}</span>`;
-  if (val === false) return `<span class="badge warn">${escapeHtml(no)}</span>`;
-  return `<span class="badge unknown">unknown</span>`;
-}
-
-function formatLanguageEntry(lang, data) {
-  if (data && typeof data === 'object' && data.files != null) {
-    const files = Number(data.files) || 0;
-    const pct =
-      data.ratio != null && !Number.isNaN(Number(data.ratio))
-        ? `, ${Math.round(Number(data.ratio) * 100)}%`
-        : '';
-    return `${lang} (${files} file${files === 1 ? '' : 's'}${pct})`;
-  }
-  if (typeof data === 'number') return `${lang} (${data})`;
-  return lang;
-}
-
-function formatLanguagesSummary(languages, primaryLanguage) {
-  if (!languages || typeof languages !== 'object' || !Object.keys(languages).length) {
-    return primaryLanguage || 'unknown';
-  }
-  return Object.entries(languages)
-    .sort((a, b) => {
-      const af = typeof a[1] === 'object' ? Number(a[1].files) || 0 : Number(a[1]) || 0;
-      const bf = typeof b[1] === 'object' ? Number(b[1].files) || 0 : Number(b[1]) || 0;
-      return bf - af;
-    })
-    .slice(0, 4)
-    .map(([lang, data]) => formatLanguageEntry(lang, data))
-    .join(' · ');
-}
-
-function findingsGroupsFromHotspots(hotspots) {
-  const byKind = new Map();
-  for (const h of hotspots) {
-    if (!byKind.has(h.kind)) byKind.set(h.kind, []);
-    byKind.get(h.kind).push(h);
-  }
-  return [...byKind.entries()]
-    .sort((a, b) => {
-      const ia = KIND_SECTION_ORDER.indexOf(a[0]);
-      const ib = KIND_SECTION_ORDER.indexOf(b[0]);
-      if (ia !== -1 && ib !== -1) return ia - ib;
-      if (ia !== -1) return -1;
-      if (ib !== -1) return 1;
-      return a[0].localeCompare(b[0]);
-    })
-    .map(([kind, items]) => ({
-      kind,
-      count: items.length,
-      items: [...items]
-        .sort((a, b) => a.rank - b.rank)
-        .map((h) => ({
-          id: h.id,
-          rank: h.rank,
-          summary: h.summary,
-          severity: h.severity,
-          evidence_ref: `hotspot:${h.id}`,
-        })),
-    }));
-}
-
-function renderOverview() {
-  const rankEl = document.getElementById('rank-explainer');
-  if (rankEl) {
-    rankEl.innerHTML = `
-      <p><strong>Rank</strong> = severity first, then kind quotas when the bundle is truncated.
-        Open <button type="button" class="inline-link" id="goto-tour-view">Findings → Tour view</button> for the full ranked list.</p>
-    `;
-    rankEl.querySelector('#goto-tour-view')?.addEventListener('click', () => {
-      switchTab('findings');
-      const tourBtn = document.querySelector('.view-btn[data-view="tour"]');
-      tourBtn?.click();
-    });
-  }
-
-  const cardEl = document.getElementById('landscape-card');
-  const scaleEl = document.getElementById('findings-scale');
-  const repoEl = document.getElementById('repo-matrix');
-  const kindEl = document.getElementById('kind-summary');
-  const stepsEl = document.getElementById('next-steps');
-
-  const card = landscapeCard || {};
-  const id = card.identity || {};
-  const scale = card.scale || {};
-  const activity = card.activity || {};
-  const maturity = card.maturity || {};
-  const health = card.health_signals || {};
-  const blocksEl = document.getElementById('overview-blocks');
-  const overviewSection = landscapeReport?.sections?.find((s) => s.id === 'overview');
-  const textBlocks = (overviewSection?.blocks || []).filter((b) => b.type === 'text' && b.text);
-  if (blocksEl) {
-    blocksEl.innerHTML = textBlocks.length
-      ? textBlocks.map((b) => `<p class="overview-block">${escapeHtml(b.text)}</p>`).join('')
-      : '';
-  }
-
-  const langs = formatLanguagesSummary(id.languages, id.primary_language);
-
-  cardEl.innerHTML = `
-    <h2>${escapeHtml(id.name || 'Landscape')}</h2>
-    <div class="card-grid">
-      <div class="card-stat"><span class="label">Language</span><span class="value">${escapeHtml(String(langs))}</span></div>
-      <div class="card-stat"><span class="label">Files</span><span class="value">${scale.total_files != null ? escapeHtml(String(scale.total_files)) : 'unknown'}</span></div>
-      ${scale.total_loc != null ? `<div class="card-stat"><span class="label">LOC (approx)</span><span class="value">${escapeHtml(String(scale.total_loc))}</span></div>` : ''}
-      <div class="card-stat"><span class="label">Repos</span><span class="value">${repos.length || '—'}</span></div>
-      <div class="card-stat"><span class="label">Last commit</span><span class="value">${escapeHtml(activity.last_commit || 'unknown')}</span></div>
-      <div class="card-stat"><span class="label">Contributors</span><span class="value">${activity.contributors != null ? escapeHtml(String(activity.contributors)) : 'unknown'}</span></div>
-    </div>
-    <div class="maturity-row">
-      ${boolBadge(maturity.has_readme, 'README', 'no README')}
-      ${boolBadge(maturity.has_ci, 'CI', 'no CI')}
-      ${boolBadge(maturity.has_tests, 'tests', 'no tests')}
-      ${boolBadge(maturity.has_docker, 'Docker', 'no Docker')}
-    </div>
-    ${health.staleness || health.test_coverage_hint ? `<p class="health-hint">Staleness: ${escapeHtml(health.staleness || 'unknown')} · Test hint: ${escapeHtml(health.test_coverage_hint || 'unknown')}</p>` : ''}
-  `;
-
-  const shown = findingsShownCount();
-  const total = findingsTotalCount();
-  const truncated = manifest?.hotspots_truncated && !usingFullHotspots;
-  scaleEl.innerHTML = `
-    <p class="scale-line">Scan found <strong>${total}</strong> findings; this bundle shows <strong>${shown}</strong>${truncated ? ' (budget truncated)' : ''}.</p>
-    ${truncated ? '<p class="scale-hint">Open the <strong>Findings</strong> tab and use <em>Show all findings from scan</em> to load the full list.</p>' : ''}
-    ${usingFullHotspots && shown === total ? '<p class="scale-hint">Showing all findings from scan.</p>' : ''}
-  `;
-
-  if (repos.length) {
-    repoEl.innerHTML = `
-      <h3>Findings by repository</h3>
-      <p class="panel-hint">Click a repo for profile, connections, and tier-labeled agent analysis.</p>
-      <table class="repo-table">
-        <thead><tr><th>Name</th><th>Path</th><th>crit</th><th>high</th><th>med</th><th>low+info</th></tr></thead>
-        <tbody>${repos
-          .map((r) => {
-            const sev = repoSeverityCounts(r.id);
-            return `<tr class="repo-row" data-repo="${escapeAttr(r.id)}">
-              <td><button type="button" class="repo-link" data-repo="${escapeAttr(r.id)}">${escapeHtml(r.name || r.id)}</button></td>
-              <td class="mono" title="${escapeAttr(r.path)}">${escapeHtml(shortPath(r.path))}</td>
-              <td class="${sev.critical ? 'sev-num sev-critical' : 'dim'}">${sev.critical}</td>
-              <td class="${sev.high ? 'sev-num sev-high' : 'dim'}">${sev.high}</td>
-              <td class="${sev.medium ? 'sev-num sev-medium' : 'dim'}">${sev.medium}</td>
-              <td class="dim">${sev.low + sev.info}</td>
-            </tr>`;
-          })
-          .join('')}</tbody></table>
-    `;
-    wireRepoLinks(repoEl);
-  } else {
-    repoEl.innerHTML = '';
-  }
-
-  const landscapeClaims = claimsForSubject('landscape');
-  const claimsBlockEl = document.getElementById('overview-claims');
-  if (claimsBlockEl) {
-    claimsBlockEl.innerHTML = landscapeClaims.length
-      ? `
-      <h3>Agent analysis of the landscape (labeled claims)</h3>
-      <p class="panel-hint">Imported via <span class="mono">import-analysis-claims.sh</span>; never mixed into ranked findings.</p>
-      ${landscapeClaims
-        .slice(0, 5)
-        .map(
-          (c) => `<div class="claim-item">${tierBadge(c.claim_tier)}<p class="claim-statement">${escapeHtml(c.statement || '')}</p><p class="guide-meta">claim-only · ${(c.cited_refs || []).length} ref(s) · agent: <span class="mono">${escapeHtml(c.agent || 'unknown')}</span></p></div>`
-        )
-        .join('')}
-      ${landscapeClaims.length > 5 ? `<p class="guide-meta">${landscapeClaims.length - 5} more in repo drill-downs and bundle-query claims.</p>` : ''}
-    `
-      : '';
-  }
-
-  const kc = usingFullHotspots ? kindCounts(allHotspots) : manifest?.kind_counts || kindCounts(allHotspots);
-  const kcTotal = usingFullHotspots
-    ? kindCounts(allHotspots)
-    : manifest?.kind_counts_total || kindCounts(allHotspots);
-  kindEl.innerHTML = `
-    <h3>Findings by kind (shown / scan total)</h3>
-    <ul class="kind-list">${Object.keys({ ...kcTotal, ...kc })
-      .sort((a, b) => {
-        const ia = KIND_SECTION_ORDER.indexOf(a);
-        const ib = KIND_SECTION_ORDER.indexOf(b);
-        if (ia !== -1 && ib !== -1) return ia - ib;
-        if (ia !== -1) return -1;
-        if (ib !== -1) return 1;
-        return a.localeCompare(b);
-      })
-      .map((k) => `<li><span class="kind-pill ${safeKindClass(k)}">${escapeHtml(kindLabel(k))}</span> ${kc[k] ?? 0} / ${kcTotal[k] ?? kc[k] ?? 0}</li>`)
-      .join('')}</ul>
-  `;
-
-  const nextSection = landscapeReport?.sections?.find((s) => s.id === 'next_steps');
-  const items = nextSection?.items || allHotspots.slice(0, 5).map((h) => ({
-    rank: h.rank,
-    kind: h.kind,
-    summary: h.summary,
-    evidence_ref: `hotspot:${h.id}`,
-  }));
-  stepsEl.innerHTML = `
-    <h3>Where to look first</h3>
-    <ol class="next-list">${items
-      .map(
-        (it) =>
-          `<li><button type="button" class="next-link" data-ref="${escapeAttr(it.evidence_ref || '')}"><span class="card-rank">#${safeRank(it.rank)}</span> <span class="kind-pill ${safeKindClass(it.kind || '')}">${escapeHtml(kindLabel(it.kind || ''))}</span> ${escapeHtml(it.summary || '')}</button></li>`
-      )
-      .join('')}</ol>
-  `;
-  stepsEl.querySelectorAll('.next-link').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const ref = btn.dataset.ref || '';
-      const hid = ref.replace(/^hotspot:/, '');
-      const h = allHotspots.find((x) => x.id === hid);
-      if (h) {
-        switchTab('findings');
-        selectHotspot(h);
-      }
-    });
-  });
-}
-
-async function loadEvidenceIndexRecords() {
-  try {
-    const res = await fetch('/api/evidence-index?limit=50');
-    if (res.ok) {
-      const data = await res.json();
-      return { records: data.records || [], warnings: data.warnings || [] };
-    }
-  } catch {
-    /* static bundle fallback */
-  }
-  try {
-    const lines = await loadJSONL('/bundle/map-bridge/evidence-index.jsonl');
-    return { records: lines.map((row, i) => ({ ...row, id: row.id || `ev-${i}` })), warnings: [] };
-  } catch {
-    return { records: [], warnings: ['map-bridge/evidence-index.jsonl missing'] };
-  }
-}
-
-function renderGraphHintsTab() {
-  const body = document.getElementById('graph-hints-body');
-  if (!body) return;
-  body.innerHTML = '<p class="empty-hint">Loading graph hints…</p>';
-  loadEvidenceIndexRecords().then(({ records, warnings }) => {
-    if (!records.length) {
-      const warn = warnings.length ? warnings.join(' ') : 'No map-bridge sidecar in this bundle.';
-      body.innerHTML = `
-        <p class="empty-hint">${escapeHtml(warn)}</p>
-        <p class="empty-hint">Optional: run <code>portolan map</code>, then <code>scripts/build-map-bridge.sh</code> — see <code>harness/SKILL.md</code>.</p>
-      `;
-      return;
-    }
-    body.innerHTML = `
-      <ul class="graph-hints-list">${records
-        .map(
-          (r) =>
-            `<li><span class="badge">${escapeHtml(r.evidence_state || r.kind || 'hint')}</span> ` +
-            `<strong>${escapeHtml(r.summary || r.id || '')}</strong>` +
-            `${r.family ? ` <span class="mono">(${escapeHtml(r.family)})</span>` : ''}</li>`
-        )
-        .join('')}</ul>
-    `;
-  });
-}
-
-function renderGapsTab() {
-  const table = document.getElementById('gaps-table');
-  if (!gaps.length) {
-    table.innerHTML = '<p class="empty-hint">No gaps recorded — all configured layers produced output or explicit skip records.</p>';
-    return;
-  }
-  table.innerHTML = `
-    <table class="gaps-table"><thead><tr><th>Surface</th><th>Status</th><th>Summary</th><th>Recipe</th></tr></thead>
-    <tbody>${gaps
-      .map(
-        (g) =>
-          `<tr><td>${escapeHtml(g.surface || '')}</td><td><span class="badge">${escapeHtml(g.status || '')}</span></td><td>${escapeHtml(g.summary || '')}</td><td class="mono">${escapeHtml(g.recipe || g.recipe_ref || g.producer_ref || '—')}</td></tr>`
-      )
-      .join('')}</tbody></table>
-  `;
-}
-
-function renderFindingsSections() {
-  const el = document.getElementById('findings-sections');
-  const groups = findingsGroupsFromHotspots(filteredHotspots());
-  if (!groups.length) {
-    el.innerHTML = '';
-    return;
-  }
-  el.innerHTML = `
-    <h3>Sections (map.md parity)</h3>
-    <div class="section-grid">${groups
-      .map(
-        (g) => `
-      <details class="section-block" open>
-        <summary><span class="kind-pill ${safeKindClass(g.kind)}">${escapeHtml(kindLabel(g.kind))}</span> ${g.count ?? (g.items?.length ?? 0)}</summary>
-        <ul>${(g.items || [])
-          .slice(0, 8)
-          .map(
-            (it) =>
-              `<li><button type="button" class="section-link" data-id="${escapeAttr(it.id)}">#${safeRank(it.rank)} ${escapeHtml(it.summary || '')}</button></li>`
-          )
-          .join('')}${(g.items?.length ?? 0) > 8 ? `<li class="more">+${g.items.length - 8} more in ranked list</li>` : ''}</ul>
-      </details>`
-      )
-      .join('')}</div>
-  `;
-  el.querySelectorAll('.section-link').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const h = allHotspots.find((x) => x.id === btn.dataset.id);
-      if (h) selectHotspot(h);
-    });
-  });
-}
-
-function updateLoadAllButton() {
-  const btn = document.getElementById('load-all-btn');
-  if (!manifest?.hotspots_truncated && !usingFullHotspots) {
-    btn.classList.add('hidden');
-    return;
-  }
-  const total = manifest?.hotspots_total ?? allHotspots.length;
-  btn.classList.remove('hidden');
-  btn.textContent = usingFullHotspots
-    ? `Showing all ${allHotspots.length} findings from scan`
-    : `Show all ${total} findings from scan`;
-  btn.disabled = usingFullHotspots;
-}
-
-async function loadFullHotspots() {
-  if (usingFullHotspots) return;
-  const full = await loadJSONL('/bundle/hotspots-full.jsonl');
-  if (!full.length) return;
-  allHotspots = full;
-  usingFullHotspots = true;
-  updateManifestFooter();
-  renderFilters();
-  updateLoadAllButton();
-  if (activeTab === 'overview') renderOverview();
-  renderFindingsTab();
-}
-
-function renderFindingsTab() {
-  const hotspots = filteredHotspots();
-  const hotspotById = new Map(hotspots.map((h) => [h.id, h]));
-  if (selectedId && !hotspotById.has(selectedId)) {
-    selectedId = null;
-    renderDetail(null);
-  }
-  renderFilterExplainer();
-  renderBanner();
-  renderTour(hotspots);
-  renderTree(hotspots);
-  renderFindingsSections();
-  updateLoadAllButton();
-}
-
-function render() {
-  if (activeTab === 'overview') renderOverview();
-  else if (activeTab === 'repos') renderReposTab();
-  else if (activeTab === 'gaps') renderGapsTab();
-  else if (activeTab === 'graph-hints') renderGraphHintsTab();
-  else renderFindingsTab();
-}
-
-async function main() {
-  manifest = await loadJSON('/bundle/manifest.json');
-  allHotspots = await loadJSONL('/bundle/hotspots.jsonl');
-  gaps = await loadJSONL('/bundle/gaps.jsonl');
-  repos = (await loadJSON('/bundle/repos.json')) || [];
-  landscapeCard = await loadJSON('/bundle/landscape-card.json');
-  landscapeReport = await loadJSON('/bundle/landscape-report.json');
-  repoProfiles = (await loadJSON('/bundle/repo-profiles.json'))?.repos || [];
-  relationships = await loadJSONL('/bundle/relationships.jsonl');
-  claims = await loadJSONL('/bundle/claims.jsonl');
-
-  updateManifestFooter();
-
-  renderKindGuide();
-  renderViewBar();
-  renderFilters();
-  renderBanner();
-
-  document.querySelectorAll('.tab-btn').forEach((btn) => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-  document.getElementById('load-all-btn').addEventListener('click', () => loadFullHotspots());
-  document.getElementById('search-input').addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    scheduleSearchCodeFetch(searchQuery);
-    if (activeTab === 'findings') renderFindingsTab();
-  });
-
-  switchTab('overview');
-  applyHashDeepLink();
-}
-
-main().catch((e) => {
-  document.getElementById('detail-body').innerHTML =
-    `<p>Failed to load bundle. Run: <code>npm run serve -- --bundle &lt;bundle-dir&gt;</code></p><pre>${escapeHtml(e.message)}</pre>`;
 });

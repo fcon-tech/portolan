@@ -1,62 +1,76 @@
 # Agent Examples
 
-## Prepare Context For A Single Repo
+## Install Cursor And OpenCode Instructions
 
 ```bash
-portolan context prepare --root /path/to/repo --out /tmp/portolan-context --profile agent
+scripts/portolan-install.sh /path/to/target --harness all
+```
+
+This writes:
+
+```text
+/path/to/target/.cursor/rules/portolan-atlas.mdc
+/path/to/target/AGENTS.md
+```
+
+Use `--harness cursor` or `--harness opencode` for one harness.
+
+## Build An Atlas For A Single Repo
+
+```bash
+PORTOLAN_PATH=/path/to/portolan
+TARGET_ROOT=/path/to/repo
+BUNDLE_DIR=/path/to/repo/.portolan/atlas
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
 ```
 
 Then read:
 
 ```text
-/tmp/portolan-context/agent-brief.md
-/tmp/portolan-context/answer-contract.md
-/tmp/portolan-context/evidence-index.jsonl
-/tmp/portolan-context/gaps.jsonl
+$BUNDLE_DIR/manifest.json
+$BUNDLE_DIR/atlas-facts.json
+$BUNDLE_DIR/repo-profiles.json
+$BUNDLE_DIR/hotspots.jsonl
+$BUNDLE_DIR/gaps.jsonl
 ```
 
-## Map A Local Repo
+## Build An Atlas For A Multi-Repo Landscape
 
 ```bash
-portolan map --root /path/to/repo --out /tmp/portolan-map
+PORTOLAN_PATH=/path/to/portolan
+TARGET_ROOT=/path/to/landscape
+BUNDLE_DIR=/path/to/landscape/.portolan/atlas
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
 ```
 
-Start with:
+Portolan inspects the target root, direct child Git repositories, and `repos/*`
+Git repositories. If a complete inventory is required, ask the user for a local
+selection, manifest, or explicit directory set; do not infer complete estate
+coverage from visible local repos.
 
-```text
-/tmp/portolan-map/summary.json
-/tmp/portolan-map/graph-index.json
-/tmp/portolan-map/findings.jsonl
-/tmp/portolan-map/map.md
-```
-
-## Map A Multi-Repo Landscape
+## Query Before Answering
 
 ```bash
-portolan map --root /path/to/landscape --out /tmp/portolan-landscape-map
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
 ```
 
-Portolan will inspect the target root, direct child Git repositories, and
-`repos/*` Git repositories. If a complete inventory is required, ask the user
-for a local selection or manifest.
-
-## Use A Curated Selection
+Use `symbol` when `symbol-index.jsonl` exists:
 
 ```bash
-portolan selection validate --selection /path/to/selection.json
-portolan map --selection /path/to/selection.json --out /tmp/portolan-selection-map
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE_DIR" --repo <repo-id> --name Run --limit 20
 ```
 
-Use this only when the selection file exists.
-
-## Bounded Graph Drill-Down
-
-Use graph slicing before loading a large `graph.json`:
+## Open The Viewer
 
 ```bash
-portolan graph slice --bundle /tmp/portolan-map --repo <repo-id> --out /tmp/repo-slice.json
-portolan graph slice --bundle /tmp/portolan-map --edge-kind depends-on --out /tmp/depends-on-slice.json
-portolan graph slice --bundle /tmp/portolan-map --finding-kind duplication --out /tmp/duplication-slice.json
+cd "$PORTOLAN_PATH/viewer"
+node scripts/build-static.js
+node scripts/serve.js --bundle "$BUNDLE_DIR"
 ```
 
 ## Report Shape
@@ -64,12 +78,13 @@ portolan graph slice --bundle /tmp/portolan-map --finding-kind duplication --out
 ```text
 Run status:
 - command:
-- output directory:
+- bundle directory:
 - blockers:
 
 What is visible:
-- repositories:
-- key artifacts:
+- repositories/components:
+- key relationships:
+- key configuration/runtime/deployment surfaces:
 
 Findings:
 - relationships:
@@ -81,6 +96,16 @@ Gaps:
 - unknown:
 - cannot_verify:
 - not_assessed:
+
+Drill-down:
+- viewer/source routes:
+- bundle-query commands:
 ```
 
 Use evidence states. Do not hide gaps.
+
+## Legacy Go Examples
+
+Use legacy `portolan context prepare`, `portolan map`, and graph slicing only
+when the operator explicitly asks for the legacy Go path. See
+`docs/harness/GO-FREEZE-POLICY.md`.

@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+# Product acceptance gate for the installable Portolan atlas pack.
+# Runs the checks that support "a user can install Portolan into Cursor/OpenCode
+# and build/query a local atlas" without starting long corpus scans by default.
+set -euo pipefail
+
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+RUN_AGENT_RUNTIME=1
+REQUIRE_AGENT_RUNTIME=0
+BIGTOP_BUNDLE=""
+
+usage() {
+  cat <<'EOF'
+usage: portolan-product-acceptance.sh [options]
+
+Options:
+  --skip-agent-runtime       Do not run live Cursor/OpenCode runtime lanes.
+  --require-agent-runtime    Fail if Cursor/OpenCode CLIs are unavailable or fail.
+  --bigtop-bundle DIR        Also run strict bigtop-10 acceptance on an existing
+                             bundle. This does not start a long Bigtop scan.
+  -h, --help                 Show this help.
+
+Default behavior:
+  - checks public install/help surfaces for product wording regressions;
+  - validates shell syntax, Go tests/vet, JSON schemas, viewer/query JS syntax;
+  - validates generated Cursor/OpenCode install files;
+  - validates the public install/scan/query route from a clean source copy;
+  - runs a bounded reproducible atlas smoke on a non-Bigtop local fixture;
+  - runs live Cursor/OpenCode lanes when the CLIs are available, recording
+    unavailable lanes as not_assessed unless --require-agent-runtime is used;
+  - runs the local harness and query smoke checks;
+  - checks diff whitespace.
+EOF
+}
+
+require_opt_value() {
+  local flag=$1 val=${2:-}
+  if [[ -z "$val" || "$val" == -* ]]; then
+    echo "option $flag requires a value" >&2
+    usage >&2
+    exit 2
+  fi
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --skip-agent-runtime) RUN_AGENT_RUNTIME=0; shift ;;
+    --require-agent-runtime) REQUIRE_AGENT_RUNTIME=1; shift ;;
+    --bigtop-bundle) require_opt_value --bigtop-bundle "${2:-}"; BIGTOP_BUNDLE="$2"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+if [[ -n "$BIGTOP_BUNDLE" ]]; then
+  BIGTOP_BUNDLE=$(cd "$BIGTOP_BUNDLE" && pwd)
+fi
+
+cd "$ROOT"
+
+run() {
+  local label=$1
+  shift
+  echo "==> $label" >&2
+  "$@"
+}
+
+run_shell_syntax() {
+  local script
+  echo "==> shell syntax" >&2
+  while IFS= read -r script; do
+    bash -n "$script"
+  done < <(find "$ROOT/scripts" -maxdepth 1 -type f -name '*.sh' | sort)
+}
+
+run_public_surface_checks() {
+  local help_file
+  help_file=$(mktemp)
+  echo "==> public install help" >&2
+  "$ROOT/scripts/portolan-install.sh" --help >"$help_file"
+  if rg -n 'install-agent-harness\.sh|prototype|прототип|stub|mock|fake' "$help_file"; then
+    rm -f "$help_file"
+    echo "public install help exposes internal/prototype wording" >&2
+    exit 1
+  fi
+  rm -f "$help_file"
+
+  echo "==> public product wording" >&2
+  if rg -n \
+    'prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|install-agent-harness\.sh|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding' \
+    "$ROOT/README.md" \
+    "$ROOT/docs/agent" \
+    "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/ru/README.md" \
+    "$ROOT/harness/SKILL.md" \
+    "$ROOT/harness/cursor" \
+    "$ROOT/harness/opencode" \
+    --glob '!**/node_modules/**'; then
+    echo "public surfaces expose prototype/internal wording" >&2
+    exit 1
+  fi
+}
+
+run_go_checks() {
+  run "go test ./..." go test ./...
+  run "go vet ./..." go vet ./...
+}
+
+run_schema_checks() {
+  run "json schema syntax" jq empty \
+    "$ROOT"/schema/*.json \
+    "$ROOT/harness/contracts/portolan-bundle.schema.json" \
+    "$ROOT/harness/contracts/bundle-query-result.schema.json" \
+    "$ROOT/harness/contracts/landscape-card.schema.json" \
+    "$ROOT/harness/contracts/landscape-report.schema.json"
+}
+
+run_viewer_checks() {
+  run "viewer/query JS syntax" node --check "$ROOT/viewer/scripts/bundle-query.js"
+  run "viewer/query CLI syntax" node --check "$ROOT/viewer/scripts/bundle-query-cli.js"
+  run "viewer/query MCP syntax" node --check "$ROOT/viewer/scripts/bundle-query-mcp.js"
+  run "viewer serve syntax" node --check "$ROOT/viewer/scripts/serve.js"
+  run "viewer app syntax" node --check "$ROOT/viewer/src/app.js"
+  echo "==> viewer static build" >&2
+  (cd "$ROOT/viewer" && node scripts/build-static.js)
+}
+
+run_harness_checks() {
+  run "agent install smoke" "$ROOT/scripts/harness-agent-install-smoke.sh"
+  if [[ "$RUN_AGENT_RUNTIME" -eq 1 ]]; then
+    if [[ "$REQUIRE_AGENT_RUNTIME" -eq 1 ]]; then
+      run "agent runtime acceptance (required)" \
+        "$ROOT/scripts/harness-agent-runtime-acceptance.sh" --require all
+    else
+      run "agent runtime acceptance" "$ROOT/scripts/harness-agent-runtime-acceptance.sh"
+    fi
+  else
+    echo "==> agent runtime acceptance skipped" >&2
+  fi
+  run "harness portolan smoke" "$ROOT/scripts/harness-portolan-smoke.sh"
+  local repro_dir
+  repro_dir=$(mktemp -d)
+  run "reproducible atlas smoke" \
+    "$ROOT/scripts/harness-reproducible-atlas-smoke.sh" \
+    "$ROOT/internal/testfixtures/portolan-bundle/target" \
+    "$repro_dir/repro-bundle"
+  rm -rf "$repro_dir"
+}
+
+run_clean_copy_install_check() {
+  echo "==> clean source-copy install smoke" >&2
+  local tmp copy target
+  tmp=$(mktemp -d)
+  copy="$tmp/portolan-copy"
+  target="$tmp/target"
+  mkdir -p "$copy" "$target"
+
+  tar \
+    --exclude='./.git' \
+    --exclude='./.portolan' \
+    --exclude='./viewer/node_modules' \
+    --exclude='./viewer/dist' \
+    -cf - . | tar -C "$copy" -xf -
+
+  git -C "$target" init -q
+  printf '# Portolan Install Target\n\nA target outside the Portolan checkout.\n' >"$target/README.md"
+
+  "$copy/scripts/portolan-install.sh" "$target" \
+    --harness all \
+    --portolan-path "$copy" >/dev/null
+  "$copy/scripts/portolan-scan.sh" "$target" "$target/.portolan/atlas" \
+    --yes \
+    --skip-install \
+    --no-viewer \
+    --core-only \
+    --producers config,ctags \
+    --shard-timeout 30 \
+    --hotspot-budget 50 >/dev/null
+
+  jq -e '.repo_count == 1 and .core_only == true' \
+    "$target/.portolan/atlas/manifest.json" >/dev/null
+  "$copy/scripts/portolan-bundle-query.sh" repos \
+    --bundle "$target/.portolan/atlas" \
+    --limit 5 | jq -e '.records | length == 1' >/dev/null
+  "$copy/scripts/portolan-bundle-query.sh" gaps \
+    --bundle "$target/.portolan/atlas" \
+    --limit 5 | jq -e '.records | length == 3' >/dev/null
+
+  rm -rf "$tmp"
+}
+
+run_cli_surface_checks() {
+  run "portolan-scan help" "$ROOT/scripts/portolan-scan.sh" --help >/dev/null
+}
+
+run_optional_bigtop_check() {
+  if [[ -n "$BIGTOP_BUNDLE" ]]; then
+    run "bigtop-10 strict acceptance" "$ROOT/scripts/harness-bigtop10-acceptance.sh" "$BIGTOP_BUNDLE"
+  else
+    echo "==> bigtop-10 strict acceptance not_assessed (pass --bigtop-bundle DIR)" >&2
+  fi
+}
+
+run_diff_check() {
+  run "git diff --check" git -C "$ROOT" diff --check
+  run "git diff --cached --check" git -C "$ROOT" diff --cached --check
+}
+
+run_shell_syntax
+run_public_surface_checks
+run_go_checks
+run_schema_checks
+run_viewer_checks
+run_clean_copy_install_check
+run_harness_checks
+run_cli_surface_checks
+run_optional_bigtop_check
+run_diff_check
+
+echo "portolan-product-acceptance: ok"

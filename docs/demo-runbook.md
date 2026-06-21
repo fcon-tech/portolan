@@ -1,15 +1,67 @@
 # Portolan Demo Runbook
 
-Live demo for a newcomer: **landscape report in 10 seconds** → **findings by section** → **gaps** → **drill-down to source**.
+Live demo for a newcomer: **agent installs Portolan into its workflow** →
+**builds a local atlas** → **opens the viewer** → **uses bundle-query for
+drill-down navigation**.
+
+This is the product demo path. Bigtop is the primary acceptance corpus; a
+second arbitrary local repo/landscape proves the path is not Bigtop-specific.
 
 ## Setup
 
-**Single repo (portolan) — recommended for demo bar / query eval:**
+**Agent-installable path (copy to Cursor/OpenCode/Kimi/Codex/etc.):**
+
+```text
+PORTOLAN_PATH=<absolute Portolan checkout>
+TARGET_ROOT=<absolute local repo or multi-repo root>
+BUNDLE_DIR=<absolute empty output dir>
+
+Use Portolan as an agent-installable landscape atlas layer.
+Read PORTOLAN_PATH/harness/SKILL.md, run the scan, open the viewer, then answer
+from bundle-query/source/drill-down routes. Preserve unknown, cannot_verify, and
+not_assessed.
+```
+
+The agent should normally run:
 
 ```bash
-scripts/portolan-scan.sh . /tmp/portolan-self --no-viewer --yes
-# optional Graph hints tab:
-scripts/portolan-scan.sh . /tmp/portolan-self --yes --with-map-bridge
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+```
+
+For human-only runs where blocking in the viewer is fine, omit `--no-viewer`.
+For locked-down corporate-style runs:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" \
+  --yes --skip-install --no-viewer
+```
+
+Then open:
+
+```bash
+cd "$PORTOLAN_PATH/viewer"
+node scripts/build-static.js
+node scripts/serve.js --bundle "$BUNDLE_DIR"
+```
+
+**Second-target reproducibility smoke (not Bigtop-specific):**
+
+```bash
+bash scripts/harness-reproducible-atlas-smoke.sh \
+  /path/to/another/local/repo-or-landscape \
+  /tmp/portolan-repro-atlas
+```
+
+This bounded smoke uses the same harness path, keeps missing OSS tools as gaps,
+and verifies atlas artifacts plus bundle-query.
+
+**Single repo (portolan) — useful for quick query eval, not sufficient as the
+only reproducibility proof:**
+
+```bash
+scripts/portolan-scan.sh . /tmp/portolan-self --no-viewer --yes --skip-install
+# optional Edges evidence graph:
+scripts/portolan-scan.sh . /tmp/portolan-self --yes --skip-install --no-viewer --with-map-bridge
 ```
 
 Viewer on self bundle:
@@ -62,14 +114,19 @@ node scripts/serve.js --bundle /tmp/portolan-portolan --port 4173
 
 Open http://127.0.0.1:4173/
 
-## 5-step demo script (report-first)
+## 6-step demo script (agent-first atlas)
 
-1. **Overview tab (default)** — Project card: language, scale, maturity (README/CI/tests/Docker), repo matrix, findings shown vs scan total, top “where to look first”.
-2. **Gaps tab** — What was **not** assessed (`not_assessed` / `cannot_verify`); not hidden findings.
-3. **Findings tab** — Sections by kind (map.md parity), then folder tree + ranked list.
-4. **Search & filter** — Header search hits the code index (`search-index.jsonl`); filter chips and views (Tour top 15, Code pain, Config).
-5. **Graph hints tab** — Optional relationship hints when `map-bridge/` exists (after `portolan map` + `build-map-bridge.sh`); not a call graph.
-6. **Drill-down** — Click a finding → detail + **Source** snippet (read-only local files).
+1. **Agent entrypoint** — Show the prompt above and the agent reading
+   `harness/SKILL.md`.
+2. **Atlas overview** — Viewer answers what landscape was scanned, how many
+   repos/components are visible, and what is missing.
+3. **Map** — Select a component and show its dependency corridor, layer, source
+   routes, and relationship records.
+4. **Risks/findings** — Explain top pain points by kind/severity/repo. Do not
+   mix agent claims into ranked tool findings.
+5. **Drill-down** — Click finding/source route; open read-only source snippet.
+6. **Agent handoff** — Run bundle-query for repos, relationships, hotspots,
+   search/source, and show how the next agent continues from the same bundle.
 
 ## Agents (query at answer time)
 
@@ -81,7 +138,8 @@ scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --kind duplicati
 
 MCP: `PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh` — recipe in `harness/recipes/bundle-query-mcp.md`.
 
-If bundle is truncated, use **Show all findings from scan** on the Findings tab.
+If bundle is truncated, use `hotspots-full.jsonl` through bundle-query; the
+Risks tab shows the demo-ranked subset.
 
 ## Demo bar (acceptance)
 
@@ -89,32 +147,32 @@ Use **`/tmp/portolan-self`** (real self-target scan). Operator answers without e
 
 | Question | Where in viewer |
 | --- | --- |
-| What is this target? | Overview → landscape card |
-| How is rank computed? | Overview → rank explainer; Findings → Tour view |
-| How do I navigate? | Overview → «How to use this report» |
-| How many repos? | Overview → repo table |
-| Top problems? | Overview → next steps; Findings → sections |
-| Why is this finding pain? | Findings → click row → «Why is this here?» + severity |
-| What was not checked? | Gaps tab |
-| Optional relationships? | Graph hints tab (only with `--with-map-bridge`) |
+| What is this target? | Atlas → hero and executive brief |
+| How is rank/pressure computed? | Atlas → executive brief; Risks → clusters |
+| How do I navigate? | Atlas → guided routes and cockpit |
+| How many repos? | Atlas → metrics; Sources → component rows |
+| Top problems? | Atlas → inspection pressure; Risks → clusters |
+| Why is this finding pain? | Risks or inspector → Evidence drill-down |
+| What was not checked? | Edges → visibility gaps; Agent loop → bundle contract |
+| Optional map-bridge relationships? | Edges → evidence graph (only with `--with-map-bridge`) |
 
 **Agent query eval (Lane B):** `scripts/run-query-eval.sh --self --run` after self-scan.
 
 Compare with `docs/test-corpora/apache-bigtop/examples/map-excerpt.md` for section parity.
 
-## CTO scenario (multi-repo, spec 108)
+## CTO scenario (multi-repo, spec 108 and atlas demo)
 
 Use **`/tmp/portolan-bigtop10`** (10 repos, `--cross-repo-dup`). The concerned-CTO
 walkthrough — every answer states which tier the knowledge is:
 
 | CTO question | Where | Tier |
 | --- | --- | --- |
-| What repos do I have and what does each do? | Repos tab → cards (langs, activity, maturity, purpose line) | A from manifests/README; purpose one-liner may be a labeled B claim |
-| How are they connected? | Repos tab → «Connections between repos» (depends-on, uses-image, shared-dependency) | A (metadata-visible); **not** runtime topology |
-| Do teams copy code between repos? | Findings → cross-repo duplicates (high severity); Repos → connections `cross-repo-duplication` | A (jscpd cross pass, opt-in) |
-| Which repo is riskiest? | Overview → «Findings by repository» severity columns; click → drill-down top findings | A (tool findings only) |
-| What does the agent *think* it means? | Repo drill-down → «Agent analysis» B/C/D blocks; Overview → landscape claims | B/C/D — labeled, never mixed into ranked findings |
-| What was not checked? | Gaps tab (+ rejected claims in `claims-import-report.json`) | honesty layer |
+| What repos do I have and what does each do? | Sources → component rows; Atlas → selected component facts | A from manifests/README; purpose one-liner may be a labeled B claim |
+| How are they connected? | Atlas → relationship corridor; Edges → selected edges | A (metadata-visible); **not** runtime topology |
+| Do teams copy code between repos? | Risks → cross-repo duplicates; Edges → `cross-repo-duplication` when present | A (jscpd cross pass, opt-in) |
+| Which repo is riskiest? | Atlas → inspection pressure; Risks → clusters; component drill-down top findings | A (tool findings only) |
+| What does the agent *think* it means? | Agent loop → Agent analysis claims; component inspector → Agent claims | B/C/D — labeled, never mixed into ranked findings |
+| What was not checked? | Edges → visibility gaps; Agent loop → rejected claims/import report | honesty layer |
 
 Agent analysis pass (full cycle, including a rejected negative case):
 
@@ -139,4 +197,4 @@ cover repos, relationships, cross-repo duplication, per-repo risk, claims).
 | --- | --- |
 | Empty viewer | Run `node viewer/scripts/build-static.js` first |
 | No source snippet | Hotspot has no paths (e.g. dep-hub) — expected |
-| Missing tools | Re-run wizard with `--yes` or install jscpd/semgrep/syft |
+| Missing tools | Keep default gaps, or remove `--skip-install` only after operator approval |

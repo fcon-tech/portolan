@@ -25,59 +25,60 @@ if command -v rg >/dev/null 2>&1; then
 fi
 
 append_line() {
-  local rel=$1 lineno=$2 line=$3
+  local repo_id=$1 rel=$2 lineno=$3 line=$4
   [[ -z "${line// }" ]] && return 0
   jq -nc \
+    --arg repo_id "$repo_id" \
     --arg path "$rel" \
     --argjson line "$lineno" \
     --arg text "$line" \
-    '{path:$path,line:$line,text:$text}' >>"$OUT"
+    '{path:$path,line:$line,text:$text} + (if $repo_id != "" then {repo_id:$repo_id} else {} end)' >>"$OUT"
   count=$((count + 1))
 }
 
 index_file_head() {
-  local fp=$1 rel=$2
+  local fp=$1 rel=$2 repo_id=$3
   local lineno=0
   while IFS= read -r line && [[ $lineno -lt $MAX_LINES ]]; do
     lineno=$((lineno + 1))
-    append_line "$rel" "$lineno" "$line"
+    append_line "$repo_id" "$rel" "$lineno" "$line"
     [[ $count -ge $BUDGET ]] && return 1
   done < <(head -n "$MAX_LINES" "$fp" 2>/dev/null || true)
   return 0
 }
 
 index_file_rg() {
-  local fp=$1 rel=$2
+  local fp=$1 rel=$2 repo_id=$3
   while IFS= read -r match; do
     [[ -z "$match" ]] && continue
     local lineno="${match%%:*}"
     local text="${match#*:}"
     [[ "$lineno" =~ ^[0-9]+$ ]] || continue
-    append_line "$rel" "$lineno" "$text"
+    append_line "$repo_id" "$rel" "$lineno" "$text"
     [[ $count -ge $BUDGET ]] && return 1
   done < <(rg -n --no-heading --max-count "$MAX_LINES" '.' "$fp" 2>/dev/null || true)
   return 0
 }
 
 index_file() {
-  local fp=$1 rel=$2
+  local fp=$1 rel=$2 repo_id=$3
   if [[ $USE_RG -eq 1 ]]; then
-    index_file_rg "$fp" "$rel" || return 1
+    index_file_rg "$fp" "$rel" "$repo_id" || return 1
   else
-    index_file_head "$fp" "$rel" || return 1
+    index_file_head "$fp" "$rel" "$repo_id" || return 1
   fi
   return 0
 }
 
 list_files() {
   if [[ -f "$REPOS_JSON" ]]; then
-    jq -r '.[].path' "$REPOS_JSON"
+    jq -r '.[] | [.id, .path] | @tsv' "$REPOS_JSON"
   else
-    echo "$TARGET_ROOT"
+    printf '\t%s\n' "$TARGET_ROOT"
   fi
 }
 
-while IFS= read -r repo; do
+while IFS=$'\t' read -r repo_id repo; do
   [[ -z "$repo" ]] && continue
   if [[ -d "$repo/.git" ]]; then
     while IFS= read -r rel; do
@@ -89,7 +90,7 @@ while IFS= read -r repo; do
           ;;
         *) continue ;;
       esac
-      index_file "$fp" "$rel" || break 2
+      index_file "$fp" "$rel" "$repo_id" || break 2
     done < <(git -C "$repo" ls-files 2>/dev/null || find "$repo" -type f 2>/dev/null | sed "s|^$repo/||")
   else
     while IFS= read -r fp; do
@@ -99,7 +100,7 @@ while IFS= read -r repo; do
           ;;
         *) continue ;;
       esac
-      index_file "$fp" "$rel" || break 2
+      index_file "$fp" "$rel" "$repo_id" || break 2
     done < <(find "$repo" -type f 2>/dev/null | head -n 500)
   fi
 done < <(list_files)

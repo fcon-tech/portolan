@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * In-process MCP smoke: spawn bundle-query-mcp.js and call one tool.
+ * In-process MCP smoke: spawn the public MCP wrapper and call one tool.
  */
 const { spawn } = require('child_process');
 const path = require('path');
@@ -15,8 +15,8 @@ function notification(method, params) {
 
 function runSmoke(bundleDir) {
   return new Promise((resolve, reject) => {
-    const serverPath = path.join(__dirname, 'bundle-query-mcp.js');
-    const child = spawn(process.execPath, [serverPath], {
+    const serverPath = path.join(__dirname, '..', '..', 'scripts', 'portolan-bundle-query-mcp.sh');
+    const child = spawn(serverPath, [], {
       env: { ...process.env, PORTOLAN_BUNDLE_DIR: bundleDir },
       stdio: ['pipe', 'pipe', 'pipe'],
     });

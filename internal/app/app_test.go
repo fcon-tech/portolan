@@ -92,6 +92,42 @@ func TestCanonicalPublicIdentityIsPresent(t *testing.T) {
 	}
 }
 
+func TestInstallableAgentPackPublicRouteIsPresent(t *testing.T) {
+	checks := map[string][]string{
+		"README.md": {
+			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"scripts/portolan-product-acceptance.sh --require-agent-runtime",
+		},
+		"docs/ru/README.md": {
+			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"scripts/portolan-product-acceptance.sh --require-agent-runtime",
+		},
+		"docs/agent/INSTALL.md": {
+			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"<target-root>/.portolan/atlas",
+		},
+		"docs/agent/INSTALL.ru.md": {
+			"git clone https://github.com/fcon-tech/portolan.git",
+			"scripts/portolan-install.sh <target-root> --harness all",
+			"<target-root>/.portolan/atlas",
+		},
+	}
+	for path, wants := range checks {
+		data := mustReadRepoFile(t, path)
+		for _, want := range wants {
+			if !strings.Contains(data, want) {
+				t.Fatalf("%s missing installable pack public route %q", path, want)
+			}
+		}
+		if strings.Contains(data, "install-agent-harness.sh") {
+			t.Fatalf("%s exposes internal install-agent-harness.sh entrypoint", path)
+		}
+	}
+}
+
 func TestCanonicalPublicIdentityOldGoImportPathIsAbsent(t *testing.T) {
 	repoRoot := filepath.Clean("../..")
 	// Keep the banned path split so the regression test does not match itself.

@@ -6,8 +6,8 @@ Local static UI + `serve.js` for Portolan scan bundles.
 
 ```bash
 # From repo root — use nvm node npm, not Windows npm on WSL PATH:
-scripts/npm-wsl.sh install --prefix viewer
-# Or: cd viewer && ../scripts/npm-wsl.sh install
+scripts/npm-wsl.sh ci --prefix viewer
+# Or: cd viewer && ../scripts/npm-wsl.sh ci
 ```
 
 `@modelcontextprotocol/sdk` is required for `scripts/portolan-bundle-query-mcp.sh`.

@@ -32,11 +32,22 @@ SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=portolan-ignore.sh
 . "$SCRIPT_DIR/portolan-ignore.sh"
 
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$1" | shasum -a 256 | cut -d' ' -f1
+  else
+    echo "sha256sum or shasum is required" >&2
+    exit 1
+  fi
+}
+
 producer_repo_slug() {
   local p=$1
   local base hash
   base=$(basename "$p" | tr ' /' '__')
-  hash=$(printf '%s' "$p" | sha256sum | cut -c1-8)
+  hash=$(hash_text "$p" | cut -c1-8)
   echo "${base}-${hash}"
 }
 
@@ -133,16 +144,23 @@ process_jscpd_file() {
   jq -r --arg ref "$jfile" '
     .duplicates[]? |
     select(.firstFile.name != null and .firstFile.name != "") |
-    [.firstFile.name, (.secondFile.name // ""), (.lines // 0 | tostring), $ref] | @tsv
-  ' "$jfile" | while IFS=$'\t' read -r first second lines ref; do
+    [
+      .firstFile.name,
+      (.secondFile.name // ""),
+      (.lines // 0 | tostring),
+      (.firstFile.start // .firstFile.startLine // .firstFile.line // 1 | tostring),
+      (.secondFile.start // .secondFile.startLine // .secondFile.line // 1 | tostring),
+      $ref
+    ] | @tsv
+  ' "$jfile" | while IFS=$'\t' read -r first second lines first_line second_line ref; do
     [[ -z "$first" ]] && continue
     bundle_path_ignored "$first" && continue
     [[ -n "$second" ]] && bundle_path_ignored "$second" && continue
-    id="dup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
+    id="dup-$(hash_text "${first}${second}" | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg first "$first" --arg second "$second" \
-      --argjson lines "${lines:-0}" --arg ref "$ref" \
-      '{id:$id,kind:"duplication",severity:"medium",summary:("Duplicate block (~"+($lines|tostring)+" lines): "+$first),paths:([$first]+(if $second != "" then [$second] else [] end)),evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
+      --argjson lines "${lines:-0}" --argjson first_line "${first_line:-1}" --argjson second_line "${second_line:-1}" --arg ref "$ref" \
+      '{id:$id,kind:"duplication",severity:"medium",summary:("Duplicate block (~"+($lines|tostring)+" lines): "+$first),paths:([$first]+(if $second != "" then [$second] else [] end)),line:$first_line,locations:([{path:$first,line:$first_line}]+(if $second != "" then [{path:$second,line:$second_line}] else [] end)),evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
   done
 }
 
@@ -160,16 +178,25 @@ process_jscpd_cross_file() {
     (repo_of($d.firstFile.name)) as $ra |
     (repo_of($d.secondFile.name)) as $rb |
     select($ra != "" and $rb != "" and $ra != $rb) |
-    [$d.firstFile.name, $d.secondFile.name, ($d.lines // 0 | tostring), $ra, $rb, $ref] | @tsv
-  ' "$jfile" | while IFS=$'\t' read -r first second lines ra rb ref; do
+    [
+      $d.firstFile.name,
+      $d.secondFile.name,
+      ($d.lines // 0 | tostring),
+      ($d.firstFile.start // $d.firstFile.startLine // $d.firstFile.line // 1 | tostring),
+      ($d.secondFile.start // $d.secondFile.startLine // $d.secondFile.line // 1 | tostring),
+      $ra,
+      $rb,
+      $ref
+    ] | @tsv
+  ' "$jfile" | while IFS=$'\t' read -r first second lines first_line second_line ra rb ref; do
     [[ -z "$first" ]] && continue
     bundle_path_ignored "$first" && continue
     bundle_path_ignored "$second" && continue
-    id="xdup-$(printf '%s%s' "$first" "$second" | sha256sum | cut -c1-12)"
+    id="xdup-$(hash_text "${first}${second}" | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg first "$first" --arg second "$second" \
-      --argjson lines "${lines:-0}" --arg ref "$ref" --arg ra "$ra" --arg rb "$rb" \
-      '{id:$id,kind:"duplication",severity:"high",summary:("Cross-repo duplicate (~"+($lines|tostring)+" lines): "+$ra+" <-> "+$rb),paths:[$first,$second],evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
+      --argjson lines "${lines:-0}" --argjson first_line "${first_line:-1}" --argjson second_line "${second_line:-1}" --arg ref "$ref" --arg ra "$ra" --arg rb "$rb" \
+      '{id:$id,kind:"duplication",severity:"high",summary:("Cross-repo duplicate (~"+($lines|tostring)+" lines): "+$ra+" <-> "+$rb),paths:[$first,$second],line:$first_line,locations:[{path:$first,line:$first_line},{path:$second,line:$second_line}],evidence_state:"metadata-visible",producer:"jscpd",producer_ref:$ref}' >>"$hotspots_raw"
   done
 }
 
@@ -177,8 +204,8 @@ process_semgrep_file() {
   local sfile=$1
   jq -r --arg ref "$sfile" '
     .results[]? |
-    [.path, .check_id, (.extra.severity // "WARNING"), $ref] | @tsv
-  ' "$sfile" | while IFS=$'\t' read -r fpath check sev_raw ref; do
+    [.path, .check_id, (.extra.severity // "WARNING"), (.start.line // .extra.start.line // 1 | tostring), $ref] | @tsv
+  ' "$sfile" | while IFS=$'\t' read -r fpath check sev_raw line ref; do
     [[ -z "$fpath" ]] && continue
     bundle_path_ignored "$fpath" && continue
     sev=$(echo "$sev_raw" | tr '[:upper:]' '[:lower:]')
@@ -188,11 +215,11 @@ process_semgrep_file() {
       info) severity="info" ;;
       *) severity="low" ;;
     esac
-    id="semgrep-$(printf '%s%s' "$fpath" "$check" | sha256sum | cut -c1-12)"
+    id="semgrep-$(hash_text "${fpath}${check}" | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg path "$fpath" --arg summary "Semgrep $check" \
-      --arg ref "$ref" --arg severity "$severity" \
-      '{id:$id,kind:"static-finding",severity:$severity,summary:$summary,paths:[$path],evidence_state:"metadata-visible",producer:"semgrep",producer_ref:$ref}' >>"$hotspots_raw"
+      --argjson line "${line:-1}" --arg ref "$ref" --arg severity "$severity" \
+      '{id:$id,kind:"static-finding",severity:$severity,summary:$summary,paths:[$path],line:$line,locations:[{path:$path,line:$line}],evidence_state:"metadata-visible",producer:"semgrep",producer_ref:$ref}' >>"$hotspots_raw"
   done
 }
 
@@ -267,7 +294,7 @@ while IFS= read -r sbom; do
     select(.dep_count >= $min) |
     [.name, (.dep_count | tostring), $ref] | @tsv
   ' "$sbom" | while IFS=$'\t' read -r name dep_count ref; do
-    id="dep-$(printf '%s' "$name" | sha256sum | cut -c1-12)"
+    id="dep-$(hash_text "$name" | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg summary "Dependency hub: $name ($dep_count dependencies)" \
       --arg ref "$ref" \
@@ -313,7 +340,7 @@ while IFS= read -r cfile; do
     paths_json=$(filter_paths_json "$(echo "$group" | jq -c '.paths')")
     [[ "$(jq 'length' <<<"$paths_json")" -eq 0 ]] && continue
     count=$(jq 'length' <<<"$paths_json")
-    id="cfg-$(printf '%s%s' "$cfile" "$surface_kind" | sha256sum | cut -c1-12)"
+    id="cfg-$(hash_text "${cfile}${surface_kind}" | cut -c1-12)"
     jq -nc \
       --arg id "$id" --arg surface_kind "$surface_kind" --argjson count "$count" \
       --argjson paths "$paths_json" --arg ref "$cfile" \
@@ -328,6 +355,7 @@ while IFS= read -r tfile; do
   [[ -f "$tfile" ]] || continue
   jq -e '.' "$tfile" >/dev/null 2>&1 || continue
   ctags_found=1
+  ctags_repo_id=$(basename "$(dirname "$tfile")")
   jq -s -r --arg ref "$tfile" --argjson min "$CTAGS_MIN_SYMBOLS" --arg root "$TARGET_ROOT" '
     def tag_rows:
       if length == 1 and (.[0] | type) == "array" then .[0] else . end;
@@ -341,10 +369,10 @@ while IFS= read -r tfile; do
   ' "$tfile" | while IFS=$'\t' read -r fpath symcount ref; do
     [[ -z "$fpath" ]] && continue
     bundle_path_ignored "$fpath" && continue
-    id="sym-$(printf '%s' "$fpath" | sha256sum | cut -c1-12)"
+    id="sym-$(hash_text "${ctags_repo_id}:${fpath}" | cut -c1-12)"
     jq -nc \
-      --arg id "$id" --arg path "$fpath" --argjson n "${symcount:-0}" --arg ref "$ref" \
-      '{id:$id,kind:"debt-candidate",severity:"medium",summary:("Symbol-dense file: "+$path+" ("+($n|tostring)+" symbols)"),paths:[$path],evidence_state:"source-visible",producer:"ctags",producer_ref:$ref}' >>"$hotspots_raw"
+      --arg id "$id" --arg path "$fpath" --argjson n "${symcount:-0}" --arg ref "$ref" --arg repo_id "$ctags_repo_id" \
+      '{id:$id,kind:"debt-candidate",severity:"medium",summary:("Symbol-dense file: "+$path+" ("+($n|tostring)+" symbols)"),paths:[$path],repo_id:$repo_id,evidence_state:"source-visible",producer:"ctags",producer_ref:$ref}' >>"$hotspots_raw"
   done
 done < <(find "$PRODUCERS_DIR/ctags" -type f -name 'tags.json' 2>/dev/null)
 
@@ -385,13 +413,25 @@ fi
 sorted_all=$(mktemp)
 if [[ -s "$hotspots_raw" ]]; then
   jq -sc '
+    def sev_rank(s):
+      if s == "critical" then 0 elif s == "high" then 1 elif s == "medium" then 2
+      elif s == "low" then 3 elif s == "info" then 4 else 5 end;
+    def kind_rank(k):
+      if k == "static-finding" then 0
+      elif k == "duplication" then 1
+      elif k == "config" then 2
+      elif k == "debt-candidate" then 3
+      elif k == "dep-hub" then 4
+      else 5 end;
+    def path_blob: ((.paths // []) | join(" ") | ascii_downcase);
+    def noise_rank:
+      path_blob as $p |
+      if ($p | test("(^|/)(docs?|site|examples?|samples?)/|(^|/)(changelog|release_notes|readme|license|notice)(\\.|$)|(^|/)target/|(^|/)build/|(^|/)dist/|generated|openapi-gen|/i18n/|/locales?/|/test/resources/|/tests?/.*\\.(json|yaml|yml)$|\\.schema\\.json$|\\.(md|rst|adoc)$")) then 1 else 0 end;
+    unique_by(.id) |
     sort_by(
-      (if .severity == "critical" then 0
-       elif .severity == "high" then 1
-       elif .severity == "medium" then 2
-       elif .severity == "low" then 3
-       else 4 end),
-      .kind,
+      sev_rank(.severity),
+      kind_rank(.kind),
+      noise_rank,
       .summary
     ) | .[]
   ' "$hotspots_raw" >"$sorted_all"
@@ -409,15 +449,26 @@ if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
   jq -sc --argjson budget "$HOTSPOT_BUDGET" '
     def sev_rank(s):
       if s == "critical" then 0 elif s == "high" then 1 elif s == "medium" then 2
-      elif s == "low" then 3 else 4 end;
-    def sort_h: sort_by(sev_rank(.severity), .summary);
+      elif s == "low" then 3 elif s == "info" then 4 else 5 end;
+    def kind_rank(k):
+      if k == "static-finding" then 0
+      elif k == "duplication" then 1
+      elif k == "config" then 2
+      elif k == "debt-candidate" then 3
+      elif k == "dep-hub" then 4
+      else 5 end;
+    def path_blob: ((.paths // []) | join(" ") | ascii_downcase);
+    def noise_rank:
+      path_blob as $p |
+      if ($p | test("(^|/)(docs?|site|examples?|samples?)/|(^|/)(changelog|release_notes|readme|license|notice)(\\.|$)|(^|/)target/|(^|/)build/|(^|/)dist/|generated|openapi-gen|/i18n/|/locales?/|/test/resources/|/tests?/.*\\.(json|yaml|yml)$|\\.schema\\.json$|\\.(md|rst|adoc)$")) then 1 else 0 end;
+    def sort_h: sort_by(sev_rank(.severity), kind_rank(.kind), noise_rank, .summary);
     def quota(k):
       if k == "static-finding" then ($budget * 0.45 | floor)
       elif k == "duplication" then ($budget * 0.25 | floor)
       elif k == "dep-hub" then ($budget * 0.15 | floor)
       elif k == "config" then ($budget * 0.15 | floor)
       else 0 end;
-    . as $all |
+    (unique_by(.id)) as $all |
     (["static-finding", "duplication", "dep-hub", "config"] | map(
       . as $k | ([$all[] | select(.kind == $k)] | sort_h) | .[0:quota($k)]
     ) | add) as $selected |
@@ -425,7 +476,7 @@ if [[ "$total_before" -gt "$HOTSPOT_BUDGET" ]]; then
     ($budget - ($selected | length)) as $rem |
     ([$all[] | select(.id as $i | ($ids | index($i) | not)) | select(.kind == "debt-candidate")] | sort_h | .[0:$rem]) as $debt_fill |
     ($selected + $debt_fill) |
-    sort_by(sev_rank(.severity), .kind, .summary) | .[]
+    sort_h | .[]
   ' "$hotspots_raw" >"$budgeted" || {
     echo "warn: kind-quota jq failed; falling back to global head budget" >&2
     head -n "$HOTSPOT_BUDGET" "$sorted_all" >"$budgeted"
@@ -485,6 +536,10 @@ relationship_count=0
 if [[ -f "$BUNDLE_DIR/relationships.jsonl" ]]; then
   relationship_count=$(wc -l <"$BUNDLE_DIR/relationships.jsonl" | tr -d ' ')
 fi
+core_only=false
+if [[ "${PORTOLAN_BUNDLE_CORE_ONLY:-0}" == "1" ]]; then
+  core_only=true
+fi
 
 cross_dup_json='null'
 if [[ -f "$PRODUCERS_DIR/jscpd-cross/_scan.json" ]]; then
@@ -512,8 +567,9 @@ jq -n \
   --argjson kind_counts_total "$kind_counts_total" \
   --argjson gap_budget "$GAP_BUDGET" \
   --argjson gaps_truncated "$gaps_truncated" \
+  --argjson core_only "$core_only" \
   --argjson cross_repo_duplication "$cross_dup_json" \
-  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated} + (if $cross_repo_duplication != null then {cross_repo_duplication:$cross_repo_duplication} else {} end)' \
+  '{schema_version:$schema_version,target_root:$target_root,generated_at:$generated_at,hotspot_count:$hotspot_count,gap_count:$gap_count,repo_count:$repo_count,relationship_count:$relationship_count,hotspot_budget:$hotspot_budget,hotspots_truncated:$hotspots_truncated,hotspots_total:$hotspots_total,kind_counts:$kind_counts,kind_counts_total:$kind_counts_total,gap_budget:$gap_budget,gaps_truncated:$gaps_truncated,core_only:$core_only} + (if $cross_repo_duplication != null then {cross_repo_duplication:$cross_repo_duplication} else {} end)' \
   >"$BUNDLE_DIR/manifest.json"
 
 # graph-slice: findings + unique path nodes for map tab
@@ -530,6 +586,12 @@ jq -s '
   }
 ' "$BUNDLE_DIR/hotspots.jsonl" >"$BUNDLE_DIR/graph-slice.json" 2>/dev/null || \
   echo '{"schema_version":"0.1.0","nodes":[],"edges":[]}' >"$BUNDLE_DIR/graph-slice.json"
+
+if [[ "${PORTOLAN_BUNDLE_CORE_ONLY:-0}" == "1" ]]; then
+  rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
+  echo "Portolan core bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
+  exit 0
+fi
 
 # landscape-card.json (spec 093)
 "$SCRIPT_DIR/scan-landscape-card.sh" "$TARGET_ROOT" "$BUNDLE_DIR/landscape-card.json" || \
@@ -596,6 +658,18 @@ jq -n \
     ]
   }
   ' >"$BUNDLE_DIR/landscape-report.json"
+
+rm -f \
+  "$BUNDLE_DIR/atlas-surfaces.json" \
+  "$BUNDLE_DIR/atlas-facts.json" \
+  "$BUNDLE_DIR/atlas-surface-content.json" \
+  "$BUNDLE_DIR/symbol-index.jsonl" \
+  "$BUNDLE_DIR/search-index.jsonl" \
+  "$BUNDLE_DIR/.search-index-meta.json"
+
+"$SCRIPT_DIR/build-atlas-surfaces.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+"$SCRIPT_DIR/build-atlas-facts.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+"$SCRIPT_DIR/build-atlas-surface-content.sh" "$BUNDLE_DIR" || true
 
 rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
 

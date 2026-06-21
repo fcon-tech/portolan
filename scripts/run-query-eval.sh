@@ -40,7 +40,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 Q="$ROOT/scripts/portolan-bundle-query.sh"
 
 cat <<EOF
-# Query eval scaffold — bundle: $BUNDLE
+# Query eval run — bundle: $BUNDLE
 # Lane B: run each command; cite hotspot:id / gap:id / path:line from JSON output.
 
 Q1 worst duplication:
@@ -94,6 +94,10 @@ C5 agent analysis with tiers (after import-analysis-claims.sh):
   $Q claims --bundle "$BUNDLE" --limit 20
   $Q claims --bundle "$BUNDLE" --tier speculative --limit 10
 
+C6 atlas facts for viewer/agent drill-down:
+  $Q atlas --bundle "$BUNDLE" --section components --limit 10
+  $Q atlas --bundle "$BUNDLE" --section edges --limit 20
+
 EOF
 
 if [[ "$RUN" -eq 0 ]]; then
@@ -104,7 +108,22 @@ run_q() {
   local label=$1
   shift
   echo "--- $label ---"
-  "$@" 2>/dev/null | head -c 8000
+  local tmp err status
+  tmp=$(mktemp)
+  err=$(mktemp)
+  status=0
+  "$@" >"$tmp" 2>"$err" || status=$?
+  head -c 8000 "$tmp" || true
+  if [[ -s "$err" ]]; then
+    echo
+    echo "stderr:"
+    head -c 2000 "$err" || true
+  fi
+  if [[ "$status" -ne 0 ]]; then
+    echo
+    echo "command_exit=$status"
+  fi
+  rm -f "$tmp" "$err"
   echo
 }
 
@@ -127,3 +146,5 @@ if [[ -n "$FIRST_REPO" ]]; then
   run_q "C4 hotspots repo=$FIRST_REPO" "$Q" hotspots --bundle "$BUNDLE" --repo "$FIRST_REPO" --limit 10
 fi
 run_q "C5 claims" "$Q" claims --bundle "$BUNDLE" --limit 20
+run_q "C6 atlas components" "$Q" atlas --bundle "$BUNDLE" --section components --limit 10
+run_q "C6 atlas edges" "$Q" atlas --bundle "$BUNDLE" --section edges --limit 20

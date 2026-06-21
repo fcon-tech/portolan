@@ -3,139 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portolan</title>
+  <title>Portolan Atlas</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <div class="header-top">
-      <div class="brand">
-        <h1>Portolan</h1>
-        <p id="subtitle">Landscape report from local scanner evidence — not an AI architecture graph</p>
-      </div>
-      <div class="search-wrap">
-        <label for="search-input" class="sr-only">Search findings and code index</label>
-        <input type="search" id="search-input" placeholder="Search path, summary, code index…" autocomplete="off">
-        <div id="search-code-results" class="search-code-results hidden" role="listbox" aria-label="Code index hits"></div>
-      </div>
-    </div>
-    <nav id="tab-bar" class="tab-bar" aria-label="Report sections">
-      <button type="button" class="tab-btn active" data-tab="overview">Overview</button>
-      <button type="button" class="tab-btn" data-tab="repos">Repos</button>
-      <button type="button" class="tab-btn" data-tab="findings">Findings</button>
-      <button type="button" class="tab-btn" data-tab="gaps">Gaps</button>
-      <button type="button" class="tab-btn" data-tab="graph-hints">Graph hints</button>
-    </nav>
-    <div id="status-banner" class="status-banner hidden" role="status"></div>
-  </header>
-
-  <main>
-    <section id="tab-overview" class="tab-panel active">
-      <div id="report-overview" class="report-overview">
-        <details id="control-guide" class="control-guide">
-          <summary>How to use this report</summary>
-          <div class="control-guide-body">
-            <p><strong>Tabs:</strong> Overview (landscape + where to start), Repos (per-repo profiles, connections, drill-down), Findings (ranked pain by folder/list), Gaps (layers not run), Graph hints (optional <code>portolan map</code> sidecar).</p>
-            <p><strong>Search</strong> in the header queries the local code index — not an LLM.</p>
-            <p><strong>Repos tab</strong> — click a card for the evidence ladder: tier A tool facts first (profile, connections, findings), then tier-labeled agent analysis (B analytical / C synthetic / D speculative) if imported.</p>
-            <p><strong>Findings tab</strong> — pick a <em>view</em> (Tour, Code pain, Config), filter by kind/severity, click a row for tool-backed detail and source preview. Ranked findings are tier A only — agent claims never mix in.</p>
-            <p><strong>Graph hints</strong> — populated only when the scan included <code>--with-map-bridge</code> or you ran map + <code>build-map-bridge.sh</code> manually; empty state is honest, not missing findings.</p>
-          </div>
-        </details>
-        <div id="rank-explainer" class="rank-explainer"></div>
-        <div id="landscape-card" class="landscape-card"></div>
-        <div id="overview-blocks" class="overview-blocks"></div>
-        <div id="findings-scale" class="findings-scale"></div>
-        <div id="repo-matrix" class="repo-matrix"></div>
-        <div id="overview-claims" class="overview-claims"></div>
-        <div id="kind-summary" class="kind-summary"></div>
-        <div id="next-steps" class="next-steps"></div>
-      </div>
-    </section>
-
-    <section id="tab-repos" class="tab-panel">
-      <div class="repos-head">
-        <h2>Repositories</h2>
-        <p class="panel-hint">Tier A profiles from local extraction (manifests, README, compose, git). Agent analysis appears only as labeled B/C/D claims.</p>
-      </div>
-      <div class="repos-layout">
-        <div class="repos-main">
-          <div id="repos-cards" class="repos-cards"></div>
-          <div id="relationships-view" class="relationships-view"></div>
-        </div>
-        <aside id="repo-drill" class="repo-drill">
-          <p class="empty-title">Select a repository</p>
-          <p class="empty-hint">Cards show tool-extracted profile; drill-down adds connections, findings, and tier-labeled agent claims.</p>
-        </aside>
-      </div>
-    </section>
-
-    <section id="tab-findings" class="tab-panel">
-      <div class="findings-toolbar">
-        <div id="view-bar" class="view-bar" aria-label="Views"></div>
-        <button type="button" id="load-all-btn" class="load-all-btn hidden">Show all findings from scan</button>
-      </div>
-      <div id="filter-explainer" class="filter-explainer" role="status"></div>
-      <details id="kind-guide" class="kind-guide">
-        <summary>What counts as a finding? Tools &amp; limits</summary>
-        <div id="kind-guide-body" class="kind-guide-body"></div>
-      </details>
-      <div id="filter-bar" class="filter-bar" aria-label="Filters"></div>
-      <div class="layout layout-three">
-        <section class="panel panel-tree" id="folder-panel">
-          <div class="panel-head">
-            <h2>By folder</h2>
-            <span id="tree-count" class="count-badge"></span>
-          </div>
-          <div id="heat-tree" class="heat-tree" aria-label="Findings by folder"></div>
-        </section>
-        <section class="panel panel-list" id="tour">
-          <div class="panel-head">
-            <h2>Ranked list</h2>
-            <span id="tour-count" class="count-badge"></span>
-          </div>
-          <ul id="hotspot-list"></ul>
-        </section>
-        <section class="panel panel-detail" id="detail">
-          <h2 class="sr-only">Detail</h2>
-          <div id="detail-body" class="detail-empty">
-            <p class="empty-title">Select a finding</p>
-            <p class="empty-hint">Use the list or folder tree. Detail explains which tool flagged it.</p>
-          </div>
-          <div id="source-preview" class="source-preview hidden">
-            <div class="source-head">
-              <h3>Source</h3>
-              <span id="source-path" class="source-path"></span>
-            </div>
-            <pre id="source-code"></pre>
-          </div>
-        </section>
-      </div>
-      <div id="findings-sections" class="findings-sections"></div>
-    </section>
-
-    <section id="tab-gaps" class="tab-panel">
-      <div id="gaps-panel" class="gaps-panel">
-        <h2>Not assessed in this scan</h2>
-        <p class="panel-hint">These layers were not run, failed, or returned empty — they are not hidden findings.</p>
-        <div id="gaps-table"></div>
-      </div>
-    </section>
-
-    <section id="tab-graph-hints" class="tab-panel">
-      <div id="graph-hints-panel" class="graph-hints-panel">
-        <h2>Graph hints</h2>
-        <p class="panel-hint">Relationship hints from optional <code>portolan map</code> sidecar — not a call graph or LLM architecture diagram.</p>
-        <div id="graph-hints-body" class="graph-hints-body">
-          <p class="empty-hint">Loading…</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <span id="manifest-info"></span>
-  </footer>
+  <div id="app" class="app-shell">
+    <main class="loading-screen" aria-live="polite">
+      <div class="loading-mark">Portolan</div>
+      <p>Building local landscape atlas...</p>
+    </main>
+  </div>
   <script src="app.js"></script>
 </body>
 </html>

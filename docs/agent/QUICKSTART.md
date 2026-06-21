@@ -8,9 +8,9 @@ in `docs/agent/INSTALL-PROMPT.md` or `docs/agent/INSTALL-PROMPT.ru.md`.
 
 For Cursor, OpenCode, install/build, and human-facing documentation routing,
 read `docs/onboarding.md` before broad claims about harness support. Cursor UI
-behavior is not proven by headless Cursor Agent CLI evidence. OpenCode default
-permissions work with repo-local output paths under the Portolan checkout; the
-recorded external-output default-permission lane failed.
+behavior is not proven by headless Cursor Agent CLI evidence. OpenCode should
+use a bundle path inside the target unless the permission mode explicitly
+allows another output root.
 
 For generated reports, use `docs/product-quality-boundary.md`,
 `docs/product-maturity.md`, and `docs/report-quality.md` before treating a
@@ -18,14 +18,78 @@ report as product-ready.
 
 ## Inputs You Need
 
-- Portolan checkout or installed `portolan` binary.
+- Portolan checkout.
 - Local target root to inspect.
-- Output directory for Portolan artifacts.
+- Bundle output directory for Portolan artifacts.
 
 Do not use network, credentials, cloning, or target mutation unless the user
 explicitly approves it.
 
-## 1. Resolve The Portolan Command
+## 1. Prefer The Harness Atlas Path
+
+For current product use, start with the harness-first atlas path. It does not require
+the legacy Go CLI as the primary entrypoint:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+```
+
+Use these modifiers deliberately:
+
+- remove `--skip-install` only after explicit operator approval to install
+  missing OSS tools.
+- `--limit-repos N` for a bounded first pass on very large landscapes.
+- `--with-map-bridge` when you want legacy `portolan map` evidence-index hints.
+
+After the scan, read the atlas artifacts before answering:
+
+- `manifest.json`
+- `atlas-facts.json`
+- `repo-profiles.json`
+- `relationships.jsonl`
+- `hotspots.jsonl`
+- `hotspots-full.jsonl`
+- `gaps.jsonl`
+- `atlas-surface-content.json`
+
+Open the viewer when the user needs a human-readable atlas:
+
+```bash
+cd "$PORTOLAN_PATH/viewer"
+node scripts/build-static.js
+node scripts/serve.js --bundle "$BUNDLE_DIR"
+```
+
+Query the same bundle at answer time:
+
+```bash
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
+"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
+```
+
+## 2. Route Selected Code Back To The Atlas
+
+When the user highlights a file, symbol, or subsystem in a coding-agent UI:
+
+1. Identify the selected path and repo root.
+2. Query `source` for a bounded snippet.
+3. Query `search` or `symbol` for related names when indexes exist.
+4. Query `hotspots --repo <repo-id>` for local pain around the repo.
+5. Query `relationships` to explain visible connections to other repos.
+6. Query `gaps` for unknown, cannot_verify, or not_assessed surfaces.
+7. Answer with explicit gaps when runtime/config/vendor relationships are not
+   present in the bundle.
+
+Do not infer runtime calls from static dependency or source-search results.
+
+## 3. Legacy Go Path When Needed
+
+Use the legacy Go path only when the user explicitly asks for
+`context prepare`, `map`, or older map artifacts.
 
 Prefer an installed binary:
 
@@ -40,14 +104,6 @@ cd <portolan-checkout>
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```
-
-Use `go run` only as a fallback from the Portolan checkout:
-
-```bash
-go run ./cmd/portolan --version
-```
-
-## 2. Prepare Agent Context
 
 ```bash
 portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
@@ -70,7 +126,7 @@ Read these files before answering broad questions:
 - `oss-plan.json`
 - `gaps.jsonl`
 
-## 3. Create A Map When Needed
+## 4. Create A Legacy Map When Needed
 
 ```bash
 portolan map --root <target-root> --out <output-dir>/map
@@ -115,7 +171,7 @@ references for citation.
 Open `graph.json` only when the bounded files, query output, and graph slices
 are insufficient.
 
-## 4. Answer From Evidence
+## 5. Answer From Evidence
 
 Your report should include:
 
@@ -130,7 +186,7 @@ Your report should include:
 
 Do not invent facts that are not in the Portolan artifacts.
 
-## 5. Preserve Boundaries
+## 6. Preserve Boundaries
 
 - Source/config duplicate clusters are evidence, not a refactoring order.
 - Local visible scope is not complete estate coverage.

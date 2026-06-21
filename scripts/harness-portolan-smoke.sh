@@ -16,8 +16,16 @@ portolan_rel_path_is_ignored "$ROOT" "scripts/portolan-scan.sh" && {
 }
 
 FIXTURE_TARGET="$ROOT/internal/testfixtures/portolan-bundle/target"
-FIXTURE_BUNDLE="$ROOT/internal/testfixtures/portolan-bundle/portolan-smoke"
+FIXTURE_BUNDLE=$(mktemp -d)
+TRUNC_BUNDLE=""
+PID=""
 VIEWER_PORT="${VIEWER_PORT:-4174}"
+
+cleanup() {
+  kill "${PID:-}" 2>/dev/null || true
+  rm -rf "$FIXTURE_BUNDLE" "${TRUNC_BUNDLE:-}"
+}
+trap cleanup EXIT
 
 # Live config scan (producer script, not only pre-baked jsonl)
 SCAN_TMP=$(mktemp)
@@ -37,8 +45,38 @@ test -f "$FIXTURE_BUNDLE/manifest.json"
 test -f "$FIXTURE_BUNDLE/hotspots-full.jsonl"
 test -f "$FIXTURE_BUNDLE/landscape-card.json"
 test -f "$FIXTURE_BUNDLE/landscape-report.json"
+test -f "$FIXTURE_BUNDLE/atlas-surfaces.json"
+test -f "$FIXTURE_BUNDLE/atlas-facts.json"
+test -f "$FIXTURE_BUNDLE/atlas-surface-content.json"
 jq empty "$FIXTURE_BUNDLE/landscape-card.json"
 jq empty "$FIXTURE_BUNDLE/landscape-report.json"
+jq -e '.schema_version == "0.1.0" and .coverage.repo_count >= 1 and (.surfaces | length) >= 1' \
+  "$FIXTURE_BUNDLE/atlas-surfaces.json" >/dev/null
+jq -e '.schema_version == "0.1.0" and .coverage.component_count >= 1 and (.components | length) >= 1 and (.edges | type == "array") and (.surface_directory | length) >= 1 and .coverage.repository_route_count >= 1' \
+  "$FIXTURE_BUNDLE/atlas-facts.json" >/dev/null
+jq -e '.schema_version == "0.1.0" and .coverage.component_count >= 1 and (.routes | type == "array") and .coverage.repository_routes >= 1' \
+  "$FIXTURE_BUNDLE/atlas-surface-content.json" >/dev/null
+
+SURFACE_CONTENT_BUNDLE=$(mktemp -d)
+cp -a "$FIXTURE_BUNDLE/." "$SURFACE_CONTENT_BUNDLE/"
+SURFACE_CONTENT_INPUT=$(mktemp)
+fixture_target_id=$(jq -r '.surface_directory[0].target_id' "$SURFACE_CONTENT_BUNDLE/atlas-facts.json")
+jq -nc --arg target_id "$fixture_target_id" '{
+  target_id: $target_id,
+  slot: "repository",
+  title: "Fixture repository overview",
+  summary: "Local export card used to verify atlas surface content ingestion.",
+  content_ref: "fixture-export.json",
+  evidence_state: "metadata-visible",
+  source: "harness-fixture"
+}' >"$SURFACE_CONTENT_INPUT"
+"$ROOT/scripts/import-surface-content.sh" "$SURFACE_CONTENT_BUNDLE" "$SURFACE_CONTENT_INPUT" fixture >/dev/null
+"$ROOT/scripts/build-atlas-surface-content.sh" "$SURFACE_CONTENT_BUNDLE" >/dev/null
+jq -e --arg target_id "$fixture_target_id" '
+  .coverage.imported_route_count >= 1 and
+  any(.routes[]; .target_id == $target_id and .slot == "repository" and .content_state == "imported" and .content_count >= 1)
+' "$SURFACE_CONTENT_BUNDLE/atlas-surface-content.json" >/dev/null
+rm -rf "$SURFACE_CONTENT_INPUT" "$SURFACE_CONTENT_BUNDLE"
 
 jq -e 'select(.kind == "config" and .producer == "config-scan" and (.paths | length) >= 1)' \
   "$FIXTURE_BUNDLE/hotspots.jsonl" >/dev/null || {
@@ -80,7 +118,6 @@ fi
 
 # Truncation smoke: budget=2 must truncate when full list is longer
 TRUNC_BUNDLE=$(mktemp -d)
-trap 'rm -rf "$TRUNC_BUNDLE"' EXIT
 mkdir -p "$TRUNC_BUNDLE/producers"
 cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$TRUNC_BUNDLE/producers/"
 PORTOLAN_HOTSPOT_BUDGET=2 "$ROOT/scripts/build-portolan-bundle.sh" "$FIXTURE_TARGET" "$TRUNC_BUNDLE"
@@ -93,22 +130,25 @@ cd "$ROOT/viewer"
 node scripts/build-static.js
 node scripts/serve.js --bundle "$FIXTURE_BUNDLE" --port "$VIEWER_PORT" &
 PID=$!
-trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$TRUNC_BUNDLE"' EXIT
 sleep 1
 
 BASE="http://127.0.0.1:$VIEWER_PORT"
 HTML=$(curl -sf "$BASE/")
-echo "$HTML" | grep -q '<h1>Portolan</h1>'
-echo "$HTML" | grep -q 'id="tab-bar"'
-echo "$HTML" | grep -q 'id="report-overview"'
-echo "$HTML" | grep -q 'id="tab-findings"'
-echo "$HTML" | grep -q 'id="search-input"'
-echo "$HTML" | grep -q 'id="filter-bar"'
-echo "$HTML" | grep -q 'id="heat-tree"'
-echo "$HTML" | grep -q 'id="status-banner"'
+grep -q '<title>Portolan Atlas</title>' <<<"$HTML"
+grep -q 'id="app"' <<<"$HTML"
+grep -q 'app.js' <<<"$HTML"
+grep -q 'styles.css' <<<"$HTML"
+APP_JS=$(curl -sf "$BASE/app.js")
+grep -q 'Enterprise landscape atlas' <<<"$APP_JS"
+grep -q 'Search component, issue, wiki, finding' <<<"$APP_JS"
+STYLES_CSS=$(curl -sf "$BASE/styles.css")
+grep -q -- '--primary' <<<"$STYLES_CSS"
+grep -q 'map-canvas' <<<"$STYLES_CSS"
 curl -sf "$BASE/bundle/manifest.json" | jq -e '.hotspot_count >= 1' >/dev/null
-curl -sf "$BASE/bundle/hotspots.jsonl" | grep -q duplication
-curl -sf "$BASE/source?path=sample.go&line=1" | grep -q 'Run'
+HOTSPOTS_JSONL=$(curl -sf "$BASE/bundle/hotspots.jsonl")
+grep -q duplication <<<"$HOTSPOTS_JSONL"
+SOURCE_SNIPPET=$(curl -sf "$BASE/source?path=sample.go&line=1")
+grep -q 'Run' <<<"$SOURCE_SNIPPET"
 
 FORBIDDEN_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/source?path=../../../etc/passwd&line=1")
 test "$FORBIDDEN_CODE" = "403"
@@ -122,6 +162,9 @@ test "$SYMLINK_CODE" = "403"
 
 curl -sf "$BASE/bundle/landscape-card.json" | jq -e '.identity.name' >/dev/null
 curl -sf "$BASE/bundle/landscape-report.json" | jq -e '.sections | length >= 1' >/dev/null
+curl -sf "$BASE/bundle/atlas-surfaces.json" | jq -e '.coverage.repo_count >= 1' >/dev/null
+curl -sf "$BASE/bundle/atlas-facts.json" | jq -e '.coverage.component_count >= 1' >/dev/null
+curl -sf "$BASE/bundle/atlas-surface-content.json" | jq -e '.coverage.route_count >= 1' >/dev/null
 curl -sf "$BASE/api/hotspots?limit=3" | jq -e '.schema_version and (.records | length) >= 1' >/dev/null
 
 "$ROOT/scripts/harness-bundle-query-smoke.sh"

@@ -4,7 +4,7 @@ Portable block — same skill as Cursor and OpenCode.
 
 ```text
 PORTOLAN_PATH=<absolute Portolan checkout>
-TARGET_PATH=<absolute local target>
+TARGET_ROOT=<absolute local target>
 BUNDLE_DIR=<absolute empty bundle output directory>
 ```
 
@@ -12,11 +12,14 @@ BUNDLE_DIR=<absolute empty bundle output directory>
 Execute Portolan harness now (no confirmation unless paths missing).
 
 1. Read PORTOLAN_PATH/harness/SKILL.md
-2. PORTOLAN_PATH/scripts/portolan-scan.sh TARGET_PATH BUNDLE_DIR --no-viewer --yes
-3. Summarize hotspots.jsonl (top 5 by rank) and gaps.jsonl
-4. Apply PORTOLAN_PATH/harness/guardrails/citation-rules.md
+2. "PORTOLAN_PATH/scripts/portolan-scan.sh" "TARGET_ROOT" "BUNDLE_DIR" --yes --skip-install --no-viewer
+   Remove --skip-install only after explicit approval to install missing local OSS tools.
+3. Query with PORTOLAN_PATH/scripts/portolan-bundle-query.sh before answering
+4. Summarize visible repos/components, key relationships, top hotspots, and gaps
+5. Apply PORTOLAN_PATH/harness/guardrails/citation-rules.md
 
-Optional viewer for human: cd PORTOLAN_PATH/viewer && npm install && npm run serve -- --bundle BUNDLE_DIR
+Optional viewer for human:
+cd "PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "BUNDLE_DIR"
 
 Legacy Go path only if asked: docs/harness/GO-FREEZE-POLICY.md
 ```

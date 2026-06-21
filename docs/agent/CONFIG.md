@@ -3,15 +3,40 @@
 Portolan's main configuration is the command line: target root, output
 directory, and optional input files.
 
-## Context Preparation
+## Atlas Bundle
+
+```bash
+scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+```
+
+Use this first when preparing Cursor, OpenCode, or another coding-agent harness
+to answer broad codebase questions. Remove `--skip-install` only after explicit
+approval to install missing local OSS tools.
+
+The default installed bundle path is `<target-root>/.portolan/atlas`.
+
+## Query Bundle
+
+```bash
+scripts/portolan-bundle-query.sh repos --bundle <bundle-dir> --limit 20
+scripts/portolan-bundle-query.sh relationships --bundle <bundle-dir> --limit 20
+scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --limit 20
+scripts/portolan-bundle-query.sh gaps --bundle <bundle-dir> --limit 20
+scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "<term>" --limit 20
+scripts/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> --path <path> --line 1
+```
+
+Use bounded queries before loading large bundle files.
+
+## Legacy Context Preparation
+
+Use only when the operator explicitly asks for the legacy Go path:
 
 ```bash
 portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
-Use this first when preparing an agent to answer questions.
-
-## Map Run
+## Legacy Map Run
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
