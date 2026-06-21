@@ -6,7 +6,7 @@ directory, and optional input files.
 ## Atlas Bundle
 
 ```bash
-scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
 Use this first when preparing Cursor, OpenCode, or another coding-agent harness
@@ -18,12 +18,12 @@ The default installed bundle path is `<target-root>/.portolan/atlas`.
 ## Query Bundle
 
 ```bash
-scripts/portolan-bundle-query.sh repos --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh relationships --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh gaps --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "<term>" --limit 20
-scripts/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> --path <path> --line 1
+<target-root>/.portolan/bin/portolan-bundle-query.sh repos --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh relationships --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh gaps --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh search --bundle <bundle-dir> --q "<term>" --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> --path <path> --line 1
 ```
 
 Use bounded queries before loading large bundle files.

@@ -51,6 +51,7 @@ test -f "$TARGET/.cursor/rules/portolan-atlas.mdc"
 test -f "$TARGET/AGENTS.md"
 test -x "$TARGET/.portolan/bin/portolan-scan.sh"
 test -x "$TARGET/.portolan/bin/portolan-bundle-query.sh"
+test -x "$TARGET/.portolan/bin/portolan-import-analysis-claims.sh"
 test -x "$TARGET/.portolan/bin/portolan-viewer.sh"
 
 rg -q 'PORTOLAN_BIN=.*/\.portolan/bin' "$TARGET/.cursor/rules/portolan-atlas.mdc"
@@ -133,6 +134,7 @@ git -C "$FULL_TARGET" init -q
   --scan-profile full
 
 test -x "$FULL_TARGET/.portolan/bin/portolan-scan.sh"
+test -x "$FULL_TARGET/.portolan/bin/portolan-import-analysis-claims.sh"
 rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer$' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"
 rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer$' "$FULL_TARGET/AGENTS.md"
 if rg -q -- '--core-only' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"; then

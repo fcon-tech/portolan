@@ -1,8 +1,9 @@
 # Agent Install
 
-Portolan's primary agent route is a source checkout plus harness instructions.
-The legacy Go binary remains available for older `context prepare` / `map`
-workflows, but it is not required for the atlas bundle path.
+Portolan's primary agent route is a source checkout installer that writes
+target-local wrappers into the selected project. The legacy Go binary remains
+available for older `context prepare` / `map` workflows, but it is not required
+for the atlas bundle path.
 
 If the user says "install Portolan" and gives you a target project, install the
 agent harness into that project:
@@ -10,7 +11,7 @@ agent harness into that project:
 ```bash
 git clone https://github.com/fcon-tech/portolan.git
 cd portolan
-scripts/portolan-install.sh <target-root> --harness all
+scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas
 ```
 
 If you already have a Portolan checkout, run the same install command from that
@@ -23,7 +24,7 @@ so Cursor/OpenCode get a queryable bundle before deeper producers run. Use
 Then build the atlas bundle:
 
 ```bash
-scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
 Remove `--skip-install` only after explicit approval to install missing local

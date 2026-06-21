@@ -133,9 +133,10 @@ You are evaluating Portolan as a local atlas layer for an AI agent. Use only the
 provided PORTOLAN_PATH, TARGET_ROOT, and BUNDLE_DIR. Do not use network access,
 credentials, cloning, or target mutation.
 
-1. Read PORTOLAN_PATH/harness/SKILL.md.
-2. Build the atlas bundle:
-   "$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+1. Install target-local wrappers:
+   "$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+2. Build the atlas bundle through the installed wrapper:
+   "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
    Remove --skip-install only after explicit operator approval.
 3. Read bounded artifacts before broad answers:
    - manifest.json
@@ -145,11 +146,11 @@ credentials, cloning, or target mutation.
    - hotspots.jsonl / hotspots-full.jsonl
    - gaps.jsonl
 4. Query the bundle at answer time:
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
 5. Answer the question set below. Cite the artifact paths and record ids you used. Preserve
    `unknown`, `cannot_verify`, and `not_assessed`.
 6. At the end, list unsupported claims you avoided or accidentally made, and

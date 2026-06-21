@@ -97,6 +97,10 @@ if [[ ! -x "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" ]]; then
   echo "missing executable: $PORTOLAN_PATH/scripts/portolan-bundle-query.sh" >&2
   exit 2
 fi
+if [[ ! -x "$PORTOLAN_PATH/scripts/import-analysis-claims.sh" ]]; then
+  echo "missing executable: $PORTOLAN_PATH/scripts/import-analysis-claims.sh" >&2
+  exit 2
+fi
 
 case "$SCAN_PROFILE" in
   fast)
@@ -424,6 +428,16 @@ exec "\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" "\$@"
 EOF
 }
 
+make_import_claims_wrapper() {
+  local out=$1
+  cat >"$out" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+PORTOLAN_PATH=$PORTOLAN_PATH_SH
+exec "\$PORTOLAN_PATH/scripts/import-analysis-claims.sh" "\$@"
+EOF
+}
+
 make_viewer_wrapper() {
   local out=$1
   cat >"$out" <<EOF
@@ -441,15 +455,18 @@ EOF
 }
 
 install_wrappers() {
-  local scan_wrapper query_wrapper viewer_wrapper
+  local scan_wrapper query_wrapper import_claims_wrapper viewer_wrapper
   scan_wrapper="$TMP_DIR/portolan-scan.sh"
   query_wrapper="$TMP_DIR/portolan-bundle-query.sh"
+  import_claims_wrapper="$TMP_DIR/portolan-import-analysis-claims.sh"
   viewer_wrapper="$TMP_DIR/portolan-viewer.sh"
   make_scan_wrapper "$scan_wrapper"
   make_query_wrapper "$query_wrapper"
+  make_import_claims_wrapper "$import_claims_wrapper"
   make_viewer_wrapper "$viewer_wrapper"
   write_managed_executable "$WRAPPER_DIR/portolan-scan.sh" "$scan_wrapper"
   write_managed_executable "$WRAPPER_DIR/portolan-bundle-query.sh" "$query_wrapper"
+  write_managed_executable "$WRAPPER_DIR/portolan-import-analysis-claims.sh" "$import_claims_wrapper"
   write_managed_executable "$WRAPPER_DIR/portolan-viewer.sh" "$viewer_wrapper"
 }
 

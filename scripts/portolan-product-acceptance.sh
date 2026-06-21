@@ -88,9 +88,11 @@ run_public_surface_checks() {
   local banned_internal
   local banned_public
   local banned_viewer
+  local banned_source_route
   banned_internal='install-agent''-harness\.sh'
   banned_public='prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
   banned_viewer='prototype|прототип|demo cockpit|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
+  banned_source_route='\$PORTOLAN_PATH/scripts/portolan-scan|\$PORTOLAN_PATH/scripts/portolan-bundle-query|PORTOLAN_PATH/harness|Read PORTOLAN_PATH|scripts/portolan-scan\.sh <target|scripts/portolan-bundle-query\.sh'
   require_cmd rg
   help_file=$(mktemp)
   echo "==> public install help" >&2
@@ -112,6 +114,7 @@ run_public_surface_checks() {
     "$ROOT/harness/SKILL.md" \
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
+    "$ROOT/harness/codex-claude" \
     "$ROOT/scripts/portolan-install.sh" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose prototype/internal wording" >&2
@@ -122,6 +125,21 @@ run_public_surface_checks() {
     "$ROOT/viewer/src" \
     --glob '!**/node_modules/**'; then
     echo "viewer source exposes prototype/internal wording" >&2
+    exit 1
+  fi
+  echo "==> public source-checkout route wording" >&2
+  if rg -n \
+    -e "$banned_source_route" \
+    "$ROOT/README.md" \
+    "$ROOT/docs/agent" \
+    "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/ru/README.md" \
+    "$ROOT/harness/cursor" \
+    "$ROOT/harness/opencode" \
+    "$ROOT/harness/codex-claude" \
+    "$ROOT/viewer/src" \
+    --glob '!**/node_modules/**'; then
+    echo "public surfaces expose old source-checkout scan/query route" >&2
     exit 1
   fi
 }
@@ -195,6 +213,7 @@ run_clean_copy_install_check() {
     --portolan-path "$copy" >/dev/null
   test -x "$target/.portolan/bin/portolan-scan.sh"
   test -x "$target/.portolan/bin/portolan-bundle-query.sh"
+  test -x "$target/.portolan/bin/portolan-import-analysis-claims.sh"
   test -x "$target/.portolan/bin/portolan-viewer.sh"
   if rg -q 'PORTOLAN_PATH=|harness/SKILL\.md|harness/recipes' \
     "$target/.cursor/rules/portolan-atlas.mdc" "$target/AGENTS.md"; then
@@ -221,6 +240,16 @@ run_clean_copy_install_check() {
   "$target/.portolan/bin/portolan-bundle-query.sh" gaps \
     --bundle "$target/.portolan/atlas" \
     --limit 5 | jq -e '.records | length == 3' >/dev/null
+  local claims_file
+  claims_file="$tmp/claims.jsonl"
+  printf '%s\n' \
+    '{"id":"acceptance-claim","claim_tier":"speculative","statement":"Acceptance smoke claim.","subject":"landscape","cited_refs":[],"agent":"portolan-product-acceptance","evidence_state":"claim-only"}' \
+    >"$claims_file"
+  "$target/.portolan/bin/portolan-import-analysis-claims.sh" \
+    "$target/.portolan/atlas" \
+    "$claims_file" >/dev/null
+  jq -e '.accepted_count == 1 and .rejected_count == 0' \
+    "$target/.portolan/atlas/claims-import-report.json" >/dev/null
 
   "$target/.portolan/bin/portolan-viewer.sh" \
     --bundle "$target/.portolan/atlas" \
