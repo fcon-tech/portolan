@@ -14,7 +14,7 @@ BUNDLE_DIR=<absolute path to empty bundle output directory>
 Если нужно установить инструкции Cursor/OpenCode в target project:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
 ```
 
 Потом отправь агенту:
@@ -25,9 +25,10 @@ BUNDLE_DIR=<absolute path to empty bundle output directory>
 отсутствует, BUNDLE_DIR небезопасно создать/заменить, или запуск/установка
 локального OSS tool требует подтверждения оператора.
 
-1. Прочитай PORTOLAN_PATH/harness/SKILL.md
-2. Сначала собери bundle:
-   "$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+1. Установи target-local wrappers:
+   "$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+2. Сначала собери bundle через установленный wrapper:
+   "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
    Убирай --skip-install только после явного разрешения установить
    отсутствующие OSS tools; по умолчанию сохраняй missing tools как
    not_assessed/cannot_verify gaps.
@@ -40,14 +41,14 @@ BUNDLE_DIR=<absolute path to empty bundle output directory>
    - gaps.jsonl
    - atlas-surface-content.json
 4. Не загружай весь bundle в чат. Запрашивай данные через bundle-query:
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section edges --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section edges --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
 5. Для выделенного кода свяжи файл/символ с atlas:
    - найди repo-id в repos.json;
    - query source/search/symbol для выбранного path/name;
@@ -56,6 +57,9 @@ BUNDLE_DIR=<absolute path to empty bundle output directory>
 
 Если harness запрещает внешний output, используй
 TARGET_ROOT/.portolan/atlas как BUNDLE_DIR.
+
+Не читай и не используй внешние файлы Portolan checkout во время atlas run.
+Установленные wrappers и target AGENTS/Cursor rule — активный интерфейс.
 
 Ответь:
 1. Scope: какие repos/components видны в atlas

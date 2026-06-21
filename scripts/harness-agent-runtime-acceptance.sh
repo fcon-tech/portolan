@@ -129,10 +129,11 @@ make_target() {
 
 prompt_text() {
   cat <<'EOF'
-Use the installed Portolan atlas harness for this workspace.
-Build the first atlas bundle only. Then query repos and gaps through
-portolan-bundle-query. Answer only JSON with repo_count, gap_count, core_only,
-and commands_ran. Do not modify source files.
+Use the Portolan commands installed for this workspace in .portolan/bin.
+Build the first atlas bundle only. Then query repos and gaps through the
+installed portolan-bundle-query.sh wrapper. Answer only JSON with repo_count,
+gap_count, core_only, and commands_ran. Do not read external paths. Do not
+modify source files.
 EOF
 }
 

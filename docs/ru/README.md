@@ -191,10 +191,10 @@ BUNDLE_DIR=<absolute path to atlas bundle directory>
 И скажи:
 
 ```text
-Поставь и используй Portolan из PORTOLAN_PATH на TARGET_ROOT. Запиши artifacts
-в BUNDLE_DIR. Следуй docs/agent/INSTALL-PROMPT.ru.md, сохраняй unknown /
-cannot_verify / not_assessed и цитируй локальные artifact paths для каждого
-важного claim.
+Поставь Portolan из PORTOLAN_PATH в TARGET_ROOT, потом используй wrappers из
+TARGET_ROOT/.portolan/bin и запиши artifacts в BUNDLE_DIR. Следуй
+docs/agent/INSTALL-PROMPT.ru.md, сохраняй unknown / cannot_verify /
+not_assessed и цитируй локальные artifact paths для каждого важного claim.
 ```
 
 Полная русская инструкция: [docs/agent/INSTALL.ru.md](../agent/INSTALL.ru.md).
