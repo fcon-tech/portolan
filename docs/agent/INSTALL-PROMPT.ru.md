@@ -66,7 +66,7 @@ TARGET_ROOT/.portolan/atlas как BUNDLE_DIR.
 6. Agent handoff: точные bundle-query команды, которые использовал или
    рекомендуешь следующему агенту
 7. Viewer URL/command:
-   cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"
+   "$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
 
 Legacy Go CLI используй только если оператор явно просит `context prepare` /

@@ -19,7 +19,7 @@ Execute Portolan harness now (no confirmation unless paths missing).
 5. Apply PORTOLAN_PATH/harness/guardrails/citation-rules.md
 
 Optional viewer for human:
-cd "PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "BUNDLE_DIR"
+"TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 
 Legacy Go path only if asked: docs/harness/GO-FREEZE-POLICY.md
 ```

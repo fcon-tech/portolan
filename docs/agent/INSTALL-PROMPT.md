@@ -69,7 +69,7 @@ Answer with:
 5. Drill-down: source/report/viewer routes for material claims
 6. Agent handoff: exact bundle-query commands used or recommended next
 7. Viewer URL/command:
-   cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"
+   "$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 
 Legacy Go CLI (optional): docs/harness/GO-FREEZE-POLICY.md
 ```

@@ -68,9 +68,7 @@ Use `symbol` when `symbol-index.jsonl` exists:
 ## Open The Viewer
 
 ```bash
-cd "$PORTOLAN_PATH/viewer"
-node scripts/build-static.js
-node scripts/serve.js --bundle "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
 
 ## Report Shape

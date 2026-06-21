@@ -64,10 +64,11 @@ Write outputs under `$BUNDLE_DIR/producers/`, then:
 ### Open atlas viewer (human)
 
 ```bash
-cd "$PORTOLAN_PATH/viewer"
-node scripts/build-static.js
-node scripts/serve.js --bundle "$BUNDLE_DIR"
+"${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}/.portolan/bin/portolan-viewer.sh"
 ```
+
+If Portolan was not installed into the target, use the source-checkout fallback:
+`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
 
 Viewer features: Bigtop-grade landscape overview, component map, relationship
 and source drill-down, ranked hotspots, search, filters, gaps, agent handoff

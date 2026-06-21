@@ -46,10 +46,11 @@ OSS tools.
 Открой viewer, когда нужен human-readable atlas:
 
 ```bash
-cd "$PORTOLAN_PATH/viewer"
-node scripts/build-static.js
-node scripts/serve.js --bundle "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
+
+Если Portolan не установлен в target, используй source-checkout fallback:
+`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
 
 Query перед ответом:
 

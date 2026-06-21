@@ -19,7 +19,7 @@ landscape:
    Start with `repos`, `relationships`, `hotspots`, and `gaps`; use `search`,
    `symbol`, and `source` for drill-down when indexes or selected paths exist.
 5. Open the viewer when the user needs navigation:
-   `cd viewer && node scripts/build-static.js && node scripts/serve.js --bundle <bundle-dir>`.
+   `<target-root>/.portolan/bin/portolan-viewer.sh`.
 6. Follow `harness/guardrails/citation-rules.md` and preserve `unknown`,
    `cannot_verify`, and `not_assessed`.
 
