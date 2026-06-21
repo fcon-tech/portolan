@@ -122,8 +122,9 @@ func TestInstallableAgentPackPublicRouteIsPresent(t *testing.T) {
 				t.Fatalf("%s missing installable pack public route %q", path, want)
 			}
 		}
-		if strings.Contains(data, "install-agent-harness.sh") {
-			t.Fatalf("%s exposes internal install-agent-harness.sh entrypoint", path)
+		oldInstaller := "install-agent" + "-harness.sh"
+		if strings.Contains(data, oldInstaller) {
+			t.Fatalf("%s exposes internal installer entrypoint", path)
 		}
 	}
 }

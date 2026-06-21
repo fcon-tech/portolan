@@ -967,7 +967,7 @@ function renderAtlasCockpit(selected) {
   const finding = activeFindingFor(selected);
   const sourcePath = finding ? (finding.paths || [])[0] || '' : '';
   return `
-    <section class="cockpit-strip" aria-label="Demo cockpit">
+    <section class="cockpit-strip" aria-label="Atlas cockpit">
       <article class="cockpit-card">
         <span>1. Brief</span>
         <strong>Read the enterprise shape</strong>

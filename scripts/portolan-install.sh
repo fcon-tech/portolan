@@ -4,4 +4,4 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 export PORTOLAN_INSTALL_PROG="portolan-install.sh"
-exec "$ROOT/scripts/install-agent-harness.sh" "$@"
+exec "$ROOT/scripts/portolan-install-core.sh" "$@"
