@@ -10,6 +10,7 @@ HARNESS="all"
 REQUIRE=""
 TIMEOUT_SEC="${PORTOLAN_AGENT_ACCEPTANCE_TIMEOUT:-240}"
 OPENCODE_MODEL="${PORTOLAN_OPENCODE_MODEL:-opencode/deepseek-v4-flash-free}"
+OPENCODE_DANGEROUS_SKIP_PERMISSIONS=0
 KEEP_TMP=0
 OUT_DIR=""
 
@@ -23,6 +24,8 @@ Options:
                        (cursor,opencode,all)
   --timeout SEC        Per-agent timeout (default ${TIMEOUT_SEC})
   --opencode-model ID  OpenCode model id (default ${OPENCODE_MODEL})
+  --opencode-dangerously-skip-permissions
+                       Pass OpenCode's permission-bypass flag. Default is off.
   --out DIR            Directory for lane transcripts (default isolated run dir)
   --keep-tmp           Keep isolated target roots
   -h, --help           Show this help
@@ -52,6 +55,7 @@ while [[ $# -gt 0 ]]; do
     --require) require_opt_value --require "${2:-}"; REQUIRE="$2"; shift 2 ;;
     --timeout) require_opt_value --timeout "${2:-}"; TIMEOUT_SEC="$2"; shift 2 ;;
     --opencode-model) require_opt_value --opencode-model "${2:-}"; OPENCODE_MODEL="$2"; shift 2 ;;
+    --opencode-dangerously-skip-permissions) OPENCODE_DANGEROUS_SKIP_PERMISSIONS=1; shift ;;
     --out) require_opt_value --out "${2:-}"; OUT_DIR="$2"; shift 2 ;;
     --keep-tmp) KEEP_TMP=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -92,6 +96,7 @@ validate_lane_list() {
 
 validate_lane_list --harness "$HARNESS"
 validate_lane_list --require "$REQUIRE" 1
+command -v rg >/dev/null 2>&1 || fail "rg is required for transcript assertions"
 
 TMP_PARENT=$(mktemp -d)
 if [[ "$KEEP_TMP" -eq 0 ]]; then
@@ -187,8 +192,12 @@ run_opencode_lane() {
   local target transcript rc
   target=$(make_target opencode)
   transcript="$OUT_DIR/opencode.jsonl"
-  timeout "$TIMEOUT_SEC" opencode run --dir "$target" --dangerously-skip-permissions \
-    --format json -m "$OPENCODE_MODEL" "$(prompt_text)" >"$transcript" || rc=$?
+  local -a cmd=(timeout "$TIMEOUT_SEC" opencode run --dir "$target" --format json -m "$OPENCODE_MODEL")
+  if [[ "$OPENCODE_DANGEROUS_SKIP_PERMISSIONS" -eq 1 ]]; then
+    cmd+=(--dangerously-skip-permissions)
+  fi
+  cmd+=("$(prompt_text)")
+  "${cmd[@]}" >"$transcript" || rc=$?
   rc=${rc:-0}
   [[ "$rc" -eq 0 ]] || fail "opencode exited $rc"
   validate_bundle opencode "$target" "$transcript"

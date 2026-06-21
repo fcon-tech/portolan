@@ -56,6 +56,7 @@ jq -e '.schema_version == "0.1.0" and .coverage.component_count >= 1 and (.compo
   "$FIXTURE_BUNDLE/atlas-facts.json" >/dev/null
 jq -e '.schema_version == "0.1.0" and .coverage.component_count >= 1 and (.routes | type == "array") and .coverage.repository_routes >= 1' \
   "$FIXTURE_BUNDLE/atlas-surface-content.json" >/dev/null
+"$ROOT/scripts/validate-atlas-schemas.sh" "$FIXTURE_BUNDLE"
 
 SURFACE_CONTENT_BUNDLE=$(mktemp -d)
 cp -a "$FIXTURE_BUNDLE/." "$SURFACE_CONTENT_BUNDLE/"
@@ -72,6 +73,7 @@ jq -nc --arg target_id "$fixture_target_id" '{
 }' >"$SURFACE_CONTENT_INPUT"
 "$ROOT/scripts/import-surface-content.sh" "$SURFACE_CONTENT_BUNDLE" "$SURFACE_CONTENT_INPUT" fixture >/dev/null
 "$ROOT/scripts/build-atlas-surface-content.sh" "$SURFACE_CONTENT_BUNDLE" >/dev/null
+"$ROOT/scripts/validate-atlas-schemas.sh" "$SURFACE_CONTENT_BUNDLE"
 jq -e --arg target_id "$fixture_target_id" '
   .coverage.imported_route_count >= 1 and
   any(.routes[]; .target_id == $target_id and .slot == "repository" and .content_state == "imported" and .content_count >= 1)

@@ -4,7 +4,26 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-export PATH="/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:${HOME}/.local/bin:${PATH}"
+prepend_path_if_dir() {
+  local dir=$1
+  [[ -n "$dir" && -d "$dir" ]] || return 0
+  case ":$PATH:" in
+    *":$dir:"*) ;;
+    *) PATH="$dir:$PATH" ;;
+  esac
+}
+if [[ -n "${PORTOLAN_EXTRA_PATH:-}" ]]; then
+  IFS=':' read -r -a portolan_extra_paths <<<"$PORTOLAN_EXTRA_PATH"
+  for portolan_extra_path in "${portolan_extra_paths[@]}"; do
+    prepend_path_if_dir "$portolan_extra_path"
+  done
+fi
+if [[ -n "${HOME:-}" ]]; then
+  prepend_path_if_dir "${HOME}/.local/bin"
+fi
+prepend_path_if_dir "/home/linuxbrew/.linuxbrew/bin"
+prepend_path_if_dir "/opt/homebrew/bin"
+export PATH
 # shellcheck source=portolan-ignore.sh
 . "$(dirname "$0")/portolan-ignore.sh"
 # shellcheck source=lib/jscpd-bounded.sh
@@ -67,6 +86,27 @@ require_opt_value() {
   fi
 }
 
+normalize_bundle_dir() {
+  local raw=$1 out
+  [[ -n "$raw" ]] || { echo "bundle dir is required" >&2; exit 2; }
+  [[ "$raw" != "/" ]] || { echo "refusing to use / as bundle dir" >&2; exit 2; }
+  if [[ -e "$raw" && ! -d "$raw" ]]; then
+    echo "bundle dir exists and is not a directory: $raw" >&2
+    exit 2
+  fi
+  mkdir -p "$raw"
+  out=$(cd "$raw" && pwd)
+  if [[ "$out" == "/" || "$out" == "$TARGET_ROOT" ]]; then
+    echo "refusing unsafe bundle dir: $out" >&2
+    exit 2
+  fi
+  if [[ -n "${HOME:-}" && "$out" == "$HOME" ]]; then
+    echo "refusing unsafe bundle dir: $out" >&2
+    exit 2
+  fi
+  printf '%s\n' "$out"
+}
+
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -114,7 +154,7 @@ if [[ "$LIMIT_REPOS" != 0 ]] && { ! [[ "$LIMIT_REPOS" =~ ^[0-9]+$ ]] || [[ "$LIM
 fi
 
 TARGET_ROOT=$(cd "${POSITIONAL[0]}" && pwd)
-BUNDLE_DIR=${POSITIONAL[1]}
+BUNDLE_DIR=$(normalize_bundle_dir "${POSITIONAL[1]}")
 PRODUCERS_DIR="$BUNDLE_DIR/producers"
 FAILURES_LOG="$PRODUCERS_DIR/_failures.log"
 SHARD_GAPS="$PRODUCERS_DIR/_gaps.jsonl"
@@ -230,8 +270,7 @@ ensure_tools() {
   fi
   if has_producer syft; then
     install_tool syft \
-      "brew install syft" \
-      "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b ${HOME}/.local/bin" || missing=1
+      "brew install syft" || missing=1
   fi
   if has_producer ctags; then
     if ! install_tool ctags \

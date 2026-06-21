@@ -8,6 +8,11 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
+fail() {
+  echo "harness-reproducible-atlas-smoke: FAIL: $*" >&2
+  exit 1
+}
+
 usage() {
   cat <<'EOF'
 usage: scripts/harness-reproducible-atlas-smoke.sh <target-root> <bundle-dir>
@@ -34,13 +39,30 @@ if [[ $# -lt 2 ]]; then
 fi
 
 TARGET_ROOT=$(cd "$1" && pwd)
-BUNDLE_DIR=$2
+RAW_BUNDLE_DIR=$2
 PRODUCERS="${PORTOLAN_REPRO_PRODUCERS:-config,ctags}"
 HOTSPOT_BUDGET="${PORTOLAN_REPRO_HOTSPOT_BUDGET:-120}"
 SHARD_TIMEOUT="${PORTOLAN_REPRO_SHARD_TIMEOUT:-180}"
 
-rm -rf "$BUNDLE_DIR"
-mkdir -p "$BUNDLE_DIR"
+[[ -n "$RAW_BUNDLE_DIR" ]] || fail "bundle dir is required"
+[[ "$RAW_BUNDLE_DIR" != "/" ]] || fail "refusing to use / as bundle dir"
+if [[ -e "$RAW_BUNDLE_DIR" && ! -d "$RAW_BUNDLE_DIR" ]]; then
+  fail "bundle dir exists and is not a directory: $RAW_BUNDLE_DIR"
+fi
+mkdir -p "$RAW_BUNDLE_DIR"
+BUNDLE_DIR=$(cd "$RAW_BUNDLE_DIR" && pwd)
+if [[ "$BUNDLE_DIR" == "/" || "$BUNDLE_DIR" == "$TARGET_ROOT" || "$BUNDLE_DIR" == "$ROOT" ]]; then
+  fail "refusing unsafe bundle dir: $BUNDLE_DIR"
+fi
+if [[ "$BUNDLE_DIR" == "$TARGET_ROOT"/* || "$BUNDLE_DIR" == "$ROOT"/* ]]; then
+  fail "refusing bundle dir inside target or Portolan checkout: $BUNDLE_DIR"
+fi
+if [[ -n "${HOME:-}" && "$BUNDLE_DIR" == "$HOME" ]]; then
+  fail "refusing unsafe bundle dir: $BUNDLE_DIR"
+fi
+if [[ -n "$(find "$BUNDLE_DIR" -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+  fail "bundle dir must be empty or absent; refusing to delete existing contents: $BUNDLE_DIR"
+fi
 
 "$ROOT/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" \
   --no-viewer \

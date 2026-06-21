@@ -9,7 +9,29 @@ if [[ $# -lt 2 ]]; then
 fi
 
 TARGET_ROOT=$(cd "$1" && pwd)
-BUNDLE_DIR=$2
+
+normalize_bundle_dir() {
+  local raw=$1 out
+  [[ -n "$raw" ]] || { echo "bundle dir is required" >&2; exit 2; }
+  [[ "$raw" != "/" ]] || { echo "refusing to use / as bundle dir" >&2; exit 2; }
+  if [[ -e "$raw" && ! -d "$raw" ]]; then
+    echo "bundle dir exists and is not a directory: $raw" >&2
+    exit 2
+  fi
+  mkdir -p "$raw"
+  out=$(cd "$raw" && pwd)
+  if [[ "$out" == "/" || "$out" == "$TARGET_ROOT" ]]; then
+    echo "refusing unsafe bundle dir: $out" >&2
+    exit 2
+  fi
+  if [[ -n "${HOME:-}" && "$out" == "$HOME" ]]; then
+    echo "refusing unsafe bundle dir: $out" >&2
+    exit 2
+  fi
+  printf '%s\n' "$out"
+}
+
+BUNDLE_DIR=$(normalize_bundle_dir "$2")
 PRODUCERS_DIR="$BUNDLE_DIR/producers"
 HOTSPOT_BUDGET="${PORTOLAN_HOTSPOT_BUDGET:-200}"
 GAP_BUDGET="${PORTOLAN_GAP_BUDGET:-20}"
@@ -408,6 +430,11 @@ fi
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
   cat "$PRODUCERS_DIR/_gaps.jsonl" >>"$gaps_raw"
 fi
+if ! command -v rg >/dev/null 2>&1; then
+  append_gap "search-index-rg" "search-index" "not_assessed" \
+    "ripgrep not installed; search index uses bounded head-only lines per file" \
+    "install ripgrep for fuller code index"
+fi
 
 # Sort all hotspots; write full list; apply kind-quota budget
 sorted_all=$(mktemp)
@@ -675,10 +702,5 @@ rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
 
 "$SCRIPT_DIR/build-symbol-index.sh" "$BUNDLE_DIR" || true
 "$SCRIPT_DIR/build-search-index.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
-if ! command -v rg >/dev/null 2>&1; then
-  append_gap "search-index-rg" "not_assessed" \
-    "ripgrep not installed; search index uses bounded head-only lines per file" \
-    "install ripgrep for fuller code index"
-fi
 
 echo "Portolan bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"

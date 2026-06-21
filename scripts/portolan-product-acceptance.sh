@@ -65,6 +65,16 @@ run() {
   "$@"
 }
 
+fail() {
+  echo "portolan-product-acceptance: FAIL: $*" >&2
+  exit 1
+}
+
+require_cmd() {
+  local cmd=$1
+  command -v "$cmd" >/dev/null 2>&1 || fail "$cmd is required for product acceptance"
+}
+
 run_shell_syntax() {
   local script
   echo "==> shell syntax" >&2
@@ -75,6 +85,7 @@ run_shell_syntax() {
 
 run_public_surface_checks() {
   local help_file
+  require_cmd rg
   help_file=$(mktemp)
   echo "==> public install help" >&2
   "$ROOT/scripts/portolan-install.sh" --help >"$help_file"
@@ -99,6 +110,13 @@ run_public_surface_checks() {
     echo "public surfaces expose prototype/internal wording" >&2
     exit 1
   fi
+  if rg -n \
+    'prototype|прототип|install-agent-harness\.sh|hidden scaffolding|private scaffolding|no-hidden-scaffolding' \
+    "$ROOT/viewer/src" \
+    --glob '!**/node_modules/**'; then
+    echo "viewer source exposes prototype/internal wording" >&2
+    exit 1
+  fi
 }
 
 run_go_checks() {
@@ -109,10 +127,7 @@ run_go_checks() {
 run_schema_checks() {
   run "json schema syntax" jq empty \
     "$ROOT"/schema/*.json \
-    "$ROOT/harness/contracts/portolan-bundle.schema.json" \
-    "$ROOT/harness/contracts/bundle-query-result.schema.json" \
-    "$ROOT/harness/contracts/landscape-card.schema.json" \
-    "$ROOT/harness/contracts/landscape-report.schema.json"
+    "$ROOT"/harness/contracts/*.schema.json
 }
 
 run_viewer_checks() {

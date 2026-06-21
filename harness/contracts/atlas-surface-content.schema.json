@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/atlas-surface-content.schema.json",
+  "title": "Portolan Atlas Surface Content",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "coverage", "routes", "gaps"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "corpus": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["component_count", "route_count", "imported_route_count", "exported_card_count"],
+      "properties": {
+        "component_count": { "type": "integer", "minimum": 0 },
+        "route_count": { "type": "integer", "minimum": 0 },
+        "imported_route_count": { "type": "integer", "minimum": 0 },
+        "exported_card_count": { "type": "integer", "minimum": 0 },
+        "repository_routes": { "type": "integer", "minimum": 0 },
+        "tracker_routes": { "type": "integer", "minimum": 0 },
+        "wiki_routes": { "type": "integer", "minimum": 0 },
+        "docs_routes": { "type": "integer", "minimum": 0 },
+        "missing_tracker_content_targets": { "type": "array", "items": { "type": "string" } },
+        "missing_wiki_content_targets": { "type": "array", "items": { "type": "string" } },
+        "cannot_verify_content_targets": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "routes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/route_content" }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gap" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "evidence_state": {
+      "type": "string",
+      "enum": [
+        "source-visible",
+        "metadata-visible",
+        "runtime-visible",
+        "claim-only",
+        "unknown",
+        "cannot_verify",
+        "not_assessed"
+      ]
+    },
+    "route_content": {
+      "type": "object",
+      "required": [
+        "target_id",
+        "repo_id",
+        "label",
+        "slot",
+        "route_label",
+        "route_state",
+        "evidence_state",
+        "route_evidence_ref",
+        "content_state",
+        "content_count",
+        "cards"
+      ],
+      "properties": {
+        "target_id": { "type": "string" },
+        "repo_id": { "type": "string" },
+        "label": { "type": "string" },
+        "role": { "type": "string" },
+        "lifecycle": { "type": "string" },
+        "slot": { "type": "string" },
+        "route_label": { "type": "string" },
+        "url": { "type": "string" },
+        "route_state": { "type": "string", "enum": ["ok", "gap", "missing"] },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "route_evidence_ref": { "type": "string" },
+        "content_state": { "type": "string", "enum": ["imported", "not_imported", "cannot_verify"] },
+        "content_count": { "type": "integer", "minimum": 0 },
+        "cards": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/content_card" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "content_card": {
+      "type": "object",
+      "required": ["id", "target_id", "repo_id", "slot", "title", "summary", "evidence_state", "source"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "target_id": { "type": "string" },
+        "repo_id": { "type": "string" },
+        "slot": { "type": "string" },
+        "url": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content_ref": { "type": "string" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "source": { "type": "string" },
+        "exported_at": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "gap": {
+      "type": "object",
+      "required": ["id", "surface", "status", "summary"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "surface": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["unknown", "cannot_verify", "not_assessed"]
+        },
+        "summary": { "type": "string" },
+        "source": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

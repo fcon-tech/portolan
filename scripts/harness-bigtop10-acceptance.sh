@@ -59,6 +59,9 @@ fi
 
 # Symbol query smoke (bundle-query)
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+if [[ -x "$ROOT/scripts/validate-atlas-schemas.sh" ]]; then
+  "$ROOT/scripts/validate-atlas-schemas.sh" "$BUNDLE"
+fi
 if [[ -x "$ROOT/scripts/portolan-bundle-query.sh" ]]; then
   [[ -s "$BUNDLE/symbol-index.jsonl" ]] || fail "symbol-index.jsonl missing or empty"
   first_symbol=$(awk 'length($0) > 0 { print; exit }' "$BUNDLE/symbol-index.jsonl" | jq -r '.name // empty')
