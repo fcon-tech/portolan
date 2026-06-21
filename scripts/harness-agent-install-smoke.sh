@@ -55,11 +55,20 @@ test -x "$TARGET/.portolan/bin/portolan-viewer.sh"
 
 rg -q 'PORTOLAN_BIN=.*/\.portolan/bin' "$TARGET/.cursor/rules/portolan-atlas.mdc"
 rg -q 'PORTOLAN_BIN=.*/\.portolan/bin' "$TARGET/AGENTS.md"
-rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50' "$TARGET/.cursor/rules/portolan-atlas.mdc"
-rg -q 'portolan-bundle-query\.sh" repos --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
-rg -q 'portolan-bundle-query\.sh" gaps --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
-rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50' "$TARGET/AGENTS.md"
-rg -q 'portolan-bundle-query\.sh" gaps --bundle' "$TARGET/AGENTS.md"
+if rg -q 'PORTOLAN_PATH=|harness/SKILL\.md|harness/recipes' \
+  "$TARGET/.cursor/rules/portolan-atlas.mdc" "$TARGET/AGENTS.md"; then
+  echo "installed agent instructions expose source-checkout guidance" >&2
+  exit 1
+fi
+if rg -q -F "$ROOT" "$TARGET/.cursor/rules/portolan-atlas.mdc" "$TARGET/AGENTS.md"; then
+  echo "installed agent instructions expose the Portolan source checkout path" >&2
+  exit 1
+fi
+rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50' "$TARGET/.cursor/rules/portolan-atlas.mdc"
+rg -q 'portolan-bundle-query\.sh.*repos --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
+rg -q 'portolan-bundle-query\.sh.*gaps --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
+rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50' "$TARGET/AGENTS.md"
+rg -q 'portolan-bundle-query\.sh.*gaps --bundle' "$TARGET/AGENTS.md"
 rg -q 'config,jscpd,semgrep,syft,ctags' "$TARGET/AGENTS.md"
 rg -q 'PORTOLAN START' "$TARGET/AGENTS.md"
 rg -q 'Keep this line\.' "$TARGET/AGENTS.md"
@@ -124,8 +133,8 @@ git -C "$FULL_TARGET" init -q
   --scan-profile full
 
 test -x "$FULL_TARGET/.portolan/bin/portolan-scan.sh"
-rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer$' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"
-rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer$' "$FULL_TARGET/AGENTS.md"
+rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer$' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"
+rg -q 'portolan-scan\.sh.*--yes --skip-install --no-viewer$' "$FULL_TARGET/AGENTS.md"
 if rg -q -- '--core-only' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"; then
   echo "full scan profile unexpectedly includes --core-only" >&2
   exit 1

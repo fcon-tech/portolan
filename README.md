@@ -172,10 +172,10 @@ absolute paths and send that block to the agent.
 For a shorter run, send this to the agent:
 
 ```text
-Install and use Portolan from PORTOLAN_PATH on TARGET_ROOT. Write artifacts to
-BUNDLE_DIR. Follow docs/agent/INSTALL-PROMPT.md, preserve unknown /
-cannot_verify / not_assessed, and cite local artifact paths for every material
-claim.
+Install Portolan from PORTOLAN_PATH into TARGET_ROOT, then use
+TARGET_ROOT/.portolan/bin wrappers to write artifacts to BUNDLE_DIR. Follow
+docs/agent/INSTALL-PROMPT.md, preserve unknown / cannot_verify / not_assessed,
+and cite local artifact paths for every material claim.
 ```
 
 For a Russian-language agent run, use

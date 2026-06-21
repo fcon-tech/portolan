@@ -9,14 +9,15 @@ BUNDLE_DIR=<absolute empty bundle output directory>
 ```
 
 ```text
-Execute Portolan harness now (no confirmation unless paths missing).
+Install Portolan into TARGET_ROOT and execute the installed target-local
+wrappers now (no confirmation unless paths are missing).
 
-1. Read PORTOLAN_PATH/harness/SKILL.md
-2. "PORTOLAN_PATH/scripts/portolan-scan.sh" "TARGET_ROOT" "BUNDLE_DIR" --yes --skip-install --no-viewer
+1. "PORTOLAN_PATH/scripts/portolan-install.sh" "TARGET_ROOT" --harness all --bundle-dir "BUNDLE_DIR"
+2. "TARGET_ROOT/.portolan/bin/portolan-scan.sh" "TARGET_ROOT" "BUNDLE_DIR" --yes --skip-install --no-viewer
    Remove --skip-install only after explicit approval to install missing local OSS tools.
-3. Query with PORTOLAN_PATH/scripts/portolan-bundle-query.sh before answering
+3. Query with "TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" before answering
 4. Summarize visible repos/components, key relationships, top hotspots, and gaps
-5. Apply PORTOLAN_PATH/harness/guardrails/citation-rules.md
+5. Cite bundle record ids or source paths for material claims
 
 Optional viewer for human:
 "TARGET_ROOT/.portolan/bin/portolan-viewer.sh"

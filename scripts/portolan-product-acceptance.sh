@@ -196,6 +196,13 @@ run_clean_copy_install_check() {
   test -x "$target/.portolan/bin/portolan-scan.sh"
   test -x "$target/.portolan/bin/portolan-bundle-query.sh"
   test -x "$target/.portolan/bin/portolan-viewer.sh"
+  if rg -q 'PORTOLAN_PATH=|harness/SKILL\.md|harness/recipes' \
+    "$target/.cursor/rules/portolan-atlas.mdc" "$target/AGENTS.md"; then
+    fail "installed agent instructions expose source-checkout guidance"
+  fi
+  if rg -q -F "$copy" "$target/.cursor/rules/portolan-atlas.mdc" "$target/AGENTS.md"; then
+    fail "installed agent instructions expose the Portolan source-copy path"
+  fi
 
   "$target/.portolan/bin/portolan-scan.sh" "$target" "$target/.portolan/atlas" \
     --yes \

@@ -3,8 +3,10 @@
 Use this prompt when you want an AI agent to run Portolan without hidden
 setup.
 
-**Recommended (harness-first):** see [`harness/SKILL.md`](../../harness/SKILL.md)
-and harness-specific prompts:
+**Recommended path:** install target-local wrappers, then run the atlas through
+`TARGET_ROOT/.portolan/bin`.
+
+Harness-specific prompt variants:
 
 - [`harness/cursor/portolan-harness.mdc`](../../harness/cursor/portolan-harness.mdc)
 - [`harness/opencode/INSTALL-PROMPT.md`](../../harness/opencode/INSTALL-PROMPT.md)
@@ -13,7 +15,7 @@ and harness-specific prompts:
 To install harness instructions into a target project:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
 ```
 
 Replace variables with absolute local paths:
@@ -32,9 +34,10 @@ Write the Portolan bundle to BUNDLE_DIR. Execute now; ask only if a path is
 missing, BUNDLE_DIR is not safe to create/replace, or local OSS tool execution
 needs operator approval.
 
-1. Read PORTOLAN_PATH/harness/SKILL.md
-2. Run the bundle build first:
-   "$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+1. Install target-local Portolan wrappers:
+   "$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+2. Run the bundle build through the installed wrapper:
+   "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
    Remove --skip-install only after explicit operator approval to install
    missing OSS tools; keep missing tools as not_assessed/cannot_verify gaps by
    default.
@@ -46,12 +49,12 @@ needs operator approval.
    - hotspots.jsonl / hotspots-full.jsonl
    - gaps.jsonl
 4. Query at answer time instead of loading everything into chat:
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
-   "$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "<term>" --limit 20
+   "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
 5. For selected code, map the file/symbol back into the atlas:
    - query search/source for the selected path;
    - query symbol when symbol-index.jsonl exists;
@@ -60,6 +63,9 @@ needs operator approval.
 
 If the harness blocks external writes, use TARGET_ROOT/.portolan/atlas as
 BUNDLE_DIR.
+
+Do not read or depend on external Portolan checkout files during the atlas run.
+The installed wrappers and target AGENTS/Cursor rule are the active interface.
 
 Answer with:
 1. Scope: repos/components visible in the atlas

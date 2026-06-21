@@ -273,20 +273,22 @@ inventing architecture.
 Set these paths for this project:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
 \`\`\`
 
+Use the target-local wrappers above as the installed Portolan interface. Do not
+inspect or depend on the external Portolan source checkout during routine atlas
+runs; the wrappers already know where it is.
+
 Build the atlas first by running this complete block:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
+$SCAN_WRAPPER_SH $TARGET_ROOT_SH $BUNDLE_DIR_SH $SCAN_ARGS
 \`\`\`
 
 Remove \`--skip-install\` only after explicit operator approval to install
@@ -296,25 +298,23 @@ After the first bundle is queryable, deepen it when the user wants duplication,
 Semgrep, Syft, and larger hotspot coverage:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
+$SCAN_WRAPPER_SH $TARGET_ROOT_SH $BUNDLE_DIR_SH $FULL_SCAN_ARGS
 \`\`\`
 
 Query the bundle instead of loading everything into chat:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+$QUERY_WRAPPER_SH repos --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH relationships --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH hotspots --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH gaps --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH search --bundle $BUNDLE_DIR_SH --q "<term>" --limit 20
+$QUERY_WRAPPER_SH source --bundle $BUNDLE_DIR_SH --repo "<repo-id>" --path "<path>" --line 1
 \`\`\`
 
 For selected code, resolve the repo/path through \`repos\`, \`search\`,
@@ -323,10 +323,9 @@ Cite bundle record ids or source paths for material claims. Open the viewer for
 human navigation:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-viewer.sh"
+$VIEWER_WRAPPER_SH --bundle $BUNDLE_DIR_SH
 \`\`\`
 EOF
 }
@@ -347,20 +346,22 @@ inventing architecture.
 Project paths:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
 \`\`\`
 
+Use the target-local wrappers above as the installed Portolan interface. Do not
+inspect or depend on the external Portolan source checkout during routine atlas
+runs; the wrappers already know where it is.
+
 Build the atlas first by running this complete block:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
+$SCAN_WRAPPER_SH $TARGET_ROOT_SH $BUNDLE_DIR_SH $SCAN_ARGS
 \`\`\`
 
 Remove \`--skip-install\` only after explicit operator approval to install
@@ -370,25 +371,23 @@ After the first bundle is queryable, deepen it when the user wants duplication,
 Semgrep, Syft, and larger hotspot coverage:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
+$SCAN_WRAPPER_SH $TARGET_ROOT_SH $BUNDLE_DIR_SH $FULL_SCAN_ARGS
 \`\`\`
 
 Query the bundle instead of loading everything into chat:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
-"\$PORTOLAN_BIN/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+$QUERY_WRAPPER_SH repos --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH relationships --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH hotspots --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH gaps --bundle $BUNDLE_DIR_SH --limit 20
+$QUERY_WRAPPER_SH search --bundle $BUNDLE_DIR_SH --q "<term>" --limit 20
+$QUERY_WRAPPER_SH source --bundle $BUNDLE_DIR_SH --repo "<repo-id>" --path "<path>" --line 1
 \`\`\`
 
 For selected code, resolve the repo/path through \`repos\`, \`search\`,
@@ -397,10 +396,9 @@ Cite bundle record ids or source paths for material claims. Open the viewer for
 human navigation:
 
 \`\`\`bash
-PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
 PORTOLAN_BIN=$WRAPPER_DIR_SH
-"\$PORTOLAN_BIN/portolan-viewer.sh"
+$VIEWER_WRAPPER_SH --bundle $BUNDLE_DIR_SH
 \`\`\`
 <!-- PORTOLAN END -->
 EOF
@@ -458,6 +456,9 @@ install_wrappers() {
 check_harness_list
 WRAPPER_DIR="$TARGET_ROOT/.portolan/bin"
 WRAPPER_DIR_SH=$(shell_quote "$WRAPPER_DIR")
+SCAN_WRAPPER_SH=$(shell_quote "$WRAPPER_DIR/portolan-scan.sh")
+QUERY_WRAPPER_SH=$(shell_quote "$WRAPPER_DIR/portolan-bundle-query.sh")
+VIEWER_WRAPPER_SH=$(shell_quote "$WRAPPER_DIR/portolan-viewer.sh")
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 

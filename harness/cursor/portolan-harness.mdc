@@ -9,18 +9,21 @@ alwaysApply: false
 When mapping, explaining, auditing, or navigating a local codebase or multi-repo
 landscape:
 
-1. Read `harness/SKILL.md` in the Portolan checkout.
+1. Use the target-local wrappers installed under `<target-root>/.portolan/bin`.
+   If they are missing, run the Portolan installer first:
+   `<portolan-checkout>/scripts/portolan-install.sh <target-root> --harness cursor --bundle-dir <bundle-dir>`
 2. Build the atlas bundle first:
-   `scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer`
+   `<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer`
 3. Remove `--skip-install` only after explicit operator approval to install
    missing local OSS tools.
-4. Query the bundle at answer time with `scripts/portolan-bundle-query.sh`
+4. Query the bundle at answer time with
+   `<target-root>/.portolan/bin/portolan-bundle-query.sh`
    instead of loading the full bundle into chat.
    Start with `repos`, `relationships`, `hotspots`, and `gaps`; use `search`,
    `symbol`, and `source` for drill-down when indexes or selected paths exist.
 5. Open the viewer when the user needs navigation:
    `<target-root>/.portolan/bin/portolan-viewer.sh`.
-6. Follow `harness/guardrails/citation-rules.md` and preserve `unknown`,
+6. Cite bundle record ids or source paths and preserve `unknown`,
    `cannot_verify`, and `not_assessed`.
 
 Do not require `go install` unless the user asks for the legacy Go path.
