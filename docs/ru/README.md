@@ -79,6 +79,7 @@ Installer пишет:
 
 - `<target-root>/.cursor/rules/portolan-atlas.mdc` для Cursor Project Rules;
 - managed Portolan block в `<target-root>/AGENTS.md` для OpenCode;
+- target-local command wrappers в `<target-root>/.portolan/bin/`;
 - default bundle path: `<target-root>/.portolan/atlas`.
 
 По умолчанию harness ставит быстрый first core scan (`config,ctags`,

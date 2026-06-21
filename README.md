@@ -49,6 +49,7 @@ This writes:
 
 - `<target-root>/.cursor/rules/portolan-atlas.mdc` for Cursor Project Rules.
 - a managed Portolan block in `<target-root>/AGENTS.md` for OpenCode.
+- target-local command wrappers in `<target-root>/.portolan/bin/`.
 
 The installed harness uses a fast first core scan (`config,ctags`, `--core-only`)
 so Cursor/OpenCode get a queryable bundle before deeper producers run. Use
@@ -62,10 +63,11 @@ scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
 The product acceptance command creates fresh isolated targets, installs the
-Cursor rule and OpenCode `AGENTS.md` block, runs the real agent CLIs when
-available, checks the generated bundle through `portolan-bundle-query`, and
-runs the local baseline checks. Without `--require-agent-runtime`, unavailable
-agent CLIs are reported as `not_assessed` instead of success.
+Cursor rule, OpenCode `AGENTS.md` block, and `.portolan/bin` wrappers, runs the
+real agent CLIs when available, checks the generated bundle through
+`portolan-bundle-query`, and runs the local baseline checks. Without
+`--require-agent-runtime`, unavailable agent CLIs are reported as
+`not_assessed` instead of success.
 
 **Agent command** (tool check → recipes → bundle; open viewer separately):
 
