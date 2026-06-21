@@ -6,6 +6,18 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+fail() {
+  echo "harness-agent-install-smoke: FAIL: $*" >&2
+  exit 1
+}
+
+require_cmd() {
+  local cmd=$1
+  command -v "$cmd" >/dev/null 2>&1 || fail "$cmd is required for smoke assertions"
+}
+
+require_cmd rg
+
 DRY_TARGET="$TMP_DIR/target-dry-run"
 mkdir -p "$DRY_TARGET"
 git -C "$DRY_TARGET" init -q

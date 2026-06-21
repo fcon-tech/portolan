@@ -4,7 +4,26 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-export PATH="/home/linuxbrew/.linuxbrew/bin:/opt/homebrew/bin:${HOME}/.local/bin:${PATH}"
+prepend_path_if_dir() {
+  local dir=$1
+  [[ -n "$dir" && -d "$dir" ]] || return 0
+  case ":$PATH:" in
+    *":$dir:"*) ;;
+    *) PATH="$dir:$PATH" ;;
+  esac
+}
+if [[ -n "${PORTOLAN_EXTRA_PATH:-}" ]]; then
+  IFS=':' read -r -a portolan_extra_paths <<<"$PORTOLAN_EXTRA_PATH"
+  for portolan_extra_path in "${portolan_extra_paths[@]}"; do
+    prepend_path_if_dir "$portolan_extra_path"
+  done
+fi
+if [[ -n "${HOME:-}" ]]; then
+  prepend_path_if_dir "${HOME}/.local/bin"
+fi
+prepend_path_if_dir "/home/linuxbrew/.linuxbrew/bin"
+prepend_path_if_dir "/opt/homebrew/bin"
+export PATH
 # shellcheck source=lib/install-ctags.sh
 . "$ROOT/scripts/lib/install-ctags.sh"
 
@@ -35,6 +54,10 @@ require_tool() {
     return 0
   fi
   [[ "$SKIP_INSTALL" -eq 1 ]] && return 1
+  if [[ "$YES" -ne 1 ]]; then
+    echo "portolan-scan-preflight: missing $tool (use --yes to install or --skip-install to record gaps)" >&2
+    return 1
+  fi
   for c in "${install_cmds[@]}"; do
     if eval "$c"; then
       command -v "$tool" >/dev/null && return 0
@@ -53,8 +76,7 @@ if has_producer semgrep; then
 fi
 if has_producer syft; then
   require_tool syft \
-    "brew install syft" \
-    "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b $HOME/.local/bin" || fail=1
+    "brew install syft" || fail=1
 fi
 if has_producer ctags; then
   require_tool ctags "portolan_install_ctags" "brew install universal-ctags" || fail=1

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/atlas-surfaces.schema.json",
+  "title": "Portolan Atlas Surfaces",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "target_root",
+    "coverage",
+    "layers",
+    "targets",
+    "surfaces",
+    "gaps"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "0.1.0" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "target_root": { "type": "string" },
+    "corpus": {
+      "type": ["object", "null"],
+      "additionalProperties": true
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["repo_count", "target_count"],
+      "properties": {
+        "repo_count": { "type": "integer", "minimum": 0 },
+        "target_count": { "type": "integer", "minimum": 0 },
+        "source_reference_count": { "type": "integer", "minimum": 0 },
+        "surface_count": { "type": "integer", "minimum": 0 },
+        "targets_by_kind": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "targets_by_lifecycle": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "missing_source_targets": { "type": "array", "items": { "type": "string" } },
+        "extra_on_disk_repos": { "type": "array", "items": { "type": "string" } },
+        "missing_tracker_targets": { "type": "array", "items": { "type": "string" } },
+        "missing_wiki_targets": { "type": "array", "items": { "type": "string" } },
+        "cannot_verify_wiki_targets": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "layers": {
+      "type": "array",
+      "items": { "type": "object", "additionalProperties": true }
+    },
+    "targets": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/target" }
+    },
+    "surfaces": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/surface" }
+    },
+    "gaps": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gap" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "evidence_state": {
+      "type": "string",
+      "enum": [
+        "source-visible",
+        "metadata-visible",
+        "runtime-visible",
+        "claim-only",
+        "unknown",
+        "cannot_verify",
+        "not_assessed"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "required": ["id", "label", "kind", "evidence_state"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string" },
+        "kind": { "type": "string" },
+        "lifecycle": { "type": "string" },
+        "role": { "type": "string" },
+        "path": { "type": "string" },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" }
+      },
+      "additionalProperties": true
+    },
+    "surface": {
+      "type": "object",
+      "required": ["id", "kind", "label", "evidence_state", "source"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "target_id": { "type": "string" },
+        "kind": { "type": "string" },
+        "label": { "type": "string" },
+        "url": { "type": "string" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "source": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "gap": {
+      "type": "object",
+      "required": ["id", "surface", "status", "summary"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "surface": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["unknown", "cannot_verify", "not_assessed"]
+        },
+        "summary": { "type": "string" },
+        "source": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

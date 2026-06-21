@@ -13,7 +13,15 @@
         "target_root": { "type": "string" },
         "generated_at": { "type": "string", "format": "date-time" },
         "hotspot_count": { "type": "integer", "minimum": 0 },
-        "gap_count": { "type": "integer", "minimum": 0 }
+        "gap_count": { "type": "integer", "minimum": 0 },
+        "repo_count": { "type": "integer", "minimum": 0 },
+        "relationship_count": { "type": "integer", "minimum": 0 },
+        "hotspot_budget": { "type": "integer", "minimum": 1 },
+        "hotspots_total": { "type": "integer", "minimum": 0 },
+        "hotspots_truncated": { "type": "integer", "enum": [0, 1] },
+        "gap_budget": { "type": "integer", "minimum": 1 },
+        "gaps_truncated": { "type": "integer", "enum": [0, 1] },
+        "core_only": { "type": "boolean" }
       },
       "additionalProperties": true
     },
@@ -84,6 +92,9 @@
         "recipe": { "type": "string" }
       },
       "additionalProperties": true
-    }
+    },
+    "atlas-surfaces": { "$ref": "atlas-surfaces.schema.json" },
+    "atlas-facts": { "$ref": "atlas-facts.schema.json" },
+    "atlas-surface-content": { "$ref": "atlas-surface-content.schema.json" }
   }
 }

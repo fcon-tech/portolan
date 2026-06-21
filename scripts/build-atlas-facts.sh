@@ -110,7 +110,7 @@ jq -n \
       state: surface_state($surface),
       kind: (if $surface == null then $slot else ($surface.kind // $slot) end),
       url: (if $surface == null then "" else ($surface.url // "") end),
-      evidence_state: (if $surface == null then "missing" else ($surface.evidence_state // "metadata-visible") end),
+      evidence_state: (if $surface == null then "unknown" else ($surface.evidence_state // "metadata-visible") end),
       source: (if $surface == null then "atlas-facts" else ($surface.source // "atlas-surfaces") end),
       evidence_ref: (if $surface == null then "" else ("atlas-surfaces.json#surface:" + ($surface.id // "")) end)
     };
