@@ -85,11 +85,17 @@ run_shell_syntax() {
 
 run_public_surface_checks() {
   local help_file
+  local banned_internal
+  local banned_public
+  local banned_viewer
+  banned_internal='install-agent''-harness\.sh'
+  banned_public='prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
+  banned_viewer='prototype|прототип|demo cockpit|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
   require_cmd rg
   help_file=$(mktemp)
   echo "==> public install help" >&2
   "$ROOT/scripts/portolan-install.sh" --help >"$help_file"
-  if rg -n 'install-agent-harness\.sh|prototype|прототип|stub|mock|fake' "$help_file"; then
+  if rg -n -i -e "$banned_internal|prototype|прототип|stub|mock|fake" "$help_file"; then
     rm -f "$help_file"
     echo "public install help exposes internal/prototype wording" >&2
     exit 1
@@ -97,8 +103,8 @@ run_public_surface_checks() {
   rm -f "$help_file"
 
   echo "==> public product wording" >&2
-  if rg -n \
-    'prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|install-agent-harness\.sh|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding' \
+  if rg -n -i \
+    -e "$banned_internal|$banned_public" \
     "$ROOT/README.md" \
     "$ROOT/docs/agent" \
     "$ROOT/docs/onboarding.md" \
@@ -106,12 +112,13 @@ run_public_surface_checks() {
     "$ROOT/harness/SKILL.md" \
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
+    "$ROOT/scripts/portolan-install.sh" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose prototype/internal wording" >&2
     exit 1
   fi
-  if rg -n \
-    'prototype|прототип|install-agent-harness\.sh|hidden scaffolding|private scaffolding|no-hidden-scaffolding' \
+  if rg -n -i \
+    -e "$banned_internal|$banned_viewer" \
     "$ROOT/viewer/src" \
     --glob '!**/node_modules/**'; then
     echo "viewer source exposes prototype/internal wording" >&2

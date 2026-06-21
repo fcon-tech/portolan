@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install Portolan agent instructions into a target project for Cursor/OpenCode.
+# Install Portolan atlas instructions into a target project for Cursor/OpenCode.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
