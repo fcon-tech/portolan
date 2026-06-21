@@ -14,7 +14,7 @@
         <div class="nav-links">
           <a href="portolan/">Portolan</a>
           <a href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
-          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md">Demo</a>
+          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md">Example</a>
           <a href="https://github.com/fcon-tech/portolan">GitHub</a>
         </div>
       </nav>
@@ -27,9 +27,9 @@
             <p class="eyebrow">Portolan project</p>
             <h1>Portolan gives agents a local evidence map before they answer.</h1>
             <p class="lede">
-              Portolan prepares local context, graph, finding, and answer-contract
-              artifacts so coding agents can separate visible repository evidence
-              from claim-only, unknown, cannot-verify, and not-assessed surfaces.
+              Portolan installs target-local wrappers, builds a local atlas
+              bundle, and gives coding agents bounded query routes before they
+              answer broad repository or landscape questions.
             </p>
             <div class="actions">
               <a class="button primary" href="portolan/">Inspect Portolan</a>
@@ -39,22 +39,19 @@
 
           <div class="artifact" aria-label="Portolan artifact preview">
             <div class="artifact-head">
-              <span class="artifact-title">portolan map</span>
-              <span class="artifact-state">local evidence</span>
+              <span class="artifact-title">installed atlas</span>
+              <span class="artifact-state">local first</span>
             </div>
-            <pre><code>map/
-  summary.json
-  graph-index.json
-  findings.jsonl
-  map.md
+            <pre><code>scripts/portolan-install.sh &lt;target&gt;
+&lt;target&gt;/.portolan/bin/portolan-scan.sh \
+  &lt;target&gt; &lt;bundle&gt; --no-viewer
 
-states:
-  source-visible
-  metadata-visible
-  runtime-visible
-  claim-only
-  unknown
-  cannot_verify</code></pre>
+atlas/
+  manifest.json
+  repo-profiles.json
+  relationships.jsonl
+  hotspots.jsonl
+  gaps.jsonl</code></pre>
           </div>
         </div>
       </section>
@@ -80,7 +77,7 @@ states:
             </article>
             <article class="card">
               <h3>Claim-bounded output</h3>
-              <p>Public copy and agent packets point back to product claims, release notes, demo evidence, contribution rules, and security boundaries.</p>
+              <p>Public copy and agent packets point back to product claims, release notes, example evidence, contribution rules, and security boundaries.</p>
             </article>
           </div>
         </div>
@@ -112,10 +109,10 @@ states:
             </article>
           </div>
           <div class="route-list">
-            <a class="route" href="portolan/"><strong>Portolan project page<span>Install, demo, limits, and routes</span></strong>→</a>
-            <a class="route" href="https://fcon.tech/"><strong>Faust Consulting<span>Company site, services, clients, and contact route</span></strong>→</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md"><strong>Claim boundary<span>Accepted, narrowed, and not-assessed claims</span></strong>→</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan"><strong>GitHub repository<span>Source, issues, pull requests, and community files</span></strong>→</a>
+            <a class="route" href="portolan/"><strong>Portolan project page<span>Install, example, limits, and routes</span></strong>-&gt;</a>
+            <a class="route" href="https://fcon.tech/"><strong>Faust Consulting<span>Company site, services, clients, and contact route</span></strong>-&gt;</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md"><strong>Claim boundary<span>Accepted, narrowed, and not-assessed claims</span></strong>-&gt;</a>
+            <a class="route" href="https://github.com/fcon-tech/portolan"><strong>GitHub repository<span>Source, issues, pull requests, and community files</span></strong>-&gt;</a>
           </div>
         </div>
       </section>
@@ -123,8 +120,8 @@ states:
 
     <footer class="footer">
       <div class="footer-inner">
-        <span>Freshness: source-controlled site for Portolan v0.1.0 launch preparation.</span>
-        <span><a href="https://github.com/fcon-tech/portolan/blob/main/SECURITY.md">Security</a> · <a href="https://github.com/fcon-tech/portolan/blob/main/CONTRIBUTING.md">Contributing</a> · <a href="https://github.com/fcon-tech/portolan/blob/main/SUPPORT.md">Support</a></span>
+        <span>Freshness: source-controlled site for the installable Portolan atlas route.</span>
+        <span><a href="https://github.com/fcon-tech/portolan/blob/main/SECURITY.md">Security</a> | <a href="https://github.com/fcon-tech/portolan/blob/main/CONTRIBUTING.md">Contributing</a> | <a href="https://github.com/fcon-tech/portolan/blob/main/SUPPORT.md">Support</a></span>
       </div>
     </footer>
   </body>

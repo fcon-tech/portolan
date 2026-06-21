@@ -28,6 +28,7 @@ Portolan copy must stay within these maintained repository surfaces:
 - `README.md`
 - `docs/product-claims.md`
 - `docs/demo.md`
+- `docs/demo-runbook.md`
 - `docs/release.md`
 - `docs/releases/v0.1.0.md`
 - `CONTRIBUTING.md`
