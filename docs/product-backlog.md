@@ -179,7 +179,7 @@ fixtures are preflight evidence only.
 | P7-089 | `docs/specs/089-portolan-scan/` | One-command scan orchestration (now `portolan-scan.sh`): tool check, consent install, recipes, bundle, viewer. | Implemented (renamed in 093) |
 | P7-090 | `docs/specs/090-viewer-demo-ux/` | Demo-ready viewer: search, filters, directory heat map, source preview, demo runbook. | Implemented |
 | P7-091 | `docs/specs/091-landscape-scale/` | Full bigtop scale: bounded jscpd shards, shard gaps, kind-quota budget, hotspots-full.jsonl. | Implemented |
-| P7-092 | `docs/specs/092-orient-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh; gitignore hardening. | Implemented via PR #65 |
+| P7-092 | `docs/specs/092-config-symbol-surfaces/` | Config-surface inventory + ctags symbol-density producers; PR #64 debt closure; kind-quota refresh; gitignore hardening. | Implemented via PR #65 |
 | P7-093 | `docs/specs/093-viewer-landscape-ux/` | Landscape report viewer: `portolan-scan`, landscape-card/report bundle, tabbed Overview/Findings/Gaps (report-first, map.md sections). | Implemented via PR #66 |
 | P7-094 | `docs/specs/094-map-bridge-sidecar/` | Optional `map-bridge/` sidecar from legacy `portolan map` for evidence-index queries. | Implemented via PR #67 |
 | P7-095 | `docs/specs/095-bundle-query-surface/` | Read-only bundle query CLI + viewer `/api/*` for agent-first Q&A at question time. | Implemented via PR #67 |

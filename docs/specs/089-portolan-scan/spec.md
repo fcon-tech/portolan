@@ -1,4 +1,4 @@
-# Feature Specification: Orient Wizard
+# Feature Specification: Portolan Scan
 
 **Feature Branch**: `codex/089-portolan-scan`
 
@@ -11,7 +11,7 @@ build bundle, open viewer. Real-target smoke on portolan and bounded bigtop.
 
 ## User Scenarios
 
-### User Story 1 - One Command Orient (Priority: P1)
+### User Story 1 - One Command Portolan Scan (Priority: P1)
 
 An operator runs `scripts/portolan-scan.sh <target> <bundle-dir>` and receives
 a ranked hotspot bundle plus optional local viewer without manual recipe steps.

@@ -426,7 +426,7 @@ if ! "$SCRIPT_DIR/scan-cross-repo.sh" "$TARGET_ROOT" "$BUNDLE_DIR" 2>&1; then
   : >"$BUNDLE_DIR/relationships.jsonl"
 fi
 
-# --- merge shard gaps from wizard ---
+# --- merge shard gaps from portolan-scan producers ---
 if [[ -f "$PRODUCERS_DIR/_gaps.jsonl" ]]; then
   cat "$PRODUCERS_DIR/_gaps.jsonl" >>"$gaps_raw"
 fi

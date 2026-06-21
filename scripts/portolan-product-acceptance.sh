@@ -208,6 +208,26 @@ run_public_surface_checks() {
   fi
 }
 
+run_backlog_checks() {
+  local spec_rel
+  local missing=0
+  echo "==> backlog spec links" >&2
+  while IFS= read -r spec_rel; do
+    if [[ ! -d "$ROOT/$spec_rel" ]]; then
+      echo "backlog references missing spec path: $spec_rel" >&2
+      missing=1
+    fi
+  done < <(rg --no-filename -o 'docs/specs/[0-9][0-9][0-9][A-Za-z0-9_-]*' "$ROOT/docs/product-backlog.md" | sort -u)
+  if [[ "$missing" -ne 0 ]]; then
+    exit 1
+  fi
+
+  echo "==> active spec naming" >&2
+  if find "$ROOT/docs/specs" -maxdepth 1 -type d -name '*orient*' | rg .; then
+    fail "active spec directory still uses legacy orient naming"
+  fi
+}
+
 run_go_checks() {
   run "go test ./..." go test ./...
   run "go vet ./..." go vet ./...
@@ -359,6 +379,7 @@ run_diff_check() {
 
 run_shell_syntax
 run_public_surface_checks
+run_backlog_checks
 run_go_checks
 run_schema_checks
 run_viewer_checks

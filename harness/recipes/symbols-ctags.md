@@ -12,7 +12,7 @@ Limit to selected repos or top-level source dirs to control output size.
 TARGET=<absolute-target-root>
 OUT=<bundle-dir>/producers/ctags
 mkdir -p "$OUT"
-# Prefer gitignore-aware file list (wizard default):
+# Prefer gitignore-aware file list (portolan-scan default):
 git -C "$TARGET" ls-files -co --exclude-standard > /tmp/ctags-files.txt
 ctags --output-format=json --fields=+nKz --links=no \
   -L /tmp/ctags-files.txt -f "$OUT/tags.json"

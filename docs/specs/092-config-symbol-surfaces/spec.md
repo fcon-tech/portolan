@@ -1,6 +1,6 @@
-# Feature Specification: Orient Surfaces
+# Feature Specification: Config And Symbol Surfaces
 
-**Feature Branch**: `codex/092-orient-surfaces`
+**Feature Slug**: `092-config-symbol-surfaces`
 
 **Created**: 2026-06-10
 
@@ -8,7 +8,7 @@
 
 **Input**: Add config-surfaces inventory and ctags symbol-density layers to the Portolan harness path; close PR #64 deferred debt items.
 
-**Out of scope**: Viewer UX polish (views, layout, product naming) — follow-up PR `codex/viewer-ux-followup` / spec 093.
+**Out of scope**: Viewer UX polish (views, layout, product naming) — follow-up spec 093.
 
 ## User Scenarios
 
@@ -22,16 +22,16 @@ When ctags is available, the bundle includes `debt-candidate` hotspots for symbo
 
 ### User Story 3 - PR #64 debt closure (Priority: P2)
 
-repo_slug hash, spec 088 layout docs, extended harness smoke, wizard orchestration in CI.
+repo_slug hash, spec 088 layout docs, extended harness smoke, and `portolan-scan` orchestration in CI.
 
 ## Requirements
 
 - **FR-001**: `scripts/scan-config-surfaces.sh` emits `producers/config/<slug>.jsonl`.
-- **FR-002**: Wizard default producers include `config` and `ctags`; config needs no install.
+- **FR-002**: `portolan-scan` default producers include `config` and `ctags`; config needs no install.
 - **FR-003**: Bundle maps config → kind `config`, ctags density → kind `debt-candidate`.
 - **FR-004**: Kind-quota budget: static-finding 45%, duplication 25%, dep-hub 15%, config 15%, remainder debt-candidate.
 - **FR-005**: repo_slug includes path hash suffix to avoid basename collisions.
-- **FR-006**: harness-portolan-smoke checks viewer DOM markers and truncation; CI runs wizard with `--skip-install`.
+- **FR-006**: harness-portolan-smoke checks viewer DOM markers and truncation; CI runs `portolan-scan` with `--skip-install`.
 - **FR-007**: Producers and bundle post-filter respect `.gitignore` (`scripts/portolan-ignore.sh`, jscpd `--gitignore`, ctags via `git ls-files`, config scan via `git check-ignore`).
 
 ## Success Criteria

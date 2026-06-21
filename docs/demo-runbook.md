@@ -155,9 +155,9 @@ Portolan does not ship pre-built Q&A. Agents query the bundle:
   hotspots --bundle "$BUNDLE_DIR" --kind duplication --limit 10
 ```
 
-MCP is an optional source-checkout adapter for users who explicitly configure
-MCP: `PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh`. The
-recipe is in `harness/recipes/bundle-query-mcp.md`.
+MCP is an optional bundle-query adapter for users who explicitly configure MCP:
+`PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh`. The recipe
+is in `harness/recipes/bundle-query-mcp.md`.
 
 If bundle output is truncated, use `hotspots-full.jsonl` through bundle-query;
 the Risks tab shows the demo-ranked subset.

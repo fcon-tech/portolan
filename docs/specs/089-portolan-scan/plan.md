@@ -1,4 +1,4 @@
-# Implementation Plan: Orient Wizard
+# Implementation Plan: Portolan Scan
 
 **Date**: 2026-06-10
 

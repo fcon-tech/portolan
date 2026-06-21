@@ -1,4 +1,4 @@
-# Smoke findings: Orient Wizard (spec 089)
+# Smoke findings: Portolan Scan (spec 089)
 
 **Date**: 2026-06-10
 
@@ -19,7 +19,7 @@ scripts/portolan-scan.sh . /tmp/portolan-portolan --no-viewer --yes
 
 1. **jscpd**: `--noSymlinks true` passed `true` as a path; replaced with `--noSymlinks` + ignore globs.
 2. **CLI flags**: options after positionals (`target bundle-dir --no-viewer`) were ignored; positional/flag parsing fixed.
-3. **jscpd output**: read from `producers/jscpd/**/jscpd-report.json` (wizard layout).
+3. **jscpd output**: read from `producers/jscpd/**/jscpd-report.json`.
 
 ## Smoke B — bigtop-landscape (bounded)
 

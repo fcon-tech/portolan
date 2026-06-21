@@ -19,6 +19,6 @@ shard failures as honest gaps; scalable bundle build with kind-aware budget.
 
 ## Success Criteria
 
-- **SC-001**: Wizard completes all 18 bigtop repos without aborting.
+- **SC-001**: `portolan-scan` completes all 18 bigtop repos without aborting.
 - **SC-002**: Failed shards visible in gaps.jsonl.
 - **SC-003**: Bundle includes multiple kinds after budget (not only static-finding).
