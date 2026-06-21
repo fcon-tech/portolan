@@ -1,8 +1,8 @@
 # Apache Bigtop Stress Example
 
 This page is a named stress example for Portolan, not the primary product
-route. The primary route is target-agnostic: run `context prepare`, `map`, and
-bounded queries against a local target you can inspect.
+route. The primary route is target-agnostic: install Portolan wrappers into a
+local target, build an atlas bundle, and answer from bounded bundle queries.
 
 The example shows Portolan as a local evidence-preparation step before an agent
 answers questions about a larger software landscape. It is not a benchmark, a
@@ -34,98 +34,76 @@ Portolan itself does not clone repositories, call upstream services, start a
 daemon, or mutate the target. The `git clone` step above is an explicit user
 setup step before Portolan reads local files.
 
-## Run The Demo
+## Run The Stress Example
 
 From the Portolan checkout:
 
 ```bash
-scripts/bootstrap-portolan
-.portolan/bin/portolan --version
-
 export BIGTOP_ROOT=/tmp/portolan-demo/bigtop-landscape
-export DEMO_OUT=/tmp/portolan-demo/portolan-output
+export BUNDLE_DIR=/tmp/portolan-demo/portolan-output/atlas
 
-.portolan/bin/portolan context prepare \
-  --root "$BIGTOP_ROOT" \
-  --out "$DEMO_OUT/context" \
-  --profile agent
+scripts/portolan-install.sh "$BIGTOP_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
 
-.portolan/bin/portolan map \
-  --root "$BIGTOP_ROOT" \
-  --out "$DEMO_OUT/map"
+"$BIGTOP_ROOT/.portolan/bin/portolan-scan.sh" \
+  "$BIGTOP_ROOT" \
+  "$BUNDLE_DIR" \
+  --yes --skip-install --no-viewer
 ```
 
-Expected context artifacts:
+Expected atlas artifacts:
 
 ```text
-context/
-  agent-brief.md
-  answer-contract.md
-  evidence-index.jsonl
-  gaps.jsonl
-  oss-plan.json
-  query-plan.md
+atlas/
+  manifest.json
   repos.json
-  tool-registry.json
+  repo-profiles.json
+  atlas-facts.json
+  atlas-surfaces.json
+  atlas-surface-content.json
+  relationships.jsonl
+  hotspots.jsonl
+  hotspots-full.jsonl
+  gaps.jsonl
 ```
 
-Expected map artifacts:
-
-```text
-map/
-  coverage.json
-  findings.jsonl
-  graph-index.json
-  graph.json
-  map.md
-  run.json
-  summary.json
-```
-
-Read `context/answer-contract.md` first when an agent will answer broad
-questions. Read `map/summary.json`, `map/graph-index.json`, and `map.md` before
-opening full `graph.json`.
+Read `manifest.json`, `repo-profiles.json`, `relationships.jsonl`,
+`hotspots*.jsonl`, and `gaps.jsonl` before making broad claims.
 
 ## Ask A Bounded Question
 
 Use bounded queries before loading the full graph:
 
 ```bash
-.portolan/bin/portolan query gaps --bundle "$DEMO_OUT/map" --limit 20
-.portolan/bin/portolan query findings --bundle "$DEMO_OUT/map" --kind relationships --limit 20
+"$BIGTOP_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$BIGTOP_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$BIGTOP_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
 ```
 
 The important result is not an all-green report. A useful demo should still
 show `unknown`, `cannot_verify`, and `not_assessed` records where local evidence
 is missing or bounded.
 
-## Local Smoke Evidence
+## Local Acceptance Evidence
 
-This branch ran two local smokes on 2026-05-30. The first follows the documented
-primary setup by cloning only `apache/bigtop` into `/tmp`. The second reuses a
-larger existing local Bigtop landscape to show the multi-repo excerpt shape.
-The committed excerpts redact private machine paths manually.
+The maintained product check is `scripts/portolan-product-acceptance.sh`. When
+given a prepared Bigtop-10 bundle, it validates the installable wrapper route,
+live Cursor/OpenCode runtime lanes, the viewer, bundle queries, schema checks,
+and strict Bigtop acceptance:
 
-### Cold-start primary setup
+```bash
+scripts/portolan-product-acceptance.sh \
+  --require-agent-runtime \
+  --bigtop-bundle <bigtop-10-bundle-dir>
+```
 
-- `git clone --depth 1 https://github.com/apache/bigtop.git apache-bigtop-repo`: passed in 0:04.01.
-- `portolan context prepare --root <bigtop-root> --out <out>/context --profile agent`: passed in 0.07s.
-- `portolan map --root <bigtop-root> --out <out>/map`: passed in 0.40s.
-- `portolan query gaps --bundle <out>/map --limit 5`: passed.
+Strict Bigtop-10 acceptance can also be run directly:
 
-### Larger existing-landscape smoke
+```bash
+scripts/harness-bigtop10-acceptance.sh <bigtop-10-bundle-dir>
+```
 
-- `portolan context prepare --root <bigtop-root> --out <out>/context --profile agent`: passed in 0.08s.
-- `portolan map --root <bigtop-root> --out <out>/map`: passed in 2:25.74.
-- Map output: 18 source-visible repositories, 172243 graph nodes, 148714 graph
-  edges, 555 findings, and 21 coverage records.
-- Finding states included 430 observed, 118 `not_assessed`, 6
-  `cannot_verify`, and 1 `unknown`.
-
-These timings are local machine observations. Machine spec was not recorded;
-network, disk, and filesystem-cache conditions can change the result. They are
-order-of-magnitude evidence, not a promise that every machine or checkout will
-finish under the same time.
+These checks are local machine observations, not a promise that every machine or
+checkout finishes under the same time.
 
 ## Case Study Boundary
 
