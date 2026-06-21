@@ -80,9 +80,7 @@ scripts/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> -
 ## 4. Открой Viewer Для Человека
 
 ```bash
-cd <portolan-checkout>/viewer
-node scripts/build-static.js
-node scripts/serve.js --bundle <bundle-dir>
+<target-root>/.portolan/bin/portolan-viewer.sh
 ```
 
 ## 5. Проверь Installable Pack

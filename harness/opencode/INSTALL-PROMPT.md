@@ -24,5 +24,5 @@ Rules:
 
 Report: visible repos/components, key relationships, top hotspots by rank,
 gaps, source/report drill-downs, and viewer command:
-cd "PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "BUNDLE_DIR"
+"TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```

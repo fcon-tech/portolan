@@ -55,10 +55,11 @@ After the scan, read the atlas artifacts before answering:
 Open the viewer when the user needs a human-readable atlas:
 
 ```bash
-cd "$PORTOLAN_PATH/viewer"
-node scripts/build-static.js
-node scripts/serve.js --bundle "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
+
+If Portolan was not installed into the target, run the source-checkout fallback:
+`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
 
 Query the same bundle at answer time:
 

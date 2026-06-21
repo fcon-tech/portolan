@@ -171,10 +171,13 @@ run_harness_checks() {
 
 run_clean_copy_install_check() {
   echo "==> clean source-copy install smoke" >&2
-  local tmp copy target
+  local tmp copy target port pid viewer_log
   tmp=$(mktemp -d)
   copy="$tmp/portolan-copy"
   target="$tmp/target"
+  port=4182
+  pid=""
+  viewer_log="$tmp/viewer.log"
   mkdir -p "$copy" "$target"
 
   tar \
@@ -190,7 +193,11 @@ run_clean_copy_install_check() {
   "$copy/scripts/portolan-install.sh" "$target" \
     --harness all \
     --portolan-path "$copy" >/dev/null
-  "$copy/scripts/portolan-scan.sh" "$target" "$target/.portolan/atlas" \
+  test -x "$target/.portolan/bin/portolan-scan.sh"
+  test -x "$target/.portolan/bin/portolan-bundle-query.sh"
+  test -x "$target/.portolan/bin/portolan-viewer.sh"
+
+  "$target/.portolan/bin/portolan-scan.sh" "$target" "$target/.portolan/atlas" \
     --yes \
     --skip-install \
     --no-viewer \
@@ -201,12 +208,34 @@ run_clean_copy_install_check() {
 
   jq -e '.repo_count == 1 and .core_only == true' \
     "$target/.portolan/atlas/manifest.json" >/dev/null
-  "$copy/scripts/portolan-bundle-query.sh" repos \
+  "$target/.portolan/bin/portolan-bundle-query.sh" repos \
     --bundle "$target/.portolan/atlas" \
     --limit 5 | jq -e '.records | length == 1' >/dev/null
-  "$copy/scripts/portolan-bundle-query.sh" gaps \
+  "$target/.portolan/bin/portolan-bundle-query.sh" gaps \
     --bundle "$target/.portolan/atlas" \
     --limit 5 | jq -e '.records | length == 3' >/dev/null
+
+  "$target/.portolan/bin/portolan-viewer.sh" \
+    --bundle "$target/.portolan/atlas" \
+    --port "$port" >"$viewer_log" 2>&1 &
+  pid=$!
+  sleep 1
+  if ! curl -sf "http://127.0.0.1:$port/" | grep -q '<title>Portolan Atlas</title>'; then
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    sed 's/^/viewer-wrapper: /' "$viewer_log" >&2
+    fail "installed viewer wrapper did not serve the viewer HTML"
+  fi
+  if ! curl -sf "http://127.0.0.1:$port/bundle/manifest.json" |
+    jq -e '.repo_count == 1 and .core_only == true' >/dev/null; then
+    kill "$pid" 2>/dev/null || true
+    wait "$pid" 2>/dev/null || true
+    sed 's/^/viewer-wrapper: /' "$viewer_log" >&2
+    fail "installed viewer wrapper did not serve the expected manifest"
+  fi
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  pid=""
 
   rm -rf "$tmp"
 }

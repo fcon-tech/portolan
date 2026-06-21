@@ -97,9 +97,7 @@ scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-vi
 OSS tools. Viewer открывай отдельно:
 
 ```bash
-cd viewer
-node scripts/build-static.js
-node scripts/serve.js --bundle <bundle-dir>
+<target-root>/.portolan/bin/portolan-viewer.sh
 ```
 
 Проверить installable Cursor/OpenCode pack на текущей машине:
