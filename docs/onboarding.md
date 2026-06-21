@@ -9,8 +9,8 @@ first.
 | Intent | Start with | Then read | Boundary to preserve |
 | --- | --- | --- | --- |
 | Understand what Portolan is for | [README](../README.md) | [Product Claims](product-claims.md), [Product Boundary](product-boundary.md), [Product Quality Boundary](product-quality-boundary.md) | Portolan is a local evidence layer, not a coding harness, readiness gate, service catalog, observability platform, or Cursor/OpenCode replacement. |
-| Ask an agent to inspect a local target | [Harness Skill](../harness/SKILL.md) | [Install Prompt](agent/INSTALL-PROMPT.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Harness-first: recipes → bundle → viewer. Cite hotspot.id and preserve gaps. |
-| Open the viewer (human) | [Viewer README](../viewer/README.md) | [Harness Skill](../harness/SKILL.md) | Local read-only viewer; folder tree + ranked hotspots from producers only. |
+| Ask an agent to inspect a local target | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Quickstart](agent/QUICKSTART.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Install target-local wrappers, build bundle, query before answering. Cite hotspot.id and preserve gaps. |
+| Open the viewer (human) | [Viewer README](../viewer/README.md) | [Agent Install](agent/INSTALL.md) | Local read-only viewer from `<target-root>/.portolan/bin/portolan-viewer.sh`; folder tree + ranked hotspots from producers only. |
 | Install or resolve the command | [Agent Install](agent/INSTALL.md) | [Troubleshooting](agent/TROUBLESHOOTING.md), [Release Guide](release.md) | Source bootstrap is local and does not fetch Go modules unless explicitly approved. |
 | Use Cursor | [Agent Install Prompt](agent/INSTALL-PROMPT.md) | [Cursor Rule](../harness/cursor/portolan-harness.mdc), [Agent Acceptance](agent/ACCEPTANCE.md) | Cursor is an operator over a local Portolan bundle. Install the rule with `scripts/portolan-install.sh <target-root> --harness cursor`; current evidence does not prove arbitrary Cursor UI behavior. |
 | Use OpenCode | [OpenCode Prompt](../harness/opencode/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode reads `AGENTS.md`; install the managed block with `scripts/portolan-install.sh <target-root> --harness opencode`. Keep output under the target unless permissions are explicitly broadened. |
@@ -28,8 +28,9 @@ first.
 - Initial public GitHub community routes now include contributing, support,
   security, conduct, issue templates, and a pull request template. This does not
   prove broad adoption or public support capacity.
-- Installation is intentionally simple: source checkout plus
-  `scripts/portolan-install.sh <target-root> --harness all`. The legacy
+- Installation is intentionally simple: source checkout installer plus
+  `scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas`.
+  The legacy
   Go binary path still uses `scripts/bootstrap-portolan`, with network module
   fetching disabled unless `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly
   set.
@@ -52,15 +53,17 @@ Use Cursor as an operator over local Portolan artifacts:
    scripts/portolan-install.sh <target-root> --harness cursor
    ```
 
-2. Let the rule route broad codebase questions through `harness/SKILL.md`.
+2. Let the installed rule route broad codebase questions through
+   `<target-root>/.portolan/bin` wrappers.
 3. Build the fast first atlas before answering broad claims:
 
    ```bash
-   scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50
+   <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50
    ```
 
-4. Query bounded artifacts with `scripts/portolan-bundle-query.sh` before
-   loading larger files.
+4. Query bounded artifacts with
+   `<target-root>/.portolan/bin/portolan-bundle-query.sh` before loading larger
+   files.
 5. Run the full producer set only after the first bundle is queryable.
 
 Current evidence supports headless Cursor Agent CLI / Composer wording. Do not

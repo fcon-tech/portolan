@@ -23,10 +23,13 @@ OpenCode должен писать bundle внутри target, если permissi
 
 ## 1. Предпочитай Harness Atlas Path
 
-Основной маршрут не требует legacy Go CLI:
+Основной маршрут начинается с установки target-local wrappers. Это основной
+interface для Cursor/OpenCode и он не требует читать внешний Portolan checkout
+во время atlas run:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
 ```
 
 Убирай `--skip-install` только после явного разрешения установить missing local
@@ -49,18 +52,17 @@ OSS tools.
 "$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
 
-Если Portolan не установлен в target, используй source-checkout fallback:
-`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
+Если Portolan не установлен в target, сначала установи его в target.
 
 Query перед ответом:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
 ```
 
 ## 2. Привяжи Selected Code К Atlas

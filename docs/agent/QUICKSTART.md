@@ -27,11 +27,13 @@ explicitly approves it.
 
 ## 1. Prefer The Harness Atlas Path
 
-For current product use, start with the harness-first atlas path. It does not require
-the legacy Go CLI as the primary entrypoint:
+For current product use, install target-local wrappers first. They are the
+primary interface for Cursor/OpenCode and avoid external workspace permission
+prompts:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+"$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
 ```
 
 Use these modifiers deliberately:
@@ -58,18 +60,18 @@ Open the viewer when the user needs a human-readable atlas:
 "$TARGET_ROOT/.portolan/bin/portolan-viewer.sh"
 ```
 
-If Portolan was not installed into the target, run the source-checkout fallback:
-`cd "$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "$BUNDLE_DIR"`.
+If Portolan is not installed into the target, install it before opening the
+viewer.
 
 Query the same bundle at answer time:
 
 ```bash
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
-"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
 ```
 
 ## 2. Route Selected Code Back To The Atlas

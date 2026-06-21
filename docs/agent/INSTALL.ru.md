@@ -20,7 +20,7 @@
 ```bash
 git clone https://github.com/fcon-tech/portolan.git
 cd portolan
-scripts/portolan-install.sh <target-root> --harness all
+scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas
 ```
 
 Если checkout Portolan уже есть, не клонируй повторно: запусти install command
@@ -49,7 +49,7 @@ Installer пишет:
 ## 2. Построй Atlas Bundle
 
 ```bash
-scripts/portolan-scan.sh <target-root> <target-root>/.portolan/atlas --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh <target-root> <target-root>/.portolan/atlas --yes --skip-install --no-viewer
 ```
 
 Убирай `--skip-install` только после явного разрешения установить missing local
@@ -69,12 +69,12 @@ OSS tools. Missing producers остаются gaps.
 ## 3. Query Перед Ответом
 
 ```bash
-scripts/portolan-bundle-query.sh repos --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh relationships --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh gaps --bundle <bundle-dir> --limit 20
-scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "<term>" --limit 20
-scripts/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> --path <path> --line 1
+<target-root>/.portolan/bin/portolan-bundle-query.sh repos --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh relationships --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh gaps --bundle <bundle-dir> --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh search --bundle <bundle-dir> --q "<term>" --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh source --bundle <bundle-dir> --repo <repo-id> --path <path> --line 1
 ```
 
 ## 4. Открой Viewer Для Человека

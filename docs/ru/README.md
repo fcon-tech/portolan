@@ -66,13 +66,13 @@ Portolan не является:
 
 ## Быстрый Старт
 
-Основной путь сейчас — source checkout Portolan плюс installable harness для
-Cursor/OpenCode:
+Основной путь сейчас — source checkout Portolan, который ставит target-local
+wrappers для Cursor/OpenCode:
 
 ```bash
 git clone https://github.com/fcon-tech/portolan.git
 cd portolan
-scripts/portolan-install.sh <target-root> --harness all
+scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas
 ```
 
 Installer пишет:
@@ -90,7 +90,7 @@ producers. Если оператор явно согласен на тяжелу
 Собрать atlas bundle вручную:
 
 ```bash
-scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
 Убирай `--skip-install` только после явного разрешения установить missing local

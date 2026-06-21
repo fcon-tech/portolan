@@ -2031,30 +2031,32 @@ function agentCommands(component) {
   const repo = component.repoId;
   const repoArg = quoteArg(repo);
   const labelArg = quoteArg(component.label);
+  const query = '"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh"';
+  const importClaims = '"$TARGET_ROOT/.portolan/bin/portolan-import-analysis-claims.sh"';
   return [
     {
       label: 'Find this repo profile',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 1`,
+      command: `${query} repos --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 1`,
     },
     {
       label: 'Get selected repo hotspots',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20 --full`,
+      command: `${query} hotspots --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20 --full`,
     },
     {
       label: 'Inspect repo relationships',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20`,
+      command: `${query} relationships --bundle "$BUNDLE_DIR" --repo ${repoArg} --limit 20`,
     },
     {
       label: 'Search selected concept',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q ${labelArg} --limit 30`,
+      command: `${query} search --bundle "$BUNDLE_DIR" --q ${labelArg} --limit 30`,
     },
     {
       label: 'Query selected atlas component',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --repo ${repoArg} --limit 5`,
+      command: `${query} atlas --bundle "$BUNDLE_DIR" --section components --repo ${repoArg} --limit 5`,
     },
     {
       label: 'Import cited agent claims',
-      command: `"$PORTOLAN_PATH/scripts/import-analysis-claims.sh" "$BUNDLE_DIR" claims.jsonl`,
+      command: `${importClaims} "$BUNDLE_DIR" claims.jsonl`,
     },
   ];
 }
@@ -2062,17 +2064,19 @@ function agentCommands(component) {
 function findingCommands(component, finding) {
   if (!finding) return [];
   const repo = component.repoId;
+  const repoArg = quoteArg(repo);
   const path = (finding.paths || [])[0] || '';
   const line = evidenceLine(finding, path);
   const summary = cleanFindingSummary(finding.summary || finding.id);
+  const query = '"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh"';
   return [
     {
       label: 'Query matching hotspots',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --repo ${repo} --text ${quoteArg(summary)} --limit 10 --full`,
+      command: `${query} hotspots --bundle "$BUNDLE_DIR" --repo ${repoArg} --text ${quoteArg(summary)} --limit 10 --full`,
     },
     path ? {
       label: 'Read source snippet',
-      command: `"$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo ${repo} --path ${quoteArg(path)} --line ${line} --radius 24`,
+      command: `${query} source --bundle "$BUNDLE_DIR" --repo ${repoArg} --path ${quoteArg(path)} --line ${line} --radius 24`,
     } : null,
     finding.producer_ref ? {
       label: 'Inspect producer JSON',

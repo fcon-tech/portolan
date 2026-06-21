@@ -69,10 +69,11 @@ real agent CLIs when available, checks the generated bundle through
 `--require-agent-runtime`, unavailable agent CLIs are reported as
 `not_assessed` instead of success.
 
-**Agent command** (tool check → recipes → bundle; open viewer separately):
+**Agent command** (installed wrapper → bundle; open viewer separately):
 
 ```bash
-scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+scripts/portolan-install.sh <target-root> --harness all --bundle-dir <bundle-dir>
+<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
 Omit `--no-viewer` only for a human-run command where blocking in the viewer is
@@ -81,17 +82,16 @@ local OSS tools. See `scripts/portolan-scan.sh --help`.
 
 The viewer shows a ranked hotspot list, folder tree, search, filters (including
 `config` and `debt-candidate` kinds), and click-to-source preview (local files only).
-See [`harness/SKILL.md`](harness/SKILL.md) and
-[`docs/agent/QUICKSTART.md`](docs/agent/QUICKSTART.md).
+See [`docs/agent/QUICKSTART.md`](docs/agent/QUICKSTART.md).
 
-Manual fallback: read [`harness/SKILL.md`](harness/SKILL.md), run recipes from
-[`harness/recipes/`](harness/recipes/), then `scripts/build-portolan-bundle.sh`.
+Developer fallback for extending producers: use [`harness/SKILL.md`](harness/SKILL.md)
+and [`harness/recipes/`](harness/recipes/) from a Portolan checkout.
 
 Query the harness bundle at answer time (agent-first; no pre-built Q&A pack):
 
 ```bash
-scripts/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --kind duplication --limit 20
-scripts/portolan-bundle-query.sh search --bundle <bundle-dir> --q "auth" --limit 30
+<target-root>/.portolan/bin/portolan-bundle-query.sh hotspots --bundle <bundle-dir> --kind duplication --limit 20
+<target-root>/.portolan/bin/portolan-bundle-query.sh search --bundle <bundle-dir> --q "auth" --limit 30
 ```
 
 The local viewer exposes the same contract at `/api/hotspots`, `/api/search`, etc.
