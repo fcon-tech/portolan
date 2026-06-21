@@ -1680,7 +1680,7 @@ func buildProducerRecommendations(repos []Repository, gaps []Gap) []EvidenceReco
 		[]string{"runtime communication", "complete runtime topology"},
 		"local runtime observation export",
 		[]producerfamily.CandidateTool{
-			candidateOnly("runtime-observation-export", "Listed as an evidence-family placeholder only; no runtime observation format is selected by this slice."),
+			candidateOnly("runtime-observation-export", "Listed as an evidence-family candidate only; no runtime observation format is selected by this slice."),
 		},
 		"Context preparation does not observe runtime behavior; runtime topology remains not_assessed without runtime-visible local input.",
 	))

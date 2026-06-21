@@ -96,15 +96,15 @@ scripts/portolan-install.sh "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_D
   --yes --limit-repos 3 --producers semgrep,syft --no-viewer
 ```
 
-**CTO multi-repo demo (Bigtop-10, spec 108):**
+**CTO multi-repo demo (full Bigtop corpus):**
 
 ```bash
 export TARGET_ROOT=~/projects/bigtop-landscape/repos
-export BUNDLE_DIR=/tmp/portolan-bigtop10
+export BUNDLE_DIR=/tmp/portolan-bigtop
 
 scripts/portolan-install.sh "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
 "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" \
-  --limit-repos 10 --cross-repo-dup --yes --no-viewer
+  --cross-repo-dup --yes --no-viewer --shard-timeout 600 --jscpd-memory-mb 2048
 ```
 
 `--cross-repo-dup` runs **pairwise bounded** jscpd across every repo pair.
@@ -113,13 +113,13 @@ cross-repo clones after a complete scan is tier-A evidence (manifest
 `cross_repo_duplication.status=complete`). `gap-cross-repo-dup` appears only
 when one or more pairs fail, not as opt-in degradation.
 
-Strict Bigtop-10 acceptance (not default CI):
+Strict Bigtop corpus acceptance (not default CI):
 
 ```bash
-scripts/harness-bigtop10-acceptance.sh /tmp/portolan-bigtop10
+scripts/harness-bigtop-acceptance.sh /tmp/portolan-bigtop
 ```
 
-**Full landscape stress (18 repos, spec 091):**
+**Full landscape stress:**
 
 ```bash
 export TARGET_ROOT=~/projects/bigtop-landscape/repos
@@ -186,7 +186,7 @@ section parity.
 
 ## CTO Scenario
 
-Use `/tmp/portolan-bigtop10` from the 10-repo scan with `--cross-repo-dup`. The
+Use `/tmp/portolan-bigtop` from the full corpus scan with `--cross-repo-dup`. The
 concerned-CTO walkthrough states which tier the knowledge is:
 
 | CTO question | Where | Tier |
@@ -203,12 +203,12 @@ Agent analysis pass, including a rejected negative case:
 ```bash
 # agent writes claims per installed Portolan instructions and analysis-claims guardrails
 "$TARGET_ROOT/.portolan/bin/portolan-import-analysis-claims.sh" \
-  /tmp/portolan-bigtop10 \
-  /tmp/bigtop10-claims.jsonl
-jq '.rejected' /tmp/portolan-bigtop10/claims-import-report.json
+  /tmp/portolan-bigtop \
+  /tmp/bigtop-claims.jsonl
+jq '.rejected' /tmp/portolan-bigtop/claims-import-report.json
 ```
 
-**CTO query eval:** `scripts/run-query-eval.sh --run /tmp/portolan-bigtop10`.
+**CTO query eval:** `scripts/run-query-eval.sh --run /tmp/portolan-bigtop`.
 C1-C5 cover repos, relationships, cross-repo duplication, per-repo risk, and
 claims.
 

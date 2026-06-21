@@ -285,8 +285,8 @@ func Run(opts Options) (Result, error) {
 		"configuration-semantic-analysis",
 	}
 	warnings := append([]string{
-		"relationship sub-surfaces beyond Go imports and go.mod manifests are not implemented; placeholder findings are not_assessed",
-		"duplication detection is OSS/tool-output backed; placeholder findings are not_assessed when no supported local duplication output is observed",
+		"relationship sub-surfaces beyond Go imports and go.mod manifests are reported as not_assessed until supported local evidence is observed",
+		"duplication detection is OSS/tool-output backed; duplication findings are not_assessed when no supported local duplication output is observed",
 		"external ecosystem completeness is unknown without a manifest or explicit inventory",
 	}, append(discoveryWarnings, walkWarnings...)...)
 	metadata := RunMetadata{

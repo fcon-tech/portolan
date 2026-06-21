@@ -621,7 +621,7 @@ if [[ "${PORTOLAN_BUNDLE_CORE_ONLY:-0}" == "1" ]]; then
 fi
 
 # landscape-card.json (spec 093)
-"$SCRIPT_DIR/scan-landscape-card.sh" "$TARGET_ROOT" "$BUNDLE_DIR/landscape-card.json" || \
+"$SCRIPT_DIR/scan-landscape-card.sh" "$TARGET_ROOT" "$BUNDLE_DIR/landscape-card.json" "$BUNDLE_DIR/repos.json" || \
   echo '{"version":"0.1.0","identity":{"name":"unknown"},"scale":{},"maturity":{},"health_signals":{}}' >"$BUNDLE_DIR/landscape-card.json"
 
 # landscape-report.json (map.md-inspired sections)

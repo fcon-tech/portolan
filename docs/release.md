@@ -27,13 +27,13 @@ rg -n "github.com/(fcon-tech|fall-out-bug)/portolan|portolan-install|git clone" 
 scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
-- For release candidates that claim Bigtop-10 evidence, run the same product
-  gate with a prepared Bigtop-10 bundle:
+- For release candidates that claim Bigtop corpus evidence, run the same product
+  gate with a prepared Bigtop bundle:
 
 ```bash
 scripts/portolan-product-acceptance.sh \
   --require-agent-runtime \
-  --bigtop-bundle <bigtop-10-bundle-dir>
+  --bigtop-bundle <bigtop-bundle-dir>
 ```
 
 - Run a fresh remote clone of the release branch/tag and repeat the product

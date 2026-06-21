@@ -16,7 +16,7 @@ usage: portolan-product-acceptance.sh [options]
 Options:
   --skip-agent-runtime       Do not run live Cursor/OpenCode runtime lanes.
   --require-agent-runtime    Fail if Cursor/OpenCode CLIs are unavailable or fail.
-  --bigtop-bundle DIR        Also run strict bigtop-10 acceptance on an existing
+  --bigtop-bundle DIR        Also run strict Bigtop corpus acceptance on an existing
                              bundle. This does not start a long Bigtop scan.
   -h, --help                 Show this help.
 
@@ -87,11 +87,13 @@ run_public_surface_checks() {
   local help_file
   local banned_internal
   local banned_public
+  local banned_experiment_route
   local banned_release_route
   local banned_viewer
   local banned_source_route
   banned_internal='install-agent''-harness\.sh'
   banned_public='prototype|прототип|experimental|experiment|scaffold|scaffolding|stub|mock|fake|toy|temporary|placeholder|TODO|FIXME|Demo script|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
+  banned_experiment_route='Bigtop-10|bigtop-10|bigtop10|--limit-repos 10|harness-bigtop10-acceptance'
   banned_release_route='go install github\.com/fcon-tech/portolan/cmd/portolan@v0\.1\.0|source-first|source checkout bootstrap|docs/releases/v0\.1\.0\.md|v0\.1\.0 release surface'
   banned_viewer='prototype|прототип|demo cockpit|hidden scaffolding|private scaffolding|no-hidden-scaffolding'
   banned_source_route='\$PORTOLAN_PATH/scripts/portolan-scan\.sh|\$PORTOLAN_PATH/scripts/portolan-bundle-query\.sh|PORTOLAN_PATH/harness|Read PORTOLAN_PATH|scripts/portolan-scan\.sh <target|scripts/portolan-bundle-query\.sh'
@@ -114,6 +116,9 @@ run_public_surface_checks() {
     "$ROOT/docs/demo.md" \
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/mvp.md" \
+    "$ROOT/docs/product-boundary.md" \
+    "$ROOT/docs/product-claims.md" \
     "$ROOT/docs/product-maturity.md" \
     "$ROOT/docs/release.md" \
     "$ROOT/docs/releases" \
@@ -143,6 +148,9 @@ run_public_surface_checks() {
     "$ROOT/docs/demo.md" \
     "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/mvp.md" \
+    "$ROOT/docs/product-boundary.md" \
+    "$ROOT/docs/product-claims.md" \
     "$ROOT/docs/product-maturity.md" \
     "$ROOT/docs/release.md" \
     "$ROOT/docs/releases" \
@@ -169,6 +177,33 @@ run_public_surface_checks() {
     "$ROOT/docs/site" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose old versioned Go/source-first release route" >&2
+    exit 1
+  fi
+  echo "==> public old experiment route wording" >&2
+  if rg -n \
+    -e "$banned_experiment_route" \
+    "$ROOT/README.md" \
+    "$ROOT/docs/agent" \
+    "$ROOT/docs/demo.md" \
+    "$ROOT/docs/demo-runbook.md" \
+    "$ROOT/docs/onboarding.md" \
+    "$ROOT/docs/mvp.md" \
+    "$ROOT/docs/product-boundary.md" \
+    "$ROOT/docs/product-claims.md" \
+    "$ROOT/docs/product-maturity.md" \
+    "$ROOT/docs/release.md" \
+    "$ROOT/docs/releases" \
+    "$ROOT/docs/ru/README.md" \
+    "$ROOT/docs/site" \
+    "$ROOT/harness/SKILL.md" \
+    "$ROOT/harness/cursor" \
+    "$ROOT/harness/opencode" \
+    "$ROOT/harness/codex-claude" \
+    "$ROOT/docs/product-backlog.md" \
+    "$ROOT/docs/specs/108-cto-demo-eval/spec.md" \
+    "$ROOT/docs/specs/108-cto-demo-eval/tasks.md" \
+    --glob '!**/node_modules/**'; then
+    echo "public surfaces expose old Bigtop-10/limit-repos experiment route" >&2
     exit 1
   fi
 }
@@ -311,9 +346,9 @@ run_cli_surface_checks() {
 
 run_optional_bigtop_check() {
   if [[ -n "$BIGTOP_BUNDLE" ]]; then
-    run "bigtop-10 strict acceptance" "$ROOT/scripts/harness-bigtop10-acceptance.sh" "$BIGTOP_BUNDLE"
+    run "Bigtop corpus acceptance" "$ROOT/scripts/harness-bigtop-acceptance.sh" "$BIGTOP_BUNDLE"
   else
-    echo "==> bigtop-10 strict acceptance not_assessed (pass --bigtop-bundle DIR)" >&2
+    echo "==> Bigtop corpus acceptance not_assessed (pass --bigtop-bundle DIR)" >&2
   fi
 }
 

@@ -1,7 +1,9 @@
 # Relationship Detection
 
 Portolan relationship detection is local-first and evidence-state preserving.
-The first implementation runs inside `portolan map --root <dir> --out <dir>`.
+The current atlas path is the installed `portolan-scan.sh` wrapper, which writes
+`relationships.jsonl` into the bundle. The older `portolan map --root <dir>
+--out <dir>` path remains a compatibility bridge for legacy map bundles.
 
 ## Supported In V1
 

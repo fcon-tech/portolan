@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Strict CTO acceptance gates for bigtop-10 bundle (spec 108 P9.1). Not default CI.
-# Usage: harness-bigtop10-acceptance.sh <bundle-dir>
+# Strict CTO acceptance gates for a prepared Apache Bigtop corpus bundle. Not default CI.
+# Usage: harness-bigtop-acceptance.sh <bundle-dir>
 set -euo pipefail
 
-fail() { echo "harness-bigtop10-acceptance: FAIL: $1" >&2; exit 1; }
-warn() { echo "harness-bigtop10-acceptance: note: $*" >&2; }
+fail() { echo "harness-bigtop-acceptance: FAIL: $1" >&2; exit 1; }
+warn() { echo "harness-bigtop-acceptance: note: $*" >&2; }
 
 BUNDLE=${1:-}
 [[ -n "$BUNDLE" && -d "$BUNDLE" ]] || {
@@ -20,7 +20,13 @@ repo_count=$(jq -r '.repo_count // empty' "$BUNDLE/manifest.json" 2>/dev/null ||
 if [[ -z "$repo_count" ]]; then
   repo_count=$(jq 'length' "$BUNDLE/repos.json")
 fi
-[[ "$repo_count" -eq 10 ]] || warn "expected 10 repos, got $repo_count"
+repos_json_count=$(jq 'length' "$BUNDLE/repos.json")
+[[ "$repo_count" -eq "$repos_json_count" ]] || fail "manifest repo_count=$repo_count differs from repos.json length=$repos_json_count"
+[[ "$repo_count" -ge 2 ]] || fail "expected a multi-repo Bigtop corpus, got $repo_count repos"
+if [[ -f "$BUNDLE/landscape-card.json" ]]; then
+  card_repo_count=$(jq -r '.identity.repo_count // empty' "$BUNDLE/landscape-card.json" 2>/dev/null || true)
+  [[ "$card_repo_count" == "$repo_count" ]] || fail "landscape-card identity.repo_count=$card_repo_count differs from manifest repo_count=$repo_count"
+fi
 
 GAPS="$BUNDLE/gaps.jsonl"
 [[ -f "$GAPS" ]] || fail "gaps.jsonl missing"
@@ -71,4 +77,4 @@ if [[ -x "$ROOT/scripts/portolan-bundle-query.sh" ]]; then
   [[ "$sym_n" -ge 1 ]] || fail "bundle-query symbol returned 0 records for '$first_symbol'"
 fi
 
-echo "harness-bigtop10-acceptance: ok (repos=$repo_count cross_edges=$cross_edges manifest_cross=$manifest_status)"
+echo "harness-bigtop-acceptance: ok (repos=$repo_count cross_edges=$cross_edges manifest_cross=$manifest_status)"

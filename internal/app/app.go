@@ -866,13 +866,11 @@ func writeUsage(w io.Writer) {
 
 Usage:
   portolan --version
+  portolan scan --help
   portolan import cyclonedx --in bom.cdx.json --out graph.json
   portolan import graphify --in graphify-out/graph.json --out graph.json
   portolan import repomix --in repomix-output.xml --out graph.json
   portolan import symbol-index --in symbols.json --out graph.json
-  portolan context prepare --root . --out .portolan/context --profile agent
-  portolan map --selection selection.json --out .portolan/run
-  portolan map --root . --out .portolan/run
   portolan query findings --bundle .portolan/run --kind relationships --limit 20
   portolan query gaps --bundle .portolan/run --limit 20
   portolan report quality --summary report-summary.json
@@ -881,7 +879,11 @@ Usage:
   portolan diff --base old-graph.json --head new-graph.json --out diff.json
   portolan selection validate --selection selection.json
   portolan packet render --graph graph.json --out packet.md
-  portolan scan --help
+
+Legacy compatibility:
+  portolan context prepare --root . --out .portolan/context --profile agent
+  portolan map --selection selection.json --out .portolan/run
+  portolan map --root . --out .portolan/run
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
