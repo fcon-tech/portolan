@@ -109,6 +109,8 @@ run_public_surface_checks() {
     -e "$banned_internal|$banned_public" \
     "$ROOT/README.md" \
     "$ROOT/docs/agent" \
+    "$ROOT/docs/demo.md" \
+    "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/ru/README.md" \
     "$ROOT/harness/SKILL.md" \
@@ -132,6 +134,8 @@ run_public_surface_checks() {
     -e "$banned_source_route" \
     "$ROOT/README.md" \
     "$ROOT/docs/agent" \
+    "$ROOT/docs/demo.md" \
+    "$ROOT/docs/demo-runbook.md" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/ru/README.md" \
     "$ROOT/harness/cursor" \
