@@ -219,24 +219,28 @@ shell commands, and other important information, read the current plan:
 ## Learned User Preferences
 
 - Ask clarifying questions before drafting implementation plans when harness targets, Go role, or MVP surface are still open.
-- Prioritize a report-first landscape viewer (Overview landing with ranked problems) over raw hotspot lists, map-only icicles, or evidence-discipline artifacts as the primary deliverable.
-- Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan.
+- Prioritize a UA-like landscape product (graph, explore, ask, reusable artifact) with a report-first viewer over raw hotspot lists or evidence-discipline-only output.
+- Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan; the owner did not choose "honesty about gaps" as the product north star.
 - Expand harness rules, guardrails, and OSS tool recipes rather than the Go codebase when adding product behavior.
 - Reject `orient` naming and legacy orient entrypoints; use Portolan-prefixed names in CLI, scripts, and UI (e.g. `portolan-scan`, `scripts/portolan-scan.sh`) and remove old orient scripts rather than thin deprecation wrappers.
 - Reject pre-built answer packs or suggested-question artifacts; prefer a queryable scan bundle (indexes, bundle-query tools) retrieved at question time.
 - Keep LLM Q&A agent-first: the primary path is the harness SKILL plus `portolan-bundle-query.sh`, with MCP as an optional adapter only; the viewer stays local navigation without network by default.
 - Explain in the viewer why findings rank as problems and what each navigation control does.
-- Review delivery by observable facts and demo behavior, not code inspection alone; for merge decisions, present what the PR changes and the evidence that proves it.
+- Review delivery by observable facts and demo behavior, not code inspection alone; use OpenCode for independent review lanes unless another harness is explicitly requested.
+- Portolan must deliver value beyond native Cursor; parity-gap positioning has no product fit.
+- Prefer an honest kill or UA-like product rescue over incremental guardrail work when map, indexing, and Q&A stay undelivered.
 
 ## Learned Workspace Facts
 
-- Understand-Anything drill-down inside a landscape report is the reference UX; graph nodes must stay evidence-backed, never unlabeled LLM-authored truth.
+- Understand-Anything graph, explore, ask, and reusable artifact set the reference product bar; drill-down UX must stay evidence-backed, never unlabeled LLM-authored truth.
 - Product-success questions center on concrete code pain (debt, duplication, risky zones), not abstract trust infrastructure alone.
 - Landscape report UX references Portolan `map.md` sections and the standalone `landscape-card.json` contract; no sdp_lab runtime dependency.
-- Early sdp_lab landscape-report prototypes set the demo richness bar; borrow report structure only, never sdp_lab runtime or scout dependencies.
+- Early sdp_lab landscape-report experiments set the demo richness bar; borrow report structure only, never sdp_lab runtime or scout dependencies.
 - Agent Q&A over a landscape uses bundle-query tools and indexes over the portolan-scan bundle, not pre-rendered briefing packs.
 - Demo-ready output must let an operator identify the target, repos, top problems, and gaps without external docs.
 - Scan and viewer inventories must honor `.gitignore`.
 - LLM-authored analysis belongs in the evidence bundle as tier-labeled claims (analytical, synthetic, speculative) with machine-checkable cited refs; claims with unresolvable refs are rejected at import, not silently downgraded.
 - Reference persona is a concerned CTO who needs architecture, functionality, relationships, duplication, and design problems explained across a multi-repo (~10 repos) product landscape.
+- Incremental producer cache is not implemented; each full scan reruns all producers.
+- Shard timeouts, missing ctags/symbols, and cannot_verify gaps on large multi-repo targets are product failures for the CTO demo bar, not pass states.
 - npm exists in this WSL environment; "npm unavailable" failures are PATH issues to fix, not missing tooling.

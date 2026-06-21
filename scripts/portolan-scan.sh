@@ -18,6 +18,7 @@ YES=0
 SKIP_INSTALL=0
 NO_VIEWER=0
 WITH_MAP_BRIDGE=0
+CORE_ONLY=0
 CROSS_REPO_DUP=0
 CROSS_REPO_DUP_ONLY=0
 CROSS_REPO_DUP_MAX_PAIRS=0
@@ -39,6 +40,7 @@ Options:
   --yes              Auto-approve tool installs
   --skip-install     Never install missing tools (gaps only)
   --no-viewer        Build bundle only; do not start viewer
+  --core-only        Stop after core bundle artifacts (manifest/repos/hotspots/gaps/graph-slice)
   --with-map-bridge  After bundle build, run portolan map + map-bridge sidecar (opt-in)
   --cross-repo-dup   Pairwise bounded jscpd across repo pairs (multi-repo only)
   --cross-repo-dup-only  Re-run only cross-repo jscpd + bundle build (existing producers)
@@ -71,6 +73,7 @@ while [[ $# -gt 0 ]]; do
     --yes) YES=1; shift ;;
     --skip-install) SKIP_INSTALL=1; shift ;;
     --no-viewer) NO_VIEWER=1; shift ;;
+    --core-only) CORE_ONLY=1; shift ;;
     --with-map-bridge) WITH_MAP_BRIDGE=1; shift ;;
     --cross-repo-dup) CROSS_REPO_DUP=1; shift ;;
     --cross-repo-dup-only) CROSS_REPO_DUP=1; CROSS_REPO_DUP_ONLY=1; shift ;;
@@ -160,6 +163,17 @@ run_shard() {
 }
 
 command -v jq >/dev/null || { log "jq is required"; exit 1; }
+
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$1" | shasum -a 256 | cut -d' ' -f1
+  else
+    log "sha256sum or shasum is required"
+    exit 1
+  fi
+}
 
 has_producer() {
   local p=$1
@@ -307,7 +321,7 @@ repo_slug() {
   local p=$1
   local base hash
   base=$(basename "$p" | tr ' /' '__')
-  hash=$(printf '%s' "$p" | sha256sum | cut -c1-8)
+  hash=$(hash_text "$p" | cut -c1-8)
   echo "${base}-${hash}"
 }
 
@@ -520,6 +534,7 @@ if [[ "$CROSS_REPO_DUP_ONLY" -eq 1 ]]; then
   run_jscpd_cross || true
   export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
   export PORTOLAN_LIMIT_REPOS="$LIMIT_REPOS"
+  export PORTOLAN_BUNDLE_CORE_ONLY="$CORE_ONLY"
   "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
   log "done (cross-repo-dup-only): $BUNDLE_DIR"
   exit 0
@@ -565,6 +580,7 @@ fi
 
 export PORTOLAN_HOTSPOT_BUDGET="$HOTSPOT_BUDGET"
 export PORTOLAN_LIMIT_REPOS="$LIMIT_REPOS"
+export PORTOLAN_BUNDLE_CORE_ONLY="$CORE_ONLY"
 "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
 
 append_bundle_gap() {

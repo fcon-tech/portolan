@@ -105,7 +105,17 @@
         },
         "type": {
           "type": "string",
-          "enum": ["official-doc", "official-release", "official-repo", "official-attic", "official-download"]
+          "enum": [
+            "official-doc",
+            "official-release",
+            "official-repo",
+            "official-attic",
+            "official-download",
+            "official-issue-tracker",
+            "official-wiki",
+            "official-mailing-list",
+            "official-ci"
+          ]
         },
         "url": {
           "type": "string",
@@ -171,7 +181,10 @@
             "documentation",
             "binary-repository",
             "docker-image",
-            "retired-project"
+            "retired-project",
+            "issue-tracker",
+            "wiki",
+            "mailing-list"
           ]
         },
         "lifecycle": {
@@ -197,6 +210,28 @@
           "format": "uri"
         },
         "reference_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tracker_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "wiki_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "wiki_evidence_state": {
+          "$ref": "#/$defs/evidence_state"
+        },
+        "wiki_note": {
+          "type": "string"
+        },
+        "docs_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "mailing_list_url": {
           "type": "string",
           "format": "uri"
         },

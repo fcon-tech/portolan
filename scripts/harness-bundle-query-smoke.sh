@@ -5,7 +5,8 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 FIXTURE_TARGET="$ROOT/internal/testfixtures/portolan-bundle/target"
 FIXTURE_BUNDLE=$(mktemp -d)
-trap 'rm -rf "$FIXTURE_BUNDLE"' EXIT
+MULTI_FIX=""
+trap 'rm -rf "$FIXTURE_BUNDLE" "${MULTI_FIX:-}"' EXIT
 
 mkdir -p "$FIXTURE_BUNDLE/producers"
 cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$FIXTURE_BUNDLE/producers/"
@@ -41,7 +42,7 @@ node scripts/build-static.js
 PORT=4179
 node scripts/serve.js --bundle "$FIXTURE_BUNDLE" --port "$PORT" &
 PID=$!
-trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$FIXTURE_BUNDLE"' EXIT
+trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$FIXTURE_BUNDLE" "${MULTI_FIX:-}"' EXIT
 sleep 1
 
 BASE="http://127.0.0.1:$PORT"
@@ -79,5 +80,42 @@ echo '[{"name":"ImportedSym","path":"sample.go","kind":"function","line":4}]' >"
 "$Q" symbol --bundle "$FIXTURE_BUNDLE" --name ImportedSym --limit 3 \
   | jq -e '.records | length >= 1' >/dev/null
 rm -f "$AST_FIX"
+
+MULTI_FIX=$(mktemp -d)
+LAND="$MULTI_FIX/land"
+MULTI_BUNDLE="$MULTI_FIX/bundle"
+mkdir -p "$LAND/service-a" "$LAND/service-b" "$MULTI_BUNDLE/producers/ctags"
+printf '{"name":"service-a","scripts":{"test":"node test.js"}}\n' >"$LAND/service-a/package.json"
+printf '{"name":"service-b","scripts":{"test":"node test.js"}}\n' >"$LAND/service-b/package.json"
+(cd "$LAND/service-a" && git init -q && git add package.json)
+(cd "$LAND/service-b" && git init -q && git add package.json)
+hash8() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | cut -c1-8
+  else
+    printf '%s' "$1" | shasum -a 256 | cut -c1-8
+  fi
+}
+slug() {
+  printf '%s-%s' "$(basename "$1" | tr ' /' '__')" "$(hash8 "$1")"
+}
+SLUG_A=$(slug "$LAND/service-a")
+SLUG_B=$(slug "$LAND/service-b")
+mkdir -p "$MULTI_BUNDLE/producers/ctags/$SLUG_A" "$MULTI_BUNDLE/producers/ctags/$SLUG_B"
+for s in "$SLUG_A" "$SLUG_B"; do
+  jq -n '[range(0;7) | {_type:"tag", name:("name" + tostring), path:"package.json", kind:"property", line:(. + 1)}]' \
+    >"$MULTI_BUNDLE/producers/ctags/$s/tags.json"
+done
+"$ROOT/scripts/build-portolan-bundle.sh" "$LAND" "$MULTI_BUNDLE" >/dev/null
+FIRST_REPO=$(jq -r '.[0].id' "$MULTI_BUNDLE/repos.json")
+"$Q" hotspots --bundle "$MULTI_BUNDLE" --repo "$FIRST_REPO" --limit 10 \
+  | jq -e --arg repo "$FIRST_REPO" '.records | length >= 1 and all(.[]; .repo_id == $repo)' >/dev/null
+"$Q" symbol --bundle "$MULTI_BUNDLE" --repo "$FIRST_REPO" --name name --limit 20 \
+  | jq -e --arg repo "$FIRST_REPO" '(.records | length >= 1) and (.records | all(.[]; .repo_id == $repo)) and (([.records[].id] | length) == ([.records[].id] | unique | length))' >/dev/null
+"$Q" search --bundle "$MULTI_BUNDLE" --repo "$FIRST_REPO" --q name --limit 5 \
+  | jq -e --arg repo "$FIRST_REPO" '.records | type == "array" and all(.[]; .repo_id == $repo)' >/dev/null
+"$Q" source --bundle "$MULTI_BUNDLE" --repo "$FIRST_REPO" --path package.json --line 1 \
+  | jq -e '.records | length == 1' >/dev/null
+rm -rf "$MULTI_FIX"
 
 echo "harness-bundle-query-smoke: ok"

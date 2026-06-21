@@ -12,6 +12,7 @@ const families = [
   'search',
   'symbol',
   'source',
+  'atlas',
   'evidence-index',
   'claims',
   'repos',
@@ -25,9 +26,10 @@ Families:
   hotspots       --kind K --severity S --path PREFIX --text Q [--repo ID] --limit N [--full]
   gaps           --surface S --status S --limit N
   landscape      --section ID
-  search         --q QUERY [--path-scope PREFIX] --limit N
-  symbol         --name NAME [--kind K] --limit N
-  source         --path PATH [--line N] [--radius N] [--full]
+  search         --q QUERY [--repo ID] [--path-scope PREFIX] --limit N
+  symbol         --name NAME [--repo ID] [--kind K] --limit N
+  source         --path PATH [--repo ID] [--line N] [--radius N] [--full]
+  atlas          [--section components|surfaces|edges|gaps] [--target ID] [--repo ID] --limit N
   evidence-index [--family F] --limit N
   claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
   repos          [--repo ID] [--text Q] --limit N
@@ -124,6 +126,10 @@ function parseArgs(argv) {
         break;
       case '--repo':
         opts.repo = next;
+        i++;
+        break;
+      case '--target':
+        opts.target = next;
         i++;
         break;
       case '--type':

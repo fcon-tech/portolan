@@ -1,14 +1,77 @@
 # Agent Install
 
-Portolan can be used as an installed binary or from a source checkout.
+Portolan's primary agent route is a source checkout plus harness instructions.
+The legacy Go binary remains available for older `context prepare` / `map`
+workflows, but it is not required for the atlas bundle path.
 
-If the user says "install Portolan" and gives you a Portolan checkout path, use
-the source-checkout bootstrap path below. If the user gives you an installed
-binary path, verify it with `--version` and use that binary directly.
+If the user says "install Portolan" and gives you a target project, install the
+agent harness into that project:
 
-## Installed Binary
+```bash
+git clone https://github.com/fcon-tech/portolan.git
+cd portolan
+scripts/portolan-install.sh <target-root> --harness all
+```
 
-For the public `v0.1.0` source-first release, the primary install route is:
+If you already have a Portolan checkout, run the same install command from that
+checkout instead of cloning again.
+
+By default this installs a fast first core scan (`config,ctags`, `--core-only`)
+so Cursor/OpenCode get a queryable bundle before deeper producers run. Use
+`--scan-profile full` when the operator accepts a heavier first command.
+
+Then build the atlas bundle:
+
+```bash
+scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+```
+
+Remove `--skip-install` only after explicit approval to install missing local
+OSS tools.
+
+## Agent Harness Install
+
+Use the install script when the user wants Cursor/OpenCode to remember Portolan
+for a target project:
+
+```bash
+scripts/portolan-install.sh <target-root> --harness cursor
+scripts/portolan-install.sh <target-root> --harness opencode
+scripts/portolan-install.sh <target-root> --harness all
+scripts/portolan-install.sh <target-root> --harness all --scan-profile full
+```
+
+Outputs:
+
+- Cursor: `<target-root>/.cursor/rules/portolan-atlas.mdc`
+- OpenCode: managed Portolan block in `<target-root>/AGENTS.md`
+- Default bundle path: `<target-root>/.portolan/atlas`
+
+The installer also adds `.portolan/` to the target's local
+`.git/info/exclude` when the target is a Git repository. It does not edit
+tracked source files beyond the requested agent instruction files.
+
+Use `--dry-run` to inspect writes and `--force` to replace an existing managed
+Portolan block/rule.
+
+## Verify Installable Pack
+
+Use the static install smoke for generated files and the runtime gate when
+Cursor/OpenCode CLIs are available on the current machine:
+
+```bash
+scripts/portolan-product-acceptance.sh --require-agent-runtime
+```
+
+The product gate runs the static install smoke, real Cursor/OpenCode runtime
+lanes, local harness smoke, schemas, Go checks, viewer build checks, and diff
+whitespace. Omit `--require-agent-runtime` only when unavailable CLIs should be
+recorded as `not_assessed` instead of failing the check.
+
+## Legacy Go Binary
+### Installed Binary
+
+For the public `v0.1.0` source-first legacy CLI release, the Go install route is:
 
 ```bash
 # Requires the published v0.1.0 tag. If this fails, use the source-checkout
@@ -25,7 +88,7 @@ portolan --version
 
 If this works, use `portolan` directly in the quickstart commands.
 
-## Source Checkout
+### Source Checkout
 
 From the Portolan repository root:
 
@@ -45,11 +108,9 @@ When the receiving harness restricts writes outside the current checkout, use a
 repo-local output directory such as `.portolan/runs/<name>` for the first run,
 then move or share the artifacts only after the run succeeds.
 
-For OpenCode default-permission runs, prefer an `OUTPUT_PATH` under the
-Portolan checkout, for example `.portolan/runs/<target-name>`. The recorded
-OpenCode external-output default-permission lane failed when the harness
-rejected writing outside the allowed workspace; treat arbitrary external output
-paths as unverified unless the user changes the permission mode.
+For OpenCode default-permission runs, prefer `BUNDLE_DIR` under the target
+project, for example `<target-root>/.portolan/atlas`. Treat arbitrary external
+output paths as unverified unless the user changes the permission mode.
 
 If you are in a subdirectory, run the script by path; the default output still
 lands in the Portolan checkout:
@@ -66,7 +127,7 @@ approves network access for dependency download, set:
 PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 ```
 
-## Go Run Fallback
+### Go Run Fallback
 
 Use this only for development when a binary is not available and bootstrap
 cannot be used:
@@ -85,7 +146,7 @@ go run ./cmd/portolan context prepare --root <target-root> --out <context-dir> -
 - No network unless explicitly approved.
 - Writes only to the selected output directory.
 
-## Local Selection Files
+## Legacy Local Selection Files
 
 If the target contains a local `selection.json`, validate and use it for the map
 step:
@@ -124,7 +185,7 @@ repomix <target-root> --output <output-dir>/repomix-output.xml --style xml
 ```
 
 If the selected Graphify mode writes inside its input path, run it against an
-explicit temporary/staged copy outside the target checkout. Import the produced
+explicit staged copy outside the target checkout. Import the produced
 graph when needed:
 
 ```bash

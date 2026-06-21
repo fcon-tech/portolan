@@ -12,9 +12,9 @@ first.
 | Ask an agent to inspect a local target | [Harness Skill](../harness/SKILL.md) | [Install Prompt](agent/INSTALL-PROMPT.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Harness-first: recipes → bundle → viewer. Cite hotspot.id and preserve gaps. |
 | Open the viewer (human) | [Viewer README](../viewer/README.md) | [Harness Skill](../harness/SKILL.md) | Local read-only viewer; folder tree + ranked hotspots from producers only. |
 | Install or resolve the command | [Agent Install](agent/INSTALL.md) | [Troubleshooting](agent/TROUBLESHOOTING.md), [Release Guide](release.md) | Source bootstrap is local and does not fetch Go modules unless explicitly approved. |
-| Use Cursor | [Agent Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | Current verified Cursor evidence is headless Cursor Agent CLI / Composer. Cursor UI behavior is outside the current required acceptance scope; no root-level Cursor rule is shipped. |
-| Use OpenCode | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode default-permission runs are verified with repo-local output under the Portolan checkout. The recorded external-output default-permission lane failed. |
-| Prepare release notes, a demo claim, or a generated report | [Release Guide](release.md) | [Product Claims](product-claims.md), [Product Quality Boundary](product-quality-boundary.md), [Report Quality Contract](report-quality.md) | Do not publish broader claims than the current claim boundary allows; run the report-quality gate before treating generated reports as product-ready. |
+| Use Cursor | [Agent Install Prompt](agent/INSTALL-PROMPT.md) | [Cursor Rule](../harness/cursor/portolan-harness.mdc), [Agent Acceptance](agent/ACCEPTANCE.md) | Cursor is an operator over a local Portolan bundle. Install the rule with `scripts/portolan-install.sh <target-root> --harness cursor`; current evidence does not prove arbitrary Cursor UI behavior. |
+| Use OpenCode | [OpenCode Prompt](../harness/opencode/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode reads `AGENTS.md`; install the managed block with `scripts/portolan-install.sh <target-root> --harness opencode`. Keep output under the target unless permissions are explicitly broadened. |
+| Prepare release notes, an acceptance claim, or a generated report | [Release Guide](release.md) | [Product Claims](product-claims.md), [Product Quality Boundary](product-quality-boundary.md), [Report Quality Contract](report-quality.md) | Do not publish broader claims than the current claim boundary allows; run the report-quality gate before treating generated reports as product-ready. |
 | Contribute a bug report, feature, evidence gap, or PR | [Contributing](../CONTRIBUTING.md) | [Support](../SUPPORT.md), [Product Claims](product-claims.md) | Keep issue and PR evidence states explicit; do not treat blocked or not_assessed surfaces as product success. |
 | Report a sensitive vulnerability | [Security Policy](../SECURITY.md) | [Security Threat Model](security-threat-model.md), [Product Claims](product-claims.md) | Use GitHub private vulnerability reporting. Do not publish sensitive vulnerability details in public issues or pull requests. |
 | Work on a SpecKit slice | [SpecKit Workflow](speckit-workflow.md) | [Product Backlog](product-backlog.md), [AGENTS.md](../AGENTS.md) | Keep backlog, spec, tasks, reviews, PR state, and evidence labels aligned. |
@@ -29,63 +29,67 @@ first.
   security, conduct, issue templates, and a pull request template. This does not
   prove broad adoption or public support capacity.
 - Installation is intentionally simple: source checkout plus
-  `scripts/bootstrap-portolan`, with network module fetching disabled unless
-  `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly set.
-- Cursor has a repo-local rule that tells Cursor to use Portolan before broad
-  architecture or map claims.
-- OpenCode has recorded acceptance lanes for the current `kimi-for-coding/k2p6`
-  runs, including the important default-permission output distinction.
+  `scripts/portolan-install.sh <target-root> --harness all`. The legacy
+  Go binary path still uses `scripts/bootstrap-portolan`, with network module
+  fetching disabled unless `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly
+  set.
+- Cursor has an installable Project Rule template that tells Cursor to build
+  and query a Portolan bundle before broad architecture or map claims.
+- OpenCode has an installable managed `AGENTS.md` block. Current recorded lanes
+  prove specific runs, not arbitrary models, targets, or permission modes.
+- Verify the current installable Cursor/OpenCode pack with
+  `scripts/portolan-product-acceptance.sh --require-agent-runtime`; the gate
+  creates fresh targets, installs the pack, runs real agent CLIs, validates the
+  generated core bundle, and runs the local baseline checks.
 
 ## Cursor Operator Notes
 
 Use Cursor as an operator over local Portolan artifacts:
 
-1. Let the Cursor rule route broad codebase questions through
-   `docs/agent/QUICKSTART.md`.
-2. Prepare context before answering broad claims:
+1. Install the project rule into the target:
 
    ```bash
-   portolan context prepare --root <target-root> --out <output-dir>/context --profile agent
+   scripts/portolan-install.sh <target-root> --harness cursor
    ```
 
-3. Build a map only when needed:
+2. Let the rule route broad codebase questions through `harness/SKILL.md`.
+3. Build the fast first atlas before answering broad claims:
 
    ```bash
-   portolan map --root <target-root> --out <output-dir>/map
+   scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50
    ```
 
-4. Read bounded artifacts before full `graph.json`: `agent-brief.md`,
-   `answer-contract.md`, `evidence-index.jsonl`, `gaps.jsonl`, `summary.json`,
-   `graph-index.json`, `findings.jsonl`, and `map.md`.
+4. Query bounded artifacts with `scripts/portolan-bundle-query.sh` before
+   loading larger files.
+5. Run the full producer set only after the first bundle is queryable.
 
 Current evidence supports headless Cursor Agent CLI / Composer wording. Do not
 claim UI Cursor behavior from that evidence.
 
 ## OpenCode Operator Notes
 
-Use OpenCode with the same copyable install prompt as other agents:
+Use OpenCode with the installable `AGENTS.md` block or the copyable prompt:
 
-1. Fill the variables in [Agent Install Prompt](agent/INSTALL-PROMPT.md).
-2. Under default OpenCode permissions, prefer an output path inside the
-   Portolan checkout, for example:
+1. Install the managed block into the target:
 
-   ```text
-   OUTPUT_PATH=<portolan-checkout>/.portolan/runs/<target-name>
+   ```bash
+   scripts/portolan-install.sh <target-root> --harness opencode
    ```
 
+2. Use `BUNDLE_DIR=<target-root>/.portolan/atlas` unless the harness permission
+   mode explicitly allows another output root.
 3. Use external output directories only when the harness permission mode allows
-   them. The recorded default-permission external-output lane failed when
-   OpenCode rejected writing outside the allowed workspace.
+   them.
 4. Keep the answer contract strict: commands run, artifact paths, visible
    scope, evidence-backed findings, `unknown`, `cannot_verify`,
    `not_assessed`, next actions, and unsupported claims avoided.
 
-OpenCode support is currently evidence-specific. Do not generalize the recorded
-lanes to arbitrary models, arbitrary targets, or arbitrary permission modes.
+OpenCode support is currently evidence-specific. Do not generalize recorded
+lanes to arbitrary models, targets, or permission modes.
 
-## Install And Build Route
+## Legacy Go Binary Route
 
-Preferred order:
+Use this only when the older Go CLI is explicitly needed:
 
 1. Use an installed `portolan` binary if one is available and `--version`
    works.

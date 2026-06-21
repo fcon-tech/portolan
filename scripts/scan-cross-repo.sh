@@ -22,6 +22,17 @@ DUP_PAIR_SAMPLES=5
 command -v jq >/dev/null || { echo "jq required" >&2; exit 1; }
 [[ -f "$REPOS_JSON" ]] || { echo "repos.json missing in $BUNDLE_DIR" >&2; exit 1; }
 
+hash_text() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf '%s' "$1" | sha256sum | cut -d' ' -f1
+  elif command -v shasum >/dev/null 2>&1; then
+    printf '%s' "$1" | shasum -a 256 | cut -d' ' -f1
+  else
+    echo "sha256sum or shasum required" >&2
+    exit 1
+  fi
+}
+
 repo_count=$(jq 'length' "$REPOS_JSON")
 : >"$OUT"
 if [[ "$repo_count" -lt 2 ]]; then
@@ -49,7 +60,7 @@ if [[ -f "$PROFILES_JSON" ]]; then
   ' "$PROFILES_JSON" 2>/dev/null | while IFS= read -r edge; do
     from=$(jq -r '.from' <<<"$edge")
     to=$(jq -r '.to' <<<"$edge")
-    id="rel-dep-$(printf '%s->%s' "$from" "$to" | sha256sum | cut -c1-12)"
+    id="rel-dep-$(hash_text "${from}->${to}" | cut -c1-12)"
     jq -nc --arg id "$id" --arg from "$from" --arg to "$to" \
       --argjson matched "$(jq -c '.matched' <<<"$edge")" \
       '{id:$id,type:"depends-on",from_repo:$from,to_repo:$to,
@@ -78,7 +89,7 @@ if [[ -f "$PROFILES_JSON" ]]; then
     from=$(jq -r '.from' <<<"$edge")
     to=$(jq -r '.to' <<<"$edge")
     svc=$(jq -r '.service' <<<"$edge")
-    id="rel-img-$(printf '%s->%s:%s' "$from" "$to" "$svc" | sha256sum | cut -c1-12)"
+    id="rel-img-$(hash_text "${from}->${to}:${svc}" | cut -c1-12)"
     jq -nc --arg id "$id" --argjson e "$edge" \
       '{id:$id,type:"uses-image",from_repo:$e.from,to_repo:$e.to,
         summary:("Compose service " + $e.service + " in " + $e.from + " uses image matching repo " + $e.to),
@@ -115,7 +126,7 @@ if [[ -s "$sbom_components" ]]; then
       .[0:$top][]
     ' 2>/dev/null | while IFS= read -r comp; do
     name=$(jq -r '.name' <<<"$comp")
-    id="rel-shared-$(printf '%s' "$name" | sha256sum | cut -c1-12)"
+    id="rel-shared-$(hash_text "$name" | cut -c1-12)"
     jq -nc --arg id "$id" --argjson c "$comp" \
       '{id:$id,type:"shared-dependency",from_repo:null,to_repo:null,
         repos:$c.repos,
@@ -153,7 +164,7 @@ while IFS= read -r jfile; do
   ' "$jfile" 2>/dev/null | while IFS= read -r pair; do
     from=$(jq -r '.from' <<<"$pair")
     to=$(jq -r '.to' <<<"$pair")
-    id="rel-xdup-$(printf '%s<->%s' "$from" "$to" | sha256sum | cut -c1-12)"
+    id="rel-xdup-$(hash_text "${from}<->${to}" | cut -c1-12)"
     jq -nc --arg id "$id" --argjson p "$pair" --arg ref "$jfile" \
       '{id:$id,type:"cross-repo-duplication",from_repo:$p.from,to_repo:$p.to,
         summary:("Cross-repo duplication: " + ($p.clone_count | tostring) + " clone pair(s), ~" + ($p.total_lines | tostring) + " lines between " + $p.from + " and " + $p.to),

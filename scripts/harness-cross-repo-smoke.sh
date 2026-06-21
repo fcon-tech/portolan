@@ -62,7 +62,13 @@ EOF
 (cd "$LAND/repo-b" && git init -q && git add -A)
 
 slug() {
-  printf '%s-%s' "$(basename "$1" | tr ' /' '__')" "$(printf '%s' "$1" | sha256sum | cut -c1-8)"
+  local digest
+  if command -v sha256sum >/dev/null 2>&1; then
+    digest=$(printf '%s' "$1" | sha256sum | cut -d' ' -f1)
+  else
+    digest=$(printf '%s' "$1" | shasum -a 256 | cut -d' ' -f1)
+  fi
+  printf '%s-%s' "$(basename "$1" | tr ' /' '__')" "$(printf '%s' "$digest" | cut -c1-8)"
 }
 SLUG_A=$(slug "$LAND/repo-a")
 SLUG_B=$(slug "$LAND/repo-b")
@@ -79,7 +85,7 @@ for s in "$SLUG_A" "$SLUG_B"; do
 EOF
 done
 
-# --- per-repo jscpd stubs (spec 109 strict per-repo contract) ---
+# --- per-repo jscpd fixtures (spec 109 strict per-repo contract) ---
 mkdir -p "$BUNDLE/producers/jscpd/$SLUG_A" "$BUNDLE/producers/jscpd/$SLUG_B"
 echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_A/jscpd-report.json"
 echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_B/jscpd-report.json"

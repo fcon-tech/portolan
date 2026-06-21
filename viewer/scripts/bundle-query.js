@@ -32,6 +32,48 @@ function readJSONL(filePath) {
   return rows;
 }
 
+function scanJSONL(filePath, onRow) {
+  if (!fs.existsSync(filePath)) return 0;
+  const fd = fs.openSync(filePath, 'r');
+  const buffer = Buffer.allocUnsafe(1024 * 1024);
+  let carry = '';
+  let parsed = 0;
+
+  try {
+    while (true) {
+      const bytes = fs.readSync(fd, buffer, 0, buffer.length, null);
+      if (bytes <= 0) break;
+      const chunk = carry + buffer.toString('utf8', 0, bytes);
+      const lines = chunk.split('\n');
+      carry = lines.pop() || '';
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t) continue;
+        try {
+          parsed += 1;
+          if (onRow(JSON.parse(t)) === false) return parsed;
+        } catch {
+          /* skip malformed */
+        }
+      }
+    }
+
+    const tail = carry.trim();
+    if (tail) {
+      try {
+        parsed += 1;
+        onRow(JSON.parse(tail));
+      } catch {
+        /* skip malformed */
+      }
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  return parsed;
+}
+
 function readJSON(filePath) {
   if (!fs.existsSync(filePath)) return null;
   try {
@@ -41,12 +83,58 @@ function readJSON(filePath) {
   }
 }
 
-function loadRepoRoots(bundlePath) {
+function loadRepoRoots(bundlePath, repoId = '') {
   const repos = readJSON(path.join(bundlePath, 'repos.json'));
   if (!Array.isArray(repos)) return [];
-  return repos
+  const repoFilter = repoId ? resolveRepoFilterIds(bundlePath, repoId) : { ids: [], unknown: false };
+  const roots = [];
+  repos
     .filter((r) => r && typeof r.path === 'string' && r.path.trim())
-    .map((r) => path.resolve(r.path));
+    .filter((r) => !repoId || r.id === repoId || r.name === repoId || repoFilter.ids.includes(r.id))
+    .forEach((r) => {
+      const declared = path.resolve(r.path);
+      roots.push(declared);
+      try {
+        roots.push(fs.realpathSync(declared));
+      } catch {
+        /* keep declared root; later file checks will fail closed */
+      }
+    });
+  return [...new Set(roots)];
+}
+
+function resolveRepoFilterIds(bundlePath, repoFilter = '') {
+  const filter = String(repoFilter || '').trim();
+  if (!filter) return { ids: [], unknown: false };
+  const ids = new Set();
+  const repos = readJSON(path.join(bundlePath, 'repos.json'));
+  if (Array.isArray(repos)) {
+    repos.forEach((repo) => {
+      if (!repo) return;
+      const candidates = [
+        repo.id,
+        repo.name,
+        repo.path ? path.basename(repo.path) : '',
+      ].filter(Boolean);
+      if (candidates.includes(filter)) ids.add(repo.id);
+    });
+  }
+  const facts = readJSON(path.join(bundlePath, 'atlas-facts.json'));
+  if (Array.isArray(facts?.components)) {
+    facts.components.forEach((component) => {
+      const repoId = component.repo_id || component.repoId || '';
+      if (!repoId) return;
+      const candidates = [
+        component.target_id,
+        component.targetId,
+        component.id,
+        component.label,
+        repoId,
+      ].filter(Boolean);
+      if (candidates.includes(filter)) ids.add(repoId);
+    });
+  }
+  return { ids: [...ids], unknown: ids.size === 0 };
 }
 
 function isPathUnderRoot(filePath, root) {
@@ -144,12 +232,12 @@ function wrapResult(query, records, total, limit, warnings = []) {
   };
 }
 
-function hotspotRecord(bundlePath, h) {
+function hotspotRecord(bundlePath, h, artifact = 'hotspots.jsonl') {
   return {
     id: h.id,
-    reference: makeRef(bundlePath, 'hotspots.jsonl', h.id),
+    reference: makeRef(bundlePath, artifact, h.id),
     bundle_path: path.resolve(bundlePath),
-    artifact: 'hotspots.jsonl',
+    artifact,
     record_id: h.id,
     kind: h.kind,
     evidence_state: h.evidence_state,
@@ -159,6 +247,9 @@ function hotspotRecord(bundlePath, h) {
     summary: h.summary || '',
     severity: h.severity || '',
     rank: h.rank,
+    repo_id: h.repo_id || '',
+    line: h.line || h.start_line || undefined,
+    locations: h.locations || undefined,
     paths: h.paths || [],
     producer: h.producer || '',
     producer_ref: h.producer_ref || '',
@@ -199,17 +290,23 @@ function repoPathPrefixes(bundlePath, repoId) {
   const repo = repos.find((r) => r && r.id === repoId);
   if (!repo || typeof repo.path !== 'string') return null;
   const prefixes = [repo.path.replace(/\\/g, '/')];
+  const repoName = (repo.name || path.basename(repo.path)).replace(/\\/g, '/');
+  if (repoName) prefixes.push(repoName);
   const manifest = readJSON(path.join(bundlePath, 'manifest.json'));
   const targetRoot = (manifest?.target_root || '').replace(/\\/g, '/');
   if (targetRoot && prefixes[0].startsWith(targetRoot + '/')) {
     prefixes.push(prefixes[0].slice(targetRoot.length + 1));
   }
-  return prefixes;
+  if (repos.length === 1) prefixes.push('');
+  return [...new Set(prefixes)];
 }
 
 function pathInRepo(p, prefixes) {
   const norm = String(p).replace(/\\/g, '/');
-  return prefixes.some((pre) => norm === pre || norm.startsWith(pre + '/'));
+  return prefixes.some((pre) => {
+    if (pre === '') return !path.isAbsolute(norm);
+    return norm === pre || norm.startsWith(pre + '/');
+  });
 }
 
 function queryHotspots(bundlePath, opts = {}) {
@@ -226,11 +323,12 @@ function queryHotspots(bundlePath, opts = {}) {
   const pathPrefix = (opts.path || opts.pathPrefix || '').trim().toLowerCase();
   const text = (opts.text || opts.q || '').trim().toLowerCase();
   const repoId = (opts.repo || '').trim();
-  let repoPrefixes = null;
+  const repoFilter = resolveRepoFilterIds(bundlePath, repoId);
+  let repoPrefixes = [];
   let repoUnknown = false;
   if (repoId) {
-    repoPrefixes = repoPathPrefixes(bundlePath, repoId);
-    if (!repoPrefixes) {
+    repoPrefixes = repoFilter.ids.flatMap((id) => repoPathPrefixes(bundlePath, id) || []);
+    if (repoFilter.unknown) {
       // unknown repo must not silently widen the answer to the whole landscape
       repoUnknown = true;
       warnings.push(`repo not found in repos.json: ${repoId}; returning no records`);
@@ -240,7 +338,13 @@ function queryHotspots(bundlePath, opts = {}) {
   let matched = repoUnknown ? [] : rows.filter((h) => {
     if (kind && h.kind !== kind) return false;
     if (severity && h.severity !== severity) return false;
-    if (repoPrefixes && !(h.paths || []).some((p) => pathInRepo(p, repoPrefixes))) return false;
+    if (repoId) {
+      if (h.repo_id && repoFilter.ids.includes(h.repo_id)) {
+        // direct producer attribution wins over path heuristics
+      } else if (!(h.paths || []).some((p) => pathInRepo(p, repoPrefixes))) {
+        return false;
+      }
+    }
     if (pathPrefix) {
       const paths = (h.paths || []).map((p) => String(p).toLowerCase());
       if (!paths.some((p) => p.includes(pathPrefix))) return false;
@@ -253,7 +357,11 @@ function queryHotspots(bundlePath, opts = {}) {
   });
 
   matched.sort((a, b) => (a.rank || 0) - (b.rank || 0));
-  const records = matched.map((h) => hotspotRecord(bundlePath, h));
+  const records = matched.map((h, index) => hotspotRecord(
+    bundlePath,
+    h.rank ? h : { ...h, rank: index + 1 },
+    artifact
+  ));
   return wrapResult(
     {
       family: 'hotspots',
@@ -371,6 +479,8 @@ function querySearch(bundlePath, opts = {}) {
   const limit = parseLimit(opts.limit);
   const q = (opts.q || opts.text || '').trim().toLowerCase();
   const pathScope = (opts.pathScope || opts.path || '').trim().toLowerCase();
+  const repoId = (opts.repo || '').trim();
+  const repoFilter = resolveRepoFilterIds(bundlePath, repoId);
   const indexPath = path.join(bundlePath, 'search-index.jsonl');
   const warnings = [];
 
@@ -395,23 +505,28 @@ function querySearch(bundlePath, opts = {}) {
   }
 
   const rows = readJSONL(indexPath);
-  let matched = rows.filter((row) => {
+  if (repoId && repoFilter.unknown) {
+    warnings.push(`repo not found in bundle: ${repoId}; returning no records`);
+  }
+  let matched = (repoId && repoFilter.unknown ? [] : rows).filter((row) => {
     const p = (row.path || '').toLowerCase();
     const lineText = (row.text || '').toLowerCase();
+    if (repoId && !repoFilter.ids.includes(row.repo_id || '')) return false;
     if (pathScope && !p.includes(pathScope)) return false;
     return p.includes(q) || lineText.includes(q);
   });
 
   const records = matched.slice(0, limit).map((row, i) => ({
-    id: `search-${i}-${row.path}:${row.line}`,
-    reference: makeRef(bundlePath, 'search-index.jsonl', `${row.path}:${row.line}`),
+    id: `search-${i}-${row.repo_id || 'repo'}:${row.path}:${row.line}`,
+    reference: makeRef(bundlePath, 'search-index.jsonl', `${row.repo_id || ''}:${row.path}:${row.line}`),
     bundle_path: path.resolve(bundlePath),
     artifact: 'search-index.jsonl',
-    record_id: `${row.path}:${row.line}`,
+    record_id: `${row.repo_id || ''}:${row.path}:${row.line}`,
     kind: 'search-hit',
     evidence_state: 'source-visible',
     status: 'observed',
     summary: row.text || '',
+    repo_id: row.repo_id || '',
     path: row.path,
     line: row.line,
     hotspot_id: row.hotspot_id || '',
@@ -422,6 +537,7 @@ function querySearch(bundlePath, opts = {}) {
       family: 'search',
       q,
       path_scope: pathScope || undefined,
+      repo: repoId || undefined,
       limit,
       bundle_path: path.resolve(bundlePath),
     },
@@ -436,6 +552,8 @@ function querySymbol(bundlePath, opts = {}) {
   const limit = parseLimit(opts.limit);
   const name = (opts.name || opts.q || '').trim().toLowerCase();
   const symKind = (opts.kind || '').trim().toLowerCase();
+  const repoId = (opts.repo || '').trim();
+  const repoFilter = resolveRepoFilterIds(bundlePath, repoId);
   const indexPath = path.join(bundlePath, 'symbol-index.jsonl');
   const warnings = [];
 
@@ -459,49 +577,59 @@ function querySymbol(bundlePath, opts = {}) {
     );
   }
 
-  const rows = readJSONL(indexPath);
-  let matched = rows.filter((row) => {
+  const records = [];
+  let total = 0;
+  if (repoId && repoFilter.unknown) {
+    warnings.push(`repo not found in bundle: ${repoId}; returning no records`);
+  }
+  scanJSONL(indexPath, (row) => {
+    if (repoId && repoFilter.unknown) return false;
     const n = (row.name || '').toLowerCase();
-    if (!n.includes(name)) return false;
-    if (symKind && (row.kind || '').toLowerCase() !== symKind) return false;
-    return true;
+    if (!n.includes(name)) return;
+    if (symKind && (row.kind || '').toLowerCase() !== symKind) return;
+    if (repoId && !repoFilter.ids.includes(row.repo_id || '')) return;
+    total += 1;
+    if (records.length >= limit) return;
+    const recordId = `${row.repo_id || ''}:${row.path}:${row.line}:${row.name}`;
+    records.push({
+      id: `sym-${recordId}`,
+      reference: makeRef(bundlePath, 'symbol-index.jsonl', recordId),
+      bundle_path: path.resolve(bundlePath),
+      artifact: 'symbol-index.jsonl',
+      record_id: recordId,
+      kind: 'symbol',
+      evidence_state: row.evidence_state || 'metadata-visible',
+      status: 'observed',
+      summary: `${row.kind || 'symbol'} ${row.name} at ${row.path}:${row.line}`,
+      name: row.name,
+      symbol_kind: row.kind,
+      repo_id: row.repo_id || '',
+      path: row.path,
+      line: row.line,
+      producer: row.producer || 'ctags',
+      resolution_limit: row.resolution_limit || 'definition-only; not a full call graph',
+    });
   });
-
-  const records = matched.slice(0, limit).map((row) => ({
-    id: `sym-${row.path}:${row.line}:${row.name}`,
-    reference: makeRef(bundlePath, 'symbol-index.jsonl', `${row.path}:${row.line}:${row.name}`),
-    bundle_path: path.resolve(bundlePath),
-    artifact: 'symbol-index.jsonl',
-    record_id: `${row.path}:${row.line}:${row.name}`,
-    kind: 'symbol',
-    evidence_state: row.evidence_state || 'metadata-visible',
-    status: 'observed',
-    summary: `${row.kind || 'symbol'} ${row.name} at ${row.path}:${row.line}`,
-    name: row.name,
-    symbol_kind: row.kind,
-    path: row.path,
-    line: row.line,
-    producer: row.producer || 'ctags',
-    resolution_limit: row.resolution_limit || 'definition-only; not a full call graph',
-  }));
 
   return wrapResult(
     {
       family: 'symbol',
       name,
       kind: symKind || undefined,
+      repo: repoId || undefined,
       limit,
       bundle_path: path.resolve(bundlePath),
     },
     records,
-    matched.length,
+    total,
     limit,
     warnings
   );
 }
 
 function querySource(bundlePath, opts = {}) {
-  const repoRoots = loadRepoRoots(bundlePath);
+  const repoId = (opts.repo || '').trim();
+  const repoRoots = loadRepoRoots(bundlePath, repoId);
   const filePath = resolveSourcePath(opts.path || '', repoRoots);
   const warnings = [];
 
@@ -510,6 +638,7 @@ function querySource(bundlePath, opts = {}) {
       {
         family: 'source',
         path: opts.path || '',
+        repo: repoId || undefined,
         line: opts.line || 1,
         bundle_path: path.resolve(bundlePath),
       },
@@ -544,6 +673,7 @@ function querySource(bundlePath, opts = {}) {
     {
       family: 'source',
       path: opts.path,
+      repo: repoId || undefined,
       line: body.line,
       radius,
       full: full || undefined,
@@ -552,6 +682,97 @@ function querySource(bundlePath, opts = {}) {
     records,
     1,
     1,
+    warnings
+  );
+}
+
+function queryAtlas(bundlePath, opts = {}) {
+  const limit = parseLimit(opts.limit, MAX_LIMIT);
+  const target = (opts.target || '').trim();
+  const repoId = (opts.repo || '').trim();
+  const repoFilter = resolveRepoFilterIds(bundlePath, repoId);
+  const section = (opts.section || 'components').trim().toLowerCase();
+  const facts = readJSON(path.join(bundlePath, 'atlas-facts.json'));
+  const content = readJSON(path.join(bundlePath, 'atlas-surface-content.json'));
+  const warnings = [];
+
+  if (!facts) {
+    return wrapResult(
+      { family: 'atlas', section, target: target || undefined, repo: repoId || undefined, limit, bundle_path: path.resolve(bundlePath) },
+      [],
+      0,
+      limit,
+      ['atlas-facts.json missing; run current portolan-scan/build-portolan-bundle']
+    );
+  }
+
+  let rows = [];
+  let artifact = 'atlas-facts.json';
+  if (section === 'surfaces' || section === 'surface-content') {
+    rows = Array.isArray(content?.routes) ? content.routes : [];
+    artifact = 'atlas-surface-content.json';
+    if (!content) warnings.push('atlas-surface-content.json missing; returning no surface-content records');
+  } else if (section === 'edges') {
+    rows = Array.isArray(facts.edges) ? facts.edges : [];
+  } else if (section === 'gaps') {
+    rows = Array.isArray(facts.gaps) ? facts.gaps : [];
+  } else {
+    rows = Array.isArray(facts.components) ? facts.components : [];
+  }
+
+  if (repoId && repoFilter.unknown) {
+    warnings.push(`repo not found in bundle: ${repoId}; returning no records`);
+  }
+  const matched = (repoId && repoFilter.unknown ? [] : rows).filter((row) => {
+    if (target) {
+      const rowTarget = row.target_id || row.targetId || row.from_target || row.to_target || row.id || '';
+      const includesTarget = rowTarget === target ||
+        row.from_target === target ||
+        row.to_target === target ||
+        (row.repo_ids || []).includes(target);
+      if (!includesTarget) return false;
+    }
+    if (repoId) {
+      const rowRepo = row.repo_id || row.repoId || row.from_repo || row.to_repo || '';
+      const includesRepo = repoFilter.ids.includes(rowRepo) ||
+        repoFilter.ids.includes(row.from_repo) ||
+        repoFilter.ids.includes(row.to_repo) ||
+        (row.repo_ids || []).some((id) => repoFilter.ids.includes(id));
+      if (!includesRepo) return false;
+    }
+    return true;
+  });
+
+  const records = matched.map((row, index) => {
+    const id = row.id || row.target_id || row.route_id || `${section}-${index + 1}`;
+    return {
+      id,
+      reference: makeRef(bundlePath, artifact, id),
+      bundle_path: path.resolve(bundlePath),
+      artifact,
+      record_id: id,
+      kind: section === 'components' ? 'atlas-component' : `atlas-${section}`,
+      evidence_state: row.evidence_state || row.state || 'metadata-visible',
+      status: row.status || 'observed',
+      summary: row.summary || row.label || row.title || id,
+      target_id: row.target_id || row.targetId || '',
+      repo_id: row.repo_id || row.repoId || '',
+      payload: row,
+    };
+  });
+
+  return wrapResult(
+    {
+      family: 'atlas',
+      section,
+      target: target || undefined,
+      repo: repoId || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+    },
+    records,
+    records.length,
+    limit,
     warnings
   );
 }
@@ -683,6 +904,7 @@ function queryRelationships(bundlePath, opts = {}) {
   const limit = parseLimit(opts.limit);
   const type = (opts.type || '').trim().toLowerCase();
   const repoId = (opts.repo || '').trim();
+  const repoFilter = resolveRepoFilterIds(bundlePath, repoId);
   const relPath = path.join(bundlePath, 'relationships.jsonl');
   const warnings = [];
 
@@ -697,11 +919,14 @@ function queryRelationships(bundlePath, opts = {}) {
   }
 
   const rows = readJSONL(relPath);
-  const matched = rows.filter((r) => {
+  if (repoId && repoFilter.unknown) {
+    warnings.push(`repo not found in bundle: ${repoId}; returning no records`);
+  }
+  const matched = (repoId && repoFilter.unknown ? [] : rows).filter((r) => {
     if (type && (r.type || '').toLowerCase() !== type) return false;
     if (repoId) {
       const members = [r.from_repo, r.to_repo, ...(r.repos || [])].filter(Boolean);
-      if (!members.includes(repoId)) return false;
+      if (!members.some((member) => repoFilter.ids.includes(member))) return false;
     }
     return true;
   });
@@ -830,6 +1055,8 @@ function dispatch(bundlePath, family, opts) {
       return querySymbol(resolved, opts);
     case 'source':
       return querySource(resolved, opts);
+    case 'atlas':
+      return queryAtlas(resolved, opts);
     case 'evidence-index':
       return queryEvidenceIndex(resolved, opts);
     case 'claims':
@@ -870,6 +1097,7 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
     return dispatch(bundlePath, 'search', {
       q: searchParams.get('q'),
       pathScope: searchParams.get('path_scope') || searchParams.get('path'),
+      repo: searchParams.get('repo'),
       limit: searchParams.get('limit'),
     });
   }
@@ -877,15 +1105,25 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
     return dispatch(bundlePath, 'symbol', {
       name: searchParams.get('name') || searchParams.get('q'),
       kind: searchParams.get('kind'),
+      repo: searchParams.get('repo'),
       limit: searchParams.get('limit'),
     });
   }
   if (p === '/api/source') {
     return dispatch(bundlePath, 'source', {
       path: searchParams.get('path'),
+      repo: searchParams.get('repo'),
       line: searchParams.get('line'),
       radius: searchParams.get('radius'),
       full: searchParams.get('full'),
+    });
+  }
+  if (p === '/api/atlas') {
+    return dispatch(bundlePath, 'atlas', {
+      section: searchParams.get('section'),
+      target: searchParams.get('target') || searchParams.get('component'),
+      repo: searchParams.get('repo'),
+      limit: searchParams.get('limit'),
     });
   }
   if (p === '/api/evidence-index') {
@@ -933,6 +1171,7 @@ module.exports = {
   querySearch,
   querySymbol,
   querySource,
+  queryAtlas,
   queryEvidenceIndex,
   queryClaims,
   queryRepos,

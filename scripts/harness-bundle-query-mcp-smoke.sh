@@ -7,6 +7,10 @@ FIXTURE_TARGET="$ROOT/internal/testfixtures/portolan-bundle/target"
 FIXTURE_BUNDLE=$(mktemp -d)
 trap 'rm -rf "$FIXTURE_BUNDLE"' EXIT
 
+if [[ ! -d "$ROOT/viewer/node_modules/@modelcontextprotocol/sdk" ]]; then
+  "$ROOT/scripts/npm-wsl.sh" ci --prefix "$ROOT/viewer" >/dev/null
+fi
+
 mkdir -p "$FIXTURE_BUNDLE/producers"
 cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$FIXTURE_BUNDLE/producers/"
 "$ROOT/scripts/build-portolan-bundle.sh" "$FIXTURE_TARGET" "$FIXTURE_BUNDLE"
@@ -14,9 +18,9 @@ cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$FIXTURE_BUNDLE
 node "$ROOT/viewer/scripts/bundle-query-mcp-smoke-client.js" "$FIXTURE_BUNDLE" \
   | grep -q 'bundle-query-mcp-smoke-client: ok'
 
-# --list-tools (spec 098 base + claims 106 + repos/relationships 107)
-PORTOLAN_BUNDLE_DIR="$FIXTURE_BUNDLE" node "$ROOT/viewer/scripts/bundle-query-mcp.js" --list-tools \
-  | jq -e 'length == 10' >/dev/null
+# --list-tools (spec 098 base + claims 106 + repos/relationships 107 + atlas query)
+PORTOLAN_BUNDLE_DIR="$FIXTURE_BUNDLE" "$ROOT/scripts/portolan-bundle-query-mcp.sh" --list-tools \
+  | jq -e 'length == 11' >/dev/null
 
 # claims family: missing claims.jsonl must warn, not fail
 node "$ROOT/viewer/scripts/bundle-query-cli.js" claims --bundle "$FIXTURE_BUNDLE" \

@@ -54,8 +54,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === '/favicon.ico') {
+    res.writeHead(204);
+    return res.end();
+  }
+
   if (url.pathname === '/source') {
-    const filePath = bundleQuery.resolveSourcePath(url.searchParams.get('path') || '', repoRoots);
+    const sourceRoots = url.searchParams.get('repo')
+      ? bundleQuery.loadRepoRoots(bundlePath, url.searchParams.get('repo'))
+      : repoRoots;
+    const filePath = bundleQuery.resolveSourcePath(url.searchParams.get('path') || '', sourceRoots);
     if (!filePath) {
       sendJson(res, 403, { error: 'forbidden or not found' });
       return;
@@ -63,7 +71,11 @@ const server = http.createServer((req, res) => {
     try {
       const line = url.searchParams.get('line') || '1';
       const body = bundleQuery.readSourceSnippet(filePath, line);
-      sendJson(res, 200, body);
+      if ((url.searchParams.get('format') || '').toLowerCase() === 'json') {
+        sendJson(res, 200, body);
+      } else {
+        sendSourceHtml(res, body);
+      }
     } catch {
       sendJson(res, 500, { error: 'read failed' });
     }
@@ -110,10 +122,19 @@ const server = http.createServer((req, res) => {
     return sendFile(path.join(bundlePath, 'relationships.jsonl'), res);
   }
   if (url.pathname === '/bundle/claims.jsonl') {
-    return sendFile(path.join(bundlePath, 'claims.jsonl'), res);
+    return sendOptionalFile(path.join(bundlePath, 'claims.jsonl'), res, '');
   }
   if (url.pathname === '/bundle/claims-import-report.json') {
-    return sendFile(path.join(bundlePath, 'claims-import-report.json'), res);
+    return sendOptionalFile(path.join(bundlePath, 'claims-import-report.json'), res, '{}');
+  }
+  if (url.pathname === '/bundle/atlas-surfaces.json') {
+    return sendOptionalFile(path.join(bundlePath, 'atlas-surfaces.json'), res, '{}');
+  }
+  if (url.pathname === '/bundle/atlas-facts.json') {
+    return sendOptionalFile(path.join(bundlePath, 'atlas-facts.json'), res, '{}');
+  }
+  if (url.pathname === '/bundle/atlas-surface-content.json') {
+    return sendOptionalFile(path.join(bundlePath, 'atlas-surface-content.json'), res, '{}');
   }
 
   const distResolved = path.resolve(distDir) + path.sep;
@@ -138,6 +159,66 @@ function sendFile(filePath, res) {
     res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain' });
     res.end(data);
   });
+}
+
+function sendOptionalFile(filePath, res, fallback) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      const ext = path.extname(filePath);
+      res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain' });
+      return res.end(fallback);
+    }
+    const ext = path.extname(filePath);
+    res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain' });
+    res.end(data);
+  });
+}
+
+function sendSourceHtml(res, body) {
+  const rows = body.lines.map((line) => `
+    <tr class="${line.highlight ? 'is-highlight' : ''}">
+      <th>${line.no}</th>
+      <td><code>${escapeHtml(line.text)}</code></td>
+    </tr>
+  `).join('');
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.end(`<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portolan source snippet</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: #101114; color: #ededed; }
+    header { position: sticky; top: 0; padding: 16px 18px; background: rgba(16,17,20,.94); border-bottom: 1px solid rgba(255,255,255,.1); }
+    strong { display: block; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+    span { color: #9fa3b6; font-size: 12px; }
+    main { padding: 16px; }
+    table { width: 100%; border-collapse: collapse; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    th { width: 58px; padding: 0 12px 0 0; color: #777d94; text-align: right; user-select: none; vertical-align: top; }
+    td { padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    tr.is-highlight th, tr.is-highlight td { background: rgba(245,166,35,.16); color: #fff7df; }
+    tr.is-highlight th { color: #f5a623; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>${escapeHtml(body.path)}</strong>
+    <span>lines ${body.startLine}-${body.endLine} of ${body.totalLines}; selected line ${body.line}</span>
+  </header>
+  <main><table><tbody>${rows}</tbody></table></main>
+</body>
+</html>`);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 server.listen(port, '127.0.0.1', () => {

@@ -78,6 +78,7 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         q: { type: 'string', description: 'Query string (required)' },
+        repo: { type: 'string', description: 'Optional repo/component id scope' },
         path_scope: { type: 'string' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
@@ -92,6 +93,7 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Symbol name (required)' },
+        repo: { type: 'string', description: 'Optional repo/component id scope' },
         kind: { type: 'string' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
@@ -106,10 +108,26 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         path: { type: 'string', description: 'Repo-relative path (required)' },
+        repo: { type: 'string', description: 'Optional repo id to disambiguate relative paths' },
         line: { type: 'integer', minimum: 1 },
         radius: { type: 'integer', minimum: 0 },
       },
       required: ['path'],
+    },
+  },
+  {
+    name: 'portolan_query_atlas',
+    description:
+      'Query atlas components, surfaces, edges, or atlas-level gaps from atlas-facts.json and atlas-surface-content.json. Use for selected component/file drill-down before making landscape claims.',
+    family: 'atlas',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        section: { type: 'string', description: 'components | surfaces | edges | gaps' },
+        target: { type: 'string', description: 'Target/component id from atlas-facts.json' },
+        repo: { type: 'string', description: 'Repo id from repos family' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
     },
   },
   {
@@ -196,11 +214,13 @@ function familyOpts(family, args) {
     case 'landscape':
       return { section: args.section };
     case 'search':
-      return { q: args.q, pathScope: args.path_scope, limit: args.limit };
+      return { q: args.q, repo: args.repo, pathScope: args.path_scope, limit: args.limit };
     case 'symbol':
-      return { name: args.name, kind: args.kind, limit: args.limit };
+      return { name: args.name, repo: args.repo, kind: args.kind, limit: args.limit };
     case 'source':
-      return { path: args.path, line: args.line, radius: args.radius };
+      return { path: args.path, repo: args.repo, line: args.line, radius: args.radius };
+    case 'atlas':
+      return { section: args.section, target: args.target, repo: args.repo, limit: args.limit };
     case 'evidence-index':
       return { family: args.family, limit: args.limit };
     case 'claims':

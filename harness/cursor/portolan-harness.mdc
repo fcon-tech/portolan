@@ -1,17 +1,26 @@
 ---
-description: Portolan harness — recipes, Portolan bundle, local map viewer
+description: Portolan atlas harness for local landscape, architecture, duplication, config, and technical-debt questions
 globs:
 alwaysApply: false
 ---
 
-# Portolan harness
+# Portolan atlas harness
 
-When mapping a local codebase for duplication, static findings, or dependency hubs:
+When mapping, explaining, auditing, or navigating a local codebase or multi-repo
+landscape:
 
 1. Read `harness/SKILL.md` in the Portolan checkout.
-2. Run approved recipes from `harness/recipes/`.
-3. Build bundle: `scripts/build-portolan-bundle.sh <target> <bundle-dir>`.
-4. Open viewer: `cd viewer && npm run serve -- --bundle <bundle-dir>`.
-5. Follow `harness/guardrails/citation-rules.md` for answers.
+2. Build the atlas bundle first:
+   `scripts/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer`
+3. Remove `--skip-install` only after explicit operator approval to install
+   missing local OSS tools.
+4. Query the bundle at answer time with `scripts/portolan-bundle-query.sh`
+   instead of loading the full bundle into chat.
+   Start with `repos`, `relationships`, `hotspots`, and `gaps`; use `search`,
+   `symbol`, and `source` for drill-down when indexes or selected paths exist.
+5. Open the viewer when the user needs navigation:
+   `cd viewer && node scripts/build-static.js && node scripts/serve.js --bundle <bundle-dir>`.
+6. Follow `harness/guardrails/citation-rules.md` and preserve `unknown`,
+   `cannot_verify`, and `not_assessed`.
 
 Do not require `go install` unless the user asks for the legacy Go path.
