@@ -28,7 +28,7 @@ git -C "$DRY_TARGET" init -q
   --harness all \
   --dry-run >/dev/null
 
-if [[ -e "$DRY_TARGET/.cursor/rules/portolan-atlas.mdc" || -e "$DRY_TARGET/AGENTS.md" ]]; then
+if [[ -e "$DRY_TARGET/.cursor/rules/portolan-atlas.mdc" || -e "$DRY_TARGET/AGENTS.md" || -e "$DRY_TARGET/.portolan" ]]; then
   echo "dry-run wrote install files" >&2
   exit 1
 fi
@@ -49,7 +49,12 @@ printf '# Existing Project Instructions\n\nKeep this line.\n' >"$TARGET/AGENTS.m
 
 test -f "$TARGET/.cursor/rules/portolan-atlas.mdc"
 test -f "$TARGET/AGENTS.md"
+test -x "$TARGET/.portolan/bin/portolan-scan.sh"
+test -x "$TARGET/.portolan/bin/portolan-bundle-query.sh"
+test -x "$TARGET/.portolan/bin/portolan-viewer.sh"
 
+rg -q 'PORTOLAN_BIN=.*/\.portolan/bin' "$TARGET/.cursor/rules/portolan-atlas.mdc"
+rg -q 'PORTOLAN_BIN=.*/\.portolan/bin' "$TARGET/AGENTS.md"
 rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50' "$TARGET/.cursor/rules/portolan-atlas.mdc"
 rg -q 'portolan-bundle-query\.sh" repos --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
 rg -q 'portolan-bundle-query\.sh" gaps --bundle' "$TARGET/.cursor/rules/portolan-atlas.mdc"
@@ -118,6 +123,7 @@ git -C "$FULL_TARGET" init -q
   --harness all \
   --scan-profile full
 
+test -x "$FULL_TARGET/.portolan/bin/portolan-scan.sh"
 rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer$' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"
 rg -q 'portolan-scan\.sh".*--yes --skip-install --no-viewer$' "$FULL_TARGET/AGENTS.md"
 if rg -q -- '--core-only' "$FULL_TARGET/.cursor/rules/portolan-atlas.mdc"; then

@@ -45,6 +45,7 @@ Outputs:
 
 - Cursor: `<target-root>/.cursor/rules/portolan-atlas.mdc`
 - OpenCode: managed Portolan block in `<target-root>/AGENTS.md`
+- Command wrappers: `<target-root>/.portolan/bin/`
 - Default bundle path: `<target-root>/.portolan/atlas`
 
 The installer also adds `.portolan/` to the target's local
@@ -63,10 +64,11 @@ Cursor/OpenCode CLIs are available on the current machine:
 scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
-The product gate runs the static install smoke, real Cursor/OpenCode runtime
-lanes, local harness smoke, schemas, Go checks, viewer build checks, and diff
-whitespace. Omit `--require-agent-runtime` only when unavailable CLIs should be
-recorded as `not_assessed` instead of failing the check.
+The product gate runs the static install smoke, target-local command wrapper
+checks, real Cursor/OpenCode runtime lanes, local harness smoke, schemas, Go
+checks, viewer build checks, and diff whitespace. Omit
+`--require-agent-runtime` only when unavailable CLIs should be recorded as
+`not_assessed` instead of failing the check.
 
 ## Legacy Go Binary
 ### Installed Binary

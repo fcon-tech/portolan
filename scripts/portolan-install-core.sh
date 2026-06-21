@@ -20,6 +20,7 @@ usage: $prog <target-root> [options]
 Installs Portolan as an agent-usable atlas layer in a target project:
   - Cursor:  .cursor/rules/portolan-atlas.mdc
   - OpenCode: managed Portolan block in AGENTS.md
+  - Commands: target-local wrappers in .portolan/bin/
 
 Options:
   --harness LIST          Comma-separated: cursor,opencode,all (default all)
@@ -149,6 +150,26 @@ write_if_changed() {
   log "wrote $path"
 }
 
+write_managed_executable() {
+  local path=$1 content_file=$2
+  if [[ -f "$path" ]] && cmp -s "$path" "$content_file"; then
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+      chmod +x "$path"
+    fi
+    log "unchanged $path"
+    return 0
+  fi
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    log "would write $path"
+    sed 's/^/  /' "$content_file" >&2
+    return 0
+  fi
+  mkdir -p "$(dirname "$path")"
+  cp "$content_file" "$path"
+  chmod +x "$path"
+  log "wrote $path"
+}
+
 replace_managed_block() {
   local file=$1 begin=$2 end=$3 block_file=$4
   local tmp
@@ -255,6 +276,7 @@ Set these paths for this project:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
+PORTOLAN_BIN=$WRAPPER_DIR_SH
 \`\`\`
 
 Build the atlas first by running this complete block:
@@ -263,7 +285,8 @@ Build the atlas first by running this complete block:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
 \`\`\`
 
 Remove \`--skip-install\` only after explicit operator approval to install
@@ -276,7 +299,8 @@ Semgrep, Syft, and larger hotspot coverage:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
 \`\`\`
 
 Query the bundle instead of loading everything into chat:
@@ -284,12 +308,13 @@ Query the bundle instead of loading everything into chat:
 \`\`\`bash
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
 \`\`\`
 
 For selected code, resolve the repo/path through \`repos\`, \`search\`,
@@ -300,7 +325,8 @@ human navigation:
 \`\`\`bash
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-cd "\$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "\$BUNDLE_DIR"
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-viewer.sh"
 \`\`\`
 EOF
 }
@@ -324,6 +350,7 @@ Project paths:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
+PORTOLAN_BIN=$WRAPPER_DIR_SH
 \`\`\`
 
 Build the atlas first by running this complete block:
@@ -332,7 +359,8 @@ Build the atlas first by running this complete block:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $SCAN_ARGS
 \`\`\`
 
 Remove \`--skip-install\` only after explicit operator approval to install
@@ -345,7 +373,8 @@ Semgrep, Syft, and larger hotspot coverage:
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 TARGET_ROOT=$TARGET_ROOT_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-scan.sh" "\$TARGET_ROOT" "\$BUNDLE_DIR" $FULL_SCAN_ARGS
 \`\`\`
 
 Query the bundle instead of loading everything into chat:
@@ -353,12 +382,13 @@ Query the bundle instead of loading everything into chat:
 \`\`\`bash
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
-"\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" gaps --bundle "\$BUNDLE_DIR" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" search --bundle "\$BUNDLE_DIR" --q "<term>" --limit 20
+"\$PORTOLAN_BIN/portolan-bundle-query.sh" source --bundle "\$BUNDLE_DIR" --repo "<repo-id>" --path "<path>" --line 1
 \`\`\`
 
 For selected code, resolve the repo/path through \`repos\`, \`search\`,
@@ -369,15 +399,69 @@ human navigation:
 \`\`\`bash
 PORTOLAN_PATH=$PORTOLAN_PATH_SH
 BUNDLE_DIR=$BUNDLE_DIR_SH
-cd "\$PORTOLAN_PATH/viewer" && node scripts/build-static.js && node scripts/serve.js --bundle "\$BUNDLE_DIR"
+PORTOLAN_BIN=$WRAPPER_DIR_SH
+"\$PORTOLAN_BIN/portolan-viewer.sh"
 \`\`\`
 <!-- PORTOLAN END -->
 EOF
 }
 
+make_scan_wrapper() {
+  local out=$1
+  cat >"$out" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+PORTOLAN_PATH=$PORTOLAN_PATH_SH
+exec "\$PORTOLAN_PATH/scripts/portolan-scan.sh" "\$@"
+EOF
+}
+
+make_query_wrapper() {
+  local out=$1
+  cat >"$out" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+PORTOLAN_PATH=$PORTOLAN_PATH_SH
+exec "\$PORTOLAN_PATH/scripts/portolan-bundle-query.sh" "\$@"
+EOF
+}
+
+make_viewer_wrapper() {
+  local out=$1
+  cat >"$out" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+PORTOLAN_PATH=$PORTOLAN_PATH_SH
+BUNDLE_DIR=$BUNDLE_DIR_SH
+if [[ \$# -eq 0 ]]; then
+  set -- --bundle "\$BUNDLE_DIR"
+fi
+cd "\$PORTOLAN_PATH/viewer"
+node scripts/build-static.js
+exec node scripts/serve.js "\$@"
+EOF
+}
+
+install_wrappers() {
+  local scan_wrapper query_wrapper viewer_wrapper
+  scan_wrapper="$TMP_DIR/portolan-scan.sh"
+  query_wrapper="$TMP_DIR/portolan-bundle-query.sh"
+  viewer_wrapper="$TMP_DIR/portolan-viewer.sh"
+  make_scan_wrapper "$scan_wrapper"
+  make_query_wrapper "$query_wrapper"
+  make_viewer_wrapper "$viewer_wrapper"
+  write_managed_executable "$WRAPPER_DIR/portolan-scan.sh" "$scan_wrapper"
+  write_managed_executable "$WRAPPER_DIR/portolan-bundle-query.sh" "$query_wrapper"
+  write_managed_executable "$WRAPPER_DIR/portolan-viewer.sh" "$viewer_wrapper"
+}
+
 check_harness_list
+WRAPPER_DIR="$TARGET_ROOT/.portolan/bin"
+WRAPPER_DIR_SH=$(shell_quote "$WRAPPER_DIR")
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
+
+install_wrappers
 
 if has_harness cursor; then
   cursor_rule="$TMP_DIR/portolan-atlas.mdc"
@@ -398,6 +482,7 @@ portolan install: complete
   target:        $TARGET_ROOT
   portolan path: $PORTOLAN_PATH
   bundle dir:    $BUNDLE_DIR
+  command dir:   $WRAPPER_DIR
   harness:       $HARNESS
   scan profile:  $SCAN_PROFILE
 EOF

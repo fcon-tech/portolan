@@ -154,6 +154,32 @@ validate_bundle() {
   rg -q 'portolan-scan\.sh' "$transcript" || fail "$lane transcript missing portolan-scan.sh"
   rg -q 'portolan-bundle-query\.sh.*repos --bundle' "$transcript" || fail "$lane transcript missing repos query"
   rg -q 'portolan-bundle-query\.sh.*gaps --bundle' "$transcript" || fail "$lane transcript missing gaps query"
+  validate_target_read_only "$lane" "$target"
+}
+
+validate_target_read_only() {
+  local lane=$1 target=$2 unexpected
+  cmp -s "$target/README.md" \
+    <(printf '# Sample Service\n\nPortolan %s acceptance target.\n' "$lane") \
+    || fail "$lane modified README.md"
+  cmp -s "$target/package.json" \
+    <(printf '{"scripts":{"test":"echo ok"},"dependencies":{"express":"latest"}}\n') \
+    || fail "$lane modified package.json"
+  cmp -s "$target/src/index.js" \
+    <(printf 'export function hello(name) { return `hello ${name}`; }\n') \
+    || fail "$lane modified src/index.js"
+
+  unexpected=$(
+    cd "$target"
+    find . \
+      -path './.git' -prune -o \
+      -path './.cursor' -prune -o \
+      -path './.portolan' -prune -o \
+      -type f -print |
+      sort |
+      grep -Ev '^(\./AGENTS\.md|\./README\.md|\./package\.json|\./src/index\.js)$' || true
+  )
+  [[ -z "$unexpected" ]] || fail "$lane wrote unexpected target files: $unexpected"
 }
 
 run_cursor_lane() {

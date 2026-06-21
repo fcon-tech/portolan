@@ -43,6 +43,7 @@ Installer пишет:
 
 - Cursor: `<target-root>/.cursor/rules/portolan-atlas.mdc`
 - OpenCode: managed Portolan block в `<target-root>/AGENTS.md`
+- Command wrappers: `<target-root>/.portolan/bin/`
 - Default bundle path: `<target-root>/.portolan/atlas`
 
 ## 2. Построй Atlas Bundle
