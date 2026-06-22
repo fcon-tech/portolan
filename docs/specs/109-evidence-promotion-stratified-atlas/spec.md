@@ -1,13 +1,13 @@
 # Feature Specification: Evidence Promotion and Stratified Atlas Contract (109)
 
-**Status**: PR #73 blocker-fix pass on branch
-`codex/109-evidence-promotion-stratified-atlas`; review-blocker fixes applied
-for git-aware inventory, required atlas build failures, JSONL validation,
-truncation health, family-total oversize health, source-role taxonomy, and
-`raw_available_only` health. Local verification is recorded in
-`reviews/pr-readiness-closeout-2026-06-22.md`. The project owner waived
-separate GitHub code-review approval for this PR on 2026-06-22; merge still
-requires an explicit merge command.
+**Status**: Merged via PR #73 into `portolan-next` with squash commit
+`8ec8f61d10ba651e41ca63866a42283300f0ae22`. Review-blocker fixes applied for
+git-aware inventory, required atlas build failures, JSONL validation, truncation
+health, family-total oversize health, source-role taxonomy, `raw_available_only`
+health, streaming full-scale symbol-index promotion, and strict Bigtop corpus
+acceptance. Local verification is recorded in
+`reviews/pr-readiness-closeout-2026-06-22.md`; merge evidence is recorded in
+`reviews/merge-closeout-2026-06-22.md`.
 
 **Input**: Research synthesis
 `/home/fall_out_bug/projects/sdp/portolan-lab/research/evidence-promotion-stratification-2026-06-22/final-report.md`
