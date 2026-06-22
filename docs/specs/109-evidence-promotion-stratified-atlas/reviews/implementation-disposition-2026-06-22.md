@@ -81,15 +81,23 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   verification: symbol-index promoted facts normalize producer-supplied
   `evidence_state` through the allowed enum and fall back to
   `metadata-visible`.
+- Full Bigtop rerun found and fixed an implementation defect: the promotion
+  builder tried to read the 855M `symbol-index.jsonl` into one JavaScript
+  string and failed with `ERR_STRING_TOO_LONG`. The builder now streams
+  symbol-index JSONL for health counts and keeps only the bounded promoted-fact
+  sample in memory.
 - Separate GitHub code-review approval is waived by the project owner for this
   PR. GitHub `reviewDecision` may remain empty and is not treated as a blocker
   for PR #73.
-- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun in this
-  branch because the full input bundle referenced by the research artifact was
-  not present as a local reusable bundle. This is not a hidden PR readiness
-  gate. The available lab core bundle contains 3,600 promoted symbol rows and
-  verifies bounded degraded health behavior; focused smoke fixtures verify the
-  pollution/fixture paths.
+- Full Bigtop symbol-index regression is verified on current head:
+  `scripts/build-evidence-promotion-atlas.sh /tmp/portolan-bigtop-20260621-193430`
+  and
+  `scripts/harness-bigtop-acceptance.sh /tmp/portolan-bigtop-20260621-193430`
+  passed. The 1.8G bundle contains 18 repos and 3,019,203 symbol rows; health
+  records flag 2,012,865 non-promotable symbol rows as
+  `polluted_by_non_source`, 1,214,223 test/fixture symbol rows as
+  `dominated_by_fixture_data`, symbol promoted-fact truncation, and oversized
+  raw symbol artifacts.
 - Merge is not executed by this closeout; it still requires an explicit merge
   command.
 

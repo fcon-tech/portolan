@@ -91,14 +91,15 @@
         oversize, cap-driven `non_exhaustive` health, `package.json`
         build-metadata classification, `secret_reference_surface`, and
         required atlas build failures.
-- [x] Run polluted-symbol regression and verify polluted rows no longer look
-      like clean atlas truth.
-      - 2026-06-22: available lab core bundle was copied to a temp directory;
-        promotion layer built and validated. Focused smoke fixtures also verify
-        pollution/fixture health paths. The historical 3,019,203-row Bigtop
-        corpus was not rerun in PR #73 because the reusable full input bundle
-        was not present; that full-corpus rerun is outside this PR readiness
-        gate.
+- [x] Run full Bigtop polluted-symbol regression and verify polluted rows no
+      longer look like clean atlas truth.
+      - 2026-06-22 current-head rerun:
+        `scripts/build-evidence-promotion-atlas.sh /tmp/portolan-bigtop-20260621-193430`
+        and
+        `scripts/harness-bigtop-acceptance.sh /tmp/portolan-bigtop-20260621-193430`.
+        Verified 3,019,203 symbol rows, `polluted_by_non_source` for 2,012,865
+        rows, `dominated_by_fixture_data` for 1,214,223 test/fixture rows,
+        symbol promoted-fact truncation, and oversized raw symbol health.
 - [x] Run Node or JS/TS large raw artifact regression and verify lazy refs
       replace default raw embedding, disabling, or arbitrary truncation.
 - [x] Run claim import negative test and verify broken refs are rejected.

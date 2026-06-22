@@ -150,6 +150,48 @@ function readJSONL(file) {
   });
 }
 
+function scanJSONL(file, { limit = 0, onRow = null } = {}) {
+  const result = {
+    count: 0,
+    parse_errors: 0,
+    rows: [],
+  };
+  if (!fs.existsSync(file)) return result;
+
+  const fd = fs.openSync(file, 'r');
+  const buffer = Buffer.allocUnsafe(1024 * 1024);
+  let carry = '';
+
+  const consumeLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    try {
+      const row = JSON.parse(trimmed);
+      result.count += 1;
+      if (result.rows.length < limit) result.rows.push(row);
+      if (onRow) onRow(row, result.count);
+    } catch {
+      result.parse_errors += 1;
+    }
+  };
+
+  try {
+    for (;;) {
+      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      const chunk = carry + buffer.toString('utf8', 0, bytesRead);
+      const lines = chunk.split('\n');
+      carry = lines.pop() || '';
+      for (const line of lines) consumeLine(line);
+    }
+    if (carry) consumeLine(carry);
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  return result;
+}
+
 function readJSONLStrict(file, errors) {
   if (!fs.existsSync(file)) {
     errors.push(`missing ${path.basename(file)}`);
@@ -472,7 +514,7 @@ function build(bundleDir, targetRootArg) {
       ? manifest.source_file_count
       : inventoryDiscoveredFileCount || totalSources;
   const nonPromotable = (roleCounts.test_code || 0) + (roleCounts.test_artifact || 0) + (roleCounts.fixture_data || 0) + (roleCounts.generated_code || 0) + (roleCounts.vendor_code || 0);
-  const fixtureish = (roleCounts.fixture_data || 0) + (roleCounts.test_artifact || 0);
+  const fixtureish = (roleCounts.test_code || 0) + (roleCounts.fixture_data || 0) + (roleCounts.test_artifact || 0);
   const lowConfidence = classified.filter((r) => r.confidence < THRESHOLDS.low_confidence_threshold || r.source_role === 'unknown_role').length;
 
   const health = FAMILIES.map((family) => {
@@ -533,12 +575,12 @@ function build(bundleDir, targetRootArg) {
       }));
     }
     if (fixtureish / totalSources > THRESHOLDS.dominated_by_fixture_data_ratio) {
-      health.push(healthRecord('source_code', 'dominated_by_fixture_data', 'Fixture and test-artifact files exceed 35 percent of classified files.', classified.filter((r) => ['fixture_data', 'test_artifact'].includes(r.source_role)).map((r) => `source-role:${r.id}`), 'classified-sources.jsonl', {
+      health.push(healthRecord('source_code', 'dominated_by_fixture_data', 'Test, fixture, and test-artifact files exceed 35 percent of classified files.', classified.filter((r) => ['test_code', 'fixture_data', 'test_artifact'].includes(r.source_role)).map((r) => `source-role:${r.id}`), 'classified-sources.jsonl', {
         id: 'promotion-health-source-code-fixtures',
         observed_count: fixtureish,
         denominator: totalSources,
         threshold: THRESHOLDS.dominated_by_fixture_data_ratio,
-        calculation_rule: '(fixture_data + test_artifact) / classified_source_records > 0.35',
+        calculation_rule: '(test_code + fixture_data + test_artifact) / classified_source_records > 0.35',
       }));
     }
     if (lowConfidence / totalSources > THRESHOLDS.low_confidence_ratio) {
@@ -566,33 +608,46 @@ function build(bundleDir, targetRootArg) {
   }
 
   const sourceSnapshotAt = Date.parse(manifest.source_snapshot_at || manifest.source_snapshot_time || '');
-  const symbolRows = readJSONL(path.join(bundleDir, 'symbol-index.jsonl'));
-  if (symbolRows.length > 0) {
-    const classifiedSymbolRows = symbolRows.map((row) => {
+  let symbolNonPromotable = 0;
+  let symbolFixtureish = 0;
+  const symbolRows = scanJSONL(path.join(bundleDir, 'symbol-index.jsonl'), {
+    limit: PROMOTED_FACT_ROW_LIMIT,
+    onRow: (row) => {
       const [role, confidence] = roleForPath(row.path || '');
-      return { row, role, confidence };
-    });
-    const symbolNonPromotable = classifiedSymbolRows.filter((item) =>
-      item.confidence < THRESHOLDS.low_confidence_threshold ||
-      ['test_code', 'test_artifact', 'fixture_data', 'generated_code', 'vendor_code', 'configuration', 'deployment_model', 'build_metadata', 'ci_cd', 'documentation', 'unknown_role'].includes(item.role)
-    ).length;
-    const symbolFixtureish = classifiedSymbolRows.filter((item) => ['fixture_data', 'test_artifact'].includes(item.role)).length;
-    if (symbolNonPromotable / symbolRows.length > THRESHOLDS.polluted_by_non_source_ratio) {
+      if (
+        confidence < THRESHOLDS.low_confidence_threshold ||
+        ['test_code', 'test_artifact', 'fixture_data', 'generated_code', 'vendor_code', 'configuration', 'deployment_model', 'build_metadata', 'ci_cd', 'documentation', 'unknown_role'].includes(role)
+      ) {
+        symbolNonPromotable += 1;
+      }
+      if (['test_code', 'fixture_data', 'test_artifact'].includes(role)) symbolFixtureish += 1;
+    },
+  });
+  if (symbolRows.count > 0) {
+    if (symbolNonPromotable / symbolRows.count > THRESHOLDS.polluted_by_non_source_ratio) {
       health.push(healthRecord('symbol_index', 'polluted_by_non_source', 'Non-promotable source roles exceed 50 percent of symbol-index rows.', ['symbol-index.jsonl'], 'symbol-index.jsonl', {
         id: 'promotion-health-symbol-index-pollution',
         observed_count: symbolNonPromotable,
-        denominator: symbolRows.length,
+        denominator: symbolRows.count,
         threshold: THRESHOLDS.polluted_by_non_source_ratio,
         calculation_rule: 'non_promotable_symbol_row_roles / symbol_index_rows > 0.5',
       }));
     }
-    if (symbolFixtureish / symbolRows.length > THRESHOLDS.dominated_by_fixture_data_ratio) {
-      health.push(healthRecord('symbol_index', 'dominated_by_fixture_data', 'Fixture and test-artifact paths exceed 35 percent of symbol-index rows.', ['symbol-index.jsonl'], 'symbol-index.jsonl', {
+    if (symbolFixtureish / symbolRows.count > THRESHOLDS.dominated_by_fixture_data_ratio) {
+      health.push(healthRecord('symbol_index', 'dominated_by_fixture_data', 'Test, fixture, and test-artifact paths exceed 35 percent of symbol-index rows.', ['symbol-index.jsonl'], 'symbol-index.jsonl', {
         id: 'promotion-health-symbol-index-fixtures',
         observed_count: symbolFixtureish,
-        denominator: symbolRows.length,
+        denominator: symbolRows.count,
         threshold: THRESHOLDS.dominated_by_fixture_data_ratio,
-        calculation_rule: '(fixture_data + test_artifact symbol rows) / symbol_index_rows > 0.35',
+        calculation_rule: '(test_code + fixture_data + test_artifact symbol rows) / symbol_index_rows > 0.35',
+      }));
+    }
+    if (symbolRows.parse_errors > 0) {
+      health.push(healthRecord('symbol_index', 'cannot_verify', 'symbol-index.jsonl contains invalid JSONL rows.', ['symbol-index.jsonl'], 'symbol-index.jsonl', {
+        id: 'promotion-health-symbol-index-invalid-jsonl',
+        observed_count: symbolRows.parse_errors,
+        denominator: symbolRows.count + symbolRows.parse_errors,
+        calculation_rule: 'invalid symbol-index JSONL rows > 0',
       }));
     }
   }
@@ -703,13 +758,13 @@ function build(bundleDir, targetRootArg) {
     });
   }
 
-  if (symbolRows.length > PROMOTED_FACT_ROW_LIMIT) {
+  if (symbolRows.count > PROMOTED_FACT_ROW_LIMIT) {
     health.push(truncationHealth(
       'symbol_index',
       'promotion-health-symbol-index-promoted-facts-truncated',
       'Promoted symbol facts exceeded the per-family row limit.',
       PROMOTED_FACT_ROW_LIMIT,
-      symbolRows.length,
+      symbolRows.count,
       PROMOTED_FACT_ROW_LIMIT,
       ['symbol-index.jsonl'],
       'promoted-facts.jsonl',
@@ -717,7 +772,7 @@ function build(bundleDir, targetRootArg) {
       'Query symbol-index.jsonl or raise PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT before treating promoted symbol facts as exhaustive.'
     ));
   }
-  for (const row of symbolRows.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
+  for (const row of symbolRows.rows) {
     const absolute = row.path && path.isAbsolute(row.path) ? path.resolve(row.path) : '';
     const role = absolute ? roleByPath.get(absolute) : null;
     promoted.push({

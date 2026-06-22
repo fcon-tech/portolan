@@ -28,8 +28,8 @@ Blocker-fix base head before this pass:
   review cycle. The current blocker-fix pass is documented in
   `reviews/review-blocker-disposition-2026-06-22.md`.
 - Requirements drift: no open task checkboxes remain; spec/backlog/tasks now
-  describe blocker-fix PR state. The historical 3,019,203-row Bigtop corpus is
-  research motivation, not a hidden PR readiness gate.
+  describe blocker-fix PR state and current-head full Bigtop regression
+  evidence.
 - Product vision drift: no new network access, daemon behavior, credential use,
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
@@ -45,19 +45,32 @@ Blocker-fix base head before this pass:
 
 - verified: `node -c viewer/scripts/evidence-promotion-atlas.js`
 - verified: `node -c viewer/scripts/validate-atlas-schemas.js`
+- verified: `node -c viewer/scripts/bundle-query.js`
+- verified: `node -c viewer/scripts/bundle-query-cli.js`
+- verified: `node -c viewer/scripts/bundle-query-mcp.js`
 - verified: `jq empty harness/contracts/*.json`
 - verified: `scripts/harness-evidence-promotion-atlas-smoke.sh`
 - verified: `scripts/harness-bundle-query-smoke.sh`
 - verified: `scripts/harness-bundle-query-mcp-smoke.sh`
 - verified: `scripts/harness-portolan-smoke.sh`
+- verified: `scripts/build-evidence-promotion-atlas.sh /tmp/portolan-bigtop-20260621-193430`
+- verified: `scripts/harness-bigtop-acceptance.sh /tmp/portolan-bigtop-20260621-193430`
+- verified: `go test ./...`
+- verified: `go vet ./...`
 - verified after final documentation update: `git diff --check`
 
-## Out Of Scope / Not Rerun
+## Bigtop Regression Evidence
 
-- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun because
-  the reusable full input bundle was not present locally. This is not a PR #73
-  merge gate; the PR verifies the behavior with the available lab core bundle
-  and focused smoke fixtures.
+- Bundle: `/tmp/portolan-bigtop-20260621-193430`, 1.8G, 18 repos.
+- Symbol index: 3,019,203 rows.
+- `promotion-health-symbol-index-pollution`: `polluted_by_non_source`,
+  observed 2,012,865 / 3,019,203 rows.
+- `promotion-health-symbol-index-fixtures`: `dominated_by_fixture_data`,
+  observed 1,214,223 / 3,019,203 test/fixture rows.
+- `promotion-health-symbol-index-promoted-facts-truncated`: `non_exhaustive`,
+  observed 200 / 3,019,203 promoted symbol facts.
+- `promotion-health-oversized-family-symbol_index`: `oversized`,
+  observed 895,795,098 bytes.
 
 ## Decision
 

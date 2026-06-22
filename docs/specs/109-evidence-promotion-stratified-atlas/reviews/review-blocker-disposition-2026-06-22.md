@@ -49,10 +49,10 @@ Base: `origin/portolan-next`
   PR #73. GitHub `reviewDecision` may remain empty and is not treated as a
   blocker.
 - Current-head GitHub Baseline is checked in the PR readiness closeout.
-- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun because
-  the reusable full input bundle is not present in this worktree. This is not a
-  hidden PR readiness gate; the behavior is covered by the available lab bundle
-  and focused smoke fixtures.
+- Current-head full Bigtop regression is checked in the PR readiness closeout.
+  The strict gate now fails unless the full-scale symbol index exposes
+  pollution, fixture/test dominance, promoted-fact truncation, and oversized raw
+  symbol health.
 
 ## Merge Readiness
 

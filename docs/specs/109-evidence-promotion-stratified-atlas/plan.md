@@ -78,10 +78,8 @@ contract:
 
 6. Regression and acceptance layer
    - Add synthetic fixture coverage for all strata and negative cases.
-   - Re-run current Bigtop/large-bundle acceptance when a reusable corpus is
-     available; otherwise verify polluted-symbol behavior with the available
-     lab bundle and focused fixtures, and keep full-corpus reruns outside PR
-     readiness.
+   - Re-run current Bigtop/large-bundle acceptance; if the reusable corpus is
+     unavailable, record a PR blocker rather than substituting synthetic proof.
    - Add a Node or JS/TS large raw artifact scenario where the correct behavior
      is lazy representation, not disabling or arbitrary truncation.
 
@@ -110,9 +108,9 @@ legacy bridge.
 - `scripts/harness-portolan-smoke.sh`
 - `scripts/harness-bundle-query-smoke.sh`
 - `scripts/harness-bundle-query-mcp-smoke.sh`
-- `scripts/harness-bigtop-acceptance.sh`, a documented current Bigtop
-  regression run, or a documented polluted-symbol regression when the historical
-  full corpus is unavailable
+- `scripts/harness-bigtop-acceptance.sh` on a current full-scale Bigtop bundle
+  with symbol-index pollution, fixture/test dominance, truncation, and oversized
+  raw symbol health verified
 - Node or JS/TS large raw artifact regression with lazy raw refs
 - canonical-family validation fails if a family health record is missing
 - spec-completion validation fails if synthetic fixture health contains

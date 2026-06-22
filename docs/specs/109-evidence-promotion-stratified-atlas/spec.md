@@ -398,10 +398,12 @@ The research data that motivated this spec remains regression evidence:
 - Existing descriptor import path: synthetic descriptors parse, but real
   descriptors may be absent and unresolved relations remain `cannot_verify`.
 
-The 3,019,203-row Bigtop corpus figure is research motivation, not a hidden PR
-readiness gate. PR #73 verifies the pollution behavior with the available lab
-bundle and focused smoke fixtures; a full historical corpus rerun belongs in a
-separate real-target regression pass if needed.
+PR #73 current-head regression reran the 1.8G Bigtop bundle at
+`/tmp/portolan-bigtop-20260621-193430` through the spec 109 promotion layer and
+strict Bigtop acceptance. The run verified 3,019,203 symbol rows, 2,012,865
+non-promotable symbol rows, 1,214,223 test/fixture symbol rows, bounded promoted
+facts, and oversized raw symbol artifacts as explicit health rather than clean
+architecture truth.
 
 ## Success Criteria
 
