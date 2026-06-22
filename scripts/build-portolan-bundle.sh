@@ -615,6 +615,7 @@ jq -s '
   echo '{"schema_version":"0.1.0","nodes":[],"edges":[]}' >"$BUNDLE_DIR/graph-slice.json"
 
 if [[ "${PORTOLAN_BUNDLE_CORE_ONLY:-0}" == "1" ]]; then
+  "$SCRIPT_DIR/build-evidence-promotion-atlas.sh" "$BUNDLE_DIR" "$TARGET_ROOT"
   rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
   echo "Portolan core bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
   exit 0
@@ -702,5 +703,6 @@ rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
 
 "$SCRIPT_DIR/build-symbol-index.sh" "$BUNDLE_DIR" || true
 "$SCRIPT_DIR/build-search-index.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+"$SCRIPT_DIR/build-evidence-promotion-atlas.sh" "$BUNDLE_DIR" "$TARGET_ROOT"
 
 echo "Portolan bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"

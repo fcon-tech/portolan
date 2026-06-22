@@ -66,8 +66,17 @@ echo '{"id":"ev-1","family":"relationships","summary":"fixture edge","evidence_s
 # single-repo fixture: empty edge list is a valid clean result (file present, no edges)
 "$Q" relationships --bundle "$FIXTURE_BUNDLE" --limit 5 \
   | jq -e '.records | type == "array"' >/dev/null
+"$Q" promotion-health --bundle "$FIXTURE_BUNDLE" --limit 20 \
+  | jq -e '.records | length >= 15 and all(.[]; .stratum == "promotion_health")' >/dev/null
+"$Q" promoted-facts --bundle "$FIXTURE_BUNDLE" --limit 5 \
+  | jq -e '.records | type == "array" and all(.[]; has("evidence_layer") and has("promotion_basis"))' >/dev/null
+"$Q" raw-artifacts --bundle "$FIXTURE_BUNDLE" --limit 5 \
+  | jq -e '.records | type == "array"' >/dev/null
+"$Q" classified-sources --bundle "$FIXTURE_BUNDLE" --limit 5 \
+  | jq -e '.records | length >= 1 and all(.[]; .stratum == "classified_source")' >/dev/null
 curl -sf "$BASE/api/repos?limit=3" | jq -e '.records | length >= 1' >/dev/null
 curl -sf "$BASE/api/relationships?limit=3" | jq -e '.records | type == "array"' >/dev/null
+curl -sf "$BASE/api/promotion-health?limit=20" | jq -e '.records | length >= 15' >/dev/null
 
 # source full read (107): whole file with line cap
 "$Q" source --bundle "$FIXTURE_BUNDLE" --path sample.go --line 1 --full \

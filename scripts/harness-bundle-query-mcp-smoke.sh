@@ -20,7 +20,13 @@ node "$ROOT/viewer/scripts/bundle-query-mcp-smoke-client.js" "$FIXTURE_BUNDLE" \
 
 # --list-tools (spec 098 base + claims 106 + repos/relationships 107 + atlas query)
 PORTOLAN_BUNDLE_DIR="$FIXTURE_BUNDLE" "$ROOT/scripts/portolan-bundle-query-mcp.sh" --list-tools \
-  | jq -e 'length == 11' >/dev/null
+  | jq -e '
+      length >= 15 and
+      any(.[]; .name == "portolan_query_promotion_health") and
+      any(.[]; .name == "portolan_query_promoted_facts") and
+      any(.[]; .name == "portolan_query_raw_artifacts") and
+      any(.[]; .name == "portolan_query_classified_sources")
+    ' >/dev/null
 
 # claims family: missing claims.jsonl must warn, not fail
 node "$ROOT/viewer/scripts/bundle-query-cli.js" claims --bundle "$FIXTURE_BUNDLE" \
