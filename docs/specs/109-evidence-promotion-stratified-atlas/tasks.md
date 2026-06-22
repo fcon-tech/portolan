@@ -32,6 +32,10 @@
       scanner.
 - [x] Implement minimal local path rules only as a fallback and mark their
       low-confidence coverage limits in health.
+      - 2026-06-22 blocker-fix pass: target source inventory now uses
+        `git ls-files -co --exclude-standard` when Git metadata is available.
+        Conservative filesystem fallback and source-inventory truncation emit
+        `non_exhaustive` health.
 - [x] Apply classification before symbol/search rows can contribute to promoted
       facts.
 - [x] Apply classification gates to catalog, config, dependency, duplication,
@@ -46,6 +50,9 @@
 - [x] Detect oversized raw outputs, stale artifacts, inventory mismatch,
       fixture dominance, non-source pollution, raw-only families, unsupported
       languages, and not-integrated families.
+      - 2026-06-22 blocker-fix pass: family-total raw artifact size >= 500 MiB
+        now emits `oversized`; representative raw inputs without promoted fact
+        routes emit `raw_available_only`.
 - [x] Emit observed counts, denominators, thresholds, and calculation rules for
       every threshold-derived health status.
 - [x] Add lazy raw artifact refs for large producer outputs, including locator,
@@ -79,6 +86,11 @@
 - [x] Run spec-completion validation and verify synthetic `not_integrated`
       health or missing non-stub route proof fails completion.
 - [x] Run standard harness smoke checks.
+      - 2026-06-22 blocker-fix pass: `harness-evidence-promotion-atlas-smoke`
+        covers ignored target files, invalid health enum rejection, family-total
+        oversize, cap-driven `non_exhaustive` health, `package.json`
+        build-metadata classification, `secret_reference_surface`, and
+        required atlas build failures.
 - [x] Run Bigtop regression and verify polluted symbol rows no longer look like
       clean atlas truth.
       - 2026-06-22: available lab core bundle was copied to a temp directory;

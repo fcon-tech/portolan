@@ -26,29 +26,33 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   oversized and stale raw artifact refs, inventory mismatch health, JSON/JSONL
   unresolved catalog relationship health, `source_role` promoted facts, and
   broken-claim-ref rejection.
+- Review-blocker pass added git-aware source inventory, explicit fallback and
+  truncation `non_exhaustive` health, strict JSONL validation, family-total
+  oversize health, reachable `secret_reference_surface` classification,
+  `package.json` build-metadata classification, `raw_available_only` family
+  health, and required atlas build failures in core/full bundle paths.
 
 ## Verification
 
-- verified: `go test ./...`
-- verified: `go vet ./...`
-- verified: `jq empty schema/*.json harness/contracts/*.json`
-- verified: `node -c viewer/src/app.js`
-- verified: `node -c viewer/scripts/evidence-promotion-atlas.js`
-- verified: `node -c viewer/scripts/bundle-query.js`
-- verified: `node -c viewer/scripts/bundle-query-cli.js`
-- verified: `node -c viewer/scripts/bundle-query-mcp.js`
-- verified: `scripts/harness-evidence-promotion-atlas-smoke.sh`
-- verified: `scripts/harness-bundle-query-smoke.sh`
-- verified: `scripts/harness-bundle-query-mcp-smoke.sh`
-- verified: `scripts/harness-portolan-smoke.sh`
-- verified: `scripts/portolan-scan.sh --help`
-- verified: `git diff --check`
-- verified: available Bigtop lab core bundle copied to a temp directory,
-  promotion layer built and validated without mutating the lab artifact.
+- verified in blocker-fix pass: `node -c
+  viewer/scripts/evidence-promotion-atlas.js`
+- verified in blocker-fix pass: `node -c
+  viewer/scripts/validate-atlas-schemas.js`
+- verified in blocker-fix pass: `scripts/harness-evidence-promotion-atlas-smoke.sh`
+- verified in blocker-fix pass: `scripts/harness-bundle-query-smoke.sh`
+- verified in blocker-fix pass: `scripts/harness-bundle-query-mcp-smoke.sh`
+- verified in blocker-fix pass: `jq empty harness/contracts/*.json`
+- verified in blocker-fix pass: `scripts/harness-portolan-smoke.sh`
+- verified in blocker-fix pass after final documentation update: `git diff
+  --check`
+- previous pre-blocker-pass baseline included Go tests, vet, scan help, and
+  Bigtop lab core-bundle promotion validation; those are stale for this
+  blocker-fix head unless rerun.
 
 ## Not Assessed
 
-- Independent OpenCode review coverage is incomplete. The repo preflight
+- Independent OpenCode review coverage was degraded before this blocker-fix
+  pass. The repo preflight
   `scripts/harness-review-opencode-smoke.sh` produced no output for roughly 90
   seconds and was interrupted with exit 130. Follow-up `opencode-go/glm-5.1`
   and `kimi-for-coding/k2p6` attempts timed out after 240 seconds each, so no
@@ -77,12 +81,13 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   verification: symbol-index promoted facts normalize producer-supplied
   `evidence_state` through the allowed enum and fall back to
   `metadata-visible`.
+- GitHub review approval remains `not_assessed`.
 - Full 3,019,203-row Bigtop symbol pollution proof is not assessed in this
   branch because the full input bundle referenced by the research artifact was
   not present as a local reusable bundle. The available lab core bundle contains
   3,600 promoted symbol rows and verifies bounded degraded health behavior, but
   it does not cross the 50 percent pollution threshold.
-- Merge readiness is not assessed yet.
+- Merge readiness is not ready; no merge approval was requested or verified.
 
 ## Risks
 

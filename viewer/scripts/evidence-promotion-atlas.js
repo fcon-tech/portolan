@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 
 const SCHEMA_VERSION = '0.1.0';
 
@@ -74,6 +75,56 @@ const THRESHOLDS = {
   inventory_mismatch_max_threshold_count: 100,
 };
 
+const HEALTH_STATUSES = new Set([
+  'ok',
+  'partial',
+  'non_exhaustive',
+  'oversized',
+  'dominated_by_fixture_data',
+  'polluted_by_non_source',
+  'stale',
+  'inventory_mismatch',
+  'raw_available_only',
+  'unsupported_language',
+  'not_integrated',
+  'cannot_verify',
+  'not_assessed',
+]);
+
+const EVIDENCE_LAYERS = new Set(['source', 'metadata', 'runtime', 'claim', 'unknown']);
+
+const SOURCE_ROLES = new Set([
+  'runtime_product_code',
+  'test_code',
+  'test_artifact',
+  'fixture_data',
+  'generated_code',
+  'vendor_code',
+  'documentation',
+  'configuration',
+  'deployment_model',
+  'build_metadata',
+  'ci_cd',
+  'secret_reference_surface',
+  'runtime_observation',
+  'catalog_descriptor',
+  'unknown_role',
+]);
+
+const PROMOTED_ROUTE_FAMILIES = new Set([
+  'source_code',
+  'symbol_index',
+  'analysis_claim',
+]);
+
+const SOURCE_CLASSIFICATION_LIMIT = positiveIntEnv('PORTOLAN_EVIDENCE_SOURCE_CLASSIFICATION_LIMIT', 5000);
+const PROMOTED_FACT_ROW_LIMIT = positiveIntEnv('PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT', 200);
+
+function positiveIntEnv(name, fallback) {
+  const value = Number.parseInt(process.env[name] || '', 10);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 function usage() {
   process.stderr.write('usage: evidence-promotion-atlas.js build <bundle-dir> [target-root]\n');
   process.stderr.write('       evidence-promotion-atlas.js validate <bundle-dir> [--completion]\n');
@@ -99,6 +150,24 @@ function readJSONL(file) {
   });
 }
 
+function readJSONLStrict(file, errors) {
+  if (!fs.existsSync(file)) {
+    errors.push(`missing ${path.basename(file)}`);
+    return [];
+  }
+  const rows = [];
+  const lines = fs.readFileSync(file, 'utf8').split('\n');
+  lines.forEach((line, index) => {
+    if (!line.trim()) return;
+    try {
+      rows.push(JSON.parse(line));
+    } catch (err) {
+      errors.push(`${path.basename(file)}:${index + 1} invalid JSON: ${err.message}`);
+    }
+  });
+  return rows;
+}
+
 function writeJSON(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
@@ -121,10 +190,11 @@ function evidenceStateOr(value, fallback) {
   return EVIDENCE_STATES.has(value) ? value : fallback;
 }
 
-function walkFiles(root, limit = 5000) {
+function walkFilesWithMetadata(root, limit = Number.POSITIVE_INFINITY) {
   const out = [];
+  let truncated = false;
   const stack = [root];
-  while (stack.length && out.length < limit) {
+  while (stack.length) {
     const dir = stack.pop();
     let entries = [];
     try {
@@ -139,12 +209,81 @@ function walkFiles(root, limit = 5000) {
       if (ent.isDirectory()) {
         stack.push(full);
       } else if (ent.isFile()) {
+        if (out.length >= limit) {
+          truncated = true;
+          break;
+        }
         out.push(full);
-        if (out.length >= limit) break;
       }
     }
+    if (truncated) break;
   }
-  return out;
+  return { files: out, total: out.length, truncated };
+}
+
+function walkFiles(root, limit = Number.POSITIVE_INFINITY) {
+  return walkFilesWithMetadata(root, limit).files;
+}
+
+function fallbackIgnoredRel(rel) {
+  if (!rel) return true;
+  const normalized = rel.replace(/\\/g, '/').replace(/^\.\//, '');
+  if (normalized === '.git' || normalized.includes('/.git/')) return true;
+  const parts = normalized.split('/');
+  for (const part of parts) {
+    if ([
+      '.git',
+      'node_modules',
+      'vendor',
+      '.portolan',
+      '.codex-subagents',
+      '.cursor',
+      'portolan-smoke',
+      'dist',
+      'bin',
+      'generated',
+      '.DS_Store',
+      '.idea',
+      '.vscode',
+    ].includes(part)) return true;
+  }
+  if (normalized.startsWith('.agents/') && !normalized.startsWith('.agents/skills/')) return true;
+  return false;
+}
+
+function listRepoFiles(root, limit = SOURCE_CLASSIFICATION_LIMIT) {
+  const absoluteRoot = path.resolve(root);
+  if (fs.existsSync(path.join(absoluteRoot, '.git'))) {
+    try {
+      const stdout = execFileSync('git', ['-C', absoluteRoot, 'ls-files', '-co', '--exclude-standard'], {
+        encoding: 'utf8',
+        maxBuffer: 256 * 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const rels = stdout.split('\n').filter(Boolean).sort((a, b) => a.localeCompare(b));
+      const files = rels.slice(0, limit).map((rel) => path.resolve(absoluteRoot, rel));
+      return {
+        root: absoluteRoot,
+        files,
+        total: rels.length,
+        truncated: rels.length > limit,
+        inventory_source: 'git_ls_files',
+        fallback: false,
+      };
+    } catch (err) {
+      // Fall through to the conservative filesystem fallback below.
+    }
+  }
+  const walked = walkFilesWithMetadata(absoluteRoot, limit);
+  const files = walked.files.filter((file) => !fallbackIgnoredRel(path.relative(absoluteRoot, file)));
+  return {
+    root: absoluteRoot,
+    files,
+    total: files.length,
+    truncated: walked.truncated,
+    inventory_source: 'filesystem_fallback',
+    fallback: true,
+  };
 }
 
 function roleForPath(file) {
@@ -157,9 +296,10 @@ function roleForPath(file) {
   if (/\.(md|rst|adoc|txt)$/.test(base) || p.includes('/docs/')) return ['documentation', 0.8];
   if (base === 'docker-compose.yml' || base === 'docker-compose.yaml' || p.includes('/helm/') || p.includes('/kubernetes/') || /\.(tf|tfvars)$/.test(base)) return ['deployment_model', 0.75];
   if (p.includes('/.github/workflows/') || p.includes('/.gitlab-ci') || base === 'jenkinsfile') return ['ci_cd', 0.8];
+  if (/^(package\.json|package-lock\.json|go\.mod|go\.sum|pom\.xml|build\.gradle|settings\.gradle|requirements\.txt|pyproject\.toml|cargo\.toml|cargo\.lock)$/.test(base)) return ['build_metadata', 0.8];
+  if (base === 'openapi.json' || base === 'openapi.yaml' || /\.(proto|graphql|avsc)$/.test(base) || base === 'catalog-info.yaml') return ['catalog_descriptor', 0.75];
+  if (/^\.env(\.|$)/.test(base) || /(^|\/)(secrets?|credentials?|vault)(\/|[-_.])/.test(p) || /(secret|credential|vault)[-_a-z0-9]*\.(env|ya?ml|json|toml|properties|txt)$/.test(base)) return ['secret_reference_surface', 0.75];
   if (/(^|\.)(env|ini|conf|config|properties|toml|yaml|yml|json)$/.test(base) || p.includes('/config/')) return ['configuration', 0.6];
-  if (/^(package-lock|package|go\.mod|go\.sum|pom\.xml|build\.gradle|settings\.gradle|requirements\.txt|pyproject\.toml|cargo\.toml|cargo\.lock)$/.test(base)) return ['build_metadata', 0.8];
-  if (/\.(proto|openapi\.json|openapi\.yaml|graphql|avsc)$/.test(base) || base === 'catalog-info.yaml') return ['catalog_descriptor', 0.75];
   if (/\.(go|js|jsx|ts|tsx|py|java|kt|scala|rb|php|rs|c|cc|cpp|h|hpp|cs)$/.test(base)) return ['runtime_product_code', 0.65];
   return ['unknown_role', 0.35];
 }
@@ -197,9 +337,12 @@ function classifySources(bundleDir, targetRoot) {
     ? repos.map((r) => r.path).filter(Boolean)
     : [targetRoot].filter(Boolean);
   const rows = [];
+  const inventories = [];
   for (const root of roots) {
     if (!root || !fs.existsSync(root)) continue;
-    for (const file of walkFiles(root, 5000)) {
+    const inventory = listRepoFiles(root);
+    inventories.push(inventory);
+    for (const file of inventory.files) {
       const [role, confidence] = roleForPath(file);
       rows.push({
         id: `source-role-${hashText(file)}`,
@@ -215,12 +358,12 @@ function classifySources(bundleDir, targetRoot) {
       });
     }
   }
-  return rows;
+  return { rows, inventories };
 }
 
-function familyInputs(bundleDir, targetRoot) {
+function familyInputs(bundleDir, classifiedSources) {
   const producers = path.join(bundleDir, 'producers');
-  const sourceFiles = targetRoot && fs.existsSync(targetRoot) ? walkFiles(targetRoot, 5000) : [];
+  const sourceFiles = classifiedSources.map((row) => row.path);
   const byRole = Object.fromEntries(FAMILIES.map((f) => [f, []]));
   const add = (family, file) => {
     if (file && fs.existsSync(file)) byRole[family].push(file);
@@ -271,11 +414,43 @@ function healthRecord(family, status, reason, evidenceRefs, producerRef, extra =
   };
 }
 
+function truncationHealth(family, id, reason, observedCount, denominator, threshold, evidenceRefs, producerRef, calculationRule, nextAction) {
+  return healthRecord(family, 'non_exhaustive', reason, evidenceRefs, producerRef, {
+    id,
+    observed_count: observedCount,
+    denominator,
+    threshold,
+    calculation_rule: calculationRule,
+    next_action: nextAction,
+  });
+}
+
+function hasValue(row, field) {
+  return row[field] !== undefined && row[field] !== null && row[field] !== '';
+}
+
+function requireFields(row, fields, label, errors) {
+  for (const field of fields) {
+    if (!hasValue(row, field)) errors.push(`${label} missing ${field}`);
+  }
+}
+
+function requireEnum(row, field, allowed, label, errors) {
+  if (hasValue(row, field) && !allowed.has(row[field])) {
+    errors.push(`${label} invalid ${field}: ${row[field]}`);
+  }
+}
+
+function requireArray(row, field, label, errors) {
+  if (!Array.isArray(row[field])) errors.push(`${label} ${field} must be an array`);
+}
+
 function build(bundleDir, targetRootArg) {
   const manifest = readJSON(path.join(bundleDir, 'manifest.json')) || {};
   const targetRoot = targetRootArg || manifest.target_root || process.cwd();
-  const classified = classifySources(bundleDir, targetRoot);
-  const inputs = familyInputs(bundleDir, targetRoot);
+  const sourceClassification = classifySources(bundleDir, targetRoot);
+  const classified = sourceClassification.rows;
+  const inputs = familyInputs(bundleDir, classified);
   const raw = [];
   for (const family of FAMILIES) {
     for (const file of inputs[family]) {
@@ -290,11 +465,12 @@ function build(bundleDir, targetRootArg) {
     return acc;
   }, {});
   const totalSources = classified.length;
+  const inventoryDiscoveredFileCount = sourceClassification.inventories.reduce((sum, inventory) => sum + inventory.total, 0);
   const discoveredFileCount = Number.isFinite(manifest.discovered_file_count)
     ? manifest.discovered_file_count
     : Number.isFinite(manifest.source_file_count)
       ? manifest.source_file_count
-      : totalSources;
+      : inventoryDiscoveredFileCount || totalSources;
   const nonPromotable = (roleCounts.test_code || 0) + (roleCounts.test_artifact || 0) + (roleCounts.fixture_data || 0) + (roleCounts.generated_code || 0) + (roleCounts.vendor_code || 0);
   const fixtureish = (roleCounts.fixture_data || 0) + (roleCounts.test_artifact || 0);
   const lowConfidence = classified.filter((r) => r.confidence < THRESHOLDS.low_confidence_threshold || r.source_role === 'unknown_role').length;
@@ -302,13 +478,49 @@ function build(bundleDir, targetRootArg) {
   const health = FAMILIES.map((family) => {
     const refs = inputs[family].map((f) => path.relative(bundleDir, f));
     if (refs.length) {
-      return healthRecord(family, 'ok', `Representative ${family} input is visible through a local route.`, refs, refs[0]);
+      if (!PROMOTED_ROUTE_FAMILIES.has(family)) {
+        return healthRecord(family, 'raw_available_only', `Representative ${family} input is addressable, but this slice has no promoted fact route for that family.`, refs, refs[0], {
+          next_action: `Keep ${family} as raw/queryable input until a reviewed promotion route is implemented.`,
+        });
+      }
+      return healthRecord(family, 'ok', `Representative ${family} input is visible through a local promotion route.`, refs, refs[0]);
     }
     return healthRecord(family, 'not_assessed', `Route for ${family} exists, but no representative input was supplied in this bundle.`, [], `route:${family}`, {
       next_action: `Provide local ${family} producer output or source artifact.`,
       route_proof: false,
     });
   });
+
+  for (const inventory of sourceClassification.inventories) {
+    if (inventory.fallback) {
+      health.push(truncationHealth(
+        'source_code',
+        `promotion-health-source-code-inventory-fallback-${hashText(inventory.root)}`,
+        `Source inventory for ${inventory.root} used conservative filesystem fallback instead of git ls-files --exclude-standard.`,
+        inventory.files.length,
+        null,
+        null,
+        [`source-inventory:${inventory.root}`],
+        'classified-sources.jsonl',
+        'git ls-files -co --exclude-standard unavailable; fallback ignore rules are conservative',
+        'Run inside a Git worktree or provide a repos.json root with Git metadata.'
+      ));
+    }
+    if (inventory.truncated) {
+      health.push(truncationHealth(
+        'source_code',
+        `promotion-health-source-code-inventory-truncated-${hashText(inventory.root)}`,
+        `Source inventory for ${inventory.root} exceeded the classification limit.`,
+        inventory.files.length,
+        inventory.total,
+        SOURCE_CLASSIFICATION_LIMIT,
+        [`source-inventory:${inventory.root}`],
+        'classified-sources.jsonl',
+        'inventory_file_count > PORTOLAN_EVIDENCE_SOURCE_CLASSIFICATION_LIMIT',
+        'Increase PORTOLAN_EVIDENCE_SOURCE_CLASSIFICATION_LIMIT or shard the target before relying on completeness.'
+      ));
+    }
+  }
 
   if (totalSources > 0) {
     if (nonPromotable / totalSources > THRESHOLDS.polluted_by_non_source_ratio) {
@@ -406,6 +618,25 @@ function build(bundleDir, targetRootArg) {
     }
   }
 
+  const rawByFamily = raw.reduce((acc, artifact) => {
+    const row = acc[artifact.family] || { size: 0, refs: [] };
+    row.size += artifact.size_bytes;
+    row.refs.push(artifact.path);
+    acc[artifact.family] = row;
+    return acc;
+  }, {});
+  for (const [family, totals] of Object.entries(rawByFamily)) {
+    if (totals.size >= THRESHOLDS.oversized_family_bytes) {
+      health.push(healthRecord(family, 'oversized', `Raw artifacts for ${family} total at least 500 MiB.`, totals.refs, 'raw-artifacts.jsonl', {
+        id: `promotion-health-oversized-family-${family}`,
+        observed_count: totals.size,
+        denominator: totals.refs.length,
+        threshold: THRESHOLDS.oversized_family_bytes,
+        calculation_rule: 'sum(raw_artifact_size_bytes by family) >= 500 MiB',
+      }));
+    }
+  }
+
   for (const catalogFile of inputs.catalog_descriptor || []) {
     const catalogRows = catalogFile.endsWith('.jsonl') ? readJSONL(catalogFile) : [readJSON(catalogFile)].filter(Boolean);
     for (const row of catalogRows) {
@@ -424,7 +655,22 @@ function build(bundleDir, targetRootArg) {
 
   const promoted = [];
   const roleByPath = new Map(classified.map((r) => [path.resolve(r.path), r]));
-  for (const row of classified.filter((r) => r.source_role === 'runtime_product_code' && r.confidence >= 0.5).slice(0, 200)) {
+  const sourcePromotionCandidates = classified.filter((r) => r.source_role === 'runtime_product_code' && r.confidence >= 0.5);
+  if (sourcePromotionCandidates.length > PROMOTED_FACT_ROW_LIMIT) {
+    health.push(truncationHealth(
+      'source_code',
+      'promotion-health-source-code-promoted-facts-truncated',
+      'Promoted source facts exceeded the per-family row limit.',
+      PROMOTED_FACT_ROW_LIMIT,
+      sourcePromotionCandidates.length,
+      PROMOTED_FACT_ROW_LIMIT,
+      ['classified-sources.jsonl'],
+      'promoted-facts.jsonl',
+      'runtime_product_code_source_candidate_count > PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT',
+      'Query classified-sources.jsonl or raise PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT before treating promoted source facts as exhaustive.'
+    ));
+  }
+  for (const row of sourcePromotionCandidates.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
     promoted.push({
       id: `fact-source-role-${hashText(row.path)}`,
       stratum: 'promoted_fact',
@@ -457,7 +703,21 @@ function build(bundleDir, targetRootArg) {
     });
   }
 
-  for (const row of readJSONL(path.join(bundleDir, 'symbol-index.jsonl')).slice(0, 200)) {
+  if (symbolRows.length > PROMOTED_FACT_ROW_LIMIT) {
+    health.push(truncationHealth(
+      'symbol_index',
+      'promotion-health-symbol-index-promoted-facts-truncated',
+      'Promoted symbol facts exceeded the per-family row limit.',
+      PROMOTED_FACT_ROW_LIMIT,
+      symbolRows.length,
+      PROMOTED_FACT_ROW_LIMIT,
+      ['symbol-index.jsonl'],
+      'promoted-facts.jsonl',
+      'symbol_index_row_count > PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT',
+      'Query symbol-index.jsonl or raise PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT before treating promoted symbol facts as exhaustive.'
+    ));
+  }
+  for (const row of symbolRows.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
     const absolute = row.path && path.isAbsolute(row.path) ? path.resolve(row.path) : '';
     const role = absolute ? roleByPath.get(absolute) : null;
     promoted.push({
@@ -478,7 +738,22 @@ function build(bundleDir, targetRootArg) {
     });
   }
 
-  for (const claim of readJSONL(path.join(bundleDir, 'claims.jsonl')).slice(0, 200)) {
+  const claimRows = readJSONL(path.join(bundleDir, 'claims.jsonl'));
+  if (claimRows.length > PROMOTED_FACT_ROW_LIMIT) {
+    health.push(truncationHealth(
+      'analysis_claim',
+      'promotion-health-analysis-claim-records-truncated',
+      'Claim records exceeded the per-family row limit.',
+      PROMOTED_FACT_ROW_LIMIT,
+      claimRows.length,
+      PROMOTED_FACT_ROW_LIMIT,
+      ['claims.jsonl'],
+      'promoted-facts.jsonl',
+      'claim_row_count > PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT',
+      'Query claims.jsonl or raise PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT before treating claim rows as exhaustive.'
+    ));
+  }
+  for (const claim of claimRows.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
     promoted.push({
       id: `claim-record-${claim.id || hashText(claim.statement || '')}`,
       stratum: 'claim',
@@ -514,6 +789,10 @@ function build(bundleDir, targetRootArg) {
       'not_assessed',
     ],
     thresholds: THRESHOLDS,
+    limits: {
+      source_classification_limit: SOURCE_CLASSIFICATION_LIMIT,
+      promoted_fact_row_limit: PROMOTED_FACT_ROW_LIMIT,
+    },
   };
 
   writeJSON(path.join(bundleDir, 'evidence-families.json'), familyRegistry);
@@ -534,6 +813,14 @@ function build(bundleDir, targetRootArg) {
     promoted_fact_count: promoted.length,
     raw_artifact_count: raw.length,
     statuses: byStatus,
+    source_inventory: {
+      total_discovered_file_count: inventoryDiscoveredFileCount,
+      classified_file_count: classified.length,
+      fallback_inventory_count: sourceClassification.inventories.filter((inventory) => inventory.fallback).length,
+      truncated_inventory_count: sourceClassification.inventories.filter((inventory) => inventory.truncated).length,
+      source_classification_limit: SOURCE_CLASSIFICATION_LIMIT,
+    },
+    promoted_fact_row_limit: PROMOTED_FACT_ROW_LIMIT,
     unsupported_family_count: health.filter((r) => r.status === 'not_integrated').length,
     not_assessed_family_count: FAMILIES.filter((f) => health.find((r) => r.id === `promotion-health-${f}`)?.status === 'not_assessed').length,
   };
@@ -548,31 +835,119 @@ function build(bundleDir, targetRootArg) {
 
 function validate(bundleDir, completion) {
   const registry = readJSON(path.join(bundleDir, 'evidence-families.json'));
-  const health = readJSONL(path.join(bundleDir, 'promotion-health.jsonl'));
-  const promoted = readJSONL(path.join(bundleDir, 'promoted-facts.jsonl'));
   const matrix = readJSON(path.join(bundleDir, 'promotion-matrix.json'));
   const errors = [];
+  const health = readJSONLStrict(path.join(bundleDir, 'promotion-health.jsonl'), errors);
+  const promoted = readJSONLStrict(path.join(bundleDir, 'promoted-facts.jsonl'), errors);
+  const classified = readJSONLStrict(path.join(bundleDir, 'classified-sources.jsonl'), errors);
+  const raw = readJSONLStrict(path.join(bundleDir, 'raw-artifacts.jsonl'), errors);
 
   if (!registry || !Array.isArray(registry.families)) errors.push('missing evidence-families.json registry');
   if (!Array.isArray(matrix?.records)) errors.push('missing promotion-matrix.json records');
   if (!health.length) errors.push('missing promotion-health.jsonl records');
+  if (!classified.length) errors.push('missing classified-sources.jsonl records');
+
+  if (Array.isArray(registry?.families)) {
+    const seenFamilies = new Set();
+    for (const row of registry.families) {
+      if (!FAMILIES.includes(row.id)) errors.push(`registry invalid family: ${row.id || '?'}`);
+      seenFamilies.add(row.id);
+    }
+    for (const family of FAMILIES) {
+      if (!seenFamilies.has(family)) errors.push(`registry missing canonical family ${family}`);
+    }
+  }
+  if (Array.isArray(registry?.health_statuses)) {
+    for (const status of registry.health_statuses) {
+      if (!HEALTH_STATUSES.has(status)) errors.push(`registry invalid health status: ${status}`);
+    }
+  }
+
+  const matrixByFamily = new Map();
+  if (Array.isArray(matrix?.records)) {
+    for (const row of matrix.records) {
+      const label = `promotion matrix ${row.family || '?'}`;
+      requireFields(row, ['family', 'evidence_layer', 'eligible_fact_kinds', 'resolution_limit'], label, errors);
+      requireEnum(row, 'family', new Set(FAMILIES), label, errors);
+      requireEnum(row, 'evidence_layer', EVIDENCE_LAYERS, label, errors);
+      if (!Array.isArray(row.eligible_fact_kinds) || row.eligible_fact_kinds.length === 0) {
+        errors.push(`${label} eligible_fact_kinds must be a non-empty array`);
+      }
+      matrixByFamily.set(row.family, row);
+    }
+  }
+
+  for (const row of classified) {
+    const label = `classified ${row.id || '?'}`;
+    requireFields(row, ['id', 'stratum', 'family', 'evidence_layer', 'evidence_state', 'path', 'source_role', 'confidence', 'classifier', 'evidence_refs'], label, errors);
+    if (row.stratum !== 'classified_source') errors.push(`${label} invalid stratum: ${row.stratum || '?'}`);
+    requireEnum(row, 'family', new Set(FAMILIES), label, errors);
+    requireEnum(row, 'evidence_layer', EVIDENCE_LAYERS, label, errors);
+    requireEnum(row, 'evidence_state', EVIDENCE_STATES, label, errors);
+    requireEnum(row, 'source_role', SOURCE_ROLES, label, errors);
+    requireArray(row, 'evidence_refs', label, errors);
+    if (typeof row.confidence !== 'number' || row.confidence < 0 || row.confidence > 1) {
+      errors.push(`${label} confidence must be a number between 0 and 1`);
+    }
+  }
+
+  for (const row of raw) {
+    const label = `raw artifact ${row.id || '?'}`;
+    requireFields(row, ['id', 'stratum', 'evidence_layer', 'evidence_state', 'family', 'producer', 'producer_ref', 'path', 'size_bytes', 'expansion_mode'], label, errors);
+    if (row.stratum !== 'raw_evidence') errors.push(`${label} invalid stratum: ${row.stratum || '?'}`);
+    requireEnum(row, 'family', new Set(FAMILIES), label, errors);
+    requireEnum(row, 'evidence_layer', EVIDENCE_LAYERS, label, errors);
+    requireEnum(row, 'evidence_state', EVIDENCE_STATES, label, errors);
+    requireEnum(row, 'expansion_mode', new Set(['core', 'expanded', 'external', 'missing']), label, errors);
+    if (!Number.isInteger(row.size_bytes) || row.size_bytes < 0) {
+      errors.push(`${label} size_bytes must be a non-negative integer`);
+    }
+  }
 
   const healthByFamily = new Map();
   for (const row of health) {
-    if (row.stratum !== 'promotion_health') errors.push(`health ${row.id || '?'} missing stratum=promotion_health`);
-    if (!row.family) errors.push(`health ${row.id || '?'} missing family`);
-    if (!row.status) errors.push(`health ${row.id || '?'} missing status`);
-    if (!row.producer_ref) errors.push(`health ${row.id || '?'} missing producer_ref`);
+    const label = `health ${row.id || '?'}`;
+    requireFields(row, ['id', 'stratum', 'family', 'scope', 'fact_kind', 'status', 'evidence_state', 'evidence_layer', 'reason', 'observed_count', 'calculation_rule', 'producer', 'producer_ref', 'evidence_refs', 'route_proof'], label, errors);
+    if (row.stratum !== 'promotion_health') errors.push(`${label} invalid stratum: ${row.stratum || '?'}`);
+    requireEnum(row, 'family', new Set(FAMILIES), label, errors);
+    requireEnum(row, 'status', HEALTH_STATUSES, label, errors);
+    requireEnum(row, 'evidence_state', EVIDENCE_STATES, label, errors);
+    requireEnum(row, 'evidence_layer', EVIDENCE_LAYERS, label, errors);
+    requireArray(row, 'evidence_refs', label, errors);
+    if (typeof row.route_proof !== 'boolean') errors.push(`${label} route_proof must be boolean`);
+    if (typeof row.observed_count !== 'number') errors.push(`${label} observed_count must be numeric`);
     if (row.id === `promotion-health-${row.family}`) healthByFamily.set(row.family, row);
   }
   for (const family of FAMILIES) {
     if (!healthByFamily.has(family)) errors.push(`missing bundle-level health for canonical family ${family}`);
   }
   for (const row of promoted) {
-    for (const field of ['stratum', 'family', 'fact_kind', 'evidence_layer', 'evidence_state', 'source_refs', 'producer', 'producer_ref', 'promotion_basis', 'resolution_limit']) {
-      if (row[field] === undefined || row[field] === null || row[field] === '') errors.push(`promoted/claim record ${row.id || '?'} missing ${field}`);
+    const label = `promoted/claim record ${row.id || '?'}`;
+    requireFields(row, ['id', 'stratum', 'family', 'fact_kind', 'evidence_layer', 'evidence_state', 'source_refs', 'producer', 'producer_ref', 'promotion_basis', 'resolution_limit'], label, errors);
+    requireEnum(row, 'family', new Set(FAMILIES), label, errors);
+    requireEnum(row, 'evidence_layer', EVIDENCE_LAYERS, label, errors);
+    requireEnum(row, 'evidence_state', EVIDENCE_STATES, label, errors);
+    requireArray(row, 'source_refs', label, errors);
+    if (row.stratum !== 'promoted_fact' && row.stratum !== 'claim') errors.push(`${label} invalid stratum: ${row.stratum || '?'}`);
+    if (row.stratum === 'claim') {
+      if (row.family !== 'analysis_claim') errors.push(`${label} claim family must be analysis_claim`);
+      if (row.evidence_layer !== 'claim') errors.push(`${label} claim evidence_layer must be claim`);
+      if (row.evidence_state !== 'claim-only') errors.push(`${label} claim evidence_state must be claim-only`);
     }
-    if (row.stratum === 'promoted_fact' && row.evidence_layer === 'claim') errors.push(`promoted fact ${row.id || '?'} uses claim evidence layer`);
+    if (row.stratum === 'promoted_fact') {
+      if (row.evidence_layer === 'claim') errors.push(`promoted fact ${row.id || '?'} uses claim evidence layer`);
+      const matrixRow = matrixByFamily.get(row.family);
+      if (!matrixRow) {
+        errors.push(`${label} has no promotion matrix family route`);
+      } else {
+        if (row.evidence_layer !== matrixRow.evidence_layer) {
+          errors.push(`${label} evidence_layer ${row.evidence_layer} does not match matrix ${matrixRow.evidence_layer}`);
+        }
+        if (!matrixRow.eligible_fact_kinds.includes(row.fact_kind)) {
+          errors.push(`${label} fact_kind ${row.fact_kind} is not eligible for family ${row.family}`);
+        }
+      }
+    }
   }
   if (completion) {
     for (const family of FAMILIES) {
