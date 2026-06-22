@@ -27,9 +27,9 @@ Implementation head assessed before MiniMax review fixes:
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
 - PR state: draft PR open, `isDraft=true`.
-- GitHub checks: `Baseline` passed in 48s for head
-  `12f8b9e359917858d6346a05799a4b23dbc730d4` before the local MiniMax fix
-  commit.
+- GitHub checks: `Baseline` passed in 43s for head
+  `ce992e80d1cae4f96e4956fd7674c3480d7a12d5` before this status-only
+  consistency update.
 - Merge readiness: not ready-to-merge.
 - Stop reason: draft PR remains blocked on additional independent review
   evidence. GitHub checks must still be refreshed after each pushed head.

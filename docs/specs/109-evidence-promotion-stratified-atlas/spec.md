@@ -2,7 +2,8 @@
 
 **Status**: Draft PR #73 open on branch
 `codex/109-evidence-promotion-stratified-atlas`; local implementation verified,
-GitHub Baseline passed, independent PR review not assessed, merge not ready.
+GitHub Baseline passed, two independent PR review lanes assessed, one required
+lane not_assessed, merge not ready.
 
 **Input**: Research synthesis
 `/home/fall_out_bug/projects/sdp/portolan-lab/research/evidence-promotion-stratification-2026-06-22/final-report.md`
