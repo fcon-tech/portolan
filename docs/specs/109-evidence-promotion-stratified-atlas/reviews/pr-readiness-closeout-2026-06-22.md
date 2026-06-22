@@ -4,7 +4,8 @@ Date: 2026-06-22
 PR: https://github.com/fcon-tech/portolan/pull/73
 Branch: `codex/109-evidence-promotion-stratified-atlas`
 Base: `portolan-next`
-Head: `4809ac5`
+Implementation head assessed before status-only closeout update:
+`5e7d7f9227b4c1cc4738f202814808fc11d9cf60`
 
 ## State Matrix
 
@@ -22,10 +23,10 @@ Head: `4809ac5`
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
 - PR state: draft PR open, `isDraft=true`.
-- GitHub checks: `Baseline` pending at closeout creation.
+- GitHub checks: `Baseline` passed in 38s for the assessed implementation
+  head above.
 - Merge readiness: not ready-to-merge.
-- Stop reason: draft PR remains blocked on independent review evidence and
-  current GitHub checks.
+- Stop reason: draft PR remains blocked on independent review evidence.
 
 ## Local Verification Evidence
 
@@ -48,10 +49,9 @@ Head: `4809ac5`
 
 - Full 3,019,203-row Bigtop symbol pollution proof remains not_assessed because
   the reusable full input bundle was not present locally.
-- GitHub `Baseline` result is pending at closeout creation.
 - GitHub review approval is not_assessed.
 
 ## Decision
 
 Keep PR #73 draft. Do not mark ready-for-review until independent review
-coverage is assessed or explicitly waived and GitHub checks are refreshed.
+coverage is assessed or explicitly waived.
