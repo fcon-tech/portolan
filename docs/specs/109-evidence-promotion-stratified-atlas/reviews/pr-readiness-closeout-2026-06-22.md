@@ -28,11 +28,13 @@ Implementation head assessed before MiniMax review fixes:
 - Product vision drift: no new network access, daemon behavior, credential use,
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
-- PR state: ready-for-review transition pending final push/check refresh.
-- GitHub checks: pending refresh after final review-fix commit.
+- PR state: ready-for-review transition pending final status-only commit check.
+- GitHub checks: `Baseline` passed in 36s for head
+  `40f89d0b69d19891e97fc6e9691ce5097227d27a` before this status-only
+  consistency update.
 - Merge readiness: not ready-to-merge.
-- Stop reason: ready-for-review PR is pending final push/check refresh; merge
-  still requires separate human/GitHub approval.
+- Stop reason: ready-for-review PR is pending final status-only commit check;
+  merge still requires separate human/GitHub approval.
 
 ## Local Verification Evidence
 
@@ -59,7 +61,7 @@ Implementation head assessed before MiniMax review fixes:
 
 ## Decision
 
-After final push and current-head GitHub check refresh, mark PR #73
-ready-for-review if Baseline remains green and the PR head matches this
-closeout state. Do not claim ready-to-merge without separate review approval or
-explicit user acceptance of absent approval.
+After this status-only update is pushed and current-head GitHub checks refresh,
+mark PR #73 ready-for-review if Baseline remains green and the PR head matches
+this closeout state. Do not claim ready-to-merge without separate review
+approval or explicit user acceptance of absent approval.
