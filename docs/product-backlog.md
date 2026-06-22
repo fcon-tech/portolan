@@ -217,7 +217,7 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P10-109 | `docs/specs/109-evidence-promotion-stratified-atlas/` | Raw evidence, classified sources, promoted facts, findings, claims, health, and lazy raw artifacts are separated across every Portolan evidence family so polluted or incomplete bundles cannot look like complete architecture truth. | PR #73 blocker-fix pass applied for git-aware inventory, required atlas build failures, strict JSONL validation, truncation health, family-total oversize health, source-role taxonomy, and `raw_available_only`; local verification recorded in spec reviews; GitHub review approval `not_assessed`; merge not ready |
+| P10-109 | `docs/specs/109-evidence-promotion-stratified-atlas/` | Raw evidence, classified sources, promoted facts, findings, claims, health, and lazy raw artifacts are separated across every Portolan evidence family so polluted or incomplete bundles cannot look like complete architecture truth. | PR #73 blocker-fix pass applied for git-aware inventory, required atlas build failures, strict JSONL validation, truncation health, family-total oversize health, source-role taxonomy, and `raw_available_only`; local verification recorded in spec reviews; separate GitHub code-review approval waived by the project owner on 2026-06-22; merge awaits explicit merge command |
 
 ## Backlog Rules
 

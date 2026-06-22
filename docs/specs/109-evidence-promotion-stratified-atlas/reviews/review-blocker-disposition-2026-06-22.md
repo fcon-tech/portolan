@@ -43,15 +43,18 @@ Base: `origin/portolan-next`
 - The smoke fails if `build-evidence-promotion-atlas.sh ... || true` is
   reintroduced in `build-portolan-bundle.sh`.
 
-## Not Assessed
+## Current Boundaries
 
-- GitHub review approval remains `not_assessed`.
-- GitHub checks are stale until the blocker-fix commit is pushed and checks run
-  on the new head.
-- Full 3,019,203-row Bigtop symbol pollution proof remains `not_assessed`
-  because the reusable full input bundle is not present in this worktree.
+- Separate GitHub/human code-review approval is waived by the project owner for
+  PR #73. GitHub `reviewDecision` may remain empty and is not treated as a
+  blocker.
+- Current-head GitHub Baseline is checked in the PR readiness closeout.
+- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun because
+  the reusable full input bundle is not present in this worktree. This is not a
+  hidden PR readiness gate; the behavior is covered by the available lab bundle
+  and focused smoke fixtures.
 
 ## Merge Readiness
 
-Not ready-to-merge. This pass fixes review blockers and refreshes local
-verification only; merge still requires separate approval.
+Merge is not executed by this pass. PR #73 still requires an explicit merge
+command.

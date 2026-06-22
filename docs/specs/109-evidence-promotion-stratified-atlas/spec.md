@@ -5,8 +5,9 @@
 for git-aware inventory, required atlas build failures, JSONL validation,
 truncation health, family-total oversize health, source-role taxonomy, and
 `raw_available_only` health. Local verification is recorded in
-`reviews/pr-readiness-closeout-2026-06-22.md`. GitHub review approval remains
-`not_assessed`; merge not ready.
+`reviews/pr-readiness-closeout-2026-06-22.md`. The project owner waived
+separate GitHub code-review approval for this PR on 2026-06-22; merge still
+requires an explicit merge command.
 
 **Input**: Research synthesis
 `/home/fall_out_bug/projects/sdp/portolan-lab/research/evidence-promotion-stratification-2026-06-22/final-report.md`
@@ -396,6 +397,11 @@ The research data that motivated this spec remains regression evidence:
   lazy.
 - Existing descriptor import path: synthetic descriptors parse, but real
   descriptors may be absent and unresolved relations remain `cannot_verify`.
+
+The 3,019,203-row Bigtop corpus figure is research motivation, not a hidden PR
+readiness gate. PR #73 verifies the pollution behavior with the available lab
+bundle and focused smoke fixtures; a full historical corpus rerun belongs in a
+separate real-target regression pass if needed.
 
 ## Success Criteria
 

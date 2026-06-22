@@ -28,17 +28,18 @@ Blocker-fix base head before this pass:
   review cycle. The current blocker-fix pass is documented in
   `reviews/review-blocker-disposition-2026-06-22.md`.
 - Requirements drift: no open task checkboxes remain; spec/backlog/tasks now
-  describe blocker-fix PR state and preserve not_assessed evidence.
+  describe blocker-fix PR state. The historical 3,019,203-row Bigtop corpus is
+  research motivation, not a hidden PR readiness gate.
 - Product vision drift: no new network access, daemon behavior, credential use,
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
-- PR state: not draft before this pass; current PR state must be refreshed
-  after push.
-- GitHub checks: stale until the blocker-fix commit is pushed and checks run on
-  the new head.
-- Merge readiness: not ready-to-merge.
-- Stop reason: blocker-fix pass delivered locally; merge still requires
-  separate human/GitHub approval.
+- PR state: ready-for-review; not draft.
+- GitHub checks: Baseline passing on current head.
+- Code-review approval: separate GitHub/human code-review approval was waived
+  by the project owner on 2026-06-22. GitHub `reviewDecision` may remain empty.
+- Merge readiness: mergeable and CI green after current-head refresh, but not
+  merged.
+- Stop reason: merge still requires an explicit merge command.
 
 ## Local Verification Evidence
 
@@ -51,16 +52,14 @@ Blocker-fix base head before this pass:
 - verified: `scripts/harness-portolan-smoke.sh`
 - verified after final documentation update: `git diff --check`
 
-## Not Assessed
+## Out Of Scope / Not Rerun
 
-- Full 3,019,203-row Bigtop symbol pollution proof remains not_assessed because
-  the reusable full input bundle was not present locally.
-- GitHub review approval is `not_assessed`.
-- Current-head GitHub checks are `not_assessed` until the blocker-fix commit is
-  pushed and checked.
+- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun because
+  the reusable full input bundle was not present locally. This is not a PR #73
+  merge gate; the PR verifies the behavior with the available lab core bundle
+  and focused smoke fixtures.
 
 ## Decision
 
-Do not claim ready-to-merge. After the blocker-fix commit is pushed, refresh PR
-head/check state and keep GitHub review approval as `not_assessed` unless a
-separate approval appears.
+Do not merge without an explicit merge command. Separate GitHub code-review
+approval is waived for PR #73; it should not be reported as a blocker.

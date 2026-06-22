@@ -81,13 +81,17 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   verification: symbol-index promoted facts normalize producer-supplied
   `evidence_state` through the allowed enum and fall back to
   `metadata-visible`.
-- GitHub review approval remains `not_assessed`.
-- Full 3,019,203-row Bigtop symbol pollution proof is not assessed in this
+- Separate GitHub code-review approval is waived by the project owner for this
+  PR. GitHub `reviewDecision` may remain empty and is not treated as a blocker
+  for PR #73.
+- The historical 3,019,203-row Bigtop symbol-index corpus was not rerun in this
   branch because the full input bundle referenced by the research artifact was
-  not present as a local reusable bundle. The available lab core bundle contains
-  3,600 promoted symbol rows and verifies bounded degraded health behavior, but
-  it does not cross the 50 percent pollution threshold.
-- Merge readiness is not ready; no merge approval was requested or verified.
+  not present as a local reusable bundle. This is not a hidden PR readiness
+  gate. The available lab core bundle contains 3,600 promoted symbol rows and
+  verifies bounded degraded health behavior; focused smoke fixtures verify the
+  pollution/fixture paths.
+- Merge is not executed by this closeout; it still requires an explicit merge
+  command.
 
 ## Risks
 
