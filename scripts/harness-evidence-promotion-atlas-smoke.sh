@@ -97,6 +97,10 @@ cat >"$BUNDLE/claims.jsonl" <<'JSONL'
 JSONL
 
 "$ROOT/scripts/build-portolan-bundle.sh" "$TARGET" "$BUNDLE" >/dev/null
+cat >>"$BUNDLE/symbol-index.jsonl" <<'JSONL'
+{"repo_id":"synthetic","path":"src/app.go","name":"BadState","kind":"function","line":3,"evidence_state":"invalid-state"}
+JSONL
+"$ROOT/scripts/build-evidence-promotion-atlas.sh" "$BUNDLE" "$TARGET" >/dev/null
 "$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$BUNDLE" --completion >/dev/null
 
 "$ROOT/scripts/portolan-bundle-query.sh" promotion-health --bundle "$BUNDLE" --limit 20 \
@@ -105,6 +109,8 @@ JSONL
   | jq -e '.records | length >= 1 and all(.[]; .promotion_basis and .resolution_limit)' >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" promoted-facts --bundle "$BUNDLE" --limit 50 \
   | jq -e '.records[] | select(.family == "source_code" and .fact_kind == "source_role")' >/dev/null
+jq -e 'select(.family == "symbol_index" and .name == "BadState" and .evidence_state == "metadata-visible")' \
+  "$BUNDLE/promoted-facts.jsonl" >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" raw-artifacts --bundle "$BUNDLE" --limit 20 \
   | jq -e '.records | length >= 1 and all(.[]; .payload.expansion_mode)' >/dev/null
 jq -e '.promotion_health.statuses.oversized >= 1' "$BUNDLE/manifest.json" >/dev/null

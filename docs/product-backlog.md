@@ -217,7 +217,7 @@ fixtures are preflight evidence only.
 
 | ID | Spec | Outcome | Status |
 | --- | --- | --- | --- |
-| P10-109 | `docs/specs/109-evidence-promotion-stratified-atlas/` | Raw evidence, classified sources, promoted facts, findings, claims, health, and lazy raw artifacts are separated across every Portolan evidence family so polluted or incomplete bundles cannot look like complete architecture truth. | Draft PR #73 open; local implementation verified, GitHub Baseline passed, two independent PR review lanes assessed, one required lane not_assessed, merge not ready |
+| P10-109 | `docs/specs/109-evidence-promotion-stratified-atlas/` | Raw evidence, classified sources, promoted facts, findings, claims, health, and lazy raw artifacts are separated across every Portolan evidence family so polluted or incomplete bundles cannot look like complete architecture truth. | PR #73 open; local implementation verified, three independent PR review lanes assessed with accepted findings fixed, GitHub Baseline refresh pending after final review-fix commit, merge not ready |
 
 ## Backlog Rules
 

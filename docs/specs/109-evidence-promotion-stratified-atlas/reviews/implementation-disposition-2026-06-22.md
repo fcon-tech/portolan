@@ -58,9 +58,10 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   lane. A later `opencode-go/deepseek-v4-flash` lane completed and is recorded
   in `reviews/opencode-deepseek-v4-flash-2026-06-22.md`; it counts as a second
   assessed lane. Qwen, Gemini Flash, and Kimi replacement attempts did not
-  produce assessed review output, so repo delivery rules still require one
-  additional assessed independent review lane before marking the PR
-  ready-for-review.
+  produce assessed review output. A later
+  `openrouter/~anthropic/claude-haiku-latest` lane completed and is recorded in
+  `reviews/opencode-claude-haiku-latest-2026-06-22.md`; it counts as the third
+  assessed lane.
 - Two partial timeout observations were accepted and fixed before final local
   verification: the viewer needed an explicit promotion-health drill-down panel,
   and the agent command list needed the new spec 109 query families.
@@ -72,13 +73,16 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
   `promotion-health`, `promoted-facts`, `raw-artifacts`, and
   `classified-sources` family filters now match `row.family` only, without
   falling back to record ids.
+- Claude Haiku review finding accepted and fixed before final local
+  verification: symbol-index promoted facts normalize producer-supplied
+  `evidence_state` through the allowed enum and fall back to
+  `metadata-visible`.
 - Full 3,019,203-row Bigtop symbol pollution proof is not assessed in this
   branch because the full input bundle referenced by the research artifact was
   not present as a local reusable bundle. The available lab core bundle contains
   3,600 promoted symbol rows and verifies bounded degraded health behavior, but
   it does not cross the 50 percent pollution threshold.
-- One additional independent PR review lane and merge readiness are not
-  assessed yet.
+- Merge readiness is not assessed yet.
 
 ## Risks
 

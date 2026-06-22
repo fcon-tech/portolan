@@ -30,6 +30,16 @@ const FAMILIES = [
   'analysis_claim',
 ];
 
+const EVIDENCE_STATES = new Set([
+  'source-visible',
+  'metadata-visible',
+  'runtime-visible',
+  'claim-only',
+  'unknown',
+  'cannot_verify',
+  'not_assessed',
+]);
+
 const PROMOTION_MATRIX = [
   ['source_code', 'source', ['file_inventory', 'source_role', 'definition'], 'No behavior, ownership, references, or runtime topology from file presence alone.'],
   ['symbol_index', 'metadata', ['definition'], 'Definition-only unless the producer contract supplies resolved references.'],
@@ -105,6 +115,10 @@ function sha256File(file) {
 
 function hashText(text) {
   return crypto.createHash('sha256').update(String(text)).digest('hex').slice(0, 16);
+}
+
+function evidenceStateOr(value, fallback) {
+  return EVIDENCE_STATES.has(value) ? value : fallback;
 }
 
 function walkFiles(root, limit = 5000) {
@@ -452,7 +466,7 @@ function build(bundleDir, targetRootArg) {
       family: 'symbol_index',
       fact_kind: 'definition',
       evidence_layer: 'metadata',
-      evidence_state: row.evidence_state || 'metadata-visible',
+      evidence_state: evidenceStateOr(row.evidence_state, 'metadata-visible'),
       source_refs: [role ? `source-role:${role.id}` : `symbol-index:${row.repo_id || ''}:${row.path}:${row.line}:${row.name}`],
       producer: row.producer || 'ctags',
       producer_ref: 'symbol-index.jsonl',

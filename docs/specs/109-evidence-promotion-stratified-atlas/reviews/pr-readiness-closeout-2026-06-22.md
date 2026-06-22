@@ -18,21 +18,21 @@ Implementation head assessed before MiniMax review fixes:
   in `reviews/opencode-minimax-m2.7-2026-06-22.md`; accepted findings were
   fixed locally. A later `opencode-go/deepseek-v4-flash` lane completed and is
   recorded in `reviews/opencode-deepseek-v4-flash-2026-06-22.md`; accepted
-  findings were fixed locally. Qwen, Gemini Flash, and Kimi replacement lanes
-  did not produce assessed review output. This is two assessed independent
-  lanes, not the full required review coverage.
+  findings were fixed locally. Qwen, Gemini Flash, Kimi, and MiMo replacement
+  lanes did not produce assessed review output. A later
+  `openrouter/~anthropic/claude-haiku-latest` lane completed and is recorded in
+  `reviews/opencode-claude-haiku-latest-2026-06-22.md`; accepted findings were
+  fixed locally. This is three assessed independent lanes.
 - Requirements drift: no open task checkboxes remain; spec/backlog/tasks now
   describe draft PR state and preserve not_assessed evidence.
 - Product vision drift: no new network access, daemon behavior, credential use,
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
-- PR state: draft PR open, `isDraft=true`.
-- GitHub checks: `Baseline` passed in 43s for head
-  `ce992e80d1cae4f96e4956fd7674c3480d7a12d5` before this status-only
-  consistency update.
+- PR state: ready-for-review transition pending final push/check refresh.
+- GitHub checks: pending refresh after final review-fix commit.
 - Merge readiness: not ready-to-merge.
-- Stop reason: draft PR remains blocked on additional independent review
-  evidence. GitHub checks must still be refreshed after each pushed head.
+- Stop reason: ready-for-review PR is pending final push/check refresh; merge
+  still requires separate human/GitHub approval.
 
 ## Local Verification Evidence
 
@@ -55,10 +55,11 @@ Implementation head assessed before MiniMax review fixes:
 
 - Full 3,019,203-row Bigtop symbol pollution proof remains not_assessed because
   the reusable full input bundle was not present locally.
-- One additional independent non-GPT review lane is not_assessed.
 - GitHub review approval is not_assessed.
 
 ## Decision
 
-Keep PR #73 draft. Do not mark ready-for-review until independent review
-coverage is assessed or explicitly waived.
+After final push and current-head GitHub check refresh, mark PR #73
+ready-for-review if Baseline remains green and the PR head matches this
+closeout state. Do not claim ready-to-merge without separate review approval or
+explicit user acceptance of absent approval.
