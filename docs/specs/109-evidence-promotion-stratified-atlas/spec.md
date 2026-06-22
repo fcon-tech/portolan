@@ -1,10 +1,9 @@
 # Feature Specification: Evidence Promotion and Stratified Atlas Contract (109)
 
-**Status**: PR #73 open on branch
-`codex/109-evidence-promotion-stratified-atlas`; ready-for-review transition
-pending final status-only commit check, local implementation verified, three
-independent PR review lanes assessed with accepted findings fixed, merge not
-ready.
+**Status**: PR #73 ready-for-review on branch
+`codex/109-evidence-promotion-stratified-atlas`; local implementation verified,
+three independent PR review lanes assessed with accepted findings fixed, GitHub
+Baseline passed on pre-status head, merge not ready.
 
 **Input**: Research synthesis
 `/home/fall_out_bug/projects/sdp/portolan-lab/research/evidence-promotion-stratification-2026-06-22/final-report.md`
