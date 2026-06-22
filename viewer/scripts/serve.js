@@ -136,6 +136,18 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/atlas-surface-content.json') {
     return sendOptionalFile(path.join(bundlePath, 'atlas-surface-content.json'), res, '{}');
   }
+  if (url.pathname === '/bundle/promotion-health.jsonl') {
+    return sendOptionalFile(path.join(bundlePath, 'promotion-health.jsonl'), res, '');
+  }
+  if (url.pathname === '/bundle/promoted-facts.jsonl') {
+    return sendOptionalFile(path.join(bundlePath, 'promoted-facts.jsonl'), res, '');
+  }
+  if (url.pathname === '/bundle/raw-artifacts.jsonl') {
+    return sendOptionalFile(path.join(bundlePath, 'raw-artifacts.jsonl'), res, '');
+  }
+  if (url.pathname === '/bundle/classified-sources.jsonl') {
+    return sendOptionalFile(path.join(bundlePath, 'classified-sources.jsonl'), res, '');
+  }
 
   const distResolved = path.resolve(distDir) + path.sep;
   let filePath = path.resolve(

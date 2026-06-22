@@ -185,6 +185,60 @@ const TOOL_DEFS = [
       },
     },
   },
+  {
+    name: 'portolan_query_promotion_health',
+    description:
+      'Query spec 109 promotion health by evidence family. Use before treating a bundle as complete architecture truth; not_integrated/not_assessed/cannot_verify are explicit degraded states.',
+    family: 'promotion-health',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        family: { type: 'string', description: 'Canonical evidence family id' },
+        status: { type: 'string', description: 'Health status filter' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
+    name: 'portolan_query_promoted_facts',
+    description:
+      'Query promoted facts and claim records with stratum, evidence_layer, evidence_state, promotion_basis, and resolution_limit.',
+    family: 'promoted-facts',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        family: { type: 'string', description: 'Canonical evidence family id' },
+        stratum: { type: 'string', description: 'promoted_fact or claim' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
+    name: 'portolan_query_raw_artifacts',
+    description:
+      'Query lazy raw artifact refs with size, hash when available, producer_ref, family, and expansion_mode.',
+    family: 'raw-artifacts',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        family: { type: 'string', description: 'Canonical evidence family id' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
+    name: 'portolan_query_classified_sources',
+    description:
+      'Query classified source-role records before relying on promoted atlas facts.',
+    family: 'classified-sources',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        family: { type: 'string', description: 'Usually source_code' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
 ];
 
 const TOOL_BY_NAME = Object.fromEntries(TOOL_DEFS.map((t) => [t.name, t]));
@@ -229,6 +283,14 @@ function familyOpts(family, args) {
       return { repo: args.repo, text: args.text, limit: args.limit };
     case 'relationships':
       return { type: args.type, repo: args.repo, limit: args.limit };
+    case 'promotion-health':
+      return { family: args.family, status: args.status, limit: args.limit };
+    case 'promoted-facts':
+      return { family: args.family, stratum: args.stratum, limit: args.limit };
+    case 'raw-artifacts':
+      return { family: args.family, limit: args.limit };
+    case 'classified-sources':
+      return { family: args.family, limit: args.limit };
     default:
       throw new Error(`unknown family ${family}`);
   }

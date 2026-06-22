@@ -213,6 +213,12 @@ fixtures are preflight evidence only.
 | P9-107 | `docs/specs/107-viewer-cto-overview/` | Repos tab, drill-down ladder A/B/C/D, relationships view, repo aggregations. | Merged via PR #71 |
 | P9-108 | `docs/specs/108-cto-demo-eval/` | CTO demo bar + eval on Apache Bigtop corpus incl. agent claims pass. | Merged via PR #71; old 10-repo slice is superseded by full-corpus Bigtop acceptance in PR #72 |
 
+## P10: Stratified Atlas Contract (active)
+
+| ID | Spec | Outcome | Status |
+| --- | --- | --- | --- |
+| P10-109 | `docs/specs/109-evidence-promotion-stratified-atlas/` | Raw evidence, classified sources, promoted facts, findings, claims, health, and lazy raw artifacts are separated across every Portolan evidence family so polluted or incomplete bundles cannot look like complete architecture truth. | Local implementation complete on `codex/109-evidence-promotion-stratified-atlas`; PR review and merge not yet assessed |
+
 ## Backlog Rules
 
 - Every P0/P1/P2 item must map to exactly one SpecKit feature directory before

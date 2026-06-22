@@ -123,6 +123,11 @@ async function init() {
       claimsImportReport,
       landscapeReport,
       searchIndex,
+      manifest,
+      promotionHealth,
+      promotedFacts,
+      rawArtifacts,
+      classifiedSources,
     ] =
       await Promise.all([
         fetchJson('/bundle/atlas-facts.json', {}),
@@ -135,6 +140,11 @@ async function init() {
         fetchJson('/bundle/claims-import-report.json', {}),
         fetchJson('/bundle/landscape-report.json', {}),
         fetchJsonl('/bundle/search-index.jsonl'),
+        fetchJson('/bundle/manifest.json', {}),
+        fetchJsonl('/bundle/promotion-health.jsonl'),
+        fetchJsonl('/bundle/promoted-facts.jsonl'),
+        fetchJsonl('/bundle/raw-artifacts.jsonl'),
+        fetchJsonl('/bundle/classified-sources.jsonl'),
       ]);
     state.model = buildModel({
       atlasFacts,
@@ -147,6 +157,11 @@ async function init() {
       claimsImportReport,
       landscapeReport,
       searchIndex,
+      manifest,
+      promotionHealth,
+      promotedFacts,
+      rawArtifacts,
+      classifiedSources,
     });
     state.selectedId = chooseDefaultComponent(state.model);
     routeFromHash();
@@ -198,6 +213,11 @@ function buildModel({
   claimsImportReport,
   landscapeReport,
   searchIndex,
+  manifest,
+  promotionHealth,
+  promotedFacts,
+  rawArtifacts,
+  classifiedSources,
 }) {
   const components = normalizeComponents(atlasFacts, repoProfiles);
   const componentByTarget = new Map(components.map((component) => [component.targetId, component]));
@@ -265,6 +285,11 @@ function buildModel({
     landscapeClaims,
     rejectedClaims: Array.isArray(claimsImportReport.rejected) ? claimsImportReport.rejected : [],
     searchIndex: Array.isArray(searchIndex) ? searchIndex.slice(0, 5000) : [],
+    manifest: manifest || {},
+    promotionHealth: Array.isArray(promotionHealth) ? promotionHealth : [],
+    promotedFacts: Array.isArray(promotedFacts) ? promotedFacts : [],
+    rawArtifacts: Array.isArray(rawArtifacts) ? rawArtifacts : [],
+    classifiedSources: Array.isArray(classifiedSources) ? classifiedSources : [],
     findingById,
     reportSections,
     insights,
@@ -312,6 +337,15 @@ function buildExecutiveInsights({ components, coverage, edges, sharedDependencie
       `${formatNumber(cannotVerifyRoutes)} cannot_verify surface routes`,
     ],
   };
+}
+
+function countBy(items, keyFn) {
+  const counts = {};
+  for (const item of items || []) {
+    const key = keyFn(item);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return counts;
 }
 
 function buildNextStepGroups(nextSteps, findingById, components) {
@@ -669,6 +703,19 @@ function renderNav() {
 function renderHero(selected) {
   const model = state.model;
   const coverage = model.coverage;
+  const promotionSummary = model.manifest.promotion_health || {};
+  const healthStatuses = promotionSummary.statuses || {};
+  const degradedFamilies =
+    numberFrom(healthStatuses.not_assessed, 0) +
+    numberFrom(healthStatuses.not_integrated, 0) +
+    numberFrom(healthStatuses.cannot_verify, 0) +
+    numberFrom(healthStatuses.partial, 0) +
+    numberFrom(healthStatuses.non_exhaustive, 0) +
+    numberFrom(healthStatuses.polluted_by_non_source, 0) +
+    numberFrom(healthStatuses.dominated_by_fixture_data, 0) +
+    numberFrom(healthStatuses.oversized, 0) +
+    numberFrom(healthStatuses.stale, 0) +
+    numberFrom(healthStatuses.inventory_mismatch, 0);
   const gapCount =
     (numberFrom(coverage.cannot_verify_surface_routes, 0) > 0 ? 1 : 0) +
     (coverage.runtime_topology === 'not_assessed' ? 1 : 0);
@@ -683,11 +730,11 @@ function renderHero(selected) {
         </p>
       </div>
       <div class="hero-metrics" aria-label="Bundle coverage">
+        ${metric('Families', promotionSummary.canonical_family_count || model.promotionHealth.length || 0, `${degradedFamilies} degraded`)}
+        ${metric('Facts', promotionSummary.promoted_fact_count || 0, 'promoted')}
         ${metric('Repos', coverage.repo_count || model.components.length, 'source-visible')}
         ${metric('Surfaces', coverage.surface_route_count || 0, 'routes')}
-        ${metric('Relations', coverage.relationship_count || model.relationships.length, 'repo + deps')}
-        ${metric('Findings', coverage.hotspot_count || state.model.hotspots.length, 'clustered')}
-        ${metric('Limits', gapCount, 'kept explicit')}
+        ${metric('Limits', gapCount + degradedFamilies, 'kept explicit')}
       </div>
       <div class="hero-selected">
         <span>Selected component</span>
@@ -719,6 +766,7 @@ function renderView(selected) {
 function renderAtlasView(selected) {
   return `
     ${renderExecutiveBriefing(selected)}
+    ${renderPromotionHealthPanel()}
     ${renderAtlasCockpit(selected)}
     <section class="atlas-grid">
       <aside class="left-rail">
@@ -744,6 +792,85 @@ function renderAtlasView(selected) {
       <aside class="inspector">
         ${renderInspector(selected)}
       </aside>
+    </section>
+  `;
+}
+
+function renderPromotionHealthPanel() {
+  const model = state.model;
+  const health = model.promotionHealth || [];
+  if (!health.length) return '';
+  const statusPriority = {
+    cannot_verify: 0,
+    not_integrated: 1,
+    not_assessed: 2,
+    polluted_by_non_source: 3,
+    dominated_by_fixture_data: 4,
+    oversized: 5,
+    stale: 6,
+    inventory_mismatch: 7,
+    non_exhaustive: 8,
+    partial: 9,
+    raw_available_only: 10,
+    unsupported_language: 11,
+    ok: 12,
+  };
+  const rows = [...health]
+    .sort((a, b) =>
+      (statusPriority[a.status] ?? 20) - (statusPriority[b.status] ?? 20) ||
+      String(a.family || '').localeCompare(String(b.family || ''))
+    )
+    .slice(0, 8);
+  const counts = countBy(health, (row) => row.status || 'unknown');
+  return `
+    <section class="briefing-board" aria-label="Promotion health">
+      <article class="brief-card brief-card--shape">
+        <div class="brief-head">
+          <span class="section-kicker">Promotion health</span>
+          <h2>What can become atlas truth</h2>
+        </div>
+        <div class="evidence-chips">
+          ${Object.entries(counts).sort(([a], [b]) => a.localeCompare(b)).map(([status, count]) =>
+            `<span>${escapeHtml(status)} ${formatNumber(count)}</span>`
+          ).join('')}
+        </div>
+        <p>Facts, claims, source roles and raw artifacts stay in separate strata. Weak families qualify the atlas before hotspots are ranked.</p>
+      </article>
+      <article class="brief-card">
+        <div class="section-row">
+          <h3>Weakest families</h3>
+          <span>${formatNumber(health.length)} health rows</span>
+        </div>
+        <div class="brief-list">
+          ${rows.map((row) => `
+            <button type="button" data-action="view" data-view="agent">
+              <strong>${escapeHtml(row.family || row.id || 'family')}</strong>
+              <span>${escapeHtml(row.status || 'unknown')} / ${escapeHtml(row.fact_kind || 'family_route')}</span>
+              <em>${escapeHtml(row.reason || row.calculation_rule || '')}</em>
+            </button>
+          `).join('')}
+        </div>
+      </article>
+      <article class="brief-card">
+        <div class="section-row">
+          <h3>Drill-down refs</h3>
+          <span>queryable strata</span>
+        </div>
+        <div class="brief-list">
+          ${[
+            ['classified-sources', model.classifiedSources.length, 'source roles'],
+            ['promoted-facts', model.promotedFacts.length, 'facts and claims'],
+            ['raw-artifacts', model.rawArtifacts.length, 'lazy raw refs'],
+            ['promotion-health', health.length, 'family health'],
+          ].map(([family, count, label]) => `
+            <button type="button" data-action="view" data-view="agent">
+              <strong>${escapeHtml(family)}</strong>
+              <span>${formatNumber(count)} ${escapeHtml(label)}</span>
+              <em>portolan-bundle-query ${escapeHtml(family)}</em>
+            </button>
+          `).join('')}
+        </div>
+      </article>
     </section>
   `;
 }
@@ -2053,6 +2180,22 @@ function agentCommands(component) {
     {
       label: 'Query selected atlas component',
       command: `${query} atlas --bundle "$BUNDLE_DIR" --section components --repo ${repoArg} --limit 5`,
+    },
+    {
+      label: 'Inspect promotion health',
+      command: `${query} promotion-health --bundle "$BUNDLE_DIR" --limit 20`,
+    },
+    {
+      label: 'Inspect promoted facts',
+      command: `${query} promoted-facts --bundle "$BUNDLE_DIR" --limit 20`,
+    },
+    {
+      label: 'Inspect raw artifact refs',
+      command: `${query} raw-artifacts --bundle "$BUNDLE_DIR" --limit 20`,
+    },
+    {
+      label: 'Inspect source roles',
+      command: `${query} classified-sources --bundle "$BUNDLE_DIR" --limit 20`,
     },
     {
       label: 'Import cited agent claims',
