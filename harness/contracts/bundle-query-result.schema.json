@@ -12,7 +12,7 @@
       "properties": {
         "family": {
           "type": "string",
-          "enum": ["hotspots", "gaps", "landscape", "search", "symbol", "source", "atlas", "evidence-index", "claims", "repos", "relationships"]
+          "enum": ["hotspots", "gaps", "landscape", "search", "symbol", "source", "atlas", "evidence-index", "claims", "repos", "relationships", "promotion-health", "promoted-facts", "raw-artifacts", "classified-sources"]
         },
         "bundle_path": { "type": "string" },
         "limit": { "type": "integer", "minimum": 1 }

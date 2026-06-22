@@ -22,6 +22,21 @@
         "gap_budget": { "type": "integer", "minimum": 1 },
         "gaps_truncated": { "type": "integer", "enum": [0, 1] },
         "core_only": { "type": "boolean" }
+        ,
+        "promotion_health": {
+          "type": "object",
+          "properties": {
+            "canonical_family_count": { "type": "integer", "minimum": 0 },
+            "health_record_count": { "type": "integer", "minimum": 0 },
+            "classified_source_count": { "type": "integer", "minimum": 0 },
+            "promoted_fact_count": { "type": "integer", "minimum": 0 },
+            "raw_artifact_count": { "type": "integer", "minimum": 0 },
+            "statuses": { "type": "object" },
+            "unsupported_family_count": { "type": "integer", "minimum": 0 },
+            "not_assessed_family_count": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": true
+        }
       },
       "additionalProperties": true
     },
@@ -95,6 +110,7 @@
     },
     "atlas-surfaces": { "$ref": "atlas-surfaces.schema.json" },
     "atlas-facts": { "$ref": "atlas-facts.schema.json" },
-    "atlas-surface-content": { "$ref": "atlas-surface-content.schema.json" }
+    "atlas-surface-content": { "$ref": "atlas-surface-content.schema.json" },
+    "evidence-promotion-atlas": { "$ref": "evidence-promotion-atlas.schema.json" }
   }
 }

@@ -17,6 +17,10 @@ const families = [
   'claims',
   'repos',
   'relationships',
+  'promotion-health',
+  'promoted-facts',
+  'raw-artifacts',
+  'classified-sources',
 ];
 
 function printUsage() {
@@ -34,6 +38,10 @@ Families:
   claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
   repos          [--repo ID] [--text Q] --limit N
   relationships  [--type T] [--repo ID] --limit N
+  promotion-health [--family F] [--status S] --limit N
+  promoted-facts   [--family F] [--stratum S] --limit N
+  raw-artifacts    [--family F] --limit N
+  classified-sources [--family F] --limit N
 
 Options:
   --bundle DIR   Portolan bundle directory (required)
@@ -114,6 +122,10 @@ function parseArgs(argv) {
         break;
       case '--family':
         opts.family = next;
+        i++;
+        break;
+      case '--stratum':
+        opts.stratum = next;
         i++;
         break;
       case '--tier':

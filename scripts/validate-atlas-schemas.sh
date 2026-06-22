@@ -10,7 +10,7 @@ if [[ $# -lt 1 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 BUNDLE_DIR=$(cd "$1" && pwd)
-for file in atlas-surfaces.json atlas-facts.json atlas-surface-content.json; do
+for file in atlas-surfaces.json atlas-facts.json atlas-surface-content.json promotion-health.jsonl promoted-facts.jsonl classified-sources.jsonl raw-artifacts.jsonl; do
   [[ -f "$BUNDLE_DIR/$file" ]] || {
     echo "validate-atlas-schemas: missing $BUNDLE_DIR/$file" >&2
     exit 1
@@ -22,3 +22,4 @@ if ! (cd "$ROOT/viewer" && node -e "require('ajv')" >/dev/null 2>&1); then
 fi
 
 node "$ROOT/viewer/scripts/validate-atlas-schemas.js" "$BUNDLE_DIR"
+"$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$BUNDLE_DIR"

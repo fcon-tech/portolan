@@ -70,6 +70,37 @@ if [[ -x "$ROOT/scripts/validate-atlas-schemas.sh" ]]; then
 fi
 if [[ -x "$ROOT/scripts/portolan-bundle-query.sh" ]]; then
   [[ -s "$BUNDLE/symbol-index.jsonl" ]] || fail "symbol-index.jsonl missing or empty"
+  symbol_rows=$(wc -l <"$BUNDLE/symbol-index.jsonl" | tr -d '[:space:]')
+  [[ "$symbol_rows" -ge 1000000 ]] || fail "expected a full-scale Bigtop symbol-index, got $symbol_rows rows"
+  jq -e --argjson rows "$symbol_rows" '
+    select(
+      .id == "promotion-health-symbol-index-pollution"
+      and .status == "polluted_by_non_source"
+      and .denominator == $rows
+      and .observed_count > ($rows * 0.5)
+    )
+  ' "$BUNDLE/promotion-health.jsonl" >/dev/null || fail "symbol-index pollution health missing or below threshold"
+  jq -e --argjson rows "$symbol_rows" '
+    select(
+      .id == "promotion-health-symbol-index-fixtures"
+      and .status == "dominated_by_fixture_data"
+      and .denominator == $rows
+      and .observed_count > ($rows * 0.35)
+    )
+  ' "$BUNDLE/promotion-health.jsonl" >/dev/null || fail "symbol-index fixture/test dominance health missing or below threshold"
+  jq -e --argjson rows "$symbol_rows" '
+    select(
+      .id == "promotion-health-symbol-index-promoted-facts-truncated"
+      and .status == "non_exhaustive"
+      and .denominator == $rows
+    )
+  ' "$BUNDLE/promotion-health.jsonl" >/dev/null || fail "symbol-index promoted-fact truncation health missing"
+  jq -e '
+    select(
+      .id == "promotion-health-oversized-family-symbol_index"
+      and .status == "oversized"
+    )
+  ' "$BUNDLE/promotion-health.jsonl" >/dev/null || fail "symbol-index oversized-family health missing"
   first_symbol=$(awk 'length($0) > 0 { print; exit }' "$BUNDLE/symbol-index.jsonl" | jq -r '.name // empty')
   [[ -n "$first_symbol" ]] || fail "symbol-index has no queryable symbol names"
   sym_out=$("$ROOT/scripts/portolan-bundle-query.sh" symbol --bundle "$BUNDLE" --name "$first_symbol" --limit 3 2>/dev/null || true)

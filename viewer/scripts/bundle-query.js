@@ -5,10 +5,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const SCHEMA_VERSION = '0.1.0';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 200;
+
+function hashText(text) {
+  return crypto.createHash('sha256').update(String(text)).digest('hex');
+}
 
 function parseLimit(raw, fallback = DEFAULT_LIMIT) {
   const n = parseInt(raw, 10);
@@ -1037,6 +1042,73 @@ function queryClaims(bundlePath, opts = {}) {
   );
 }
 
+function stratumRecord(bundlePath, artifact, row) {
+  const id = row.id || row.record_id || `${artifact}-${hashText(JSON.stringify(row)).slice(0, 12)}`;
+  return {
+    id,
+    reference: makeRef(bundlePath, artifact, id),
+    bundle_path: path.resolve(bundlePath),
+    artifact,
+    record_id: id,
+    kind: row.stratum || row.kind || artifact.replace(/\.(jsonl|json)$/g, ''),
+    stratum: row.stratum || '',
+    family: row.family || '',
+    fact_kind: row.fact_kind || '',
+    evidence_layer: row.evidence_layer || '',
+    evidence_state: row.evidence_state || 'metadata-visible',
+    status: row.status || 'observed',
+    health_status: row.stratum === 'promotion_health' ? row.status || '' : undefined,
+    summary: row.reason || row.summary || row.promotion_basis || row.path || row.statement || id,
+    promotion_basis: row.promotion_basis || '',
+    resolution_limit: row.resolution_limit || '',
+    source_refs: row.source_refs || row.evidence_refs || [],
+    producer: row.producer || '',
+    producer_ref: row.producer_ref || '',
+    payload: row,
+  };
+}
+
+function queryStratumFile(bundlePath, opts = {}, config) {
+  const limit = parseLimit(opts.limit, MAX_LIMIT);
+  const family = (opts.family || '').trim().toLowerCase();
+  const status = (opts.status || '').trim().toLowerCase();
+  const stratum = (opts.stratum || '').trim().toLowerCase();
+  const filePath = path.join(bundlePath, config.artifact);
+  const warnings = [];
+  if (!fs.existsSync(filePath)) {
+    return wrapResult(
+      { family: config.family, filter_family: family || undefined, status: status || undefined, limit, bundle_path: path.resolve(bundlePath) },
+      [],
+      0,
+      limit,
+      [`${config.artifact} missing; run build-evidence-promotion-atlas.sh or portolan-scan`]
+    );
+  }
+  let rows = config.json ? (readJSON(filePath)?.records || readJSON(filePath)?.families || []) : readJSONL(filePath);
+  if (!Array.isArray(rows)) rows = [];
+  const matched = rows.filter((row) => {
+    if (family && (row.family || '').toLowerCase() !== family) return false;
+    if (status && (row.status || '').toLowerCase() !== status) return false;
+    if (stratum && (row.stratum || '').toLowerCase() !== stratum) return false;
+    return true;
+  });
+  return wrapResult(
+    {
+      family: config.family,
+      filter_family: family || undefined,
+      status: status || undefined,
+      stratum: stratum || undefined,
+      limit,
+      bundle_path: path.resolve(bundlePath),
+      artifact: config.artifact,
+    },
+    matched.map((row) => stratumRecord(bundlePath, config.artifact, row)),
+    matched.length,
+    limit,
+    warnings
+  );
+}
+
 function dispatch(bundlePath, family, opts) {
   const resolved = path.resolve(bundlePath);
   if (!fs.existsSync(resolved)) {
@@ -1065,6 +1137,14 @@ function dispatch(bundlePath, family, opts) {
       return queryRepos(resolved, opts);
     case 'relationships':
       return queryRelationships(resolved, opts);
+    case 'promotion-health':
+      return queryStratumFile(resolved, opts, { family, artifact: 'promotion-health.jsonl' });
+    case 'promoted-facts':
+      return queryStratumFile(resolved, opts, { family, artifact: 'promoted-facts.jsonl' });
+    case 'raw-artifacts':
+      return queryStratumFile(resolved, opts, { family, artifact: 'raw-artifacts.jsonl' });
+    case 'classified-sources':
+      return queryStratumFile(resolved, opts, { family, artifact: 'classified-sources.jsonl' });
     default:
       throw new Error(`unknown query family ${family}`);
   }
@@ -1150,6 +1230,34 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
     return dispatch(bundlePath, 'relationships', {
       type: searchParams.get('type'),
       repo: searchParams.get('repo'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/promotion-health') {
+    return dispatch(bundlePath, 'promotion-health', {
+      family: searchParams.get('family'),
+      status: searchParams.get('status'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/promoted-facts') {
+    return dispatch(bundlePath, 'promoted-facts', {
+      family: searchParams.get('family'),
+      stratum: searchParams.get('stratum'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/raw-artifacts') {
+    return dispatch(bundlePath, 'raw-artifacts', {
+      family: searchParams.get('family'),
+      status: searchParams.get('status'),
+      limit: searchParams.get('limit'),
+    });
+  }
+  if (p === '/api/classified-sources') {
+    return dispatch(bundlePath, 'classified-sources', {
+      family: searchParams.get('family'),
+      status: searchParams.get('status'),
       limit: searchParams.get('limit'),
     });
   }

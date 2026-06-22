@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.local/schemas/evidence-promotion-atlas.schema.json",
+  "title": "Evidence Promotion Atlas Records",
+  "oneOf": [
+    { "$ref": "#/$defs/classified_source" },
+    { "$ref": "#/$defs/promotion_health" },
+    { "$ref": "#/$defs/promoted_fact" },
+    { "$ref": "#/$defs/raw_artifact" },
+    { "$ref": "#/$defs/claim_record" }
+  ],
+  "$defs": {
+    "family": {
+      "type": "string",
+      "enum": [
+        "source_code",
+        "documentation",
+        "build_metadata",
+        "dependency_metadata",
+        "configuration",
+        "deployment_model",
+        "ci_cd",
+        "runtime_observation",
+        "catalog_descriptor",
+        "duplication",
+        "static_analysis",
+        "search_index",
+        "symbol_index",
+        "semantic_index",
+        "analysis_claim"
+      ]
+    },
+    "evidence_state": {
+      "type": "string",
+      "enum": [
+        "source-visible",
+        "metadata-visible",
+        "runtime-visible",
+        "claim-only",
+        "unknown",
+        "cannot_verify",
+        "not_assessed"
+      ]
+    },
+    "evidence_layer": {
+      "type": "string",
+      "enum": ["source", "metadata", "runtime", "claim", "unknown"]
+    },
+    "source_role": {
+      "type": "string",
+      "enum": [
+        "runtime_product_code",
+        "test_code",
+        "test_artifact",
+        "fixture_data",
+        "generated_code",
+        "vendor_code",
+        "documentation",
+        "configuration",
+        "deployment_model",
+        "build_metadata",
+        "ci_cd",
+        "secret_reference_surface",
+        "runtime_observation",
+        "catalog_descriptor",
+        "unknown_role"
+      ]
+    },
+    "health_status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "partial",
+        "non_exhaustive",
+        "oversized",
+        "dominated_by_fixture_data",
+        "polluted_by_non_source",
+        "stale",
+        "inventory_mismatch",
+        "raw_available_only",
+        "unsupported_language",
+        "not_integrated",
+        "cannot_verify",
+        "not_assessed"
+      ]
+    },
+    "classified_source": {
+      "type": "object",
+      "required": [
+        "id",
+        "stratum",
+        "family",
+        "evidence_layer",
+        "evidence_state",
+        "path",
+        "source_role",
+        "confidence",
+        "classifier",
+        "evidence_refs"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "stratum": { "const": "classified_source" },
+        "family": { "$ref": "#/$defs/family" },
+        "evidence_layer": { "$ref": "#/$defs/evidence_layer" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "path": { "type": "string" },
+        "source_role": { "$ref": "#/$defs/source_role" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "classifier": { "type": "string" },
+        "evidence_refs": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "promotion_health": {
+      "type": "object",
+      "required": [
+        "id",
+        "stratum",
+        "family",
+        "scope",
+        "fact_kind",
+        "status",
+        "evidence_state",
+        "evidence_layer",
+        "reason",
+        "observed_count",
+        "calculation_rule",
+        "producer",
+        "producer_ref",
+        "evidence_refs",
+        "route_proof"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "stratum": { "const": "promotion_health" },
+        "family": { "$ref": "#/$defs/family" },
+        "scope": { "type": "string" },
+        "fact_kind": { "type": "string" },
+        "status": { "$ref": "#/$defs/health_status" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "evidence_layer": { "$ref": "#/$defs/evidence_layer" },
+        "reason": { "type": "string" },
+        "observed_count": { "type": "number" },
+        "denominator": { "type": ["number", "null"] },
+        "threshold": { "type": ["number", "null"] },
+        "calculation_rule": { "type": "string" },
+        "next_action": { "type": "string" },
+        "producer": { "type": "string" },
+        "producer_ref": { "type": "string" },
+        "evidence_refs": { "type": "array", "items": { "type": "string" } },
+        "route_proof": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "promoted_fact": {
+      "type": "object",
+      "required": [
+        "id",
+        "stratum",
+        "family",
+        "fact_kind",
+        "evidence_layer",
+        "evidence_state",
+        "source_refs",
+        "producer",
+        "producer_ref",
+        "promotion_basis",
+        "resolution_limit"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "stratum": { "const": "promoted_fact" },
+        "family": { "$ref": "#/$defs/family" },
+        "fact_kind": { "type": "string" },
+        "evidence_layer": { "$ref": "#/$defs/evidence_layer" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "source_refs": { "type": "array", "items": { "type": "string" } },
+        "producer": { "type": "string" },
+        "producer_ref": { "type": "string" },
+        "promotion_basis": { "type": "string" },
+        "resolution_limit": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "claim_record": {
+      "type": "object",
+      "required": [
+        "id",
+        "stratum",
+        "family",
+        "fact_kind",
+        "evidence_layer",
+        "evidence_state",
+        "source_refs",
+        "producer",
+        "producer_ref",
+        "promotion_basis",
+        "resolution_limit"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "stratum": { "const": "claim" },
+        "family": { "const": "analysis_claim" },
+        "fact_kind": { "type": "string" },
+        "evidence_layer": { "const": "claim" },
+        "evidence_state": { "const": "claim-only" },
+        "source_refs": { "type": "array", "items": { "type": "string" } },
+        "producer": { "type": "string" },
+        "producer_ref": { "type": "string" },
+        "promotion_basis": { "type": "string" },
+        "resolution_limit": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "raw_artifact": {
+      "type": "object",
+      "required": [
+        "id",
+        "stratum",
+        "evidence_layer",
+        "evidence_state",
+        "family",
+        "producer",
+        "producer_ref",
+        "path",
+        "size_bytes",
+        "expansion_mode"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "stratum": { "const": "raw_evidence" },
+        "evidence_layer": { "$ref": "#/$defs/evidence_layer" },
+        "evidence_state": { "$ref": "#/$defs/evidence_state" },
+        "family": { "$ref": "#/$defs/family" },
+        "producer": { "type": "string" },
+        "producer_ref": { "type": "string" },
+        "path": { "type": "string" },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "content_hash": { "type": "string" },
+        "expansion_mode": { "type": "string", "enum": ["core", "expanded", "external", "missing"] }
+      },
+      "additionalProperties": true
+    }
+  }
+}
