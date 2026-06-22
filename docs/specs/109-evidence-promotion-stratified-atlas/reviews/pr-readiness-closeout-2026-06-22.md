@@ -24,14 +24,12 @@ Implementation head assessed before MiniMax review fixes:
   `reviews/opencode-claude-haiku-latest-2026-06-22.md`; accepted findings were
   fixed locally. This is three assessed independent lanes.
 - Requirements drift: no open task checkboxes remain; spec/backlog/tasks now
-  describe draft PR state and preserve not_assessed evidence.
+  describe ready-for-review PR state and preserve not_assessed evidence.
 - Product vision drift: no new network access, daemon behavior, credential use,
   target mutation, or scanner replacement was added. Implementation normalizes
   local bundle/producers artifacts only.
 - PR state: ready-for-review.
-- GitHub checks: `Baseline` passed in 36s for head
-  `0a97db890e77a57b7354eb20e68a81aec96ea71c` before this status-only
-  consistency update.
+- GitHub checks: pending refresh after this status cleanup commit.
 - Merge readiness: not ready-to-merge.
 - Stop reason: ready-for-review PR delivered; merge still requires separate
   human/GitHub approval.
@@ -61,6 +59,6 @@ Implementation head assessed before MiniMax review fixes:
 
 ## Decision
 
-Keep PR #73 ready-for-review after this status-only update is pushed and
-current-head GitHub checks refresh. Do not claim ready-to-merge without
-separate review approval or explicit user acceptance of absent approval.
+Keep PR #73 ready-for-review after this status cleanup is pushed and
+current-head GitHub checks refresh. Do not claim ready-to-merge without separate
+review approval or explicit user acceptance of absent approval.
