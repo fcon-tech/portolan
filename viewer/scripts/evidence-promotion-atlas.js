@@ -60,6 +60,8 @@ const THRESHOLDS = {
   oversized_family_bytes: 500 * 1024 * 1024,
   low_confidence_ratio: 0.1,
   low_confidence_threshold: 0.5,
+  inventory_mismatch_ratio: 0.01,
+  inventory_mismatch_max_threshold_count: 100,
 };
 
 function usage() {
@@ -160,6 +162,7 @@ function rawArtifact(bundleDir, file, producer, family, expansionMode = 'core') 
     producer_ref: path.relative(bundleDir, file),
     path: path.relative(bundleDir, file),
     size_bytes: stats.size,
+    mtime: stats.mtime.toISOString(),
     content_hash: stats.size <= 50 * 1024 * 1024 ? `sha256:${sha256File(file)}` : undefined,
     expansion_mode: expansionMode,
   };
@@ -273,6 +276,11 @@ function build(bundleDir, targetRootArg) {
     return acc;
   }, {});
   const totalSources = classified.length;
+  const discoveredFileCount = Number.isFinite(manifest.discovered_file_count)
+    ? manifest.discovered_file_count
+    : Number.isFinite(manifest.source_file_count)
+      ? manifest.source_file_count
+      : totalSources;
   const nonPromotable = (roleCounts.test_code || 0) + (roleCounts.test_artifact || 0) + (roleCounts.fixture_data || 0) + (roleCounts.generated_code || 0) + (roleCounts.vendor_code || 0);
   const fixtureish = (roleCounts.fixture_data || 0) + (roleCounts.test_artifact || 0);
   const lowConfidence = classified.filter((r) => r.confidence < THRESHOLDS.low_confidence_threshold || r.source_role === 'unknown_role').length;
@@ -316,8 +324,22 @@ function build(bundleDir, targetRootArg) {
         calculation_rule: 'low_confidence_or_unknown_role / classified_source_records > 0.1',
       }));
     }
+    const mismatchCount = Math.abs(discoveredFileCount - totalSources);
+    const mismatchThreshold = Math.max(1, Math.min(Math.ceil(discoveredFileCount * THRESHOLDS.inventory_mismatch_ratio), THRESHOLDS.inventory_mismatch_max_threshold_count));
+    if (mismatchCount > mismatchThreshold) {
+      health.push(healthRecord('source_code', 'inventory_mismatch', 'Discovered file count and classified source count differ beyond the allowed threshold.', ['classified-sources.jsonl'], 'classified-sources.jsonl', {
+        id: 'promotion-health-source-code-inventory-mismatch',
+        observed_count: mismatchCount,
+        denominator: discoveredFileCount,
+        threshold: mismatchThreshold,
+        calculation_rule: 'abs(discovered_file_count - classified_source_count) > max(1, min(ceil(discovered_file_count * 0.01), 100))',
+        discovered_file_count: discoveredFileCount,
+        classified_file_count: totalSources,
+      }));
+    }
   }
 
+  const sourceSnapshotAt = Date.parse(manifest.source_snapshot_at || manifest.source_snapshot_time || '');
   const symbolRows = readJSONL(path.join(bundleDir, 'symbol-index.jsonl'));
   if (symbolRows.length > 0) {
     const classifiedSymbolRows = symbolRows.map((row) => {
@@ -358,6 +380,16 @@ function build(bundleDir, targetRootArg) {
         calculation_rule: 'raw_artifact_size_bytes >= 100 MiB',
       }));
     }
+    if (Number.isFinite(sourceSnapshotAt) && artifact.mtime && Date.parse(artifact.mtime) < sourceSnapshotAt) {
+      health.push(healthRecord(artifact.family, 'stale', `Raw artifact ${artifact.path} is older than the declared source snapshot.`, [artifact.path], artifact.path, {
+        id: `promotion-health-stale-${hashText(artifact.path)}`,
+        observed_count: Date.parse(artifact.mtime),
+        denominator: sourceSnapshotAt,
+        calculation_rule: 'raw_artifact_mtime < manifest.source_snapshot_at',
+        source_snapshot_at: manifest.source_snapshot_at || manifest.source_snapshot_time,
+        artifact_mtime: artifact.mtime,
+      }));
+    }
   }
 
   for (const catalogFile of inputs.catalog_descriptor || []) {
@@ -379,6 +411,22 @@ function build(bundleDir, targetRootArg) {
   const promoted = [];
   const roleByPath = new Map(classified.map((r) => [path.resolve(r.path), r]));
   for (const row of classified.filter((r) => r.source_role === 'runtime_product_code' && r.confidence >= 0.5).slice(0, 200)) {
+    promoted.push({
+      id: `fact-source-role-${hashText(row.path)}`,
+      stratum: 'promoted_fact',
+      family: 'source_code',
+      fact_kind: 'source_role',
+      evidence_layer: 'source',
+      evidence_state: 'source-visible',
+      source_refs: [`source-role:${row.id}`],
+      producer: 'portolan-evidence-promotion-atlas',
+      producer_ref: 'classified-sources.jsonl',
+      promotion_basis: `classified_source role=${row.source_role} confidence=${row.confidence}`,
+      resolution_limit: PROMOTION_MATRIX.find((m) => m.family === 'source_code').resolution_limit,
+      path: row.path,
+      source_role: row.source_role,
+      confidence: row.confidence,
+    });
     promoted.push({
       id: `fact-source-file-${hashText(row.path)}`,
       stratum: 'promoted_fact',

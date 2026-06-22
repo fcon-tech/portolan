@@ -1053,6 +1053,7 @@ function stratumRecord(bundlePath, artifact, row) {
     kind: row.stratum || row.kind || artifact.replace(/\.(jsonl|json)$/g, ''),
     stratum: row.stratum || '',
     family: row.family || '',
+    fact_kind: row.fact_kind || '',
     evidence_layer: row.evidence_layer || '',
     evidence_state: row.evidence_state || 'metadata-visible',
     status: row.status || 'observed',

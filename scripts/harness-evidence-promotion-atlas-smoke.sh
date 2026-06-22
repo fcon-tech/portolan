@@ -79,6 +79,9 @@ JSON
 cat >"$BUNDLE/producers/catalog/openapi.json" <<'JSON'
 {"openapi":"3.0.0","info":{"title":"Synthetic","version":"1.0.0"},"paths":{},"unresolved_relations":["service:missing-api"]}
 JSON
+cat >"$BUNDLE/producers/catalog/catalog-relations.jsonl" <<'JSONL'
+{"id":"catalog-jsonl","unresolved_relations":["component:missing-worker"]}
+JSONL
 truncate -s 105M "$BUNDLE/producers/semantic-index/large.jsonl"
 cat >"$BUNDLE/producers/runtime/observations.jsonl" <<'JSONL'
 {"id":"runtime-service-api","service":"api","status":"observed"}
@@ -100,10 +103,25 @@ JSONL
   | jq -e '.records | length >= 15 and all(.[]; .stratum == "promotion_health")' >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" promoted-facts --bundle "$BUNDLE" --limit 20 \
   | jq -e '.records | length >= 1 and all(.[]; .promotion_basis and .resolution_limit)' >/dev/null
+"$ROOT/scripts/portolan-bundle-query.sh" promoted-facts --bundle "$BUNDLE" --limit 50 \
+  | jq -e '.records[] | select(.family == "source_code" and .fact_kind == "source_role")' >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" raw-artifacts --bundle "$BUNDLE" --limit 20 \
   | jq -e '.records | length >= 1 and all(.[]; .payload.expansion_mode)' >/dev/null
 jq -e '.promotion_health.statuses.oversized >= 1' "$BUNDLE/manifest.json" >/dev/null
 jq -e 'select(.family == "catalog_descriptor" and .status == "cannot_verify")' "$BUNDLE/promotion-health.jsonl" >/dev/null
+jq -e 'select(.family == "catalog_descriptor" and .status == "cannot_verify" and .producer_ref == "producers/catalog/catalog-relations.jsonl")' \
+  "$BUNDLE/promotion-health.jsonl" >/dev/null
+
+tmp_manifest=$(mktemp)
+jq '.source_snapshot_at = "2999-01-01T00:00:00.000Z" | .discovered_file_count = 99' \
+  "$BUNDLE/manifest.json" >"$tmp_manifest"
+mv "$tmp_manifest" "$BUNDLE/manifest.json"
+"$ROOT/scripts/build-evidence-promotion-atlas.sh" "$BUNDLE" "$TARGET" >/dev/null
+"$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$BUNDLE" --completion >/dev/null
+jq -e '.promotion_health.statuses.stale >= 1 and .promotion_health.statuses.inventory_mismatch >= 1' \
+  "$BUNDLE/manifest.json" >/dev/null
+jq -e 'select(.family == "source_code" and .status == "inventory_mismatch" and .discovered_file_count == 99)' \
+  "$BUNDLE/promotion-health.jsonl" >/dev/null
 
 BAD_CLAIMS="$FIX/bad-claims.jsonl"
 cat >"$BAD_CLAIMS" <<'JSONL'
@@ -118,6 +136,15 @@ cp -a "$BUNDLE" "$BROKEN"
 jq -c 'select(.family != "semantic_index")' "$BUNDLE/promotion-health.jsonl" >"$BROKEN/promotion-health.jsonl"
 if "$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$BROKEN" --completion >/dev/null 2>&1; then
   echo "expected completion validation to fail when canonical family health is missing" >&2
+  exit 1
+fi
+
+NOT_INTEGRATED="$FIX/not-integrated"
+cp -a "$BUNDLE" "$NOT_INTEGRATED"
+jq -c 'if .id == "promotion-health-semantic_index" then .status = "not_integrated" else . end' \
+  "$BUNDLE/promotion-health.jsonl" >"$NOT_INTEGRATED/promotion-health.jsonl"
+if "$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$NOT_INTEGRATED" --completion >/dev/null 2>&1; then
+  echo "expected completion validation to fail when a canonical family is not_integrated" >&2
   exit 1
 fi
 

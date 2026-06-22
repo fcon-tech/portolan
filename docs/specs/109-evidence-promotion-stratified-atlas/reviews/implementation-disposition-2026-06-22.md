@@ -22,9 +22,10 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
 - Updated viewer first-screen metrics to show canonical family health,
   degraded states, and promoted fact count before hotspot volume.
 - Added `scripts/harness-evidence-promotion-atlas-smoke.sh` with synthetic
-  completion coverage, missing-family negative validation, oversized raw
-  artifact refs, unresolved catalog relationship health, and broken-claim-ref
-  rejection.
+  completion coverage, missing-family and `not_integrated` negative validation,
+  oversized and stale raw artifact refs, inventory mismatch health, JSON/JSONL
+  unresolved catalog relationship health, `source_role` promoted facts, and
+  broken-claim-ref rejection.
 
 ## Verification
 
@@ -47,21 +48,29 @@ Branch: `codex/109-evidence-promotion-stratified-atlas`
 
 ## Not Assessed
 
-- Independent OpenCode review lanes are not assessed. The repo preflight
+- Independent OpenCode review coverage is incomplete. The repo preflight
   `scripts/harness-review-opencode-smoke.sh` produced no output for roughly 90
   seconds and was interrupted with exit 130. Follow-up `opencode-go/glm-5.1`
   and `kimi-for-coding/k2p6` attempts timed out after 240 seconds each, so no
-  model lane is counted as assessed implementation review evidence.
+  output from those attempts is counted as assessed implementation review
+  evidence. A later `minimax/MiniMax-M2.7` lane completed and is recorded in
+  `reviews/opencode-minimax-m2.7-2026-06-22.md`; it counts as one assessed
+  lane, but repo delivery rules still require additional assessed independent
+  review coverage before marking the PR ready-for-review.
 - Two partial timeout observations were accepted and fixed before final local
   verification: the viewer needed an explicit promotion-health drill-down panel,
   and the agent command list needed the new spec 109 query families.
+- MiniMax review findings were accepted and fixed before final local
+  verification: JSONL catalog unresolved-relations coverage, stale raw artifact
+  health, inventory mismatch health, `not_integrated` completion validation,
+  `source_role` promoted facts, and top-level `bundle-query` `fact_kind`.
 - Full 3,019,203-row Bigtop symbol pollution proof is not assessed in this
   branch because the full input bundle referenced by the research artifact was
   not present as a local reusable bundle. The available lab core bundle contains
   3,600 promoted symbol rows and verifies bounded degraded health behavior, but
   it does not cross the 50 percent pollution threshold.
-- GitHub PR state, GitHub checks, independent PR review lanes, and merge
-  readiness are not assessed yet.
+- Additional independent PR review lanes and merge readiness are not assessed
+  yet.
 
 ## Risks
 
