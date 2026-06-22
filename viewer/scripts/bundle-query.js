@@ -1087,7 +1087,7 @@ function queryStratumFile(bundlePath, opts = {}, config) {
   let rows = config.json ? (readJSON(filePath)?.records || readJSON(filePath)?.families || []) : readJSONL(filePath);
   if (!Array.isArray(rows)) rows = [];
   const matched = rows.filter((row) => {
-    if (family && (row.family || row.id || '').toLowerCase() !== family) return false;
+    if (family && (row.family || '').toLowerCase() !== family) return false;
     if (status && (row.status || '').toLowerCase() !== status) return false;
     if (stratum && (row.stratum || '').toLowerCase() !== stratum) return false;
     return true;

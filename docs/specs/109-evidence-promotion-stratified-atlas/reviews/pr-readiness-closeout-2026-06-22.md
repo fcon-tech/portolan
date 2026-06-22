@@ -16,8 +16,11 @@ Implementation head assessed before MiniMax review fixes:
   `opencode-go/glm-5.1` and `kimi-for-coding/k2p6` attempts timed out after 240
   seconds each. A later `minimax/MiniMax-M2.7` lane completed and is recorded
   in `reviews/opencode-minimax-m2.7-2026-06-22.md`; accepted findings were
-  fixed locally. This is one assessed independent lane, not the full required
-  review coverage.
+  fixed locally. A later `opencode-go/deepseek-v4-flash` lane completed and is
+  recorded in `reviews/opencode-deepseek-v4-flash-2026-06-22.md`; accepted
+  findings were fixed locally. Qwen, Gemini Flash, and Kimi replacement lanes
+  did not produce assessed review output. This is two assessed independent
+  lanes, not the full required review coverage.
 - Requirements drift: no open task checkboxes remain; spec/backlog/tasks now
   describe draft PR state and preserve not_assessed evidence.
 - Product vision drift: no new network access, daemon behavior, credential use,
@@ -52,7 +55,7 @@ Implementation head assessed before MiniMax review fixes:
 
 - Full 3,019,203-row Bigtop symbol pollution proof remains not_assessed because
   the reusable full input bundle was not present locally.
-- Additional independent non-GPT review lanes are not_assessed.
+- One additional independent non-GPT review lane is not_assessed.
 - GitHub review approval is not_assessed.
 
 ## Decision
