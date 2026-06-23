@@ -9,17 +9,21 @@ const state = {
   mapMode: 'ua',
   layout: 'force',
   zoom: 1,
+  panX: 0,
+  panY: 0,
   detailOpen: false,
   riskFilter: 'all',
   typeFilter: 'all',
 };
 
+let dragState = null;
+
 const groupMeta = {
-  compute: { label: 'Compute & Orchestration', color: '#4d8dff', x: 610, y: 186 },
-  data: { label: 'Data Systems', color: '#ffd04a', x: 700, y: 404 },
-  platform: { label: 'Platform & Governance', color: '#ff8b47', x: 875, y: 244 },
-  service: { label: 'Services & Integrations', color: '#4ed5d1', x: 270, y: 400 },
-  control: { label: 'Coordination', color: '#9c7cff', x: 238, y: 230 },
+  compute: { label: 'Compute & Orchestration', color: '#4d8dff', x: 610, y: 186, spreadX: 120, spreadY: 88 },
+  data: { label: 'Data Systems', color: '#ffd04a', x: 705, y: 420, spreadX: 118, spreadY: 86 },
+  platform: { label: 'Platform & Governance', color: '#ff8b47', x: 850, y: 300, spreadX: 170, spreadY: 126 },
+  service: { label: 'Services & Integrations', color: '#4ed5d1', x: 300, y: 410, spreadX: 125, spreadY: 88 },
+  control: { label: 'Coordination', color: '#9c7cff', x: 260, y: 238, spreadX: 72, spreadY: 52 },
 };
 
 const viewTargets = {
@@ -36,7 +40,7 @@ const helpText = {
   hotspots: 'Bounded rows of duplication, config, dependency, and other attention signals.',
   atlasNodes: 'Everything visible on the map: source repos plus package, deploy, test, runtime, and community surfaces.',
   view: 'Changes what color means on the map. UA view colors by role; risk view colors by risk level.',
-  layout: 'Changes where nodes sit. Force Directed groups by role; Dependency fanout centers the selected node and its neighbors.',
+  layout: 'Changes where nodes sit. Force Directed spreads nodes into organic role clusters; Dependency fanout centers the selected node and its neighbors.',
   filters: 'Limits the map and table to one cluster family.',
   sharedDependency: 'A library, module, or declared dependency that appears in more than one visible node.',
   riskScore: 'A navigation score from visible findings and fanout. It is not a security severity or production incident score.',
@@ -221,6 +225,10 @@ function bindEvents() {
       state.selectedId = element.dataset.component;
       state.view = 'map';
       state.detailOpen = false;
+      focusComponentInMap(element.dataset.component, {
+        x: Number(element.dataset.x),
+        y: Number(element.dataset.y),
+      });
       render();
       scrollToView('map');
     });
@@ -243,6 +251,8 @@ function bindEvents() {
     state.layout = event.target.value;
     state.view = 'map';
     state.detailOpen = false;
+    state.panX = 0;
+    state.panY = 0;
     render();
     scrollToView('map');
   });
@@ -250,7 +260,11 @@ function bindEvents() {
     button.addEventListener('click', () => {
       if (button.dataset.zoom === 'in') state.zoom = Math.min(1.6, Number((state.zoom + 0.15).toFixed(2)));
       if (button.dataset.zoom === 'out') state.zoom = Math.max(0.7, Number((state.zoom - 0.15).toFixed(2)));
-      if (button.dataset.zoom === 'fit') state.zoom = 1;
+      if (button.dataset.zoom === 'fit') {
+        state.zoom = 1;
+        state.panX = 0;
+        state.panY = 0;
+      }
       state.view = 'map';
       state.detailOpen = false;
       render();
@@ -282,6 +296,7 @@ function bindEvents() {
     scrollToView('map');
   });
   app.querySelector('[data-action="export"]')?.addEventListener('click', exportAtlas);
+  bindMapViewport();
 }
 
 function navigateTo(view) {
@@ -312,7 +327,7 @@ function renderMap(selected) {
   const links = buildVisibleLinks(nodeById, selected);
 
   return `
-    <svg class="atlas-map" viewBox="${mapViewBox()}" role="img" aria-label="Bigtop clustered component map">
+    <svg class="atlas-map" data-map viewBox="${mapViewBox()}" role="img" aria-label="Bigtop clustered component map">
       <defs>
         <filter id="nodeGlow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
@@ -337,7 +352,7 @@ function renderMap(selected) {
         const mutedClass = selectedNeighbors.size && !selectedNeighbors.has(node.id) && node.id !== selected.id ? ' is-muted' : '';
         const color = nodeColor(node);
         return `
-          <g class="map-node${selectedClass}${mutedClass}" data-component="${escapeAttr(node.id)}" transform="translate(${node.x} ${node.y})">
+          <g class="map-node${selectedClass}${mutedClass}" data-component="${escapeAttr(node.id)}" data-x="${node.x}" data-y="${node.y}" transform="translate(${node.x} ${node.y})">
             <circle r="${node.r}" fill="${color}" filter="${node.id === selected.id ? 'url(#nodeGlow)' : ''}"></circle>
             <title>${escapeHtml(node.label)}</title>
           </g>
@@ -358,7 +373,7 @@ function renderMapLabels(components, selected) {
   return Object.entries(groupMeta).map(([group, meta]) => {
     const count = components.filter((component) => component.group === group).length;
     if (!count) return '';
-    return `<text class="cluster-label" x="${meta.x}" y="${meta.y - 76}" fill="${meta.color}">${escapeHtml(meta.label)} (${count} ${count === 1 ? 'node' : 'nodes'})</text>`;
+    return `<text class="cluster-label" x="${meta.x}" y="${meta.y - meta.spreadY - 22}" fill="${meta.color}">${escapeHtml(meta.label)} (${count} ${count === 1 ? 'node' : 'nodes'})</text>`;
   }).join('');
 }
 
@@ -375,16 +390,21 @@ function groupedLayout(components) {
 
   return Object.entries(byGroup).flatMap(([group, rows]) => {
     const meta = groupMeta[group] || groupMeta.service;
-    return rows.map((component, index) => {
-      const angle = (index / rows.length) * Math.PI * 2 - Math.PI / 2;
-      const ring = rows.length <= 2 ? 36 : 62;
-      return {
-        ...component,
-        x: meta.x + Math.cos(angle) * ring,
-        y: meta.y + Math.sin(angle) * ring,
-        r: Math.max(7, Math.min(15, 6 + Math.sqrt(component.files) / 36 + component.relationships / 14)),
-      };
-    });
+    return [...rows]
+      .sort((a, b) => riskScore(b) - riskScore(a) || (b.relationships || 0) - (a.relationships || 0) || repoSlug(a).localeCompare(repoSlug(b)))
+      .map((component, index) => {
+        const seed = stableHash(component.id);
+        const angle = index * 2.399963229728653 + (seed % 61) / 61;
+        const spread = rows.length <= 2 ? 0.42 : Math.sqrt(index + 0.7) / Math.sqrt(rows.length + 0.7);
+        const jitterX = ((seed % 17) - 8) * 1.3;
+        const jitterY = (((seed >> 4) % 17) - 8) * 1.1;
+        return {
+          ...component,
+          x: Math.round((meta.x + Math.cos(angle) * meta.spreadX * spread + jitterX) * 10) / 10,
+          y: Math.round((meta.y + Math.sin(angle) * meta.spreadY * spread + jitterY) * 10) / 10,
+          r: nodeRadius(component),
+        };
+      });
   });
 }
 
@@ -406,22 +426,24 @@ function fanoutLayout(components, selected, selectedNeighbors) {
     r: Math.max(13, Math.min(19, 9 + Math.sqrt(selected.files || 0) / 40 + (selected.relationships || 0) / 16)),
   }];
   neighbors.forEach((component, index) => {
-    const angle = (index / Math.max(1, neighbors.length)) * Math.PI * 2 - Math.PI / 2;
-    const radius = 155 + (index % 3) * 22;
+    const seed = stableHash(component.id);
+    const angle = index * 2.399963229728653 - Math.PI / 2 + (seed % 29) / 70;
+    const spread = 0.5 + Math.sqrt(index + 1) / Math.sqrt(neighbors.length + 1) * 0.5;
     placed.push({
       ...component,
-      x: 520 + Math.cos(angle) * radius,
-      y: 325 + Math.sin(angle) * radius,
+      x: Math.round((520 + Math.cos(angle) * 235 * spread) * 10) / 10,
+      y: Math.round((325 + Math.sin(angle) * 165 * spread) * 10) / 10,
       r: nodeRadius(component),
     });
   });
   rest.forEach((component, index) => {
-    const angle = (index / Math.max(1, rest.length)) * Math.PI * 2 - Math.PI / 2;
-    const radius = 270 + (index % 4) * 18;
+    const seed = stableHash(component.id);
+    const angle = index * 2.399963229728653 + (seed % 53) / 53;
+    const spread = Math.sqrt(index + 1) / Math.sqrt(rest.length + 1);
     placed.push({
       ...component,
-      x: 520 + Math.cos(angle) * radius,
-      y: 325 + Math.sin(angle) * radius,
+      x: Math.round((520 + Math.cos(angle) * 435 * spread + ((seed % 13) - 6) * 1.2) * 10) / 10,
+      y: Math.round((325 + Math.sin(angle) * 265 * spread + (((seed >> 5) % 13) - 6) * 1.2) * 10) / 10,
       r: Math.max(5, nodeRadius(component) - 2),
     });
   });
@@ -435,7 +457,83 @@ function nodeRadius(component) {
 function mapViewBox() {
   const width = 1040 / state.zoom;
   const height = 650 / state.zoom;
-  return `${(1040 - width) / 2} ${(650 - height) / 2} ${width} ${height}`;
+  const centerX = 520 + state.panX;
+  const centerY = 325 + state.panY;
+  return `${centerX - width / 2} ${centerY - height / 2} ${width} ${height}`;
+}
+
+function bindMapViewport() {
+  const map = app.querySelector('[data-map]');
+  if (!map) return;
+
+  map.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const nextZoom = state.zoom * (event.deltaY > 0 ? 0.9 : 1.1);
+    state.zoom = clamp(Number(nextZoom.toFixed(2)), 0.7, 1.8);
+    applyMapViewport();
+  }, { passive: false });
+
+  map.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || event.target.closest('.map-node')) return;
+    const box = map.getBoundingClientRect();
+    const [, , width, height] = mapViewBoxParts();
+    dragState = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      panX: state.panX,
+      panY: state.panY,
+      unitX: width / box.width,
+      unitY: height / box.height,
+    };
+    map.classList.add('is-panning');
+    map.setPointerCapture?.(event.pointerId);
+  });
+
+  map.addEventListener('pointermove', (event) => {
+    if (!dragState || dragState.pointerId !== event.pointerId) return;
+    state.panX = dragState.panX - (event.clientX - dragState.startX) * dragState.unitX;
+    state.panY = dragState.panY - (event.clientY - dragState.startY) * dragState.unitY;
+    applyMapViewport();
+  });
+
+  map.addEventListener('pointerup', endMapPan);
+  map.addEventListener('pointercancel', endMapPan);
+}
+
+function endMapPan(event) {
+  if (!dragState || dragState.pointerId !== event.pointerId) return;
+  app.querySelector('[data-map]')?.classList.remove('is-panning');
+  dragState = null;
+}
+
+function mapViewBoxParts() {
+  return mapViewBox().split(' ').map(Number);
+}
+
+function applyMapViewport() {
+  app.querySelector('[data-map]')?.setAttribute('viewBox', mapViewBox());
+  const zoomValue = app.querySelector('.zoom-value');
+  if (zoomValue) zoomValue.textContent = `${Math.round(state.zoom * 100)}%`;
+}
+
+function focusComponentInMap(componentId, point = {}) {
+  const directX = Number(point.x);
+  const directY = Number(point.y);
+  let target = Number.isFinite(directX) && Number.isFinite(directY) ? { x: directX, y: directY } : null;
+
+  if (!target) {
+    const selected = componentById(componentId);
+    if (!selected) return;
+    const selectedRelations = state.data.relationships.filter((relationship) => relationship.repos.includes(componentId));
+    const selectedNeighbors = new Set(selectedRelations.flatMap((relationship) => relationship.repos));
+    target = layoutNodes(filteredComponents(), selected, selectedNeighbors).find((node) => node.id === componentId);
+  }
+
+  if (!target) return;
+  state.panX = clamp(target.x - 520, -420, 420);
+  state.panY = clamp(target.y - 325, -260, 260);
+  state.zoom = Math.max(state.zoom, state.layout === 'fanout' ? 1.02 : 1.08);
 }
 
 function nodeColor(component) {
@@ -476,7 +574,7 @@ function buildVisibleLinks(nodeById, selected) {
       repos.filter((repo) => repo !== selected.id).slice(0, 14).forEach((repo) => add(selected.id, repo, true));
     }
   }
-  return links.sort((a, b) => Number(a.selectedLink) - Number(b.selectedLink)).slice(0, 70);
+  return links.sort((a, b) => Number(b.selectedLink) - Number(a.selectedLink)).slice(0, 70);
 }
 
 function renderInspector(component) {
@@ -744,6 +842,16 @@ function exportAtlas() {
 
 function severityRank(severity) {
   return { critical: 5, high: 4, medium: 3, low: 2, info: 1 }[severity] || 0;
+}
+
+function stableHash(value) {
+  return String(value).split('').reduce((hash, char) => {
+    return ((hash << 5) - hash + char.charCodeAt(0)) >>> 0;
+  }, 2166136261);
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function compact(value) {
