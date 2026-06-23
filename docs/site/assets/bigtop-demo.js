@@ -30,6 +30,25 @@ const viewTargets = {
   drilldown: 'drilldown-panel',
 };
 
+const helpText = {
+  sourceRepos: 'Git repositories that were actually scanned in this public Bigtop bundle.',
+  relationships: 'Dependency touchpoints and atlas links found across visible repositories and modules.',
+  hotspots: 'Bounded rows of duplication, config, dependency, and other attention signals.',
+  atlasNodes: 'Everything visible on the map: source repos plus package, deploy, test, runtime, and community surfaces.',
+  view: 'Changes what color means on the map. UA view colors by role; risk view colors by risk level.',
+  layout: 'Changes where nodes sit. Force Directed groups by role; Dependency fanout centers the selected node and its neighbors.',
+  filters: 'Limits the map and table to one cluster family.',
+  sharedDependency: 'A library, module, or declared dependency that appears in more than one visible node.',
+  riskScore: 'A navigation score from visible findings and fanout. It is not a security severity or production incident score.',
+  riskDrivers: 'The visible facts that currently push the selected node up the attention list.',
+  neighbors: 'Direct relationship anchors connected to the selected node in the current bundle.',
+  surfaces: 'Places where the system can be inspected: repository, docs, tracker, wiki, package, deploy, or test surface.',
+  findings: 'Concrete rows from the bundle: duplicate blocks, config surfaces, dependency signals, and similar scan outputs.',
+  evidence: 'How visible this fact is in the local bundle: source-visible, metadata-visible, unknown, or not_assessed.',
+  manifest: 'Inbound and outbound manifest dependencies observed for this node.',
+  files: 'Files counted in the scanned source profile for this node.',
+};
+
 init();
 
 async function init() {
@@ -86,11 +105,20 @@ function render() {
             <p>${escapeHtml(data.narrative[0]?.body || data.subtitle)}</p>
             <button type="button" data-view="drilldown" class="text-link">Read more</button>
           </section>
+          <section class="concept-strip" aria-label="Map key">
+            <h2>Map key</h2>
+            <div class="concept-grid">
+              ${conceptCard('Node', 'A repo, package, deploy, test, or community surface in the atlas.')}
+              ${conceptCard('Color', state.mapMode === 'risk' ? 'Risk level: red high, amber medium, green low.' : 'Role cluster: compute, data, platform, services, coordination.')}
+              ${conceptCard('Line', 'A shared dependency or relationship anchor between visible nodes.')}
+              ${conceptCard('Selected', 'White ring and right panel show the node you are inspecting now.')}
+            </div>
+          </section>
           <div class="metric-grid">
-            ${metric('Source repos', data.totals.source_repos || data.totals.repos, '+0', 'Git repositories scanned', 'teal')}
-            ${metric('Relationships', relationFanout(data), '+8%', 'Dependency touches', 'blue')}
-            ${metric('Hotspots', data.hotspots.length, '+3', 'Bounded public rows', 'orange')}
-            ${metric('Atlas nodes', data.totals.atlas_nodes || atlasNodes.length, '+modules', 'Repos + packages + tests', 'muted')}
+            ${metric('Source repos', data.totals.source_repos || data.totals.repos, '+0', 'Git repositories scanned', 'teal', helpText.sourceRepos)}
+            ${metric('Relationships', relationFanout(data), '+8%', 'Dependency touches', 'blue', helpText.relationships)}
+            ${metric('Hotspots', data.hotspots.length, '+3', 'Bounded public rows', 'orange', helpText.hotspots)}
+            ${metric('Atlas nodes', data.totals.atlas_nodes || atlasNodes.length, '+modules', 'Repos + packages + tests', 'muted', helpText.atlasNodes)}
           </div>
           <section class="recent-signals">
             <h2>Recent signals</h2>
@@ -106,19 +134,20 @@ function render() {
 
         <section class="map-panel panel ${state.view === 'map' ? 'is-view-focus' : ''}" id="map">
           <div class="map-toolbar">
-            <label>View:
+            <label>View: ${help(helpText.view)}
               <select data-control="map-mode" aria-label="Map view">
                 <option value="ua" ${selectedAttr(state.mapMode, 'ua')}>Understand-Anything</option>
                 <option value="risk" ${selectedAttr(state.mapMode, 'risk')}>Risk clusters</option>
               </select>
             </label>
-            <label>Layout:
+            <label>Layout: ${help(helpText.layout)}
               <select data-control="layout" aria-label="Map layout">
                 <option value="force" ${selectedAttr(state.layout, 'force')}>Force Directed</option>
                 <option value="fanout" ${selectedAttr(state.layout, 'fanout')}>Dependency fanout</option>
               </select>
             </label>
             <div class="layer-tabs" aria-label="Map filters">
+              ${help(helpText.filters)}
               ${groupButton('all', 'All')}
               ${groupButton('compute', 'Compute')}
               ${groupButton('data', 'Data')}
@@ -135,7 +164,7 @@ function render() {
           <div class="map-footer">
             <span>Legend:</span>
             ${legendItems()}
-            <span class="line-sample"></span><span>Shared dependency</span>
+            <span class="line-sample"></span><span>Shared dependency ${help(helpText.sharedDependency)}</span>
             <strong>Showing ${filteredComponents().length} of ${atlasNodes.length} nodes</strong>
           </div>
         </section>
@@ -163,7 +192,7 @@ function render() {
           </div>
           <div class="repo-table" role="table" aria-label="Bigtop atlas nodes">
             <div class="repo-table-row repo-table-head" role="row">
-              <span></span><span>Node</span><span>Type</span><span>Cluster</span><span>Files</span><span>Risk Score</span><span>Top Risk Drivers</span><span>Relations</span><span>State</span>
+              <span></span><span>Node ${help(helpText.atlasNodes)}</span><span>Type</span><span>Cluster</span><span>Files ${help(helpText.files)}</span><span>Risk Score ${help(helpText.riskScore)}</span><span>Top Risk Drivers ${help(helpText.riskDrivers)}</span><span>Relations ${help(helpText.relationships)}</span><span>State ${help(helpText.evidence)}</span>
             </div>
             ${visibleNodes.map(renderTableRow).join('')}
           </div>
@@ -206,12 +235,14 @@ function bindEvents() {
   app.querySelector('[data-control="map-mode"]')?.addEventListener('change', (event) => {
     state.mapMode = event.target.value;
     state.view = 'map';
+    state.detailOpen = false;
     render();
     scrollToView('map');
   });
   app.querySelector('[data-control="layout"]')?.addEventListener('change', (event) => {
     state.layout = event.target.value;
     state.view = 'map';
+    state.detailOpen = false;
     render();
     scrollToView('map');
   });
@@ -221,17 +252,20 @@ function bindEvents() {
       if (button.dataset.zoom === 'out') state.zoom = Math.max(0.7, Number((state.zoom - 0.15).toFixed(2)));
       if (button.dataset.zoom === 'fit') state.zoom = 1;
       state.view = 'map';
+      state.detailOpen = false;
       render();
       scrollToView('map');
     });
   });
   app.querySelector('[data-filter="risk"]')?.addEventListener('change', (event) => {
     state.riskFilter = event.target.value;
+    state.detailOpen = false;
     render();
     scrollToView('repos');
   });
   app.querySelector('[data-filter="type"]')?.addEventListener('change', (event) => {
     state.typeFilter = event.target.value;
+    state.detailOpen = false;
     render();
     scrollToView('repos');
   });
@@ -252,7 +286,7 @@ function bindEvents() {
 
 function navigateTo(view) {
   state.view = view;
-  if (view === 'drilldown') state.detailOpen = true;
+  state.detailOpen = view === 'drilldown';
   render();
   scrollToView(view);
 }
@@ -456,31 +490,35 @@ function renderInspector(component) {
         <span class="repo-dot" style="background:${meta.color}"></span>
         <div>
           <h2>${escapeHtml(repoSlug(component))}</h2>
-          <span>${escapeHtml(typeLabel(component))}</span>
+          <span>${escapeHtml(typeLabel(component))} in ${escapeHtml(meta.label)}</span>
         </div>
         <button type="button" data-action="close-details" aria-label="Collapse drill-down">x</button>
       </div>
+      <section class="node-explain">
+        <h3>What this means ${help('A plain-language read of the selected atlas node.')}</h3>
+        <p>${escapeHtml(nodeExplanation(component, score, meta))}</p>
+      </section>
       <dl class="detail-list">
         <dt>Group ID</dt><dd>org.apache.bigtop</dd>
         <dt>Artifact ID</dt><dd>${escapeHtml(repoSlug(component))}</dd>
-        <dt>Type</dt><dd>${escapeHtml(typeLabel(component))}</dd>
+        <dt>Type ${help(typeHelp(component))}</dt><dd>${escapeHtml(typeLabel(component))}</dd>
         <dt>Language</dt><dd>${escapeHtml(((component.languages || [])[0]?.ext || '').replace('.', '').toUpperCase() || 'mixed')}</dd>
         <dt>License</dt><dd>Apache-2.0</dd>
         <dt>Description</dt><dd>${escapeHtml(component.summary || component.role)}</dd>
       </dl>
       <section class="risk-score" id="risks">
-        <div><span>Risk score</span><strong>${score}<em>/ 100</em></strong></div>
+        <div><span>Risk score ${help(helpText.riskScore)}</span><strong>${score}<em>/ 100</em></strong></div>
         <div class="risk-bar"><span style="width:${score}%"></span></div>
       </section>
       <section class="risk-drivers">
-        <h3>Top risk drivers</h3>
-        ${driverRow('Medium findings', component.medium || 0)}
-        ${driverRow('Dependency fanout', component.relationships || 0)}
-        ${driverRow('Missing surfaces', (component.surfaces || []).filter((surface) => surface.state === 'missing').length)}
-        ${driverRow('Unknown runtime', 1)}
+        <h3>Top risk drivers ${help(helpText.riskDrivers)}</h3>
+        ${driverRow('Medium findings', component.medium || 0, 'Count of medium-severity scan findings visible in this public bundle.')}
+        ${driverRow('Dependency fanout', component.relationships || 0, 'How many relationship anchors connect this node to the rest of the atlas.')}
+        ${driverRow('Missing surfaces', (component.surfaces || []).filter((surface) => surface.state === 'missing').length, 'Expected documentation, tracker, release, or related surface that was not visible in this bundle.')}
+        ${driverRow('Unknown runtime', 1, 'Runtime topology, secrets, vendor config, and live deployment are not proven by this static demo bundle.')}
       </section>
       <section class="neighbors">
-        <h3>Neighbors (direct)</h3>
+        <h3>Neighbors (direct) ${help(helpText.neighbors)}</h3>
         ${relations.map((relationship) => `
           <div class="neighbor-row">
             <span class="repo-dot" style="background:${meta.color}"></span>
@@ -501,12 +539,12 @@ function renderFullDetails(component, relations) {
       <h3>Drill-down</h3>
       <div class="detail-kpis">
         ${miniKpi('Source', component.source || component.kind || 'visible')}
-        ${miniKpi('Evidence', component.evidence_state || 'visible')}
-        ${miniKpi('Manifest in/out', `${component.manifest_in || 0} / ${component.manifest_out || 0}`)}
-        ${miniKpi('Files', compact(component.files || 0))}
+        ${miniKpi('Evidence', component.evidence_state || 'visible', helpText.evidence)}
+        ${miniKpi('Manifest in/out', `${component.manifest_in || 0} / ${component.manifest_out || 0}`, helpText.manifest)}
+        ${miniKpi('Files', compact(component.files || 0), helpText.files)}
       </div>
       <div class="detail-block">
-        <h4>Surfaces</h4>
+        <h4>Surfaces ${help(helpText.surfaces)}</h4>
         ${(component.surfaces || []).length ? component.surfaces.map((surface) => `
           <a class="surface-row" href="${escapeAttr(surface.url || '#')}" ${surface.url ? 'target="_blank" rel="noreferrer"' : 'aria-disabled="true"'} data-empty="${surface.url ? 'false' : 'true'}">
             <span>${escapeHtml(surface.label || surface.kind)}</span>
@@ -515,7 +553,7 @@ function renderFullDetails(component, relations) {
         `).join('') : '<p class="empty-state">No explicit surfaces in this node.</p>'}
       </div>
       <div class="detail-block">
-        <h4>Top findings</h4>
+        <h4>Top findings ${help(helpText.findings)}</h4>
         ${(component.top_findings || []).length ? component.top_findings.slice(0, 5).map((finding) => `
           <div class="finding-row">
             <strong>${escapeHtml(finding.kind || 'signal')}</strong>
@@ -525,7 +563,7 @@ function renderFullDetails(component, relations) {
         `).join('') : '<p class="empty-state">No top findings for this node.</p>'}
       </div>
       <div class="detail-block">
-        <h4>Relationship anchors</h4>
+        <h4>Relationship anchors ${help(helpText.relationships)}</h4>
         ${relations.length ? relations.map((relationship) => `
           <div class="finding-row">
             <strong>${escapeHtml(relationship.type || 'relationship')}</strong>
@@ -557,10 +595,10 @@ function renderTableRow(component) {
   `;
 }
 
-function metric(label, value, delta, caption, tone) {
+function metric(label, value, delta, caption, tone, tooltip = '') {
   return `
     <article class="metric metric-${tone}">
-      <span>${escapeHtml(label)}</span>
+      <span>${escapeHtml(label)} ${tooltip ? help(tooltip) : ''}</span>
       <strong>${escapeHtml(String(value))}</strong>
       <em>${escapeHtml(delta)}</em>
       <p>${escapeHtml(caption)}</p>
@@ -568,12 +606,58 @@ function metric(label, value, delta, caption, tone) {
   `;
 }
 
-function driverRow(label, value) {
-  return `<div class="driver-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+function driverRow(label, value, tooltip = '') {
+  return `<div class="driver-row"><span>${escapeHtml(label)} ${tooltip ? help(tooltip) : ''}</span><strong>${escapeHtml(String(value))}</strong></div>`;
 }
 
-function miniKpi(label, value) {
-  return `<div class="mini-kpi"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+function miniKpi(label, value, tooltip = '') {
+  return `<div class="mini-kpi"><span>${escapeHtml(label)} ${tooltip ? help(tooltip) : ''}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+}
+
+function conceptCard(label, body) {
+  return `
+    <article class="concept-card">
+      <strong>${escapeHtml(label)}</strong>
+      <span>${escapeHtml(body)}</span>
+    </article>
+  `;
+}
+
+function help(text) {
+  return `<span class="help-chip" tabindex="0" role="note" aria-label="${escapeAttr(text)}" title="${escapeAttr(text)}" data-tooltip="${escapeAttr(text)}">?</span>`;
+}
+
+function nodeExplanation(component, score, meta) {
+  const type = typeLabel(component).toLowerCase();
+  const cluster = meta.label.toLowerCase();
+  const name = repoSlug(component);
+  const relationText = (component.relationships || 0)
+    ? countPhrase(component.relationships, 'relationship anchor')
+    : 'no direct relationship anchors in the current filter';
+  const mediumText = countPhrase(component.medium || 0, 'medium finding');
+  const missingText = countPhrase((component.surfaces || []).filter((surface) => surface.state === 'missing').length, 'missing surface');
+  const riskText = score >= 70
+    ? 'It is high on the attention list'
+    : score >= 45
+      ? 'It has medium attention signals'
+      : 'It is comparatively quiet in this bundle';
+  return `${name} is ${articleFor(type)} ${type} in the ${cluster} cluster. ${riskText} because Portolan sees ${mediumText}, ${relationText}, and ${missingText}. This is an atlas node, not proof of a live service boundary.`;
+}
+
+function articleFor(word) {
+  return /^[aeiou]/i.test(word) ? 'an' : 'a';
+}
+
+function countPhrase(count, singular) {
+  return `${count} ${singular}${count === 1 ? '' : 's'}`;
+}
+
+function typeHelp(component) {
+  const type = typeLabel(component);
+  if (type === 'Application') return 'A source component that looks like an application or major project surface in this ecosystem.';
+  if (type === 'Platform') return 'A package, deployment, CI, governance, or infrastructure support surface.';
+  if (type === 'Tool') return 'A coordination or tooling surface used by the ecosystem.';
+  return 'A library or integration surface rather than a standalone application.';
 }
 
 function filteredComponents() {
