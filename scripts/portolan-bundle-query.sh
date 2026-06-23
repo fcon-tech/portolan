@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Read-only query surface over a Portolan harness bundle (spec 095).
+# Read-only query surface over a Portolan harness bundle.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

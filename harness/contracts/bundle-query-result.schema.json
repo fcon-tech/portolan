@@ -12,7 +12,7 @@
       "properties": {
         "family": {
           "type": "string",
-          "enum": ["hotspots", "gaps", "landscape", "search", "symbol", "source", "atlas", "evidence-index", "claims", "repos", "relationships", "promotion-health", "promoted-facts", "raw-artifacts", "classified-sources"]
+          "enum": ["hotspots", "gaps", "landscape", "overview", "search", "symbol", "source", "selected-code", "claim-check", "atlas", "evidence-index", "claims", "repos", "relationships", "promotion-health", "promoted-facts", "raw-artifacts", "classified-sources"]
         },
         "bundle_path": { "type": "string" },
         "limit": { "type": "integer", "minimum": 1 }
@@ -28,6 +28,10 @@
       }
     },
     "total_records": { "type": "integer", "minimum": 0 },
+    "total_records_relation": {
+      "type": "string",
+      "enum": ["exact", "lower_bound"]
+    },
     "truncated": { "type": "boolean" },
     "truncated_records": { "type": "integer", "minimum": 0 },
     "warnings": {

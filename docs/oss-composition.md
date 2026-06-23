@@ -47,8 +47,8 @@ OSS output is generated, preserved, normalized, and recorded.
 
 ## First-Wave Adapter Profiles
 
-Spec `docs/specs/042-agent-adapter-layer/` adds the first productization wave of
-adapter profiles:
+The active OSS decision surface is
+`docs/captain-atlas/06-oss-kill-gates.md`. Current adapter profiles:
 
 - `docs/adapter-contracts/graphify-profile.md`: Graphify is accepted through
   native OSS output plus a local adapter-contract validation profile, raw
@@ -65,10 +65,8 @@ adapter profiles:
   content is navigation context, not architecture truth, and requires redaction
   before sharing.
 
-The first-wave evaluation ledger is recorded in
-`docs/specs/042-agent-adapter-layer/reviews/oss-candidate-ledger-2026-05-27.md`.
-The historical follow-up OSS smoke ledger is recorded in
-`docs/specs/042-agent-adapter-layer/reviews/oss-composition-followup-2026-05-27.md`.
+Future OSS decisions should be recorded as captain-atlas scorecards, with a
+clear kill, pack, or build recommendation.
 
 ## Integration Rules
 

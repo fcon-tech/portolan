@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "portolan-analysis-claims",
-  "title": "Portolan agent analysis claim (claims.jsonl line, spec 106)",
+  "title": "Portolan agent analysis claim (claims.jsonl line)",
   "description": "LLM-authored analysis enters the bundle only through import-analysis-claims.sh. Tiers: analytical (B) and synthetic (C) require cited refs that resolve in this bundle; speculative (D) requires labeling only. evidence_state is always claim-only; the importer never raises a tier.",
   "type": "object",
   "required": ["id", "claim_tier", "statement", "subject", "cited_refs", "agent", "evidence_state"],

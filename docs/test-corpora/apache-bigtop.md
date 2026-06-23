@@ -56,10 +56,10 @@ layer has produced concrete product decisions.
 
 ### Phase 0 - Agent Bootstrap And Blind Acceptance
 
-- Implement the generic agent bootstrap in
-  `docs/specs/014-agent-bootstrap-discovery/`.
-- Implement the blind acceptance protocol in
-  `docs/specs/015-blind-agent-acceptance/`.
+- Use the Cursor Composer first-run contract in
+  `docs/captain-atlas/01-cursor-composer-first-run.md`.
+- Use the shared product contract in
+  `docs/captain-atlas/00-product-contract.md`.
 - Run Cursor + Composer 2.5 with only the generic Portolan path, target path,
   output path, and mapping request.
 - Use a real local Apache Bigtop checkout for the real operator lane.
@@ -68,13 +68,33 @@ layer has produced concrete product decisions.
 - Record what the agent could not do without target-specific prompting.
 - Record missing Portolan capabilities as product gaps, not as free-form agent
   advice.
-- Follow the smoke runbook in
-  `docs/specs/007-apache-bigtop-corpus/acceptance-smoke.md`.
-  The agent-facing workflow is defined in `docs/agent/QUICKSTART.md`.
+- Keep the handoff aligned with the packaging and local-first contract in
+  `docs/captain-atlas/05-packaging-qol-security.md`.
 - If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
   is unavailable, run the local fallback smoke against
   `internal/testfixtures/apache-bigtop-smoke/selection.json` only as preflight and mark the
   real operator lane blocked or `not_assessed`.
+
+Current reproducible gate:
+
+```bash
+scripts/portolan-product-acceptance.sh --skip-agent-runtime
+```
+
+That command runs the local Bigtop-shaped fixture, the second non-JVM fixture,
+and repo-cap/gap-truncation checks. It does not claim full Apache Bigtop
+coverage. Without an explicit bundle path, full Bigtop corpus acceptance is
+reported as `not_assessed`.
+
+Strict full-corpus acceptance is only this validation command against an already
+generated local bundle:
+
+```bash
+scripts/harness-bigtop-acceptance.sh <bundle-dir>
+```
+
+The strict harness rejects repo-capped or gap-truncated bundles. Those states are
+valid degraded evidence for navigation, but they are not full Bigtop proof.
 
 ### Phase 1 - Manifest Acceptance
 

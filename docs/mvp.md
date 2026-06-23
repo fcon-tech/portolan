@@ -17,7 +17,7 @@ The MVP should prove one narrow product promise:
 
 - Accept a local target root.
 - Install target-local wrappers under `<target-root>/.portolan/bin`.
-- Install Cursor/OpenCode instructions that use those wrappers.
+- Install Cursor/OpenCode/Codex/Claude instructions that use those wrappers.
 - Build a first atlas bundle at `<target-root>/.portolan/atlas`.
 - Emit `manifest.json`, `repos.json`, `repo-profiles.json`,
   `relationships.jsonl`, `hotspots*.jsonl`, `gaps.jsonl`, `atlas-facts.json`,

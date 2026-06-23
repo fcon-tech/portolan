@@ -1,2 +1,0 @@
-Verdict: approve
-Findings: none

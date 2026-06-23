@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build symbol-index.jsonl from ctags producer output (spec 096).
+# Build symbol-index.jsonl from ctags producer output.
 set -euo pipefail
 
 if [[ $# -lt 1 ]]; then

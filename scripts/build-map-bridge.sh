@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copy bounded map artifacts into bundle map-bridge/ sidecar (spec 094).
+# Copy bounded map artifacts into bundle map-bridge/ sidecar.
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then

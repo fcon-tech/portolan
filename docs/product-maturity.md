@@ -9,7 +9,7 @@ visible.
 
 | Surface | Kind | Maturity | Product Boundary | Not Supported | Verification |
 | --- | --- | --- | --- | --- | --- |
-| `scripts/portolan-install.sh` | Installer | `stable-first-run` | Installs Cursor/OpenCode instructions and target-local wrappers under `<target-root>/.portolan/bin` | Does not install producer tools without explicit approval | Product acceptance gate and clean source-copy install smoke |
+| `scripts/portolan-install.sh` | Installer | `stable-first-run` | Installs Cursor/OpenCode/Codex/Claude instructions and target-local wrappers under `<target-root>/.portolan/bin` | Does not install producer tools without explicit approval; Codex/Claude live runtime lanes are not assessed by default | Product acceptance gate and clean source-copy install smoke |
 | `<target-root>/.portolan/bin/portolan-scan.sh` | Installed wrapper | `stable-first-run` | Builds a local atlas bundle from the target through the installed interface | Does not prove complete estate coverage or runtime topology | Product acceptance gate, smoke fixtures, Bigtop corpus acceptance |
 | `<target-root>/.portolan/bin/portolan-bundle-query.sh` | Installed wrapper | `stable-first-run` | Reads bounded repos, relationships, hotspots, gaps, search, symbols, source, and claims from a bundle | Not a general graph database | Bundle-query smoke, MCP smoke, Bigtop corpus acceptance |
 | `<target-root>/.portolan/bin/portolan-viewer.sh` | Installed wrapper | `stable-first-run` | Opens the local atlas viewer against a bundle | Not a hosted service or shared catalog | Clean source-copy viewer wrapper smoke and viewer build checks |

@@ -22,6 +22,12 @@ if (!bundlePath || !fs.existsSync(bundlePath)) {
 }
 
 const distDir = path.join(__dirname, '..', 'dist');
+const indexPath = path.join(distDir, 'index.html');
+if (!fs.existsSync(indexPath)) {
+  console.error(`viewer build missing: ${indexPath}`);
+  console.error('Run from the installed portolan-viewer.sh wrapper or run `node scripts/build-static.js` in viewer/.');
+  process.exit(2);
+}
 const mime = {
   '.html': 'text/html',
   '.js': 'application/javascript',
@@ -98,7 +104,7 @@ const server = http.createServer((req, res) => {
     return sendFile(path.join(bundlePath, 'repos.json'), res);
   }
   if (url.pathname === '/bundle/hotspots-full.jsonl') {
-    return sendFile(path.join(bundlePath, 'hotspots-full.jsonl'), res);
+    return sendDownloadOnlyFile(path.join(bundlePath, 'hotspots-full.jsonl'), url, res);
   }
   if (url.pathname === '/bundle/landscape-card.json') {
     return sendFile(path.join(bundlePath, 'landscape-card.json'), res);
@@ -107,10 +113,10 @@ const server = http.createServer((req, res) => {
     return sendFile(path.join(bundlePath, 'landscape-report.json'), res);
   }
   if (url.pathname === '/bundle/search-index.jsonl') {
-    return sendFile(path.join(bundlePath, 'search-index.jsonl'), res);
+    return sendDownloadOnlyFile(path.join(bundlePath, 'search-index.jsonl'), url, res);
   }
   if (url.pathname === '/bundle/symbol-index.jsonl') {
-    return sendFile(path.join(bundlePath, 'symbol-index.jsonl'), res);
+    return sendDownloadOnlyFile(path.join(bundlePath, 'symbol-index.jsonl'), url, res);
   }
   if (url.pathname === '/bundle/map-bridge/evidence-index.jsonl') {
     return sendFile(path.join(bundlePath, 'map-bridge', 'evidence-index.jsonl'), res);
@@ -136,17 +142,23 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/atlas-surface-content.json') {
     return sendOptionalFile(path.join(bundlePath, 'atlas-surface-content.json'), res, '{}');
   }
+  if (url.pathname === '/bundle/captain-handoff.json') {
+    return sendOptionalFile(path.join(bundlePath, 'captain-handoff.json'), res, '{}');
+  }
+  if (url.pathname === '/bundle/captain-handoff.md') {
+    return sendOptionalFile(path.join(bundlePath, 'captain-handoff.md'), res, '');
+  }
   if (url.pathname === '/bundle/promotion-health.jsonl') {
     return sendOptionalFile(path.join(bundlePath, 'promotion-health.jsonl'), res, '');
   }
   if (url.pathname === '/bundle/promoted-facts.jsonl') {
-    return sendOptionalFile(path.join(bundlePath, 'promoted-facts.jsonl'), res, '');
+    return sendDownloadOnlyOptionalFile(path.join(bundlePath, 'promoted-facts.jsonl'), url, res, '');
   }
   if (url.pathname === '/bundle/raw-artifacts.jsonl') {
-    return sendOptionalFile(path.join(bundlePath, 'raw-artifacts.jsonl'), res, '');
+    return sendDownloadOnlyOptionalFile(path.join(bundlePath, 'raw-artifacts.jsonl'), url, res, '');
   }
   if (url.pathname === '/bundle/classified-sources.jsonl') {
-    return sendOptionalFile(path.join(bundlePath, 'classified-sources.jsonl'), res, '');
+    return sendDownloadOnlyOptionalFile(path.join(bundlePath, 'classified-sources.jsonl'), url, res, '');
   }
 
   const distResolved = path.resolve(distDir) + path.sep;
@@ -173,6 +185,46 @@ function sendFile(filePath, res) {
   });
 }
 
+function sendDownloadOnlyFile(filePath, url, res) {
+  if (!isExplicitDownload(url)) {
+    return sendJson(res, 403, {
+      error: 'explicit download required',
+      hint: 'Use ?download=1 for raw bundle files, or use /api/* for bounded viewer queries.',
+    });
+  }
+  sendFileDownload(filePath, res);
+}
+
+function sendDownloadOnlyOptionalFile(filePath, url, res, fallback) {
+  if (!isExplicitDownload(url)) {
+    return sendJson(res, 403, {
+      error: 'explicit download required',
+      hint: 'Use ?download=1 for raw bundle files, or use /api/* for bounded viewer queries.',
+    });
+  }
+  sendOptionalFileDownload(filePath, res, fallback);
+}
+
+function isExplicitDownload(url) {
+  return url.searchParams.get('download') === '1';
+}
+
+function sendFileDownload(filePath, res) {
+  fs.stat(filePath, (err, stat) => {
+    if (err) {
+      res.writeHead(404);
+      return res.end('Not found');
+    }
+    const ext = path.extname(filePath);
+    res.writeHead(200, {
+      'Content-Type': mime[ext] || 'text/plain',
+      'Content-Disposition': `attachment; filename="${path.basename(filePath)}"`,
+      'Content-Length': stat.size,
+    });
+    fs.createReadStream(filePath).pipe(res);
+  });
+}
+
 function sendOptionalFile(filePath, res, fallback) {
   fs.readFile(filePath, (err, data) => {
     if (err) {
@@ -183,6 +235,23 @@ function sendOptionalFile(filePath, res, fallback) {
     const ext = path.extname(filePath);
     res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain' });
     res.end(data);
+  });
+}
+
+function sendOptionalFileDownload(filePath, res, fallback) {
+  fs.stat(filePath, (err, stat) => {
+    const ext = path.extname(filePath);
+    const headers = {
+      'Content-Type': mime[ext] || 'text/plain',
+      'Content-Disposition': `attachment; filename="${path.basename(filePath)}"`,
+    };
+    if (err) {
+      res.writeHead(200, headers);
+      return res.end(fallback);
+    }
+    headers['Content-Length'] = stat.size;
+    res.writeHead(200, headers);
+    fs.createReadStream(filePath).pipe(res);
   });
 }
 

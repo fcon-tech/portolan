@@ -10,20 +10,44 @@ When mapping, explaining, auditing, or navigating a local codebase or multi-repo
 landscape:
 
 1. Use the target-local wrappers installed under `<target-root>/.portolan/bin`.
-   If they are missing, run the Portolan installer first:
-   `<portolan-checkout>/scripts/portolan-install.sh <target-root> --harness cursor --bundle-dir <bundle-dir>`
-2. Build the atlas bundle first:
+   If they are missing, resolve the user-provided Portolan source first. A
+   local checkout can be used directly; a URL must be fetched only after the
+   user approves fetching exactly that URL into a local cache. Then run:
+   `<resolved-portolan-path>/scripts/portolan-install.sh <target-root> --harness cursor --bundle-dir <bundle-dir>`
+   Default `<bundle-dir>` to `<target-root>/.portolan/atlas` unless the captain
+   supplied an explicit safe override.
+2. Run doctor first and report blockers before building:
+   `<target-root>/.portolan/bin/portolan-scan.sh --doctor <target-root> <bundle-dir> --skip-install --no-viewer`
+   The doctor must report target shape, bundle writability, tool availability,
+   rough size, and local-first/no-network expectations.
+3. If the user asks what will happen, show the dry-run plan:
+   `<target-root>/.portolan/bin/portolan-scan.sh --dry-run <target-root> <bundle-dir> --skip-install --no-viewer`
+4. Build the atlas bundle:
    `<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer`
-3. Remove `--skip-install` only after explicit operator approval to install
+5. Remove `--skip-install` only after explicit operator approval to install
    missing local OSS tools.
-4. Query the bundle at answer time with
+6. Run bundle status after the scan:
+   `<target-root>/.portolan/bin/portolan-scan.sh --status <target-root> <bundle-dir>`
+7. Read `<bundle-dir>/receipt.json` and
+   `<bundle-dir>/captain-atlas-scorecard.json` after the scan. Preserve
+   producer gaps, local-first flags, duration, first useful captain insight,
+   next actions, and the viewer launch command in the handoff.
+8. Generate and read the deterministic Q&A/drill-down artifact:
+   `<target-root>/.portolan/bin/portolan-query-eval.sh --run <bundle-dir>`.
+   Include `<bundle-dir>/captain-qna-eval.json` status in the handoff.
+9. Build and read the captain handoff artifact:
+   `<target-root>/.portolan/bin/portolan-captain-handoff.sh <bundle-dir>`.
+   Use `<bundle-dir>/captain-handoff.md` as the human summary and keep
+   `<bundle-dir>/captain-handoff.json` as machine-readable run status.
+10. Query the bundle at answer time with
    `<target-root>/.portolan/bin/portolan-bundle-query.sh`
    instead of loading the full bundle into chat.
    Start with `repos`, `relationships`, `hotspots`, and `gaps`; use `search`,
-   `symbol`, and `source` for drill-down when indexes or selected paths exist.
-5. Open the viewer when the user needs navigation:
+   `symbol`, `source`, and `selected-code` for drill-down when indexes or
+   selected paths exist.
+11. Open the viewer when the user needs navigation:
    `<target-root>/.portolan/bin/portolan-viewer.sh`.
-6. Cite bundle record ids or source paths and preserve `unknown`,
+12. Cite bundle record ids or source paths and preserve `unknown`,
    `cannot_verify`, and `not_assessed`.
 
 Do not require `go install` unless the user asks for the legacy Go path.

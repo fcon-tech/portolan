@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Smoke coverage for spec 109 evidence-promotion atlas semantics.
+# Smoke coverage for evidence-promotion atlas semantics.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -146,6 +146,19 @@ jq -e 'select(.family == "documentation" and .status == "raw_available_only")' \
   | jq -e '.records | length >= 1 and all(.[]; .promotion_basis and .resolution_limit)' >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" promoted-facts --bundle "$BUNDLE" --limit 50 \
   | jq -e '.records[] | select(.family == "source_code" and .fact_kind == "source_role")' >/dev/null
+jq -e '
+  .schema_version == "0.1.0" and
+  .sample_limit >= 20 and
+  (.artifacts["promoted-facts.jsonl"].queries["family=source_code"].total >= 1) and
+  (.artifacts["promoted-facts.jsonl"].queries["family=source_code"].records | length >= 1) and
+  (.artifacts["classified-sources.jsonl"].queries["family=source_code"].total >= 1)
+' "$BUNDLE/promotion-query-index.json" >/dev/null
+"$ROOT/scripts/portolan-bundle-query.sh" promoted-facts --bundle "$BUNDLE" --family source_code --limit 20 \
+  | jq -e '
+      (.records | length >= 1) and
+      .total_records_relation == "exact" and
+      (.warnings | length == 0)
+    ' >/dev/null
 jq -e 'select(.family == "symbol_index" and .name == "BadState" and .evidence_state == "metadata-visible")' \
   "$BUNDLE/promoted-facts.jsonl" >/dev/null
 "$ROOT/scripts/portolan-bundle-query.sh" raw-artifacts --bundle "$BUNDLE" --limit 20 \

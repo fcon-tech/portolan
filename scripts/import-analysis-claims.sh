@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Import agent analysis claims into a Portolan bundle (spec 106).
+# Import agent analysis claims into a Portolan bundle.
 #
 # Validates each claim and resolves every cited ref against the bundle:
 #   hotspot:<id> gap:<id> relationship:<id> repo:<id>

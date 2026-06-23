@@ -19,62 +19,35 @@ mkdir -p "$(dirname "$OUT")"
 
 command -v jq >/dev/null || { echo "jq required" >&2; exit 1; }
 
-append_surface() {
-  local kind=$1 path=$2
-  [[ -z "$path" ]] && return 0
-  local rel
-  rel="${path#"$REPO_ROOT"/}"
-  [[ "$rel" == "$path" && "$path" != "$REPO_ROOT"/* ]] && return 0
-  portolan_rel_path_is_ignored "$REPO_ROOT" "$rel" && return 0
-  jq -nc --arg path "$rel" --arg surface_kind "$kind" \
-    '{path:$path,surface_kind:$surface_kind}' >>"$OUT"
-}
+surfaces_tmp=$(mktemp)
+trap 'rm -f "$surfaces_tmp"' EXIT
 
-scan_glob() {
-  local kind=$1 pattern=$2
-  local f
-  while IFS= read -r f; do
-    [[ -f "$f" ]] || continue
-    append_surface "$kind" "$f"
-  done < <(find -P "$REPO_ROOT" -type f \
-    \( -path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/vendor/*' \) -prune \
-    -o -type f -name "$pattern" -print 2>/dev/null)
-}
+portolan_repo_file_list "$REPO_ROOT" | awk -F/ '
+  function emit(kind, path) {
+    print kind "\t" path
+  }
+  {
+    path=$0
+    base=$NF
+    lower=tolower(base)
+    if (base == "Dockerfile" || base ~ /^Dockerfile[.]/ || lower ~ /[.]dockerfile$/) emit("dockerfile", path)
+    if (base == "docker-compose.yml" || base == "docker-compose.yaml" || base == "compose.yml" || base == "compose.yaml") emit("docker-compose", path)
+    if (base == "Chart.yaml") emit("kubernetes", path)
+    if (base == ".env" || base ~ /^\.env[.]/ || base ~ /[.]env$/) emit("env-file", path)
+    if (base == ".gitlab-ci.yml") emit("ci-workflow", path)
+    if (path ~ /(^|[/])[.]github[/]workflows[/][^/]+[.]ya?ml$/) emit("ci-workflow", path)
+    if (base ~ /[.]tf$/ || base ~ /[.]tfvars$/) emit("terraform", path)
+    if (base == "nginx.conf" || base ~ /[.]nginx[.]conf$/) emit("nginx", path)
+    if (base ~ /^(deployment|service|ingress|configmap|kustomization)[.]ya?ml$/) emit("kubernetes", path)
+  }
+' | sort -u >"$surfaces_tmp"
 
-scan_glob dockerfile 'Dockerfile'
-scan_glob dockerfile 'Dockerfile.*'
-scan_glob dockerfile '*.dockerfile'
-scan_glob docker-compose 'docker-compose.yml'
-scan_glob docker-compose 'docker-compose.yaml'
-scan_glob docker-compose 'compose.yml'
-scan_glob docker-compose 'compose.yaml'
-scan_glob kubernetes 'Chart.yaml'
-scan_glob env-file '.env'
-scan_glob env-file '.env.*'
-scan_glob env-file '*.env'
-while IFS= read -r f; do
-  [[ -f "$f" ]] || continue
-  append_surface ci-workflow "$f"
-done < <(find -P "$REPO_ROOT" -type f \
-  \( -path '*/.git/*' -o -path '*/node_modules/*' -o -path '*/vendor/*' \) -prune \
-  -o -type f \( -path '*/.github/workflows/*.yml' -o -path '*/.github/workflows/*.yaml' -o -name '.gitlab-ci.yml' \) -print 2>/dev/null)
-scan_glob terraform '*.tf'
-scan_glob terraform '*.tfvars'
-scan_glob nginx 'nginx.conf'
-scan_glob nginx '*.nginx.conf'
+jq -Rnc '
+  inputs
+  | split("\t") as $parts
+  | select($parts | length == 2)
+  | {path:$parts[1], surface_kind:$parts[0]}
+' "$surfaces_tmp" >"$OUT"
 
-# k8s manifests by filename heuristic
-while IFS= read -r f; do
-  [[ -f "$f" ]] || continue
-  base=$(basename "$f")
-  case "$base" in
-    deployment.yaml|deployment.yml|service.yaml|service.yml|ingress.yaml|ingress.yml|configmap.yaml|configmap.yml|kustomization.yaml|kustomization.yml)
-      append_surface kubernetes "$f"
-      ;;
-  esac
-done < <(find -P "$REPO_ROOT" -type f \( -name '*.yaml' -o -name '*.yml' \) \
-  \( -path '*/.git/*' -o -path '*/node_modules/*' \) -prune -o -type f -print 2>/dev/null)
-
-sort -u -o "$OUT" "$OUT" 2>/dev/null || true
 lines=$(wc -l <"$OUT" | tr -d ' ')
 echo "scan-config-surfaces: $lines surfaces -> $OUT" >&2

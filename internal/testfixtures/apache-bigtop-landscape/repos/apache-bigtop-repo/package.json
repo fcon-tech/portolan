@@ -1,0 +1,11 @@
+{
+  "name": "apache-bigtop-repo",
+  "description": "Packaging and integration fixture for Bigtop components",
+  "version": "3.5.0-fixture",
+  "dependencies": {
+    "apache-hadoop": "3.5.0-fixture"
+  },
+  "scripts": {
+    "build": "node src/package-plan.js"
+  }
+}

@@ -33,26 +33,45 @@ prompts:
 
 ```bash
 "$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --doctor "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --dry-run "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
 "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --status "$TARGET_ROOT" "$BUNDLE_DIR"
 ```
 
 Use these modifiers deliberately:
 
+- `--doctor` is read-only and should be run before the first scan.
+- `--dry-run` / `--plan` shows reads, writes, tools, network expectations, and
+  approval-required actions.
 - remove `--skip-install` only after explicit operator approval to install
   missing OSS tools.
-- `--limit-repos N` for a bounded first pass on very large landscapes.
-- `--with-map-bridge` when you want legacy `portolan map` evidence-index hints.
+- `--limit-repos N` is a diagnostic escape hatch only. Do not use it for the
+  captain atlas unless the receipt and final answer explicitly say the corpus
+  was bounded and findings are incomplete.
+- `--with-map-bridge` only for explicit legacy compatibility hints from
+  `portolan map`.
 
-After the scan, read the atlas artifacts before answering:
+After the scan, read the small control artifacts before answering:
 
-- `manifest.json`
-- `atlas-facts.json`
-- `repo-profiles.json`
-- `relationships.jsonl`
-- `hotspots.jsonl`
-- `hotspots-full.jsonl`
-- `gaps.jsonl`
-- `atlas-surface-content.json`
+- `receipt.json`
+- `captain-atlas-scorecard.json`
+- `captain-qna-eval.json` after running
+  `"$TARGET_ROOT/.portolan/bin/portolan-query-eval.sh" --run "$BUNDLE_DIR"`
+- `captain-handoff.md` and `captain-handoff.json` after running
+  `"$TARGET_ROOT/.portolan/bin/portolan-captain-handoff.sh" "$BUNDLE_DIR"`
+
+Do not load raw relationship, hotspot, gap, or source-content JSONL files into
+chat on large estates. Use the query wrapper for landscape facts:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section edges --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+```
 
 Open the viewer when the user needs a human-readable atlas:
 
@@ -72,6 +91,7 @@ Query the same bundle at answer time:
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" selected-code --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1 --limit 20
 ```
 
 ## 2. Route Selected Code Back To The Atlas
@@ -79,20 +99,21 @@ Query the same bundle at answer time:
 When the user highlights a file, symbol, or subsystem in a coding-agent UI:
 
 1. Identify the selected path and repo root.
-2. Query `source` for a bounded snippet.
-3. Query `search` or `symbol` for related names when indexes exist.
-4. Query `hotspots --repo <repo-id>` for local pain around the repo.
-5. Query `relationships` to explain visible connections to other repos.
-6. Query `gaps` for unknown, cannot_verify, or not_assessed surfaces.
-7. Answer with explicit gaps when runtime/config/vendor relationships are not
+2. Query `selected-code` for the bounded context packet.
+3. Query `source` for a bounded snippet when the packet needs more detail.
+4. Query `search` or `symbol` for related names when indexes exist.
+5. Query `hotspots --repo <repo-id>` for local pain around the repo.
+6. Query `relationships` to explain visible connections to other repos.
+7. Query `gaps` for unknown, cannot_verify, or not_assessed surfaces.
+8. Answer with explicit gaps when runtime/config/vendor relationships are not
    present in the bundle.
 
 Do not infer runtime calls from static dependency or source-search results.
 
-## 3. Legacy Go Path When Needed
+## 3. Legacy Compatibility Path When Needed
 
-Use the legacy Go path only when the user explicitly asks for
-`context prepare`, `map`, or older map artifacts.
+Use the legacy compatibility path only when the user explicitly asks for
+`context prepare`, `map`, or compatibility artifacts.
 
 Prefer an installed binary:
 
@@ -100,10 +121,11 @@ Prefer an installed binary:
 portolan --version
 ```
 
-From a Portolan source checkout, build the repo-local binary:
+If the operator explicitly chooses the legacy route and `PORTOLAN` has already
+been resolved to a local checkout, build the repo-local binary:
 
 ```bash
-cd <portolan-checkout>
+cd "$PORTOLAN_PATH"
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```

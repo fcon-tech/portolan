@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-repo relationships producer (spec 105): internal depends-on edges,
+# Cross-repo relationships producer: internal depends-on edges,
 # shared external dependencies (syft SBOM intersection), cross-repo duplication
 # edges (opt-in jscpd-cross pass). Reads repos.json + repo-profiles.json +
 # producers/. Writes relationships.jsonl. Read-only; single repo -> empty file.

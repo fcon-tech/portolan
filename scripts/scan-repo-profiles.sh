@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Per-repo tier-A profiles (spec 104): purpose surfaces, module ids, declared deps,
+# Per-repo tier-A profiles: purpose surfaces, module ids, declared deps,
 # activity, maturity. Reads repos.json; writes repo-profiles.json. Read-only.
 set -euo pipefail
 

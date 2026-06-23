@@ -1,246 +1,124 @@
 # Agent Instructions
 
-Portolan is a local-first codebase mapping toolbox for AI agents working across
-large, multi-repo, and black-box software landscapes.
+Portolan is a local-first atlas generator for AI agents working across large,
+multi-repo, and partly black-box software landscapes.
 
-## Boundary
+The current product target is simple:
 
-Portolan is not:
+> The user is the captain. The user gives Cursor Composer or another coding
+> agent a Portolan link plus a target ecosystem. The agent installs Portolan,
+> builds a UA-like local atlas, opens the app, and explains the landscape,
+> risks, relationships, and drill-down paths.
 
-- another coding harness;
-- a manual consulting report generator;
-- a replacement for enterprise code intelligence, modernization, service
-  catalog, or observability tools;
-- tied to Cursor, Claude, Codex, OpenCode, pi, or any specific agent harness;
-- a readiness gate;
-- a source of truth for claims it cannot verify.
+## Active Product Contract
 
-Portolan is:
+Use `docs/captain-atlas/` as the active product specification surface.
 
-- a read-only local discovery substrate an agent can run;
-- a harness-first supplement (`harness/SKILL.md`, recipes, guardrails, Portolan
-  viewer) with an optional legacy Go CLI bridge;
-- a normalizer for source, metadata, runtime, and claim evidence;
-- a machine-readable evidence graph;
-- a finding generator for relationships, duplication, configuration surfaces,
-  and technical debt;
-- a human-readable packet derived from that graph;
-- a complement to existing tools.
+Do not use deleted or historical planning artifacts as source of truth. They
+were removed because they encoded false tracks, stale claims, and
+implementation drift.
+
+The active documents are:
+
+- `docs/captain-atlas/README.md`: work package index.
+- `docs/captain-atlas/00-product-contract.md`: shared captain-atlas contract.
+- `docs/captain-atlas/01-cursor-composer-first-run.md`: Cursor first-run BDD.
+- `docs/captain-atlas/02-atlas-app-shell.md`: UA-like atlas app BDD.
+- `docs/captain-atlas/03-landscape-intelligence-producers.md`: data and
+  producer BDD.
+- `docs/captain-atlas/04-agent-qna-drilldown.md`: agent Q&A and selected-code
+  drill-down BDD.
+- `docs/captain-atlas/05-packaging-qol-security.md`: install, status,
+  progress, receipt, and local-first BDD.
+- `docs/captain-atlas/06-oss-kill-gates.md`: OSS replacement and adoption BDD.
+
+## Mandatory Decision Gate
+
+Before proposing product, design, implementation, dependency, or workflow
+changes, answer:
+
+1. **Simpler/Faster**: can the captain-atlas scenario be solved with less code,
+   fewer moving parts, fewer dependencies, less process, or a smaller change?
+2. **Blocking Edge Cases**: what scale, security, privacy, install, harness,
+   compatibility, data-quality, or UX constraints prevent that simpler answer?
+3. **Existing Open Source**: does an existing OSS or commercial tool solve the
+   captain-atlas scenario well enough that Portolan should integrate, wrap, or
+   die instead of building?
+
+Use enough evidence to make the decision reliable. Do not turn this into broad
+market theater.
 
 ## Product Rules
 
+- Optimize for the captain opening a useful atlas, not for internal proof
+  rituals.
 - Keep local-first and read-only defaults.
 - Do not add network access, daemon behavior, mutation, or credentials without
-  explicit design approval.
-- Preserve evidence states: `source-visible`, `metadata-visible`,
-  `runtime-visible`, `claim-only`, `unknown`, and `cannot_verify`.
-- Unknown is a valid result. Do not collapse unknown or unverifiable evidence
-  into success.
-- Agent conclusions are claims until backed by local Portolan inputs.
+  explicit product approval.
+- Cursor Composer is the first acceptance client. The product must remain
+  portable to OpenCode, Codex, Kimi/Zed-like harnesses, and direct shell use.
+- Portolan should generate a ready local atlas app instance. Agents should not
+  have to write a new UI for every target.
+- Evidence states are internal guardrails. Do not sell evidence as the primary
+  value proposition.
+- Unknown, partial, and cannot-verify states must remain visible in the atlas,
+  but they must support navigation instead of dominating the product.
 - Prefer importing and normalizing OSS/tool outputs over reimplementing mature
   scanners.
+- Treat Bigtop as a useful stress corpus, not as product-specific choreography.
 
 ## Engineering Rules
 
-- Primary delivery: harness artifacts and Portolan bundle contract; see spec 087.
-- Go CLI is frozen for new features per
-  [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md).
-- Keep `cmd/portolan` thin; put behavior in internal packages when Go changes are
-  allowed (bugfix/bridge only during freeze).
-- Add focused tests before behavior changes.
-- Do not add dependencies unless the product boundary and integration cost are
-  documented.
-- Keep docs and schemas aligned with the CLI contract.
+- Keep changes small and testable.
+- Preserve the harness-first path unless a captain-atlas BDD scenario proves it
+  is insufficient.
+- Keep the legacy Go CLI thin; new product behavior should usually live in
+  harness scripts, viewer app, schema/contracts, importers, or generated bundle
+  artifacts.
+- Add dependencies only after documenting fit, maintenance, license, privacy,
+  and integration cost.
+- Do not hide failed or not-assessed checks.
 
-## SpecKit Rules
+## Delivery Rules
 
-- Use `.specify/memory/constitution.md` as the governing SpecKit contract.
-- Use `docs/product-backlog.md` as the backlog index.
-- Use `docs/specs/<NNN-short-name>/` for feature slices.
-- Do not implement a non-trivial feature until its `spec.md`, `plan.md`, and
-  `tasks.md` are concrete.
-- Backlog-only specs may start with `spec.md`; active work needs plan and tasks.
-- Keep backlog rows, spec status, task ledgers, review dispositions, and
-  implementation state consistent. Before treating a spec as ready, verify that
-  `docs/product-backlog.md`, `spec.md`, `tasks.md`, existing reviews, and the
-  current code agree. If they disagree, stop implementation, record a
-  spec-local status reconstruction under `docs/specs/<NNN-short-name>/reviews/`, and
-  fix the stale status before choosing the next task.
-- Generated Spec Kit skills under `.agents/skills/` are committed; do not store
-  credentials or private runtime state under `.agents/`.
+When implementing one BDD work package:
 
-## Delivery Workflow Rules
+- Work from the matching `docs/captain-atlas/*.md` file.
+- Record what scenario is being served.
+- Keep parallel-agent work package boundaries clean.
+- Verify with the smallest command set that proves the scenario.
+- If a scenario cannot be proven, record the blocker and whether the answer is
+  kill, pack, or build.
 
-When asked to take the next ready spec into implementation:
+## Review Rules
 
-- Work in a dedicated worktree and branch. Do not implement from a dirty main
-  checkout.
-- Before committing or opening a PR, verify branch provenance and diff scope
-  with `git diff --name-status <base>...HEAD`. A branch created from a local
-  planning commit may accidentally include adjacent specs; remove unrelated
-  backlog/spec files before PR review.
-- Select the next spec from `docs/product-backlog.md` that is marked ready and
-  has concrete `spec.md`, `plan.md`, and `tasks.md`.
-- Reconstruct consistency before coding: compare the backlog status, spec
-  status, task checkboxes, review dispositions, recent git history, and
-  implementation files. A stale `Ready for implementation` row is not permission
-  to reimplement completed work.
-- Start with review, not coding. Review the spec/plan/tasks against the
-  constitution, backlog order, schemas, CLI contract, and product boundary.
-- Record review evidence under `docs/specs/<NNN-short-name>/reviews/`; do not create
-  root-level review clutter.
-- Treat empty, hung, malformed, stale, or off-topic model output as
-  `not_assessed`. Do not count it as review evidence.
-- Ordinary implementation slice reviews should use `pi` as the default review
-  harness and choose independent lanes from the repo review roster in
-  `docs/review-harness-benchmark.md`. Start with subscription/provider-direct
-  lanes where they are live, then use the documented OpenRouter fallback for the
-  same model family before replacing the lane.
-- Every implementation or PR review iteration must end with three assessed
-  independent review lanes plus any required repo-grounded local review.
-  Failed, empty, hung, malformed, unavailable, stale, off-topic, or
-  `not_assessed` lanes do not count toward the three. If a default or roster
-  lane is not usable, choose an explicit replacement from enabled non-GPT
-  models, record the original lane, failure reason, replacement lane, and why
-  the replacement is acceptable. Do not use GPT-family models as independent
-  review evidence because Codex itself is already GPT-family.
-- Fix accepted review findings in the spec/task contract before implementation
-  when they affect scope, safety, evidence semantics, or testability.
-- Implement in task slices. Each slice must have focused tests or an explicit
-  documented reason when only docs/schema checks apply.
-- After every implementation slice, run an independent review cycle and record
-  accepted, rejected, fixed, and `not_assessed` findings in a review
-  disposition file.
-- Re-run focused reviewers after fixes when findings touch evidence state
-  semantics, graph identity, path/output safety, schema compatibility, or CLI
-  user behavior.
-- Continue through the complete active `tasks.md` for the selected spec unless
-  a blocker is recorded. Do not stop after the first green slice when remaining
-  tasks are still open.
-- After all tasks are complete, update the task ledger, spec/backlog status, and
-  review dispositions so they agree, then create or update a PR and run the PR
-  review workflow before claiming the spec is ready.
-- Do not mark a PR ready only because local tests passed. PR state, review
-  artifacts, and any GitHub checks must agree.
-- A spec implementation is not complete at PR creation. Completion requires a
-  PR readiness closeout that records implementation state, local verification,
-  review evidence, PR draft/ready state, GitHub checks as `verified`, `failed`,
-  or `not_assessed`, merge readiness, and the explicit stop reason.
-- Do not stop at draft PR when the task is to deliver the implementation unless
-  a blocker is recorded. Run the PR-level review workflow, fix accepted
-  findings, refresh PR state, and either mark the PR ready-for-review or record
-  the exact blocker that prevents it.
-- Do not use unqualified "ready" or "готов" for PR work. Say exactly which
-  surface is ready: local implementation, draft PR, ready-for-review PR, or
-  ready-to-merge PR.
+Classify issues as:
 
-When asked to review and improve an existing PR:
+- critical
+- major
+- minor
 
-- Reconstruct the current PR head, diff, draft state, merge state, check state,
-  and review artifacts first.
-- If the review request names quality lenses such as CRAP, Maintainability
-  Index, CleanArch/hexagonal architecture, CleanCode, SOLID, DRY, or YAGNI,
-  first classify the changed file set. For docs/config-only PRs, record code
-  metrics and code-architecture lenses as `not_applicable` with diff evidence
-  instead of inventing meaningless numbers.
-- Verify SpecKit branch metadata during PR review: `spec.md`, `plan.md`, the
-  actual git branch, and PR head branch must agree, or the mismatch is spec
-  drift that must be fixed before readiness.
-- Use at least two independent review lanes when the PR touches evidence
-  semantics, path/output safety, schemas, or CLI behavior; serious or risky PRs
-  still need three assessed independent non-GPT lanes. Choose lanes from
-  `docs/review-harness-benchmark.md`, include a repo-grounded local review lane,
-  and verify exact enabled model IDs from `~/.pi/agent/settings.json` before
-  launch. If a requested model is unavailable or fails before producing review
-  output, record it as `not_assessed` or `failed` and run an explicit enabled
-  non-GPT replacement lane until the required assessed coverage is available.
-  Do not silently substitute another Gemini, Qwen, MiniMax, or GPT-family model.
-- Verify every accepted finding locally before editing. Do not patch from model
-  text alone.
-- Record degraded review lanes explicitly. A missing Claude/Gemini result is
-  `not_assessed`, not a clean review.
-- Keep PRs draft while blockers remain. Mark ready only after fixes, local
-  verification, review disposition, and current PR state are coherent.
-- If the PR remains draft, has absent checks, lacks review approval, or has
-  stale SpecKit surfaces, report the blocker explicitly instead of stopping at
-  implementation completion.
-- After any rebase, merge-base update, amend, or force-push, refresh PR state,
-  checks, merge state, PR description, and readiness closeout. Earlier green
-  checks or clean merge state are stale evidence after the head changes.
+Prioritize:
 
-Merge rules:
+1. mismatch with the captain-atlas scenario;
+2. UX failure in the generated atlas;
+3. agent first-run failure;
+4. correctness bugs;
+5. security/privacy issues;
+6. maintainability risks;
+7. test gaps.
 
-- Merge only after the user explicitly asks to merge or after a separate
-  human/GitHub approval authorizes it.
-- Before merge, re-check PR state and report absent CI as `not_assessed`, not
-  green.
-- A ready-for-review PR is not ready-to-merge by itself. If GitHub checks are
-  absent or review approval is absent, record those as `not_assessed` and merge
-  only when the user explicitly accepts that state.
-- Merge closeout must consolidate statuses before the work is considered done:
-  verify and align `docs/product-backlog.md`, the active `spec.md`, `tasks.md`,
-  review dispositions, PR state, check state, and implementation evidence. If
-  any surface is stale after merge, update it or record a spec-local blocker
-  before claiming completion.
-- After merge, confirm the merge commit and clean up the remote feature branch
-  when requested or when the merge command was intended to delete it.
+Use evidence labels:
 
-## Baseline Checks
+- `verified`: command, test, check, or direct inspection passed.
+- `not_assessed`: not checked.
+- `assumed`: inferred but not checked.
+- `blocked`: could not check, with reason.
+- `failed`: checked and failed.
 
-Run:
+Do not call a surface ready unless the relevant BDD scenario passed.
 
-```bash
-go test ./...
-go vet ./...
-jq empty schema/*.json
-jq empty harness/contracts/portolan-bundle.schema.json
-jq empty harness/contracts/bundle-query-result.schema.json
-scripts/harness-portolan-smoke.sh
-scripts/harness-bundle-query-smoke.sh
-scripts/harness-bundle-query-mcp-smoke.sh
-scripts/portolan-scan.sh --help
-jq empty harness/contracts/landscape-card.schema.json
-jq empty harness/contracts/landscape-report.schema.json
-git diff --check
-```
+## Response Style
 
-For CLI changes, also run the affected command, for example:
-
-```bash
-go run ./cmd/portolan scan --help
-```
-
-<!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan:
-`docs/specs/087-harness-first-product/plan.md`
-<!-- SPECKIT END -->
-
-## Learned User Preferences
-
-- Ask clarifying questions before drafting implementation plans when harness targets, Go role, or MVP surface are still open.
-- Prioritize a UA-like landscape product (graph, explore, ask, reusable artifact) with a report-first viewer over raw hotspot lists or evidence-discipline-only output.
-- Treat B2B evidence guardrails as a secondary layer on top of the map, not the main reason to use Portolan; the owner did not choose "honesty about gaps" as the product north star.
-- Expand harness rules, guardrails, and OSS tool recipes rather than the Go codebase when adding product behavior.
-- Reject `orient` naming and legacy orient entrypoints; use Portolan-prefixed names in CLI, scripts, and UI (e.g. `portolan-scan`, `scripts/portolan-scan.sh`) and remove old orient scripts rather than thin deprecation wrappers.
-- Reject pre-built answer packs or suggested-question artifacts; prefer a queryable scan bundle (indexes, bundle-query tools) retrieved at question time.
-- Keep LLM Q&A agent-first: the primary path is the harness SKILL plus `portolan-bundle-query.sh`, with MCP as an optional adapter only; the viewer stays local navigation without network by default.
-- Explain in the viewer why findings rank as problems and what each navigation control does.
-- Review delivery by observable facts and demo behavior, not code inspection alone; use OpenCode for independent review lanes unless another harness is explicitly requested.
-- Portolan must deliver value beyond native Cursor; parity-gap positioning has no product fit.
-- Prefer an honest kill or UA-like product rescue over incremental guardrail work when map, indexing, and Q&A stay undelivered.
-
-## Learned Workspace Facts
-
-- Understand-Anything graph, explore, ask, and reusable artifact set the reference product bar; drill-down UX must stay evidence-backed, never unlabeled LLM-authored truth.
-- Product-success questions center on concrete code pain (debt, duplication, risky zones), not abstract trust infrastructure alone.
-- Landscape report UX references Portolan `map.md` sections and the standalone `landscape-card.json` contract; no sdp_lab runtime dependency.
-- Early sdp_lab landscape-report experiments set the demo richness bar; borrow report structure only, never sdp_lab runtime or scout dependencies.
-- Agent Q&A over a landscape uses bundle-query tools and indexes over the portolan-scan bundle, not pre-rendered briefing packs.
-- Demo-ready output must let an operator identify the target, repos, top problems, and gaps without external docs.
-- Scan and viewer inventories must honor `.gitignore`.
-- LLM-authored analysis belongs in the evidence bundle as tier-labeled claims (analytical, synthetic, speculative) with machine-checkable cited refs; claims with unresolvable refs are rejected at import, not silently downgraded.
-- Reference persona is a concerned CTO who needs architecture, functionality, relationships, duplication, and design problems explained across a multi-repo (~10 repos) product landscape.
-- Incremental producer cache is not implemented; each full scan reruns all producers.
-- Shard timeouts, missing ctags/symbols, and cannot_verify gaps on large multi-repo targets are product failures for the CTO demo bar, not pass states.
-- npm exists in this WSL environment; "npm unavailable" failures are PATH issues to fix, not missing tooling.
+Be direct, concise, and grounded in the current repo state. When the user pushes
+back on scope drift, treat it as a product contract failure, not a wording issue.

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Import operator-supplied ast-index JSON export into symbol-index.jsonl (spec 097).
+# Import operator-supplied ast-index JSON export into symbol-index.jsonl.
 # Portolan does NOT execute ast-index; import only.
 set -euo pipefail
 

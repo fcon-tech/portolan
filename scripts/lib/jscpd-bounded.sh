@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared bounded jscpd profile (spec 039 / internal/contextprep boundedJSCPDArgs).
+# Shared bounded jscpd profile for Portolan duplication producers.
 # Source: . "$(dirname "$0")/lib/jscpd-bounded.sh"
 
 jscpd_bounded_ignore_globs() {

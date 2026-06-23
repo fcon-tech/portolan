@@ -1,0 +1,1 @@
+{"name":"api-node","version":"1.0.0","description":"API facade for the polyglot fixture","dependencies":{"worker-go":"file:../worker-go"},"scripts":{"start":"node src/server.js"}}

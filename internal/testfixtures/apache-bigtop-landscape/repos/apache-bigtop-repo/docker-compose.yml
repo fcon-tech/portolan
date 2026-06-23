@@ -1,0 +1,9 @@
+services:
+  smoke-runner:
+    image: apache-hadoop:3.5.0-fixture
+    ports:
+      - "8088:8088"
+    depends_on:
+      - package-repo
+  package-repo:
+    image: apache-bigtop-repo:3.5.0-fixture

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Optional map-bridge path on fixture target (spec 102). Slow-ish; not part of default harness smoke.
+# Optional map-bridge path on fixture target. Slow-ish; not part of default harness smoke.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

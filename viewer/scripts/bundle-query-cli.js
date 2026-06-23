@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CLI for Portolan harness bundle queries (spec 095).
+ * CLI for Portolan harness bundle queries.
  * Usage: node bundle-query-cli.js <family> --bundle <dir> [options]
  */
 const bundleQuery = require('./bundle-query');
@@ -9,9 +9,12 @@ const families = [
   'hotspots',
   'gaps',
   'landscape',
+  'overview',
   'search',
   'symbol',
   'source',
+  'selected-code',
+  'claim-check',
   'atlas',
   'evidence-index',
   'claims',
@@ -30,18 +33,21 @@ Families:
   hotspots       --kind K --severity S --path PREFIX --text Q [--repo ID] --limit N [--full]
   gaps           --surface S --status S --limit N
   landscape      --section ID
+  overview       --limit N
   search         --q QUERY [--repo ID] [--path-scope PREFIX] --limit N
-  symbol         --name NAME [--repo ID] [--kind K] --limit N
+  symbol         --name NAME [--path PATH] [--repo ID] [--kind K] --limit N
   source         --path PATH [--repo ID] [--line N] [--radius N] [--full]
+  selected-code  --path PATH [--symbol NAME] [--repo ID] [--line N] [--radius N] --limit N
+  claim-check    --from ID --to ID [--kind K|--type T] [--text TEXT] --limit N
   atlas          [--section components|surfaces|edges|gaps] [--target ID] [--repo ID] --limit N
   evidence-index [--family F] --limit N
   claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
   repos          [--repo ID] [--text Q] --limit N
   relationships  [--type T] [--repo ID] --limit N
-  promotion-health [--family F] [--status S] --limit N
-  promoted-facts   [--family F] [--stratum S] --limit N
-  raw-artifacts    [--family F] --limit N
-  classified-sources [--family F] --limit N
+  promotion-health [--family F] [--status S] [--stratum S] --limit N
+  promoted-facts   [--family F] [--status S] [--stratum S] --limit N
+  raw-artifacts    [--family F] [--status S] [--stratum S] --limit N
+  classified-sources [--family F] [--status S] [--stratum S] --limit N
 
 Options:
   --bundle DIR   Portolan bundle directory (required)
@@ -110,6 +116,18 @@ function parseArgs(argv) {
         break;
       case '--name':
         opts.name = next;
+        i++;
+        break;
+      case '--symbol':
+        opts.symbol = next;
+        i++;
+        break;
+      case '--from':
+        opts.from = next;
+        i++;
+        break;
+      case '--to':
+        opts.to = next;
         i++;
         break;
       case '--line':

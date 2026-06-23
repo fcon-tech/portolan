@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Portolan is a local-first evidence map for AI agents, with company context from fcon.tech.">
-    <title>Portolan | Local Evidence Maps For AI Agents</title>
+    <meta name="description" content="Portolan helps coding agents build a local atlas app for multi-repo software landscapes, with company context from fcon.tech.">
+    <title>Portolan | Captain Atlas For Coding Agents</title>
     <link rel="stylesheet" href="assets/site.css">
   </head>
   <body>
@@ -12,9 +12,10 @@
       <nav class="nav" aria-label="Main navigation">
         <a class="brand" href="./">Portolan</a>
         <div class="nav-links">
+          <a href="bigtop/">Bigtop demo</a>
           <a href="portolan/">Portolan</a>
           <a href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
-          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo.md">Example</a>
+          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/captain-atlas/">Atlas</a>
           <a href="https://github.com/fcon-tech/portolan">GitHub</a>
         </div>
       </nav>
@@ -25,28 +26,30 @@
         <div class="hero-inner hero-grid">
           <div>
             <p class="eyebrow">Portolan project</p>
-            <h1>Portolan gives agents a local evidence map before they answer.</h1>
+            <h1>Portolan gives agents a local atlas before they answer.</h1>
             <p class="lede">
-              Portolan installs target-local wrappers, builds a local atlas
-              bundle, and gives coding agents bounded query routes before they
-              answer broad repository or landscape questions.
+              A captain gives an agent Portolan plus a target ecosystem. The
+              agent installs target-local wrappers, builds a local atlas app,
+              and uses bounded query routes to explain the landscape.
             </p>
             <div class="actions">
-              <a class="button primary" href="portolan/">Inspect Portolan</a>
+              <a class="button primary" href="bigtop/">Open Bigtop demo</a>
+              <a class="button secondary" href="portolan/">Inspect Portolan</a>
               <a class="button secondary" href="https://github.com/fcon-tech/portolan#quick-start">Install from GitHub</a>
             </div>
           </div>
 
           <div class="artifact" aria-label="Portolan artifact preview">
             <div class="artifact-head">
-              <span class="artifact-title">installed atlas</span>
+              <span class="artifact-title">captain route</span>
               <span class="artifact-state">local first</span>
             </div>
-            <pre><code>scripts/portolan-install.sh &lt;target&gt;
-&lt;target&gt;/.portolan/bin/portolan-scan.sh \
-  &lt;target&gt; &lt;bundle&gt; --no-viewer
+            <pre><code>scripts/portolan-captain-prompt.sh \
+  --portolan https://github.com/fcon-tech/portolan \
+  --target-root /work/enterprise
 
-atlas/
+The agent builds:
+  local viewer app
   manifest.json
   repo-profiles.json
   relationships.jsonl
@@ -61,23 +64,23 @@ atlas/
           <div class="section-head">
             <h2>What Portolan is for</h2>
             <p>
-              Use Portolan when an agent needs bounded local evidence before it
-              answers architecture, dependency, duplication, configuration, or
-              technical-debt questions across a codebase or software landscape.
+              Use Portolan when an agent needs to orient a captain across
+              repositories, dependencies, duplication, configuration, risks,
+              and gaps without loading a whole codebase into chat.
             </p>
           </div>
           <div class="grid">
             <article class="card">
-              <h3>Local evidence first</h3>
-              <p>Tools should read local inputs and keep missing evidence visible instead of turning gaps into confident prose.</p>
+              <h3>Atlas first</h3>
+              <p>The primary output is a local viewer and queryable bundle, not a static consulting report.</p>
             </article>
             <article class="card">
               <h3>Agent-facing workflows</h3>
-              <p>Outputs are designed for coding agents, staff engineers, and reviewers who need bounded context before decisions.</p>
+              <p>Outputs are designed for Cursor, OpenCode, Codex-compatible harnesses, Claude-style notes, and shell-capable agents.</p>
             </article>
             <article class="card">
-              <h3>Claim-bounded output</h3>
-              <p>Public copy and agent packets point back to product claims, release notes, example evidence, contribution rules, and security boundaries.</p>
+              <h3>Drill-down boundaries</h3>
+              <p>Answers point back to bundle records, source snippets, relationship rows, gaps, and viewer routes.</p>
             </article>
           </div>
         </div>
@@ -109,7 +112,8 @@ atlas/
             </article>
           </div>
           <div class="route-list">
-            <a class="route" href="portolan/"><strong>Portolan project page<span>Install, example, limits, and routes</span></strong>-&gt;</a>
+            <a class="route" href="bigtop/"><strong>Bigtop demo<span>Interactive public atlas over a large OSS ecosystem</span></strong>-&gt;</a>
+            <a class="route" href="portolan/"><strong>Portolan project page<span>Captain route, install, atlas app, limits, and proof routes</span></strong>-&gt;</a>
             <a class="route" href="https://fcon.tech/"><strong>Faust Consulting<span>Company site, services, clients, and contact route</span></strong>-&gt;</a>
             <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md"><strong>Claim boundary<span>Accepted, narrowed, and not-assessed claims</span></strong>-&gt;</a>
             <a class="route" href="https://github.com/fcon-tech/portolan"><strong>GitHub repository<span>Source, issues, pull requests, and community files</span></strong>-&gt;</a>
@@ -120,7 +124,7 @@ atlas/
 
     <footer class="footer">
       <div class="footer-inner">
-        <span>Freshness: source-controlled site for the installable Portolan atlas route.</span>
+        <span>Freshness: source-controlled site for the captain atlas route.</span>
         <span><a href="https://github.com/fcon-tech/portolan/blob/main/SECURITY.md">Security</a> | <a href="https://github.com/fcon-tech/portolan/blob/main/CONTRIBUTING.md">Contributing</a> | <a href="https://github.com/fcon-tech/portolan/blob/main/SUPPORT.md">Support</a></span>
       </div>
     </footer>

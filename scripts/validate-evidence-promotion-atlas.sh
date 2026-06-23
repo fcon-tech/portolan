@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validate spec 109 evidence-promotion artifacts.
+# Validate evidence-promotion artifacts.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
