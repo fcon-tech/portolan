@@ -108,9 +108,141 @@ function publicComponent(component) {
 const atlasFacts = readJson('atlas-facts.json', {});
 const manifest = readJson('manifest.json', {});
 const landscapeReport = readJson('landscape-report.json', {});
+const corpusManifest = (() => {
+  const candidates = [
+    path.resolve('internal/testfixtures/corpus-manifests/apache-bigtop/manifest.json'),
+    path.resolve(path.dirname(bundleDir), 'manifest.json'),
+  ];
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return JSON.parse(fs.readFileSync(candidate, 'utf8'));
+  }
+  return null;
+})();
 const components = (atlasFacts.components || [])
   .map(publicComponent)
   .sort((a, b) => b.files - a.files);
+
+const componentById = new Map(components.map((component) => [component.id, component]));
+
+function moduleDirNames(root, rel) {
+  const dir = path.join(root, rel);
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+function packageComponentId(name) {
+  const candidate = `apache-${name}`;
+  if (componentById.has(candidate)) return candidate;
+  if (componentById.has(name)) return name;
+  return '';
+}
+
+function nodeGroup(kind = '', role = '') {
+  const combined = `${kind} ${role}`.toLowerCase();
+  if (/(smoke|test|ci|runtime|docker|deploy|juju|puppet|package|binary|release)/.test(combined)) return 'platform';
+  return roleGroup(role);
+}
+
+function publicTarget(target, source = 'corpus-manifest') {
+  const component = componentById.get(target.id);
+  return sanitizeDeep({
+    id: target.id,
+    label: target.label || target.id,
+    repo_id: component?.repo_id || '',
+    role: target.role || component?.role || target.kind || 'component',
+    kind: target.kind || 'component',
+    group: nodeGroup(target.kind || '', target.role || component?.role || ''),
+    lifecycle: target.lifecycle || component?.lifecycle || '',
+    summary: target.notes || component?.summary || '',
+    files: component?.files || 0,
+    findings: component?.findings || 0,
+    medium: component?.medium || 0,
+    info: component?.info || 0,
+    relationships: component?.relationships || 0,
+    manifest_in: component?.manifest_in || 0,
+    manifest_out: component?.manifest_out || 0,
+    languages: component?.languages || [],
+    surfaces: component?.surfaces || [],
+    signals: component?.signals || {},
+    top_findings: component?.top_findings || [],
+    source,
+    evidence_state: target.evidence_state || component?.evidence_state || 'metadata-visible',
+    url: target.repository_url || target.project_url || target.url || '',
+  });
+}
+
+function supportNode(id, label, kind, role, backingPath, targetId = '') {
+  const component = targetId ? componentById.get(targetId) : null;
+  return sanitizeDeep({
+    id,
+    label,
+    repo_id: 'apache-bigtop-repo-00bd5224',
+    role,
+    kind,
+    group: nodeGroup(kind, role),
+    lifecycle: 'active',
+    summary: `${label} discovered in ${backingPath}.`,
+    files: 0,
+    findings: 0,
+    medium: 0,
+    info: 0,
+    relationships: targetId ? 1 : 0,
+    manifest_in: 0,
+    manifest_out: 0,
+    languages: [],
+    surfaces: [],
+    signals: { good: [], attention: [], unknown: ['runtime behavior not_assessed'] },
+    top_findings: [],
+    source: 'bigtop-repo-directory',
+    evidence_state: 'source-visible',
+    backing_path: backingPath,
+    target_component: targetId || component?.id || '',
+  });
+}
+
+const targetRoot = manifest.target_root || '';
+const bigtopRepo = path.join(targetRoot, 'apache-bigtop-repo');
+const packageNames = new Set([
+  ...moduleDirNames(bigtopRepo, 'bigtop-packages/src/common'),
+  ...moduleDirNames(bigtopRepo, 'bigtop-packages/src/deb'),
+  ...moduleDirNames(bigtopRepo, 'bigtop-packages/src/rpm'),
+]);
+const puppetNames = moduleDirNames(bigtopRepo, 'bigtop-deploy/puppet/modules');
+const smokeNames = moduleDirNames(bigtopRepo, 'bigtop-tests/smoke-tests')
+  .filter((name) => !['logger-test-config'].includes(name));
+const jujuNames = moduleDirNames(bigtopRepo, 'bigtop-deploy/juju');
+
+const manifestTargets = corpusManifest?.targets || [];
+const atlasNodesById = new Map();
+for (const target of manifestTargets) {
+  atlasNodesById.set(target.id, publicTarget(target));
+}
+for (const component of components) {
+  if (!atlasNodesById.has(component.id)) {
+    atlasNodesById.set(component.id, { ...component, kind: 'repository', source: 'atlas-facts', evidence_state: 'source-visible' });
+  }
+}
+for (const name of packageNames) {
+  const targetId = packageComponentId(name);
+  atlasNodesById.set(`pkg:${name}`, supportNode(`pkg:${name}`, `${name} package`, 'package-module', 'packaging', `apache-bigtop-repo/bigtop-packages/src/*/${name}`, targetId));
+}
+for (const name of puppetNames) {
+  const normalized = name.replaceAll('_', '-').replace(/^hadoop-/, '');
+  atlasNodesById.set(`puppet:${name}`, supportNode(`puppet:${name}`, `${name} puppet module`, 'deployment-module', 'puppet-deployment', `apache-bigtop-repo/bigtop-deploy/puppet/modules/${name}`, packageComponentId(normalized)));
+}
+for (const name of smokeNames) {
+  atlasNodesById.set(`smoke:${name}`, supportNode(`smoke:${name}`, `${name} smoke test`, 'test-module', 'smoke-test', `apache-bigtop-repo/bigtop-tests/smoke-tests/${name}`, packageComponentId(name)));
+}
+for (const name of jujuNames) {
+  atlasNodesById.set(`juju:${name}`, supportNode(`juju:${name}`, `${name} juju bundle`, 'deployment-module', 'juju-deployment', `apache-bigtop-repo/bigtop-deploy/juju/${name}`, ''));
+}
+const atlasNodes = [...atlasNodesById.values()].sort((a, b) => {
+  const weight = { repository: 0, 'retired-project': 1, package: 2, 'package-module': 3, 'deployment-module': 4, 'test-module': 5 };
+  return (weight[a.kind] ?? 9) - (weight[b.kind] ?? 9) || a.label.localeCompare(b.label);
+});
 
 const componentByRepo = new Map(components.map((component) => [component.repo_id, component]));
 const relationships = readJsonl('relationships.jsonl')
@@ -133,6 +265,21 @@ const relationships = readJsonl('relationships.jsonl')
   }))
   .sort((a, b) => b.count - a.count)
   .slice(0, 80);
+
+const moduleRelationships = atlasNodes
+  .filter((node) => node.target_component)
+  .map((node) => ({
+    id: `module-link:${node.id}->${node.target_component}`,
+    type: 'module-belongs-to-component',
+    summary: `${node.label} belongs to ${componentById.get(node.target_component)?.label || node.target_component}`,
+    component: node.kind,
+    repo_ids: [],
+    repos: [node.id, node.target_component],
+    labels: [node.label, componentById.get(node.target_component)?.label || node.target_component],
+    count: 2,
+    evidence_state: 'source-visible',
+    producer: 'bigtop-directory-export',
+  }));
 
 const hotspots = readJsonl('hotspots.jsonl', 160).map((hotspot) => sanitizeDeep({
   id: hotspot.id,
@@ -164,9 +311,15 @@ const totals = components.reduce(
     components_with_missing_surface: 0,
   },
 );
+totals.atlas_nodes = atlasNodes.length;
+totals.source_repos = components.length;
 
 const groups = components.reduce((acc, component) => {
   acc[component.group] = (acc[component.group] || 0) + 1;
+  return acc;
+}, {});
+const nodeGroups = atlasNodes.reduce((acc, node) => {
+  acc[node.group] = (acc[node.group] || 0) + 1;
   return acc;
 }, {});
 
@@ -175,9 +328,10 @@ const demo = sanitizeDeep({
   generated_at: new Date().toISOString(),
   source_bundle: path.basename(bundleDir),
   title: 'Apache Bigtop landscape atlas',
-  subtitle: 'A public Portolan demo over a large OSS ecosystem: repositories, roles, shared dependencies, risk signals, and drill-down paths.',
+  subtitle: 'A public Portolan demo over a large OSS ecosystem: source repositories, package modules, deployment modules, smoke-test modules, shared dependencies, and drill-down paths.',
   totals,
   groups,
+  node_groups: nodeGroups,
   narrative: [
     {
       title: 'Bigtop behaves like a platform portfolio, not one repository.',
@@ -193,7 +347,8 @@ const demo = sanitizeDeep({
     },
   ],
   components,
-  relationships,
+  atlas_nodes: atlasNodes,
+  relationships: [...relationships, ...moduleRelationships],
   hotspots,
   report_sections: (landscapeReport.sections || []).slice(0, 8).map((section) => ({
     id: section.id,
@@ -219,4 +374,4 @@ if (leaked.length) {
   process.exit(1);
 }
 
-console.log(`exported ${components.length} components, ${relationships.length} relationships, ${hotspots.length} hotspots to ${outDir}`);
+console.log(`exported ${components.length} source repos, ${atlasNodes.length} atlas nodes, ${relationships.length + moduleRelationships.length} relationships, ${hotspots.length} hotspots to ${outDir}`);

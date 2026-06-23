@@ -3,136 +3,115 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Portolan helps an agent build a local atlas app for a multi-repo software landscape, then answer with drill-downs into bundle facts.">
-    <title>Portolan | Captain Atlas For Agentic Codebase Navigation</title>
-    <link rel="stylesheet" href="../assets/site.css">
+    <meta name="description" content="Portolan helps a coding agent build a local atlas for a multi-repo software landscape.">
+    <title>Portolan | Agent-built Software Landscape Atlas</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../assets/product.css">
   </head>
   <body>
-    <header class="site-header">
-      <nav class="nav" aria-label="Main navigation">
-        <a class="brand" href="../">Portolan</a>
-        <div class="nav-links">
+    <div class="product-shell">
+      <header class="topbar">
+        <a class="brand" href="../">
+          <span class="brand-compass" aria-hidden="true"></span>
+          <span class="brand-copy"><strong>PORTOLAN</strong><em>CAPTAIN ATLAS</em></span>
+        </a>
+        <nav class="nav" aria-label="Product navigation">
+          <a class="is-active" href="./">Product</a>
+          <a href="../bigtop/">Bigtop demo</a>
           <a href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
-          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo-runbook.md">Runbook</a>
-          <a href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md">Claims</a>
           <a href="https://github.com/fcon-tech/portolan">GitHub</a>
-        </div>
-      </nav>
-    </header>
+        </nav>
+      </header>
 
-    <main>
-      <section class="hero">
-        <div class="hero-inner hero-grid">
-          <div>
-            <p class="eyebrow">Captain atlas for software landscapes</p>
-            <h1>Give an agent Portolan and a target ecosystem. Get a local atlas.</h1>
+      <main>
+        <section class="hero-grid">
+          <div class="hero-copy panel">
+            <p class="kicker">Agent-built atlas for software landscapes</p>
+            <h1>Give an agent Portolan and a target ecosystem. Get a navigable atlas.</h1>
             <p class="lede">
-              Portolan packages the install guide, target-local wrappers, local
-              producers, bounded query tools, and viewer app an agent needs to
-              map a multi-repo codebase, explain relationships, and drill from
-              the atlas into reports and source snippets.
+              Portolan packages the guides, target-local wrappers, producers,
+              query tools, and viewer app a coding agent needs to map a
+              multi-repo estate and explain what is visible, risky, connected,
+              duplicated, or still unknown.
             </p>
             <div class="actions">
-              <a class="button primary" href="https://github.com/fcon-tech/portolan#quick-start">Install</a>
-              <a class="button secondary" href="https://github.com/fcon-tech/portolan/blob/main/docs/captain-atlas/">Read the captain atlas contract</a>
+              <a class="button primary" href="../bigtop/">Open Bigtop demo</a>
+              <a class="button secondary" href="https://github.com/fcon-tech/portolan#quick-start">Install from GitHub</a>
             </div>
           </div>
 
-          <div class="artifact" aria-label="Portolan command preview">
-            <div class="artifact-head">
-              <span class="artifact-title">captain prompt</span>
-              <span class="artifact-state">read-only</span>
+          <aside class="workflow panel">
+            <div class="workflow-head">
+              <span>Captain prompt</span>
+              <strong>read-only by default</strong>
             </div>
             <pre><code>scripts/portolan-captain-prompt.sh \
   --portolan https://github.com/fcon-tech/portolan \
   --target-root /work/enterprise
 
-# Paste the prompt into Cursor, OpenCode,
-# Codex, Claude, or another shell-capable agent.
+# Paste into Cursor Composer, OpenCode,
+# Codex, Kimi, Zed-like harnesses, or shell agents.
 # The agent installs .portolan/bin wrappers,
-# builds the atlas, and hands off the viewer.</code></pre>
-          </div>
-        </div>
-      </section>
+# builds the atlas, opens the viewer, and hands off.</code></pre>
+            <div class="hero-facts" aria-label="Product facts">
+              <span><strong>01</strong> Agent first-run</span>
+              <span><strong>02</strong> Local atlas bundle</span>
+              <span><strong>03</strong> UA-like drill-down</span>
+              <span><strong>04</strong> Read-only default</span>
+            </div>
+          </aside>
+        </section>
 
-      <section class="band white">
-        <div class="section-inner">
-          <div class="section-head">
-            <h2>The first screen is the product</h2>
+        <section class="surface-grid">
+          <article class="surface panel">
+            <span class="surface-index">01</span>
+            <h2>First run for agents</h2>
+            <p>The product starts when a coding agent reads the Portolan guide, asks only blocking questions, installs target-local wrappers, and runs a bounded scan.</p>
+            <ul>
+              <li>Cursor Composer is the first acceptance client.</li>
+              <li>OpenCode, Codex, Kimi/Zed-like harnesses stay portable.</li>
+              <li>Target source is read-only unless explicitly approved.</li>
+            </ul>
+          </article>
+          <article class="surface panel">
+            <span class="surface-index">02</span>
+            <h2>Atlas app, not report theater</h2>
+            <p>The useful artifact is a local viewer plus a queryable bundle: repositories, components, package/deploy/test modules, relationships, hotspots, gaps, and handoff.</p>
+            <ul>
+              <li>Map first, drill-down second.</li>
+              <li>Unknowns stay visible without becoming the headline.</li>
+              <li>Large indexes stay local and stratified.</li>
+            </ul>
+          </article>
+          <article class="surface panel">
+            <span class="surface-index">03</span>
+            <h2>Agent navigation layer</h2>
+            <p>Portolan gives agents bounded commands and stable bundle contracts, so they can answer landscape questions without re-inventing discovery for every codebase.</p>
+            <ul>
+              <li>Repos, relationships, risks, gaps, search, selected code.</li>
+              <li>Receipts and progress for first-run handoff.</li>
+              <li>Local-first bundle with no network requirement by default.</li>
+            </ul>
+          </article>
+        </section>
+
+        <section class="route-panel panel">
+          <div>
+            <h2>What a client should feel</h2>
             <p>
-              The useful outcome is not a report template. It is a local atlas
-              app plus a queryable bundle: repos, relationships, risks, gaps,
-              selected-code context, and captain-facing handoff in one workflow.
+              They open an atlas, see the shape of the estate, inspect the
+              cross-repo connective tissue, and ask the augmented coding agent
+              to drill into a selected node or source area.
             </p>
-          </div>
-          <div class="grid">
-            <article class="card">
-              <h3>Agent-native install</h3>
-              <p>Cursor rules, OpenCode/Codex AGENTS blocks, Claude notes, and target-local command wrappers under <code>.portolan/bin</code>.</p>
-            </article>
-            <article class="card">
-              <h3>Landscape atlas</h3>
-              <p>Manifest, repository profiles, relationships, hotspots, gaps, search, symbols, claims, and drill-down routes for the viewer.</p>
-            </article>
-            <article class="card">
-              <h3>Agent drill-down</h3>
-              <p>Bounded commands for repos, relationships, hotspots, gaps, search, symbols, selected code, and source snippets.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="band">
-        <div class="section-inner">
-          <div class="section-head">
-            <h2>Routes</h2>
-            <p>Start from the captain workflow. This page is a wrapper, not a second source of truth.</p>
           </div>
           <div class="route-list">
-            <a class="route" href="https://github.com/fcon-tech/portolan#quick-start"><strong>Install<span>Install target-local wrappers for Cursor, OpenCode, and shell use</span></strong>-&gt;</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/captain-atlas/"><strong>Captain atlas<span>Product contract and BDD acceptance surfaces</span></strong>-&gt;</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/demo-runbook.md"><strong>Runbook<span>Captain prompt, scan, viewer, bundle-query, and handoff walkthrough</span></strong>-&gt;</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md"><strong>Product limits<span>Accepted, narrowed, rejected, and not-assessed claims</span></strong>-&gt;</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan"><strong>GitHub repository<span>Source, issues, pull requests, and community files</span></strong>-&gt;</a>
-            <a class="route" href="https://github.com/fcon-tech/portolan/blob/main/SECURITY.md"><strong>Security<span>Vulnerability reporting boundary</span></strong>-&gt;</a>
+            <a href="../bigtop/">Interactive Bigtop atlas</a>
+            <a href="https://github.com/fcon-tech/portolan/blob/main/docs/captain-atlas/">Captain atlas contract</a>
+            <a href="https://github.com/fcon-tech/portolan/blob/main/docs/demo-runbook.md">Runbook</a>
+            <a href="https://github.com/fcon-tech/portolan/blob/main/docs/product-claims.md">Current product claims</a>
           </div>
-        </div>
-      </section>
-
-      <section class="band white">
-        <div class="section-inner">
-          <div class="section-head">
-            <h2>Boundaries that stay visible</h2>
-            <p>
-              Portolan preserves proof boundaries, but evidence is not the
-              headline. The headline is navigation: when a relationship, risk,
-              gap, or answer cannot be backed by local bundle facts, it remains
-              unknown, cannot_verify, or not_assessed.
-            </p>
-          </div>
-          <div class="grid">
-            <article class="card limit">
-              <h3>Not a replacement</h3>
-              <p>Portolan complements Cursor, OpenCode, Codex, Sourcegraph, Backstage, service catalogs, observability, and modernization tools.</p>
-            </article>
-            <article class="card limit">
-              <h3>Not complete estate proof by default</h3>
-              <p>Repository counts and local runs show visible scope. Complete inherited-estate coverage remains unproven unless inventory evidence supports it.</p>
-            </article>
-            <article class="card limit">
-              <h3>Not broad security certification</h3>
-              <p>The current security boundary covers selected local CLI risks and untrusted-artifact handling, not a general security audit.</p>
-            </article>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <div class="footer-inner">
-        <span>Freshness: captain atlas route. Check docs/product-claims.md before reusing claims.</span>
-        <span><a href="https://github.com/fcon-tech/portolan/blob/main/CONTRIBUTING.md">Contributing</a> | <a href="https://github.com/fcon-tech/portolan/blob/main/SUPPORT.md">Support</a></span>
-      </div>
-    </footer>
+        </section>
+      </main>
+    </div>
   </body>
 </html>

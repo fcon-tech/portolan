@@ -1,22 +1,31 @@
 {
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-23T11:02:25.874Z",
+  "generated_at": "2026-06-23T12:25:32.569Z",
   "source_bundle": "portolan-bigtop-20260623-full-proof",
   "title": "Apache Bigtop landscape atlas",
-  "subtitle": "A public Portolan demo over a large OSS ecosystem: repositories, roles, shared dependencies, risk signals, and drill-down paths.",
+  "subtitle": "A public Portolan demo over a large OSS ecosystem: source repositories, package modules, deployment modules, smoke-test modules, shared dependencies, and drill-down paths.",
   "totals": {
     "repos": 18,
     "files": 132941,
     "findings": 6019,
     "medium": 3515,
     "relationship_records": 329,
-    "components_with_missing_surface": 15
+    "components_with_missing_surface": 15,
+    "atlas_nodes": 93,
+    "source_repos": 18
   },
   "groups": {
     "compute": 5,
     "data": 6,
     "platform": 2,
     "service": 4,
+    "control": 1
+  },
+  "node_groups": {
+    "data": 6,
+    "compute": 5,
+    "platform": 74,
+    "service": 7,
     "control": 1
   },
   "narrative": [
@@ -2598,6 +2607,4785 @@
       ]
     }
   ],
+  "atlas_nodes": [
+    {
+      "id": "alluxio",
+      "label": "Alluxio",
+      "repo_id": "alluxio-a8b47d51",
+      "role": "distributed-cache-filesystem",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "external",
+      "summary": "Included in the Bigtop release BOM but not an Apache project.",
+      "files": 4127,
+      "findings": 66,
+      "medium": 58,
+      "info": 8,
+      "relationships": 27,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 2860
+        },
+        {
+          "ext": ".tsx",
+          "files": 178
+        },
+        {
+          "ext": ".md",
+          "files": 176
+        },
+        {
+          "ext": ".yml",
+          "files": 120
+        },
+        {
+          "ext": ".sh",
+          "files": 110
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/Alluxio/alluxio",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://www.alluxio.io/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://github.com/Alluxio/alluxio/issues",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://github.com/Alluxio/alluxio/wiki",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "58 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-156af02a7f92",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-9851e3ccc9a8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-63b4da8aba3c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-84c4ef8f17df",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-1f31518c782f",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~118 lines): alluxio/integration/kubernetes/operator/alluxio/cmd/webhook/webhook-create-signed-cert.sh",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-579907b3aeaa",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~205 lines): alluxio/integration/kubernetes/operator/alluxio/config/crd/bases/data.pillars.io_runtimes.yaml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/Alluxio/alluxio"
+    },
+    {
+      "id": "apache-airflow",
+      "label": "Apache Airflow",
+      "repo_id": "apache-airflow-1028f3a0",
+      "role": "workflow-orchestration",
+      "kind": "repository",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 12627,
+      "findings": 329,
+      "medium": 142,
+      "info": 187,
+      "relationships": 6,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".py",
+          "files": 7244
+        },
+        {
+          "ext": ".rst",
+          "files": 1560
+        },
+        {
+          "ext": ".png",
+          "files": 509
+        },
+        {
+          "ext": ".tsx",
+          "files": 501
+        },
+        {
+          "ext": ".json",
+          "files": 393
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/airflow",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://airflow.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://github.com/apache/airflow/issues",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/AIRFLOW",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "142 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-9fe2e7dfaaa8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-0e1f30506e9c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-292c819d82c2",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8ea5fa30747f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-a8028760b768",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-258ca1d43c63",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: terraform (3 files)",
+          "evidence_state": "source-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/airflow"
+    },
+    {
+      "id": "apache-bigtop-repo",
+      "label": "Apache Bigtop",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "ecosystem-integrator",
+      "kind": "repository",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.",
+      "files": 1580,
+      "findings": 87,
+      "medium": 53,
+      "info": 34,
+      "relationships": 2,
+      "manifest_in": 4,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".xml",
+          "files": 216
+        },
+        {
+          "ext": ".java",
+          "files": 183
+        },
+        {
+          "ext": ".groovy",
+          "files": 128
+        },
+        {
+          "ext": ".yaml",
+          "files": 82
+        },
+        {
+          "ext": ".txt",
+          "files": 78
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/bigtop",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://bigtop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/BIGTOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "53 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-0020cf1576af",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b7f200614299",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b699e8c82d79",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-7c191fd8fd6a",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~178 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/hbase.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d86e4b5e4403",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~214 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/hadoop-httpfs.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-2e7bb9baceae",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~468 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/solr.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/bigtop"
+    },
+    {
+      "id": "apache-flink",
+      "label": "Apache Flink",
+      "repo_id": "apache-flink-f7a93d2d",
+      "role": "stream-batch-processing",
+      "kind": "repository",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 877,
+      "medium": 692,
+      "info": 185,
+      "relationships": 21,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 13161
+        },
+        {
+          "ext": ".md",
+          "files": 819
+        },
+        {
+          "ext": ".scala",
+          "files": 547
+        },
+        {
+          "ext": ".xml",
+          "files": 427
+        },
+        {
+          "ext": ".py",
+          "files": 312
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/flink",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://flink.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/FLINK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/FLINK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "692 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-022c56181186",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-d1aab192309a",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-f65102001afe",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-95d3cd60c595",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-flink/docs/content/docs/sql/reference/queries/set-ops.md",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a300252b8271",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-flink/flink-core/src/main/java/org/apache/flink/api/common/operators/base/CoGroupOperatorBase.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3fd6132baf8e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-flink/flink-formats/flink-orc/src/main/java/org/apache/flink/orc/vector/RowDataVectorizer.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/flink"
+    },
+    {
+      "id": "apache-hadoop",
+      "label": "Apache Hadoop",
+      "repo_id": "apache-hadoop-9834500d",
+      "role": "filesystem-yarn-mapreduce-foundation",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 16425,
+      "findings": 514,
+      "medium": 250,
+      "info": 264,
+      "relationships": 28,
+      "manifest_in": 11,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 12488
+        },
+        {
+          "ext": ".xml",
+          "files": 547
+        },
+        {
+          "ext": ".md",
+          "files": 541
+        },
+        {
+          "ext": ".js",
+          "files": 525
+        },
+        {
+          "ext": ".h",
+          "files": 263
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hadoop",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hadoop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HADOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HADOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "250 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-9f82ba09827b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-09e0a956a438",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-27022977e815",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-fc4a6aeb07d1",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-0bf78920116c",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hadoop/hadoop-tools/hadoop-distcp/pom.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-cfa3c9a874e9",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.10.0.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/hadoop"
+    },
+    {
+      "id": "apache-hbase",
+      "label": "Apache HBase",
+      "repo_id": "apache-hbase-2f98b2ea",
+      "role": "distributed-nosql-store",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 6461,
+      "findings": 323,
+      "medium": 71,
+      "info": 252,
+      "relationships": 22,
+      "manifest_in": 1,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 5340
+        },
+        {
+          "ext": ".rb",
+          "files": 239
+        },
+        {
+          "ext": ".xml",
+          "files": 106
+        },
+        {
+          "ext": ".mdx",
+          "files": 103
+        },
+        {
+          "ext": ".tsx",
+          "files": 95
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hbase",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hbase.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HBASE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HBASE/Home",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://hbase.apache.org/book.html",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "71 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-88a2c7729b49",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-17334ec63176",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-45593632ad71",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hbase/hbase-archetypes/hbase-client-project/src/test/java/org/apache/hbase/archetypes/exemplars/client/TestHelloHBase.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4e2475002dd4",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~137 lines): apache-hbase/hbase-archetypes/hbase-client-project/src/main/resources/log4j2.properties",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-fce18015baea",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~149 lines): apache-hbase/hbase-server/src/test/java/org/apache/hadoop/hbase/mapreduce/MapreduceTestingShim.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f9504cecfec0",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~151 lines): apache-hbase/hbase-shaded/hbase-shaded-check-invariants/src/test/resources/ensure-jars-have-correct-contents.sh",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/hbase"
+    },
+    {
+      "id": "apache-hive",
+      "label": "Apache Hive",
+      "repo_id": "apache-hive-32260a21",
+      "role": "sql-warehouse",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 985,
+      "medium": 552,
+      "info": 433,
+      "relationships": 28,
+      "manifest_in": 2,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 7307
+        },
+        {
+          "ext": ".out",
+          "files": 5416
+        },
+        {
+          "ext": ".q",
+          "files": 5279
+        },
+        {
+          "ext": ".txt",
+          "files": 564
+        },
+        {
+          "ext": ".php",
+          "files": 302
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hive",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hive.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HIVE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HIVE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "552 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-7cc8538848fc",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-de4ce3189a4b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8db886d183f0",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8c91d88edc99",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-3d75f753988d",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hive/data/files/orc_create_people.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-adf199d91a9c",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetPrimaryKeysReq.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/hive"
+    },
+    {
+      "id": "apache-kafka",
+      "label": "Apache Kafka",
+      "repo_id": "apache-kafka-82e1005d",
+      "role": "event-streaming",
+      "kind": "repository",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 7272,
+      "findings": 234,
+      "medium": 173,
+      "info": 61,
+      "relationships": 4,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 5921
+        },
+        {
+          "ext": ".json",
+          "files": 302
+        },
+        {
+          "ext": ".scala",
+          "files": 283
+        },
+        {
+          "ext": ".py",
+          "files": 177
+        },
+        {
+          "ext": ".md",
+          "files": 126
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/kafka",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://kafka.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/KAFKA",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/KAFKA",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "173 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-7555c5d1e7f9",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-5549274d03c5",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-6aca34ef53bd",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-3c92de682620",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-22/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-7e3c65f515f1",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-23/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-860ce47387d5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-24/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/kafka"
+    },
+    {
+      "id": "apache-livy",
+      "label": "Apache Livy",
+      "repo_id": "apache-livy-6b19d048",
+      "role": "spark-rest-service",
+      "kind": "repository",
+      "group": "service",
+      "lifecycle": "incubating",
+      "summary": "",
+      "files": 428,
+      "findings": 45,
+      "medium": 31,
+      "info": 14,
+      "relationships": 17,
+      "manifest_in": 0,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".scala",
+          "files": 169
+        },
+        {
+          "ext": ".java",
+          "files": 98
+        },
+        {
+          "ext": ".xml",
+          "files": 26
+        },
+        {
+          "ext": ".js",
+          "files": 12
+        },
+        {
+          "ext": ".py",
+          "files": 11
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/incubator-livy",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://livy.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/LIVY",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/LIVY",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://livy.apache.org/docs/latest/",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "31 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-e237a7951f8d",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-9e880782c960",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-e1f267e753ab",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-2bfcf1af033e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-livy/thriftserver/server/src/test/scala/org/apache/livy/thriftserver/ThriftServerSuites.scala",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "semgrep-a999ae139f55",
+          "kind": "static-finding",
+          "severity": "medium",
+          "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "semgrep-22a63705e277",
+          "kind": "static-finding",
+          "severity": "info",
+          "summary": "Semgrep harness.recipes.semgrep-rules.portolan-todo-fixme",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/incubator-livy"
+    },
+    {
+      "id": "apache-phoenix",
+      "label": "Apache Phoenix",
+      "repo_id": "apache-phoenix-4fa00b9a",
+      "role": "sql-over-hbase",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2787,
+      "findings": 248,
+      "medium": 73,
+      "info": 175,
+      "relationships": 20,
+      "manifest_in": 0,
+      "manifest_out": 3,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 2501
+        },
+        {
+          "ext": ".sql",
+          "files": 54
+        },
+        {
+          "ext": ".xml",
+          "files": 52
+        },
+        {
+          "ext": ".js",
+          "files": 25
+        },
+        {
+          "ext": ".sh",
+          "files": 20
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/phoenix",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://phoenix.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/PHOENIX",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/PHOENIX/Home",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://phoenix.apache.org/resources.html",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "73 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-d4e308295cc8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-fab50567289b",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/UncoveredGlobalIndexRegionScannerIT.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-01ef8ac16e1f",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.0/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4b1e6d4a3bb8",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.4/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-eb939dcda58e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-phoenix/phoenix-core/src/test/java/org/apache/phoenix/expression/AndExpressionTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-30bf85d95a03",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~103 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/BaseImmutableIndexIT.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/phoenix"
+    },
+    {
+      "id": "apache-ranger",
+      "label": "Apache Ranger",
+      "repo_id": "apache-ranger-e3f6c781",
+      "role": "security-governance",
+      "kind": "repository",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 3722,
+      "findings": 245,
+      "medium": 186,
+      "info": 59,
+      "relationships": 29,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1970
+        },
+        {
+          "ext": ".sql",
+          "files": 336
+        },
+        {
+          "ext": ".xml",
+          "files": 322
+        },
+        {
+          "ext": ".json",
+          "files": 216
+        },
+        {
+          "ext": ".sh",
+          "files": 121
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/ranger",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://ranger.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/RANGER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/RANGER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "186 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-a8d8bc09e1f8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b706aba9f97e",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-dc7e609dbba9",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-50a65d4b99ec",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~107 lines): apache-ranger/security-admin/src/main/java/org/apache/ranger/entity/XXResourceDef.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-975d72d35768",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~108 lines): apache-ranger/agents-common/src/test/resources/policyengine/gds/gds_info_hive_data_mask.json",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f1b4618f9cb1",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~116 lines): apache-ranger/agents-common/src/test/resources/policyengine/test_policyengine_hive_default_policies.json",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/ranger"
+    },
+    {
+      "id": "apache-solr",
+      "label": "Apache Solr",
+      "repo_id": "apache-solr-1f23ebe3",
+      "role": "search-index",
+      "kind": "repository",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 8558,
+      "findings": 681,
+      "medium": 353,
+      "info": 328,
+      "relationships": 26,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 4390
+        },
+        {
+          "ext": ".yml",
+          "files": 662
+        },
+        {
+          "ext": ".txt",
+          "files": 641
+        },
+        {
+          "ext": ".png",
+          "files": 594
+        },
+        {
+          "ext": ".xml",
+          "files": 589
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/solr",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://solr.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SOLR",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SOLR",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "353 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-156137f317d2",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-afa8dbdabe12",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-7f83f82a478f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-9e5e7a579945",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/search/TestTermQParserPlugin.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-bb50eb6a1b23",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/spelling/suggest/TestFileDictionaryLookup.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-96bb6157fa76",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~105 lines): apache-solr/solr/core/src/test-files/solr/configsets/different-stopwords/collectionA/conf/schema.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/solr"
+    },
+    {
+      "id": "apache-spark",
+      "label": "Apache Spark",
+      "repo_id": "apache-spark-37047291",
+      "role": "distributed-compute",
+      "kind": "repository",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 944,
+      "medium": 551,
+      "info": 393,
+      "relationships": 27,
+      "manifest_in": 2,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".scala",
+          "files": 5637
+        },
+        {
+          "ext": ".py",
+          "files": 1413
+        },
+        {
+          "ext": ".java",
+          "files": 1296
+        },
+        {
+          "ext": ".txt",
+          "files": 1261
+        },
+        {
+          "ext": ".out",
+          "files": 820
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/spark",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://spark.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SPARK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SPARK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "551 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-89e923e29d5b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-946f558c53de",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-9f51920ff2aa",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/connect/common/src/test/resources/query-tests/queries/from_protobuf_messageClassName_descFilePath.json",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-085f556bd6ea",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/core/src/test/resources/tpcds-plan-stability/approved-plans-v1_4/q70.sf100/explain.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d07c1e4cf1f5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/core/src/test/resources/tpcds-plan-stability/approved-plans-v1_4/q77/explain.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4c2e72cd0ac5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-spark/sql/connect/common/src/test/resources/query-tests/queries/function_mask_with_specific_upperChar_lowerChar_digitChar.json",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/spark"
+    },
+    {
+      "id": "apache-tez",
+      "label": "Apache Tez",
+      "repo_id": "apache-tez-7cf0eade",
+      "role": "dag-execution-engine",
+      "kind": "repository",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2092,
+      "findings": 105,
+      "medium": 54,
+      "info": 51,
+      "relationships": 16,
+      "manifest_in": 1,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1270
+        },
+        {
+          "ext": ".js",
+          "files": 432
+        },
+        {
+          "ext": ".hbs",
+          "files": 74
+        },
+        {
+          "ext": ".xml",
+          "files": 69
+        },
+        {
+          "ext": ".md",
+          "files": 46
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/tez",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://tez.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/TEZ",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/TEZ",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "54 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-b08caed51829",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-94149f567fae",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-37a571e77ce8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-abe2f9787150",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-b1ca67d6a8f8",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~111 lines): apache-tez/tez-plugins/tez-yarn-timeline-history/pom.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-b0550e5dff68",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~115 lines): apache-tez/tez-tools/tez-javadoc-tools/src/main/java-17/org/apache/tez/tools/javadoc/model/ConfigProperty.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/tez"
+    },
+    {
+      "id": "apache-zeppelin",
+      "label": "Apache Zeppelin",
+      "repo_id": "apache-zeppelin-114b95ca",
+      "role": "notebook-analytics",
+      "kind": "repository",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2558,
+      "findings": 98,
+      "medium": 88,
+      "info": 10,
+      "relationships": 18,
+      "manifest_in": 0,
+      "manifest_out": 3,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 841
+        },
+        {
+          "ext": ".ts",
+          "files": 313
+        },
+        {
+          "ext": ".png",
+          "files": 226
+        },
+        {
+          "ext": ".js",
+          "files": 131
+        },
+        {
+          "ext": ".html",
+          "files": 129
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/zeppelin",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://zeppelin.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/ZEPPELIN",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/ZEPPELIN",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "88 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-1001a46ad376",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-5af41dd76e8f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-a7bcae13f4e4",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~122 lines): apache-zeppelin/docs/usage/rest_api/helium.md",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d08acda6a592",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~130 lines): apache-zeppelin/zeppelin-web/src/app/interpreter/interpreter-create.html",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a80eccc8356a",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~143 lines): apache-zeppelin/flink/flink1.15-shims/src/main/java/org/apache/zeppelin/flink/TimestampStringUtils.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4c4a5df1aeaf",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~143 lines): apache-zeppelin/flink/flink1.16-shims/src/main/java/org/apache/zeppelin/flink/TimestampStringUtils.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/zeppelin"
+    },
+    {
+      "id": "apache-zookeeper",
+      "label": "Apache ZooKeeper",
+      "repo_id": "apache-zookeeper-562afacb",
+      "role": "coordination-service",
+      "kind": "repository",
+      "group": "control",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 1485,
+      "findings": 98,
+      "medium": 73,
+      "info": 25,
+      "relationships": 18,
+      "manifest_in": 3,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 936
+        },
+        {
+          "ext": ".png",
+          "files": 66
+        },
+        {
+          "ext": ".xml",
+          "files": 53
+        },
+        {
+          "ext": ".txt",
+          "files": 53
+        },
+        {
+          "ext": ".h",
+          "files": 42
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/zookeeper",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://zookeeper.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/ZOOKEEPER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/ZOOKEEPER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "73 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-5f7f61f07b1c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-3835418a11b3",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-cd500c7c4857",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/conf/logback.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-08223e91bc52",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/build.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-00018ef46214",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/src/main/c/tests/TestDriver.cc",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-c540cfdb3646",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~134 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/src/main/c/tests/Util.h",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "source-visible",
+      "url": "https://github.com/apache/zookeeper"
+    },
+    {
+      "id": "apache-oozie",
+      "label": "Apache Oozie",
+      "repo_id": "apache-oozie-40208cd8",
+      "role": "legacy-hadoop-workflow-scheduler",
+      "kind": "retired-project",
+      "group": "compute",
+      "lifecycle": "retired",
+      "summary": "Retired project used as a legacy control for lifecycle and evidence-state handling.",
+      "files": 1869,
+      "findings": 82,
+      "medium": 65,
+      "info": 17,
+      "relationships": 20,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1394
+        },
+        {
+          "ext": ".xml",
+          "files": 251
+        },
+        {
+          "ext": ".xsd",
+          "files": 48
+        },
+        {
+          "ext": ".properties",
+          "files": 46
+        },
+        {
+          "ext": ".md",
+          "files": 36
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/oozie",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://attic.apache.org/projects/oozie.html",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/OOZIE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/OOZIE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "65 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "dup-3527e277c1de",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-oozie/core/src/main/java/org/apache/oozie/command/coord/CoordActionSkipXCommand.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-9459dbb82144",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~52 lines): apache-oozie/core/src/test/resources/recovery-wf.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-1914b15f0617",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~54 lines): apache-oozie/core/src/main/java/org/apache/oozie/util/db/SLADbOperations.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-35d6c8e53acd",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~57 lines): apache-oozie/core/src/test/resources/coord-multiple-input-instance3.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3caaadd040b2",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-oozie/core/src/main/resources/META-INF/persistence.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-8aae6af3dea6",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~59 lines): apache-oozie/fluent-job/fluent-job-api/src/main/java/org/apache/oozie/fluentjob/api/mapping/DistcpPrepareConverter.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": "https://github.com/apache/oozie"
+    },
+    {
+      "id": "apache-sqoop",
+      "label": "Apache Sqoop",
+      "repo_id": "apache-sqoop-8bd014af",
+      "role": "legacy-rdbms-hadoop-transfer",
+      "kind": "retired-project",
+      "group": "service",
+      "lifecycle": "retired",
+      "summary": "Retired project used as a legacy control for replacement and migration signals.",
+      "files": 950,
+      "findings": 58,
+      "medium": 50,
+      "info": 8,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 719
+        },
+        {
+          "ext": ".txt",
+          "files": 107
+        },
+        {
+          "ext": ".png",
+          "files": 25
+        },
+        {
+          "ext": ".xml",
+          "files": 18
+        },
+        {
+          "ext": ".sh",
+          "files": 14
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/sqoop",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://sqoop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SQOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SQOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "50 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "dup-c480e708a14d",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~150 lines): apache-sqoop/config/checkstyle/checkstyle.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a0c82cdfcf51",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-sqoop/src/java/org/apache/sqoop/mapreduce/JdbcExportJob.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-491817ae03d0",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-sqoop/src/test/org/apache/sqoop/manager/sqlserver/SQLServerManagerExportTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-9a043d3877b9",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~56 lines): apache-sqoop/src/test/org/apache/sqoop/orm/TestParseMethods.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f2abced2c275",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-sqoop/config/checkstyle/checkstyle-noframes.xsl",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3eeb151821c5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-sqoop/src/test/org/apache/sqoop/TestAvroExport.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": "https://github.com/apache/sqoop"
+    },
+    {
+      "id": "bigtop-groovy",
+      "label": "Bigtop Groovy package",
+      "repo_id": "",
+      "role": "build-runtime-support",
+      "kind": "package",
+      "group": "platform",
+      "lifecycle": "internal-support",
+      "summary": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-jsvc",
+      "label": "Bigtop JSVC package",
+      "repo_id": "",
+      "role": "daemon-service-support",
+      "kind": "package",
+      "group": "platform",
+      "lifecycle": "internal-support",
+      "summary": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-select",
+      "label": "Bigtop Select package",
+      "repo_id": "",
+      "role": "bigtop-version-selection",
+      "kind": "package",
+      "group": "platform",
+      "lifecycle": "internal-support",
+      "summary": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-utils",
+      "label": "Bigtop Utils package",
+      "repo_id": "",
+      "role": "bigtop-runtime-support",
+      "kind": "package",
+      "group": "platform",
+      "lifecycle": "internal-support",
+      "summary": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "pkg:airflow",
+      "label": "airflow package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "airflow package discovered in apache-bigtop-repo/bigtop-packages/src/*/airflow.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/airflow",
+      "target_component": "apache-airflow"
+    },
+    {
+      "id": "pkg:alluxio",
+      "label": "alluxio package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "alluxio package discovered in apache-bigtop-repo/bigtop-packages/src/*/alluxio.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/alluxio",
+      "target_component": "alluxio"
+    },
+    {
+      "id": "pkg:bigtop-groovy",
+      "label": "bigtop-groovy package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop-groovy package discovered in apache-bigtop-repo/bigtop-packages/src/*/bigtop-groovy.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/bigtop-groovy",
+      "target_component": ""
+    },
+    {
+      "id": "pkg:bigtop-jsvc",
+      "label": "bigtop-jsvc package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop-jsvc package discovered in apache-bigtop-repo/bigtop-packages/src/*/bigtop-jsvc.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/bigtop-jsvc",
+      "target_component": ""
+    },
+    {
+      "id": "pkg:bigtop-select",
+      "label": "bigtop-select package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop-select package discovered in apache-bigtop-repo/bigtop-packages/src/*/bigtop-select.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/bigtop-select",
+      "target_component": ""
+    },
+    {
+      "id": "pkg:bigtop-utils",
+      "label": "bigtop-utils package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop-utils package discovered in apache-bigtop-repo/bigtop-packages/src/*/bigtop-utils.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/bigtop-utils",
+      "target_component": ""
+    },
+    {
+      "id": "pkg:flink",
+      "label": "flink package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "flink package discovered in apache-bigtop-repo/bigtop-packages/src/*/flink.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/flink",
+      "target_component": "apache-flink"
+    },
+    {
+      "id": "pkg:hadoop",
+      "label": "hadoop package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop package discovered in apache-bigtop-repo/bigtop-packages/src/*/hadoop.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/hadoop",
+      "target_component": "apache-hadoop"
+    },
+    {
+      "id": "pkg:hbase",
+      "label": "hbase package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hbase package discovered in apache-bigtop-repo/bigtop-packages/src/*/hbase.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/hbase",
+      "target_component": "apache-hbase"
+    },
+    {
+      "id": "pkg:hive",
+      "label": "hive package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hive package discovered in apache-bigtop-repo/bigtop-packages/src/*/hive.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/hive",
+      "target_component": "apache-hive"
+    },
+    {
+      "id": "pkg:kafka",
+      "label": "kafka package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "kafka package discovered in apache-bigtop-repo/bigtop-packages/src/*/kafka.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/kafka",
+      "target_component": "apache-kafka"
+    },
+    {
+      "id": "pkg:livy",
+      "label": "livy package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "livy package discovered in apache-bigtop-repo/bigtop-packages/src/*/livy.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/livy",
+      "target_component": "apache-livy"
+    },
+    {
+      "id": "pkg:phoenix",
+      "label": "phoenix package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "phoenix package discovered in apache-bigtop-repo/bigtop-packages/src/*/phoenix.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/phoenix",
+      "target_component": "apache-phoenix"
+    },
+    {
+      "id": "pkg:ranger",
+      "label": "ranger package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "ranger package discovered in apache-bigtop-repo/bigtop-packages/src/*/ranger.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/ranger",
+      "target_component": "apache-ranger"
+    },
+    {
+      "id": "pkg:solr",
+      "label": "solr package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "solr package discovered in apache-bigtop-repo/bigtop-packages/src/*/solr.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/solr",
+      "target_component": "apache-solr"
+    },
+    {
+      "id": "pkg:spark",
+      "label": "spark package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "spark package discovered in apache-bigtop-repo/bigtop-packages/src/*/spark.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/spark",
+      "target_component": "apache-spark"
+    },
+    {
+      "id": "pkg:tez",
+      "label": "tez package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "tez package discovered in apache-bigtop-repo/bigtop-packages/src/*/tez.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/tez",
+      "target_component": "apache-tez"
+    },
+    {
+      "id": "pkg:zeppelin",
+      "label": "zeppelin package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "zeppelin package discovered in apache-bigtop-repo/bigtop-packages/src/*/zeppelin.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/zeppelin",
+      "target_component": "apache-zeppelin"
+    },
+    {
+      "id": "pkg:zookeeper",
+      "label": "zookeeper package",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "packaging",
+      "kind": "package-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "zookeeper package discovered in apache-bigtop-repo/bigtop-packages/src/*/zookeeper.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-packages/src/*/zookeeper",
+      "target_component": "apache-zookeeper"
+    },
+    {
+      "id": "puppet:airflow",
+      "label": "airflow puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "airflow puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/airflow.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/airflow",
+      "target_component": "apache-airflow"
+    },
+    {
+      "id": "puppet:alluxio",
+      "label": "alluxio puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "alluxio puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/alluxio.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/alluxio",
+      "target_component": "alluxio"
+    },
+    {
+      "id": "puppet:bigtop_utils",
+      "label": "bigtop_utils puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop_utils puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/bigtop_utils.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/bigtop_utils",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:bigtop-util",
+      "label": "bigtop-util puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "bigtop-util puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/bigtop-util.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/bigtop-util",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:flink",
+      "label": "flink puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "flink puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/flink.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/flink",
+      "target_component": "apache-flink"
+    },
+    {
+      "id": "puppet:hadoop",
+      "label": "hadoop puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop",
+      "target_component": "apache-hadoop"
+    },
+    {
+      "id": "puppet:hadoop_hbase",
+      "label": "hadoop_hbase puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop_hbase puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_hbase.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_hbase",
+      "target_component": "apache-hbase"
+    },
+    {
+      "id": "puppet:hadoop_hive",
+      "label": "hadoop_hive puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop_hive puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_hive.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_hive",
+      "target_component": "apache-hive"
+    },
+    {
+      "id": "puppet:hadoop_zookeeper",
+      "label": "hadoop_zookeeper puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop_zookeeper puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_zookeeper.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/hadoop_zookeeper",
+      "target_component": "apache-zookeeper"
+    },
+    {
+      "id": "juju:hadoop-hbase",
+      "label": "hadoop-hbase juju bundle",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "juju-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop-hbase juju bundle discovered in apache-bigtop-repo/bigtop-deploy/juju/hadoop-hbase.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/juju/hadoop-hbase",
+      "target_component": ""
+    },
+    {
+      "id": "juju:hadoop-kafka",
+      "label": "hadoop-kafka juju bundle",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "juju-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop-kafka juju bundle discovered in apache-bigtop-repo/bigtop-deploy/juju/hadoop-kafka.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/juju/hadoop-kafka",
+      "target_component": ""
+    },
+    {
+      "id": "juju:hadoop-processing",
+      "label": "hadoop-processing juju bundle",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "juju-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop-processing juju bundle discovered in apache-bigtop-repo/bigtop-deploy/juju/hadoop-processing.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/juju/hadoop-processing",
+      "target_component": ""
+    },
+    {
+      "id": "juju:hadoop-spark",
+      "label": "hadoop-spark juju bundle",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "juju-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hadoop-spark juju bundle discovered in apache-bigtop-repo/bigtop-deploy/juju/hadoop-spark.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/juju/hadoop-spark",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:hcatalog",
+      "label": "hcatalog puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hcatalog puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/hcatalog.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/hcatalog",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:kafka",
+      "label": "kafka puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "kafka puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/kafka.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/kafka",
+      "target_component": "apache-kafka"
+    },
+    {
+      "id": "puppet:kerberos",
+      "label": "kerberos puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "kerberos puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/kerberos.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/kerberos",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:livy",
+      "label": "livy puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "livy puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/livy.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/livy",
+      "target_component": "apache-livy"
+    },
+    {
+      "id": "puppet:nfs",
+      "label": "nfs puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "nfs puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/nfs.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/nfs",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:phoenix",
+      "label": "phoenix puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "phoenix puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/phoenix.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/phoenix",
+      "target_component": "apache-phoenix"
+    },
+    {
+      "id": "puppet:ranger",
+      "label": "ranger puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "ranger puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/ranger.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/ranger",
+      "target_component": "apache-ranger"
+    },
+    {
+      "id": "puppet:solr",
+      "label": "solr puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "solr puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/solr.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/solr",
+      "target_component": "apache-solr"
+    },
+    {
+      "id": "puppet:spark",
+      "label": "spark puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "spark puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/spark.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/spark",
+      "target_component": "apache-spark"
+    },
+    {
+      "id": "juju:spark-processing",
+      "label": "spark-processing juju bundle",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "juju-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "spark-processing juju bundle discovered in apache-bigtop-repo/bigtop-deploy/juju/spark-processing.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/juju/spark-processing",
+      "target_component": ""
+    },
+    {
+      "id": "puppet:tez",
+      "label": "tez puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "tez puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/tez.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/tez",
+      "target_component": "apache-tez"
+    },
+    {
+      "id": "puppet:zeppelin",
+      "label": "zeppelin puppet module",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "puppet-deployment",
+      "kind": "deployment-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "zeppelin puppet module discovered in apache-bigtop-repo/bigtop-deploy/puppet/modules/zeppelin.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-deploy/puppet/modules/zeppelin",
+      "target_component": "apache-zeppelin"
+    },
+    {
+      "id": "smoke:airflow",
+      "label": "airflow smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "airflow smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/airflow.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/airflow",
+      "target_component": "apache-airflow"
+    },
+    {
+      "id": "smoke:alluxio",
+      "label": "alluxio smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "alluxio smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/alluxio.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/alluxio",
+      "target_component": "alluxio"
+    },
+    {
+      "id": "smoke:flink",
+      "label": "flink smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "flink smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/flink.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/flink",
+      "target_component": "apache-flink"
+    },
+    {
+      "id": "smoke:hbase",
+      "label": "hbase smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hbase smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/hbase.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/hbase",
+      "target_component": "apache-hbase"
+    },
+    {
+      "id": "smoke:hcfs",
+      "label": "hcfs smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hcfs smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/hcfs.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/hcfs",
+      "target_component": ""
+    },
+    {
+      "id": "smoke:hdfs",
+      "label": "hdfs smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hdfs smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/hdfs.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/hdfs",
+      "target_component": ""
+    },
+    {
+      "id": "smoke:hive",
+      "label": "hive smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "hive smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/hive.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/hive",
+      "target_component": "apache-hive"
+    },
+    {
+      "id": "smoke:kafka",
+      "label": "kafka smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "kafka smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/kafka.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/kafka",
+      "target_component": "apache-kafka"
+    },
+    {
+      "id": "smoke:kms",
+      "label": "kms smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "kms smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/kms.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/kms",
+      "target_component": ""
+    },
+    {
+      "id": "smoke:livy",
+      "label": "livy smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "livy smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/livy.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/livy",
+      "target_component": "apache-livy"
+    },
+    {
+      "id": "smoke:mapreduce",
+      "label": "mapreduce smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "mapreduce smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/mapreduce.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/mapreduce",
+      "target_component": ""
+    },
+    {
+      "id": "smoke:phoenix",
+      "label": "phoenix smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "phoenix smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/phoenix.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/phoenix",
+      "target_component": "apache-phoenix"
+    },
+    {
+      "id": "smoke:ranger",
+      "label": "ranger smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "ranger smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/ranger.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/ranger",
+      "target_component": "apache-ranger"
+    },
+    {
+      "id": "smoke:solr",
+      "label": "solr smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "solr smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/solr.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/solr",
+      "target_component": "apache-solr"
+    },
+    {
+      "id": "smoke:spark",
+      "label": "spark smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "spark smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/spark.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/spark",
+      "target_component": "apache-spark"
+    },
+    {
+      "id": "smoke:tez",
+      "label": "tez smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "tez smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/tez.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/tez",
+      "target_component": "apache-tez"
+    },
+    {
+      "id": "smoke:yarn",
+      "label": "yarn smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "yarn smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/yarn.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/yarn",
+      "target_component": ""
+    },
+    {
+      "id": "smoke:zeppelin",
+      "label": "zeppelin smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "zeppelin smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/zeppelin.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/zeppelin",
+      "target_component": "apache-zeppelin"
+    },
+    {
+      "id": "smoke:zookeeper",
+      "label": "zookeeper smoke test",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "smoke-test",
+      "kind": "test-module",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "zookeeper smoke test discovered in apache-bigtop-repo/bigtop-tests/smoke-tests/zookeeper.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 1,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {
+        "good": [],
+        "attention": [],
+        "unknown": [
+          "runtime behavior not_assessed"
+        ]
+      },
+      "top_findings": [],
+      "source": "bigtop-repo-directory",
+      "evidence_state": "source-visible",
+      "backing_path": "apache-bigtop-repo/bigtop-tests/smoke-tests/zookeeper",
+      "target_component": "apache-zookeeper"
+    },
+    {
+      "id": "apache-bigtop-release-350",
+      "label": "Apache Bigtop 3.5.0 release",
+      "repo_id": "",
+      "role": "release-bom",
+      "kind": "release",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "apache-bigtop-support-matrix-350",
+      "label": "Apache Bigtop 3.5.0 support matrix",
+      "repo_id": "",
+      "role": "support-matrix",
+      "kind": "documentation",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "apache-bigtop-wiki",
+      "label": "Apache Bigtop Confluence",
+      "repo_id": "",
+      "role": "project-documentation-and-release-planning",
+      "kind": "wiki",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "Official Bigtop wiki space with overview, releases, support matrix, build, deployment, and contribution pages.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "apache-bigtop-jira",
+      "label": "Apache Bigtop JIRA",
+      "repo_id": "",
+      "role": "issue-and-enhancement-tracking",
+      "kind": "issue-tracker",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "Official Bigtop tracker for bugs and enhancement requests.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "apache-bigtop-mailing-lists",
+      "label": "Apache Bigtop mailing lists",
+      "repo_id": "",
+      "role": "community-support-and-notifications",
+      "kind": "mailing-list",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "Official user, developer, commits, CI, announce, and issues mailing lists.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-ci",
+      "label": "Bigtop CI and smoke-test jobs",
+      "repo_id": "",
+      "role": "upstream-verification-surface",
+      "kind": "runtime",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "Upstream CI is context evidence, not a Portolan verification result.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-docker-images",
+      "label": "Bigtop Docker images",
+      "repo_id": "",
+      "role": "runtime-surface",
+      "kind": "docker-image",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "Later runtime tests may observe containers locally; the manifest itself remains metadata-only.",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    },
+    {
+      "id": "bigtop-binary-repos",
+      "label": "Bigtop installable binary repositories",
+      "repo_id": "",
+      "role": "package-surface",
+      "kind": "binary-repository",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 0,
+      "findings": 0,
+      "medium": 0,
+      "info": 0,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [],
+      "surfaces": [],
+      "signals": {},
+      "top_findings": [],
+      "source": "corpus-manifest",
+      "evidence_state": "metadata-visible",
+      "url": ""
+    }
+  ],
   "relationships": [
     {
       "id": "rel-shared-5c74e9329237",
@@ -4035,6 +8823,798 @@
       "count": 9,
       "evidence_state": "metadata-visible",
       "producer": "syft"
+    },
+    {
+      "id": "module-link:pkg:airflow->apache-airflow",
+      "type": "module-belongs-to-component",
+      "summary": "airflow package belongs to Apache Airflow",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:airflow",
+        "apache-airflow"
+      ],
+      "labels": [
+        "airflow package",
+        "Apache Airflow"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:alluxio->alluxio",
+      "type": "module-belongs-to-component",
+      "summary": "alluxio package belongs to Alluxio",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:alluxio",
+        "alluxio"
+      ],
+      "labels": [
+        "alluxio package",
+        "Alluxio"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:flink->apache-flink",
+      "type": "module-belongs-to-component",
+      "summary": "flink package belongs to Apache Flink",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:flink",
+        "apache-flink"
+      ],
+      "labels": [
+        "flink package",
+        "Apache Flink"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:hadoop->apache-hadoop",
+      "type": "module-belongs-to-component",
+      "summary": "hadoop package belongs to Apache Hadoop",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:hadoop",
+        "apache-hadoop"
+      ],
+      "labels": [
+        "hadoop package",
+        "Apache Hadoop"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:hbase->apache-hbase",
+      "type": "module-belongs-to-component",
+      "summary": "hbase package belongs to Apache HBase",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:hbase",
+        "apache-hbase"
+      ],
+      "labels": [
+        "hbase package",
+        "Apache HBase"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:hive->apache-hive",
+      "type": "module-belongs-to-component",
+      "summary": "hive package belongs to Apache Hive",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:hive",
+        "apache-hive"
+      ],
+      "labels": [
+        "hive package",
+        "Apache Hive"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:kafka->apache-kafka",
+      "type": "module-belongs-to-component",
+      "summary": "kafka package belongs to Apache Kafka",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:kafka",
+        "apache-kafka"
+      ],
+      "labels": [
+        "kafka package",
+        "Apache Kafka"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:livy->apache-livy",
+      "type": "module-belongs-to-component",
+      "summary": "livy package belongs to Apache Livy",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:livy",
+        "apache-livy"
+      ],
+      "labels": [
+        "livy package",
+        "Apache Livy"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:phoenix->apache-phoenix",
+      "type": "module-belongs-to-component",
+      "summary": "phoenix package belongs to Apache Phoenix",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:phoenix",
+        "apache-phoenix"
+      ],
+      "labels": [
+        "phoenix package",
+        "Apache Phoenix"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:ranger->apache-ranger",
+      "type": "module-belongs-to-component",
+      "summary": "ranger package belongs to Apache Ranger",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:ranger",
+        "apache-ranger"
+      ],
+      "labels": [
+        "ranger package",
+        "Apache Ranger"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:solr->apache-solr",
+      "type": "module-belongs-to-component",
+      "summary": "solr package belongs to Apache Solr",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:solr",
+        "apache-solr"
+      ],
+      "labels": [
+        "solr package",
+        "Apache Solr"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:spark->apache-spark",
+      "type": "module-belongs-to-component",
+      "summary": "spark package belongs to Apache Spark",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:spark",
+        "apache-spark"
+      ],
+      "labels": [
+        "spark package",
+        "Apache Spark"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:tez->apache-tez",
+      "type": "module-belongs-to-component",
+      "summary": "tez package belongs to Apache Tez",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:tez",
+        "apache-tez"
+      ],
+      "labels": [
+        "tez package",
+        "Apache Tez"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:zeppelin->apache-zeppelin",
+      "type": "module-belongs-to-component",
+      "summary": "zeppelin package belongs to Apache Zeppelin",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:zeppelin",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "zeppelin package",
+        "Apache Zeppelin"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:pkg:zookeeper->apache-zookeeper",
+      "type": "module-belongs-to-component",
+      "summary": "zookeeper package belongs to Apache ZooKeeper",
+      "component": "package-module",
+      "repo_ids": [],
+      "repos": [
+        "pkg:zookeeper",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "zookeeper package",
+        "Apache ZooKeeper"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:airflow->apache-airflow",
+      "type": "module-belongs-to-component",
+      "summary": "airflow puppet module belongs to Apache Airflow",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:airflow",
+        "apache-airflow"
+      ],
+      "labels": [
+        "airflow puppet module",
+        "Apache Airflow"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:alluxio->alluxio",
+      "type": "module-belongs-to-component",
+      "summary": "alluxio puppet module belongs to Alluxio",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:alluxio",
+        "alluxio"
+      ],
+      "labels": [
+        "alluxio puppet module",
+        "Alluxio"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:flink->apache-flink",
+      "type": "module-belongs-to-component",
+      "summary": "flink puppet module belongs to Apache Flink",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:flink",
+        "apache-flink"
+      ],
+      "labels": [
+        "flink puppet module",
+        "Apache Flink"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:hadoop->apache-hadoop",
+      "type": "module-belongs-to-component",
+      "summary": "hadoop puppet module belongs to Apache Hadoop",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:hadoop",
+        "apache-hadoop"
+      ],
+      "labels": [
+        "hadoop puppet module",
+        "Apache Hadoop"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:hadoop_hbase->apache-hbase",
+      "type": "module-belongs-to-component",
+      "summary": "hadoop_hbase puppet module belongs to Apache HBase",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:hadoop_hbase",
+        "apache-hbase"
+      ],
+      "labels": [
+        "hadoop_hbase puppet module",
+        "Apache HBase"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:hadoop_hive->apache-hive",
+      "type": "module-belongs-to-component",
+      "summary": "hadoop_hive puppet module belongs to Apache Hive",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:hadoop_hive",
+        "apache-hive"
+      ],
+      "labels": [
+        "hadoop_hive puppet module",
+        "Apache Hive"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:hadoop_zookeeper->apache-zookeeper",
+      "type": "module-belongs-to-component",
+      "summary": "hadoop_zookeeper puppet module belongs to Apache ZooKeeper",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:hadoop_zookeeper",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "hadoop_zookeeper puppet module",
+        "Apache ZooKeeper"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:kafka->apache-kafka",
+      "type": "module-belongs-to-component",
+      "summary": "kafka puppet module belongs to Apache Kafka",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:kafka",
+        "apache-kafka"
+      ],
+      "labels": [
+        "kafka puppet module",
+        "Apache Kafka"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:livy->apache-livy",
+      "type": "module-belongs-to-component",
+      "summary": "livy puppet module belongs to Apache Livy",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:livy",
+        "apache-livy"
+      ],
+      "labels": [
+        "livy puppet module",
+        "Apache Livy"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:phoenix->apache-phoenix",
+      "type": "module-belongs-to-component",
+      "summary": "phoenix puppet module belongs to Apache Phoenix",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:phoenix",
+        "apache-phoenix"
+      ],
+      "labels": [
+        "phoenix puppet module",
+        "Apache Phoenix"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:ranger->apache-ranger",
+      "type": "module-belongs-to-component",
+      "summary": "ranger puppet module belongs to Apache Ranger",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:ranger",
+        "apache-ranger"
+      ],
+      "labels": [
+        "ranger puppet module",
+        "Apache Ranger"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:solr->apache-solr",
+      "type": "module-belongs-to-component",
+      "summary": "solr puppet module belongs to Apache Solr",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:solr",
+        "apache-solr"
+      ],
+      "labels": [
+        "solr puppet module",
+        "Apache Solr"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:spark->apache-spark",
+      "type": "module-belongs-to-component",
+      "summary": "spark puppet module belongs to Apache Spark",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:spark",
+        "apache-spark"
+      ],
+      "labels": [
+        "spark puppet module",
+        "Apache Spark"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:tez->apache-tez",
+      "type": "module-belongs-to-component",
+      "summary": "tez puppet module belongs to Apache Tez",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:tez",
+        "apache-tez"
+      ],
+      "labels": [
+        "tez puppet module",
+        "Apache Tez"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:puppet:zeppelin->apache-zeppelin",
+      "type": "module-belongs-to-component",
+      "summary": "zeppelin puppet module belongs to Apache Zeppelin",
+      "component": "deployment-module",
+      "repo_ids": [],
+      "repos": [
+        "puppet:zeppelin",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "zeppelin puppet module",
+        "Apache Zeppelin"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:airflow->apache-airflow",
+      "type": "module-belongs-to-component",
+      "summary": "airflow smoke test belongs to Apache Airflow",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:airflow",
+        "apache-airflow"
+      ],
+      "labels": [
+        "airflow smoke test",
+        "Apache Airflow"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:alluxio->alluxio",
+      "type": "module-belongs-to-component",
+      "summary": "alluxio smoke test belongs to Alluxio",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:alluxio",
+        "alluxio"
+      ],
+      "labels": [
+        "alluxio smoke test",
+        "Alluxio"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:flink->apache-flink",
+      "type": "module-belongs-to-component",
+      "summary": "flink smoke test belongs to Apache Flink",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:flink",
+        "apache-flink"
+      ],
+      "labels": [
+        "flink smoke test",
+        "Apache Flink"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:hbase->apache-hbase",
+      "type": "module-belongs-to-component",
+      "summary": "hbase smoke test belongs to Apache HBase",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:hbase",
+        "apache-hbase"
+      ],
+      "labels": [
+        "hbase smoke test",
+        "Apache HBase"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:hive->apache-hive",
+      "type": "module-belongs-to-component",
+      "summary": "hive smoke test belongs to Apache Hive",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:hive",
+        "apache-hive"
+      ],
+      "labels": [
+        "hive smoke test",
+        "Apache Hive"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:kafka->apache-kafka",
+      "type": "module-belongs-to-component",
+      "summary": "kafka smoke test belongs to Apache Kafka",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:kafka",
+        "apache-kafka"
+      ],
+      "labels": [
+        "kafka smoke test",
+        "Apache Kafka"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:livy->apache-livy",
+      "type": "module-belongs-to-component",
+      "summary": "livy smoke test belongs to Apache Livy",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:livy",
+        "apache-livy"
+      ],
+      "labels": [
+        "livy smoke test",
+        "Apache Livy"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:phoenix->apache-phoenix",
+      "type": "module-belongs-to-component",
+      "summary": "phoenix smoke test belongs to Apache Phoenix",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:phoenix",
+        "apache-phoenix"
+      ],
+      "labels": [
+        "phoenix smoke test",
+        "Apache Phoenix"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:ranger->apache-ranger",
+      "type": "module-belongs-to-component",
+      "summary": "ranger smoke test belongs to Apache Ranger",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:ranger",
+        "apache-ranger"
+      ],
+      "labels": [
+        "ranger smoke test",
+        "Apache Ranger"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:solr->apache-solr",
+      "type": "module-belongs-to-component",
+      "summary": "solr smoke test belongs to Apache Solr",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:solr",
+        "apache-solr"
+      ],
+      "labels": [
+        "solr smoke test",
+        "Apache Solr"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:spark->apache-spark",
+      "type": "module-belongs-to-component",
+      "summary": "spark smoke test belongs to Apache Spark",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:spark",
+        "apache-spark"
+      ],
+      "labels": [
+        "spark smoke test",
+        "Apache Spark"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:tez->apache-tez",
+      "type": "module-belongs-to-component",
+      "summary": "tez smoke test belongs to Apache Tez",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:tez",
+        "apache-tez"
+      ],
+      "labels": [
+        "tez smoke test",
+        "Apache Tez"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:zeppelin->apache-zeppelin",
+      "type": "module-belongs-to-component",
+      "summary": "zeppelin smoke test belongs to Apache Zeppelin",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:zeppelin",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "zeppelin smoke test",
+        "Apache Zeppelin"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
+    },
+    {
+      "id": "module-link:smoke:zookeeper->apache-zookeeper",
+      "type": "module-belongs-to-component",
+      "summary": "zookeeper smoke test belongs to Apache ZooKeeper",
+      "component": "test-module",
+      "repo_ids": [],
+      "repos": [
+        "smoke:zookeeper",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "zookeeper smoke test",
+        "Apache ZooKeeper"
+      ],
+      "count": 2,
+      "evidence_state": "source-visible",
+      "producer": "bigtop-directory-export"
     }
   ],
   "hotspots": [
