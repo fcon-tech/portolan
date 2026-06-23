@@ -558,12 +558,21 @@ h1 {
   height: calc(100% - 6.1rem);
   min-height: 33rem;
   display: block;
+  cursor: grab;
+  touch-action: none;
+}
+
+.atlas-map.is-panning {
+  cursor: grabbing;
 }
 
 .cluster-label {
   font-size: 0.8rem;
   font-weight: 720;
   text-anchor: middle;
+  paint-order: stroke;
+  stroke: rgba(7, 10, 15, 0.78);
+  stroke-width: 4px;
 }
 
 .muted-label {
