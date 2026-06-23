@@ -3,17 +3,17 @@ const app = document.getElementById('demo-app');
 const state = {
   data: null,
   selectedId: '',
-  view: 'overview',
+  view: 'map',
   group: 'all',
   query: '',
 };
 
-const groupColor = {
-  platform: '#49d6c5',
-  compute: '#63b7ff',
-  data: '#a99cff',
-  control: '#f1b65c',
-  service: '#6fd28c',
+const groupMeta = {
+  compute: { label: 'Compute & Orchestration', color: '#4d8dff', x: 610, y: 186 },
+  data: { label: 'Data Systems', color: '#ffd04a', x: 700, y: 404 },
+  platform: { label: 'Platform & Governance', color: '#ff8b47', x: 875, y: 244 },
+  service: { label: 'Services & Integrations', color: '#4ed5d1', x: 270, y: 400 },
+  control: { label: 'Coordination', color: '#9c7cff', x: 238, y: 230 },
 };
 
 init();
@@ -23,7 +23,7 @@ async function init() {
     const response = await fetch('data/bigtop-demo.json');
     if (!response.ok) throw new Error(`data/bigtop-demo.json returned HTTP ${response.status}`);
     state.data = await response.json();
-    state.selectedId = chooseDefault(state.data.components);
+    state.selectedId = chooseDefault(state.data.atlas_nodes || state.data.components);
     render();
   } catch (error) {
     app.innerHTML = `<main class="loading"><div class="loading-mark">Portolan</div><p>${escapeHtml(error.message || String(error))}</p></main>`;
@@ -31,105 +31,113 @@ async function init() {
 }
 
 function chooseDefault(components) {
-  return [...components].sort((a, b) => b.relationships - a.relationships || b.files - a.files)[0]?.id || '';
+  return [...components].sort((a, b) => riskScore(b) - riskScore(a) || b.relationships - a.relationships)[0]?.id || '';
 }
 
 function render() {
   const data = state.data;
-  const selected = componentById(state.selectedId) || data.components[0];
+  const atlasNodes = data.atlas_nodes || data.components;
+  const selected = componentById(state.selectedId) || atlasNodes[0];
   app.innerHTML = `
     <div class="demo-shell">
       <header class="topbar">
         <a class="brand" href="../">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span><strong>Portolan Bigtop Atlas</strong><span>public demo over a large OSS landscape</span></span>
+          <span class="brand-compass" aria-hidden="true"></span>
+          <span class="brand-copy"><strong>PORTOLAN</strong><em>BIGTOP ATLAS</em></span>
         </a>
         <nav class="nav" aria-label="Demo navigation">
           ${navButton('overview', 'Overview')}
           ${navButton('map', 'Map')}
           ${navButton('repos', 'Repos')}
           ${navButton('risks', 'Risks')}
-          <a class="home-link" href="../portolan/">Product</a>
+          ${navButton('drilldown', 'Drill-down')}
         </nav>
-        <input class="search" type="search" value="${escapeAttr(state.query)}" placeholder="Find repo, role, dependency" aria-label="Search atlas">
+        <div class="top-actions">
+          <input class="search" type="search" value="${escapeAttr(state.query)}" placeholder="Search anything..." aria-label="Search atlas">
+          <a class="home-link" href="../portolan/">Product</a>
+        </div>
       </header>
 
-      <main>
-        <section class="hero" id="overview">
-          <aside class="brief panel">
-            <p class="demo-label">Apache Bigtop demo</p>
-            <h1>${escapeHtml(data.title)}</h1>
-            <p class="lede">${escapeHtml(data.subtitle)}</p>
-            <div class="metric-grid">
-              ${metric('Repositories', data.totals.repos)}
-              ${metric('Files mapped', compact(data.totals.files))}
-              ${metric('Relationships', data.relationships.length)}
-              ${metric('Findings', compact(data.totals.findings))}
-            </div>
-            <div class="narrative">
-              ${data.narrative.map((item) => `
-                <article>
-                  <h3>${escapeHtml(item.title)}</h3>
-                  <p>${escapeHtml(item.body)}</p>
-                </article>
-              `).join('')}
-            </div>
-          </aside>
-          <section class="map-panel panel" id="map">
-            <div class="map-toolbar">
-              <div class="layer-tabs" aria-label="Map layers">
-                ${groupButton('all', 'All')}
-                ${groupButton('platform', 'Platform')}
-                ${groupButton('compute', 'Compute')}
-                ${groupButton('data', 'Data')}
-                ${groupButton('control', 'Control')}
-              </div>
-              <button class="map-action" type="button" data-action="focus-risk">Focus risk</button>
-            </div>
-            ${renderMap(selected)}
-            ${renderInspector(selected)}
+      <main class="atlas-workspace">
+        <aside class="summary-panel panel" id="overview">
+          <h1>${escapeHtml(data.title)}</h1>
+          <p class="lede">Understand the structure, dependencies, and risk signals across the Apache Bigtop ecosystem.</p>
+          <section class="executive-summary">
+            <h2>Executive summary</h2>
+            <p>${escapeHtml(data.narrative[0]?.body || data.subtitle)}</p>
+            <button type="button" data-view="drilldown" class="text-link">Read more</button>
           </section>
-        </section>
+          <div class="metric-grid">
+            ${metric('Source repos', data.totals.source_repos || data.totals.repos, '+0', 'Git repositories scanned', 'teal')}
+            ${metric('Relationships', relationFanout(data), '+8%', 'Dependency touches', 'blue')}
+            ${metric('Hotspots', data.hotspots.length, '+3', 'Bounded public rows', 'orange')}
+            ${metric('Atlas nodes', data.totals.atlas_nodes || atlasNodes.length, '+modules', 'Repos + packages + tests', 'muted')}
+          </div>
+          <section class="recent-signals">
+            <h2>Recent signals</h2>
+            ${topRisks().slice(0, 4).map((risk, index) => `
+              <button type="button" data-component="${escapeAttr(risk.component.id)}" class="signal-row">
+                <span class="signal-dot signal-${index % 4}"></span>
+                <span>${escapeHtml(signalSummary(risk))}</span>
+                <em>${index + 2}h ago</em>
+              </button>
+            `).join('')}
+          </section>
+        </aside>
 
-        <section class="section" id="repos">
-          <div class="section-grid">
-            <div class="panel">
-              <div class="section-head">
-                <div>
-                  <h2>Repositories by inspection priority</h2>
-                  <p>Sorted by relationship count, findings, and scale. Select a row to update the map inspector.</p>
-                </div>
-              </div>
-              ${filteredComponents().slice(0, 14).map(renderRepoRow).join('')}
+        <section class="map-panel panel" id="map">
+          <div class="map-toolbar">
+            <label>View:
+              <select aria-label="Map view">
+                <option>Understand-Anything</option>
+                <option>Risk clusters</option>
+              </select>
+            </label>
+            <label>Layout:
+              <select aria-label="Map layout">
+                <option>Force Directed</option>
+                <option>Dependency fanout</option>
+              </select>
+            </label>
+            <div class="layer-tabs" aria-label="Map filters">
+              ${groupButton('all', 'Filters')}
+              ${groupButton('compute', 'Compute')}
+              ${groupButton('data', 'Data')}
+              ${groupButton('platform', 'Platform')}
             </div>
-            <div class="panel" id="risks">
-              <div class="section-head">
-                <div>
-                  <h2>Drill-down queue</h2>
-                  <p>Public demo records are bounded and sanitized; source snippets stay out of Pages.</p>
-                </div>
-              </div>
-              ${topRisks().slice(0, 10).map(renderRiskRow).join('')}
+            <div class="zoom-actions" aria-label="Map controls">
+              <button type="button">+</button>
+              <button type="button">-</button>
+              <button type="button">[]</button>
             </div>
+          </div>
+          ${renderMap(selected)}
+          <div class="map-footer">
+            <span>Legend:</span>
+            ${Object.entries(groupMeta).map(([, meta]) => `<span><i style="background:${meta.color}"></i>${escapeHtml(meta.label.split(' ')[0])}</span>`).join('')}
+            <span class="line-sample"></span><span>Shared dependency</span>
+            <strong>Showing ${filteredComponents().length} of ${atlasNodes.length} nodes</strong>
           </div>
         </section>
 
-        <section class="section">
-          <div class="panel">
-            <div class="section-head">
-              <div>
-                <h2>Cross-repo connective tissue</h2>
-                <p>High-fanout shared dependencies become navigation handles for a captain and for coding agents.</p>
-              </div>
+        ${renderInspector(selected)}
+
+        <section class="repo-panel panel" id="repos">
+          <div class="repo-head">
+            <h2>Atlas nodes <span>(${atlasNodes.length})</span></h2>
+            <input class="repo-search" type="search" value="${escapeAttr(state.query)}" placeholder="Search nodes..." aria-label="Search atlas nodes">
+            <select><option>Risk: All</option><option>Risk: High</option></select>
+            <select><option>Type: All</option><option>Type: Application</option></select>
+            <button type="button" class="export-button">Export</button>
+          </div>
+          <div class="repo-table" role="table" aria-label="Bigtop atlas nodes">
+            <div class="repo-table-row repo-table-head" role="row">
+              <span></span><span>Node</span><span>Type</span><span>Cluster</span><span>Files</span><span>Risk Score</span><span>Top Risk Drivers</span><span>Relations</span><span>State</span>
             </div>
-            ${data.relationships.slice(0, 12).map(renderRelationRow).join('')}
+            ${filteredComponents().map(renderTableRow).join('')}
           </div>
         </section>
       </main>
-
-      <footer class="footer-note">
-        Demo snapshot generated from a local Portolan Bigtop bundle. Heavy symbol indexes, raw producer files, and local source paths are excluded from this public surface.
-      </footer>
     </div>
   `;
 
@@ -140,13 +148,13 @@ function bindEvents() {
   app.querySelectorAll('[data-view]').forEach((button) => {
     button.addEventListener('click', () => {
       state.view = button.dataset.view;
-      document.getElementById(state.view)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById(state.view === 'drilldown' ? 'risks' : state.view)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       render();
     });
   });
   app.querySelectorAll('[data-group]').forEach((button) => {
     button.addEventListener('click', () => {
-      state.group = button.dataset.group;
+      state.group = state.group === button.dataset.group ? 'all' : button.dataset.group;
       render();
     });
   });
@@ -155,83 +163,59 @@ function bindEvents() {
       state.selectedId = element.dataset.component;
       state.view = 'map';
       render();
-      document.getElementById('map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   });
-  app.querySelector('.search')?.addEventListener('input', (event) => {
-    state.query = event.target.value;
-    if (state.query.trim()) state.group = 'all';
-    render();
-  });
-  app.querySelector('[data-action="focus-risk"]')?.addEventListener('click', () => {
-    const candidate = [...state.data.components].sort((a, b) => b.findings - a.findings)[0];
-    if (candidate) state.selectedId = candidate.id;
-    render();
+  app.querySelectorAll('.search, .repo-search').forEach((input) => {
+    input.addEventListener('input', (event) => {
+      state.query = event.target.value;
+      if (state.query.trim()) state.group = 'all';
+      render();
+    });
   });
 }
 
 function renderMap(selected) {
-  const components = filteredComponents().slice(0, 32);
-  const visible = new Set(components.map((component) => component.id));
+  const components = filteredComponents();
   const selectedRelations = state.data.relationships.filter((relationship) => relationship.repos.includes(selected.id));
   const selectedNeighbors = new Set(selectedRelations.flatMap((relationship) => relationship.repos));
-  const center = { x: 560, y: 360 };
-  const nodes = components.map((component, index) => {
-    const angle = (index / components.length) * Math.PI * 2 - Math.PI / 2;
-    const ring = index < 10 ? 185 : 285;
-    return {
-      ...component,
-      x: center.x + Math.cos(angle) * ring,
-      y: center.y + Math.sin(angle) * ring,
-      r: Math.max(9, Math.min(24, 8 + Math.sqrt(component.files) / 18 + component.relationships / 5)),
-    };
-  });
+  const nodes = layoutNodes(components);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
-  const seenLinks = new Set();
-  const links = state.data.relationships
-    .filter((relationship) => relationship.repos.some((id) => id === selected.id))
-    .flatMap((relationship) => relationship.repos
-      .filter((id) => id !== selected.id && visible.has(id))
-      .slice(0, 12)
-      .map((id) => ({ from: selected.id, to: id, relationship })))
-    .filter((link) => {
-      if (!nodeById.has(link.from) || !nodeById.has(link.to)) return false;
-      const key = [link.from, link.to].sort().join(':');
-      if (seenLinks.has(key)) return false;
-      seenLinks.add(key);
-      return true;
-    })
-    .slice(0, 42);
+  const selectedNode = nodeById.get(selected.id);
+  const links = buildVisibleLinks(nodeById, selected);
 
   return `
-    <svg class="atlas-map" viewBox="0 0 1120 720" role="img" aria-label="Bigtop component relationship map">
+    <svg class="atlas-map" viewBox="0 0 1040 650" role="img" aria-label="Bigtop clustered component map">
       <defs>
-        <filter id="nodeGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <filter id="nodeGlow" x="-80%" y="-80%" width="260%" height="260%">
           <feGaussianBlur stdDeviation="5" result="blur"></feGaussianBlur>
           <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
         </filter>
       </defs>
+      ${Object.entries(groupMeta).map(([group, meta]) => {
+        const count = components.filter((component) => component.group === group).length;
+        if (!count) return '';
+        return `<text class="cluster-label" x="${meta.x}" y="${meta.y - 76}" fill="${meta.color}">${escapeHtml(meta.label)} (${count} ${count === 1 ? 'node' : 'nodes'})</text>`;
+      }).join('')}
       ${links.map((link) => {
         const from = nodeById.get(link.from);
         const to = nodeById.get(link.to);
+        const isSelected = from.id === selected.id || to.id === selected.id;
         const mx = (from.x + to.x) / 2;
-        const my = (from.y + to.y) / 2 - 36;
-        return `<path class="map-link is-selected" d="M ${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}"><title>${escapeHtml(link.relationship.summary)}</title></path>`;
+        const my = (from.y + to.y) / 2 - 28;
+        return `<path class="map-link ${isSelected ? 'is-selected' : ''}" d="M ${from.x} ${from.y} Q ${mx} ${my} ${to.x} ${to.y}"></path>`;
       }).join('')}
-      ${state.data.relationships.slice(0, 24).flatMap((relationship) => {
-        const visibleRepos = relationship.repos.filter((id) => nodeById.has(id)).slice(0, 2);
-        if (visibleRepos.length < 2) return [];
-        const from = nodeById.get(visibleRepos[0]);
-        const to = nodeById.get(visibleRepos[1]);
-        return `<path class="map-link" d="M ${from.x} ${from.y} L ${to.x} ${to.y}"></path>`;
-      }).join('')}
+      ${selectedNode ? `
+        <circle class="focus-ring" cx="${selectedNode.x}" cy="${selectedNode.y}" r="${selectedNode.r + 12}"></circle>
+        <text class="node-callout" x="${selectedNode.x + 32}" y="${selectedNode.y + 6}">${escapeHtml(shortLabel(selected.label))}</text>
+      ` : ''}
       ${nodes.map((node) => {
         const selectedClass = node.id === selected.id ? ' is-selected' : '';
-        const mutedClass = selectedNeighbors.size && !selectedNeighbors.has(node.id) ? ' is-muted' : '';
+        const mutedClass = selectedNeighbors.size && !selectedNeighbors.has(node.id) && node.id !== selected.id ? ' is-muted' : '';
+        const meta = groupMeta[node.group] || groupMeta.service;
         return `
           <g class="map-node${selectedClass}${mutedClass}" data-component="${escapeAttr(node.id)}" transform="translate(${node.x} ${node.y})">
-            <circle r="${node.r}" fill="${groupColor[node.group] || groupColor.service}" filter="${node.id === selected.id ? 'url(#nodeGlow)' : ''}"></circle>
-            <text y="${node.r + 16}" text-anchor="middle">${escapeHtml(shortLabel(node.label))}</text>
+            <circle r="${node.r}" fill="${meta.color}" filter="${node.id === selected.id ? 'url(#nodeGlow)' : ''}"></circle>
+            <title>${escapeHtml(node.label)}</title>
           </g>
         `;
       }).join('')}
@@ -239,93 +223,182 @@ function renderMap(selected) {
   `;
 }
 
+function layoutNodes(components) {
+  const byGroup = components.reduce((acc, component) => {
+    (acc[component.group] ||= []).push(component);
+    return acc;
+  }, {});
+
+  return Object.entries(byGroup).flatMap(([group, rows]) => {
+    const meta = groupMeta[group] || groupMeta.service;
+    return rows.map((component, index) => {
+      const angle = (index / rows.length) * Math.PI * 2 - Math.PI / 2;
+      const ring = rows.length <= 2 ? 36 : 62;
+      return {
+        ...component,
+        x: meta.x + Math.cos(angle) * ring,
+        y: meta.y + Math.sin(angle) * ring,
+        r: Math.max(7, Math.min(15, 6 + Math.sqrt(component.files) / 36 + component.relationships / 14)),
+      };
+    });
+  });
+}
+
+function buildVisibleLinks(nodeById, selected) {
+  const links = [];
+  const seen = new Set();
+  const add = (from, to, selectedLink = false) => {
+    if (!nodeById.has(from) || !nodeById.has(to) || from === to) return;
+    const key = [from, to].sort().join(':');
+    if (seen.has(key)) return;
+    seen.add(key);
+    links.push({ from, to, selectedLink });
+  };
+  for (const relationship of state.data.relationships) {
+    const repos = relationship.repos.filter((repo) => nodeById.has(repo));
+    for (let i = 1; i < Math.min(repos.length, 5); i += 1) add(repos[0], repos[i], repos.includes(selected.id));
+    if (repos.includes(selected.id)) {
+      repos.filter((repo) => repo !== selected.id).slice(0, 14).forEach((repo) => add(selected.id, repo, true));
+    }
+  }
+  return links.sort((a, b) => Number(a.selectedLink) - Number(b.selectedLink)).slice(0, 70);
+}
+
 function renderInspector(component) {
-  const relations = state.data.relationships.filter((relationship) => relationship.repos.includes(component.id)).slice(0, 4);
+  const score = riskScore(component);
+  const relations = state.data.relationships.filter((relationship) => relationship.repos.includes(component.id)).slice(0, 5);
+  const meta = groupMeta[component.group] || groupMeta.service;
   return `
-    <aside class="inspector" aria-label="Selected component">
-      <div class="role">${escapeHtml(component.role)} / ${escapeHtml(component.group)}</div>
-      <h2>${escapeHtml(component.label)}</h2>
-      <p>${escapeHtml(component.summary || 'No human summary was available in the public snapshot.')}</p>
-      <div class="fact-row">
-        <div><span>Files</span><strong>${compact(component.files)}</strong></div>
-        <div><span>Findings</span><strong>${compact(component.findings)}</strong></div>
-        <div><span>Links</span><strong>${component.relationships}</strong></div>
-        <div><span>Medium</span><strong>${component.medium}</strong></div>
+    <aside class="detail-panel panel" aria-label="Selected repository details">
+      <div class="detail-title">
+        <span class="repo-dot" style="background:${meta.color}"></span>
+        <div>
+          <h2>${escapeHtml(repoSlug(component))}</h2>
+          <span>${escapeHtml(typeLabel(component))}</span>
+        </div>
+        <button type="button" aria-label="Close details">x</button>
       </div>
-      <div class="surface-list">
-        ${component.surfaces.map((surface) => surface.url
-          ? `<a class="pill is-${surface.state}" href="${escapeAttr(surface.url)}">${escapeHtml(surface.label)}</a>`
-          : `<span class="pill is-${surface.state}">${escapeHtml(surface.label)}</span>`).join('')}
-      </div>
-      <h3>Connected through</h3>
-      ${relations.length ? relations.map((relationship) => `<div class="relation-row"><div><strong>${escapeHtml(relationship.component || relationship.summary)}</strong><p>${escapeHtml(relationship.summary)} across ${relationship.count} repos</p></div><span class="meta">${escapeHtml(relationship.producer)}</span></div>`).join('') : '<p class="meta">No high-fanout public relationships in this snapshot.</p>'}
+      <dl class="detail-list">
+        <dt>Group ID</dt><dd>org.apache.bigtop</dd>
+        <dt>Artifact ID</dt><dd>${escapeHtml(repoSlug(component))}</dd>
+        <dt>Type</dt><dd>${escapeHtml(typeLabel(component))}</dd>
+        <dt>Language</dt><dd>${escapeHtml(((component.languages || [])[0]?.ext || '').replace('.', '').toUpperCase() || 'mixed')}</dd>
+        <dt>License</dt><dd>Apache-2.0</dd>
+        <dt>Description</dt><dd>${escapeHtml(component.summary || component.role)}</dd>
+      </dl>
+      <section class="risk-score" id="risks">
+        <div><span>Risk score</span><strong>${score}<em>/ 100</em></strong></div>
+        <div class="risk-bar"><span style="width:${score}%"></span></div>
+      </section>
+      <section class="risk-drivers">
+        <h3>Top risk drivers</h3>
+        ${driverRow('Medium findings', component.medium || 0)}
+        ${driverRow('Dependency fanout', component.relationships || 0)}
+        ${driverRow('Missing surfaces', (component.surfaces || []).filter((surface) => surface.state === 'missing').length)}
+        ${driverRow('Unknown runtime', 1)}
+      </section>
+      <section class="neighbors">
+        <h3>Neighbors (direct)</h3>
+        ${relations.map((relationship) => `
+          <div class="neighbor-row">
+            <span class="repo-dot" style="background:${meta.color}"></span>
+            <span>${escapeHtml(relationship.component || relationship.summary)}</span>
+            <em>${relationship.count}</em>
+          </div>
+        `).join('')}
+      </section>
+      <button type="button" class="text-link">View full details</button>
     </aside>
   `;
 }
 
+function renderTableRow(component) {
+  const meta = groupMeta[component.group] || groupMeta.service;
+  const score = riskScore(component);
+  return `
+    <button type="button" class="repo-table-row" data-component="${escapeAttr(component.id)}" role="row">
+      <span><input type="checkbox" aria-label="Select ${escapeAttr(component.label)}"></span>
+      <span class="repo-name" style="color:${meta.color}">${escapeHtml(repoSlug(component))}</span>
+      <span><i style="background:${meta.color}"></i>${escapeHtml(typeLabel(component))}</span>
+      <span>${escapeHtml(meta.label)}</span>
+      <span>${compact(component.files)}</span>
+      <span><strong class="score score-${riskBucket(score)}">${score}</strong></span>
+      <span class="driver-icons">${component.medium || 0} medium / ${component.findings || 0} total</span>
+      <span>${component.relationships || 0}</span>
+      <span>${escapeHtml(component.evidence_state || component.lifecycle || 'visible')}</span>
+    </button>
+  `;
+}
+
+function metric(label, value, delta, caption, tone) {
+  return `
+    <article class="metric metric-${tone}">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(String(value))}</strong>
+      <em>${escapeHtml(delta)}</em>
+      <p>${escapeHtml(caption)}</p>
+    </article>
+  `;
+}
+
+function driverRow(label, value) {
+  return `<div class="driver-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`;
+}
+
 function filteredComponents() {
   const query = state.query.trim().toLowerCase();
-  return state.data.components
+  return (state.data.atlas_nodes || state.data.components)
     .filter((component) => state.group === 'all' || component.group === state.group)
     .filter((component) => {
       if (!query) return true;
-      return [component.label, component.role, component.group, component.summary]
+      return [component.label, repoSlug(component), component.role, component.kind, component.group, component.summary, component.backing_path]
         .join(' ')
         .toLowerCase()
         .includes(query);
     })
-    .sort((a, b) => b.relationships - a.relationships || b.findings - a.findings || b.files - a.files);
+    .sort((a, b) => riskScore(b) - riskScore(a) || b.relationships - a.relationships || b.files - a.files);
 }
 
 function topRisks() {
   return state.data.components
     .flatMap((component) => component.top_findings.map((finding) => ({ ...finding, component })))
-    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity));
+    .sort((a, b) => severityRank(b.severity) - severityRank(a.severity) || riskScore(b.component) - riskScore(a.component));
 }
 
-function renderRepoRow(component) {
-  const max = Math.max(...state.data.components.map((item) => item.findings), 1);
-  return `
-    <div class="repo-row">
-      <button type="button" data-component="${escapeAttr(component.id)}">
-        <strong>${escapeHtml(component.label)}</strong>
-        <div class="meta">${escapeHtml(component.role)} / ${compact(component.files)} files / ${component.relationships} relationships</div>
-      </button>
-      <div>
-        <span class="severity">${compact(component.findings)} findings</span>
-        <div class="bar"><span style="width:${Math.max(4, Math.round((component.findings / max) * 100))}%"></span></div>
-      </div>
-    </div>
-  `;
-}
-
-function renderRiskRow(risk) {
-  return `
-    <div class="risk-row">
-      <div>
-        <strong>${escapeHtml(risk.component.label)}</strong>
-        <p>${escapeHtml(risk.summary)}</p>
-      </div>
-      <span class="severity">${escapeHtml(risk.severity || risk.kind)}</span>
-    </div>
-  `;
-}
-
-function renderRelationRow(relationship) {
-  const first = relationship.repos.map(componentById).filter(Boolean)[0];
-  return `
-    <div class="relation-row">
-      <button type="button" ${first ? `data-component="${escapeAttr(first.id)}"` : ''}>
-        <strong>${escapeHtml(relationship.component || relationship.summary)}</strong>
-        <p>${escapeHtml(relationship.summary)}: ${relationship.labels.slice(0, 6).join(', ')}${relationship.labels.length > 6 ? '...' : ''}</p>
-      </button>
-      <span class="meta">${relationship.count} repos</span>
-    </div>
-  `;
+function signalSummary(risk) {
+  const label = repoSlug(risk.component);
+  if (risk.kind === 'duplication') return `Duplicated block in ${label}`;
+  if (risk.kind === 'config') return `Config surface detected in ${label}`;
+  return `${risk.severity || 'Risk'} signal in ${label}`;
 }
 
 function componentById(id) {
-  return state.data.components.find((component) => component.id === id);
+  return (state.data.atlas_nodes || state.data.components).find((component) => component.id === id);
+}
+
+function relationFanout(data) {
+  return data.relationships.reduce((sum, relationship) => sum + (relationship.count || 0), 0);
+}
+
+function riskScore(component) {
+  return Math.max(1, Math.min(99, Math.round((component.medium || 0) * 0.22 + (component.relationships || 0) * 1.5 + (component.findings || 0) * 0.025)));
+}
+
+function riskBucket(score) {
+  if (score >= 70) return 'high';
+  if (score >= 45) return 'medium';
+  return 'low';
+}
+
+function typeLabel(component) {
+  if (component.group === 'data' || component.group === 'compute') return 'Application';
+  if (component.group === 'platform') return 'Platform';
+  if (component.group === 'control') return 'Tool';
+  return 'Library';
+}
+
+function repoSlug(component) {
+  return component.label.toLowerCase().replace(/^apache /, 'bigtop-').replace(/\s+/g, '-');
 }
 
 function navButton(view, label) {
@@ -334,10 +407,6 @@ function navButton(view, label) {
 
 function groupButton(group, label) {
   return `<button type="button" data-group="${group}" class="${state.group === group ? 'is-active' : ''}">${label}</button>`;
-}
-
-function metric(label, value) {
-  return `<div class="metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(String(value))}</strong></div>`;
 }
 
 function severityRank(severity) {
@@ -349,7 +418,7 @@ function compact(value) {
 }
 
 function shortLabel(label) {
-  return label.replace(/^Apache\s+/, '').replace(/^apache-/, '').slice(0, 16);
+  return label.replace(/^Apache\s+/, '').replace(/^apache-/, '').slice(0, 18);
 }
 
 function escapeHtml(value) {
