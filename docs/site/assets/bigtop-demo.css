@@ -29,6 +29,11 @@ body {
   min-height: 100%;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
   margin: 0;
   overflow-x: hidden;
@@ -135,7 +140,7 @@ a {
 
 .nav button,
 .home-link {
-  min-height: 2.35rem;
+  min-height: 2.5rem;
   padding: 0.45rem 0.8rem;
   color: var(--muted);
   background: transparent;
@@ -143,6 +148,7 @@ a {
   border-bottom: 2px solid transparent;
   text-decoration: none;
   cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease, transform 150ms ease;
 }
 
 .nav button:hover,
@@ -156,6 +162,11 @@ a {
 .nav button.is-active {
   color: var(--text);
   border-bottom-color: var(--teal);
+}
+
+button:active,
+.home-link:active {
+  transform: scale(0.96);
 }
 
 .top-actions {
@@ -208,6 +219,14 @@ select:focus {
   border: 1px solid var(--line);
   border-radius: 0.35rem;
   box-shadow: var(--shadow);
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.panel.is-view-focus {
+  border-color: rgba(82, 222, 218, 0.48);
+  box-shadow:
+    0 0 0 1px rgba(82, 222, 218, 0.08),
+    var(--shadow);
 }
 
 .summary-panel {
@@ -227,12 +246,14 @@ h1 {
   font-size: clamp(1.6rem, 2.1vw, 2rem);
   line-height: 1.05;
   letter-spacing: 0;
+  text-wrap: balance;
 }
 
 .lede {
   margin-bottom: 1.55rem;
   color: #d7e1e1;
   font-size: 0.98rem;
+  text-wrap: pretty;
 }
 
 .executive-summary h2,
@@ -390,13 +411,15 @@ h1 {
 .layer-tabs button,
 .zoom-actions button,
 .export-button {
-  min-height: 2.05rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
   padding: 0.35rem 0.65rem;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--line);
   border-radius: 0.3rem;
   cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease, transform 150ms ease;
 }
 
 .layer-tabs button.is-active,
@@ -407,10 +430,23 @@ h1 {
   border-color: var(--line-strong);
 }
 
+.layer-tabs button.is-active {
+  background: rgba(82, 222, 218, 0.1);
+}
+
 .zoom-actions {
   margin-left: auto;
   display: flex;
+  align-items: center;
   gap: 0.25rem;
+}
+
+.zoom-value {
+  min-width: 3.1rem;
+  color: var(--quiet);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .atlas-map {
@@ -424,6 +460,11 @@ h1 {
   font-size: 0.8rem;
   font-weight: 720;
   text-anchor: middle;
+}
+
+.muted-label {
+  fill: var(--quiet);
+  font-size: 0.74rem;
 }
 
 .map-link {
@@ -637,6 +678,120 @@ h1 {
   font-style: normal;
 }
 
+.detail-toggle {
+  min-height: 2.4rem;
+  margin-top: 0.4rem;
+}
+
+.drilldown-panel {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--line);
+}
+
+.drilldown-panel h3,
+.detail-block h4 {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.detail-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.mini-kpi {
+  min-height: 3.2rem;
+  padding: 0.55rem;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line);
+  border-radius: 0.28rem;
+}
+
+.mini-kpi span {
+  display: block;
+  color: var(--quiet);
+  font-size: 0.68rem;
+}
+
+.mini-kpi strong {
+  display: block;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-block {
+  margin-top: 0.8rem;
+}
+
+.surface-row,
+.finding-row {
+  min-height: 2.45rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.45rem 0.55rem;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 0.25rem;
+  text-decoration: none;
+}
+
+.surface-row + .surface-row,
+.finding-row + .finding-row {
+  margin-top: 0.3rem;
+}
+
+.surface-row[data-empty="true"] {
+  pointer-events: none;
+}
+
+.surface-row:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.surface-row span,
+.finding-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.surface-row em,
+.finding-row em {
+  color: var(--text);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.finding-row {
+  grid-template-columns: 5.8rem minmax(0, 1fr) auto;
+}
+
+.finding-row strong {
+  color: var(--teal);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.empty-state {
+  margin: 0;
+  color: var(--quiet);
+  font-size: 0.78rem;
+}
+
 .repo-panel {
   grid-column: 1 / -1;
   overflow: hidden;
@@ -692,6 +847,10 @@ button.repo-table-row.is-selected {
   background: rgba(82, 222, 218, 0.055);
 }
 
+button.repo-table-row.is-selected {
+  color: var(--text);
+}
+
 .repo-table-head {
   position: sticky;
   top: 0;
@@ -705,6 +864,20 @@ button.repo-table-row.is-selected {
 
 .repo-name {
   font-weight: 700;
+}
+
+.row-marker {
+  width: 0.62rem;
+  height: 0.62rem;
+  display: inline-block;
+  border: 1px solid var(--quiet);
+  border-radius: 50%;
+}
+
+.repo-table-row.is-selected .row-marker {
+  background: var(--teal);
+  border-color: var(--teal);
+  box-shadow: 0 0 14px rgba(82, 222, 218, 0.45);
 }
 
 .repo-table-row i {
