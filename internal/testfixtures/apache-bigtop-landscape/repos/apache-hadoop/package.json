@@ -1,0 +1,8 @@
+{
+  "name": "apache-hadoop",
+  "description": "Distributed storage and compute foundation fixture",
+  "version": "3.5.0-fixture",
+  "scripts": {
+    "test": "node src/hdfs.js"
+  }
+}

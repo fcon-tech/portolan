@@ -50,22 +50,26 @@ scripts/portolan-product-acceptance.sh \
 
 ## Release Artifact
 
-The current product artifact is a source checkout installer plus target-local
-wrappers:
+The current product artifact is the captain prompt plus target-local wrappers.
+The captain gives the agent only a Portolan URL/local path and the target root:
 
 ```bash
-git clone https://github.com/fcon-tech/portolan.git
-cd portolan
-scripts/portolan-install.sh <target-root> --harness all --bundle-dir <bundle-dir>
-<target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+scripts/portolan-captain-prompt.sh \
+  --portolan <Portolan git URL or local checkout path> \
+  --target-root <target-root>
 ```
+
+The generated prompt makes the agent default the bundle to
+`<target-root>/.portolan/atlas`, ask before fetching a URL, install target-local
+wrappers, run doctor/status/query-eval/captain-handoff, and answer through
+bounded bundle queries instead of raw bundle dumps.
 
 This installs:
 
 - Cursor Project Rule: `<target-root>/.cursor/rules/portolan-atlas.mdc`
 - OpenCode managed block: `<target-root>/AGENTS.md`
 - Target-local wrappers: `<target-root>/.portolan/bin/`
-- Default atlas location when selected: `<target-root>/.portolan/atlas`
+- Default atlas location: `<target-root>/.portolan/atlas`
 
 Prebuilt binaries, Homebrew, Docker, npm, apt, and other package-manager routes
 are out of scope until a later slice adds platform smoke, checksums, and release
@@ -110,7 +114,7 @@ until newer validation evidence changes them:
 
 Use the install guidance in `docs/agent/INSTALL.md` to distinguish:
 
-- source checkout installer for Cursor/OpenCode/agent harnesses;
+- Portolan source URL/local-path acquisition for Cursor/OpenCode/agent harnesses;
 - target-local wrappers under `<target-root>/.portolan/bin`;
 - legacy Go binary/bootstrap only when an operator explicitly asks for older
   context or map artifacts.

@@ -85,7 +85,7 @@ for s in "$SLUG_A" "$SLUG_B"; do
 EOF
 done
 
-# --- per-repo jscpd fixtures (spec 109 strict per-repo contract) ---
+# --- per-repo jscpd fixtures ---
 mkdir -p "$BUNDLE/producers/jscpd/$SLUG_A" "$BUNDLE/producers/jscpd/$SLUG_B"
 echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_A/jscpd-report.json"
 echo '{"duplicates":[]}' >"$BUNDLE/producers/jscpd/$SLUG_B/jscpd-report.json"
@@ -158,13 +158,13 @@ grep -q '"id":"xdup-' "$BUNDLE/hotspots.jsonl" || fail "cross-repo dup hotspot m
 jq -es 'map(select(.id | startswith("xdup-"))) | .[0].severity == "high"' \
   "$BUNDLE/hotspots.jsonl" >/dev/null || fail "cross-repo dup severity must be high"
 
-# --- manifest counters + cross-repo completion metadata (spec 110) ---
+# --- manifest counters + cross-repo completion metadata ---
 jq -e '.repo_count == 2 and .relationship_count >= 4' "$BUNDLE/manifest.json" >/dev/null ||
   fail "manifest repo_count/relationship_count wrong"
 jq -e '.cross_repo_duplication.status == "complete" and .cross_repo_duplication.clone_pairs == 1' \
   "$BUNDLE/manifest.json" >/dev/null || fail "manifest cross_repo_duplication metadata missing or wrong"
 
-# --- claims import (spec 106) ---
+# --- claims import ---
 if [[ -x "$ROOT/scripts/import-analysis-claims.sh" ]]; then
   hot_id=$(head -1 "$BUNDLE/hotspots.jsonl" | jq -r '.id')
   rel_id=$(head -1 "$BUNDLE/relationships.jsonl" | jq -r '.id')

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Public installer entrypoint for the Portolan Cursor/OpenCode atlas pack.
+# Public installer entrypoint for the Portolan agent harness atlas pack.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

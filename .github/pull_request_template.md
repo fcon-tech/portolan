@@ -2,7 +2,7 @@
 
 ## Scope
 
-- Spec or issue:
+- Captain-atlas package or issue:
 - User-facing change:
 - Out of scope:
 
@@ -36,4 +36,4 @@ List only states affected by this PR, or write `N/A`.
 
 - [ ] No new network access, daemon behavior, credentials, or target repository mutation without explicit approval.
 - [ ] No private source, secrets, customer data, or sensitive vulnerability details are included.
-- [ ] Docs, schemas, fixtures, task ledgers, and review artifacts are aligned where applicable.
+- [ ] Docs, schemas, fixtures, scorecards, and review artifacts are aligned where applicable.

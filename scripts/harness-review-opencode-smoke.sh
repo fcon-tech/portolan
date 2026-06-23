@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Preflight OpenCode review harness health (spec 112). Skips live review when tools absent.
+# Preflight OpenCode review harness health. Skips live review when tools absent.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

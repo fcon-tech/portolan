@@ -2,19 +2,20 @@
 
 [Русская версия](docs/ru/README.md)
 
-Portolan is a local, read-only codebase navigation kit for AI agents and
-engineering leaders.
+Portolan is a local-first atlas generator for AI agents and engineering
+leaders responsible for large software estates.
 
-It runs on your machine, reads local files, and writes bounded evidence
-artifacts before an agent answers questions: what repositories were visible,
-what relationships and duplicate/configuration surfaces were found, what looks
-like technical debt, and what is still unknown.
+The captain gives an agent a Portolan URL or local path plus a target
+ecosystem. The agent resolves Portolan into a local runtime with explicit
+approval for URL fetches, installs target-local wrappers, runs bounded local
+discovery, opens a
+generated atlas app, and uses the bundle to explain visible repositories,
+components, relationships, risks, gaps, and drill-down routes.
 
-Portolan is an agent harness for landscape navigation: it gives the agent a
-bounded route through local evidence, explicit gaps, and imported OSS outputs.
-It is not a coding harness, readiness gate, service catalog, observability
-platform, modernization engine, or replacement for Cursor, Claude, Sourcegraph,
-Backstage, or enterprise code-intelligence tools.
+Portolan is an agent harness for landscape navigation, not another coding
+harness. It complements Cursor, OpenCode, Codex, Claude, Sourcegraph,
+Backstage, Understand Anything, and enterprise code-intelligence tools by
+wrapping local outputs into an atlas the agent and human can navigate.
 
 ## When To Use It
 
@@ -34,45 +35,51 @@ partly black-box.
 ## Harness-First Quick Start (recommended)
 
 Portolan is primarily a **harness supplement**: portable skill, OSS recipes,
-guardrails, and a local hotspot viewer — not a Go module you must install first.
+guardrails, queryable bundle, and local atlas viewer. It is not a Go module you
+must install first.
 
-Get Portolan as a source checkout, then install its Cursor/OpenCode
-instructions into a target project:
+Generate the prompt from the two inputs the captain actually knows. `PORTOLAN`
+may be a local checkout path or a git URL; the receiving agent must ask before
+fetching a URL and clone it into a local cache before running the installer.
 
 ```bash
-git clone https://github.com/fcon-tech/portolan.git
-cd portolan
-scripts/portolan-install.sh <target-root> --harness all
+scripts/portolan-captain-prompt.sh \
+  --portolan <Portolan git URL or local checkout path> \
+  --target-root <target-root>
 ```
 
 This writes:
 
 - `<target-root>/.cursor/rules/portolan-atlas.mdc` for Cursor Project Rules.
-- a managed Portolan block in `<target-root>/AGENTS.md` for OpenCode.
+- a managed Portolan block in `<target-root>/AGENTS.md` for OpenCode and Codex.
+- a managed Portolan block in `<target-root>/CLAUDE.md` for Claude.
 - target-local command wrappers in `<target-root>/.portolan/bin/`.
+- a runnable Portolan runtime copy in `<target-root>/.portolan/runtime/portolan/`.
 
-The installed harness uses a fast first core scan (`config,ctags`, `--core-only`)
-so Cursor/OpenCode get a queryable bundle before deeper producers run. Use
-`--scan-profile full` when you explicitly want the installed first command to
-run the full producer set.
+The installed harness defaults to a full first atlas command so supported agent
+instruction files get the relationships, findings, query artifacts, and handoff
+expected by the captain workflow. Use `--scan-profile fast` only when you
+explicitly want a lightweight reconnaissance pass before the full atlas command.
 
-Verify the installable Cursor/OpenCode pack on the current machine:
+Verify the installable agent harness pack on the current machine:
 
 ```bash
 scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
 The product acceptance command creates fresh isolated targets, installs the
-Cursor rule, OpenCode `AGENTS.md` block, and `.portolan/bin` wrappers, runs the
-real agent CLIs when available, checks the generated bundle through
-`portolan-bundle-query`, and runs the local baseline checks. Without
-`--require-agent-runtime`, unavailable agent CLIs are reported as
-`not_assessed` instead of success.
+Cursor rule, OpenCode/Codex `AGENTS.md` block, Claude `CLAUDE.md` block, and
+`.portolan/bin` wrappers, runs the real Cursor/OpenCode CLIs when available,
+checks the generated bundle through `portolan-bundle-query`, and runs the local
+baseline checks. Without `--require-agent-runtime`, unavailable agent CLIs are
+reported as `not_assessed` instead of success.
 
-**Agent command** (installed wrapper → bundle; open viewer separately):
+**Agent command** (doctor -> plan -> bundle; open viewer separately):
 
 ```bash
 scripts/portolan-install.sh <target-root> --harness all --bundle-dir <bundle-dir>
+<target-root>/.portolan/bin/portolan-scan.sh --doctor <target-root> <bundle-dir> --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh --dry-run <target-root> <bundle-dir> --skip-install --no-viewer
 <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
@@ -80,8 +87,9 @@ Omit `--no-viewer` only for a human-run command where blocking in the viewer is
 fine. Remove `--skip-install` only after explicit approval to install missing
 local OSS tools. See `scripts/portolan-scan.sh --help`.
 
-The viewer shows a ranked hotspot list, folder tree, search, filters (including
-`config` and `debt-candidate` kinds), and click-to-source preview (local files only).
+The viewer opens as a map-first atlas: landscape overview, component graph,
+relationship drill-down, ranked risks, gaps, search, filters, agent handoff
+commands, and click-to-source preview for local files.
 See [`docs/agent/QUICKSTART.md`](docs/agent/QUICKSTART.md).
 
 Developer fallback for extending producers: use [`harness/SKILL.md`](harness/SKILL.md)
@@ -105,8 +113,8 @@ legacy Go CLI status.
 
 The older Go CLI (`context prepare`, `map`, and `query`) remains available for
 existing users and compatibility tests, but it is not the primary install or
-agent route. Use it only when an operator explicitly asks for older map/context
-artifacts. See [`docs/agent/INSTALL.md`](docs/agent/INSTALL.md) and
+agent route. Use it only when an operator explicitly asks for the legacy
+compatibility route. See [`docs/agent/INSTALL.md`](docs/agent/INSTALL.md) and
 [`docs/harness/GO-FREEZE-POLICY.md`](docs/harness/GO-FREEZE-POLICY.md).
 
 Canonical source identity for that compatibility route:
@@ -125,9 +133,9 @@ If you are not sure which document to open first, start with the
 agents, Cursor operators, OpenCode operators, and release reviewers to the
 maintained surface for each workflow.
 
-For a larger named stress example, see
-[Apache Bigtop Stress Example](docs/demo.md). It is evidence for one local
-target shape, not the main product path.
+For a walkthrough that starts from the captain prompt and any local target, see
+[Demo Runbook](docs/demo-runbook.md). Named stress corpora are optional
+validation fixtures, not the main product path.
 
 ## Public Routes
 
@@ -135,9 +143,12 @@ These routes are current and boundary-limited. Some public surfaces are initial
 community infrastructure rather than proof of broad adoption or support.
 
 - Install: use the [Harness-First Quick Start](#harness-first-quick-start-recommended) above.
-- Example run: run the [Harness-First Quick Start](#harness-first-quick-start-recommended) against any local target you can
-  inspect. For a larger named example, see
-  [Apache Bigtop Stress Example](docs/demo.md).
+- Example run: use the [Demo Runbook](docs/demo-runbook.md) or run the
+  [Harness-First Quick Start](#harness-first-quick-start-recommended) against
+  any local target you can inspect.
+- Captain Atlas specs: read
+  [Captain Atlas BDD Work Packages](docs/captain-atlas/README.md) before
+  changing product direction or assigning parallel agents.
 - Product claims: read [Product Claims](docs/product-claims.md) before reusing
   public wording.
 - Product quality: read
@@ -167,29 +178,46 @@ If you are asking an AI agent to use Portolan, point it at the user-agent docs:
 
 Developer agents working on this repository should follow [AGENTS.md](AGENTS.md).
 
-The safest reusable instruction is the copyable prompt block in
-[docs/agent/INSTALL-PROMPT.md](docs/agent/INSTALL-PROMPT.md). Fill in the three
-absolute paths and send that block to the agent.
+The safest reusable instruction is generated from the two captain inputs:
+`PORTOLAN` and `TARGET_ROOT`.
+
+```bash
+scripts/portolan-captain-prompt.sh \
+  --portolan <Portolan git URL or local checkout path> \
+  --target-root <target-root>
+```
+
+Send the printed block to the agent. It defaults the bundle to
+`$TARGET_ROOT/.portolan/atlas`, asks before fetching a URL, installs
+target-local wrappers, builds the atlas, and produces the captain handoff.
 
 For a shorter run, send this to the agent:
 
 ```text
-Install Portolan from PORTOLAN_PATH into TARGET_ROOT, then use
-TARGET_ROOT/.portolan/bin wrappers to write artifacts to BUNDLE_DIR. Follow
-docs/agent/INSTALL-PROMPT.md, preserve unknown / cannot_verify / not_assessed,
-and cite local artifact paths for every material claim.
+Use Portolan to build my atlas.
+
+PORTOLAN=<Portolan git URL or local checkout path>
+TARGET_ROOT=<target-root>
+
+Default the bundle to TARGET_ROOT/.portolan/atlas, ask before fetching a URL or
+installing missing tools, use target-local .portolan/bin wrappers after install,
+preserve unknown / cannot_verify / not_assessed, and cite local artifact paths
+for every material claim.
 ```
 
 For a Russian-language agent run, use
 [docs/agent/INSTALL-PROMPT.ru.md](docs/agent/INSTALL-PROMPT.ru.md).
 
-Give the agent absolute local paths for `PORTOLAN_PATH`, `TARGET_ROOT`, and
-`BUNDLE_DIR`. Do not add target-specific expected findings to the prompt.
+Give the agent `PORTOLAN` and `TARGET_ROOT`; let it default `BUNDLE_DIR` to
+`$TARGET_ROOT/.portolan/atlas` unless you need an explicit override. Do not add
+target-specific expected findings to the prompt.
 
-## Evidence Rules
+## Atlas Trust Guardrails
 
-Portolan does not turn missing evidence into confidence. Results preserve
-evidence states:
+Portolan leads with the atlas: what exists, how it connects, what looks risky,
+and where to drill down. The evidence labels below are guardrails for navigation;
+they are not the product value proposition. Portolan does not turn missing
+evidence into confidence. Results preserve evidence states:
 
 - `source-visible`: visible in source files.
 - `metadata-visible`: visible in local metadata, manifests, or exported tool
@@ -234,6 +262,7 @@ Important limits:
 English:
 
 - [Documentation Onboarding](docs/onboarding.md)
+- [Captain Atlas BDD Work Packages](docs/captain-atlas/README.md)
 - [Product Claims](docs/product-claims.md)
 - [Release Guide](docs/release.md)
 - [Product Boundary](docs/product-boundary.md)
@@ -242,12 +271,10 @@ English:
 - [Runtime Observations](docs/runtime-observations.md)
 - [Security Threat Model](docs/security-threat-model.md)
 - [OSS Composition](docs/oss-composition.md)
-- [Apache Bigtop Stress Example](docs/demo.md)
+- [Demo Runbook](docs/demo-runbook.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security Policy](SECURITY.md)
 - [Support](SUPPORT.md)
-- [Product Backlog](docs/product-backlog.md)
-- [SpecKit Workflow](docs/speckit-workflow.md)
 
 Russian:
 

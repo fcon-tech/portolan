@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Assert bounded jscpd profile is shared and sub-shard helper exists (spec 109).
+# Assert bounded jscpd profile is shared and sub-shard helper exists.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

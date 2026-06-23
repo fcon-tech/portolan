@@ -21,7 +21,7 @@ Portolan does **not** answer user questions. Agents query the bundle at question
 | `landscape` | Project card / report sections |
 | `evidence-index` | Map-bridge relationship hints (optional) |
 
-## MCP (spec 098)
+## MCP
 
 - Use `portolan-bundle-query-mcp` only with `PORTOLAN_BUNDLE_DIR` pointing at a local scan bundle.
 - MCP tools return the same JSON as CLI; do not treat tool output as user-facing answers without citations.

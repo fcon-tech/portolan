@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# End-to-end Portolan harness smoke (spec 087 / 092 / 093). No network required.
+# End-to-end Portolan harness smoke. No network required.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

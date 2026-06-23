@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "portolan-repo-profiles",
-  "title": "Portolan repo profiles (spec 104)",
+  "title": "Portolan repo profiles",
   "type": "object",
   "required": ["schema_version", "generated_at", "target_root", "repos"],
   "properties": {

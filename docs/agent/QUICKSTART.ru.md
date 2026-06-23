@@ -14,7 +14,7 @@ OpenCode должен писать bundle внутри target, если permissi
 
 ## Какие Inputs Нужны
 
-- Checkout Portolan.
+- Portolan git URL или путь к локальному checkout.
 - Локальный target root для чтения.
 - BUNDLE_DIR для Portolan bundle.
 
@@ -29,7 +29,10 @@ interface для Cursor/OpenCode и он не требует читать вне
 
 ```bash
 "$PORTOLAN_PATH/scripts/portolan-install.sh" "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --doctor "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --dry-run "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
 "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --status "$TARGET_ROOT" "$BUNDLE_DIR"
 ```
 
 Убирай `--skip-install` только после явного разрешения установить missing local
@@ -37,6 +40,12 @@ OSS tools.
 
 После scan прочитай:
 
+- `receipt.json`
+- `captain-atlas-scorecard.json`
+- `captain-qna-eval.json` после запуска
+  `"$TARGET_ROOT/.portolan/bin/portolan-query-eval.sh" --run "$BUNDLE_DIR"`
+- `captain-handoff.md` и `captain-handoff.json` после запуска
+  `"$TARGET_ROOT/.portolan/bin/portolan-captain-handoff.sh" "$BUNDLE_DIR"`
 - `manifest.json`
 - `atlas-facts.json`
 - `repo-profiles.json`
@@ -63,6 +72,7 @@ Query перед ответом:
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" search --bundle "$BUNDLE_DIR" --q "auth" --limit 20
 "$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" source --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" selected-code --bundle "$BUNDLE_DIR" --repo <repo-id> --path README.md --line 1 --limit 20
 ```
 
 ## 2. Привяжи Selected Code К Atlas
@@ -70,23 +80,25 @@ Query перед ответом:
 Когда пользователь выделяет файл, symbol или subsystem в coding-agent UI:
 
 1. Определи selected path и repo root.
-2. Query `source` для bounded snippet.
-3. Query `search` или `symbol`, если индексы есть.
-4. Query `hotspots --repo <repo-id>` для локальной боли вокруг repo.
-5. Query `relationships` для видимых связей с другими repo.
-6. Явно скажи gaps, если runtime/config/vendor relationships отсутствуют.
+2. Query `selected-code` для bounded context packet.
+3. Query `source` для bounded snippet, если packet требует деталей.
+4. Query `search` или `symbol`, если индексы есть.
+5. Query `hotspots --repo <repo-id>` для локальной боли вокруг repo.
+6. Query `relationships` для видимых связей с другими repo.
+7. Явно скажи gaps, если runtime/config/vendor relationships отсутствуют.
 
 Не выводи runtime calls из static dependency или source-search результатов.
 
-## 3. Legacy Go Path Только Когда Нужен
+## 3. Legacy Compatibility Path Только Когда Нужен
 
-Используй legacy Go path только если пользователь явно просит
-`context prepare`, `map` или старые map artifacts.
+Используй legacy compatibility path только если пользователь явно просит
+`context prepare`, `map` или compatibility artifacts.
 
-Из source checkout Portolan:
+Если оператор явно выбрал legacy route и Portolan уже resolved в локальный
+checkout:
 
 ```bash
-cd <portolan-checkout>
+cd "$PORTOLAN_PATH"
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```

@@ -45,7 +45,15 @@ count_file() {
   total_files=$((total_files + 1))
 }
 
-if [[ -d "$TARGET_ROOT/.git" ]]; then
+if [[ -n "$REPOS_JSON" && -f "$REPOS_JSON" ]] && jq -e 'type == "array" and length > 0' "$REPOS_JSON" >/dev/null 2>&1; then
+  while IFS= read -r repo_root; do
+    [[ -n "$repo_root" && -d "$repo_root" ]] || continue
+    while IFS= read -r rel; do
+      [[ -z "$rel" ]] && continue
+      count_file "$rel"
+    done < <(portolan_repo_file_list "$repo_root")
+  done < <(jq -r '.[] | .path // empty' "$REPOS_JSON")
+elif [[ -d "$TARGET_ROOT/.git" ]]; then
   while IFS= read -r rel; do
     [[ -z "$rel" ]] && continue
     portolan_rel_path_is_ignored "$TARGET_ROOT" "$rel" && continue
@@ -88,9 +96,9 @@ last_commit=null
 contributors=0
 commits_30d=0
 if [[ -d "$TARGET_ROOT/.git" ]]; then
-  last_commit=$(git -C "$TARGET_ROOT" log -1 --format=%cs 2>/dev/null || echo null)
-  contributors=$(git -C "$TARGET_ROOT" shortlog -sn --all 2>/dev/null | wc -l | tr -d ' ')
-  commits_30d=$(git -C "$TARGET_ROOT" log --since=30.days.ago --oneline 2>/dev/null | wc -l | tr -d ' ')
+  last_commit=$(timeout 5 git -C "$TARGET_ROOT" log -1 --format=%cs 2>/dev/null || echo null)
+  contributors=$(timeout 5 git -C "$TARGET_ROOT" shortlog -sn --all 2>/dev/null | wc -l | tr -d ' ')
+  commits_30d=$(timeout 5 git -C "$TARGET_ROOT" log --since=30.days.ago --oneline 2>/dev/null | wc -l | tr -d ' ')
 fi
 
 staleness="unknown"

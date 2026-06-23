@@ -1,0 +1,9 @@
+services:
+  api:
+    image: api-node:local
+    ports:
+      - "3000:3000"
+    depends_on:
+      - worker
+  worker:
+    image: worker-go:local

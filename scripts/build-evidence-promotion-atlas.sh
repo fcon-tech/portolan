@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build spec 109 evidence-promotion artifacts for an existing Portolan bundle.
+# Build evidence-promotion artifacts for an existing Portolan bundle.
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

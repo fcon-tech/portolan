@@ -8,16 +8,16 @@ first.
 
 | Intent | Start with | Then read | Boundary to preserve |
 | --- | --- | --- | --- |
-| Understand what Portolan is for | [README](../README.md) | [Product Claims](product-claims.md), [Product Boundary](product-boundary.md), [Product Quality Boundary](product-quality-boundary.md) | Portolan is a local evidence layer, not a coding harness, readiness gate, service catalog, observability platform, or Cursor/OpenCode replacement. |
-| Ask an agent to inspect a local target | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Quickstart](agent/QUICKSTART.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Install target-local wrappers, build bundle, query before answering. Cite hotspot.id and preserve gaps. |
-| Open the viewer (human) | [Viewer README](../viewer/README.md) | [Agent Install](agent/INSTALL.md) | Local read-only viewer from `<target-root>/.portolan/bin/portolan-viewer.sh`; folder tree + ranked hotspots from producers only. |
-| Install or resolve the command | [Agent Install](agent/INSTALL.md) | [Troubleshooting](agent/TROUBLESHOOTING.md), [Release Guide](release.md) | Source bootstrap is local and does not fetch Go modules unless explicitly approved. |
+| Understand what Portolan is for | [README](../README.md) | [Product Claims](product-claims.md), [Product Boundary](product-boundary.md), [Product Quality Boundary](product-quality-boundary.md) | Portolan is a local atlas generator for agent-assisted landscape navigation, not a coding harness, readiness gate, service catalog, observability platform, or Cursor/OpenCode replacement. |
+| Ask an agent to inspect a local target | [Install Prompt](agent/INSTALL-PROMPT.md) | [Agent Quickstart](agent/QUICKSTART.md), [Agent Acceptance](agent/ACCEPTANCE.md) | Install target-local wrappers, run doctor/dry-run, build bundle, query before answering, and preserve gaps. |
+| Open the viewer (human) | [Viewer README](../viewer/README.md) | [Agent Install](agent/INSTALL.md) | Local read-only atlas from `<target-root>/.portolan/bin/portolan-viewer.sh`; overview, graph, relationships, risks, gaps, and source drill-down from the bundle. |
+| Install or resolve the command | [Agent Install](agent/INSTALL.md) | [Troubleshooting](agent/TROUBLESHOOTING.md), [Release Guide](release.md) | Resolve Portolan from a URL or local path, install target-local wrappers, and use legacy source bootstrap only for explicit compatibility work. |
 | Use Cursor | [Agent Install Prompt](agent/INSTALL-PROMPT.md) | [Cursor Rule](../harness/cursor/portolan-harness.mdc), [Agent Acceptance](agent/ACCEPTANCE.md) | Cursor is an operator over a local Portolan bundle. Install the rule with `scripts/portolan-install.sh <target-root> --harness cursor`; current evidence does not prove arbitrary Cursor UI behavior. |
 | Use OpenCode | [OpenCode Prompt](../harness/opencode/INSTALL-PROMPT.md) | [Agent Acceptance](agent/ACCEPTANCE.md), [Product Claims](product-claims.md) | OpenCode reads `AGENTS.md`; install the managed block with `scripts/portolan-install.sh <target-root> --harness opencode`. Keep output under the target unless permissions are explicitly broadened. |
 | Prepare release notes, an acceptance claim, or a generated report | [Release Guide](release.md) | [Product Claims](product-claims.md), [Product Quality Boundary](product-quality-boundary.md), [Report Quality Contract](report-quality.md) | Do not publish broader claims than the current claim boundary allows; run the report-quality gate before treating generated reports as product-ready. |
 | Contribute a bug report, feature, evidence gap, or PR | [Contributing](../CONTRIBUTING.md) | [Support](../SUPPORT.md), [Product Claims](product-claims.md) | Keep issue and PR evidence states explicit; do not treat blocked or not_assessed surfaces as product success. |
 | Report a sensitive vulnerability | [Security Policy](../SECURITY.md) | [Security Threat Model](security-threat-model.md), [Product Claims](product-claims.md) | Use GitHub private vulnerability reporting. Do not publish sensitive vulnerability details in public issues or pull requests. |
-| Work on a SpecKit slice | [SpecKit Workflow](speckit-workflow.md) | [Product Backlog](product-backlog.md), [AGENTS.md](../AGENTS.md) | Keep backlog, spec, tasks, reviews, PR state, and evidence labels aligned. |
+| Work on the active product | [Captain Atlas BDD Work Packages](captain-atlas/README.md) | [AGENTS.md](../AGENTS.md), [Product Claims](product-claims.md) | Serve the captain-atlas scenario first; do not revive historical backlog/spec tracks. |
 
 ## What Is Already Strong
 
@@ -28,20 +28,27 @@ first.
 - Initial public GitHub community routes now include contributing, support,
   security, conduct, issue templates, and a pull request template. This does not
   prove broad adoption or public support capacity.
-- Installation is intentionally simple: source checkout installer plus
-  `scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas`.
-  The legacy
-  Go binary path still uses `scripts/bootstrap-portolan`, with network module
-  fetching disabled unless `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly
-  set.
+- Installation is intentionally simple: resolve a Portolan URL or local path,
+  then run
+  `<resolved-portolan-path>/scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas`.
+  The legacy Go binary path still uses `scripts/bootstrap-portolan`, with
+  network module fetching disabled unless
+  `PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1` is explicitly set.
 - Cursor has an installable Project Rule template that tells Cursor to build
-  and query a Portolan bundle before broad architecture or map claims.
-- OpenCode has an installable managed `AGENTS.md` block. Current recorded lanes
-  prove specific runs, not arbitrary models, targets, or permission modes.
-- Verify the current installable Cursor/OpenCode pack with
+  and query a Portolan atlas bundle before broad architecture or landscape
+  claims.
+- OpenCode and Codex share an installable managed `AGENTS.md` block; Claude has
+  an installable managed `CLAUDE.md` block. Current recorded runtime lanes prove
+  specific Cursor/OpenCode/Codex/Claude runs, not arbitrary models, targets, or
+  permission modes.
+- Verify the current installable agent harness pack with
   `scripts/portolan-product-acceptance.sh --require-agent-runtime`; the gate
-  creates fresh targets, installs the pack, runs real agent CLIs, validates the
-  generated core bundle, and runs the local baseline checks.
+  creates fresh targets, installs the pack, runs real Cursor/OpenCode CLIs,
+  validates the generated usable atlas bundle, and runs the local baseline
+  checks. Require Codex or Claude explicitly with
+  `scripts/harness-agent-runtime-acceptance.sh --harness codex --require codex --prompt-mode captain`
+  or
+  `scripts/harness-agent-runtime-acceptance.sh --harness claude --require claude --prompt-mode captain`.
 
 ## Cursor Operator Notes
 
@@ -55,16 +62,17 @@ Use Cursor as an operator over local Portolan artifacts:
 
 2. Let the installed rule route broad codebase questions through
    `<target-root>/.portolan/bin` wrappers.
-3. Build the fast first atlas before answering broad claims:
+3. Build the first usable atlas before answering broad claims:
 
    ```bash
-   <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer --core-only --producers config,ctags --shard-timeout 30 --hotspot-budget 50
+   <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
    ```
 
 4. Query bounded artifacts with
    `<target-root>/.portolan/bin/portolan-bundle-query.sh` before loading larger
    files.
-5. Run the full producer set only after the first bundle is queryable.
+5. Use `--scan-profile fast` during install only when the captain explicitly
+   wants a lightweight reconnaissance pass before the full atlas command.
 
 Current evidence supports headless Cursor Agent CLI / Composer wording. Do not
 claim UI Cursor behavior from that evidence.
@@ -96,7 +104,8 @@ Use this only when the older Go CLI is explicitly needed:
 
 1. Use an installed `portolan` binary if one is available and `--version`
    works.
-2. From a source checkout, run:
+2. If the operator explicitly chose the compatibility route and `PORTOLAN_PATH`
+   points at a local Portolan checkout, run:
 
    ```bash
    scripts/bootstrap-portolan

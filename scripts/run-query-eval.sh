@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# Scaffold for query eval rubric (spec 100/101): prints Lane B query commands per question.
+# Query eval rubric and deterministic captain Q&A acceptance artifact.
 set -euo pipefail
 
 SELF=0
 RUN=0
+OUT=""
 POSITIONAL=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --self) SELF=1; shift ;;
     --run) RUN=1; shift ;;
+    --out) OUT=${2:-}; shift 2 ;;
     -h|--help)
       cat <<'EOF'
-usage: run-query-eval.sh [--self] [--run] <bundle-dir>
+usage: run-query-eval.sh [--self] [--run] [--out FILE] <bundle-dir>
 
-  --self   Use /tmp/portolan-self (real-target eval preset, spec 101)
-  --run    Execute Lane B commands and print JSON summaries (for eval artifact)
+  --self   Use /tmp/portolan-self (real-target eval preset)
+  --run    Write deterministic captain Q&A JSON artifact from bounded queries
+  --out    Output file for --run (default: <bundle-dir>/captain-qna-eval.json)
 EOF
       exit 0
       ;;
@@ -31,13 +34,50 @@ fi
 
 if [[ ${#POSITIONAL[@]} -lt 1 ]]; then
   echo "usage: $0 [--self] [--run] <bundle-dir>" >&2
-  echo "See docs/specs/095-bundle-query-surface/reviews/query-eval-rubric.md" >&2
+  echo "See docs/captain-atlas/04-agent-qna-drilldown.md" >&2
   exit 2
 fi
 
 BUNDLE=$(cd "${POSITIONAL[0]}" && pwd)
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 Q="$ROOT/scripts/portolan-bundle-query.sh"
+
+if [[ "$RUN" -eq 1 ]]; then
+  if [[ -z "$OUT" ]]; then
+    OUT="$BUNDLE/captain-qna-eval.json"
+  fi
+  node "$ROOT/viewer/scripts/query-eval.js" --out "$OUT" "$BUNDLE"
+  echo "query-eval: wrote $OUT"
+	  jq -e '
+	    .scenario == "captain-agent-qna-drilldown" and
+	    .verdict == "verified" and
+	    .answer_count == 7 and
+	    .requirements.captain_questions == 5 and
+	    .requirements.selected_code_questions == 2 and
+	    .requirements.raw_large_outputs_read == false and
+	    .requirements.bounded_query_only == true and
+	    (.answers | length == 7) and
+	    (.answers | map(select(.bounded_queries | length > 0)) | length >= 6) and
+	    (.answers | all(.verdict == "verified" or .verdict == "verified_with_warnings")) and
+	    (.answers | map(select((.id | startswith("selected-")) and (.verdict == "verified" or .verdict == "verified_with_warnings"))) | length) == 2
+	  ' "$OUT" >/dev/null
+  SCORECARD="$BUNDLE/captain-atlas-scorecard.json"
+  if [[ -f "$SCORECARD" && "$OUT" == "$BUNDLE/captain-qna-eval.json" ]]; then
+    tmp=$(mktemp)
+    jq \
+      --arg qna_path "$OUT" \
+      '.demo_evidence.qna_eval_path = $qna_path |
+       .demo_evidence.qna_eval_status = "present" |
+       (.dimensions[]? | select(.name == "drill_down") | .verdict) = "verified" |
+       (.dimensions[]? | select(.name == "drill_down") | .note) = "Bounded Q&A and selected-code drill-down eval produced captain-qna-eval.json." |
+       (.bdd_scenarios[]? | select(.name == "agent_qna_eval_recorded") | .verdict) = "verified" |
+       (.bdd_scenarios[]? | select(.name == "agent_qna_eval_recorded") | .evidence) = $qna_path' \
+      "$SCORECARD" >"$tmp"
+    mv "$tmp" "$SCORECARD"
+    echo "query-eval: updated $SCORECARD"
+  fi
+  exit 0
+fi
 
 cat <<EOF
 # Query eval run — bundle: $BUNDLE
@@ -75,7 +115,7 @@ Q10 reduce unknowns:
   $Q gaps --bundle "$BUNDLE" --limit 20
   $Q landscape --bundle "$BUNDLE" --section next_steps
 
-# CTO questions (spec 108): multi-repo landscape understanding.
+# CTO questions: multi-repo landscape understanding.
 
 C1 what repos and what do they do:
   $Q repos --bundle "$BUNDLE" --limit 20
@@ -99,52 +139,3 @@ C6 atlas facts for viewer/agent drill-down:
   $Q atlas --bundle "$BUNDLE" --section edges --limit 20
 
 EOF
-
-if [[ "$RUN" -eq 0 ]]; then
-  exit 0
-fi
-
-run_q() {
-  local label=$1
-  shift
-  echo "--- $label ---"
-  local tmp err status
-  tmp=$(mktemp)
-  err=$(mktemp)
-  status=0
-  "$@" >"$tmp" 2>"$err" || status=$?
-  head -c 8000 "$tmp" || true
-  if [[ -s "$err" ]]; then
-    echo
-    echo "stderr:"
-    head -c 2000 "$err" || true
-  fi
-  if [[ "$status" -ne 0 ]]; then
-    echo
-    echo "command_exit=$status"
-  fi
-  rm -f "$tmp" "$err"
-  echo
-}
-
-run_q "Q1 duplication" "$Q" hotspots --bundle "$BUNDLE" --kind duplication --limit 5
-run_q "Q2 config" "$Q" hotspots --bundle "$BUNDLE" --kind config --limit 20
-run_q "Q3 gaps" "$Q" gaps --bundle "$BUNDLE" --limit 30
-run_q "Q4 debt-candidate" "$Q" hotspots --bundle "$BUNDLE" --kind debt-candidate --limit 5
-run_q "Q5 search package" "$Q" search --bundle "$BUNDLE" --q package --limit 10
-run_q "Q6 symbol Run" "$Q" symbol --bundle "$BUNDLE" --name Run --limit 5
-run_q "Q7 top hotspot" "$Q" hotspots --bundle "$BUNDLE" --limit 1
-run_q "Q8 dep-hub" "$Q" hotspots --bundle "$BUNDLE" --kind dep-hub --limit 10
-run_q "Q9 static-finding" "$Q" hotspots --bundle "$BUNDLE" --kind static-finding --limit 10
-run_q "Q10 gaps+next_steps" "$Q" gaps --bundle "$BUNDLE" --limit 20
-run_q "Q10 landscape" "$Q" landscape --bundle "$BUNDLE" --section next_steps
-run_q "C1 repos" "$Q" repos --bundle "$BUNDLE" --limit 20
-run_q "C2 relationships" "$Q" relationships --bundle "$BUNDLE" --limit 30
-run_q "C3 cross-repo-dup" "$Q" relationships --bundle "$BUNDLE" --type cross-repo-duplication --limit 10
-FIRST_REPO=$(jq -r '.[0].id // empty' "$BUNDLE/repos.json" 2>/dev/null || true)
-if [[ -n "$FIRST_REPO" ]]; then
-  run_q "C4 hotspots repo=$FIRST_REPO" "$Q" hotspots --bundle "$BUNDLE" --repo "$FIRST_REPO" --limit 10
-fi
-run_q "C5 claims" "$Q" claims --bundle "$BUNDLE" --limit 20
-run_q "C6 atlas components" "$Q" atlas --bundle "$BUNDLE" --section components --limit 10
-run_q "C6 atlas edges" "$Q" atlas --bundle "$BUNDLE" --section edges --limit 20

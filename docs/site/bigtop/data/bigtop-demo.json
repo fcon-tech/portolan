@@ -1,0 +1,5674 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at": "2026-06-23T11:02:25.874Z",
+  "source_bundle": "portolan-bigtop-20260623-full-proof",
+  "title": "Apache Bigtop landscape atlas",
+  "subtitle": "A public Portolan demo over a large OSS ecosystem: repositories, roles, shared dependencies, risk signals, and drill-down paths.",
+  "totals": {
+    "repos": 18,
+    "files": 132941,
+    "findings": 6019,
+    "medium": 3515,
+    "relationship_records": 329,
+    "components_with_missing_surface": 15
+  },
+  "groups": {
+    "compute": 5,
+    "data": 6,
+    "platform": 2,
+    "service": 4,
+    "control": 1
+  },
+  "narrative": [
+    {
+      "title": "Bigtop behaves like a platform portfolio, not one repository.",
+      "body": "The atlas separates ecosystem integrator, compute engines, data systems, coordination services, and governance surfaces so a captain can inspect the shape before reading code."
+    },
+    {
+      "title": "Shared dependencies are the clearest cross-repo connective tissue.",
+      "body": "The demo highlights high-fanout libraries such as jackson-databind, guava, commons-cli, jetty-server, and slf4j-api as navigation anchors across the landscape."
+    },
+    {
+      "title": "Unknown runtime topology remains visible.",
+      "body": "Static evidence can map repositories, manifests, configuration, docs, trackers, and duplicated/debt-prone files. Live deployment, secrets, vendor config, and runtime calls are intentionally marked as unknown here."
+    }
+  ],
+  "components": [
+    {
+      "id": "apache-flink",
+      "label": "Apache Flink",
+      "repo_id": "apache-flink-f7a93d2d",
+      "role": "stream-batch-processing",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 877,
+      "medium": 692,
+      "info": 185,
+      "relationships": 21,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 13161
+        },
+        {
+          "ext": ".md",
+          "files": 819
+        },
+        {
+          "ext": ".scala",
+          "files": 547
+        },
+        {
+          "ext": ".xml",
+          "files": 427
+        },
+        {
+          "ext": ".py",
+          "files": 312
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/flink",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://flink.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/FLINK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/FLINK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "692 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-022c56181186",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-d1aab192309a",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-f65102001afe",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-95d3cd60c595",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-flink/docs/content/docs/sql/reference/queries/set-ops.md",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a300252b8271",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-flink/flink-core/src/main/java/org/apache/flink/api/common/operators/base/CoGroupOperatorBase.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3fd6132baf8e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-flink/flink-formats/flink-orc/src/main/java/org/apache/flink/orc/vector/RowDataVectorizer.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-hive",
+      "label": "Apache Hive",
+      "repo_id": "apache-hive-32260a21",
+      "role": "sql-warehouse",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 985,
+      "medium": 552,
+      "info": 433,
+      "relationships": 28,
+      "manifest_in": 2,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 7307
+        },
+        {
+          "ext": ".out",
+          "files": 5416
+        },
+        {
+          "ext": ".q",
+          "files": 5279
+        },
+        {
+          "ext": ".txt",
+          "files": 564
+        },
+        {
+          "ext": ".php",
+          "files": 302
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hive",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hive.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HIVE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HIVE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "552 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-7cc8538848fc",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-de4ce3189a4b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8db886d183f0",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8c91d88edc99",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-3d75f753988d",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hive/data/files/orc_create_people.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-adf199d91a9c",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetPrimaryKeysReq.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "apache-zeppelin",
+        "apache-sqoop"
+      ],
+      "outbound_targets": [
+        "apache-hadoop",
+        "apache-tez"
+      ]
+    },
+    {
+      "id": "apache-spark",
+      "label": "Apache Spark",
+      "repo_id": "apache-spark-37047291",
+      "role": "distributed-compute",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 20000,
+      "findings": 944,
+      "medium": 551,
+      "info": 393,
+      "relationships": 27,
+      "manifest_in": 2,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".scala",
+          "files": 5637
+        },
+        {
+          "ext": ".py",
+          "files": 1413
+        },
+        {
+          "ext": ".java",
+          "files": 1296
+        },
+        {
+          "ext": ".txt",
+          "files": 1261
+        },
+        {
+          "ext": ".out",
+          "files": 820
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/spark",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://spark.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SPARK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SPARK",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "551 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-89e923e29d5b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-946f558c53de",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-9f51920ff2aa",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/connect/common/src/test/resources/query-tests/queries/from_protobuf_messageClassName_descFilePath.json",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-085f556bd6ea",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/core/src/test/resources/tpcds-plan-stability/approved-plans-v1_4/q70.sf100/explain.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d07c1e4cf1f5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-spark/sql/core/src/test/resources/tpcds-plan-stability/approved-plans-v1_4/q77/explain.txt",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4c2e72cd0ac5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-spark/sql/connect/common/src/test/resources/query-tests/queries/function_mask_with_specific_upperChar_lowerChar_digitChar.json",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "apache-livy",
+        "apache-zeppelin"
+      ],
+      "outbound_targets": [
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-hadoop",
+      "label": "Apache Hadoop",
+      "repo_id": "apache-hadoop-9834500d",
+      "role": "filesystem-yarn-mapreduce-foundation",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 16425,
+      "findings": 514,
+      "medium": 250,
+      "info": 264,
+      "relationships": 28,
+      "manifest_in": 11,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 12488
+        },
+        {
+          "ext": ".xml",
+          "files": 547
+        },
+        {
+          "ext": ".md",
+          "files": 541
+        },
+        {
+          "ext": ".js",
+          "files": 525
+        },
+        {
+          "ext": ".h",
+          "files": 263
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hadoop",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hadoop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HADOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HADOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "250 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-9f82ba09827b",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-09e0a956a438",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-27022977e815",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-fc4a6aeb07d1",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-0bf78920116c",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hadoop/hadoop-tools/hadoop-distcp/pom.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-cfa3c9a874e9",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.10.0.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "alluxio",
+        "apache-flink",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-phoenix",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-oozie",
+        "apache-sqoop"
+      ],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-airflow",
+      "label": "Apache Airflow",
+      "repo_id": "apache-airflow-1028f3a0",
+      "role": "workflow-orchestration",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 12627,
+      "findings": 329,
+      "medium": 142,
+      "info": 187,
+      "relationships": 6,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".py",
+          "files": 7244
+        },
+        {
+          "ext": ".rst",
+          "files": 1560
+        },
+        {
+          "ext": ".png",
+          "files": 509
+        },
+        {
+          "ext": ".tsx",
+          "files": 501
+        },
+        {
+          "ext": ".json",
+          "files": 393
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/airflow",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://airflow.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://github.com/apache/airflow/issues",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/AIRFLOW",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "142 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-9fe2e7dfaaa8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-0e1f30506e9c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-292c819d82c2",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-8ea5fa30747f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-a8028760b768",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-258ca1d43c63",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: terraform (3 files)",
+          "evidence_state": "source-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-solr",
+      "label": "Apache Solr",
+      "repo_id": "apache-solr-1f23ebe3",
+      "role": "search-index",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 8558,
+      "findings": 681,
+      "medium": 353,
+      "info": 328,
+      "relationships": 26,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 4390
+        },
+        {
+          "ext": ".yml",
+          "files": 662
+        },
+        {
+          "ext": ".txt",
+          "files": 641
+        },
+        {
+          "ext": ".png",
+          "files": 594
+        },
+        {
+          "ext": ".xml",
+          "files": 589
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/solr",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://solr.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SOLR",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SOLR",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "353 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-156137f317d2",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-afa8dbdabe12",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-7f83f82a478f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-9e5e7a579945",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/search/TestTermQParserPlugin.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-bb50eb6a1b23",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/spelling/suggest/TestFileDictionaryLookup.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-96bb6157fa76",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~105 lines): apache-solr/solr/core/src/test-files/solr/configsets/different-stopwords/collectionA/conf/schema.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-kafka",
+      "label": "Apache Kafka",
+      "repo_id": "apache-kafka-82e1005d",
+      "role": "event-streaming",
+      "group": "compute",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 7272,
+      "findings": 234,
+      "medium": 173,
+      "info": 61,
+      "relationships": 4,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 5921
+        },
+        {
+          "ext": ".json",
+          "files": 302
+        },
+        {
+          "ext": ".scala",
+          "files": 283
+        },
+        {
+          "ext": ".py",
+          "files": 177
+        },
+        {
+          "ext": ".md",
+          "files": 126
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/kafka",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://kafka.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/KAFKA",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/KAFKA",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "173 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-7555c5d1e7f9",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-5549274d03c5",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-6aca34ef53bd",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-3c92de682620",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-22/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-7e3c65f515f1",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-23/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-860ce47387d5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-24/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-zookeeper"
+      ]
+    },
+    {
+      "id": "apache-hbase",
+      "label": "Apache HBase",
+      "repo_id": "apache-hbase-2f98b2ea",
+      "role": "distributed-nosql-store",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 6461,
+      "findings": 323,
+      "medium": 71,
+      "info": 252,
+      "relationships": 22,
+      "manifest_in": 1,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 5340
+        },
+        {
+          "ext": ".rb",
+          "files": 239
+        },
+        {
+          "ext": ".xml",
+          "files": 106
+        },
+        {
+          "ext": ".mdx",
+          "files": 103
+        },
+        {
+          "ext": ".tsx",
+          "files": 95
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/hbase",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://hbase.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/HBASE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/HBASE/Home",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://hbase.apache.org/book.html",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "71 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-88a2c7729b49",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-17334ec63176",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-45593632ad71",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-hbase/hbase-archetypes/hbase-client-project/src/test/java/org/apache/hbase/archetypes/exemplars/client/TestHelloHBase.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4e2475002dd4",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~137 lines): apache-hbase/hbase-archetypes/hbase-client-project/src/main/resources/log4j2.properties",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-fce18015baea",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~149 lines): apache-hbase/hbase-server/src/test/java/org/apache/hadoop/hbase/mapreduce/MapreduceTestingShim.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f9504cecfec0",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~151 lines): apache-hbase/hbase-shaded/hbase-shaded-check-invariants/src/test/resources/ensure-jars-have-correct-contents.sh",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "apache-phoenix"
+      ],
+      "outbound_targets": [
+        "apache-hadoop",
+        "apache-zookeeper"
+      ]
+    },
+    {
+      "id": "alluxio",
+      "label": "Alluxio",
+      "repo_id": "alluxio-a8b47d51",
+      "role": "distributed-cache-filesystem",
+      "group": "data",
+      "lifecycle": "external",
+      "summary": "Included in the Bigtop release BOM but not an Apache project.",
+      "files": 4127,
+      "findings": 66,
+      "medium": 58,
+      "info": 8,
+      "relationships": 27,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 2860
+        },
+        {
+          "ext": ".tsx",
+          "files": 178
+        },
+        {
+          "ext": ".md",
+          "files": 176
+        },
+        {
+          "ext": ".yml",
+          "files": 120
+        },
+        {
+          "ext": ".sh",
+          "files": 110
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/Alluxio/alluxio",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://www.alluxio.io/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://github.com/Alluxio/alluxio/issues",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://github.com/Alluxio/alluxio/wiki",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "58 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-156af02a7f92",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-9851e3ccc9a8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-63b4da8aba3c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-84c4ef8f17df",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: kubernetes (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-1f31518c782f",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~118 lines): alluxio/integration/kubernetes/operator/alluxio/cmd/webhook/webhook-create-signed-cert.sh",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-579907b3aeaa",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~205 lines): alluxio/integration/kubernetes/operator/alluxio/config/crd/bases/data.pillars.io_runtimes.yaml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-ranger",
+      "label": "Apache Ranger",
+      "repo_id": "apache-ranger-e3f6c781",
+      "role": "security-governance",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 3722,
+      "findings": 245,
+      "medium": 186,
+      "info": 59,
+      "relationships": 29,
+      "manifest_in": 0,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1970
+        },
+        {
+          "ext": ".sql",
+          "files": 336
+        },
+        {
+          "ext": ".xml",
+          "files": 322
+        },
+        {
+          "ext": ".json",
+          "files": 216
+        },
+        {
+          "ext": ".sh",
+          "files": 121
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/ranger",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://ranger.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/RANGER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/RANGER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "186 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-a8d8bc09e1f8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b706aba9f97e",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-dc7e609dbba9",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-50a65d4b99ec",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~107 lines): apache-ranger/security-admin/src/main/java/org/apache/ranger/entity/XXResourceDef.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-975d72d35768",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~108 lines): apache-ranger/agents-common/src/test/resources/policyengine/gds/gds_info_hive_data_mask.json",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f1b4618f9cb1",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~116 lines): apache-ranger/agents-common/src/test/resources/policyengine/test_policyengine_hive_default_policies.json",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-phoenix",
+      "label": "Apache Phoenix",
+      "repo_id": "apache-phoenix-4fa00b9a",
+      "role": "sql-over-hbase",
+      "group": "data",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2787,
+      "findings": 248,
+      "medium": 73,
+      "info": 175,
+      "relationships": 20,
+      "manifest_in": 0,
+      "manifest_out": 3,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 2501
+        },
+        {
+          "ext": ".sql",
+          "files": 54
+        },
+        {
+          "ext": ".xml",
+          "files": 52
+        },
+        {
+          "ext": ".js",
+          "files": 25
+        },
+        {
+          "ext": ".sh",
+          "files": 20
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/phoenix",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://phoenix.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/PHOENIX",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/PHOENIX/Home",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://phoenix.apache.org/resources.html",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "73 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-d4e308295cc8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-fab50567289b",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/UncoveredGlobalIndexRegionScannerIT.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-01ef8ac16e1f",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.0/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4b1e6d4a3bb8",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.4/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-eb939dcda58e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~101 lines): apache-phoenix/phoenix-core/src/test/java/org/apache/phoenix/expression/AndExpressionTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-30bf85d95a03",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~103 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/BaseImmutableIndexIT.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-hbase",
+        "apache-hadoop",
+        "apache-zookeeper"
+      ]
+    },
+    {
+      "id": "apache-zeppelin",
+      "label": "Apache Zeppelin",
+      "repo_id": "apache-zeppelin-114b95ca",
+      "role": "notebook-analytics",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2558,
+      "findings": 98,
+      "medium": 88,
+      "info": 10,
+      "relationships": 18,
+      "manifest_in": 0,
+      "manifest_out": 3,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 841
+        },
+        {
+          "ext": ".ts",
+          "files": 313
+        },
+        {
+          "ext": ".png",
+          "files": 226
+        },
+        {
+          "ext": ".js",
+          "files": 131
+        },
+        {
+          "ext": ".html",
+          "files": 129
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/zeppelin",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://zeppelin.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/ZEPPELIN",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/ZEPPELIN",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "88 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-1001a46ad376",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-5af41dd76e8f",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (5 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-a7bcae13f4e4",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~122 lines): apache-zeppelin/docs/usage/rest_api/helium.md",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d08acda6a592",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~130 lines): apache-zeppelin/zeppelin-web/src/app/interpreter/interpreter-create.html",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a80eccc8356a",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~143 lines): apache-zeppelin/flink/flink1.15-shims/src/main/java/org/apache/zeppelin/flink/TimestampStringUtils.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-4c4a5df1aeaf",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~143 lines): apache-zeppelin/flink/flink1.16-shims/src/main/java/org/apache/zeppelin/flink/TimestampStringUtils.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-spark",
+        "apache-hive",
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-tez",
+      "label": "Apache Tez",
+      "repo_id": "apache-tez-7cf0eade",
+      "role": "dag-execution-engine",
+      "group": "service",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 2092,
+      "findings": 105,
+      "medium": 54,
+      "info": 51,
+      "relationships": 16,
+      "manifest_in": 1,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1270
+        },
+        {
+          "ext": ".js",
+          "files": 432
+        },
+        {
+          "ext": ".hbs",
+          "files": 74
+        },
+        {
+          "ext": ".xml",
+          "files": 69
+        },
+        {
+          "ext": ".md",
+          "files": 46
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/tez",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://tez.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/TEZ",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/TEZ",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "54 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-b08caed51829",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-94149f567fae",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-37a571e77ce8",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (2 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-abe2f9787150",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-b1ca67d6a8f8",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~111 lines): apache-tez/tez-plugins/tez-yarn-timeline-history/pom.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-b0550e5dff68",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~115 lines): apache-tez/tez-tools/tez-javadoc-tools/src/main/java-17/org/apache/tez/tools/javadoc/model/ConfigProperty.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "apache-hive"
+      ],
+      "outbound_targets": [
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-oozie",
+      "label": "Apache Oozie",
+      "repo_id": "apache-oozie-40208cd8",
+      "role": "legacy-hadoop-workflow-scheduler",
+      "group": "compute",
+      "lifecycle": "retired",
+      "summary": "Retired project used as a legacy control for lifecycle and evidence-state handling.",
+      "files": 1869,
+      "findings": 82,
+      "medium": 65,
+      "info": 17,
+      "relationships": 20,
+      "manifest_in": 0,
+      "manifest_out": 1,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 1394
+        },
+        {
+          "ext": ".xml",
+          "files": 251
+        },
+        {
+          "ext": ".xsd",
+          "files": 48
+        },
+        {
+          "ext": ".properties",
+          "files": 46
+        },
+        {
+          "ext": ".md",
+          "files": 36
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/oozie",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://attic.apache.org/projects/oozie.html",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/OOZIE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/OOZIE",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "65 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "dup-3527e277c1de",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-oozie/core/src/main/java/org/apache/oozie/command/coord/CoordActionSkipXCommand.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-9459dbb82144",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~52 lines): apache-oozie/core/src/test/resources/recovery-wf.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-1914b15f0617",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~54 lines): apache-oozie/core/src/main/java/org/apache/oozie/util/db/SLADbOperations.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-35d6c8e53acd",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~57 lines): apache-oozie/core/src/test/resources/coord-multiple-input-instance3.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3caaadd040b2",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-oozie/core/src/main/resources/META-INF/persistence.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-8aae6af3dea6",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~59 lines): apache-oozie/fluent-job/fluent-job-api/src/main/java/org/apache/oozie/fluentjob/api/mapping/DistcpPrepareConverter.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-hadoop"
+      ]
+    },
+    {
+      "id": "apache-bigtop-repo",
+      "label": "Apache Bigtop",
+      "repo_id": "apache-bigtop-repo-00bd5224",
+      "role": "ecosystem-integrator",
+      "group": "platform",
+      "lifecycle": "active",
+      "summary": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.",
+      "files": 1580,
+      "findings": 87,
+      "medium": 53,
+      "info": 34,
+      "relationships": 2,
+      "manifest_in": 4,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".xml",
+          "files": 216
+        },
+        {
+          "ext": ".java",
+          "files": 183
+        },
+        {
+          "ext": ".groovy",
+          "files": 128
+        },
+        {
+          "ext": ".yaml",
+          "files": 82
+        },
+        {
+          "ext": ".txt",
+          "files": 78
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/bigtop",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://bigtop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/BIGTOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "53 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-0020cf1576af",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b7f200614299",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-b699e8c82d79",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: env-file (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-7c191fd8fd6a",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~178 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/hbase.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-d86e4b5e4403",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~214 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/hadoop-httpfs.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-2e7bb9baceae",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~468 lines): apache-bigtop-repo/bigtop-tests/test-artifacts/package/src/main/resources/yum/solr.xml",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "bigtop-groovy",
+        "bigtop-jsvc",
+        "bigtop-select",
+        "bigtop-utils"
+      ],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-zookeeper",
+      "label": "Apache ZooKeeper",
+      "repo_id": "apache-zookeeper-562afacb",
+      "role": "coordination-service",
+      "group": "control",
+      "lifecycle": "active",
+      "summary": "",
+      "files": 1485,
+      "findings": 98,
+      "medium": 73,
+      "info": 25,
+      "relationships": 18,
+      "manifest_in": 3,
+      "manifest_out": 0,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 936
+        },
+        {
+          "ext": ".png",
+          "files": 66
+        },
+        {
+          "ext": ".xml",
+          "files": 53
+        },
+        {
+          "ext": ".txt",
+          "files": 53
+        },
+        {
+          "ext": ".h",
+          "files": 42
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/zookeeper",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://zookeeper.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/ZOOKEEPER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/ZOOKEEPER",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "73 medium finding(s)",
+          "docs/release surface missing"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-5f7f61f07b1c",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-3835418a11b3",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-cd500c7c4857",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/conf/logback.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-08223e91bc52",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/build.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-00018ef46214",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~114 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/src/main/c/tests/TestDriver.cc",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-c540cfdb3646",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~134 lines): apache-zookeeper/zookeeper-recipes/zookeeper-recipes-lock/src/main/c/tests/Util.h",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [
+        "apache-hbase",
+        "apache-kafka",
+        "apache-phoenix"
+      ],
+      "outbound_targets": []
+    },
+    {
+      "id": "apache-sqoop",
+      "label": "Apache Sqoop",
+      "repo_id": "apache-sqoop-8bd014af",
+      "role": "legacy-rdbms-hadoop-transfer",
+      "group": "service",
+      "lifecycle": "retired",
+      "summary": "Retired project used as a legacy control for replacement and migration signals.",
+      "files": 950,
+      "findings": 58,
+      "medium": 50,
+      "info": 8,
+      "relationships": 0,
+      "manifest_in": 0,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".java",
+          "files": 719
+        },
+        {
+          "ext": ".txt",
+          "files": 107
+        },
+        {
+          "ext": ".png",
+          "files": 25
+        },
+        {
+          "ext": ".xml",
+          "files": 18
+        },
+        {
+          "ext": ".sh",
+          "files": 14
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/sqoop",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://sqoop.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/SQOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "ok",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/SQOOP",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Docs/release",
+          "state": "missing",
+          "kind": "docs",
+          "url": "",
+          "evidence_state": "unknown"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "test surface visible",
+          "tracker mapped",
+          "wiki mapped"
+        ],
+        "attention": [
+          "50 medium finding(s)",
+          "docs/release surface missing",
+          "CI not detected"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "dup-c480e708a14d",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~150 lines): apache-sqoop/config/checkstyle/checkstyle.xml",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-a0c82cdfcf51",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-sqoop/src/java/org/apache/sqoop/mapreduce/JdbcExportJob.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-491817ae03d0",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~51 lines): apache-sqoop/src/test/org/apache/sqoop/manager/sqlserver/SQLServerManagerExportTest.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-9a043d3877b9",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~56 lines): apache-sqoop/src/test/org/apache/sqoop/orm/TestParseMethods.java",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-f2abced2c275",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-sqoop/config/checkstyle/checkstyle-noframes.xsl",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "dup-3eeb151821c5",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-sqoop/src/test/org/apache/sqoop/TestAvroExport.java",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-hadoop",
+        "apache-hive"
+      ]
+    },
+    {
+      "id": "apache-livy",
+      "label": "Apache Livy",
+      "repo_id": "apache-livy-6b19d048",
+      "role": "spark-rest-service",
+      "group": "service",
+      "lifecycle": "incubating",
+      "summary": "",
+      "files": 428,
+      "findings": 45,
+      "medium": 31,
+      "info": 14,
+      "relationships": 17,
+      "manifest_in": 0,
+      "manifest_out": 2,
+      "languages": [
+        {
+          "ext": ".scala",
+          "files": 169
+        },
+        {
+          "ext": ".java",
+          "files": 98
+        },
+        {
+          "ext": ".xml",
+          "files": 26
+        },
+        {
+          "ext": ".js",
+          "files": 12
+        },
+        {
+          "ext": ".py",
+          "files": 11
+        }
+      ],
+      "surfaces": [
+        {
+          "label": "Repository",
+          "state": "ok",
+          "kind": "repository",
+          "url": "https://github.com/apache/incubator-livy",
+          "evidence_state": "source-visible"
+        },
+        {
+          "label": "Project site",
+          "state": "ok",
+          "kind": "project-site",
+          "url": "https://livy.apache.org/",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Tracker",
+          "state": "ok",
+          "kind": "issue-tracker",
+          "url": "https://issues.apache.org/jira/browse/LIVY",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "label": "Wiki",
+          "state": "gap",
+          "kind": "wiki",
+          "url": "https://cwiki.apache.org/confluence/display/LIVY",
+          "evidence_state": "cannot_verify"
+        },
+        {
+          "label": "Docs/release",
+          "state": "ok",
+          "kind": "documentation",
+          "url": "https://livy.apache.org/docs/latest/",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "signals": {
+        "good": [
+          "README visible",
+          "CI surface visible",
+          "test surface visible",
+          "Docker/deploy surface visible",
+          "tracker mapped",
+          "docs/release mapped"
+        ],
+        "attention": [
+          "31 medium finding(s)",
+          "wiki cannot_verify"
+        ],
+        "unknown": [
+          "runtime call topology not_assessed",
+          "live deployments/secrets/vendor config not_assessed"
+        ]
+      },
+      "top_findings": [
+        {
+          "id": "cfg-e237a7951f8d",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: ci-workflow (4 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-9e880782c960",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: docker-compose (1 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "cfg-e1f267e753ab",
+          "kind": "config",
+          "severity": "info",
+          "summary": "Config surface: dockerfile (3 files)",
+          "evidence_state": "source-visible"
+        },
+        {
+          "id": "dup-2bfcf1af033e",
+          "kind": "duplication",
+          "severity": "medium",
+          "summary": "Duplicate block (~58 lines): apache-livy/thriftserver/server/src/test/scala/org/apache/livy/thriftserver/ThriftServerSuites.scala",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "semgrep-a999ae139f55",
+          "kind": "static-finding",
+          "severity": "medium",
+          "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+          "evidence_state": "metadata-visible"
+        },
+        {
+          "id": "semgrep-22a63705e277",
+          "kind": "static-finding",
+          "severity": "info",
+          "summary": "Semgrep harness.recipes.semgrep-rules.portolan-todo-fixme",
+          "evidence_state": "metadata-visible"
+        }
+      ],
+      "inbound_targets": [],
+      "outbound_targets": [
+        "apache-spark",
+        "apache-hadoop"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "rel-shared-5c74e9329237",
+      "type": "shared-dependency",
+      "summary": "Shared dependency slf4j-api (14 repos)",
+      "component": "slf4j-api",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-airflow-1028f3a0",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-airflow",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Airflow",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 14,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-728eabd6c513",
+      "type": "shared-dependency",
+      "summary": "Shared dependency actions/checkout (14 repos)",
+      "component": "actions/checkout",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-airflow-1028f3a0",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-kafka-82e1005d",
+        "apache-livy-6b19d048",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-airflow",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-kafka",
+        "apache-livy",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Airflow",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Kafka",
+        "Apache Livy",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 14,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-f67da9aac4b1",
+      "type": "shared-dependency",
+      "summary": "Shared dependency commons-io (14 repos)",
+      "component": "commons-io",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 14,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-02b469b4d293",
+      "type": "shared-dependency",
+      "summary": "Shared dependency jackson-databind (13 repos)",
+      "component": "jackson-databind",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-54a9e062d540",
+      "type": "shared-dependency",
+      "summary": "Shared dependency mockito-core (13 repos)",
+      "component": "mockito-core",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-ebd2095bc1a0",
+      "type": "shared-dependency",
+      "summary": "Shared dependency commons-lang3 (13 repos)",
+      "component": "commons-lang3",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin"
+      ],
+      "count": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-0e27150cb1fc",
+      "type": "shared-dependency",
+      "summary": "Shared dependency guava (12 repos)",
+      "component": "guava",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 12,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-1cb509227e94",
+      "type": "shared-dependency",
+      "summary": "Shared dependency commons-cli (12 repos)",
+      "component": "commons-cli",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-oozie",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 12,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-22c30c7b5620",
+      "type": "shared-dependency",
+      "summary": "Shared dependency commons-codec (12 repos)",
+      "component": "commons-codec",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin"
+      ],
+      "count": 12,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-de82914cd654",
+      "type": "shared-dependency",
+      "summary": "Shared dependency metrics-core (12 repos)",
+      "component": "metrics-core",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache ZooKeeper"
+      ],
+      "count": 12,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-09bd5a288739",
+      "type": "shared-dependency",
+      "summary": "Shared dependency jetty-server (11 repos)",
+      "component": "jetty-server",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-436b012bf843",
+      "type": "shared-dependency",
+      "summary": "Shared dependency protobuf-java (11 repos)",
+      "component": "protobuf-java",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-890a47ae2a79",
+      "type": "shared-dependency",
+      "summary": "Shared dependency jackson-core (11 repos)",
+      "component": "jackson-core",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-9874f5e2069c",
+      "type": "shared-dependency",
+      "summary": "Shared dependency hadoop-common (11 repos)",
+      "component": "hadoop-common",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-bigtop-repo-00bd5224",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-tez-7cf0eade"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-bigtop-repo",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-tez"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Bigtop",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Tez"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-a20404c3e187",
+      "type": "shared-dependency",
+      "summary": "Shared dependency hadoop-hdfs (11 repos)",
+      "component": "hadoop-hdfs",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-bigtop-repo-00bd5224",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-tez-7cf0eade"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-bigtop-repo",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-tez"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Bigtop",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Tez"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-bd88401795c7",
+      "type": "shared-dependency",
+      "summary": "Shared dependency actions/setup-java (11 repos)",
+      "component": "actions/setup-java",
+      "repo_ids": [
+        "apache-airflow-1028f3a0",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-kafka-82e1005d",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "apache-airflow",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-kafka",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Apache Airflow",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Kafka",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-f3ea67c11469",
+      "type": "shared-dependency",
+      "summary": "Shared dependency actions/upload-artifact (11 repos)",
+      "component": "actions/upload-artifact",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-airflow-1028f3a0",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-kafka-82e1005d",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-airflow",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-kafka",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Airflow",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Kafka",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 11,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-456831beef3f",
+      "type": "shared-dependency",
+      "summary": "Shared dependency zookeeper (10 repos)",
+      "component": "zookeeper",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache ZooKeeper"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-490ca83092fd",
+      "type": "shared-dependency",
+      "summary": "Shared dependency curator-test (10 repos)",
+      "component": "curator-test",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-oozie",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache ZooKeeper"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-682c636f44bf",
+      "type": "shared-dependency",
+      "summary": "Shared dependency httpcore (10 repos)",
+      "component": "httpcore",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-airflow-1028f3a0",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-airflow",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Airflow",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-c14e897842ab",
+      "type": "shared-dependency",
+      "summary": "Shared dependency httpclient (10 repos)",
+      "component": "httpclient",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-c92202f9e1b9",
+      "type": "shared-dependency",
+      "summary": "Shared dependency javax.servlet-api (10 repos)",
+      "component": "javax.servlet-api",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hbase",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-spark",
+        "apache-tez",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache ZooKeeper"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-d2d92a2e788a",
+      "type": "shared-dependency",
+      "summary": "Shared dependency actions/stale (10 repos)",
+      "component": "actions/stale",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-airflow-1028f3a0",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-kafka-82e1005d",
+        "apache-livy-6b19d048",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-airflow",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-kafka",
+        "apache-livy",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Airflow",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Kafka",
+        "Apache Livy",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin"
+      ],
+      "count": 10,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-30604ae34f88",
+      "type": "shared-dependency",
+      "summary": "Shared dependency curator-recipes (9 repos)",
+      "component": "curator-recipes",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-livy-6b19d048",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-spark-37047291",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-livy",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-spark",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Livy",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Spark",
+        "Apache ZooKeeper"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-3a2ff84cb8bd",
+      "type": "shared-dependency",
+      "summary": "Shared dependency gson (9 repos)",
+      "component": "gson",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Zeppelin"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-5bf116c3c9ee",
+      "type": "shared-dependency",
+      "summary": "Shared dependency commons-compress (9 repos)",
+      "component": "commons-compress",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-707f89f20d8c",
+      "type": "shared-dependency",
+      "summary": "Shared dependency jackson-annotations (9 repos)",
+      "component": "jackson-annotations",
+      "repo_ids": [
+        "apache-flink-f7a93d2d",
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291"
+      ],
+      "repos": [
+        "apache-flink",
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark"
+      ],
+      "labels": [
+        "Apache Flink",
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-88adda38378a",
+      "type": "shared-dependency",
+      "summary": "Shared dependency jetty-util (9 repos)",
+      "component": "jetty-util",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-hadoop-9834500d",
+        "apache-hive-32260a21",
+        "apache-oozie-40208cd8",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-hadoop",
+        "apache-hive",
+        "apache-oozie",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Hadoop",
+        "Apache Hive",
+        "Apache Oozie",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache ZooKeeper"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-bbbb5f37a30c",
+      "type": "shared-dependency",
+      "summary": "Shared dependency actions/cache (9 repos)",
+      "component": "actions/cache",
+      "repo_ids": [
+        "alluxio-a8b47d51",
+        "apache-flink-f7a93d2d",
+        "apache-hbase-2f98b2ea",
+        "apache-livy-6b19d048",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-zeppelin-114b95ca",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "alluxio",
+        "apache-flink",
+        "apache-hbase",
+        "apache-livy",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-zeppelin",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Alluxio",
+        "Apache Flink",
+        "Apache HBase",
+        "Apache Livy",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Zeppelin",
+        "Apache ZooKeeper"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "rel-shared-c5ba4b68be44",
+      "type": "shared-dependency",
+      "summary": "Shared dependency bcprov-jdk18on (9 repos)",
+      "component": "bcprov-jdk18on",
+      "repo_ids": [
+        "apache-hadoop-9834500d",
+        "apache-hbase-2f98b2ea",
+        "apache-hive-32260a21",
+        "apache-phoenix-4fa00b9a",
+        "apache-ranger-e3f6c781",
+        "apache-solr-1f23ebe3",
+        "apache-spark-37047291",
+        "apache-tez-7cf0eade",
+        "apache-zookeeper-562afacb"
+      ],
+      "repos": [
+        "apache-hadoop",
+        "apache-hbase",
+        "apache-hive",
+        "apache-phoenix",
+        "apache-ranger",
+        "apache-solr",
+        "apache-spark",
+        "apache-tez",
+        "apache-zookeeper"
+      ],
+      "labels": [
+        "Apache Hadoop",
+        "Apache HBase",
+        "Apache Hive",
+        "Apache Phoenix",
+        "Apache Ranger",
+        "Apache Solr",
+        "Apache Spark",
+        "Apache Tez",
+        "Apache ZooKeeper"
+      ],
+      "count": 9,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    }
+  ],
+  "hotspots": [
+    {
+      "id": "semgrep-009d7b8578be",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/dev/breeze/src/airflow_breeze/utils/provider_dependencies.py",
+      "line": 265,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-0340284f7013",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/sql/connect/common/src/main/scala/org/apache/spark/sql/connect/client/SparkConnectClient.scala",
+      "line": 810,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-05be3bc58b5d",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/teradata/src/airflow/providers/teradata/utils/tpt_util.py",
+      "line": 439,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-0f735b22ef2d",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/src/main/java/org/apache/hadoop/yarn/server/resourcemanager/webapp/RMWSConsts.java",
+      "line": 167,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-11f7b2529347",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/scripts/ci/prek/common_prek_utils.py",
+      "line": 775,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-145317184f45",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/java/org/apache/ranger/common/RangerConstants.java",
+      "line": 63,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-152f7066d310",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/kms/src/main/java/org/apache/hadoop/crypto/key/KeySecureToRangerDBMKUtil.java",
+      "line": 29,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1536aa0a16fa",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/python/pyspark/sql/connect/client/core.py",
+      "line": 146,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1771218fe1d7",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-bigtop-repo/bigtop.bom",
+      "line": 50,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1788e528dd82",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/webapp/react-webapp/src/views/UserGroupRoleListing/users_details/UserForm.jsx",
+      "line": 349,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-17d190058071",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zeppelin/zeppelin-server/src/main/java/org/apache/zeppelin/realm/kerberos/KerberosRealm.java",
+      "line": 115,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-18a79a6f61d1",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-sqoop/src/java/org/apache/sqoop/mapreduce/db/DataDrivenDBInputFormat.java",
+      "line": 64,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-19019712071b",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/devel-common/src/tests_common/test_utils/common_sql.py",
+      "line": 34,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-19d2285219e1",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/java/org/apache/hadoop/mapreduce/MRJobConfig.java",
+      "line": 608,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1a337c0ce020",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-core/src/main/java/org/apache/hadoop/mapreduce/lib/db/DataDrivenDBInputFormat.java",
+      "line": 63,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1aa75b539f31",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/kms/src/main/java/org/apache/hadoop/crypto/key/RangerAzureKeyVaultKeyGenerator.java",
+      "line": 45,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1b7b0e264d84",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zeppelin/mongodb/src/main/resources/shell_extension.js",
+      "line": 134,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1c2be60a2aa0",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-phoenix/dev/create-release/release-util.sh",
+      "line": 264,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-1c3ce1e1a6c8",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/amazon/src/airflow/providers/amazon/aws/operators/eks.py",
+      "line": 1278,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-20ec4c89a96a",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-oozie/client/src/main/java/org/apache/oozie/cli/OozieCLI.java",
+      "line": 183,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-24f3b3d3281b",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/R/pkg/R/SQLContext.R",
+      "line": 655,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-251c74716ea4",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/google/src/airflow/providers/google/cloud/fs/gcs.py",
+      "line": 26,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-25e3f779d616",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-cloud-storage-project/hadoop-tos/src/main/java/org/apache/hadoop/fs/tosfs/object/tos/TOS.java",
+      "line": 131,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-25f0ac9a40c1",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/webapp/react-webapp/src/utils/fetchAPI.js",
+      "line": 32,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-28b05db0d1dc",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zookeeper/zookeeper-contrib/zookeeper-contrib-zkperl/t/util.pl",
+      "line": 53,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2be18a3d8c40",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zookeeper/zookeeper-server/src/main/java/org/apache/zookeeper/server/auth/SaslServerCallbackHandler.java",
+      "line": 36,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2c83e04fcb22",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/ugsync/src/main/java/org/apache/ranger/unixusersync/config/UserGroupSyncConfig.java",
+      "line": 87,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2cadb75bcd7c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-kafka/metadata/src/main/java/org/apache/kafka/metadata/storage/ScramParser.java",
+      "line": 235,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2eada8bdaee5",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-oozie/sharelib/hive2/src/main/java/org/apache/oozie/action/hadoop/Hive2Main.java",
+      "line": 141,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2effc7e0fb3a",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/telegram/src/airflow/providers/telegram/hooks/telegram.py",
+      "line": 52,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-2fb922f69fe1",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/mvnw",
+      "line": 246,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3012feb5c522",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-resourcemanager/src/main/java/org/apache/hadoop/yarn/server/resourcemanager/security/DelegationTokenRenewer.java",
+      "line": 873,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-311d5a0da33c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "alluxio/integration/kubernetes/operator/alluxio/cmd/webhook/webhook-create-signed-cert.sh",
+      "line": 44,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-32412a9d47de",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/airflow-core/src/airflow/utils/cli.py",
+      "line": 183,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-341867369df0",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/security/ssl/SSLFactory.java",
+      "line": 85,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-36973c6518a6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zeppelin/zeppelin-web/src/app/interpreter/interpreter.html",
+      "line": 422,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3753d9a4a8f6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/standalone-metastore/metastore-server/src/main/java/org/apache/hadoop/hive/metastore/tools/schematool/HiveSchemaHelper.java",
+      "line": 339,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-378bc07f2f93",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/airflow-core/src/airflow/utils/db.py",
+      "line": 372,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3856323c793c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-kafka/clients/src/main/java/org/apache/kafka/common/security/oauthbearer/OAuthBearerLoginCallbackHandler.java",
+      "line": 113,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-39a3687d6b14",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-kafka/config/producer.properties",
+      "line": 111,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3a91ce8843fc",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/fab/src/airflow/providers/fab/www/security/permissions.py",
+      "line": 44,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3b3f62c6476e",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/dev/create-release/release-util.sh",
+      "line": 230,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3c9e8459a695",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-phoenix/dev/jenkins_precommit_jira_yetus.sh",
+      "line": 175,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3cf5e8ece06c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/agents-common/src/main/java/org/apache/ranger/plugin/client/HadoopConfigHolder.java",
+      "line": 45,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-3da7d66646c6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/data/scripts/q_test_country_table_with_schema.mssql.sql",
+      "line": 35,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-40ff9fcb0ca4",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/.github/workflows/release.yml",
+      "line": 175,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-41136a053e1e",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/apache/spark/src/airflow/providers/apache/spark/hooks/spark_connect.py",
+      "line": 32,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-41979fa85d1b",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/service/src/java/org/apache/hive/service/cli/session/HiveSessionImplwithUGI.java",
+      "line": 45,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-42160badb20c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/connector/kafka-0-10-token-provider/src/main/scala/org/apache/spark/kafka010/KafkaRedactionUtil.scala",
+      "line": 47,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-43af98eb69a8",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/testutils/metastore/metastore-validation-test.sh",
+      "line": 1115,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-43bf7374408c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/launcher/src/main/java/org/apache/spark/launcher/LauncherProtocol.java",
+      "line": 33,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-43ee1426031d",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/providers/teradata/src/airflow/providers/teradata/transfers/s3_to_teradata.py",
+      "line": 106,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-4b3e49f05292",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "alluxio/integration/kubernetes/operator/alluxio/charts/pillars/pillars/scripts/webhook-create-signed-cert.sh",
+      "line": 44,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-4d2a9e6d57d5",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-common-project/hadoop-auth/src/main/java/org/apache/hadoop/security/authentication/server/AuthenticationFilter.java",
+      "line": 84,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-4df6abbdc636",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-oozie/core/src/main/java/org/apache/oozie/action/hadoop/Hive2ActionExecutor.java",
+      "line": 36,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-502d3678c970",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/ugsync/ldapconfigchecktool/ldapconfigcheck/src/main/java/org/apache/ranger/ldapconfigcheck/LdapConfig.java",
+      "line": 42,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-50cf09d97635",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-phoenix/Jenkinsfile.github",
+      "line": 64,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5371c318bdb3",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/plugin-atlas/src/main/java/org/apache/ranger/services/atlas/RangerServiceAtlas.java",
+      "line": 96,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-53e76374d171",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-airflow/devel-common/src/tests_common/test_utils/db.py",
+      "line": 698,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5426d2c9d873",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-flink/mvnw",
+      "line": 240,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5513b9bf4e38",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-applications/hadoop-yarn-applications-unmanaged-am-launcher/src/main/java/org/apache/hadoop/yarn/applications/unmanagedamlauncher/UnmanagedAMLauncher.java",
+      "line": 463,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5a63b3854c69",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-yarn-project/hadoop-yarn/hadoop-yarn-server/hadoop-yarn-server-router/src/main/java/org/apache/hadoop/yarn/server/router/RouterAuditLogger.java",
+      "line": 73,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5b9e40ffb27f",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-cloud-storage-project/hadoop-tos/src/main/java/org/apache/hadoop/fs/tosfs/conf/TosKeys.java",
+      "line": 41,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5f940c60dca0",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "alluxio/core/common/src/main/java/alluxio/security/authentication/plain/SaslClientHandlerPlain.java",
+      "line": 52,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-5febff3a06cc",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "alluxio/core/common/src/main/java/alluxio/conf/PropertyKey.java",
+      "line": 8202,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-608f0c531fea",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/unixauthservice/scripts/setup.py",
+      "line": 72,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-6197c082f7ff",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-tools/hadoop-aws/src/main/java/org/apache/hadoop/fs/s3a/auth/delegation/SessionTokenBinding.java",
+      "line": 75,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-638b531b61fc",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/java/org/apache/ranger/security/web/filter/RangerCSRFPreventionFilter.java",
+      "line": 52,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-66fdd875b0b2",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/java/org/apache/ranger/biz/KmsKeyMgr.java",
+      "line": 87,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-68233736f432",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-common-project/hadoop-common/src/main/java/org/apache/hadoop/security/UserGroupInformation.java",
+      "line": 286,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-6ce5c7b0e2a6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-tools/hadoop-azure/src/main/java/org/apache/hadoop/fs/azurebfs/constants/ConfigurationKeys.java",
+      "line": 437,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-6ea08ecf1e98",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-zeppelin/zeppelin-web/src/app/credential/credential.html",
+      "line": 117,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-6eb3b4021fa6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/kms/src/main/java/org/apache/hadoop/crypto/key/DBToAzureKeyVault.java",
+      "line": 33,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-706449bc15f7",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/service-rpc/src/gen/thrift/gen-cpp/TCLIService_types.cpp",
+      "line": 4783,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-70716bc63971",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-hdfs-project/hadoop-hdfs/src/main/java/org/apache/hadoop/hdfs/tools/offlineImageViewer/PBImageXmlWriter.java",
+      "line": 205,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-71e8affc1f39",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/plugin-kafka/src/main/java/org/apache/ranger/authorization/kafka/authorizer/RangerKafkaAuthorizer.java",
+      "line": 74,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7206877b6f61",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/security-admin/src/main/webapp/react-webapp/src/views/UserGroupRoleListing/users_details/EditUserView.jsx",
+      "line": 94,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-72e660a3eeb6",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hive/hcatalog/webhcat/svr/src/main/java/org/apache/hive/hcatalog/templeton/tool/ZooKeeperStorage.java",
+      "line": 57,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-73efa60e257a",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-kafka/core/src/main/scala/kafka/tools/StorageTool.scala",
+      "line": 329,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7488a90fdb8a",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-flink/flink-end-to-end-tests/test-scripts/common_ssl.sh",
+      "line": 28,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-74aabce7e407",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/unixauthservice/conf.dist/jaas.conf",
+      "line": 22,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-74bbff80afce",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hbase/hbase-common/src/main/java/org/apache/hadoop/hbase/io/crypto/KeyProvider.java",
+      "line": 30,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-753c5b506fd5",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-solr/solr/core/src/java/org/apache/solr/cli/AuthTool.java",
+      "line": 280,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-75a3ebd2022c",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/kms/src/main/java/org/apache/hadoop/crypto/key/RangerHSM.java",
+      "line": 47,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7704d442db17",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-tools/hadoop-aliyun/src/main/java/org/apache/hadoop/fs/aliyun/oss/Constants.java",
+      "line": 44,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-77abe531c847",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-hadoop/hadoop-tools/hadoop-azure-datalake/src/main/java/org/apache/hadoop/fs/adl/AdlConfKeys.java",
+      "line": 55,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-77e4a9b29f26",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-kafka/clients/src/testFixtures/java/org/apache/kafka/common/security/authenticator/TestJaasConfig.java",
+      "line": 40,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7c2bf402b0d0",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/R/pkg/R/DataFrame.R",
+      "line": 3790,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7d0da86adfaa",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-spark/core/src/main/scala/org/apache/spark/SecurityManager.scala",
+      "line": 453,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "semgrep-7d6d8f35cc40",
+      "kind": "static-finding",
+      "severity": "medium",
+      "summary": "Semgrep harness.recipes.semgrep-rules.portolan-hardcoded-secret-pattern",
+      "path": "apache-ranger/embeddedwebserver/src/main/java/org/apache/ranger/server/tomcat/ElasticSearchIndexBootStrapper.java",
+      "line": 59,
+      "evidence_state": "metadata-visible",
+      "producer": "semgrep"
+    },
+    {
+      "id": "dup-0bf78920116c",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-hadoop/hadoop-tools/hadoop-distcp/pom.xml",
+      "path": "apache-hadoop/hadoop-tools/hadoop-distcp/pom.xml",
+      "line": 100,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-45593632ad71",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-hbase/hbase-archetypes/hbase-client-project/src/test/java/org/apache/hbase/archetypes/exemplars/client/TestHelloHBase.java",
+      "path": "apache-hbase/hbase-archetypes/hbase-client-project/src/test/java/org/apache/hbase/archetypes/exemplars/client/TestHelloHBase.java",
+      "line": 18,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3d75f753988d",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-hive/data/files/orc_create_people.txt",
+      "path": "apache-hive/data/files/orc_create_people.txt",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-adf199d91a9c",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetPrimaryKeysReq.java",
+      "path": "apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetPrimaryKeysReq.java",
+      "line": 150,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3c92de682620",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-22/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-22/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-7e3c65f515f1",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-23/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-23/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-860ce47387d5",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-24/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-24/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-63abb3b28ac3",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-25/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-25/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-b6afc380f145",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-26/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-26/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-0f7b4499ea34",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-27/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-27/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-443a256135af",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-30/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-30/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-c2b1e23d1be7",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-31/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-31/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-83b1daa8c816",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-32/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-32/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-37ff73795f03",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-33/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-33/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-e6d48158ca58",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-34/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-34/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-90be63a2bf72",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-e6c42928509e",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-36/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-36/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3e4205f635f0",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-37/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-37/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3f33d1fecb71",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-38/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-38/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-72c04d98fd81",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-39/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-39/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-2ef956431ae5",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-kafka/streams/upgrade-system-tests-40/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "path": "apache-kafka/streams/upgrade-system-tests-40/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-fab50567289b",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/UncoveredGlobalIndexRegionScannerIT.java",
+      "path": "apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/UncoveredGlobalIndexRegionScannerIT.java",
+      "line": 426,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-01ef8ac16e1f",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.0/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+      "path": "apache-phoenix/phoenix-hbase-compat-2.5.0/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-4b1e6d4a3bb8",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~100 lines): apache-phoenix/phoenix-hbase-compat-2.5.4/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+      "path": "apache-phoenix/phoenix-hbase-compat-2.5.4/src/main/java/org/apache/phoenix/compat/hbase/CompatScanMetrics.java",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-a300252b8271",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-flink/flink-core/src/main/java/org/apache/flink/api/common/operators/base/CoGroupOperatorBase.java",
+      "path": "apache-flink/flink-core/src/main/java/org/apache/flink/api/common/operators/base/CoGroupOperatorBase.java",
+      "line": 94,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3fd6132baf8e",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-flink/flink-formats/flink-orc/src/main/java/org/apache/flink/orc/vector/RowDataVectorizer.java",
+      "path": "apache-flink/flink-formats/flink-orc/src/main/java/org/apache/flink/orc/vector/RowDataVectorizer.java",
+      "line": 63,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-dfa534f71df3",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-flink/flink-state-backends/flink-statebackend-rocksdb/src/main/java/org/apache/flink/state/rocksdb/AbstractRocksDBState.java",
+      "path": "apache-flink/flink-state-backends/flink-statebackend-rocksdb/src/main/java/org/apache/flink/state/rocksdb/AbstractRocksDBState.java",
+      "line": 94,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-cfa3c9a874e9",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.10.0.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.10.0.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-15bb6058983c",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.7.2.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.7.2.xml",
+      "line": 29,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-0d809849c9ec",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.8.0.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.8.0.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-fd47e78c9d79",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.8.2.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_2.8.2.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-6a85f8ea6663",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.1.0.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.1.0.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-8b4ca69ed72a",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.2.2.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.2.2.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-2bac6fd9e37b",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.2.4.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.2.4.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-78c167433532",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.3.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.3.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-62e129537198",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.4.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.4.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-c257a14c6c0f",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.5.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.5.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-3761996499a4",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.6.xml",
+      "path": "apache-hadoop/hadoop-mapreduce-project/dev-support/jdiff/Apache_Hadoop_MapReduce_Common_3.3.6.xml",
+      "line": 13,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-b803ba01797a",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hive/ql/src/java/org/apache/hadoop/hive/ql/exec/vector/expressions/FuncDecimalToLong.java",
+      "path": "apache-hive/ql/src/java/org/apache/hadoop/hive/ql/exec/vector/expressions/FuncDecimalToLong.java",
+      "line": 66,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-7cc433cee688",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hive/ql/src/test/queries/clientpositive/perf/cbo_query14.q",
+      "path": "apache-hive/ql/src/test/queries/clientpositive/perf/cbo_query14.q",
+      "line": 4,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-ef4052d087ca",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetColumnsReq.java",
+      "path": "apache-hive/service-rpc/src/gen/thrift/gen-javabean/org/apache/hive/service/rpc/thrift/TGetColumnsReq.java",
+      "line": 161,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-eb939dcda58e",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~101 lines): apache-phoenix/phoenix-core/src/test/java/org/apache/phoenix/expression/AndExpressionTest.java",
+      "path": "apache-phoenix/phoenix-core/src/test/java/org/apache/phoenix/expression/AndExpressionTest.java",
+      "line": 62,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-8bc3104b3cfb",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~102 lines): apache-flink/flink-runtime/src/test/java/org/apache/flink/runtime/resourcemanager/WorkerResourceSpecTest.java",
+      "path": "apache-flink/flink-runtime/src/test/java/org/apache/flink/runtime/resourcemanager/WorkerResourceSpecTest.java",
+      "line": 153,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-986178fb2d2c",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~102 lines): apache-hive/standalone-metastore/metastore-common/src/gen/thrift/gen-javabean/org/apache/hadoop/hive/metastore/api/AddPackageRequest.java",
+      "path": "apache-hive/standalone-metastore/metastore-common/src/gen/thrift/gen-javabean/org/apache/hadoop/hive/metastore/api/AddPackageRequest.java",
+      "line": 22,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-9e5e7a579945",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/search/TestTermQParserPlugin.java",
+      "path": "apache-solr/solr/core/src/test/org/apache/solr/search/TestTermQParserPlugin.java",
+      "line": 26,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-bb50eb6a1b23",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~102 lines): apache-solr/solr/core/src/test/org/apache/solr/spelling/suggest/TestFileDictionaryLookup.java",
+      "path": "apache-solr/solr/core/src/test/org/apache/solr/spelling/suggest/TestFileDictionaryLookup.java",
+      "line": 28,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-30bf85d95a03",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~103 lines): apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/BaseImmutableIndexIT.java",
+      "path": "apache-phoenix/phoenix-core/src/it/java/org/apache/phoenix/end2end/index/BaseImmutableIndexIT.java",
+      "line": 662,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-fe196b25de06",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~103 lines): apache-spark/mllib/src/main/scala/org/apache/spark/ml/classification/FMClassifier.scala",
+      "path": "apache-spark/mllib/src/main/scala/org/apache/spark/ml/classification/FMClassifier.scala",
+      "line": 81,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-91a204525829",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~104 lines): apache-airflow/providers/cncf/kubernetes/tests/system/cncf/kubernetes/example_kubernetes.py",
+      "path": "apache-airflow/providers/cncf/kubernetes/tests/system/cncf/kubernetes/example_kubernetes.py",
+      "line": 1,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dup-38b3beb9fb6f",
+      "kind": "duplication",
+      "severity": "medium",
+      "summary": "Duplicate block (~104 lines): apache-flink/flink-table/flink-table-planner/src/test/scala/org/apache/flink/table/planner/plan/batch/sql/join/BroadcastHashSemiAntiJoinTest.scala",
+      "path": "apache-flink/flink-table/flink-table-planner/src/test/scala/org/apache/flink/table/planner/plan/batch/sql/join/BroadcastHashSemiAntiJoinTest.scala",
+      "line": 71,
+      "evidence_state": "metadata-visible",
+      "producer": "jscpd"
+    },
+    {
+      "id": "dep-3c72c7469e0d",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @11ty/eleventy (38 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-4b6b3f9ed3bf",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @11ty/eleventy-dev-server (13 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-a1bd33ac732e",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/component (11 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-b5494427a17b",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/data-set (18 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-489956a31271",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/g-base (13 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-8820d41ab659",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/g-canvas (9 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-b3ad0abf008e",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/g2 (11 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-8dd72b32e70a",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @antv/g2plot (8 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-5ba9654fbabd",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @ark-ui/react (67 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-a37d5ac72bea",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/core (30 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-a687c8ba8f75",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/eslint-parser (8 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-b7dac2c0ba80",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/generator (12 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-4cbea0b5db54",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/helper-compilation-targets (8 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-cc898686d102",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/helper-create-class-features-plugin (9 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-59f97f2b7bbb",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/helper-module-transforms (8 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-66bdf5dbb777",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/plugin-transform-runtime (11 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-b4406be0f3e7",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/preset-env (76 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-b652e195fb39",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/template (9 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-970fa7dca085",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @babel/traverse (19 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    },
+    {
+      "id": "dep-2f40ce12b03a",
+      "kind": "dep-hub",
+      "severity": "low",
+      "summary": "Dependency hub: @chakra-ui/react (10 dependencies)",
+      "path": "(dependency-hub)",
+      "line": null,
+      "evidence_state": "metadata-visible",
+      "producer": "syft"
+    }
+  ],
+  "report_sections": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "summary": ""
+    },
+    {
+      "id": "repos",
+      "title": "Repositories",
+      "summary": ""
+    },
+    {
+      "id": "findings_by_kind",
+      "title": "Findings",
+      "summary": ""
+    },
+    {
+      "id": "gaps",
+      "title": "Not assessed",
+      "summary": ""
+    },
+    {
+      "id": "next_steps",
+      "title": "Where to look first",
+      "summary": ""
+    }
+  ],
+  "manifest": {
+    "generated_at": "2026-06-23T00:30:52Z",
+    "source": "",
+    "schema_version": "0.1.0"
+  }
+}

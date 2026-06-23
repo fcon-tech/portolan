@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build bounded search-index.jsonl for bundle query (spec 096 / 099).
+# Build bounded search-index.jsonl for bundle query.
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then

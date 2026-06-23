@@ -4,19 +4,24 @@ Live demo for a newcomer: **install Portolan into the target** -> **build a
 local atlas** -> **open the viewer** -> **use bundle-query for drill-down
 navigation**.
 
-This is the product demo path. Bigtop is the primary acceptance corpus; a
-second arbitrary local repo or landscape proves the path is not Bigtop-specific.
+This is the product demo path. The primary story is target-agnostic: the
+captain gives an agent a Portolan link or local path plus a target ecosystem,
+the agent installs target-local wrappers, builds the local atlas app/bundle,
+and answers through query and drill-down routes. Named corpora are stress
+fixtures, not the product story.
 
 ## Setup
 
 **Agent-installable path (copy to Cursor/OpenCode/Kimi/Codex/etc.):**
 
 ```text
-PORTOLAN_PATH=<absolute Portolan checkout>
+PORTOLAN=<Portolan git URL or local checkout path>
 TARGET_ROOT=<absolute local repo or multi-repo root>
 BUNDLE_DIR=<absolute empty output dir>
 
 Use Portolan as an agent-installable landscape atlas layer for TARGET_ROOT.
+If PORTOLAN is a URL, ask before fetching exactly that URL into a local cache.
+If it is a path, use it directly. Set PORTOLAN_PATH to the resolved local path.
 Install the target-local wrappers first, build the atlas bundle into BUNDLE_DIR,
 open the viewer when useful, and answer from bundle-query/source/drill-down
 routes. Preserve unknown, cannot_verify, and not_assessed.
@@ -50,7 +55,7 @@ Open the viewer through the installed wrapper:
 "$TARGET_ROOT/.portolan/bin/portolan-viewer.sh" --bundle "$BUNDLE_DIR"
 ```
 
-**Second-target reproducibility smoke (not Bigtop-specific):**
+**Second-target reproducibility smoke:**
 
 ```bash
 bash scripts/harness-reproducible-atlas-smoke.sh \
@@ -85,7 +90,7 @@ Viewer on self bundle:
 
 Open http://127.0.0.1:4173/
 
-**Bounded multi-repo (Bigtop quick sample):**
+**Optional named stress corpus (Bigtop quick sample):**
 
 ```bash
 export TARGET_ROOT=~/projects/bigtop-landscape/repos
@@ -96,7 +101,7 @@ scripts/portolan-install.sh "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_D
   --yes --limit-repos 3 --producers semgrep,syft --no-viewer
 ```
 
-**CTO multi-repo demo (full Bigtop corpus):**
+**Optional CTO-scale stress corpus (full Bigtop corpus):**
 
 ```bash
 export TARGET_ROOT=~/projects/bigtop-landscape/repos
@@ -113,13 +118,13 @@ cross-repo clones after a complete scan is tier-A evidence (manifest
 `cross_repo_duplication.status=complete`). `gap-cross-repo-dup` appears only
 when one or more pairs fail, not as opt-in degradation.
 
-Strict Bigtop corpus acceptance (not default CI):
+Strict Bigtop corpus acceptance remains a non-default stress check:
 
 ```bash
 scripts/harness-bigtop-acceptance.sh /tmp/portolan-bigtop
 ```
 
-**Full landscape stress:**
+**Optional full landscape stress:**
 
 ```bash
 export TARGET_ROOT=~/projects/bigtop-landscape/repos
@@ -138,7 +143,7 @@ Expect 30-90+ minutes. Failed shards appear in gaps, not as a scan abort.
    managed `AGENTS.md` block, and the target-local `.portolan/bin` wrappers.
 2. **Atlas overview** - Viewer answers what landscape was scanned, how many
    repos/components are visible, and what is missing.
-3. **Map** - Select a component and show its dependency corridor, layer, source
+3. **Atlas graph** - Select a component and show its dependency corridor, layer, source
    routes, and relationship records.
 4. **Risks/findings** - Explain top pain points by kind/severity/repo. Do not
    mix agent claims into ranked tool findings.
@@ -181,13 +186,16 @@ external docs:
 **Agent query eval (Lane B):** `scripts/run-query-eval.sh --self --run` after
 self-scan.
 
-Compare with `docs/test-corpora/apache-bigtop/examples/map-excerpt.md` for
-section parity.
+For named stress-corpus parity, compare with
+`docs/test-corpora/apache-bigtop/examples/map-excerpt.md`. Do not treat that
+fixture as the default product route.
 
 ## CTO Scenario
 
-Use `/tmp/portolan-bigtop` from the full corpus scan with `--cross-repo-dup`. The
-concerned-CTO walkthrough states which tier the knowledge is:
+Use a real multi-repo target bundle from the captain route. `/tmp/portolan-bigtop`
+from the full corpus scan with `--cross-repo-dup` is one named stress option,
+not a required starting point. The concerned-CTO walkthrough states which tier
+the knowledge is:
 
 | CTO question | Where | Tier |
 | --- | --- | --- |

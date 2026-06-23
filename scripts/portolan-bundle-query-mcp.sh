@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch stdio MCP server for Portolan bundle queries (spec 098).
+# Launch stdio MCP server for Portolan bundle queries.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 

@@ -20,6 +20,25 @@ If an existing Cursor rule or OpenCode block blocks replacement, do not edit
 around it silently. Re-run with `--force` only after confirming the file/block is
 Portolan-managed and safe to replace.
 
+## Doctor Finds A Bad First-Run Shape
+
+Run doctor before the first scan:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --doctor "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
+```
+
+If the bundle status is `unsafe` or `not_writable`, choose a writable Portolan
+output path such as `$TARGET_ROOT/.portolan/atlas`. Missing producer tools are
+not a first-run blocker when `--skip-install` is present; they should become
+`not_assessed` or `cannot_verify` gaps after scan.
+
+Use dry-run when the captain asks what will happen:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --dry-run "$TARGET_ROOT" "$BUNDLE_DIR" --skip-install --no-viewer
+```
+
 ## Bundle Build Fails Or Writes Nowhere
 
 Run through the installed wrapper, not the external checkout:
@@ -31,10 +50,32 @@ Run through the installed wrapper, not the external checkout:
 If the harness blocks external writes, use `$TARGET_ROOT/.portolan/atlas` as the
 bundle directory.
 
+If the scan created a bundle directory, inspect `$BUNDLE_DIR/receipt.json`. A
+failed receipt records the phase, command argv, producer states/gaps, duration,
+and local-first flags.
+
+For a machine-readable reuse check, run status. It is read-only and should be
+safe before or after a scan:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --status "$TARGET_ROOT" "$BUNDLE_DIR"
+```
+
 ## Output Directory Already Exists
 
 Do not overwrite silently. Either choose a fresh output directory or use
 `--force` only after the user accepts replacing that Portolan output.
+
+To remove a generated Portolan bundle, use clean on the bundle path, not on the
+target:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --clean "$TARGET_ROOT" "$BUNDLE_DIR"
+```
+
+If clean refuses the path, choose `$TARGET_ROOT/.portolan/atlas` or a bundle
+that contains Portolan's generated marker/receipt. Do not use shell `rm -rf` on
+the target root.
 
 ## Missing OSS Tools
 
@@ -106,5 +147,5 @@ or another local source, label it `claim-only`, `unknown`, `cannot_verify`, or
 ## Legacy Go CLI Needed
 
 Use legacy `portolan context prepare`, `portolan map`, and graph slicing only
-when the operator explicitly asks for older artifacts. The current atlas path is
-the installed wrapper flow above.
+when the operator explicitly asks for the compatibility route. The current
+atlas path is the installed wrapper flow above.

@@ -1,173 +1,49 @@
 # Product Claims
 
-This page is the repo-level claim boundary for Portolan. Start here before
-writing README copy, a client answer, a proposal, a demo walkthrough, or an agent
-instruction that says what Portolan can do.
+This page is the current public claim boundary for Portolan. It follows the
+captain-atlas contract in `docs/captain-atlas/`.
 
-Use [Product Quality Boundary](product-quality-boundary.md) for guarantees,
-non-guarantees, maturity controls, and report-quality gating. Use this page for
-individual claim wording.
+## Current Safe Wording
 
-Detailed evidence and review records live under
-`docs/specs/038-product-claim-gate/reviews/`. This page is the maintained product
-surface derived from that evidence.
+Portolan is a local-first atlas generator for AI agents. A captain gives an
+agent a Portolan link plus a target software ecosystem; the agent installs or
+prepares Portolan, builds a local atlas bundle, opens a generated atlas app, and
+uses that bundle to explain visible repos, components, relationships, risks,
+and gaps.
 
-## Current Client-Safe Answer
-
-Portolan helps engineers and agents find where local code pain is visible:
-duplication clusters, static findings, dependency hubs, and configuration
-hotspots — then navigate there through a harness workflow and the local viewer.
-
-The primary product path is install-first: run `scripts/portolan-install.sh`,
-use the target-local wrappers under `<target-root>/.portolan/bin`, build a
-Portolan atlas bundle, query it through `portolan-bundle-query.sh`, and open the
-local viewer. The legacy Go CLI (`context prepare`, `map`) remains an optional
-compatibility bridge.
-
-Evidence discipline is a **secondary** (B2B) value: hotspots and viewer nodes
-cite `producer_ref` and evidence states; unknowns stay visible without blocking
-first-run navigation. Portolan does not replace mature scanners — it composes
-their local outputs into one Portolan surface.
-
-Named examples, including the Apache Bigtop runs, are evidence records for
-specific target shapes. They are not the main product path and must not be
-generalized to arbitrary targets or UI Cursor behavior.
-
-The current validated claim is narrow. Portolan supports local visible-scope
-mapping, exact duplicate-cluster evidence, relationship evidence by type, and
-Syft/CycloneDX component identity evidence where those artifacts exist.
-Portolan should be described as a complement to Cursor and enterprise tools,
-not as their replacement.
-
-The agent acceptance matrix is defined for named harness and target shapes.
-Codex, OpenCode, and Cursor Agent CLI lanes have been run on selected local
-targets. Current installable-atlas evidence shows Cursor/OpenCode can install
-target-local wrappers, build and query a local atlas, and preserve gaps in
-those specific local runs. Older evidence records may mention context/map
-artifacts; do not treat those legacy artifacts as the current product path.
-This evidence does not validate UI Cursor/Composer, arbitrary external targets,
-arbitrary customer metadata/runtime formats, or all OpenCode permission modes.
-
-In one named local Bigtop headless Cursor comparison, the Portolan-assisted
-lane reduced unsupported claims from 12 to 0 and produced equal or better next
-actions across all five tested questions. Treat that as a named evidence
-record, not the product narrative.
+This is the product direction and acceptance target. It is not a claim that
+every harness, target shape, or customer estate already works.
 
 ## Claim Boundary
 
 | Claim | Status | Safe wording |
 | --- | --- | --- |
-| Portolan helps an agent answer CTO-level questions with fewer unsupported claims than an unaided agent on the same local target. | `narrowed` | Proven only for named comparison lanes. Do not generalize to UI Cursor/Composer or arbitrary targets. |
-| Portolan is a harness for agent navigation across local software landscapes. | `accepted` | Safe when "harness" means bounded evidence routing, artifact contracts, gap labeling, and OSS-output import for agent use. Do not describe it as a coding harness or autonomous development runtime. |
-| Portolan provides a local, read-only atlas bundle and viewer before agents answer. | `accepted` | Safe for the installed wrapper workflow and bundle artifacts. Legacy context/map artifacts are compatibility routes only. |
-| Portolan can map a normal local repository or landscape root without a generated selection file. | `narrowed` | Verified on named local targets. It reports visible local scope and weak states; it does not prove complete ecosystem coverage. |
-| Portolan understands a complete inherited software estate from a local target. | `rejected` | Say local visible scope unless a supplied inventory verifies completeness. A curated manifest can narrow scope for that manifest only; global external ecosystem completeness remains unproven. |
-| Portolan can provide full runtime service topology. | `not_assessed` | Runtime-visible observations can be represented from supported local files, but partial observations do not prove complete topology. Service-topology inference remains `not_assessed`. |
-| Portolan composes existing OSS tool outputs instead of reimplementing mature scanners. | `narrowed` | Safe only for named local output/import contracts and recorded evidence. Agents should use native OSS CLI, skill, or MCP surfaces when available. Graphify MCP/LLM/dashboard behavior, SCIP protobuf/real indexer output, real Serena export/MCP behavior, Repomix source/redaction semantics, broad Semgrep rule value, and broad OSS producer value remain unassessed. |
-| Portolan detects duplication across a landscape. | `narrowed` | Safe only for selected local duplication tool outputs, such as bounded jscpd/CPD-style evidence for the named target/profile that produced usable JSON. Native exact source/config duplicate detection has been removed; broad near-clone and component-duplication claims remain unproven. |
-| Portolan detects relationships across imports, manifests, metadata, runtime exports, and claims. | `narrowed` | Safe only when the relationship evidence type is named. Runtime-visible relationships require runtime evidence. |
-| Portolan has a documented security boundary for untrusted local artifacts. | `narrowed` | Safe only for the documented local CLI boundary and focused tests covering selected prompt-like text escaping, native config secret-value redaction, output path boundaries, and runtime schema handling. Do not claim broad security hardening. |
-| Portolan replaces Cursor, coding harnesses, enterprise code intelligence, service catalogs, observability, modernization, or readiness tools. | `rejected` | Say Portolan is a local landscape-navigation harness and evidence-preparation complement for agents. |
-| Portolan can safely support claims about UI Cursor/Composer behavior. | `rejected` | UI Cursor/Composer is outside the current required acceptance scope. Use only Cursor Agent CLI / Composer 2.5 wording until UI-specific evidence exists. |
-| Portolan defines a blind acceptance matrix contract across multiple agent harnesses and target shapes. | `narrowed` | The matrix contract exists, with selected Codex, OpenCode, and Cursor Agent CLI lanes verified on named local targets. Cursor UI/Composer is outside current required acceptance scope. Arbitrary external targets remain unproven. OpenCode default-permission external-output behavior failed. |
-| Portolan accepts LLM-authored analysis as tier-labeled claims (analytical / synthetic / speculative). | `narrowed` | Safe only as described by spec 106: claims enter the bundle through `import-analysis-claims.sh`, stay `claim-only`, carry a mandatory `claim_tier`, and analytical/synthetic claims are rejected unless every cited ref resolves in that bundle. Portolan validates citations and labeling, never the truth of the conclusion. Claims are never mixed into ranked findings or presented as tool evidence. |
+| Portolan targets the captain-atlas scenario. | `accepted` | Safe: the active product specs define this as the product contract. |
+| Portolan generates local atlas data and a local viewer from visible files and supplied local artifacts. | `narrowed` | Safe for the implemented install/scan/viewer path; usefulness still depends on target shape and available producers. |
+| Portolan should help Cursor Composer build an atlas from a Portolan link and target path. | `target` | This is the first acceptance client, not yet a broad product guarantee. |
+| Portolan replaces Cursor, Sourcegraph, Backstage, Understand Anything, or code intelligence products. | `rejected` | Safe wording: Portolan complements agents and may wrap OSS/product outputs when they win. |
+| Portolan proves complete enterprise architecture or runtime topology from source alone. | `rejected` | Safe wording: Portolan shows visible local scope and marks gaps. |
+| Portolan's evidence states are the main value proposition. | `rejected` | Evidence states are guardrails. The user-facing value is a useful atlas. |
+| Portolan should build a capability when existing OSS already solves it. | `rejected` | The OSS kill-gate spec decides kill, pack, or build per capability. |
 
-## Limits That Must Stay Visible
+## Required Limits
 
-- Portolan is a local evidence-preparation tool, not a live service, SLA,
-  observability system, modernization engine, or control plane.
-- Public community files, issue templates, and pull request templates are
-  contribution infrastructure. They do not prove public adoption, response
-  capacity, or support commitments.
-- UI Cursor/Composer behavior is outside the current required acceptance scope.
-  Cursor evidence is for headless Cursor Agent CLI on named local targets only.
-- Cross-harness acceptance is narrow: selected Codex, OpenCode, and Cursor
-  Agent CLI lanes are verified only for the target shapes named in the evidence
-  records. Current OpenCode acceptance uses a target-local bundle path under
-  `.portolan/atlas`; arbitrary external output paths and future permission modes
-  remain unproven unless named evidence is added.
-- Apache Bigtop evidence is a stress example. It must stay named as Bigtop
-  evidence and must not become the default product narrative.
-- Complete inherited-estate coverage is not proven by repository count.
-- Runtime service topology remains `not_assessed` without supported runtime
-  observations, and partial observations do not prove complete topology.
-- Security claims are narrow: Portolan has a documented untrusted-artifact
-  boundary and focused tests for selected local CLI risks, not a broad security
-  certification.
-- OSS producer validation is narrow and named. Producer/import paths may be
-  used when installed and explicitly requested, but broad scanner coverage,
-  certification, and target-independent producer value remain unproven or
-  `not_assessed`.
-- Output quality depends on the local evidence supplied to Portolan. Missing,
-  stale, or incomplete inputs must stay visible as gaps, not be hidden as
-  product success.
-- Imported agent claims (tiers B/C/D) are validated for citation resolution and
-  labeling only. Ref validity is per-bundle: a rescan invalidates prior claims,
-  and Portolan never upgrades a claim tier or verifies the conclusion itself.
-
-## Evidence
-
-- Claim ledger:
-  `docs/specs/038-product-claim-gate/reviews/product-claim-ledger-2026-05-27.md`
-- Client-safe answer source:
-  `docs/specs/038-product-claim-gate/reviews/client-safe-answer-2026-05-27.md`
-- Cursor comparison validation:
-  `docs/specs/034-cursor-comparison-validation/reviews/implementation-disposition-2026-05-26.md`
-- OSS producer acceptance:
-  `docs/specs/035-oss-producer-acceptance/reviews/implementation-disposition-2026-05-26.md`
-- Scope completeness validation:
-  `docs/specs/036-scope-completeness-validation/reviews/pr16-merge-closeout-2026-05-27.md`
-- Relationship evidence taxonomy:
-  `docs/specs/037-relationship-evidence-taxonomy/reviews/merge-closeout-2026-05-27.md`
-- Bounded jscpd profile:
-  `docs/specs/039-bounded-jscpd-profile/reviews/implementation-disposition-2026-05-27.md`
-- Agent acceptance matrix:
-  `docs/specs/041-agent-acceptance-matrix/reviews/acceptance-matrix-2026-05-27.md`
-- Codex single-repo acceptance lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/codex-single-repo-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` single-repo acceptance lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-kimi-single-repo-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` Bigtop multi-repo acceptance lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-multi-repo-bigtop-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` black-box acceptance lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-black-box-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` install prompt lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-install-prompt-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` Russian install prompt lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-ru-install-prompt-lane-2026-05-27.md`
-- OpenCode + `kimi-for-coding/k2p6` Bigtop install prompt lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-install-prompt-bigtop-lane-2026-05-28.md`
-- OpenCode + `kimi-for-coding/k2p6` external single-repo install prompt lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-install-prompt-external-single-repo-lane-2026-05-28.md`
-- OpenCode + `kimi-for-coding/k2p6` Russian external single-repo install
-  prompt lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-ru-install-prompt-external-single-repo-lane-2026-05-28.md`
-- OpenCode + `kimi-for-coding/k2p6` default-permission external-output lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-default-permission-external-output-lane-2026-05-28.md`
-- OpenCode + `kimi-for-coding/k2p6` default-permission internal-output lane:
-  `docs/specs/041-agent-acceptance-matrix/reviews/opencode-k2p6-default-permission-internal-output-lane-2026-05-28.md`
-- Agent adapter layer:
-  `docs/specs/042-agent-adapter-layer/reviews/implementation-disposition-2026-05-27.md`
-- OSS composition follow-up:
-  `docs/specs/042-agent-adapter-layer/reviews/oss-composition-followup-2026-05-27.md`
-- Runtime security boundary:
-  `docs/specs/044-runtime-security-boundary/reviews/implementation-disposition-2026-05-27.md`
-- Runtime topology acceptance audit:
-  `docs/specs/044-runtime-security-boundary/reviews/runtime-topology-acceptance-audit-2026-05-27.md`
-- Bigtop generic root stress:
-  `docs/specs/007-apache-bigtop-corpus/reviews/generic-root-stress-2026-05-27.md`
-- Cursor Composer 2.5 Bigtop operator lane:
-  `docs/specs/007-apache-bigtop-corpus/reviews/cursor-composer25-bigtop-lane-2026-05-27.md`
-- Bigtop selection completeness:
-  `docs/specs/036-scope-completeness-validation/reviews/bigtop-selection-completeness-2026-05-27.md`
-- Thread goal completion audit:
-  `docs/specs/040-release-envelope/reviews/thread-goal-completion-audit-2026-05-27.md`
+- Do not claim arbitrary Cursor UI behavior until the Cursor Composer first-run
+  BDD passes.
+- Do not claim complete estate coverage from local repository count alone.
+- Do not claim runtime topology unless runtime observations were supplied or
+  captured with explicit approval.
+- Do not treat missing, failed, partial, or stale producer output as a clean
+  result.
+- Do not claim broad security certification. Portolan is local-first and
+  read-only by default, but each new surface still needs review.
+- Do not present LLM-authored conclusions as source truth.
 
 ## How To Use This Page
 
-- Product copy may use only `accepted` or `narrowed` claims.
-- A `narrowed` claim must carry its scope in the same paragraph.
-- `rejected`, `not_assessed`, `blocked`, and `failed` claims are limitations,
-  not positive claims.
-- Internal tests and implementation status can support capability readiness,
-  but they are not enough to claim product value.
+- Product copy may use `accepted` and properly scoped `narrowed` claims.
+- `target` claims describe the desired product and must not be written as
+  already proven.
+- `rejected`, `failed`, `blocked`, and `not_assessed` states are limits, not
+  positive claims.
+- When in doubt, route the decision through `docs/captain-atlas/06-oss-kill-gates.md`.

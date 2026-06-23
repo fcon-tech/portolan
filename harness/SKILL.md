@@ -10,11 +10,12 @@ is optional (see `docs/harness/GO-FREEZE-POLICY.md`).
 
 ## Inputs
 
-- `PORTOLAN_PATH` - absolute path to this Portolan checkout.
+- `PORTOLAN` - Portolan git URL or absolute path to a local Portolan checkout.
 - `TARGET_ROOT` - absolute path to repo or landscape root (read-only).
 - `TARGET_PATH` - accepted alias for `TARGET_ROOT` in older prompts.
-- `BUNDLE_DIR` - absolute empty output directory for the Portolan bundle
-  (default convention: `<target-root>/.portolan/atlas`).
+- `BUNDLE_DIR` - optional absolute output directory for the Portolan bundle.
+  Default it to `<target-root>/.portolan/atlas` unless the operator supplied
+  an explicit safe override.
 
 Do not clone, fetch, install tools, start daemons, or mutate target source files
 unless the operator explicitly approves it. Portolan writes installed harness
@@ -28,6 +29,23 @@ Portolan interface.
 
 ```bash
 TARGET_ROOT="${TARGET_ROOT:-${TARGET_PATH:?set TARGET_ROOT}}"
+PORTOLAN="${PORTOLAN:?set PORTOLAN to a git URL or local checkout path}"
+BUNDLE_DIR="${BUNDLE_DIR:-$TARGET_ROOT/.portolan/atlas}"
+if [[ "$PORTOLAN" == http://* || "$PORTOLAN" == https://* || "$PORTOLAN" == git@* ]]; then
+  echo "Ask the operator before fetching exactly this Portolan URL: $PORTOLAN" >&2
+  # After approval:
+  PORTOLAN_CACHE="${PORTOLAN_CACHE:-$HOME/.cache/portolan-harness}"
+  mkdir -p "$PORTOLAN_CACHE"
+  PORTOLAN_PATH="$PORTOLAN_CACHE/portolan"
+  if [[ -d "$PORTOLAN_PATH/.git" ]]; then
+    git -C "$PORTOLAN_PATH" fetch --all --prune
+    git -C "$PORTOLAN_PATH" pull --ff-only
+  else
+    git clone "$PORTOLAN" "$PORTOLAN_PATH"
+  fi
+else
+  PORTOLAN_PATH="$PORTOLAN"
+fi
 "$PORTOLAN_PATH/scripts/portolan-install.sh" \
   "$TARGET_ROOT" \
   --harness all \
@@ -39,15 +57,48 @@ viewer separately so the agent can continue querying the bundle:
 
 ```bash
 "$TARGET_ROOT/.portolan/bin/portolan-scan.sh" \
+  --doctor \
+  "$TARGET_ROOT" \
+  "$BUNDLE_DIR" \
+  --skip-install --no-viewer
+
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" \
+  --dry-run \
+  "$TARGET_ROOT" \
+  "$BUNDLE_DIR" \
+  --skip-install --no-viewer
+
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" \
   "$TARGET_ROOT" \
   "$BUNDLE_DIR" \
   --yes --skip-install --no-viewer
+```
+
+The doctor reports target shape, bundle writability, available/missing tools,
+rough size, and local-first expectations without writing outputs. The dry-run
+adds the planned reads, writes, tool commands, network expectations, and
+approval-required actions. After a scan, read `$BUNDLE_DIR/receipt.json` before
+handoff, then read `$BUNDLE_DIR/captain-atlas-scorecard.json`; together they
+record command argv, target, bundle, producer states/gaps, local-first flags,
+duration, viewer launch path, and which captain-atlas dimensions are verified
+or not_assessed.
+
+Use status before reusing a bundle and clean only when replacing generated
+Portolan output:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --status "$TARGET_ROOT" "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" --clean "$TARGET_ROOT" "$BUNDLE_DIR"
 ```
 
 Useful flags:
 
 | Flag | Purpose |
 | --- | --- |
+| `--doctor` | Read-only first-run check; no bundle writes |
+| `--dry-run` / `--plan` | Read-only plan after doctor |
+| `--status` | Read-only JSON status for reuse/freshness and handoff |
+| `--clean` | Remove approved generated bundle output; refuses target/root/home/cwd |
 | `--no-viewer` | Build bundle only; recommended for agent runs |
 | `--skip-install` | Never install missing tools (gaps only) |
 | `--limit-repos N` | Cap multi-repo sharding |
@@ -79,7 +130,7 @@ When you need fine-grained producer control, run individual recipes from
 Then rebuild the bundle from the local producer outputs:
 
 ```bash
-"$PORTOLAN_PATH/scripts/build-portolan-bundle.sh" "$TARGET_ROOT" "$BUNDLE_DIR"
+"$TARGET_ROOT/.portolan/bin/portolan-scan.sh" "$TARGET_ROOT" "$BUNDLE_DIR" --yes --skip-install --no-viewer
 ```
 
 ### Open atlas viewer (human)
@@ -95,17 +146,49 @@ read-only source preview via `/source` (path-guarded). Operator runbook:
 
 ### Agent navigation
 
-Read in order:
+Read only the small control artifacts directly:
 
-1. `$BUNDLE_DIR/manifest.json`
-2. `$BUNDLE_DIR/atlas-facts.json` (landscape components, relationships, surface routes)
-3. `$BUNDLE_DIR/repo-profiles.json` (repo purpose, languages, config/CI/test surfaces)
-4. `$BUNDLE_DIR/relationships.jsonl` (visible cross-repo relationships)
-5. `$BUNDLE_DIR/hotspots.jsonl` and `$BUNDLE_DIR/hotspots-full.jsonl` (ranked pain points)
-6. `$BUNDLE_DIR/gaps.jsonl` (missing evidence - do not invent)
+1. `$BUNDLE_DIR/receipt.json`
+2. `$BUNDLE_DIR/captain-atlas-scorecard.json`
+3. `$BUNDLE_DIR/captain-qna-eval.json` after running query eval
+4. `$BUNDLE_DIR/captain-handoff.md` and `$BUNDLE_DIR/captain-handoff.json`
+
+Do not load raw relationship, hotspot, gap, or source-content JSONL files into
+chat on large estates. Query the bundle instead:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section components --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" atlas --bundle "$BUNDLE_DIR" --section edges --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "$BUNDLE_DIR" --limit 20
+"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" gaps --bundle "$BUNDLE_DIR" --limit 20
+```
 
 Cite `repo.id`, `relationship.id`, `hotspot.id`, `gap.id`, source paths, and
 `producer_ref` for every material claim.
+
+Generate the deterministic Q&A acceptance artifact when proving the atlas can
+answer captain follow-ups without reading raw large outputs:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-query-eval.sh" --run "$BUNDLE_DIR"
+```
+
+This writes `$BUNDLE_DIR/captain-qna-eval.json` with five captain questions and
+two selected-code questions answered from bounded `portolan-bundle-query`
+results. Use it as evidence of queryability, not as a replacement for answering
+the captain's actual question.
+
+Build the final captain handoff after Q&A eval:
+
+```bash
+"$TARGET_ROOT/.portolan/bin/portolan-captain-handoff.sh" "$BUNDLE_DIR"
+```
+
+This writes `$BUNDLE_DIR/captain-handoff.md` for the human summary and
+`$BUNDLE_DIR/captain-handoff.json` for machine-readable status. Treat it as the
+portable demo artifact for the completed atlas run.
 
 ### Query the bundle (agent Q&A)
 
@@ -134,12 +217,13 @@ When a user highlights a file, symbol, function, or subsystem in Cursor,
 OpenCode, Codex, Kimi, Zed, Claude, or another coding-agent harness:
 
 1. Resolve the selected path relative to one repo in `$BUNDLE_DIR/repos.json`.
-2. Call `source` for a bounded snippet.
-3. Call `symbol` for the selected symbol when `symbol-index.jsonl` exists.
-4. Call `search` for the selected path/name to find nearby indexed mentions.
-5. Call `hotspots --repo <repo-id>` to show local pain around that repo.
-6. Call `relationships` to show visible repo-to-repo or shared-dependency context.
-7. State whether runtime/config/vendor relationships are `runtime-visible`,
+2. Call `selected-code` first to get the bounded source, component, risk, gap,
+   relationship, and atlas navigation packet:
+   `"$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" selected-code --bundle "$BUNDLE_DIR" --repo <repo-id> --path <path> --line <line> --limit 20`.
+3. Use `source`, `symbol`, `search`, `hotspots --repo <repo-id>`, and
+   `relationships` as follow-up queries when the selected-code packet points to
+   more detail or when repo/path/symbol resolution is ambiguous.
+4. State whether runtime/config/vendor relationships are `runtime-visible`,
    `metadata-visible`, `source-visible`, `not_assessed`, `unknown`, or
    `cannot_verify`.
 

@@ -9,15 +9,15 @@ local-first, read-only by default, and honest about unknowns.
   behavior, and evidence state.
 - Documentation fixes that make install, agent use, product boundaries, or
   evidence labels clearer.
-- Focused CLI, schema, or artifact improvements backed by SpecKit tasks and
-  tests.
+- Focused CLI, schema, or artifact improvements backed by captain-atlas BDD
+  scenarios and tests.
 - Focused importer or producer proposals that normalize local tool output and
-  include a SpecKit plan.
+  include an OSS kill / pack / build decision.
 - Review artifacts that narrow, reject, block, or verify public claims.
 
 Avoid broad rewrites, speculative architecture, daemon behavior, network access,
-credentials, or target repository mutation unless an approved spec explicitly
-requires them.
+credentials, or target repository mutation unless the captain-atlas contract
+explicitly requires and approves them.
 
 ## Evidence Labels
 
@@ -53,8 +53,8 @@ vulnerabilities.
 
 ## Before Opening A Pull Request
 
-For repository changes, start from the relevant SpecKit package under `docs/specs/`
-or open a proposal issue when no spec exists yet.
+For repository changes, start from the relevant work package under
+`docs/captain-atlas/` or open a proposal issue when no package exists yet.
 
 Follow the [Code Of Conduct](CODE_OF_CONDUCT.md). By contributing, you confirm
 that you have the right to submit the work under this repository's license. No
@@ -75,7 +75,7 @@ For CLI behavior changes, also run the affected command, for example:
 go run ./cmd/portolan <command> --help
 ```
 
-Update docs, schemas, fixtures, review artifacts, and task ledgers when the
+Update docs, schemas, fixtures, review artifacts, and BDD scorecards when the
 behavior or public claim surface changes.
 
 ## Product Claim Discipline

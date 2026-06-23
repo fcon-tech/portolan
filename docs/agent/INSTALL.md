@@ -1,25 +1,46 @@
 # Agent Install
 
-Portolan's primary agent route is a source checkout installer that writes
-target-local wrappers into the selected project. The legacy Go binary remains
-available for older `context prepare` / `map` workflows, but it is not required
-for the atlas bundle path.
+Portolan's primary agent route starts from a Portolan URL or local path, then
+writes target-local wrappers into the selected project. The legacy Go binary
+remains available for explicit compatibility work, but it is not required for
+the atlas bundle path.
 
-If the user says "install Portolan" and gives you a target project, install the
-agent harness into that project:
+If the user says "install Portolan" and gives you a target project, resolve
+Portolan first, then install the agent harness into that project. Fetch a URL
+only after the operator approves fetching exactly that URL.
+
+For captain-facing use, generate the copyable prompt from the two required
+inputs:
 
 ```bash
-git clone https://github.com/fcon-tech/portolan.git
-cd portolan
-scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas
+scripts/portolan-captain-prompt.sh \
+  --portolan <Portolan git URL or local checkout path> \
+  --target-root <target-root>
 ```
 
-If you already have a Portolan checkout, run the same install command from that
-checkout instead of cloning again.
+Inside the run, the agent resolves `PORTOLAN` to a local `PORTOLAN_PATH`, asking
+before URL fetches. If `PORTOLAN` is already a local checkout, use it directly
+instead of cloning.
 
-By default this installs a fast first core scan (`config,ctags`, `--core-only`)
-so Cursor/OpenCode get a queryable bundle before deeper producers run. Use
-`--scan-profile full` when the operator accepts a heavier first command.
+By default this installs a full first atlas command so supported agent
+instruction files get the relationships, findings, query artifacts, and
+handoff expected by the captain workflow. Use `--scan-profile fast` only when
+the operator explicitly wants a lightweight reconnaissance pass before the full
+atlas command.
+
+Run doctor before building. It is read-only and reports target shape, output
+writability, available/missing tools, rough scan size, and local-first
+expectations:
+
+```bash
+<target-root>/.portolan/bin/portolan-scan.sh --doctor <target-root> <bundle-dir> --skip-install --no-viewer
+```
+
+If the captain asks what Portolan will do, show the dry-run plan:
+
+```bash
+<target-root>/.portolan/bin/portolan-scan.sh --dry-run <target-root> <bundle-dir> --skip-install --no-viewer
+```
 
 Then build the atlas bundle:
 
@@ -30,22 +51,46 @@ Then build the atlas bundle:
 Remove `--skip-install` only after explicit approval to install missing local
 OSS tools.
 
+After the scan, read `<bundle-dir>/receipt.json`. It records command argv,
+target, bundle, producer states/gaps, local-first flags, duration, and viewer
+launch path.
+
+Check whether an existing bundle can be reused without writing anything:
+
+```bash
+<target-root>/.portolan/bin/portolan-scan.sh --status <target-root> <bundle-dir>
+```
+
+The status output is JSON with bundle existence, receipt status, target,
+generated time, gap count, producer states, and viewer handoff when available.
+To remove generated Portolan output, clean only the approved bundle path:
+
+```bash
+<target-root>/.portolan/bin/portolan-scan.sh --clean <target-root> <bundle-dir>
+```
+
+Clean refuses target root, repo root, cwd, home, `/`, and unmarked arbitrary
+directories. It must not delete target source files.
+
 ## Agent Harness Install
 
-Use the install script when the user wants Cursor/OpenCode to remember Portolan
-for a target project:
+Use the install script when the user wants a coding-agent harness to remember
+Portolan for a target project:
 
 ```bash
 scripts/portolan-install.sh <target-root> --harness cursor
 scripts/portolan-install.sh <target-root> --harness opencode
+scripts/portolan-install.sh <target-root> --harness codex
+scripts/portolan-install.sh <target-root> --harness claude
 scripts/portolan-install.sh <target-root> --harness all
-scripts/portolan-install.sh <target-root> --harness all --scan-profile full
+scripts/portolan-install.sh <target-root> --harness all --scan-profile fast
 ```
 
 Outputs:
 
 - Cursor: `<target-root>/.cursor/rules/portolan-atlas.mdc`
-- OpenCode: managed Portolan block in `<target-root>/AGENTS.md`
+- OpenCode/Codex/Zed-compatible agents: managed Portolan block in `<target-root>/AGENTS.md`
+- Claude: managed Portolan block in `<target-root>/CLAUDE.md`
 - Command wrappers: `<target-root>/.portolan/bin/`
 - Default bundle path: `<target-root>/.portolan/atlas`
 
@@ -65,9 +110,10 @@ Cursor/OpenCode CLIs are available on the current machine:
 scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
-The product gate runs the static install smoke, target-local command wrapper
-checks, real Cursor/OpenCode runtime lanes, local harness smoke, schemas, Go
-checks, viewer build checks, and diff whitespace. Omit
+The product gate runs the static install smoke for Cursor/OpenCode/Codex/Claude
+instruction files, target-local command wrapper checks, real Cursor/OpenCode
+runtime lanes, local harness smoke, schemas, Go checks, viewer build checks,
+and diff whitespace. Omit
 `--require-agent-runtime` only when unavailable CLIs should be recorded as
 `not_assessed` instead of failing the check.
 
@@ -79,13 +125,14 @@ Check whether a legacy `portolan` binary is already available:
 portolan --version
 ```
 
-If this works and the operator explicitly asked for legacy map/context
-artifacts, use that binary directly. Otherwise use the atlas wrappers above.
+If this works and the operator explicitly asked for the legacy compatibility
+route, use that binary directly. Otherwise use the atlas wrappers above.
 
-From the Portolan repository root:
+If the operator explicitly chooses the legacy route and `PORTOLAN` has already
+been resolved to a local checkout:
 
 ```bash
-cd <portolan-checkout>
+cd "$PORTOLAN_PATH"
 scripts/bootstrap-portolan
 .portolan/bin/portolan --version
 ```

@@ -1,6 +1,11 @@
-# Portolan viewer
+# Portolan Atlas Viewer
 
-Local static UI + `serve.js` for Portolan scan bundles.
+Local map-first atlas app for Portolan scan bundles.
+
+The viewer is the human-facing half of the captain-atlas flow: it loads a local
+bundle, shows target identity, repo/component shape, relationship edges, risks,
+gaps, and drill-down routes back to local bundle records and source snippets.
+It does not call remote services or mutate the target.
 
 ## Dependencies (MCP server only)
 
@@ -26,3 +31,7 @@ likely resolves `npm` to `/mnt/c/Program Files/nodejs/npm`. Prefer:
 node scripts/build-static.js
 node scripts/serve.js --bundle /path/to/bundle --port 4173
 ```
+
+Open the printed localhost URL. The first screen should orient a cold reader
+without requiring raw JSON: map first, selection detail second, report/source
+drill-down next.

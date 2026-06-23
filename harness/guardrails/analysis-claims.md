@@ -1,7 +1,7 @@
 # Guardrail: Agent Analysis Claims (tiers B/C/D)
 
 Portolan accepts LLM-authored analysis only as tier-labeled, citation-checked
-claims (`claims.jsonl`, spec 106). This guardrail is binding for any agent
+claims (`claims.jsonl`). This guardrail is binding for any agent
 writing or presenting claims.
 
 ## Tier ladder

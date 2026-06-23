@@ -5,14 +5,14 @@
       "subject": "apache-bigtop",
       "predicate": "claims",
       "object": "missing-one-command-map-bundle",
-      "source": "docs/specs/007-apache-bigtop-corpus/acceptance-smoke.md"
+      "source": "docs/captain-atlas/00-product-contract.md"
     },
     {
       "id": "claim-bigtop-needs-relationship-detection",
       "subject": "apache-bigtop",
       "predicate": "claims",
       "object": "missing-relationship-detection",
-      "source": "docs/specs/007-apache-bigtop-corpus/acceptance-smoke.md"
+      "source": "docs/captain-atlas/00-product-contract.md"
     }
   ]
 }

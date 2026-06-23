@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bridge legacy portolan map bundle -> Portolan bundle layout. See spec 088.
+# Bridge legacy portolan map bundle -> Portolan bundle layout.
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then

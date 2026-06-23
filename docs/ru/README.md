@@ -2,9 +2,10 @@
 
 [English version](../../README.md)
 
-Portolan - локальный read-only набор для навигации по кодовым базам. Он
-помогает AI-агентам и engineering leaders отвечать по проверяемым артефактам,
-а не по уверенной прозе.
+Portolan - локальный read-only atlas route для AI-агентов и engineering
+leaders. Капитан дает агенту Portolan URL или локальный path плюс target
+ecosystem; агент ставит target-local wrappers, строит local atlas app/bundle и
+отвечает через query/drill-down routes.
 
 Portolan читает локальные репозитории и пишет atlas bundle:
 
@@ -33,9 +34,10 @@ Portolan особенно полезен для messy, legacy, multi-repo и par
 
 ## Что Получится
 
-Основной workflow устанавливает инструкции для Cursor/OpenCode, строит
-atlas bundle и открывает local viewer. Агент сначала строит bundle, затем
-отвечает через bounded `portolan-bundle-query`, а не грузит весь target в чат.
+Основной workflow устанавливает инструкции для поддержанных agent harnesses,
+строит atlas bundle и открывает local viewer. Агент сначала строит bundle,
+затем отвечает через bounded `portolan-bundle-query`, а не грузит весь target в
+чат.
 
 Типичный bundle:
 
@@ -66,61 +68,72 @@ Portolan не является:
 
 ## Быстрый Старт
 
-Основной путь сейчас — source checkout Portolan, который ставит target-local
-wrappers для Cursor/OpenCode:
+Основной путь сейчас — captain prompt generator. Дай агенту Portolan как URL
+или локальный path и target root; агент сам выберет безопасный bundle path,
+спросит разрешение перед fetch URL и поставит target-local wrappers для
+поддержанных agent harnesses:
 
 ```bash
-git clone https://github.com/fcon-tech/portolan.git
-cd portolan
-scripts/portolan-install.sh <target-root> --harness all --bundle-dir <target-root>/.portolan/atlas
+scripts/portolan-captain-prompt.sh \
+  --portolan <Portolan git URL or local checkout path> \
+  --target-root <target-root>
 ```
 
 Installer пишет:
 
 - `<target-root>/.cursor/rules/portolan-atlas.mdc` для Cursor Project Rules;
-- managed Portolan block в `<target-root>/AGENTS.md` для OpenCode;
+- managed Portolan block в `<target-root>/AGENTS.md` для OpenCode/Codex/Zed-compatible agents;
+- managed Portolan block в `<target-root>/CLAUDE.md` для Claude;
 - target-local command wrappers в `<target-root>/.portolan/bin/`;
 - default bundle path: `<target-root>/.portolan/atlas`.
 
-По умолчанию harness ставит быстрый first core scan (`config,ctags`,
-`--core-only`), чтобы Cursor/OpenCode получили queryable bundle до тяжелых
-producers. Если оператор явно согласен на тяжелую первую команду, используй
-`--scan-profile full`.
+По умолчанию harness ставит полноценную первую команду атласа, чтобы
+поддержанные agent instruction files получили связи, findings, query artifacts
+и handoff для капитанского workflow. Используй `--scan-profile fast`, только
+если оператор явно хочет легкий разведочный проход перед полной командой
+атласа.
 
-Собрать atlas bundle вручную:
+Собрать atlas bundle вручную после установки:
 
 ```bash
+<target-root>/.portolan/bin/portolan-scan.sh --doctor <target-root> <bundle-dir> --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh --dry-run <target-root> <bundle-dir> --skip-install --no-viewer
 <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh --status <target-root> <bundle-dir>
 ```
 
 Убирай `--skip-install` только после явного разрешения установить missing local
-OSS tools. Viewer открывай отдельно:
+OSS tools. Прямой scan shorthand используй только после `doctor` и `dry-run`.
+Viewer открывай отдельно:
 
 ```bash
 <target-root>/.portolan/bin/portolan-viewer.sh
 ```
 
-Проверить installable Cursor/OpenCode pack на текущей машине:
+Проверить installable agent pack на текущей машине:
 
 ```bash
 scripts/portolan-product-acceptance.sh --require-agent-runtime
 ```
 
-Если Cursor/OpenCode CLI недоступны и это не должно ломать локальную проверку,
-запусти product acceptance без `--require-agent-runtime`; недоступные lanes
-будут `not_assessed`.
+Static install lanes проверяют Cursor/OpenCode/Codex/Claude instruction files.
+Live runtime lanes сейчас проверяются для Cursor/OpenCode; если эти CLI
+недоступны и это не должно ломать локальную проверку, запусти product
+acceptance без `--require-agent-runtime`; недоступные lanes будут
+`not_assessed`.
 
 ## Legacy Go CLI
 
-Используй этот путь только для старых `context prepare` / `map` workflows.
+Используй этот путь только когда оператор явно просит legacy compatibility
+route для `context prepare` / `map`.
 Если legacy binary уже доступен, проверь его:
 
 ```bash
 portolan --version
 ```
 
-Если binary нет или нужен воспроизводимый repo-local запуск, собери его из
-source checkout:
+Если оператор явно выбрал compatibility route, а `PORTOLAN_PATH` уже указывает
+на локальный Portolan checkout, собери repo-local binary:
 
 ```bash
 git clone https://github.com/fcon-tech/portolan.git
@@ -142,7 +155,7 @@ download только явно:
 PORTOLAN_BOOTSTRAP_ALLOW_NETWORK=1 scripts/bootstrap-portolan
 ```
 
-В legacy map/context runs начинай чтение с:
+В legacy compatibility runs начинай чтение с:
 
 ```text
 <output-dir>/context/agent-brief.md
@@ -166,7 +179,7 @@ overview, agent run, install/build, Cursor, OpenCode и release notes.
 Важные границы:
 
 - Cursor evidence сейчас относится к headless Cursor Agent CLI / Composer, а
-  не к Cursor UI вообще.
+  не к произвольному Cursor UI вообще.
 - Для OpenCode default-permission runs предпочитай output path внутри target,
   например `<target-root>/.portolan/atlas`. Внешний output path в
   зафиксированном default-permission lane failed.
@@ -180,7 +193,7 @@ overview, agent run, install/build, Cursor, OpenCode и release notes.
 агенту.
 
 ```text
-PORTOLAN_PATH=<absolute path to Portolan checkout>
+PORTOLAN=<Portolan git URL or local checkout path>
 TARGET_ROOT=<absolute path to local target>
 BUNDLE_DIR=<absolute path to atlas bundle directory>
 ```
@@ -188,9 +201,11 @@ BUNDLE_DIR=<absolute path to atlas bundle directory>
 И скажи:
 
 ```text
-Поставь Portolan из PORTOLAN_PATH в TARGET_ROOT, потом используй wrappers из
-TARGET_ROOT/.portolan/bin и запиши artifacts в BUNDLE_DIR. Следуй
-docs/agent/INSTALL-PROMPT.ru.md, сохраняй unknown / cannot_verify /
+Поставь Portolan из PORTOLAN в TARGET_ROOT: если PORTOLAN это URL, сначала
+спроси разрешение fetch/clone ровно этого URL в локальный cache; если это path,
+используй его напрямую. Потом используй wrappers из TARGET_ROOT/.portolan/bin и
+запиши artifacts в BUNDLE_DIR. Следуй docs/agent/INSTALL-PROMPT.ru.md,
+сохраняй unknown / cannot_verify /
 not_assessed и цитируй локальные artifact paths для каждого важного claim.
 ```
 

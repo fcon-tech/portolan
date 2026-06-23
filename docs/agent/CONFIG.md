@@ -3,17 +3,28 @@
 Portolan's main configuration is the command line: target root, output
 directory, and optional input files.
 
-## Atlas Bundle
+## Atlas Bundle First Run
 
 ```bash
+<target-root>/.portolan/bin/portolan-scan.sh --doctor <target-root> <bundle-dir> --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh --dry-run <target-root> <bundle-dir> --skip-install --no-viewer
 <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
+<target-root>/.portolan/bin/portolan-scan.sh --status <target-root> <bundle-dir>
+<target-root>/.portolan/bin/portolan-viewer.sh
 ```
 
-Use this first when preparing Cursor, OpenCode, or another coding-agent harness
-to answer broad codebase questions. Remove `--skip-install` only after explicit
-approval to install missing local OSS tools.
+Use this sequence after install when preparing Cursor, OpenCode, or another
+coding-agent harness to answer broad codebase questions. Remove
+`--skip-install` only after explicit approval to install missing local OSS
+tools.
 
 The default installed bundle path is `<target-root>/.portolan/atlas`.
+
+Scan shorthand is acceptable only after doctor and dry-run have succeeded or
+their blockers are recorded.
+
+Run `--status` after scan. Do not replace it with `ls`; status reports bundle
+compatibility, receipt state, reusability, and local-first flags as JSON.
 
 ## Query Bundle
 
@@ -28,22 +39,22 @@ The default installed bundle path is `<target-root>/.portolan/atlas`.
 
 Use bounded queries before loading large bundle files.
 
-## Legacy Context Preparation
+## Legacy Compatibility Preparation
 
-Use only when the operator explicitly asks for the legacy Go path:
+Use only when the operator explicitly asks for the legacy compatibility route:
 
 ```bash
 portolan context prepare --root <target-root> --out <context-dir> --profile agent
 ```
 
-## Legacy Map Run
+## Legacy Compatibility Map Run
 
 ```bash
 portolan map --root <target-root> --out <run-dir>
 ```
 
 `map --root` discovers the target root, direct child Git repositories, and
-`repos/*` Git repositories. It does not prove the local checkout is the complete
+`repos/*` Git repositories. It does not prove the local target is the complete
 external ecosystem.
 
 ## Curated Selection

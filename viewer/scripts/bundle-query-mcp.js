@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * stdio MCP server for Portolan bundle queries (spec 098).
+ * stdio MCP server for Portolan bundle queries.
  * Uses @modelcontextprotocol/sdk; delegates queries to bundle-query.js.
  */
 const { Server } = require('@modelcontextprotocol/sdk/server/index.js');
@@ -70,6 +70,18 @@ const TOOL_DEFS = [
     },
   },
   {
+    name: 'portolan_query_overview',
+    description:
+      'Return a compact captain-facing overview context from repos, atlas components, relationships, risks, and gaps. Machine-readable; not a prewritten answer.',
+    family: 'overview',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
     name: 'portolan_query_search',
     description:
       'Search bounded code index (search-index.jsonl). Requires portolan-scan build. Not full-repo grep.',
@@ -93,11 +105,11 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         name: { type: 'string', description: 'Symbol name (required)' },
+        path: { type: 'string', description: 'Optional file path filter; may be used without name for selected-file lookup' },
         repo: { type: 'string', description: 'Optional repo/component id scope' },
         kind: { type: 'string' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
-      required: ['name'],
     },
   },
   {
@@ -113,6 +125,40 @@ const TOOL_DEFS = [
         radius: { type: 'integer', minimum: 0 },
       },
       required: ['path'],
+    },
+  },
+  {
+    name: 'portolan_query_selected_code',
+    description:
+      'Map a selected file and/or symbol to repo, atlas component, source snippet, symbols, search hits, risks, relationships, gaps, and viewer/API drill-down routes.',
+    family: 'selected-code',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Selected repo-relative or absolute path' },
+        symbol: { type: 'string', description: 'Selected symbol/name' },
+        repo: { type: 'string', description: 'Optional repo/component id scope' },
+        line: { type: 'integer', minimum: 1 },
+        radius: { type: 'integer', minimum: 0 },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+    },
+  },
+  {
+    name: 'portolan_query_claim_check',
+    description:
+      'Check a human/developer claim that one repo/component has a relationship to another. Returns supported, contradicted, cannot_verify, or not_assessed from bounded relationship, atlas edge, and gap records only.',
+    family: 'claim-check',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        from: { type: 'string', description: 'Claim source repo/component id or label (required)' },
+        to: { type: 'string', description: 'Claim target repo/component id or label (required)' },
+        kind: { type: 'string', description: 'Optional relationship kind e.g. depends-on, uses-image' },
+        text: { type: 'string', description: 'Optional substring in relationship summary/detail' },
+        limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
+      },
+      required: ['from', 'to'],
     },
   },
   {
@@ -188,13 +234,14 @@ const TOOL_DEFS = [
   {
     name: 'portolan_query_promotion_health',
     description:
-      'Query spec 109 promotion health by evidence family. Use before treating a bundle as complete architecture truth; not_integrated/not_assessed/cannot_verify are explicit degraded states.',
+      'Query promotion health by evidence family. Use before treating a bundle as complete architecture truth; not_integrated/not_assessed/cannot_verify are explicit degraded states.',
     family: 'promotion-health',
     inputSchema: {
       type: 'object',
       properties: {
         family: { type: 'string', description: 'Canonical evidence family id' },
         status: { type: 'string', description: 'Health status filter' },
+        stratum: { type: 'string', description: 'promotion_health' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
     },
@@ -208,6 +255,7 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         family: { type: 'string', description: 'Canonical evidence family id' },
+        status: { type: 'string', description: 'Optional status filter when present on records' },
         stratum: { type: 'string', description: 'promoted_fact or claim' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
@@ -222,6 +270,8 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         family: { type: 'string', description: 'Canonical evidence family id' },
+        status: { type: 'string', description: 'Optional status filter when present on records' },
+        stratum: { type: 'string', description: 'raw_evidence' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
     },
@@ -235,6 +285,8 @@ const TOOL_DEFS = [
       type: 'object',
       properties: {
         family: { type: 'string', description: 'Usually source_code' },
+        status: { type: 'string', description: 'Optional status filter when present on records' },
+        stratum: { type: 'string', description: 'classified_source' },
         limit: { type: 'integer', minimum: 1, maximum: bundleQuery.MAX_LIMIT },
       },
     },
@@ -267,12 +319,31 @@ function familyOpts(family, args) {
       return { surface: args.surface, status: args.status, limit: args.limit };
     case 'landscape':
       return { section: args.section };
+    case 'overview':
+      return { limit: args.limit };
     case 'search':
       return { q: args.q, repo: args.repo, pathScope: args.path_scope, limit: args.limit };
     case 'symbol':
-      return { name: args.name, repo: args.repo, kind: args.kind, limit: args.limit };
+      return { name: args.name, path: args.path, repo: args.repo, kind: args.kind, limit: args.limit };
     case 'source':
       return { path: args.path, repo: args.repo, line: args.line, radius: args.radius };
+    case 'selected-code':
+      return {
+        path: args.path,
+        symbol: args.symbol,
+        repo: args.repo,
+        line: args.line,
+        radius: args.radius,
+        limit: args.limit,
+      };
+    case 'claim-check':
+      return {
+        from: args.from,
+        to: args.to,
+        kind: args.kind || args.type || args.relationship,
+        text: args.text || args.q,
+        limit: args.limit,
+      };
     case 'atlas':
       return { section: args.section, target: args.target, repo: args.repo, limit: args.limit };
     case 'evidence-index':
@@ -284,13 +355,13 @@ function familyOpts(family, args) {
     case 'relationships':
       return { type: args.type, repo: args.repo, limit: args.limit };
     case 'promotion-health':
-      return { family: args.family, status: args.status, limit: args.limit };
+      return { family: args.family, status: args.status, stratum: args.stratum, limit: args.limit };
     case 'promoted-facts':
-      return { family: args.family, stratum: args.stratum, limit: args.limit };
+      return { family: args.family, status: args.status, stratum: args.stratum, limit: args.limit };
     case 'raw-artifacts':
-      return { family: args.family, limit: args.limit };
+      return { family: args.family, status: args.status, stratum: args.stratum, limit: args.limit };
     case 'classified-sources':
-      return { family: args.family, limit: args.limit };
+      return { family: args.family, status: args.status, stratum: args.stratum, limit: args.limit };
     default:
       throw new Error(`unknown family ${family}`);
   }

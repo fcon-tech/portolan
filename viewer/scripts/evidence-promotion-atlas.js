@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build and validate the spec 109 evidence-promotion atlas artifacts.
+ * Build and validate evidence-promotion atlas artifacts.
  *
  * This is a local normalizer over already present bundle/producers artifacts.
  * It does not run scanners, fetch networks, mutate targets, or infer secret
@@ -119,6 +119,7 @@ const PROMOTED_ROUTE_FAMILIES = new Set([
 
 const SOURCE_CLASSIFICATION_LIMIT = positiveIntEnv('PORTOLAN_EVIDENCE_SOURCE_CLASSIFICATION_LIMIT', 5000);
 const PROMOTED_FACT_ROW_LIMIT = positiveIntEnv('PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT', 200);
+const PROMOTION_QUERY_SAMPLE_LIMIT = positiveIntEnv('PORTOLAN_PROMOTION_QUERY_SAMPLE_LIMIT', 200);
 
 function positiveIntEnv(name, fallback) {
   const value = Number.parseInt(process.env[name] || '', 10);
@@ -210,12 +211,159 @@ function readJSONLStrict(file, errors) {
   return rows;
 }
 
+function forEachJSONLStrict(file, errors, onRow) {
+  if (!fs.existsSync(file)) {
+    errors.push(`missing ${path.basename(file)}`);
+    return 0;
+  }
+  const fd = fs.openSync(file, 'r');
+  const buffer = Buffer.allocUnsafe(1024 * 1024);
+  let carry = '';
+  let lineNumber = 0;
+  let rowCount = 0;
+
+  const consumeLine = (line) => {
+    lineNumber += 1;
+    if (!line.trim()) return;
+    try {
+      rowCount += 1;
+      onRow(JSON.parse(line), lineNumber);
+    } catch (err) {
+      errors.push(`${path.basename(file)}:${lineNumber} invalid JSON: ${err.message}`);
+    }
+  };
+
+  try {
+    for (;;) {
+      const bytesRead = fs.readSync(fd, buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      const chunk = carry + buffer.toString('utf8', 0, bytesRead);
+      const lines = chunk.split('\n');
+      carry = lines.pop() || '';
+      for (const line of lines) consumeLine(line);
+    }
+    if (carry) consumeLine(carry);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return rowCount;
+}
+
 function writeJSON(file, value) {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
 function writeJSONL(file, rows) {
   fs.writeFileSync(file, rows.map((row) => JSON.stringify(row)).join('\n') + (rows.length ? '\n' : ''));
+}
+
+function createJSONLWriter(file) {
+  const fd = fs.openSync(file, 'w');
+  let count = 0;
+  return {
+    write(row) {
+      fs.writeSync(fd, `${JSON.stringify(row)}\n`);
+      count += 1;
+    },
+    close() {
+      fs.closeSync(fd);
+    },
+    get count() {
+      return count;
+    },
+  };
+}
+
+function normalizeIndexValue(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function promotionQueryKey(filters) {
+  return ['family', 'status', 'stratum']
+    .filter((field) => filters[field])
+    .map((field) => `${field}=${normalizeIndexValue(filters[field])}`)
+    .join('&');
+}
+
+function createPromotionQueryIndex(sampleLimit = PROMOTION_QUERY_SAMPLE_LIMIT) {
+  const artifacts = {};
+
+  function ensureArtifact(artifact) {
+    if (!artifacts[artifact]) {
+      artifacts[artifact] = {
+        total: 0,
+        queries: {},
+      };
+    }
+    return artifacts[artifact];
+  }
+
+  function ensureQuery(artifactIndex, key) {
+    if (!artifactIndex.queries[key]) {
+      artifactIndex.queries[key] = {
+        total: 0,
+        records: [],
+      };
+    }
+    return artifactIndex.queries[key];
+  }
+
+  function addRow(artifact, row) {
+    const artifactIndex = ensureArtifact(artifact);
+    artifactIndex.total += 1;
+    const filters = {
+      family: normalizeIndexValue(row.family),
+      status: normalizeIndexValue(row.status),
+      stratum: normalizeIndexValue(row.stratum),
+    };
+    const fields = ['family', 'status', 'stratum'].filter((field) => filters[field]);
+    const keySets = [];
+    for (let mask = 1; mask < (1 << fields.length); mask += 1) {
+      const filter = {};
+      fields.forEach((field, index) => {
+        if (mask & (1 << index)) filter[field] = filters[field];
+      });
+      keySets.push(filter);
+    }
+    for (const filter of keySets) {
+      const query = ensureQuery(artifactIndex, promotionQueryKey(filter));
+      query.total += 1;
+      if (query.records.length < sampleLimit) query.records.push(row);
+    }
+  }
+
+  function addRows(artifact, rows) {
+    rows.forEach((row) => addRow(artifact, row));
+  }
+
+  function toJSON(bundleDir = '') {
+    const indexedArtifacts = {};
+    for (const [artifact, artifactIndex] of Object.entries(artifacts)) {
+      let sizeBytes = null;
+      if (bundleDir) {
+        try {
+          sizeBytes = fs.statSync(path.join(bundleDir, artifact)).size;
+        } catch {
+          sizeBytes = null;
+        }
+      }
+      indexedArtifacts[artifact] = {
+        ...artifactIndex,
+        artifact_stats: {
+          row_count: artifactIndex.total,
+          size_bytes: sizeBytes,
+        },
+      };
+    }
+    return {
+      schema_version: SCHEMA_VERSION,
+      generated_at: new Date().toISOString(),
+      sample_limit: sampleLimit,
+      artifacts: indexedArtifacts,
+    };
+  }
+
+  return { addRow, addRows, toJSON };
 }
 
 function sha256File(file) {
@@ -364,6 +512,31 @@ function rawArtifact(bundleDir, file, producer, family, expansionMode = 'core') 
   };
 }
 
+function sourceInventoryRawArtifact(bundleDir, inventory) {
+  const root = path.resolve(inventory.root || '');
+  const id = `raw-source-inventory-${hashText(root)}`;
+  return {
+    id,
+    stratum: 'raw_evidence',
+    evidence_layer: 'source',
+    evidence_state: 'source-visible',
+    family: 'source_code',
+    producer: 'portolan-source-inventory',
+    producer_ref: `source-inventory.json#${id}`,
+    path: root,
+    source_root: root,
+    size_bytes: 0,
+    inventory_source: inventory.inventory_source || 'unknown',
+    total_file_count: inventory.total || 0,
+    retained_file_refs: (inventory.files || []).length,
+    truncated: Boolean(inventory.truncated),
+    expansion_mode: 'external',
+    resolution_limit: inventory.truncated
+      ? 'The full source corpus is cataloged by count and local root; only classified-sources.jsonl rows are retained in the bundle.'
+      : 'The source inventory rows retained in classified-sources.jsonl cover this root within the configured classification limit.',
+  };
+}
+
 function filesByGlob(dir, predicate) {
   if (!fs.existsSync(dir)) return [];
   return walkFiles(dir, 20000).filter(predicate);
@@ -413,6 +586,7 @@ function familyInputs(bundleDir, classifiedSources) {
   const addMany = (family, files) => files.forEach((f) => add(family, f));
 
   add('source_code', path.join(bundleDir, 'repos.json'));
+  add('source_code', path.join(bundleDir, 'source-inventory.json'));
   addMany('documentation', sourceFiles.filter((f) => /\.(md|rst|adoc|txt)$/i.test(f)));
   addMany('build_metadata', sourceFiles.filter((f) => /(^|\/)(package\.json|go\.mod|pom\.xml|build\.gradle|requirements\.txt|pyproject\.toml|Cargo\.toml)$/i.test(f)));
   addMany('configuration', sourceFiles.filter((f) => /(^|\/)(\.env|.*\.ya?ml|.*\.toml|.*\.properties|.*\.conf|.*config.*\.json)$/i.test(f)));
@@ -492,6 +666,25 @@ function build(bundleDir, targetRootArg) {
   const targetRoot = targetRootArg || manifest.target_root || process.cwd();
   const sourceClassification = classifySources(bundleDir, targetRoot);
   const classified = sourceClassification.rows;
+  const sourceInventoryRecords = sourceClassification.inventories.map((inventory) => ({
+    id: `source-inventory-${hashText(path.resolve(inventory.root || ''))}`,
+    root: path.resolve(inventory.root || ''),
+    inventory_source: inventory.inventory_source || 'unknown',
+    total_file_count: inventory.total || 0,
+    classified_file_count: (inventory.files || []).length,
+    truncated: Boolean(inventory.truncated),
+    fallback: Boolean(inventory.fallback),
+    source_classification_limit: SOURCE_CLASSIFICATION_LIMIT,
+    expansion_mode: inventory.truncated ? 'query_source_root' : 'classified_sources_rows',
+    resolution_limit: inventory.truncated
+      ? 'Portolan retained a bounded classified source sample. Use the local source root or raise PORTOLAN_EVIDENCE_SOURCE_CLASSIFICATION_LIMIT for exhaustive source-role rows.'
+      : 'classified-sources.jsonl retains the source-role rows for this root within the configured limit.',
+  }));
+  writeJSON(path.join(bundleDir, 'source-inventory.json'), {
+    schema_version: SCHEMA_VERSION,
+    generated_at: new Date().toISOString(),
+    records: sourceInventoryRecords,
+  });
   const inputs = familyInputs(bundleDir, classified);
   const raw = [];
   for (const family of FAMILIES) {
@@ -501,6 +694,7 @@ function build(bundleDir, targetRootArg) {
       }
     }
   }
+  raw.push(...sourceClassification.inventories.map((inventory) => sourceInventoryRawArtifact(bundleDir, inventory)));
 
   const roleCounts = classified.reduce((acc, row) => {
     acc[row.source_role] = (acc[row.source_role] || 0) + 1;
@@ -610,8 +804,9 @@ function build(bundleDir, targetRootArg) {
   const sourceSnapshotAt = Date.parse(manifest.source_snapshot_at || manifest.source_snapshot_time || '');
   let symbolNonPromotable = 0;
   let symbolFixtureish = 0;
-  const symbolRows = scanJSONL(path.join(bundleDir, 'symbol-index.jsonl'), {
-    limit: PROMOTED_FACT_ROW_LIMIT,
+  const symbolIndexPath = path.join(bundleDir, 'symbol-index.jsonl');
+  const symbolRows = scanJSONL(symbolIndexPath, {
+    limit: 0,
     onRow: (row) => {
       const [role, confidence] = roleForPath(row.path || '');
       if (
@@ -708,7 +903,13 @@ function build(bundleDir, targetRootArg) {
     }
   }
 
-  const promoted = [];
+  const promotedPath = path.join(bundleDir, 'promoted-facts.jsonl');
+  const promotedWriter = createJSONLWriter(promotedPath);
+  const queryIndex = createPromotionQueryIndex();
+  const writePromotedFact = (row) => {
+    promotedWriter.write(row);
+    queryIndex.addRow('promoted-facts.jsonl', row);
+  };
   const roleByPath = new Map(classified.map((r) => [path.resolve(r.path), r]));
   const sourcePromotionCandidates = classified.filter((r) => r.source_role === 'runtime_product_code' && r.confidence >= 0.5);
   if (sourcePromotionCandidates.length > PROMOTED_FACT_ROW_LIMIT) {
@@ -726,7 +927,7 @@ function build(bundleDir, targetRootArg) {
     ));
   }
   for (const row of sourcePromotionCandidates.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
-    promoted.push({
+    writePromotedFact({
       id: `fact-source-role-${hashText(row.path)}`,
       stratum: 'promoted_fact',
       family: 'source_code',
@@ -742,7 +943,7 @@ function build(bundleDir, targetRootArg) {
       source_role: row.source_role,
       confidence: row.confidence,
     });
-    promoted.push({
+    writePromotedFact({
       id: `fact-source-file-${hashText(row.path)}`,
       stratum: 'promoted_fact',
       family: 'source_code',
@@ -772,24 +973,30 @@ function build(bundleDir, targetRootArg) {
       'Query symbol-index.jsonl or raise PORTOLAN_EVIDENCE_PROMOTED_FACT_LIMIT before treating promoted symbol facts as exhaustive.'
     ));
   }
-  for (const row of symbolRows.rows) {
-    const absolute = row.path && path.isAbsolute(row.path) ? path.resolve(row.path) : '';
-    const role = absolute ? roleByPath.get(absolute) : null;
-    promoted.push({
-      id: `fact-symbol-definition-${hashText(`${row.repo_id}:${row.path}:${row.line}:${row.name}`)}`,
-      stratum: 'promoted_fact',
-      family: 'symbol_index',
-      fact_kind: 'definition',
-      evidence_layer: 'metadata',
-      evidence_state: evidenceStateOr(row.evidence_state, 'metadata-visible'),
-      source_refs: [role ? `source-role:${role.id}` : `symbol-index:${row.repo_id || ''}:${row.path}:${row.line}:${row.name}`],
-      producer: row.producer || 'ctags',
-      producer_ref: 'symbol-index.jsonl',
-      promotion_basis: role ? `symbol row plus source role ${role.source_role}` : 'symbol row; source role unavailable in bundle',
-      resolution_limit: PROMOTION_MATRIX.find((m) => m.family === 'symbol_index').resolution_limit,
-      path: row.path,
-      name: row.name,
-      line: row.line,
+  if (fs.existsSync(symbolIndexPath) && PROMOTED_FACT_ROW_LIMIT > 0) {
+    scanJSONL(symbolIndexPath, {
+      limit: 0,
+      onRow: (row, index) => {
+        if (index > PROMOTED_FACT_ROW_LIMIT) return;
+        const absolute = row.path && path.isAbsolute(row.path) ? path.resolve(row.path) : '';
+        const role = absolute ? roleByPath.get(absolute) : null;
+        writePromotedFact({
+          id: `fact-symbol-definition-${hashText(`${row.repo_id}:${row.path}:${row.line}:${row.name}`)}`,
+          stratum: 'promoted_fact',
+          family: 'symbol_index',
+          fact_kind: 'definition',
+          evidence_layer: 'metadata',
+          evidence_state: evidenceStateOr(row.evidence_state, 'metadata-visible'),
+          source_refs: [role ? `source-role:${role.id}` : `symbol-index:${row.repo_id || ''}:${row.path}:${row.line}:${row.name}`],
+          producer: row.producer || 'ctags',
+          producer_ref: 'symbol-index.jsonl',
+          promotion_basis: role ? `symbol row plus source role ${role.source_role}` : 'symbol row; source role unavailable in bundle',
+          resolution_limit: PROMOTION_MATRIX.find((m) => m.family === 'symbol_index').resolution_limit,
+          path: row.path,
+          name: row.name,
+          line: row.line,
+        });
+      },
     });
   }
 
@@ -809,7 +1016,7 @@ function build(bundleDir, targetRootArg) {
     ));
   }
   for (const claim of claimRows.slice(0, PROMOTED_FACT_ROW_LIMIT)) {
-    promoted.push({
+    writePromotedFact({
       id: `claim-record-${claim.id || hashText(claim.statement || '')}`,
       stratum: 'claim',
       family: 'analysis_claim',
@@ -824,6 +1031,7 @@ function build(bundleDir, targetRootArg) {
       statement: claim.statement || '',
     });
   }
+  promotedWriter.close();
 
   const familyRegistry = {
     schema_version: SCHEMA_VERSION,
@@ -855,7 +1063,10 @@ function build(bundleDir, targetRootArg) {
   writeJSONL(path.join(bundleDir, 'classified-sources.jsonl'), classified);
   writeJSONL(path.join(bundleDir, 'raw-artifacts.jsonl'), raw);
   writeJSONL(path.join(bundleDir, 'promotion-health.jsonl'), health);
-  writeJSONL(path.join(bundleDir, 'promoted-facts.jsonl'), promoted);
+  queryIndex.addRows('classified-sources.jsonl', classified);
+  queryIndex.addRows('raw-artifacts.jsonl', raw);
+  queryIndex.addRows('promotion-health.jsonl', health);
+  writeJSON(path.join(bundleDir, 'promotion-query-index.json'), queryIndex.toJSON(bundleDir));
 
   const byStatus = health.reduce((acc, row) => {
     acc[row.status] = (acc[row.status] || 0) + 1;
@@ -865,7 +1076,7 @@ function build(bundleDir, targetRootArg) {
     canonical_family_count: FAMILIES.length,
     health_record_count: health.length,
     classified_source_count: classified.length,
-    promoted_fact_count: promoted.length,
+    promoted_fact_count: promotedWriter.count,
     raw_artifact_count: raw.length,
     statuses: byStatus,
     source_inventory: {
@@ -891,9 +1102,13 @@ function build(bundleDir, targetRootArg) {
 function validate(bundleDir, completion) {
   const registry = readJSON(path.join(bundleDir, 'evidence-families.json'));
   const matrix = readJSON(path.join(bundleDir, 'promotion-matrix.json'));
+  const queryIndexPath = path.join(bundleDir, 'promotion-query-index.json');
+  const queryIndex = readJSON(queryIndexPath);
   const errors = [];
   const health = readJSONLStrict(path.join(bundleDir, 'promotion-health.jsonl'), errors);
-  const promoted = readJSONLStrict(path.join(bundleDir, 'promoted-facts.jsonl'), errors);
+  const promotedPath = path.join(bundleDir, 'promoted-facts.jsonl');
+  const promotedLarge = fs.existsSync(promotedPath) && fs.statSync(promotedPath).size > 256 * 1024 * 1024;
+  const promoted = promotedLarge ? [] : readJSONLStrict(promotedPath, errors);
   const classified = readJSONLStrict(path.join(bundleDir, 'classified-sources.jsonl'), errors);
   const raw = readJSONLStrict(path.join(bundleDir, 'raw-artifacts.jsonl'), errors);
 
@@ -901,6 +1116,39 @@ function validate(bundleDir, completion) {
   if (!Array.isArray(matrix?.records)) errors.push('missing promotion-matrix.json records');
   if (!health.length) errors.push('missing promotion-health.jsonl records');
   if (!classified.length) errors.push('missing classified-sources.jsonl records');
+
+  if (fs.existsSync(queryIndexPath)) {
+    if (!queryIndex || typeof queryIndex !== 'object') {
+      errors.push('promotion-query-index.json must be valid JSON object');
+    }
+    const requiredIndexedArtifacts = {
+      'promotion-health.jsonl': health.length,
+      'classified-sources.jsonl': classified.length,
+      'raw-artifacts.jsonl': raw.length,
+    };
+    if (!promotedLarge) requiredIndexedArtifacts['promoted-facts.jsonl'] = promoted.length;
+    for (const [artifact, expectedRows] of Object.entries(requiredIndexedArtifacts)) {
+      const artifactIndex = queryIndex?.artifacts?.[artifact];
+      if (!artifactIndex || typeof artifactIndex !== 'object') {
+        errors.push(`promotion-query-index missing artifact ${artifact}`);
+        continue;
+      }
+      const rowCount = Number(artifactIndex.artifact_stats?.row_count);
+      if (!Number.isFinite(rowCount) || rowCount !== expectedRows) {
+        errors.push(`promotion-query-index ${artifact} row_count mismatch: expected ${expectedRows}, got ${artifactIndex.artifact_stats?.row_count}`);
+      }
+      const sizeBytes = Number(artifactIndex.artifact_stats?.size_bytes);
+      const filePath = path.join(bundleDir, artifact);
+      if (!fs.existsSync(filePath)) {
+        errors.push(`promotion-query-index ${artifact} points to missing artifact`);
+      } else if (Number.isFinite(sizeBytes) && sizeBytes >= 0 && fs.statSync(filePath).size !== sizeBytes) {
+        errors.push(`promotion-query-index ${artifact} size_bytes mismatch`);
+      }
+      if (!artifactIndex.queries || typeof artifactIndex.queries !== 'object') {
+        errors.push(`promotion-query-index ${artifact} queries must be an object`);
+      }
+    }
+  }
 
   if (Array.isArray(registry?.families)) {
     const seenFamilies = new Set();
@@ -976,7 +1224,7 @@ function validate(bundleDir, completion) {
   for (const family of FAMILIES) {
     if (!healthByFamily.has(family)) errors.push(`missing bundle-level health for canonical family ${family}`);
   }
-  for (const row of promoted) {
+  const validatePromotedRow = (row) => {
     const label = `promoted/claim record ${row.id || '?'}`;
     requireFields(row, ['id', 'stratum', 'family', 'fact_kind', 'evidence_layer', 'evidence_state', 'source_refs', 'producer', 'producer_ref', 'promotion_basis', 'resolution_limit'], label, errors);
     requireEnum(row, 'family', new Set(FAMILIES), label, errors);
@@ -1003,7 +1251,9 @@ function validate(bundleDir, completion) {
         }
       }
     }
-  }
+  };
+  for (const row of promoted) validatePromotedRow(row);
+  if (promotedLarge) forEachJSONLStrict(promotedPath, errors, validatePromotedRow);
   if (completion) {
     for (const family of FAMILIES) {
       const row = healthByFamily.get(family);

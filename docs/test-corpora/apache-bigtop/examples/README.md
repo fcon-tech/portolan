@@ -2,8 +2,8 @@
 
 These are archival excerpts from the legacy `context prepare` / `portolan map`
 demo route. They are kept as historical evidence only. Current product demos
-must use the installable atlas route in `docs/demo-runbook.md` and strict
-Bigtop corpus acceptance via `scripts/harness-bigtop-acceptance.sh`.
+must use the captain-atlas contract in `docs/captain-atlas/` and strict Bigtop
+corpus acceptance via `scripts/harness-bigtop-acceptance.sh`.
 
 Freshness: generated from a local Apache Bigtop landscape on 2026-05-30 using
 `portolan dev` from commit `195d80d` on branch
@@ -33,3 +33,8 @@ Files:
 - `gaps-query-excerpt.json`: redacted bounded `query gaps` result.
 
 The full Bigtop output bundle is intentionally not committed.
+
+These excerpts are not current acceptance proof. A current run is either
+validated by `scripts/harness-bigtop-acceptance.sh <bundle-dir>` or reported as
+`not_assessed` by `scripts/portolan-product-acceptance.sh` when no full bundle
+is supplied.
