@@ -44,6 +44,26 @@ The active documents are:
   `docs/captain-atlas/06-oss-kill-gates.md`: supporting work-package notes.
   Use them only when they do not contradict `08` or `07`.
 
+## The One Entry Point: /portolan:map
+
+After the agent installs Portolan and runs managed intake, the single command
+that opens the atlas is:
+
+```bash
+node portolan-core/scripts/portolan-map.mjs --target <target-root> [--open]
+```
+
+This is `/portolan:map`. It: (1) loads the intake result from
+`<target>/.portolan/intake.json` (errors with the exact remediation if absent),
+(2) builds the snapshot via the deterministic core if stale, (3) exports the
+clean-stack shell + inlined atlas to `<target>/.portolan/atlas.html`, and (4)
+optionally opens it. The admiral types no command beyond the initial prompt.
+
+The clean stack (`portolan-core/`) is the Part-1a direction: domain → use-cases
+→ ports → adapters, dependency rule enforced. The frozen `viewer/` remains the
+0.1.0 contract until cutover. Both render the same Bigtop demo (22 units, 24
+relationships, 7 families) — feature-parity proven headlessly.
+
 ## Mandatory Decision Gate
 
 Before proposing product, design, implementation, dependency, or workflow
