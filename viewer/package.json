@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/build-static.js",
     "serve": "node scripts/serve.js",
+    "export:single-file": "node scripts/export-single-file.mjs",
     "test": "node --test"
   },
   "license": "MIT",
