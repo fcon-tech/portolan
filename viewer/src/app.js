@@ -256,21 +256,86 @@ function renderC4(main){
 }
 function renderC4Context(panel){
   const boxes=(state.map.c4&&state.map.c4.context_boxes)||[];
-  panel.appendChild(sectionKicker('Context — target and external systems'));
-  const grid=el('div',{class:'route-button-grid'});
-  for(const b of boxes){const entry=state.index.byId.get(b.object_id);const label=b.display_name||(entry&&entry.obj.display_name)||b.object_id;grid.appendChild(routeLink(label,b.route,{id:b.id,kind:'c4-box',class:'card c4-context-card'}));}
-  panel.appendChild(grid);
+  // Split into the system-in-scope (target root / integrator) and contextual
+  // neighbors (retired, legacy, external). A context box is "central" when its
+  // object_id is self-referential (c4-context:<root>) or resolves to nothing in
+  // the index — that is the Portolan target itself.
+  const central=[];
+  const neighbors=[];
+  for(const b of boxes){
+    const entry=state.index.byId.get(b.object_id);
+    const isSelfRef=b.id===b.object_id||!entry;
+    if(isSelfRef)central.push({box:b,entry});
+    else neighbors.push({box:b,entry});
+  }
+  panel.appendChild(sectionKicker('System context — the target and its contextual neighbors'));
+  panel.appendChild(renderContextDiagram(central,neighbors));
+  // Honest gap: Portolan sees the target root only, so no actors/upstream/downstream
+  // were observed. Say so explicitly rather than inventing them.
+  panel.appendChild(el('div',{class:'context-gap'},el('p',{class:'muted'},text('No external users, upstream, or downstream systems were observed. Portolan inspects the target root only; live actors and integrations are marked unknown unless local evidence proves them.'))));
+}
+// SVG radial context diagram: the system in scope sits at the center; contextual
+// neighbors (retired/legacy/external) ring it. This is honest C4 level-1 notation:
+// the system is in the middle, neighbors around it, and what is NOT known is stated.
+function renderContextDiagram(central,neighbors){
+  const size=420,cx=size/2,cy=size/2;
+  const svg=svgEl('svg',{class:'context-diagram',viewBox:`0 0 ${size} ${size}`,preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'System context diagram'});
+  // Arrows from each neighbor to the center (neighbors relate to the system).
+  neighbors.forEach((n,i)=>{
+    const ang=(i/neighbors.length)*Math.PI*2-Math.PI/2;
+    const orbit=145;
+    const nx=cx+Math.cos(ang)*orbit,ny=cy+Math.sin(ang)*orbit;
+    const line=svgEl('line',{x1:nx,y1:ny,x2:cx,y2:cy,class:'ctx-edge','data-portolan-id':n.box.id,'data-portolan-kind':'c4-box','data-portolan-route':n.box.route,'data-portolan-clickable':'true'});
+    svg.appendChild(line);
+  });
+  // Center node — the system in scope.
+  const centerNode=svgEl('g',{class:'ctx-center',transform:`translate(${cx},${cy})`});
+  centerNode.appendChild(svgEl('circle',{r:'54',class:'ctx-center-bg'}));
+  centerNode.appendChild(svgEl('circle',{r:'54',class:'ctx-center-ring'}));
+  const centerLabel=central[0]?central[0].box.display_name||(central[0].entry&&central[0].entry.obj.display_name):'target';
+  // wrap long labels
+  centerNode.appendChild(svgEl('text',{y:'-4','text-anchor':'middle',class:'ctx-center-label'},centerLabel));
+  centerNode.appendChild(svgEl('text',{y:'14','text-anchor':'middle',class:'ctx-center-sub'},'system in scope'));
+  if(central[0]){
+    centerNode.setAttribute('data-portolan-id',central[0].box.id);
+    centerNode.setAttribute('data-portolan-kind','c4-box');
+    centerNode.setAttribute('data-portolan-route',central[0].box.route);
+    centerNode.setAttribute('data-portolan-clickable','true');
+    centerNode.addEventListener('click',(ev)=>{ev.preventDefault();setHash(central[0].box.route.replace(/^#/,''));});
+  }
+  svg.appendChild(centerNode);
+  // Neighbor nodes.
+  neighbors.forEach((n,i)=>{
+    const ang=(i/neighbors.length)*Math.PI*2-Math.PI/2;
+    const orbit=145;
+    const nx=cx+Math.cos(ang)*orbit,ny=cy+Math.sin(ang)*orbit;
+    const label=n.box.display_name||(n.entry&&n.entry.obj.display_name)||n.box.object_id;
+    const g=svgEl('g',{class:'ctx-neighbor',transform:`translate(${nx},${ny})`,'data-portolan-id':n.box.id,'data-portolan-kind':'c4-box','data-portolan-route':n.box.route,'data-portolan-clickable':'true'});
+    g.appendChild(svgEl('circle',{r:'34',class:'ctx-neighbor-bg'}));
+    g.appendChild(svgEl('text',{y:'-2','text-anchor':'middle',class:'ctx-neighbor-label'},label));
+    // lifecycle subtitle if resolvable
+    const lc=n.entry&&n.entry.obj&&n.entry.obj.lifecycle;
+    if(lc==='retired')g.appendChild(svgEl('text',{y:'14','text-anchor':'middle',class:'ctx-neighbor-sub'},'retired'));
+    else if(lc==='external')g.appendChild(svgEl('text',{y:'14','text-anchor':'middle',class:'ctx-neighbor-sub'},'external'));
+    g.addEventListener('click',(ev)=>{ev.preventDefault();setHash(n.box.route.replace(/^#/,''));});
+    svg.appendChild(g);
+  });
+  const wrap=el('div',{class:'context-diagram-wrap'});
+  wrap.appendChild(svg);
+  // Legend line for the central node (accessible label supplement).
+  const legend=el('div',{class:'context-legend'});
+  legend.appendChild(el('span',{class:'context-leg-item'},el('span',{class:'context-leg-swatch ctx-center-ring'}),text('system in scope')));
+  if(neighbors.length>0)legend.appendChild(el('span',{class:'context-leg-item'},el('span',{class:'context-leg-swatch ctx-neighbor-bg'}),text('contextual neighbor (retired / legacy / external)')));
+  wrap.appendChild(legend);
+  return wrap;
 }
 function renderC4Families(panel){
   const families=(state.map.c4&&state.map.c4.families)||[];
-  const comps=(state.map.objects&&state.map.objects.components)||[];
-  const rels=(state.map.objects&&state.map.objects.relationships)||[];
-  panel.appendChild(sectionKicker('Container view — families and inter-family dependencies'));
-  // Build a family-level dependency diagram: each family is a box; an edge exists
-  // between two families when a component in one depends on a component in another.
-  panel.appendChild(renderFamilyContainerDiagram(families,comps,rels));
-  // Keep the detailed family cards below the diagram for drill-down.
-  panel.appendChild(sectionKicker('Families — detail'));
+  // Families are a composition lens: components grouped by role. This is NOT a
+  // dependency or deployment topology — edges between role-buckets would invent
+  // architecture Portolan did not observe. Show the grouping and its balance.
+  panel.appendChild(sectionKicker('Families — components grouped by role'));
+  panel.appendChild(el('p',{class:'muted c4-level-note'},text('A composition view: how the landscape divides by role. Not a dependency or deployment topology — drill into a family to see its components and their relationships.')));
   const grid=el('div',{class:'c4-family-grid'});
   for(const f of families){
     const card=el('a',{class:'card c4-family-card',href:`#${f.route}`,'data-portolan-id':f.id,'data-portolan-kind':'c4-family','data-portolan-route':f.route,'data-portolan-clickable':'true'});
@@ -285,63 +350,6 @@ function renderC4Families(panel){
     grid.appendChild(card);
   }
   panel.appendChild(grid);
-}
-// SVG container diagram: families as rounded boxes arranged in a grid, edges
-// between families that have inter-family component dependencies. Edge width
-// encodes the number of dependencies between the two families.
-function renderFamilyContainerDiagram(families,comps,rels){
-  if(families.length===0)return el('p',{class:'muted'},text('No C4 families recorded.'));
-  // Map component → family.
-  const compFam=new Map();
-  for(const c of comps)compFam.set(c.id,c.c4_family||'unknown');
-  // Count inter-family edges.
-  const edgeCount=new Map(); // "famA|famB" → count
-  for(const r of rels){
-    const fa=compFam.get(r.from_id),fb=compFam.get(r.to_id);
-    if(!fa||!fb||fa===fb)continue; // skip intra-family
-    const key=[fa,fb].sort().join('|');
-    edgeCount.set(key,(edgeCount.get(key)||0)+1);
-  }
-  // Layout: arrange family boxes in a grid.
-  const cols=Math.ceil(Math.sqrt(families.length));
-  const rows=Math.ceil(families.length/cols);
-  const boxW=150,boxH=64,gapX=70,gapY=50;
-  const w=cols*boxW+(cols-1)*gapX;
-  const h=rows*boxH+(rows-1)*gapY;
-  const pad=30;
-  const famPos=new Map();
-  families.forEach((f,i)=>{
-    const col=i%cols,row=Math.floor(i/cols);
-    famPos.set(f.family,{x:pad+col*(boxW+gapX),y:pad+row*(boxH+gapY),f});
-  });
-  const svg=svgEl('svg',{class:'c4-container-diagram',viewBox:`0 0 ${w+pad*2} ${h+pad*2}`,preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'C4 container diagram: families and inter-family dependencies'});
-  // Edges first (under boxes).
-  for(const [key,count] of edgeCount){
-    const [fa,fb]=key.split('|');
-    const a=famPos.get(fa),b=famPos.get(fb);
-    if(!a||!b)continue;
-    const ax=a.x+boxW/2,ay=a.y+boxH/2;
-    const bx=b.x+boxW/2,by=b.y+boxH/2;
-    const lw=Math.min(6,1.5+count*0.8);
-    const line=svgEl('line',{x1:ax,y1:ay,x2:bx,y2:by,stroke:'rgba(168,181,255,0.3)','stroke-width':String(lw),'stroke-linecap':'round'});
-    line.appendChild(svgEl('title',null,`${fa} ↔ ${fb}: ${count} inter-family dependenc${count===1?'y':'ies'}`));
-    svg.appendChild(line);
-  }
-  // Boxes.
-  for(const f of families){
-    const p=famPos.get(f.family);if(!p)continue;
-    const col=familyColor(f.family);
-    const g=svgEl('g',{class:'c4-fam-box',transform:`translate(${p.x},${p.y})`,'data-portolan-id':f.id,'data-portolan-kind':'c4-family','data-portolan-route':f.route,'data-portolan-clickable':'true'});
-    g.appendChild(svgEl('rect',{width:boxW,height:boxH,rx:10,fill:`rgba(${col.soft},0.12)`,stroke:col.main,'stroke-width':'1.5'}));
-    g.appendChild(svgEl('text',{x:boxW/2,y:24,'text-anchor':'middle',class:'c4-box-title',fill:col.main},f.display_name));
-    g.appendChild(svgEl('text',{x:boxW/2,y:44,'text-anchor':'middle',class:'c4-box-sub',fill:'var(--muted)'},`${f.component_ids.length} components`));
-    g.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components/'+f.family);});
-    svg.appendChild(g);
-  }
-  const wrap=el('div',{class:'c4-diagram-wrap'});
-  wrap.appendChild(svg);
-  if(edgeCount.size===0)wrap.appendChild(el('p',{class:'muted graph-hint'},text('No inter-family dependencies observed — families are independent at this level.')));
-  return wrap;
 }
 function renderC4Components(panel){
   const boxes=(state.map.c4&&state.map.c4.component_boxes)||[];
@@ -361,9 +369,17 @@ function renderC4Components(panel){
     if(state.c4Family&&fam!==state.c4Family)continue;
     panel.appendChild(el('h3',{class:'family-heading'},text(C4_FAMILY_LABELS[fam]||fam)));
     const grid=el('div',{class:'route-button-grid'});
-    for(const b of famBoxes){const entry=state.index.byId.get(b.object_id);const comp=entry&&entry.obj;const label=b.display_name||(entry&&entry.obj.display_name)||b.object_id;const card=el('div',{class:'card c4-component-card-block'},routeLink(label,b.route,{id:b.id,kind:'c4-box',class:'card-title'}));
-      if(comp){const compSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]).filter(sf=>sf.owner_id===comp.id);if(compSurfaces.length>0){card.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(compSurfaces.length+' surfaces'))));}
-        card.appendChild(el('div',{class:'route-button-grid'},...compSurfaces.slice(0,6).map(sf=>routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}))));}
+    for(const b of famBoxes){const entry=state.index.byId.get(b.object_id);const comp=entry&&entry.obj;const label=b.display_name||(entry&&entry.obj.display_name)||b.object_id;
+      const card=el('div',{class:'card c4-component-card-block'},routeLink(label,b.route,{id:b.id,kind:'c4-box',class:'card-title'}));
+      if(comp){
+        const relCount=(comp.relationship_ids||[]).length;
+        const cardMeta=el('div',{class:'card-meta'},lifecycleBadge(comp.lifecycle),evidenceDot(comp.evidence&&comp.evidence.state));
+        if(relCount>0)cardMeta.appendChild(el('span',{class:'badge badge-quiet'},text(relCount+' relationship'+(relCount===1?'':'s'))));
+        card.appendChild(cardMeta);
+        const compSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]).filter(sf=>sf.owner_id===comp.id);
+        if(compSurfaces.length>0)card.appendChild(el('div',{class:'route-button-grid'},...compSurfaces.slice(0,6).map(sf=>routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}))));
+        if(relCount===0&&compSurfaces.length===0)card.appendChild(el('p',{class:'muted card-reason'},text('No recorded relationships or surfaces. May be isolated, or suspicious for an integrator.')));
+      }
       grid.appendChild(card);}
     panel.appendChild(grid);
   }
