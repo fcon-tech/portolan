@@ -32,14 +32,22 @@ require_navigable_relationship_query() {
 }
 
 ALLOW_DEGRADED=0
-if [[ "${1:-}" == "--allow-degraded" ]]; then
-  ALLOW_DEGRADED=1
-  shift
-fi
+REQUIRE_SYSTEM_MAP=0
+POSITIONAL=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --allow-degraded) ALLOW_DEGRADED=1; shift ;;
+    --require-system-map) REQUIRE_SYSTEM_MAP=1; shift ;;
+    --) shift; break ;;
+    -*) echo "unknown option: $1" >&2; exit 2 ;;
+    *) POSITIONAL+=("$1"); shift ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
 
 BUNDLE=${1:-}
 [[ -n "$BUNDLE" && -d "$BUNDLE" ]] || {
-  echo "usage: $0 [--allow-degraded] <bundle-dir>" >&2
+  echo "usage: $0 [--allow-degraded] [--require-system-map] <bundle-dir>" >&2
   exit 2
 }
 
@@ -47,6 +55,19 @@ command -v jq >/dev/null || fail "jq required"
 
 [[ -f "$BUNDLE/manifest.json" ]] || fail "manifest.json missing"
 [[ -f "$BUNDLE/repos.json" ]] || fail "repos.json missing"
+
+# System-map gate: when required, the bundle must carry a valid normalized
+# system map and no surface-only target may leak as a default-map component.
+if [[ "$REQUIRE_SYSTEM_MAP" -eq 1 ]]; then
+  SM="$BUNDLE/system-map.json"
+  [[ -f "$SM" ]] || fail "--require-system-map set but system-map.json missing"
+  "$ROOT/scripts/validate-system-map-schema.sh" "$SM" >/dev/null ||
+    fail "system-map.json failed schema + semantic validation"
+  leaked=$(jq -r '[.objects.components[] | select(.id | test("support-matrix|mailing-list|bigtop-ci|binary-repo|docker-image"))] | length' "$SM")
+  [[ "$leaked" == "0" ]] ||
+    fail "--require-system-map: $leaked surface-only target(s) leaked as default-map components"
+  warn "--require-system-map: system map valid ($SM)"
+fi
 if [[ "$ALLOW_DEGRADED" -ne 1 ]]; then
   [[ -f "$BUNDLE/receipt.json" ]] || fail "receipt.json missing; strict proof must include scan operability evidence"
   [[ -f "$BUNDLE/captain-atlas-scorecard.json" ]] || fail "captain-atlas-scorecard.json missing; strict proof must include product scorecard"
