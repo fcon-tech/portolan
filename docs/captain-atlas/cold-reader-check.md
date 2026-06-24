@@ -55,24 +55,37 @@ Wide-desktop (1600×1000) screenshots captured for every primary view:
 | `viewer-screenshots/surfaces.png` | Surfaces (by type) |
 | `viewer-screenshots/dossier-sqoop.png` | Apache Sqoop dossier (retired/legacy regression) |
 
-## Known limitations (short and concrete)
+## Real gaps (fixed)
 
-1. **Dependency graph unknown without Syft**: when the `syft`/CycloneDX producer
-   is not installed or skipped (`--core-only --producers config,ctags`), the
-   dependency topology is recorded as `gap-deps` (unknown), not assessed. This
-   is honest, not a bug.
-2. **C4 is a role-based lens, not observed runtime topology**: family assignment
-   is deterministic from component role/kind metadata. Components with no role
-   signal are classified `unknown` and grouped under "Unclassified."
-3. **Map relationship list is capped at 40**: surplus relationships are hidden
-   silently in the map edge list (use the Overview "Important relationships" or
-   the relationship dossier for the full set).
-4. **Search filters the Components view only**: global search does not yet
-   filter Surfaces or Findings in-place.
-5. **No mobile layout**: the UI is desktop-first by spec ("mobile is not a
-   priority"). The `@media (max-width: 720px)` block is minimal.
-6. **Single-target scope**: one scan covers one target root; cross-target
-   federation is out of scope for this spec.
-7. **Retired-component detection is metadata-driven**: a component is marked
-   retired only when the corpus manifest / bundle declares `lifecycle: retired`.
-   Source-only targets without a corpus manifest cannot infer retirement.
+These were genuine defects introduced in the first UI pass; both are now fixed
+and re-verified by browser probe:
+
+- ~~**Map relationship list capped at 40**~~ — FIXED: the Map relationship list
+  now renders every relationship with an honest count in the section header
+  (e.g. "RELATIONSHIPS (24)"). Browser probe confirms all 24 chips render.
+- ~~**Search filtered only the Components view**~~ — FIXED: there is now a
+  dedicated `#/search` view that matches across **all object kinds**
+  (components, repositories, surfaces, relationships, findings, unknowns) per
+  Feature 9. Browser probe: "sqoop" returns component + surface + relationship
+  results; "mailing" returns 2 mailing-list surfaces.
+
+## Honest design boundaries (NOT defects — these are spec compliance / out-of-scope)
+
+These are recorded here so a cold reader does not mistake spec-mandated behavior
+for missing features:
+
+- **Dependency graph unknown without a dependency producer**: when no
+  `syft`/CycloneDX producer runs, the dependency topology is `gap-deps`
+  (unknown). This is **required** by the spec: "Unknown is not failure; hiding
+  unknowns is failure." The gap is surfaced, not hidden.
+- **C4 is a role-based lens, not observed runtime topology**: the spec
+  (line 195) explicitly forbids claiming runtime truth Portolan did not
+  observe. Components with no role signal are classified `unknown` by design.
+- **Retired-component detection is metadata-driven**: a component is marked
+  retired only when the corpus/bundle declares `lifecycle: retired`. Inferring
+  retirement from source alone would be the unsupported claim the spec bans.
+- **No mobile layout**: the spec states "mobile is not a priority." The UI is
+  desktop-first; the minimal `@media` block is for legibility, not full mobile.
+- **Single-target scope**: one scan covers one target root. Cross-target
+  federation is out of scope (spec: "hosted services; remote SaaS ingestion"
+  are out of scope).
