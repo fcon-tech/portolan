@@ -5,7 +5,7 @@
   "description": "Portolan Clean Architecture core: domain, use-cases, ports. Renderer/storage agnostic.",
   "type": "commonjs",
   "scripts": {
-    "test": "node --test test/unit/*.test.js",
+    "test": "node --test test/unit/*.test.js && node --test test/bdd-runner.js",
     "test:deps": "node scripts/check-dependency-rule.js"
   },
   "license": "MIT"
