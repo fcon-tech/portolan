@@ -20,6 +20,26 @@ const C4_FAMILY_LABELS = { 'data-systems':'Data systems','compute-processing':'C
 const LIFECYCLE_LABELS = { active:'Active',external:'External',retired:'Retired / legacy','internal-support':'Internal support',unknown:'Lifecycle unknown' };
 const EVIDENCE_LABELS = { 'source-visible':'Source-visible','metadata-visible':'Metadata-visible','runtime-visible':'Runtime-visible','claim-only':'Claim only',unknown:'Unknown',cannot_verify:'Cannot verify' };
 
+// ===== Knowledge-graph visualization (SVG, force-directed) =====
+// soft is the "r,g,b" triple used to build rgba() glow strings.
+const FAMILY_COLORS = {
+  'data-systems':          { main:'#2dd4bf', glow:'#5eead4', soft:'45,212,191' },
+  'compute-processing':    { main:'#a78bfa', glow:'#c4b5fd', soft:'167,139,250' },
+  'platform-governance':   { main:'#fb7185', glow:'#fda4af', soft:'251,113,133' },
+  'packaging-runtime':     { main:'#fbbf24', glow:'#fcd34d', soft:'251,191,36' },
+  'coordination-community':{ main:'#60a5fa', glow:'#93c5fd', soft:'96,165,250' },
+  'integration-services':  { main:'#34d399', glow:'#6ee7b7', soft:'52,211,153' },
+  unknown:                 { main:'#94a3b8', glow:'#cbd5e1', soft:'148,163,184' },
+};
+function familyColor(fam){ return FAMILY_COLORS[fam]||FAMILY_COLORS.unknown; }
+const SVG_NS='http://www.w3.org/2000/svg';
+function svgEl(tag,attrs,...children){
+  const node=document.createElementNS(SVG_NS,tag);
+  if(attrs){for(const [k,v] of Object.entries(attrs)){if(v==null||v===false)continue;node.setAttribute(k,v);}}
+  for(const child of children){if(child==null||child===false)continue;node.appendChild(typeof child==='string'?document.createTextNode(child):child);}
+  return node;
+}
+
 async function fetchJson(p){const r=await fetch(p);if(!r.ok)return null;return r.json();}
 async function loadModel(){const [map,manifest,handoff]=await Promise.all([fetchJson('/bundle/system-map.json'),fetchJson('/bundle/manifest.json'),fetchJson('/bundle/captain-handoff.json')]);return {map,manifest,handoff};}
 function buildIndexes(map){
@@ -115,42 +135,107 @@ function renderOverview(main){
   const unknowns=(map.objects&&map.objects.unknowns)||[];
   const surfaces=(map.objects&&map.objects.surfaces)||[];
   const panel=el('section',{class:'panel overview-panel'});
-  panel.appendChild(el('h1',{class:'panel-title'},text(target.display_name||'Portolan target')));
-  panel.appendChild(el('p',{class:'muted target-root'},text(target.root||'')));
+  // Hero: target identity + landscape radar (donut of family composition).
+  const hero=el('div',{class:'overview-hero'});
+  const heroText=el('div',{class:'hero-identity'});
+  heroText.appendChild(el('div',{class:'hero-eyebrow'},text('PORTOLAN ATLAS')));
+  heroText.appendChild(el('h1',{class:'panel-title hero-title'},text(target.display_name||'Portolan target')));
+  if(target.root)heroText.appendChild(el('p',{class:'muted target-root'},text(target.root)));
+  // One-line landscape read: what kind of ecosystem is this?
+  const integrator=comps.find(c=>c.type==='platform')||comps[0];
+  if(integrator){
+    const famName=C4_FAMILY_LABELS[integrator.c4_family]||integrator.c4_family;
+    heroText.appendChild(el('p',{class:'hero-read'},text(`${comps.length} components across ${countFamilies(comps)} C4 families, anchored by `),el('strong',null,text(integrator.display_name)),text(` (${famName.toLowerCase()}), with ${rels.length} declared dependency relationships.`)));
+  }
+  heroText.appendChild(el('div',{class:'hero-cta'},routeLink('Open the component map →','/map',{class:'cta-primary'}),routeLink('C4 lens','/c4',{class:'cta-secondary'})));
+  hero.appendChild(heroText);
+  hero.appendChild(renderFamilyDonut(comps));
+  panel.appendChild(hero);
+  // Metric strip (secondary, supports the visual).
   const firstScreen=el('div',{class:'hero-grid'});
-  firstScreen.appendChild(metricCard('Target',target.display_name||'—','What Portolan inspected'));
-  firstScreen.appendChild(metricCard('Components',String(comps.length),'Main components'));
-  firstScreen.appendChild(metricCard('Relationships',String(rels.length),'Observed connections'));
+  firstScreen.appendChild(metricCard('Components',String(comps.length),'Meaningful units'));
+  firstScreen.appendChild(metricCard('Relationships',String(rels.length),'Declared dependencies'));
+  firstScreen.appendChild(metricCard('Surfaces',String(surfaces.length),'Docs, CI, trackers'));
   firstScreen.appendChild(metricCard('Findings',String(findings.length),'Risks and signals'));
-  firstScreen.appendChild(metricCard('Surfaces',String(surfaces.length),'Docs, CI, trackers, packages'));
   firstScreen.appendChild(metricCard('Unknowns',String(unknowns.length),'Honest gaps'));
   panel.appendChild(firstScreen);
+  // Family distribution bar: visual balance of the landscape.
+  panel.appendChild(renderFamilyDistribution(comps));
+  // Main components (ranked by connectivity).
   const ranked=[...comps].sort((a,b)=>(b.relationship_ids||[]).length+(b.finding_ids||[]).length-(a.relationship_ids||[]).length-(a.finding_ids||[]).length).slice(0,8);
-  panel.appendChild(sectionKicker('Main components'));
+  panel.appendChild(sectionKicker('Most connected components'));
   const compGrid=el('div',{class:'route-button-grid'});for(const c of ranked)compGrid.appendChild(componentCard(c));panel.appendChild(compGrid);
-  panel.appendChild(sectionKicker('Role of this target'));
-  const integrator=comps.find(c=>c.type==='platform')||comps[0];
-  if(integrator)panel.appendChild(el('p',{class:'prose'},text(`${integrator.display_name} is the integrator/platform that owns the inspected components and surfaces. It sits in the ${C4_FAMILY_LABELS[integrator.c4_family]||integrator.c4_family} family.`)));
-  else panel.appendChild(el('p',{class:'muted'},text('No integrator component was identified in this target.')));
-  panel.appendChild(sectionKicker('Important relationships'));
-  const relList=el('div',{class:'route-button-grid'});for(const r of rels.slice(0,10))relList.appendChild(relationshipChip(r));
-  if(rels.length===0)panel.appendChild(el('p',{class:'muted'},text('No relationships observed.')));else panel.appendChild(relList);
-  panel.appendChild(sectionKicker('What is risky or suspicious'));
-  const riskList=el('div',{class:'route-button-grid'});for(const f of findings.slice(0,8))riskList.appendChild(findingChip(f));
-  if(findings.length===0)panel.appendChild(el('p',{class:'muted'},text('No findings recorded.')));else panel.appendChild(riskList);
   panel.appendChild(sectionKicker('What is missing or unknown'));
   const unkList=el('div',{class:'unknown-list'});
-  for(const u of unknowns.slice(0,8))unkList.appendChild(el('div',{class:'unknown-item','data-portolan-id':u.id,'data-portolan-kind':u.unknown ? 'unknown':'unknown'},routeLink(u.summary,u.route||('#/detail/unknown/'+u.id),{id:u.id,kind:'unknown',class:'unknown-summary'})));
+  for(const u of unknowns.slice(0,6))unkList.appendChild(el('div',{class:'unknown-item','data-portolan-id':u.id,'data-portolan-kind':'unknown'},routeLink(u.summary,u.route||('#/detail/unknown/'+u.id),{id:u.id,kind:'unknown',class:'unknown-summary'})));
   if(unknowns.length===0)panel.appendChild(el('p',{class:'muted'},text('No unknowns recorded.')));else panel.appendChild(unkList);
-  panel.appendChild(sectionKicker('What to click next'));
-  const nextActions=el('div',{class:'route-button-grid'});
-  nextActions.appendChild(routeLink('Browse all components','/components',{}));
-  nextActions.appendChild(routeLink('Open the C4 lens','/c4',{}));
-  nextActions.appendChild(routeLink('See the component map','/map',{}));
-  nextActions.appendChild(routeLink('Review risks','/risks',{}));
-  nextActions.appendChild(routeLink('Inspect surfaces','/surfaces',{}));
-  panel.appendChild(nextActions);
   main.appendChild(panel);
+}
+function countFamilies(comps){const s=new Set();for(const c of comps)s.add(c.c4_family||'unknown');return s.size;}
+
+// Donut chart: each C4 family is a colored arc, proportional to component count.
+// Gives an instant visual read of the landscape's shape.
+function renderFamilyDonut(comps){
+  const byFam=new Map();
+  for(const c of comps){const f=c.c4_family||'unknown';byFam.set(f,(byFam.get(f)||0)+1);}
+  const total=Math.max(1,comps.length);
+  const order=['data-systems','compute-processing','platform-governance','packaging-runtime','coordination-community','integration-services','unknown'].filter(f=>byFam.has(f));
+  const size=220,cx=size/2,cy=size/2,rOuter=92,rInner=58;
+  const svg=svgEl('svg',{class:'family-donut',viewBox:`0 0 ${size} ${size}`,width:size,height:size,role:'img','aria-label':'Component count by C4 family'});
+  let angle=-Math.PI/2; // start at top
+  for(const fam of order){
+    const count=byFam.get(fam);
+    const sweep=(count/total)*Math.PI*2;
+    const col=familyColor(fam);
+    const path=arcPath(cx,cy,rOuter,rInner,angle,angle+sweep);
+    const seg=svgEl('path',{d:path,fill:col.main,stroke:'var(--bg)','stroke-width':'2',class:'donut-seg','data-family':fam});
+    seg.appendChild(svgEl('title',null,`${C4_FAMILY_LABELS[fam]||fam}: ${count} component${count===1?'':'s'}`));
+    svg.appendChild(seg);
+    angle+=sweep;
+  }
+  // Center label: total components.
+  const center=svgEl('g',{class:'donut-center'});
+  center.appendChild(svgEl('text',{x:cx,y:cy-4,'text-anchor':'middle',class:'donut-count'},String(comps.length)));
+  center.appendChild(svgEl('text',{x:cx,y:cy+16,'text-anchor':'middle',class:'donut-label'},'components'));
+  svg.appendChild(center);
+  const wrap=el('div',{class:'donut-wrap'});
+  wrap.appendChild(svg);
+  return wrap;
+}
+// Annular sector path between two radii and two angles.
+function arcPath(cx,cy,rO,rI,a0,a1){
+  const large=(a1-a0)>Math.PI?1:0;
+  const x0=cx+rO*Math.cos(a0),y0=cy+rO*Math.sin(a0);
+  const x1=cx+rO*Math.cos(a1),y1=cy+rO*Math.sin(a1);
+  const x2=cx+rI*Math.cos(a1),y2=cy+rI*Math.sin(a1);
+  const x3=cx+rI*Math.cos(a0),y3=cy+rI*Math.sin(a0);
+  return `M${x0} ${y0} A${rO} ${rO} 0 ${large} 1 ${x1} ${y1} L${x2} ${y2} A${rI} ${rI} 0 ${large} 0 ${x3} ${y3} Z`;
+}
+// Horizontal stacked bar showing family composition — a second visual read.
+function renderFamilyDistribution(comps){
+  const byFam=new Map();
+  for(const c of comps){const f=c.c4_family||'unknown';byFam.set(f,(byFam.get(f)||0)+1);}
+  const total=Math.max(1,comps.length);
+  const order=['data-systems','compute-processing','platform-governance','packaging-runtime','coordination-community','integration-services','unknown'].filter(f=>byFam.has(f));
+  const wrap=el('div',{class:'family-distribution'});
+  wrap.appendChild(sectionKicker('Landscape composition by C4 family'));
+  const bar=el('div',{class:'dist-bar',role:'img','aria-label':'Component distribution by family'});
+  for(const fam of order){
+    const count=byFam.get(fam);
+    const col=familyColor(fam);
+    const pct=(count/total)*100;
+    const seg=el('div',{class:'dist-seg',style:`flex-grow:${count};background:${col.main}`,title:`${C4_FAMILY_LABELS[fam]||fam}: ${count} (${pct.toFixed(0)}%)`});
+    bar.appendChild(seg);
+  }
+  wrap.appendChild(bar);
+  // Legend below the bar.
+  const legend=el('div',{class:'dist-legend'});
+  for(const fam of order){
+    const count=byFam.get(fam);const col=familyColor(fam);
+    legend.appendChild(el('span',{class:'dist-leg-item'},el('span',{class:'dist-leg-swatch',style:`background:${col.main}`}),text(`${C4_FAMILY_LABELS[fam]||fam} · ${count}`)));
+  }
+  wrap.appendChild(legend);
+  return wrap;
 }
 function metricCard(label,value,sub){return el('div',{class:'metric-card'},el('div',{class:'metric-label'},text(label)),el('div',{class:'metric-value'},text(value)),el('div',{class:'metric-sub muted'},text(sub||'')));}
 function componentCard(c){return el('div',{class:'card component-card'},routeLink(c.display_name,c.route,{id:c.id,kind:'component',class:'card-title'}),el('div',{class:'card-meta'},lifecycleBadge(c.lifecycle),el('span',{class:'badge badge-quiet'},text(C4_FAMILY_LABELS[c.c4_family]||c.c4_family)),evidenceDot(c.evidence&&c.evidence.state)),el('p',{class:'card-role muted'},text(c.role||c.type||'')));}
@@ -178,11 +263,21 @@ function renderC4Context(panel){
 }
 function renderC4Families(panel){
   const families=(state.map.c4&&state.map.c4.families)||[];
-  panel.appendChild(sectionKicker('Containers / Families — grouped by role'));
+  const comps=(state.map.objects&&state.map.objects.components)||[];
+  const rels=(state.map.objects&&state.map.objects.relationships)||[];
+  panel.appendChild(sectionKicker('Container view — families and inter-family dependencies'));
+  // Build a family-level dependency diagram: each family is a box; an edge exists
+  // between two families when a component in one depends on a component in another.
+  panel.appendChild(renderFamilyContainerDiagram(families,comps,rels));
+  // Keep the detailed family cards below the diagram for drill-down.
+  panel.appendChild(sectionKicker('Families — detail'));
   const grid=el('div',{class:'c4-family-grid'});
   for(const f of families){
     const card=el('a',{class:'card c4-family-card',href:`#${f.route}`,'data-portolan-id':f.id,'data-portolan-kind':'c4-family','data-portolan-route':f.route,'data-portolan-clickable':'true'});
     card.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components/'+f.family);});
+    const col=familyColor(f.family);
+    card.style.borderColor=`rgba(${col.soft},0.35)`;
+    card.appendChild(el('div',{class:'c4-family-marker',style:`background:${col.main}`}));
     card.appendChild(el('div',{class:'card-title'},text(f.display_name)));
     card.appendChild(el('p',{class:'muted'},text(f.purpose||'')));
     card.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(`${f.component_ids.length} components`)),el('span',{class:'badge badge-quiet'},text(`${f.surface_count} surfaces`)),el('span',{class:'badge badge-quiet'},text(`${f.finding_count} findings`)),el('span',{class:'badge badge-quiet'},text(`${f.unknown_count} unknowns`))));
@@ -190,6 +285,63 @@ function renderC4Families(panel){
     grid.appendChild(card);
   }
   panel.appendChild(grid);
+}
+// SVG container diagram: families as rounded boxes arranged in a grid, edges
+// between families that have inter-family component dependencies. Edge width
+// encodes the number of dependencies between the two families.
+function renderFamilyContainerDiagram(families,comps,rels){
+  if(families.length===0)return el('p',{class:'muted'},text('No C4 families recorded.'));
+  // Map component → family.
+  const compFam=new Map();
+  for(const c of comps)compFam.set(c.id,c.c4_family||'unknown');
+  // Count inter-family edges.
+  const edgeCount=new Map(); // "famA|famB" → count
+  for(const r of rels){
+    const fa=compFam.get(r.from_id),fb=compFam.get(r.to_id);
+    if(!fa||!fb||fa===fb)continue; // skip intra-family
+    const key=[fa,fb].sort().join('|');
+    edgeCount.set(key,(edgeCount.get(key)||0)+1);
+  }
+  // Layout: arrange family boxes in a grid.
+  const cols=Math.ceil(Math.sqrt(families.length));
+  const rows=Math.ceil(families.length/cols);
+  const boxW=150,boxH=64,gapX=70,gapY=50;
+  const w=cols*boxW+(cols-1)*gapX;
+  const h=rows*boxH+(rows-1)*gapY;
+  const pad=30;
+  const famPos=new Map();
+  families.forEach((f,i)=>{
+    const col=i%cols,row=Math.floor(i/cols);
+    famPos.set(f.family,{x:pad+col*(boxW+gapX),y:pad+row*(boxH+gapY),f});
+  });
+  const svg=svgEl('svg',{class:'c4-container-diagram',viewBox:`0 0 ${w+pad*2} ${h+pad*2}`,preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'C4 container diagram: families and inter-family dependencies'});
+  // Edges first (under boxes).
+  for(const [key,count] of edgeCount){
+    const [fa,fb]=key.split('|');
+    const a=famPos.get(fa),b=famPos.get(fb);
+    if(!a||!b)continue;
+    const ax=a.x+boxW/2,ay=a.y+boxH/2;
+    const bx=b.x+boxW/2,by=b.y+boxH/2;
+    const lw=Math.min(6,1.5+count*0.8);
+    const line=svgEl('line',{x1:ax,y1:ay,x2:bx,y2:by,stroke:'rgba(168,181,255,0.3)','stroke-width':String(lw),'stroke-linecap':'round'});
+    line.appendChild(svgEl('title',null,`${fa} ↔ ${fb}: ${count} inter-family dependenc${count===1?'y':'ies'}`));
+    svg.appendChild(line);
+  }
+  // Boxes.
+  for(const f of families){
+    const p=famPos.get(f.family);if(!p)continue;
+    const col=familyColor(f.family);
+    const g=svgEl('g',{class:'c4-fam-box',transform:`translate(${p.x},${p.y})`,'data-portolan-id':f.id,'data-portolan-kind':'c4-family','data-portolan-route':f.route,'data-portolan-clickable':'true'});
+    g.appendChild(svgEl('rect',{width:boxW,height:boxH,rx:10,fill:`rgba(${col.soft},0.12)`,stroke:col.main,'stroke-width':'1.5'}));
+    g.appendChild(svgEl('text',{x:boxW/2,y:24,'text-anchor':'middle',class:'c4-box-title',fill:col.main},f.display_name));
+    g.appendChild(svgEl('text',{x:boxW/2,y:44,'text-anchor':'middle',class:'c4-box-sub',fill:'var(--muted)'},`${f.component_ids.length} components`));
+    g.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components/'+f.family);});
+    svg.appendChild(g);
+  }
+  const wrap=el('div',{class:'c4-diagram-wrap'});
+  wrap.appendChild(svg);
+  if(edgeCount.size===0)wrap.appendChild(el('p',{class:'muted graph-hint'},text('No inter-family dependencies observed — families are independent at this level.')));
+  return wrap;
 }
 function renderC4Components(panel){
   const boxes=(state.map.c4&&state.map.c4.component_boxes)||[];
@@ -220,36 +372,229 @@ function renderC4Components(panel){
 function renderMap(main){
   const panel=el('section',{class:'panel map-panel'});
   panel.appendChild(el('h1',{class:'panel-title'},text('Component map')));
-  panel.appendChild(el('p',{class:'muted'},text('Meaningful components and their important relationships. Surfaces are hidden by default — toggle below or use the Surfaces view.')));
-  const toggle=el('button',{class:'map-surface-toggle','data-portolan-clickable':'true'},text(state.mapShowSurfaces?'Hide attached surfaces':'Show attached surfaces'));
-  toggle.addEventListener('click',()=>{state.mapShowSurfaces=!state.mapShowSurfaces;render();});
-  panel.appendChild(toggle);
+  panel.appendChild(el('p',{class:'muted map-intro'},text('Each circle is a component; lines are declared dependencies. Size shows how connected a component is, color shows its C4 family. Hover to focus, click to open its dossier.')));
   const comps=((state.map.objects&&state.map.objects.components)||[]);
   const rels=((state.map.objects&&state.map.objects.relationships)||[]);
-  const canvas=el('div',{class:'map-canvas','data-testid':'portolan-map'});
-  const byFamily=new Map();
-  for(const c of comps){if(!byFamily.has(c.c4_family))byFamily.set(c.c4_family,[]);byFamily.get(c.c4_family).push(c);}
-  const familyOrder=['data-systems','compute-processing','platform-governance','packaging-runtime','coordination-community','integration-services','unknown'];
-  const lanes=el('div',{class:'domain-lanes'});
-  for(const fam of familyOrder){
-    const famComps=byFamily.get(fam)||[];if(famComps.length===0)continue;
-    const lane=el('div',{class:'map-lane'});
-    lane.appendChild(el('div',{class:'lane-label'},text(C4_FAMILY_LABELS[fam]||fam)));
-    for(const c of famComps){
-      const node=el('a',{class:'map-node',href:`#${c.route}`,'data-portolan-id':c.id,'data-portolan-kind':'component','data-portolan-route':c.route,'data-portolan-clickable':'true','data-testid':'portolan-map-node'});
-      node.addEventListener('click',(ev)=>{ev.preventDefault();setHash(c.route.replace(/^#/,''));});
-      node.appendChild(evidenceDot(c.evidence&&c.evidence.state));
-      node.appendChild(el('span',{class:'map-node-label'},text(c.display_name)));
-      if(c.lifecycle==='retired')node.classList.add('is-retired');
-      lane.appendChild(node);
-    }
-    lanes.appendChild(lane);
+  panel.appendChild(renderGraphLegend());
+  panel.appendChild(renderGraphCanvas(comps,rels));
+  // Surfaces toggle stays, but is no longer the focus of the view.
+  const toggle=el('button',{class:'map-surface-toggle','data-portolan-clickable':'true'},text(state.mapShowSurfaces?'Hide attached surfaces':'Show attached surfaces'));
+  toggle.addEventListener('click',()=>{state.mapShowSurfaces=!state.mapShowSurfaces;render();});
+  if(state.mapShowSurfaces){
+    const surfStrip=el('div',{class:'map-surface-strip'});
+    surfStrip.appendChild(sectionKicker('Attached surfaces (revealed)'));
+    const allSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]);
+    const sg=el('div',{class:'route-button-grid'});
+    for(const sf of allSurfaces.slice(0,40))sg.appendChild(routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}));
+    if(allSurfaces.length===0)surfStrip.appendChild(el('p',{class:'muted'},text('No surfaces.')));else surfStrip.appendChild(sg);
+    panel.appendChild(toggle);
+    panel.appendChild(surfStrip);
   }
-  canvas.appendChild(lanes);
-  if(rels.length>0){const edgeList=el('div',{class:'edge-list'});edgeList.appendChild(sectionKicker('Relationships ('+rels.length+')'));for(const r of rels)edgeList.appendChild(relationshipChip(r));canvas.appendChild(edgeList);}
-  if(state.mapShowSurfaces){const surfStrip=el('div',{class:'map-surface-strip'});surfStrip.appendChild(sectionKicker('Attached surfaces (revealed)'));const allSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]);const sg=el('div',{class:'route-button-grid'});for(const sf of allSurfaces.slice(0,40))sg.appendChild(routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}));if(allSurfaces.length===0)surfStrip.appendChild(el('p',{class:'muted'},text('No surfaces.')));else surfStrip.appendChild(sg);panel.appendChild(surfStrip);}
-  panel.appendChild(canvas);
   main.appendChild(panel);
+}
+
+// Color swatch + label row showing what each family color encodes.
+function renderGraphLegend(){
+  const legend=el('div',{class:'graph-legend','aria-label':'C4 family color legend'});
+  const families=Object.keys(C4_FAMILY_LABELS);
+  for(const fam of families){
+    const col=familyColor(fam);
+    const item=el('div',{class:'legend-item'},el('span',{class:'legend-swatch',style:`background:${col.main};box-shadow:0 0 8px rgba(${col.soft},0.5)`}),el('span',{class:'legend-label'},text(C4_FAMILY_LABELS[fam])));
+    legend.appendChild(item);
+  }
+  return legend;
+}
+
+// Build node/edge model, compute a radial family-clustered layout, draw SVG.
+function renderGraphCanvas(comps,rels){
+  // 1. Build graph model.
+  const nodeMap=new Map();
+  for(const c of comps){nodeMap.set(c.id,{id:c.id,comp:c,family:c.c4_family||'unknown',degree:0});}
+  const edges=[];
+  for(const r of rels){
+    const from=nodeMap.get(r.from_id);const to=nodeMap.get(r.to_id);
+    if(from&&to){from.degree++;to.degree++;edges.push({from:from,to:to,rel:r});}
+  }
+  const nodes=[...nodeMap.values()];
+  // 2. Compute node radius from degree (importance).
+  const maxDeg=Math.max(1,...nodes.map(n=>n.degree));
+  for(const n of nodes){
+    // base 9, scale up to 26 for the most-connected node; isolated nodes still 9.
+    n.r=9+14*(n.degree/maxDeg);
+  }
+  // 3. Radial family-clustered layout: each family gets a sector angle; members fan out around it.
+  layoutRadialClusters(nodes);
+  // 4. Render SVG.
+  const bounds=computeBounds(nodes,40);
+  const canvas=el('div',{class:'map-canvas graph-stage','data-testid':'portolan-map'});
+  const svg=svgEl('svg',{class:'graph-svg',viewBox:`${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`,preserveAspectRatio:'xMidYMid meet',role:'img','aria-label':'Component dependency graph'});
+  // defs: edge arrow marker + soft glow filter
+  const defs=svgEl('defs');
+  defs.appendChild(svgEl('marker',{id:'graph-arrow',viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'6',markerHeight:'6',orient:'auto-start-reverse'},
+    svgEl('path',{d:'M0,0 L10,5 L0,10 z',fill:'rgba(168,181,255,0.55)'})));
+  const glow=svgEl('filter',{id:'graph-glow',x:'-50%',y:'-50%',width:'200%',height:'200%'});
+  glow.appendChild(svgEl('feGaussianBlur',{stdDeviation:'4',result:'blur'}));
+  glow.appendChild(svgEl('feMerge',null,svgEl('feMergeNode',{in:'blur'}),svgEl('feMergeNode',{in:'SourceGraphic'})));
+  defs.appendChild(glow);
+  svg.appendChild(defs);
+  // 5. Edges first (under nodes).
+  const edgeLayer=svgEl('g',{class:'edge-layer'});
+  for(const e of edges){
+    const a=e.from,b=e.to;
+    // straight segment, trimmed to node borders
+    const dx=b.x-a.x,dy=b.y-a.y;
+    const dist=Math.max(0.001,Math.hypot(dx,dy));
+    const ux=dx/dist,uy=dy/dist;
+    const x1=a.x+ux*a.r,y1=a.y+uy*a.r;
+    const x2=b.x-ux*b.r,y2=b.y-uy*b.r;
+    const line=svgEl('line',{class:'graph-edge',x1,y1,x2,y2,'data-portolan-id':e.rel.id,'data-portolan-kind':'relationship','data-portolan-route':e.rel.route,'data-portolan-clickable':'true','data-from':a.id,'data-to':b.id});
+    line.setAttribute('marker-end','url(#graph-arrow)');
+    line.addEventListener('click',(ev)=>{ev.preventDefault();setHash(e.rel.route.replace(/^#/,''));});
+    edgeLayer.appendChild(line);
+  }
+  svg.appendChild(edgeLayer);
+  // 6. Nodes.
+  const nodeLayer=svgEl('g',{class:'node-layer'});
+  for(const n of nodes){
+    const col=familyColor(n.family);
+    const g=svgEl('g',{class:'graph-node',transform:`translate(${n.x},${n.y})`,'data-portolan-id':n.id,'data-portolan-kind':'component','data-portolan-route':n.comp.route,'data-portolan-clickable':'true','data-family':n.family,'data-degree':String(n.degree),'data-testid':'portolan-map-node'});
+    // lifecycle styling: retired = dashed ring, unknown = faint ring
+    let ringDash='none',ringStroke=col.main;
+    if(n.comp.lifecycle==='retired'){ringDash='4 3';ringStroke=col.glow;}
+    g.appendChild(svgEl('circle',{class:'node-halo',r:String(n.r+6),fill:`rgba(${col.soft},0.10)`}));
+    g.appendChild(svgEl('circle',{class:'node-ring',r:String(n.r+2),fill:'none',stroke:ringStroke,'stroke-width':'1.5','stroke-dasharray':ringDash,opacity:n.comp.lifecycle==='unknown'?'0.5':'0.8'}));
+    g.appendChild(svgEl('circle',{class:'node-core',r:String(n.r),fill:col.main,stroke:col.glow,'stroke-width':'1.5',filter:'url(#graph-glow)'}));
+    // label: always render for readability
+    const label=n.comp.display_name;
+    const labelY=n.r+16;
+    g.appendChild(svgEl('text',{class:'node-label',y:String(labelY),'text-anchor':'middle'},label));
+    g.addEventListener('click',(ev)=>{ev.preventDefault();setHash(n.comp.route.replace(/^#/,''));});
+    g.addEventListener('mouseenter',()=>focusNode(svg,n.id));
+    g.addEventListener('mouseleave',()=>unfocusAll(svg));
+    nodeLayer.appendChild(g);
+  }
+  svg.appendChild(nodeLayer);
+  // 7. Edge hover behavior delegated on svg.
+  svg.addEventListener('mouseover',(ev)=>{
+    const t=ev.target;
+    if(t.classList&&t.classList.contains('graph-edge')){highlightEdge(svg,t.getAttribute('data-from'),t.getAttribute('data-to'));}
+  });
+  svg.addEventListener('mouseout',(ev)=>{
+    const t=ev.target;
+    if(t.classList&&t.classList.contains('graph-edge')){unfocusAll(svg);}
+  });
+  canvas.appendChild(svg);
+  // 8. Hint line for isolated nodes.
+  const isolated=nodes.filter(n=>n.degree===0);
+  if(isolated.length>0){
+    canvas.appendChild(el('p',{class:'muted graph-hint'},text(`${isolated.length} component(s) with no declared dependencies sit at the edge of their family cluster.`)));
+  }
+  return canvas;
+}
+
+// Radial layout: place families around a circle, fan members out within each family sector.
+// Hubs (high-degree nodes) are pulled toward the center so the dense core is visible.
+// Isolated nodes (degree 0) are placed on the outer orbit of their family to avoid the dense core.
+function layoutRadialClusters(nodes){
+  if(nodes.length===0)return;
+  const families=['data-systems','compute-processing','platform-governance','packaging-runtime','coordination-community','integration-services','unknown'];
+  const byFam=new Map();
+  for(const f of families)byFam.set(f,[]);
+  for(const n of nodes){(byFam.get(n.family)||byFam.get('unknown')).push(n);}
+  const usedFamilies=families.filter(f=>(byFam.get(f)||[]).length>0);
+  const k=usedFamilies.length;
+  const sectorAngle=(Math.PI*2)/Math.max(1,k);
+  const RING_BASE=230; // base family ring radius from global center
+  const globalMaxDeg=Math.max(1,...nodes.map(n=>n.degree));
+  usedFamilies.forEach((fam,fi)=>{
+    const members=byFam.get(fam);
+    const centerAngle=fi*sectorAngle-Math.PI/2; // start at top
+    // Split into connected (have edges) and isolated (degree 0).
+    const connected=members.filter(n=>n.degree>0).sort((a,b)=>b.degree-a.degree);
+    const isolated=members.filter(n=>n.degree===0);
+    // Family cluster center: pulled toward global origin proportional to its hub's importance.
+    const hub=connected[0]||members[0];
+    const hubPull=hub.degree/globalMaxDeg; // 0..1
+    const cx=Math.cos(centerAngle)*RING_BASE*(1-0.5*hubPull);
+    const cy=Math.sin(centerAngle)*RING_BASE*(1-0.5*hubPull);
+    // Connected members: hub at cluster center, others on a ring around it.
+    connected.forEach((n,i)=>{
+      if(i===0){n.x=cx;n.y=cy;return;}
+      // Distribute non-hub connected members evenly around the hub on a ring.
+      // Use golden-angle spiral for even spacing regardless of count.
+      const ringR=78+26*Math.floor((i-1)/6); // grow rings if many members
+      const ang=centerAngle+Math.PI+((i-1)*2.399963); // golden angle offset from hub direction
+      n.x=cx+Math.cos(ang)*ringR;
+      n.y=cy+Math.sin(ang)*ringR;
+    });
+    // Isolated members: place on outer orbit in the family sector direction,
+    // spread along an arc so they read as "edge of cluster, not connected".
+    const isoBaseR=RING_BASE+115;
+    isolated.forEach((n,i)=>{
+      const spread=0.7; // radians of arc per isolated node — wider to avoid connected members
+      const ang=centerAngle+(i-(isolated.length-1)/2)*spread;
+      n.x=Math.cos(ang)*isoBaseR;
+      n.y=Math.sin(ang)*isoBaseR;
+    });
+  });
+  // Resolve gross overlaps between clusters with a light relaxation pass.
+  relax(nodes,55,24);
+}
+// Simple overlap resolution: push apart any two nodes closer than minDist, a few iterations.
+function relax(nodes,minDist,iterations){
+  for(let iter=0;iter<iterations;iter++){
+    for(let i=0;i<nodes.length;i++){
+      for(let j=i+1;j<nodes.length;j++){
+        const a=nodes[i],b=nodes[j];
+        const dx=b.x-a.x,dy=b.y-a.y;
+        const d=Math.hypot(dx,dy);
+        const want=a.r+b.r+minDist;
+        if(d<want&&d>0.001){
+          const push=(want-d)/2;
+          const ux=dx/d,uy=dy/d;
+          a.x-=ux*push;a.y-=uy*push;
+          b.x+=ux*push;b.y+=uy*push;
+        }
+      }
+    }
+  }
+}
+function computeBounds(nodes,pad){
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  for(const n of nodes){
+    // Account for node radius + label height below the node so labels never clip.
+    const r=n.r+28;
+    minX=Math.min(minX,n.x-r);minY=Math.min(minY,n.y-r);
+    maxX=Math.max(maxX,n.x+r);maxY=Math.max(maxY,n.y+r);
+  }
+  if(!isFinite(minX)){minX=0;minY=0;maxX=600;maxY=400;}
+  return {minX:minX-pad,minY:minY-pad,maxX:maxX+pad,maxY:maxY+pad,width:(maxX-minX)+pad*2,height:(maxY-minY)+pad*2};
+}
+// Highlight a node and its connected edges; dim everything else.
+function focusNode(svg,id){
+  const edges=svg.querySelectorAll('.graph-edge');
+  const nodes=svg.querySelectorAll('.graph-node');
+  const connected=new Set([id]);
+  edges.forEach(e=>{
+    const from=e.getAttribute('data-from'),to=e.getAttribute('data-to');
+    if(from===id||to===id){e.classList.add('is-active');connected.add(from);connected.add(to);}
+    else e.classList.add('is-dim');
+  });
+  nodes.forEach(n=>{
+    if(connected.has(n.getAttribute('data-portolan-id')))n.classList.remove('is-dim');
+    else n.classList.add('is-dim');
+  });
+}
+function highlightEdge(svg,fromId,toId){
+  const nodes=svg.querySelectorAll('.graph-node');
+  const keep=new Set([fromId,toId]);
+  nodes.forEach(n=>{if(!keep.has(n.getAttribute('data-portolan-id')))n.classList.add('is-dim');});
+  svg.querySelectorAll('.graph-edge').forEach(e=>{
+    if(e.getAttribute('data-from')!==fromId||e.getAttribute('data-to')!==toId)e.classList.add('is-dim');
+  });
+}
+function unfocusAll(svg){
+  svg.querySelectorAll('.is-dim,.is-active').forEach(e=>{e.classList.remove('is-dim');e.classList.remove('is-active');});
 }
 
 function renderComponents(main){
