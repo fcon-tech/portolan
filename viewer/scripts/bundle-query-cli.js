@@ -20,6 +20,7 @@ const families = [
   'claims',
   'repos',
   'relationships',
+  'system-map',
   'promotion-health',
   'promoted-facts',
   'raw-artifacts',
@@ -44,6 +45,7 @@ Families:
   claims         [--tier analytical|synthetic|speculative] [--subject S] --limit N
   repos          [--repo ID] [--text Q] --limit N
   relationships  [--type T] [--repo ID] --limit N
+  system-map     [--section overview|components|repositories|surfaces|relationships|findings|unknowns|c4] [--kind K] [--id ID] [--q TEXT] --limit N
   promotion-health [--family F] [--status S] [--stratum S] --limit N
   promoted-facts   [--family F] [--status S] [--stratum S] --limit N
   raw-artifacts    [--family F] [--status S] [--stratum S] --limit N
@@ -164,6 +166,10 @@ function parseArgs(argv) {
         break;
       case '--type':
         opts.type = next;
+        i++;
+        break;
+      case '--id':
+        opts.id = next;
         i++;
         break;
       case '--limit':
