@@ -139,6 +139,9 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/bundle/atlas-facts.json') {
     return sendOptionalFile(path.join(bundlePath, 'atlas-facts.json'), res, '{}');
   }
+  if (url.pathname === '/bundle/system-map.json') {
+    return sendOptionalFile(path.join(bundlePath, 'system-map.json'), res, '{}');
+  }
   if (url.pathname === '/bundle/atlas-surface-content.json') {
     return sendOptionalFile(path.join(bundlePath, 'atlas-surface-content.json'), res, '{}');
   }

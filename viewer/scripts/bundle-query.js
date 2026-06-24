@@ -6,6 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { querySystemMap: querySystemMapImpl } = require('./system-map/query');
 
 const SCHEMA_VERSION = '0.1.0';
 const DEFAULT_LIMIT = 20;
@@ -2262,6 +2263,11 @@ function queryStratumFile(bundlePath, opts = {}, config) {
   );
 }
 
+// querySystemMap delegated to ./system-map/query.js (SSOT, unit-tested).
+function querySystemMap(bundlePath, opts) {
+  return querySystemMapImpl(bundlePath, opts);
+}
+
 function dispatch(bundlePath, family, opts) {
   const resolved = path.resolve(bundlePath);
   if (!fs.existsSync(resolved)) {
@@ -2296,6 +2302,8 @@ function dispatch(bundlePath, family, opts) {
       return queryRepos(resolved, opts);
     case 'relationships':
       return queryRelationships(resolved, opts);
+    case 'system-map':
+      return querySystemMap(resolved, opts);
     case 'promotion-health':
       return queryStratumFile(resolved, opts, { family, artifact: 'promotion-health.jsonl' });
     case 'promoted-facts':
@@ -2447,6 +2455,15 @@ function handleHttpPath(pathname, searchParams, bundlePath) {
       limit: searchParams.get('limit'),
     });
   }
+  if (p === '/api/system-map') {
+    return dispatch(bundlePath, 'system-map', {
+      section: searchParams.get('section'),
+      kind: searchParams.get('kind'),
+      q: searchParams.get('q') || searchParams.get('text'),
+      id: searchParams.get('id'),
+      limit: searchParams.get('limit'),
+    });
+  }
   return null;
 }
 
@@ -2473,4 +2490,5 @@ module.exports = {
   queryClaims,
   queryRepos,
   queryRelationships,
+  querySystemMap,
 };
