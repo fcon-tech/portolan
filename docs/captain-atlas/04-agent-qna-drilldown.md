@@ -1,9 +1,14 @@
 # BDD Work Package: Agent Q&A And Drill-Down
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Agent Assignment
 
-Make the generated atlas useful inside the coding-agent workflow. The agent must
-answer from the atlas bundle and map selected code back to landscape context.
+Make the generated Portolan result useful inside the coding-agent workflow. The
+agent must answer from the Portolan bundle and map selected code back to
+landscape context.
 
 ## Product Question
 

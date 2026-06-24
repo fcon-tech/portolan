@@ -1,5 +1,9 @@
 # BDD Work Package: Cursor Composer First Run
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Agent Assignment
 
 Prove or falsify that Cursor Composer can be handed Portolan and a target
@@ -101,6 +105,6 @@ If Cursor cannot do this, classify the blocker:
 - permissions;
 - long-running scan UX;
 - missing command;
-- weak generated atlas;
+- weak generated Portolan UI;
 - weak agent answer;
 - other.

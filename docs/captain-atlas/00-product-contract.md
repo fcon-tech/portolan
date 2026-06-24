@@ -1,5 +1,9 @@
 # Product Contract: Captain Atlas
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Job Story
 
 When I am responsible for a large software estate, I want to give an AI coding
@@ -38,7 +42,10 @@ and use the resulting bundle to answer questions.
 - **Drill-down**: navigation from map node, relationship, risk, or answer to
   local files, facts, reports, commands, and known gaps.
 - **First run**: the clean path from a Portolan link/path and target ecosystem
-  to an opened atlas.
+  to an opened atlas. The agent runs bounded local discovery, produces a
+  **normalized system map** (`schema/system-map.schema.json`, written to
+  `<target>/.portolan/atlas/system-map.json`), opens or hands off the local
+  meaning-first UI, and can answer landscape questions through bounded queries.
 
 ## Common BDD
 
