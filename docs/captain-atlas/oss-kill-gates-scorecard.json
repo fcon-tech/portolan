@@ -159,6 +159,19 @@
       "integration_cost": "medium_to_high",
       "recommendation": "pack",
       "portolan_boundary": "Define import contracts and validation; do not build a full semantic indexer until local export options fail for a specific target."
+    },
+    {
+      "id": "c4-renderer-delta",
+      "capability": "graph_and_c4_rendering",
+      "candidate": "D3 / Cytoscape.js / Sigma.js / React Flow / Mermaid / Structurizr / C4-PlantUML",
+      "status": "inspected",
+      "fit": "Delta check for the 07 core spec UI rebuild. Portolan renders meaningful components (~2-50 nodes), not raw graph entities. C4 is a family-grouped lens over the same objects, not observed runtime topology. WebGL (Sigma) and Canvas (Cytoscape) scale advantages are irrelevant at this node count. Each candidate is permissively licensed (MIT/ISC) but adds either a bundler/framework or a new major dependency, which is a 07 stop-condition. C4 DSL tools (Structurizr/PlantUML/Mermaid) target diagram-as-code export, not an interactive agent-first dossier UI.",
+      "license": "all_mit_or_isc",
+      "local_first": "all_local_capable",
+      "privacy": "ok_when_local",
+      "integration_cost": "medium",
+      "recommendation": "pack",
+      "portolan_boundary": "Keep the existing vanilla-JS SVG-edge + positioned-HTML-node renderer (no bundler, no framework). C4 is a deterministic family-grouped view over the normalized system map, not a separate diagramming pipeline. Do not add a graph/C4 rendering dependency unless a concrete large-graph (>500 node) need is proven."
     }
   ]
 }

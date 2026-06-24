@@ -8,6 +8,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 RUN_AGENT_RUNTIME=1
 REQUIRE_AGENT_RUNTIME=0
+REQUIRE_SYSTEM_MAP=0
 BIGTOP_BUNDLE=""
 BIGTOP_STRESS_BUNDLE=""
 SECOND_OSS_BUNDLE=""
@@ -80,6 +81,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-agent-runtime) RUN_AGENT_RUNTIME=0; shift ;;
     --require-agent-runtime) REQUIRE_AGENT_RUNTIME=1; shift ;;
+    --require-system-map) REQUIRE_SYSTEM_MAP=1; shift ;;
     --bigtop-bundle) require_opt_value --bigtop-bundle "${2:-}"; BIGTOP_BUNDLE="$2"; shift 2 ;;
     --bigtop-stress-bundle) require_opt_value --bigtop-stress-bundle "${2:-}"; BIGTOP_STRESS_BUNDLE="$2"; shift 2 ;;
     --second-oss-bundle) require_opt_value --second-oss-bundle "${2:-}"; SECOND_OSS_BUNDLE="$2"; shift 2 ;;
@@ -148,6 +150,21 @@ run() {
 fail() {
   echo "portolan-product-acceptance: FAIL: $*" >&2
   exit 1
+}
+
+# When --require-system-map is set, a bundle must carry a valid normalized
+# system map and no surface-only target may leak as a default-map component.
+require_system_map_if_requested() {
+  local bundle=$1
+  [[ "$REQUIRE_SYSTEM_MAP" -eq 1 ]] || return 0
+  local sm="$bundle/system-map.json"
+  [[ -f "$sm" ]] || fail "--require-system-map set but $sm is missing"
+  "$ROOT/scripts/validate-system-map-schema.sh" "$sm" >/dev/null ||
+    fail "--require-system-map: $sm failed schema + semantic validation"
+  local leaked
+  leaked=$(jq -r '[.objects.components[] | select(.id | test("support-matrix|mailing-list|bigtop-ci|binary-repo|docker-image"))] | length' "$sm")
+  [[ "$leaked" == "0" ]] ||
+    fail "--require-system-map: $leaked surface-only target(s) leaked as default-map components in $sm"
 }
 
 mark_bundle_full_proof() {
@@ -975,6 +992,7 @@ run_exported_multirepo_fixture_check() {
     "$bundle/hotspots-full.jsonl" >/dev/null; then
     fail "manifest files leaked into symbol-density risk ranking"
   fi
+  require_system_map_if_requested "$bundle"
 
   rm -rf "$tmp"
 }
@@ -1042,6 +1060,7 @@ run_polyglot_multirepo_fixture_check() {
     "$bundle/hotspots-full.jsonl" >/dev/null; then
     fail "polyglot manifest files leaked into symbol-density risk ranking"
   fi
+  require_system_map_if_requested "$bundle"
 
   rm -rf "$tmp"
 }

@@ -700,6 +700,9 @@ jq -s '
 
 if [[ "${PORTOLAN_BUNDLE_CORE_ONLY:-0}" == "1" ]]; then
   "$SCRIPT_DIR/build-evidence-promotion-atlas.sh" "$BUNDLE_DIR" "$TARGET_ROOT"
+  "$SCRIPT_DIR/build-atlas-surfaces.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+  "$SCRIPT_DIR/build-atlas-facts.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
+  "$SCRIPT_DIR/build-system-map.sh" "$BUNDLE_DIR" "$TARGET_ROOT" || true
   rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
   echo "Portolan core bundle written to $BUNDLE_DIR (hotspots=$hotspot_count gaps=$gap_count total_before=$total_before truncated=$truncated)"
   exit 0
@@ -782,6 +785,7 @@ rm -f \
 "$SCRIPT_DIR/build-atlas-surfaces.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
 "$SCRIPT_DIR/build-atlas-facts.sh" "$TARGET_ROOT" "$BUNDLE_DIR" || true
 "$SCRIPT_DIR/build-atlas-surface-content.sh" "$BUNDLE_DIR" || true
+"$SCRIPT_DIR/build-system-map.sh" "$BUNDLE_DIR" "$TARGET_ROOT"
 
 rm -f "$hotspots_raw" "$gaps_raw" "$sorted_all" "$budgeted"
 
