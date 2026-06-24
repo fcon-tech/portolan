@@ -1,0 +1,3155 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "portolan-system-map 0.1.0",
+  "generated_at": "2026-06-24T09:49:27.941Z",
+  "target": {
+    "id": "target:.",
+    "display_name": "Apache Bigtop",
+    "root": "apache-bigtop landscape",
+    "approved_output_area": ".portolan",
+    "approved_instruction_files": [
+      ".cursor/rules/portolan-atlas.mdc",
+      "AGENTS.md",
+      "CLAUDE.md"
+    ]
+  },
+  "objects": {
+    "components": [
+      {
+        "id": "component:apache-bigtop-repo",
+        "display_name": "Apache Bigtop",
+        "type": "platform",
+        "role": "ecosystem-integrator",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-bigtop-repo",
+          "tracker-apache-bigtop-repo",
+          "wiki-apache-bigtop-repo",
+          "list-apache-bigtop-repo"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo",
+          "rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo",
+          "rel:manifest-dep:bigtop-select--to--apache-bigtop-repo",
+          "rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "coordination-community",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-bigtop-repo",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"ecosystem-integrator\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-bigtop-repo"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-bigtop-repo",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-bigtop-repo"
+      },
+      {
+        "id": "component:bigtop-groovy",
+        "display_name": "Bigtop Groovy package",
+        "type": "package",
+        "role": "build-runtime-support",
+        "lifecycle": "internal-support",
+        "repository_ids": [],
+        "surface_ids": [
+          "ref-target-bigtop-groovy"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "packaging-runtime",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:bigtop-groovy",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"package\" with role \"build-runtime-support\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:bigtop-groovy.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/bigtop-groovy"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-groovy",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/bigtop-groovy"
+      },
+      {
+        "id": "component:bigtop-jsvc",
+        "display_name": "Bigtop JSVC package",
+        "type": "package",
+        "role": "daemon-service-support",
+        "lifecycle": "internal-support",
+        "repository_ids": [],
+        "surface_ids": [
+          "ref-target-bigtop-jsvc"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "packaging-runtime",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:bigtop-jsvc",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"package\" with role \"daemon-service-support\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:bigtop-jsvc.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/bigtop-jsvc"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-jsvc",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/bigtop-jsvc"
+      },
+      {
+        "id": "component:bigtop-select",
+        "display_name": "Bigtop Select package",
+        "type": "package",
+        "role": "bigtop-version-selection",
+        "lifecycle": "internal-support",
+        "repository_ids": [],
+        "surface_ids": [
+          "ref-target-bigtop-select"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:bigtop-select--to--apache-bigtop-repo"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "packaging-runtime",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:bigtop-select",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"package\" with role \"bigtop-version-selection\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:bigtop-select.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/bigtop-select"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-select",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/bigtop-select"
+      },
+      {
+        "id": "component:bigtop-utils",
+        "display_name": "Bigtop Utils package",
+        "type": "package",
+        "role": "bigtop-runtime-support",
+        "lifecycle": "internal-support",
+        "repository_ids": [],
+        "surface_ids": [
+          "ref-target-bigtop-utils"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "packaging-runtime",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:bigtop-utils",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"package\" with role \"bigtop-runtime-support\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:bigtop-utils.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/bigtop-utils"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-utils",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/bigtop-utils"
+      },
+      {
+        "id": "component:apache-airflow",
+        "display_name": "Apache Airflow",
+        "type": "application",
+        "role": "workflow-orchestration",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-airflow",
+          "tracker-apache-airflow",
+          "wiki-apache-airflow"
+        ],
+        "relationship_ids": [],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "compute-processing",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-airflow",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"workflow-orchestration\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-airflow"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-airflow",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-airflow"
+      },
+      {
+        "id": "component:alluxio",
+        "display_name": "Alluxio",
+        "type": "application",
+        "role": "distributed-cache-filesystem",
+        "lifecycle": "external",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-alluxio",
+          "tracker-alluxio",
+          "wiki-alluxio"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:alluxio--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "data-systems",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:alluxio",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"distributed-cache-filesystem\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:alluxio.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Included in the Bigtop release BOM but not an Apache project.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/alluxio"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:alluxio",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/alluxio"
+      },
+      {
+        "id": "component:apache-flink",
+        "display_name": "Apache Flink",
+        "type": "application",
+        "role": "stream-batch-processing",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-flink",
+          "tracker-apache-flink",
+          "wiki-apache-flink"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-flink--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "compute-processing",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-flink",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"stream-batch-processing\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-flink.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-flink"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-flink",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-flink"
+      },
+      {
+        "id": "component:apache-hadoop",
+        "display_name": "Apache Hadoop",
+        "type": "application",
+        "role": "filesystem-yarn-mapreduce-foundation",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-hadoop",
+          "tracker-apache-hadoop",
+          "wiki-apache-hadoop"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:alluxio--to--apache-hadoop",
+          "rel:manifest-dep:apache-flink--to--apache-hadoop",
+          "rel:manifest-dep:apache-hbase--to--apache-hadoop",
+          "rel:manifest-dep:apache-hive--to--apache-hadoop",
+          "rel:manifest-dep:apache-livy--to--apache-hadoop",
+          "rel:manifest-dep:apache-phoenix--to--apache-hadoop",
+          "rel:manifest-dep:apache-spark--to--apache-hadoop",
+          "rel:manifest-dep:apache-tez--to--apache-hadoop",
+          "rel:manifest-dep:apache-zeppelin--to--apache-hadoop",
+          "rel:manifest-dep:apache-oozie--to--apache-hadoop",
+          "rel:manifest-dep:apache-sqoop--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "data-systems",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-hadoop",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"filesystem-yarn-mapreduce-foundation\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-hadoop"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-hadoop",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-hadoop"
+      },
+      {
+        "id": "component:apache-hbase",
+        "display_name": "Apache HBase",
+        "type": "application",
+        "role": "distributed-nosql-store",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-hbase",
+          "tracker-apache-hbase",
+          "wiki-apache-hbase",
+          "docs-apache-hbase"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-hbase--to--apache-hadoop",
+          "rel:manifest-dep:apache-hbase--to--apache-zookeeper",
+          "rel:manifest-dep:apache-phoenix--to--apache-hbase"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "data-systems",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-hbase",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"distributed-nosql-store\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-hbase.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 2 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-hbase"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-hbase",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-hbase"
+      },
+      {
+        "id": "component:apache-hive",
+        "display_name": "Apache Hive",
+        "type": "application",
+        "role": "sql-warehouse",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-hive",
+          "tracker-apache-hive",
+          "wiki-apache-hive"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-hive--to--apache-hadoop",
+          "rel:manifest-dep:apache-hive--to--apache-tez",
+          "rel:manifest-dep:apache-zeppelin--to--apache-hive",
+          "rel:manifest-dep:apache-sqoop--to--apache-hive"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "data-systems",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-hive",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"sql-warehouse\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-hive.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 2 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-hive"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-hive",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-hive"
+      },
+      {
+        "id": "component:apache-kafka",
+        "display_name": "Apache Kafka",
+        "type": "application",
+        "role": "event-streaming",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-kafka",
+          "tracker-apache-kafka",
+          "wiki-apache-kafka"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-kafka--to--apache-zookeeper"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "unknown",
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-kafka",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"event-streaming\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-kafka.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-kafka"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-kafka",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-kafka"
+      },
+      {
+        "id": "component:apache-livy",
+        "display_name": "Apache Livy",
+        "type": "application",
+        "role": "spark-rest-service",
+        "lifecycle": "unknown",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-livy",
+          "tracker-apache-livy",
+          "wiki-apache-livy",
+          "docs-apache-livy"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-livy--to--apache-spark",
+          "rel:manifest-dep:apache-livy--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "integration-services",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-livy",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"spark-rest-service\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-livy.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 2 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-livy"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-livy",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-livy"
+      },
+      {
+        "id": "component:apache-phoenix",
+        "display_name": "Apache Phoenix",
+        "type": "application",
+        "role": "sql-over-hbase",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-phoenix",
+          "tracker-apache-phoenix",
+          "wiki-apache-phoenix",
+          "docs-apache-phoenix"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-phoenix--to--apache-hbase",
+          "rel:manifest-dep:apache-phoenix--to--apache-hadoop",
+          "rel:manifest-dep:apache-phoenix--to--apache-zookeeper"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "unknown",
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-phoenix",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"sql-over-hbase\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-phoenix.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 3 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-phoenix"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-phoenix",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-phoenix"
+      },
+      {
+        "id": "component:apache-ranger",
+        "display_name": "Apache Ranger",
+        "type": "application",
+        "role": "security-governance",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-ranger",
+          "tracker-apache-ranger",
+          "wiki-apache-ranger"
+        ],
+        "relationship_ids": [],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "platform-governance",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-ranger",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"security-governance\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-ranger"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-ranger",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-ranger"
+      },
+      {
+        "id": "component:apache-solr",
+        "display_name": "Apache Solr",
+        "type": "application",
+        "role": "search-index",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-solr",
+          "tracker-apache-solr",
+          "wiki-apache-solr"
+        ],
+        "relationship_ids": [],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "data-systems",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-solr",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"search-index\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-solr"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-solr",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-solr"
+      },
+      {
+        "id": "component:apache-spark",
+        "display_name": "Apache Spark",
+        "type": "application",
+        "role": "distributed-compute",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-spark",
+          "tracker-apache-spark",
+          "wiki-apache-spark"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-livy--to--apache-spark",
+          "rel:manifest-dep:apache-spark--to--apache-hadoop",
+          "rel:manifest-dep:apache-zeppelin--to--apache-spark"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "compute-processing",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-spark",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"distributed-compute\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-spark.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-spark"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-spark",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-spark"
+      },
+      {
+        "id": "component:apache-tez",
+        "display_name": "Apache Tez",
+        "type": "application",
+        "role": "dag-execution-engine",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-tez",
+          "tracker-apache-tez",
+          "wiki-apache-tez"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-hive--to--apache-tez",
+          "rel:manifest-dep:apache-tez--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "compute-processing",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-tez",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"dag-execution-engine\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-tez.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-tez"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-tez",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-tez"
+      },
+      {
+        "id": "component:apache-zeppelin",
+        "display_name": "Apache Zeppelin",
+        "type": "application",
+        "role": "notebook-analytics",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-zeppelin",
+          "tracker-apache-zeppelin",
+          "wiki-apache-zeppelin"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-zeppelin--to--apache-spark",
+          "rel:manifest-dep:apache-zeppelin--to--apache-hive",
+          "rel:manifest-dep:apache-zeppelin--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "unknown",
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-zeppelin",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"notebook-analytics\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-zeppelin.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 3 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-zeppelin"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-zeppelin",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-zeppelin"
+      },
+      {
+        "id": "component:apache-zookeeper",
+        "display_name": "Apache ZooKeeper",
+        "type": "application",
+        "role": "coordination-service",
+        "lifecycle": "active",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-zookeeper",
+          "tracker-apache-zookeeper",
+          "wiki-apache-zookeeper"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-hbase--to--apache-zookeeper",
+          "rel:manifest-dep:apache-kafka--to--apache-zookeeper",
+          "rel:manifest-dep:apache-phoenix--to--apache-zookeeper"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "coordination-community",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-zookeeper",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"repository\" with role \"coordination-service\"."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Named repository component present in the inspected target corpus.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-zookeeper"
+          }
+        ],
+        "evidence": {
+          "state": "source-visible",
+          "source": "corpus-manifest#target:apache-zookeeper",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-zookeeper"
+      },
+      {
+        "id": "component:apache-oozie",
+        "display_name": "Apache Oozie",
+        "type": "retired",
+        "role": "legacy-hadoop-workflow-scheduler",
+        "lifecycle": "retired",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-oozie",
+          "tracker-apache-oozie",
+          "wiki-apache-oozie"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-oozie--to--apache-hadoop"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "compute-processing",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-oozie",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"retired-project\" with role \"legacy-hadoop-workflow-scheduler\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-oozie.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 1 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Retired project used as a legacy control for lifecycle and evidence-state handling.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-oozie"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-oozie",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-oozie"
+      },
+      {
+        "id": "component:apache-sqoop",
+        "display_name": "Apache Sqoop",
+        "type": "retired",
+        "role": "legacy-rdbms-hadoop-transfer",
+        "lifecycle": "retired",
+        "repository_ids": [],
+        "surface_ids": [
+          "site-apache-sqoop",
+          "tracker-apache-sqoop",
+          "wiki-apache-sqoop"
+        ],
+        "relationship_ids": [
+          "rel:manifest-dep:apache-sqoop--to--apache-hadoop",
+          "rel:manifest-dep:apache-sqoop--to--apache-hive"
+        ],
+        "finding_ids": [],
+        "unknown_ids": [
+          "unknown:atlas-facts-runtime-topology"
+        ],
+        "c4_family": "integration-services",
+        "secondary_c4_families": [],
+        "promotion_signals": [
+          {
+            "signal_type": "repository-metadata",
+            "source": "corpus-manifest#target:apache-sqoop",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest",
+            "reason": "Corpus target kind \"retired-project\" with role \"legacy-rdbms-hadoop-transfer\"."
+          },
+          {
+            "signal_type": "dependency-edge",
+            "source": "corpus-manifest#target:apache-sqoop.depends_on",
+            "producer": "corpus-manifest",
+            "independence_group": "corpus-manifest-dependencies",
+            "reason": "Declared 2 manifest dependency edge(s)."
+          }
+        ],
+        "created_by_producer_family": "portolan-system-map",
+        "why_present": "Retired project used as a legacy control for replacement and migration signals.",
+        "next_actions": [
+          {
+            "label": "Open dossier",
+            "target": "#/dossier/component/apache-sqoop"
+          }
+        ],
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-sqoop",
+          "producer": "corpus-manifest"
+        },
+        "route": "#/dossier/component/apache-sqoop"
+      }
+    ],
+    "repositories": [],
+    "surfaces": [
+      {
+        "id": "surf:apache-bigtop-release-350",
+        "surface_type": "release-matrix",
+        "label": "Apache Bigtop 3.5.0 release",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:apache-bigtop-release-350",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"release\" attached to component:apache-hadoop.",
+        "why_it_matters": "Support/release matrix; records which component versions are compatible.",
+        "route": "#/dossier/surface/surf:apache-bigtop-release-350"
+      },
+      {
+        "id": "surf:apache-bigtop-support-matrix-350",
+        "surface_type": "docs",
+        "label": "Apache Bigtop 3.5.0 support matrix",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Overview%2Bof%2BBigtop%2B3.5.0%2BSupport%2BMatrix",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:apache-bigtop-support-matrix-350",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"documentation\" attached to component:apache-hadoop.",
+        "why_it_matters": "Documentation/release surface; explains intended behavior and compatibility.",
+        "route": "#/dossier/surface/surf:apache-bigtop-support-matrix-350"
+      },
+      {
+        "id": "surf:bigtop-binary-repos",
+        "surface_type": "binary-repo",
+        "label": "Bigtop installable binary repositories",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://downloads.apache.org/bigtop/bigtop-3.5.0/repos/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:bigtop-binary-repos",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"binary-repository\" attached to component:apache-hadoop.",
+        "why_it_matters": "Binary/package repository surface; where installable artifacts are published.",
+        "route": "#/dossier/surface/surf:bigtop-binary-repos"
+      },
+      {
+        "id": "surf:bigtop-docker-images",
+        "surface_type": "docker-image",
+        "label": "Bigtop Docker images",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://hub.docker.com/u/bigtop",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:bigtop-docker-images",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"docker-image\" attached to component:apache-hadoop.",
+        "why_it_matters": "Docker image surface; containerized runtime artifacts.",
+        "route": "#/dossier/surface/surf:bigtop-docker-images"
+      },
+      {
+        "id": "surf:bigtop-ci",
+        "surface_type": "ci",
+        "label": "Bigtop CI and smoke-test jobs",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://ci.bigtop.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:bigtop-ci",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"runtime\" attached to component:apache-hadoop.",
+        "why_it_matters": "CI/verification surface; smoke-test and upstream-verification jobs.",
+        "route": "#/dossier/surface/surf:bigtop-ci"
+      },
+      {
+        "id": "surf:apache-bigtop-jira",
+        "surface_type": "issue-tracker",
+        "label": "Apache Bigtop JIRA",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://issues.apache.org/jira/browse/BIGTOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:apache-bigtop-jira",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"issue-tracker\" attached to component:apache-hadoop.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/surf:apache-bigtop-jira"
+      },
+      {
+        "id": "surf:apache-bigtop-wiki",
+        "surface_type": "wiki",
+        "label": "Apache Bigtop Confluence",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:apache-bigtop-wiki",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"wiki\" attached to component:apache-hadoop.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/surf:apache-bigtop-wiki"
+      },
+      {
+        "id": "surf:apache-bigtop-mailing-lists",
+        "surface_type": "mailing-list",
+        "label": "Apache Bigtop mailing lists",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://bigtop.apache.org/mail-lists.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#target:apache-bigtop-mailing-lists",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface-only target of kind \"mailing-list\" attached to component:apache-hadoop.",
+        "why_it_matters": "Community/mailing-list surface; the coordination and announcement channel.",
+        "route": "#/dossier/surface/surf:apache-bigtop-mailing-lists"
+      },
+      {
+        "id": "ref-bigtop-homepage",
+        "surface_type": "docs",
+        "label": "Apache Bigtop project overview",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://bigtop.apache.org/index.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-bigtop-homepage",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"docs\" attached to component:apache-hadoop.",
+        "why_it_matters": "Documentation/release surface; explains intended behavior and compatibility.",
+        "route": "#/dossier/surface/ref-bigtop-homepage"
+      },
+      {
+        "id": "ref-bigtop-github",
+        "surface_type": "other",
+        "label": "Apache Bigtop source repository",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://github.com/apache/bigtop",
+        "state": "available",
+        "evidence": {
+          "state": "source-visible",
+          "source": "atlas-surfaces.json#surface:ref-bigtop-github",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hadoop.",
+        "why_it_matters": "Contains packaging, deployment, test framework, smoke tests, Docker, and BOM source.",
+        "route": "#/dossier/surface/ref-bigtop-github"
+      },
+      {
+        "id": "ref-bigtop-issue-tracking",
+        "surface_type": "issue-tracker",
+        "label": "Apache Bigtop issue tracking guide",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://bigtop.apache.org/issue-tracking.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-bigtop-issue-tracking",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-hadoop.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/ref-bigtop-issue-tracking"
+      },
+      {
+        "id": "ref-apache-attic-oozie",
+        "surface_type": "other",
+        "label": "Apache Attic entry for Oozie",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://attic.apache.org/projects/oozie.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-apache-attic-oozie",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hadoop.",
+        "why_it_matters": "Marks Oozie as retired and preserves read-only resources.",
+        "route": "#/dossier/surface/ref-apache-attic-oozie"
+      },
+      {
+        "id": "ref-apache-sqoop-retired",
+        "surface_type": "other",
+        "label": "Apache Sqoop retired project site",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://sqoop.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-apache-sqoop-retired",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hadoop.",
+        "why_it_matters": "Marks Sqoop as retired while retaining release and repository links.",
+        "route": "#/dossier/surface/ref-apache-sqoop-retired"
+      },
+      {
+        "id": "site-apache-bigtop-repo",
+        "surface_type": "other",
+        "label": "Apache Bigtop project site",
+        "owner_id": "component:apache-bigtop-repo",
+        "url": "https://bigtop.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-bigtop-repo",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-bigtop-repo.",
+        "why_it_matters": "Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.",
+        "route": "#/dossier/surface/site-apache-bigtop-repo"
+      },
+      {
+        "id": "site-apache-airflow",
+        "surface_type": "other",
+        "label": "Apache Airflow project site",
+        "owner_id": "component:apache-airflow",
+        "url": "https://airflow.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-airflow",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-airflow.",
+        "why_it_matters": "Apache Airflow project site",
+        "route": "#/dossier/surface/site-apache-airflow"
+      },
+      {
+        "id": "site-alluxio",
+        "surface_type": "other",
+        "label": "Alluxio project site",
+        "owner_id": "component:alluxio",
+        "url": "https://www.alluxio.io/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-alluxio",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:alluxio.",
+        "why_it_matters": "Included in the Bigtop release BOM but not an Apache project.",
+        "route": "#/dossier/surface/site-alluxio"
+      },
+      {
+        "id": "site-apache-flink",
+        "surface_type": "other",
+        "label": "Apache Flink project site",
+        "owner_id": "component:apache-flink",
+        "url": "https://flink.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-flink",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-flink.",
+        "why_it_matters": "Apache Flink project site",
+        "route": "#/dossier/surface/site-apache-flink"
+      },
+      {
+        "id": "site-apache-hadoop",
+        "surface_type": "other",
+        "label": "Apache Hadoop project site",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://hadoop.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-hadoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hadoop.",
+        "why_it_matters": "Apache Hadoop project site",
+        "route": "#/dossier/surface/site-apache-hadoop"
+      },
+      {
+        "id": "site-apache-hbase",
+        "surface_type": "other",
+        "label": "Apache HBase project site",
+        "owner_id": "component:apache-hbase",
+        "url": "https://hbase.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-hbase",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hbase.",
+        "why_it_matters": "Apache HBase project site",
+        "route": "#/dossier/surface/site-apache-hbase"
+      },
+      {
+        "id": "site-apache-hive",
+        "surface_type": "other",
+        "label": "Apache Hive project site",
+        "owner_id": "component:apache-hive",
+        "url": "https://hive.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-hive",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-hive.",
+        "why_it_matters": "Apache Hive project site",
+        "route": "#/dossier/surface/site-apache-hive"
+      },
+      {
+        "id": "site-apache-kafka",
+        "surface_type": "other",
+        "label": "Apache Kafka project site",
+        "owner_id": "component:apache-kafka",
+        "url": "https://kafka.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-kafka",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-kafka.",
+        "why_it_matters": "Apache Kafka project site",
+        "route": "#/dossier/surface/site-apache-kafka"
+      },
+      {
+        "id": "site-apache-livy",
+        "surface_type": "other",
+        "label": "Apache Livy project site",
+        "owner_id": "component:apache-livy",
+        "url": "https://livy.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-livy",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-livy.",
+        "why_it_matters": "Apache Livy project site",
+        "route": "#/dossier/surface/site-apache-livy"
+      },
+      {
+        "id": "site-apache-phoenix",
+        "surface_type": "other",
+        "label": "Apache Phoenix project site",
+        "owner_id": "component:apache-phoenix",
+        "url": "https://phoenix.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-phoenix",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-phoenix.",
+        "why_it_matters": "Apache Phoenix project site",
+        "route": "#/dossier/surface/site-apache-phoenix"
+      },
+      {
+        "id": "site-apache-ranger",
+        "surface_type": "other",
+        "label": "Apache Ranger project site",
+        "owner_id": "component:apache-ranger",
+        "url": "https://ranger.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-ranger",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-ranger.",
+        "why_it_matters": "Apache Ranger project site",
+        "route": "#/dossier/surface/site-apache-ranger"
+      },
+      {
+        "id": "site-apache-solr",
+        "surface_type": "other",
+        "label": "Apache Solr project site",
+        "owner_id": "component:apache-solr",
+        "url": "https://solr.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-solr",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-solr.",
+        "why_it_matters": "Apache Solr project site",
+        "route": "#/dossier/surface/site-apache-solr"
+      },
+      {
+        "id": "site-apache-spark",
+        "surface_type": "other",
+        "label": "Apache Spark project site",
+        "owner_id": "component:apache-spark",
+        "url": "https://spark.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-spark",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-spark.",
+        "why_it_matters": "Apache Spark project site",
+        "route": "#/dossier/surface/site-apache-spark"
+      },
+      {
+        "id": "site-apache-tez",
+        "surface_type": "other",
+        "label": "Apache Tez project site",
+        "owner_id": "component:apache-tez",
+        "url": "https://tez.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-tez",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-tez.",
+        "why_it_matters": "Apache Tez project site",
+        "route": "#/dossier/surface/site-apache-tez"
+      },
+      {
+        "id": "site-apache-zeppelin",
+        "surface_type": "other",
+        "label": "Apache Zeppelin project site",
+        "owner_id": "component:apache-zeppelin",
+        "url": "https://zeppelin.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-zeppelin",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-zeppelin.",
+        "why_it_matters": "Apache Zeppelin project site",
+        "route": "#/dossier/surface/site-apache-zeppelin"
+      },
+      {
+        "id": "site-apache-zookeeper",
+        "surface_type": "other",
+        "label": "Apache ZooKeeper project site",
+        "owner_id": "component:apache-zookeeper",
+        "url": "https://zookeeper.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-zookeeper",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-zookeeper.",
+        "why_it_matters": "Apache ZooKeeper project site",
+        "route": "#/dossier/surface/site-apache-zookeeper"
+      },
+      {
+        "id": "site-apache-oozie",
+        "surface_type": "other",
+        "label": "Apache Oozie project site",
+        "owner_id": "component:apache-oozie",
+        "url": "https://attic.apache.org/projects/oozie.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-oozie",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-oozie.",
+        "why_it_matters": "Retired project used as a legacy control for lifecycle and evidence-state handling.",
+        "route": "#/dossier/surface/site-apache-oozie"
+      },
+      {
+        "id": "site-apache-sqoop",
+        "surface_type": "other",
+        "label": "Apache Sqoop project site",
+        "owner_id": "component:apache-sqoop",
+        "url": "https://sqoop.apache.org/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:site-apache-sqoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:apache-sqoop.",
+        "why_it_matters": "Retired project used as a legacy control for replacement and migration signals.",
+        "route": "#/dossier/surface/site-apache-sqoop"
+      },
+      {
+        "id": "ref-target-bigtop-groovy",
+        "surface_type": "other",
+        "label": "Bigtop Groovy package",
+        "owner_id": "component:bigtop-groovy",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-target-bigtop-groovy",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:bigtop-groovy.",
+        "why_it_matters": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "route": "#/dossier/surface/ref-target-bigtop-groovy"
+      },
+      {
+        "id": "ref-target-bigtop-jsvc",
+        "surface_type": "other",
+        "label": "Bigtop JSVC package",
+        "owner_id": "component:bigtop-jsvc",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-target-bigtop-jsvc",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:bigtop-jsvc.",
+        "why_it_matters": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "route": "#/dossier/surface/ref-target-bigtop-jsvc"
+      },
+      {
+        "id": "ref-target-bigtop-select",
+        "surface_type": "other",
+        "label": "Bigtop Select package",
+        "owner_id": "component:bigtop-select",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-target-bigtop-select",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:bigtop-select.",
+        "why_it_matters": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "route": "#/dossier/surface/ref-target-bigtop-select"
+      },
+      {
+        "id": "ref-target-bigtop-utils",
+        "surface_type": "other",
+        "label": "Bigtop Utils package",
+        "owner_id": "component:bigtop-utils",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:ref-target-bigtop-utils",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"other\" attached to component:bigtop-utils.",
+        "why_it_matters": "Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.",
+        "route": "#/dossier/surface/ref-target-bigtop-utils"
+      },
+      {
+        "id": "tracker-apache-bigtop-repo",
+        "surface_type": "issue-tracker",
+        "label": "Apache Bigtop tracker",
+        "owner_id": "component:apache-bigtop-repo",
+        "url": "https://issues.apache.org/jira/browse/BIGTOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-bigtop-repo",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-bigtop-repo.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-bigtop-repo"
+      },
+      {
+        "id": "tracker-apache-airflow",
+        "surface_type": "issue-tracker",
+        "label": "Apache Airflow tracker",
+        "owner_id": "component:apache-airflow",
+        "url": "https://github.com/apache/airflow/issues",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-airflow",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-airflow.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-airflow"
+      },
+      {
+        "id": "tracker-alluxio",
+        "surface_type": "issue-tracker",
+        "label": "Alluxio tracker",
+        "owner_id": "component:alluxio",
+        "url": "https://github.com/Alluxio/alluxio/issues",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-alluxio",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:alluxio.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-alluxio"
+      },
+      {
+        "id": "tracker-apache-flink",
+        "surface_type": "issue-tracker",
+        "label": "Apache Flink tracker",
+        "owner_id": "component:apache-flink",
+        "url": "https://issues.apache.org/jira/browse/FLINK",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-flink",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-flink.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-flink"
+      },
+      {
+        "id": "tracker-apache-hadoop",
+        "surface_type": "issue-tracker",
+        "label": "Apache Hadoop tracker",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://issues.apache.org/jira/browse/HADOOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-hadoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-hadoop.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-hadoop"
+      },
+      {
+        "id": "tracker-apache-hbase",
+        "surface_type": "issue-tracker",
+        "label": "Apache HBase tracker",
+        "owner_id": "component:apache-hbase",
+        "url": "https://issues.apache.org/jira/browse/HBASE",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-hbase",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-hbase.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-hbase"
+      },
+      {
+        "id": "tracker-apache-hive",
+        "surface_type": "issue-tracker",
+        "label": "Apache Hive tracker",
+        "owner_id": "component:apache-hive",
+        "url": "https://issues.apache.org/jira/browse/HIVE",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-hive",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-hive.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-hive"
+      },
+      {
+        "id": "tracker-apache-kafka",
+        "surface_type": "issue-tracker",
+        "label": "Apache Kafka tracker",
+        "owner_id": "component:apache-kafka",
+        "url": "https://issues.apache.org/jira/browse/KAFKA",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-kafka",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-kafka.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-kafka"
+      },
+      {
+        "id": "tracker-apache-livy",
+        "surface_type": "issue-tracker",
+        "label": "Apache Livy tracker",
+        "owner_id": "component:apache-livy",
+        "url": "https://issues.apache.org/jira/browse/LIVY",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-livy",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-livy.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-livy"
+      },
+      {
+        "id": "tracker-apache-phoenix",
+        "surface_type": "issue-tracker",
+        "label": "Apache Phoenix tracker",
+        "owner_id": "component:apache-phoenix",
+        "url": "https://issues.apache.org/jira/browse/PHOENIX",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-phoenix",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-phoenix.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-phoenix"
+      },
+      {
+        "id": "tracker-apache-ranger",
+        "surface_type": "issue-tracker",
+        "label": "Apache Ranger tracker",
+        "owner_id": "component:apache-ranger",
+        "url": "https://issues.apache.org/jira/browse/RANGER",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-ranger",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-ranger.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-ranger"
+      },
+      {
+        "id": "tracker-apache-solr",
+        "surface_type": "issue-tracker",
+        "label": "Apache Solr tracker",
+        "owner_id": "component:apache-solr",
+        "url": "https://issues.apache.org/jira/browse/SOLR",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-solr",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-solr.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-solr"
+      },
+      {
+        "id": "tracker-apache-spark",
+        "surface_type": "issue-tracker",
+        "label": "Apache Spark tracker",
+        "owner_id": "component:apache-spark",
+        "url": "https://issues.apache.org/jira/browse/SPARK",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-spark",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-spark.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-spark"
+      },
+      {
+        "id": "tracker-apache-tez",
+        "surface_type": "issue-tracker",
+        "label": "Apache Tez tracker",
+        "owner_id": "component:apache-tez",
+        "url": "https://issues.apache.org/jira/browse/TEZ",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-tez",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-tez.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-tez"
+      },
+      {
+        "id": "tracker-apache-zeppelin",
+        "surface_type": "issue-tracker",
+        "label": "Apache Zeppelin tracker",
+        "owner_id": "component:apache-zeppelin",
+        "url": "https://issues.apache.org/jira/browse/ZEPPELIN",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-zeppelin",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-zeppelin.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-zeppelin"
+      },
+      {
+        "id": "tracker-apache-zookeeper",
+        "surface_type": "issue-tracker",
+        "label": "Apache ZooKeeper tracker",
+        "owner_id": "component:apache-zookeeper",
+        "url": "https://issues.apache.org/jira/browse/ZOOKEEPER",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-zookeeper",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-zookeeper.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-zookeeper"
+      },
+      {
+        "id": "tracker-apache-oozie",
+        "surface_type": "issue-tracker",
+        "label": "Apache Oozie tracker",
+        "owner_id": "component:apache-oozie",
+        "url": "https://issues.apache.org/jira/browse/OOZIE",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-oozie",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-oozie.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-oozie"
+      },
+      {
+        "id": "tracker-apache-sqoop",
+        "surface_type": "issue-tracker",
+        "label": "Apache Sqoop tracker",
+        "owner_id": "component:apache-sqoop",
+        "url": "https://issues.apache.org/jira/browse/SQOOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:tracker-apache-sqoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"issue-tracker\" attached to component:apache-sqoop.",
+        "why_it_matters": "Issue tracker surface; where bugs, enhancements, and releases are tracked.",
+        "route": "#/dossier/surface/tracker-apache-sqoop"
+      },
+      {
+        "id": "wiki-apache-bigtop-repo",
+        "surface_type": "wiki",
+        "label": "Apache Bigtop wiki",
+        "owner_id": "component:apache-bigtop-repo",
+        "url": "https://cwiki.apache.org/confluence/display/BIGTOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-bigtop-repo",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-bigtop-repo.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-bigtop-repo"
+      },
+      {
+        "id": "wiki-apache-airflow",
+        "surface_type": "wiki",
+        "label": "Apache Airflow wiki",
+        "owner_id": "component:apache-airflow",
+        "url": "https://cwiki.apache.org/confluence/display/AIRFLOW",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-airflow",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-airflow.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-airflow"
+      },
+      {
+        "id": "wiki-alluxio",
+        "surface_type": "wiki",
+        "label": "Alluxio wiki",
+        "owner_id": "component:alluxio",
+        "url": "https://github.com/Alluxio/alluxio/wiki",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-alluxio",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:alluxio.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-alluxio"
+      },
+      {
+        "id": "wiki-apache-flink",
+        "surface_type": "wiki",
+        "label": "Apache Flink wiki",
+        "owner_id": "component:apache-flink",
+        "url": "https://cwiki.apache.org/confluence/display/FLINK",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-flink",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-flink.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-flink"
+      },
+      {
+        "id": "wiki-apache-hadoop",
+        "surface_type": "wiki",
+        "label": "Apache Hadoop wiki",
+        "owner_id": "component:apache-hadoop",
+        "url": "https://cwiki.apache.org/confluence/display/HADOOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-hadoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-hadoop.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-hadoop"
+      },
+      {
+        "id": "wiki-apache-hbase",
+        "surface_type": "wiki",
+        "label": "Apache HBase wiki",
+        "owner_id": "component:apache-hbase",
+        "url": "https://cwiki.apache.org/confluence/display/HBASE/Home",
+        "state": "unknown",
+        "evidence": {
+          "state": "cannot_verify",
+          "source": "atlas-surfaces.json#surface:wiki-apache-hbase",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-hbase.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-hbase"
+      },
+      {
+        "id": "wiki-apache-hive",
+        "surface_type": "wiki",
+        "label": "Apache Hive wiki",
+        "owner_id": "component:apache-hive",
+        "url": "https://cwiki.apache.org/confluence/display/HIVE",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-hive",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-hive.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-hive"
+      },
+      {
+        "id": "wiki-apache-kafka",
+        "surface_type": "wiki",
+        "label": "Apache Kafka wiki",
+        "owner_id": "component:apache-kafka",
+        "url": "https://cwiki.apache.org/confluence/display/KAFKA",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-kafka",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-kafka.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-kafka"
+      },
+      {
+        "id": "wiki-apache-livy",
+        "surface_type": "wiki",
+        "label": "Apache Livy wiki",
+        "owner_id": "component:apache-livy",
+        "url": "https://cwiki.apache.org/confluence/display/LIVY",
+        "state": "unknown",
+        "evidence": {
+          "state": "cannot_verify",
+          "source": "atlas-surfaces.json#surface:wiki-apache-livy",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-livy.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-livy"
+      },
+      {
+        "id": "wiki-apache-phoenix",
+        "surface_type": "wiki",
+        "label": "Apache Phoenix wiki",
+        "owner_id": "component:apache-phoenix",
+        "url": "https://cwiki.apache.org/confluence/display/PHOENIX/Home",
+        "state": "unknown",
+        "evidence": {
+          "state": "cannot_verify",
+          "source": "atlas-surfaces.json#surface:wiki-apache-phoenix",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-phoenix.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-phoenix"
+      },
+      {
+        "id": "wiki-apache-ranger",
+        "surface_type": "wiki",
+        "label": "Apache Ranger wiki",
+        "owner_id": "component:apache-ranger",
+        "url": "https://cwiki.apache.org/confluence/display/RANGER",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-ranger",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-ranger.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-ranger"
+      },
+      {
+        "id": "wiki-apache-solr",
+        "surface_type": "wiki",
+        "label": "Apache Solr wiki",
+        "owner_id": "component:apache-solr",
+        "url": "https://cwiki.apache.org/confluence/display/SOLR",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-solr",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-solr.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-solr"
+      },
+      {
+        "id": "wiki-apache-spark",
+        "surface_type": "wiki",
+        "label": "Apache Spark wiki",
+        "owner_id": "component:apache-spark",
+        "url": "https://cwiki.apache.org/confluence/display/SPARK",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-spark",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-spark.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-spark"
+      },
+      {
+        "id": "wiki-apache-tez",
+        "surface_type": "wiki",
+        "label": "Apache Tez wiki",
+        "owner_id": "component:apache-tez",
+        "url": "https://cwiki.apache.org/confluence/display/TEZ",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-tez",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-tez.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-tez"
+      },
+      {
+        "id": "wiki-apache-zeppelin",
+        "surface_type": "wiki",
+        "label": "Apache Zeppelin wiki",
+        "owner_id": "component:apache-zeppelin",
+        "url": "https://cwiki.apache.org/confluence/display/ZEPPELIN",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-zeppelin",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-zeppelin.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-zeppelin"
+      },
+      {
+        "id": "wiki-apache-zookeeper",
+        "surface_type": "wiki",
+        "label": "Apache ZooKeeper wiki",
+        "owner_id": "component:apache-zookeeper",
+        "url": "https://cwiki.apache.org/confluence/display/ZOOKEEPER",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-zookeeper",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-zookeeper.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-zookeeper"
+      },
+      {
+        "id": "wiki-apache-oozie",
+        "surface_type": "wiki",
+        "label": "Apache Oozie wiki",
+        "owner_id": "component:apache-oozie",
+        "url": "https://cwiki.apache.org/confluence/display/OOZIE",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-oozie",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-oozie.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-oozie"
+      },
+      {
+        "id": "wiki-apache-sqoop",
+        "surface_type": "wiki",
+        "label": "Apache Sqoop wiki",
+        "owner_id": "component:apache-sqoop",
+        "url": "https://cwiki.apache.org/confluence/display/SQOOP",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:wiki-apache-sqoop",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"wiki\" attached to component:apache-sqoop.",
+        "why_it_matters": "Wiki surface; community-maintained documentation and planning.",
+        "route": "#/dossier/surface/wiki-apache-sqoop"
+      },
+      {
+        "id": "docs-apache-hbase",
+        "surface_type": "docs",
+        "label": "Apache HBase docs",
+        "owner_id": "component:apache-hbase",
+        "url": "https://hbase.apache.org/book.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:docs-apache-hbase",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"docs\" attached to component:apache-hbase.",
+        "why_it_matters": "Documentation/release surface; explains intended behavior and compatibility.",
+        "route": "#/dossier/surface/docs-apache-hbase"
+      },
+      {
+        "id": "docs-apache-livy",
+        "surface_type": "docs",
+        "label": "Apache Livy docs",
+        "owner_id": "component:apache-livy",
+        "url": "https://livy.apache.org/docs/latest/",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:docs-apache-livy",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"docs\" attached to component:apache-livy.",
+        "why_it_matters": "Documentation/release surface; explains intended behavior and compatibility.",
+        "route": "#/dossier/surface/docs-apache-livy"
+      },
+      {
+        "id": "docs-apache-phoenix",
+        "surface_type": "docs",
+        "label": "Apache Phoenix docs",
+        "owner_id": "component:apache-phoenix",
+        "url": "https://phoenix.apache.org/resources.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:docs-apache-phoenix",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"docs\" attached to component:apache-phoenix.",
+        "why_it_matters": "Documentation/release surface; explains intended behavior and compatibility.",
+        "route": "#/dossier/surface/docs-apache-phoenix"
+      },
+      {
+        "id": "list-apache-bigtop-repo",
+        "surface_type": "mailing-list",
+        "label": "Apache Bigtop mailing lists",
+        "owner_id": "component:apache-bigtop-repo",
+        "url": "https://bigtop.apache.org/mail-lists.html",
+        "state": "available",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "atlas-surfaces.json#surface:list-apache-bigtop-repo",
+          "producer": "atlas-surfaces"
+        },
+        "created_by_producer_family": "atlas-surfaces",
+        "why_present": "Surface of type \"mailing-list\" attached to component:apache-bigtop-repo.",
+        "why_it_matters": "Community/mailing-list surface; the coordination and announcement channel.",
+        "route": "#/dossier/surface/list-apache-bigtop-repo"
+      }
+    ],
+    "relationships": [
+      {
+        "id": "rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo",
+        "relationship_type": "depends-on",
+        "from_id": "component:bigtop-groovy",
+        "to_id": "component:apache-bigtop-repo",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-groovy.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Bigtop Groovy package declares a dependency on apache-bigtop-repo.",
+        "summary": "Bigtop Groovy package depends on apache-bigtop-repo (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo"
+      },
+      {
+        "id": "rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo",
+        "relationship_type": "depends-on",
+        "from_id": "component:bigtop-jsvc",
+        "to_id": "component:apache-bigtop-repo",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-jsvc.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Bigtop JSVC package declares a dependency on apache-bigtop-repo.",
+        "summary": "Bigtop JSVC package depends on apache-bigtop-repo (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo"
+      },
+      {
+        "id": "rel:manifest-dep:bigtop-select--to--apache-bigtop-repo",
+        "relationship_type": "depends-on",
+        "from_id": "component:bigtop-select",
+        "to_id": "component:apache-bigtop-repo",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-select.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Bigtop Select package declares a dependency on apache-bigtop-repo.",
+        "summary": "Bigtop Select package depends on apache-bigtop-repo (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:bigtop-select--to--apache-bigtop-repo"
+      },
+      {
+        "id": "rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo",
+        "relationship_type": "depends-on",
+        "from_id": "component:bigtop-utils",
+        "to_id": "component:apache-bigtop-repo",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:bigtop-utils.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Bigtop Utils package declares a dependency on apache-bigtop-repo.",
+        "summary": "Bigtop Utils package depends on apache-bigtop-repo (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"
+      },
+      {
+        "id": "rel:manifest-dep:alluxio--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:alluxio",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:alluxio.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Alluxio declares a dependency on apache-hadoop.",
+        "summary": "Alluxio depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:alluxio--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-flink--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-flink",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-flink.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Flink declares a dependency on apache-hadoop.",
+        "summary": "Apache Flink depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-flink--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-hbase--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-hbase",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-hbase.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache HBase declares a dependency on apache-hadoop.",
+        "summary": "Apache HBase depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-hbase--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-hbase--to--apache-zookeeper",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-hbase",
+        "to_id": "component:apache-zookeeper",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-hbase.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache HBase declares a dependency on apache-zookeeper.",
+        "summary": "Apache HBase depends on apache-zookeeper (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-hbase--to--apache-zookeeper"
+      },
+      {
+        "id": "rel:manifest-dep:apache-hive--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-hive",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-hive.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Hive declares a dependency on apache-hadoop.",
+        "summary": "Apache Hive depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-hive--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-hive--to--apache-tez",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-hive",
+        "to_id": "component:apache-tez",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-hive.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Hive declares a dependency on apache-tez.",
+        "summary": "Apache Hive depends on apache-tez (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-hive--to--apache-tez"
+      },
+      {
+        "id": "rel:manifest-dep:apache-kafka--to--apache-zookeeper",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-kafka",
+        "to_id": "component:apache-zookeeper",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-kafka.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Kafka declares a dependency on apache-zookeeper.",
+        "summary": "Apache Kafka depends on apache-zookeeper (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-kafka--to--apache-zookeeper"
+      },
+      {
+        "id": "rel:manifest-dep:apache-livy--to--apache-spark",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-livy",
+        "to_id": "component:apache-spark",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-livy.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Livy declares a dependency on apache-spark.",
+        "summary": "Apache Livy depends on apache-spark (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-livy--to--apache-spark"
+      },
+      {
+        "id": "rel:manifest-dep:apache-livy--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-livy",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-livy.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Livy declares a dependency on apache-hadoop.",
+        "summary": "Apache Livy depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-livy--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-phoenix--to--apache-hbase",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-phoenix",
+        "to_id": "component:apache-hbase",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-phoenix.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Phoenix declares a dependency on apache-hbase.",
+        "summary": "Apache Phoenix depends on apache-hbase (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-hbase"
+      },
+      {
+        "id": "rel:manifest-dep:apache-phoenix--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-phoenix",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-phoenix.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Phoenix declares a dependency on apache-hadoop.",
+        "summary": "Apache Phoenix depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-phoenix--to--apache-zookeeper",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-phoenix",
+        "to_id": "component:apache-zookeeper",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-phoenix.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Phoenix declares a dependency on apache-zookeeper.",
+        "summary": "Apache Phoenix depends on apache-zookeeper (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-zookeeper"
+      },
+      {
+        "id": "rel:manifest-dep:apache-spark--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-spark",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-spark.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Spark declares a dependency on apache-hadoop.",
+        "summary": "Apache Spark depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-spark--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-tez--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-tez",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-tez.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Tez declares a dependency on apache-hadoop.",
+        "summary": "Apache Tez depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-tez--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-zeppelin--to--apache-spark",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-zeppelin",
+        "to_id": "component:apache-spark",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-zeppelin.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Zeppelin declares a dependency on apache-spark.",
+        "summary": "Apache Zeppelin depends on apache-spark (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-spark"
+      },
+      {
+        "id": "rel:manifest-dep:apache-zeppelin--to--apache-hive",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-zeppelin",
+        "to_id": "component:apache-hive",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-zeppelin.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Zeppelin declares a dependency on apache-hive.",
+        "summary": "Apache Zeppelin depends on apache-hive (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-hive"
+      },
+      {
+        "id": "rel:manifest-dep:apache-zeppelin--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-zeppelin",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-zeppelin.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Zeppelin declares a dependency on apache-hadoop.",
+        "summary": "Apache Zeppelin depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-oozie--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-oozie",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-oozie.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Oozie declares a dependency on apache-hadoop.",
+        "summary": "Apache Oozie depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-oozie--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-sqoop--to--apache-hadoop",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-sqoop",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-sqoop.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Sqoop declares a dependency on apache-hadoop.",
+        "summary": "Apache Sqoop depends on apache-hadoop (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-sqoop--to--apache-hadoop"
+      },
+      {
+        "id": "rel:manifest-dep:apache-sqoop--to--apache-hive",
+        "relationship_type": "depends-on",
+        "from_id": "component:apache-sqoop",
+        "to_id": "component:apache-hive",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#target:apache-sqoop.depends_on",
+          "producer": "corpus-manifest"
+        },
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Apache Sqoop declares a dependency on apache-hive.",
+        "summary": "Apache Sqoop depends on apache-hive (manifest metadata).",
+        "route": "#/detail/relationship/rel:manifest-dep:apache-sqoop--to--apache-hive"
+      }
+    ],
+    "findings": [],
+    "unknowns": [
+      {
+        "id": "unknown:atlas-facts-runtime-topology",
+        "summary": "Runtime calls, live deployments, secrets, and vendor configuration are not proven by this local atlas facts pack.",
+        "created_by_producer_family": "atlas-facts",
+        "evidence": {
+          "state": "unknown",
+          "source": "gaps.jsonl#atlas-facts-runtime-topology",
+          "producer": "atlas-facts",
+          "reason": "Gap status: not_assessed."
+        },
+        "route": "#/detail/unknown/unknown:atlas-facts-runtime-topology"
+      }
+    ]
+  },
+  "c4": {
+    "context_boxes": [
+      {
+        "id": "c4-context:.",
+        "level": "context",
+        "display_name": "target",
+        "object_id": "c4-context:.",
+        "route": "#/dossier/c4-box/c4-context:."
+      },
+      {
+        "id": "c4-context:component:apache-oozie",
+        "level": "context",
+        "display_name": "Apache Oozie",
+        "object_id": "component:apache-oozie",
+        "route": "#/dossier/c4-box/c4-context:component:apache-oozie"
+      },
+      {
+        "id": "c4-context:component:apache-sqoop",
+        "level": "context",
+        "display_name": "Apache Sqoop",
+        "object_id": "component:apache-sqoop",
+        "route": "#/dossier/c4-box/c4-context:component:apache-sqoop"
+      }
+    ],
+    "families": [
+      {
+        "id": "c4-family:coordination-community",
+        "family": "coordination-community",
+        "display_name": "Coordination / community",
+        "purpose": "Coordination services, registries, community, and project-governance surfaces.",
+        "grouping_reason": "Components with coordination/registry/community/contribution/governance roles.",
+        "component_ids": [
+          "component:apache-bigtop-repo",
+          "component:apache-zookeeper"
+        ],
+        "surface_count": 7,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:coordination-community"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:coordination-community"
+      },
+      {
+        "id": "c4-family:packaging-runtime",
+        "family": "packaging-runtime",
+        "display_name": "Packaging / runtime",
+        "purpose": "Package build, distribution, image, deploy, runtime, and installer roles.",
+        "grouping_reason": "Components with package-build/distribution/image/deploy/runtime/installer roles.",
+        "component_ids": [
+          "component:bigtop-groovy",
+          "component:bigtop-jsvc",
+          "component:bigtop-select",
+          "component:bigtop-utils"
+        ],
+        "surface_count": 4,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:packaging-runtime"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:packaging-runtime"
+      },
+      {
+        "id": "c4-family:compute-processing",
+        "family": "compute-processing",
+        "display_name": "Compute / processing",
+        "purpose": "Batch, stream, workflow, scheduler, engine, and execution roles.",
+        "grouping_reason": "Components with batch/stream/workflow/scheduler/engine/execution roles.",
+        "component_ids": [
+          "component:apache-airflow",
+          "component:apache-flink",
+          "component:apache-spark",
+          "component:apache-tez",
+          "component:apache-oozie"
+        ],
+        "surface_count": 15,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:compute-processing"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:compute-processing"
+      },
+      {
+        "id": "c4-family:data-systems",
+        "family": "data-systems",
+        "display_name": "Data systems",
+        "purpose": "Storage, database, warehouse, filesystem, metastore, and data-serving roles.",
+        "grouping_reason": "Components with storage/database/warehouse/indexing/query/data-serving roles.",
+        "component_ids": [
+          "component:alluxio",
+          "component:apache-hadoop",
+          "component:apache-hbase",
+          "component:apache-hive",
+          "component:apache-solr"
+        ],
+        "surface_count": 29,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:data-systems"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:data-systems"
+      },
+      {
+        "id": "c4-family:unknown",
+        "family": "unknown",
+        "display_name": "Unclassified",
+        "purpose": "Components with insufficient local evidence for a confident C4 family.",
+        "grouping_reason": "No local role/kind signal matched a known C4 family.",
+        "component_ids": [
+          "component:apache-kafka",
+          "component:apache-phoenix",
+          "component:apache-zeppelin"
+        ],
+        "surface_count": 10,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:unknown"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:unknown"
+      },
+      {
+        "id": "c4-family:integration-services",
+        "family": "integration-services",
+        "display_name": "Integration / services",
+        "purpose": "Connectors, plugins, adapters, clients, APIs, and cross-system integration.",
+        "grouping_reason": "Components with connector/plugin/adapter/client/api/integration roles.",
+        "component_ids": [
+          "component:apache-livy",
+          "component:apache-sqoop"
+        ],
+        "surface_count": 7,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:integration-services"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:integration-services"
+      },
+      {
+        "id": "c4-family:platform-governance",
+        "family": "platform-governance",
+        "display_name": "Platform / governance",
+        "purpose": "Security, policy, release, governance, observability, and compatibility roles.",
+        "grouping_reason": "Components with security/policy/release/governance/observability/compatibility roles.",
+        "component_ids": [
+          "component:apache-ranger"
+        ],
+        "surface_count": 3,
+        "finding_count": 0,
+        "unknown_count": 1,
+        "next_actions": [
+          {
+            "label": "Open family dossier",
+            "target": "#/dossier/c4-family/c4-family:platform-governance"
+          }
+        ],
+        "route": "#/dossier/c4-family/c4-family:platform-governance"
+      }
+    ],
+    "component_boxes": [
+      {
+        "id": "c4-component:component:apache-bigtop-repo",
+        "level": "component",
+        "display_name": "Apache Bigtop",
+        "object_id": "component:apache-bigtop-repo",
+        "route": "#/dossier/c4-box/c4-component:component:apache-bigtop-repo"
+      },
+      {
+        "id": "c4-component:component:bigtop-groovy",
+        "level": "component",
+        "display_name": "Bigtop Groovy package",
+        "object_id": "component:bigtop-groovy",
+        "route": "#/dossier/c4-box/c4-component:component:bigtop-groovy"
+      },
+      {
+        "id": "c4-component:component:bigtop-jsvc",
+        "level": "component",
+        "display_name": "Bigtop JSVC package",
+        "object_id": "component:bigtop-jsvc",
+        "route": "#/dossier/c4-box/c4-component:component:bigtop-jsvc"
+      },
+      {
+        "id": "c4-component:component:bigtop-select",
+        "level": "component",
+        "display_name": "Bigtop Select package",
+        "object_id": "component:bigtop-select",
+        "route": "#/dossier/c4-box/c4-component:component:bigtop-select"
+      },
+      {
+        "id": "c4-component:component:bigtop-utils",
+        "level": "component",
+        "display_name": "Bigtop Utils package",
+        "object_id": "component:bigtop-utils",
+        "route": "#/dossier/c4-box/c4-component:component:bigtop-utils"
+      },
+      {
+        "id": "c4-component:component:apache-airflow",
+        "level": "component",
+        "display_name": "Apache Airflow",
+        "object_id": "component:apache-airflow",
+        "route": "#/dossier/c4-box/c4-component:component:apache-airflow"
+      },
+      {
+        "id": "c4-component:component:alluxio",
+        "level": "component",
+        "display_name": "Alluxio",
+        "object_id": "component:alluxio",
+        "route": "#/dossier/c4-box/c4-component:component:alluxio"
+      },
+      {
+        "id": "c4-component:component:apache-flink",
+        "level": "component",
+        "display_name": "Apache Flink",
+        "object_id": "component:apache-flink",
+        "route": "#/dossier/c4-box/c4-component:component:apache-flink"
+      },
+      {
+        "id": "c4-component:component:apache-hadoop",
+        "level": "component",
+        "display_name": "Apache Hadoop",
+        "object_id": "component:apache-hadoop",
+        "route": "#/dossier/c4-box/c4-component:component:apache-hadoop"
+      },
+      {
+        "id": "c4-component:component:apache-hbase",
+        "level": "component",
+        "display_name": "Apache HBase",
+        "object_id": "component:apache-hbase",
+        "route": "#/dossier/c4-box/c4-component:component:apache-hbase"
+      },
+      {
+        "id": "c4-component:component:apache-hive",
+        "level": "component",
+        "display_name": "Apache Hive",
+        "object_id": "component:apache-hive",
+        "route": "#/dossier/c4-box/c4-component:component:apache-hive"
+      },
+      {
+        "id": "c4-component:component:apache-kafka",
+        "level": "component",
+        "display_name": "Apache Kafka",
+        "object_id": "component:apache-kafka",
+        "route": "#/dossier/c4-box/c4-component:component:apache-kafka"
+      },
+      {
+        "id": "c4-component:component:apache-livy",
+        "level": "component",
+        "display_name": "Apache Livy",
+        "object_id": "component:apache-livy",
+        "route": "#/dossier/c4-box/c4-component:component:apache-livy"
+      },
+      {
+        "id": "c4-component:component:apache-phoenix",
+        "level": "component",
+        "display_name": "Apache Phoenix",
+        "object_id": "component:apache-phoenix",
+        "route": "#/dossier/c4-box/c4-component:component:apache-phoenix"
+      },
+      {
+        "id": "c4-component:component:apache-ranger",
+        "level": "component",
+        "display_name": "Apache Ranger",
+        "object_id": "component:apache-ranger",
+        "route": "#/dossier/c4-box/c4-component:component:apache-ranger"
+      },
+      {
+        "id": "c4-component:component:apache-solr",
+        "level": "component",
+        "display_name": "Apache Solr",
+        "object_id": "component:apache-solr",
+        "route": "#/dossier/c4-box/c4-component:component:apache-solr"
+      },
+      {
+        "id": "c4-component:component:apache-spark",
+        "level": "component",
+        "display_name": "Apache Spark",
+        "object_id": "component:apache-spark",
+        "route": "#/dossier/c4-box/c4-component:component:apache-spark"
+      },
+      {
+        "id": "c4-component:component:apache-tez",
+        "level": "component",
+        "display_name": "Apache Tez",
+        "object_id": "component:apache-tez",
+        "route": "#/dossier/c4-box/c4-component:component:apache-tez"
+      },
+      {
+        "id": "c4-component:component:apache-zeppelin",
+        "level": "component",
+        "display_name": "Apache Zeppelin",
+        "object_id": "component:apache-zeppelin",
+        "route": "#/dossier/c4-box/c4-component:component:apache-zeppelin"
+      },
+      {
+        "id": "c4-component:component:apache-zookeeper",
+        "level": "component",
+        "display_name": "Apache ZooKeeper",
+        "object_id": "component:apache-zookeeper",
+        "route": "#/dossier/c4-box/c4-component:component:apache-zookeeper"
+      },
+      {
+        "id": "c4-component:component:apache-oozie",
+        "level": "component",
+        "display_name": "Apache Oozie",
+        "object_id": "component:apache-oozie",
+        "route": "#/dossier/c4-box/c4-component:component:apache-oozie"
+      },
+      {
+        "id": "c4-component:component:apache-sqoop",
+        "level": "component",
+        "display_name": "Apache Sqoop",
+        "object_id": "component:apache-sqoop",
+        "route": "#/dossier/c4-box/c4-component:component:apache-sqoop"
+      }
+    ]
+  }
+}
