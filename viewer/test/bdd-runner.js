@@ -104,8 +104,7 @@ test('every artifact binding with a key resolves to a passing verdict in the art
     const parts = b.binding.key.split('.');
     let node = data;
     for (const p of parts) { node = (node && typeof node === 'object') ? node[p] : undefined; }
-    const ok = node === 'verified' || node === false || node === 'false' ||
-      (typeof node === 'string' && node.startsWith('false')) || (typeof node === 'string' && node.startsWith('verified'));
+    const ok = node === 'verified' || node === false || node === 'false';
     assert.ok(ok,
       `${b.scenario}: artifact key "${b.binding.key}" = ${JSON.stringify(node)} (expected a passing value)`);
   }

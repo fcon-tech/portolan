@@ -55,6 +55,8 @@ const KIND_SINGULAR = {
   findings: 'finding',
   unknowns: 'unknown',
   surfaces: 'surface',
+  'c4-family': 'c4-family',
+  'c4-box': 'c4-box',
 };
 
 // Fields searched by the text filter (avoid matching raw JSON property names).
