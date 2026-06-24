@@ -104,6 +104,8 @@ BUNDLE_DIR=$BUNDLE_DIR
     receipt.json, captain-atlas-scorecard.json, captain-qna-eval.json,
     captain-handoff.md, captain-handoff.json.
 13. Для фактов используй bounded queries, а не raw JSONL:
+    "\$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" system-map --bundle "\$BUNDLE_DIR" --section overview
+    "\$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" system-map --bundle "\$BUNDLE_DIR" --section components --limit 20
     "\$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" repos --bundle "\$BUNDLE_DIR" --limit 20
     "\$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" relationships --bundle "\$BUNDLE_DIR" --limit 20
     "\$TARGET_ROOT/.portolan/bin/portolan-bundle-query.sh" hotspots --bundle "\$BUNDLE_DIR" --limit 20

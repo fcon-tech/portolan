@@ -1,5 +1,9 @@
 # BDD Work Package: Landscape Intelligence And Producers
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Agent Assignment
 
 Define and validate the facts that make the atlas useful. Prefer mature OSS
