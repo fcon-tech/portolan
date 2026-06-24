@@ -1,14 +1,20 @@
 # Agent Instructions
 
-Portolan is a local-first system-map generator for AI agents working across large,
-multi-repo, and partly black-box software landscapes.
+Portolan is a local-first cartographic atlas of a code landscape. The admiral
+(the human) drops a Portolan link to an agent, leans back, and participants in
+the expedition (deterministic static analyzers + agent producers) build a
+snapshot. `/portolan:map` opens the behaviour map. The admiral reads units,
+typed edges, surfaces, and confidence; drills into dossiers; and enables
+triangulation to see where the three truths (behaviour, intentions,
+representations) disagree.
 
 The current product target is simple:
 
-> The user is the captain. The user gives Cursor Composer or another coding
-> agent a Portolan link plus a target ecosystem. The agent installs Portolan,
-> builds a UA-like local Portolan UI, opens it, and explains the landscape,
-> risks, relationships, and drill-down paths.
+> The admiral drops a Portolan link to an agent and leans back. The agent
+> installs Portolan autonomously (zero copied commands), runs managed
+> conversational intake, builds the snapshot, and opens `/portolan:map`. The
+> admiral understands the landscape: units, typed edges, surfaces, confidence,
+> and drill-down paths.
 
 ## Active Product Contract
 
@@ -18,14 +24,25 @@ Do not use deleted or historical planning artifacts as source of truth. They
 were removed because they encoded false tracks, stale claims, and
 implementation drift.
 
+Authority order: `08` (product concepts) > `07` (frozen system-map contract) >
+`00`–`06` (supporting notes).
+
 The active documents are:
 
 - `docs/captain-atlas/README.md`: work package index.
-- `docs/captain-atlas/07-portolan-core-product-spec.md`: controlling one-file
-  goal specification for the next implementation pass.
+- `docs/captain-atlas/08-portolan-product-charter.md`: **governing** product
+  charter for Part 1 (the admiral's atlas). Defines identity, roles
+  (admiral/participants/fleet), discovered ontology, trust/confidence
+  contract, navigation model, C4-as-one-optional-map, UX principles, and the
+  Part 1 / Part 2 boundary.
+- `docs/captain-atlas/07-portolan-core-product-spec.md`: **partially
+  superseded.** Remains the frozen contract authority for the
+  already-implemented `system-map` schema, builder, and viewer. Its product
+  concepts are superseded by `08` (see the "Superseded Concepts" table at the
+  end of `08`).
 - `docs/captain-atlas/00-product-contract.md` through
   `docs/captain-atlas/06-oss-kill-gates.md`: supporting work-package notes.
-  Use them only when they do not contradict `07-portolan-core-product-spec.md`.
+  Use them only when they do not contradict `08` or `07`.
 
 ## Mandatory Decision Gate
 

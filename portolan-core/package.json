@@ -1,0 +1,12 @@
+{
+  "name": "portolan-core",
+  "version": "0.2.0-dev",
+  "private": true,
+  "description": "Portolan Clean Architecture core: domain, use-cases, ports. Renderer/storage agnostic.",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test test/unit/*.test.js",
+    "test:deps": "node scripts/check-dependency-rule.js"
+  },
+  "license": "MIT"
+}
