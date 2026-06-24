@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.1.0",
+  "scenario": "cursor-agent-cli-first-run",
+  "verdict": "verified",
+  "recorded_at": "2026-06-23T21:30:00Z",
+  "cursor_agent_cli": {
+    "binary": "cursor-agent",
+    "version": "2026.06.19-20-24-33-653a7fb",
+    "installed": true,
+    "installed_path": "/home/fall_out_bug/.local/bin/cursor-agent",
+    "authenticated": true,
+    "api_key_source": "login",
+    "model": "Composer 2.5"
+  },
+  "lane_state": "authenticated_completed",
+  "run": {
+    "command": "cursor-agent --print --output-format stream-json --force --trust --workspace <target-root> \"<first-run prompt: scan the target, then report success/component+surface counts/one risk>\"",
+    "flags_present": ["--print", "--output-format stream-json", "--force", "--trust", "--workspace"],
+    "duration_ms": 24398,
+    "is_error": false,
+    "exit_code": 0,
+    "timeout_seconds": 180,
+    "usage_input_tokens": 25192,
+    "usage_output_tokens": 527
+  },
+  "exact_outcome": "Authenticated Cursor Agent CLI run completed in 24.4s. The agent ran the Portolan scan command correctly, inspected the produced bundle (system-map.json + gaps), and gave a meaningful 3-line report: scan succeeded (receipt status: completed), system-map.json has 1 component and 0 surfaces, risk/unknown = gap-deps (dependencies not assessed, no Syft/CycloneDX producer). Earlier 11s probe was simply too short; the lane is fully authenticated and operational from the terminal.",
+  "scorecard_fields": {
+    "prompt_used": "first-run prompt: run portolan-scan.sh on the target into <target>/.portolan/atlas, then report (1) scan success, (2) component+surface counts in system-map.json, (3) one risk or unknown",
+    "model_or_harness_version": "cursor-agent 2026.06.19-20-24-33-653a7fb; Composer 2.5",
+    "target_root": "isolated temp git repo with 2 sub-repos (api-svc go module + web-client node package)",
+    "output_location": "<target-root>/.portolan/atlas (produced; receipt.json status: completed)",
+    "questions_cursor_asked": "none — ran non-interactively with --force --trust",
+    "commands_cursor_ran": "portolan-scan.sh ... --core-only --producers config,ctags (captured in stream-json transcript)",
+    "manual_interventions": "none",
+    "target_source_modified": "false — only .portolan/ created; source tree unchanged (git status clean except untracked .portolan/)",
+    "ui_opened_or_handoff": "not_applicable (headless --print run; viewer handoff verified separately by harness-viewer-system-map-smoke.sh)",
+    "first_useful_explanation": "'1. Success: Yes — scan completed with exit code 0 ... 2. Counts: system-map.json has 1 component and 0 surfaces (0 relationships). 3. Risk/unknown: Dependencies were not assessed — no Syft/CycloneDX producer output, so the dependency graph is unknown (unknown:gap-deps).'",
+    "failed_or_weak_steps": "none"
+  },
+  "bdd_feature_1_verdicts": {
+    "cursor_discovers_portolan": "verified",
+    "cursor_keeps_target_read_only": "verified",
+    "cursor_produces_usable_handoff": "verified"
+  },
+  "evidence_files": {
+    "transcript": "<run-tmp>/cursor-run.jsonl (stream-json, 16 events, session 0418e79a-...)",
+    "bundle_system_map": "<target-root>/.portolan/atlas/system-map.json (validated by validate-system-map-schema.sh)",
+    "bundle_receipt": "<target-root>/.portolan/atlas/receipt.json (status: completed)"
+  }
+}
