@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portolan Atlas — Apache Bigtop System Map</title>
+  <meta name="description" content="Portolan system-map demo: a meaning-first view of the Apache Bigtop ecosystem with typed components, C4 families, dossiers, and honest evidence states.">
+  <style>
+:root {
+  --bg: #0e0e12;
+  --bg-2: #15161d;
+  --surface: #1a1a1e;
+  --surface-2: #202231;
+  --surface-3: #11131a;
+  --text: #ededed;
+  --muted: #8b93a8;
+  --quiet: #646d84;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(168, 181, 255, 0.28);
+  --primary: #6b7fff;
+  --primary-dark: #4760f3;
+  --lavender: #9d9eff;
+  --lavender-soft: #a8b5ff;
+  --blue-tint: #1a1d3a;
+  --coral: #ff8080;
+  --amber: #f5a623;
+  --green: #3db87a;
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.32);
+  --shadow-brand: 0 16px 48px rgba(71, 96, 243, 0.16);
+  --font: Geologica, Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--lavender-soft); text-decoration: none; }
+a:hover { color: var(--primary); }
+.muted { color: var(--muted); }
+.prose { color: var(--text); max-width: 80ch; }
+.portolan-map, .workspace, .panel { container-type: normal; }
+
+/* ---- loading / error ---- */
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--muted);
+}
+.loading-mark {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--lavender);
+}
+.error-panel { max-width: 720px; margin: 48px auto; }
+
+/* ---- topbar ---- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(280px, 1fr) minmax(200px, 320px);
+  gap: 16px;
+  align-items: center;
+  padding: 12px 24px;
+  background: rgba(14, 14, 18, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  color: var(--lavender);
+}
+.nav { display: flex; flex-wrap: wrap; gap: 4px; }
+.nav-item {
+  padding: 7px 12px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+.nav-item:hover { color: var(--text); background: var(--surface-2); }
+.nav-item.is-active { color: var(--text); background: var(--blue-tint); border: 1px solid var(--line-strong); }
+.search { display: flex; justify-content: flex-end; }
+.search-input {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+}
+.search-input:focus { outline: none; border-color: var(--line-strong); }
+
+/* ---- workspace / panel ---- */
+.workspace {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+  padding: 24px;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-soft);
+}
+.panel-title { margin: 0 0 8px; font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+.target-root { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all; }
+.section-kicker {
+  margin: 24px 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lavender);
+}
+
+/* ---- hero / metrics ---- */
+.hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.metric-card {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.metric-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.metric-value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+.metric-sub { font-size: 12px; margin-top: 2px; }
+
+/* ---- cards / grids ---- */
+.route-button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.card:hover { border-color: var(--line-strong); }
+.card-title { font-weight: 650; color: var(--text); font-size: 15px; }
+.card-role { font-size: 13px; margin: 0; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.card-reason { font-size: 12px; margin: 0; }
+.component-grid, .surface-grid, .c4-family-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.route-link.card-title { padding: 0; border-radius: 0; background: none; border: none; }
+
+/* ---- badges / dots ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+}
+.badge-active { color: var(--green); border-color: rgba(61, 184, 122, 0.4); }
+.badge-retired { color: var(--amber); border-color: rgba(245, 166, 35, 0.4); }
+.badge-quiet { color: var(--muted); }
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+.dot-source { background: var(--primary); }
+.dot-meta { background: var(--lavender-soft); }
+.dot-runtime { background: var(--green); }
+.dot-claim { background: var(--quiet); }
+.dot-gap { background: var(--amber); }
+.dot-risk { background: var(--coral); }
+
+/* ---- chips ---- */
+.chip {
+  display: inline-block;
+  padding: 6px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chip:hover { border-color: var(--line-strong); color: var(--text); }
+.edge-list, .unknown-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.unknown-item { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
+.unknown-summary { color: var(--muted); }
+.rel-chip { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+
+/* ---- C4 ---- */
+.level-nav { display: flex; gap: 6px; margin: 16px 0 8px; }
+.level-item {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: capitalize;
+}
+.level-item.is-active { color: var(--text); background: var(--blue-tint); border-color: var(--line-strong); }
+.family-heading { margin: 24px 0 8px; font-size: 15px; color: var(--lavender); text-transform: uppercase; letter-spacing: 0.04em; }
+.c4-context-card, .c4-component-card { font-size: 14px; }
+.c4-family-card { cursor: pointer; }
+.c4-family-card:hover { text-decoration: none; }
+
+/* ---- map ---- */
+.map-panel .map-canvas { margin-top: 16px; }
+.domain-lanes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.map-lane {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 120px;
+}
+.lane-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--lavender);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.map-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+}
+.map-node:hover { border-color: var(--line-strong); color: var(--text); }
+.map-node.is-retired { opacity: 0.7; border-style: dashed; }
+.map-node-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edge-list { margin-top: 24px; }
+
+/* ---- components list ---- */
+.components-panel .component-grid { margin-top: 12px; }
+
+/* ---- risks ---- */
+.risk-group {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.risk-group-title { font-weight: 650; display: block; margin-bottom: 8px; color: var(--text); }
+.risk-group .chip { margin: 4px 6px 0 0; }
+
+/* ---- dossier ---- */
+.dossier-panel { max-width: 920px; margin: 0 auto; }
+.dossier-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.back-link { font-size: 13px; color: var(--muted); }
+.dossier-section { margin-top: 18px; }
+.ref-list { margin-top: 18px; }
+.ref-list.empty .muted { font-style: italic; }
+
+/* ---- misc ---- */
+.is-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+@media (max-width: 720px) {
+  .topbar { grid-template-columns: 1fr; }
+  .nav { overflow-x: auto; }
+  .workspace { padding: 16px; }
+  .panel { padding: 18px; border-radius: 12px; }
+}
+
+/* ---- C4 family selector + map surface toggle (Slice 3 review fixes) ---- */
+.family-selector { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.family-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+.family-pill.is-active { color: var(--text); background: var(--blue-tint); border-color: var(--line-strong); }
+.c4-component-card-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.surface-chip { font-size: 12px; }
+.map-surface-toggle {
+  margin: 8px 0 16px;
+  padding: 7px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.map-surface-toggle:hover { background: var(--blue-tint); }
+.map-surface-strip { margin-top: 16px; }
+
+  </style>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <main class="loading-screen" aria-live="polite">
+      <div class="loading-mark">Portolan</div>
+      <p>Building local system map…</p>
+    </main>
+  </div>
+  <script>
+
+// Static-demo fetch shim: serve inlined bundle data instead of HTTP.
+const __DEMO_MAP = {"schema_version":"0.1.0","generated_by":"portolan-system-map 0.1.0","generated_at":"2026-06-24T09:49:27.941Z","target":{"id":"target:.","display_name":"target","root":".","approved_output_area":".portolan","approved_instruction_files":[".cursor/rules/portolan-atlas.mdc","AGENTS.md","CLAUDE.md"]},"objects":{"components":[{"id":"component:apache-bigtop-repo","display_name":"Apache Bigtop","type":"platform","role":"ecosystem-integrator","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-bigtop-repo","tracker-apache-bigtop-repo","wiki-apache-bigtop-repo","list-apache-bigtop-repo"],"relationship_ids":["rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo","rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo","rel:manifest-dep:bigtop-select--to--apache-bigtop-repo","rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"coordination-community","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-bigtop-repo","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"ecosystem-integrator\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-bigtop-repo"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-bigtop-repo","producer":"corpus-manifest"},"route":"#/dossier/component/apache-bigtop-repo"},{"id":"component:bigtop-groovy","display_name":"Bigtop Groovy package","type":"package","role":"build-runtime-support","lifecycle":"internal-support","repository_ids":[],"surface_ids":["ref-target-bigtop-groovy"],"relationship_ids":["rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"packaging-runtime","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:bigtop-groovy","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"package\" with role \"build-runtime-support\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:bigtop-groovy.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/bigtop-groovy"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-groovy","producer":"corpus-manifest"},"route":"#/dossier/component/bigtop-groovy"},{"id":"component:bigtop-jsvc","display_name":"Bigtop JSVC package","type":"package","role":"daemon-service-support","lifecycle":"internal-support","repository_ids":[],"surface_ids":["ref-target-bigtop-jsvc"],"relationship_ids":["rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"packaging-runtime","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:bigtop-jsvc","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"package\" with role \"daemon-service-support\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:bigtop-jsvc.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/bigtop-jsvc"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-jsvc","producer":"corpus-manifest"},"route":"#/dossier/component/bigtop-jsvc"},{"id":"component:bigtop-select","display_name":"Bigtop Select package","type":"package","role":"bigtop-version-selection","lifecycle":"internal-support","repository_ids":[],"surface_ids":["ref-target-bigtop-select"],"relationship_ids":["rel:manifest-dep:bigtop-select--to--apache-bigtop-repo"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"packaging-runtime","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:bigtop-select","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"package\" with role \"bigtop-version-selection\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:bigtop-select.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/bigtop-select"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-select","producer":"corpus-manifest"},"route":"#/dossier/component/bigtop-select"},{"id":"component:bigtop-utils","display_name":"Bigtop Utils package","type":"package","role":"bigtop-runtime-support","lifecycle":"internal-support","repository_ids":[],"surface_ids":["ref-target-bigtop-utils"],"relationship_ids":["rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"packaging-runtime","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:bigtop-utils","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"package\" with role \"bigtop-runtime-support\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:bigtop-utils.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/bigtop-utils"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-utils","producer":"corpus-manifest"},"route":"#/dossier/component/bigtop-utils"},{"id":"component:apache-airflow","display_name":"Apache Airflow","type":"application","role":"workflow-orchestration","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-airflow","tracker-apache-airflow","wiki-apache-airflow"],"relationship_ids":[],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"compute-processing","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-airflow","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"workflow-orchestration\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-airflow"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-airflow","producer":"corpus-manifest"},"route":"#/dossier/component/apache-airflow"},{"id":"component:alluxio","display_name":"Alluxio","type":"application","role":"distributed-cache-filesystem","lifecycle":"external","repository_ids":[],"surface_ids":["site-alluxio","tracker-alluxio","wiki-alluxio"],"relationship_ids":["rel:manifest-dep:alluxio--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"data-systems","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:alluxio","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"distributed-cache-filesystem\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:alluxio.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Included in the Bigtop release BOM but not an Apache project.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/alluxio"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:alluxio","producer":"corpus-manifest"},"route":"#/dossier/component/alluxio"},{"id":"component:apache-flink","display_name":"Apache Flink","type":"application","role":"stream-batch-processing","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-flink","tracker-apache-flink","wiki-apache-flink"],"relationship_ids":["rel:manifest-dep:apache-flink--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"compute-processing","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-flink","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"stream-batch-processing\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-flink.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-flink"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-flink","producer":"corpus-manifest"},"route":"#/dossier/component/apache-flink"},{"id":"component:apache-hadoop","display_name":"Apache Hadoop","type":"application","role":"filesystem-yarn-mapreduce-foundation","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-hadoop","tracker-apache-hadoop","wiki-apache-hadoop"],"relationship_ids":["rel:manifest-dep:alluxio--to--apache-hadoop","rel:manifest-dep:apache-flink--to--apache-hadoop","rel:manifest-dep:apache-hbase--to--apache-hadoop","rel:manifest-dep:apache-hive--to--apache-hadoop","rel:manifest-dep:apache-livy--to--apache-hadoop","rel:manifest-dep:apache-phoenix--to--apache-hadoop","rel:manifest-dep:apache-spark--to--apache-hadoop","rel:manifest-dep:apache-tez--to--apache-hadoop","rel:manifest-dep:apache-zeppelin--to--apache-hadoop","rel:manifest-dep:apache-oozie--to--apache-hadoop","rel:manifest-dep:apache-sqoop--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"data-systems","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-hadoop","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"filesystem-yarn-mapreduce-foundation\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-hadoop"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-hadoop","producer":"corpus-manifest"},"route":"#/dossier/component/apache-hadoop"},{"id":"component:apache-hbase","display_name":"Apache HBase","type":"application","role":"distributed-nosql-store","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-hbase","tracker-apache-hbase","wiki-apache-hbase","docs-apache-hbase"],"relationship_ids":["rel:manifest-dep:apache-hbase--to--apache-hadoop","rel:manifest-dep:apache-hbase--to--apache-zookeeper","rel:manifest-dep:apache-phoenix--to--apache-hbase"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"data-systems","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-hbase","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"distributed-nosql-store\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-hbase.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 2 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-hbase"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-hbase","producer":"corpus-manifest"},"route":"#/dossier/component/apache-hbase"},{"id":"component:apache-hive","display_name":"Apache Hive","type":"application","role":"sql-warehouse","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-hive","tracker-apache-hive","wiki-apache-hive"],"relationship_ids":["rel:manifest-dep:apache-hive--to--apache-hadoop","rel:manifest-dep:apache-hive--to--apache-tez","rel:manifest-dep:apache-zeppelin--to--apache-hive","rel:manifest-dep:apache-sqoop--to--apache-hive"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"data-systems","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-hive","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"sql-warehouse\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-hive.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 2 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-hive"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-hive","producer":"corpus-manifest"},"route":"#/dossier/component/apache-hive"},{"id":"component:apache-kafka","display_name":"Apache Kafka","type":"application","role":"event-streaming","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-kafka","tracker-apache-kafka","wiki-apache-kafka"],"relationship_ids":["rel:manifest-dep:apache-kafka--to--apache-zookeeper"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"unknown","promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-kafka","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"event-streaming\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-kafka.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-kafka"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-kafka","producer":"corpus-manifest"},"route":"#/dossier/component/apache-kafka"},{"id":"component:apache-livy","display_name":"Apache Livy","type":"application","role":"spark-rest-service","lifecycle":"unknown","repository_ids":[],"surface_ids":["site-apache-livy","tracker-apache-livy","wiki-apache-livy","docs-apache-livy"],"relationship_ids":["rel:manifest-dep:apache-livy--to--apache-spark","rel:manifest-dep:apache-livy--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"integration-services","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-livy","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"spark-rest-service\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-livy.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 2 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-livy"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-livy","producer":"corpus-manifest"},"route":"#/dossier/component/apache-livy"},{"id":"component:apache-phoenix","display_name":"Apache Phoenix","type":"application","role":"sql-over-hbase","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-phoenix","tracker-apache-phoenix","wiki-apache-phoenix","docs-apache-phoenix"],"relationship_ids":["rel:manifest-dep:apache-phoenix--to--apache-hbase","rel:manifest-dep:apache-phoenix--to--apache-hadoop","rel:manifest-dep:apache-phoenix--to--apache-zookeeper"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"unknown","promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-phoenix","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"sql-over-hbase\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-phoenix.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 3 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-phoenix"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-phoenix","producer":"corpus-manifest"},"route":"#/dossier/component/apache-phoenix"},{"id":"component:apache-ranger","display_name":"Apache Ranger","type":"application","role":"security-governance","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-ranger","tracker-apache-ranger","wiki-apache-ranger"],"relationship_ids":[],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"platform-governance","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-ranger","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"security-governance\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-ranger"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-ranger","producer":"corpus-manifest"},"route":"#/dossier/component/apache-ranger"},{"id":"component:apache-solr","display_name":"Apache Solr","type":"application","role":"search-index","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-solr","tracker-apache-solr","wiki-apache-solr"],"relationship_ids":[],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"data-systems","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-solr","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"search-index\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-solr"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-solr","producer":"corpus-manifest"},"route":"#/dossier/component/apache-solr"},{"id":"component:apache-spark","display_name":"Apache Spark","type":"application","role":"distributed-compute","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-spark","tracker-apache-spark","wiki-apache-spark"],"relationship_ids":["rel:manifest-dep:apache-livy--to--apache-spark","rel:manifest-dep:apache-spark--to--apache-hadoop","rel:manifest-dep:apache-zeppelin--to--apache-spark"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"compute-processing","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-spark","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"distributed-compute\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-spark.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-spark"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-spark","producer":"corpus-manifest"},"route":"#/dossier/component/apache-spark"},{"id":"component:apache-tez","display_name":"Apache Tez","type":"application","role":"dag-execution-engine","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-tez","tracker-apache-tez","wiki-apache-tez"],"relationship_ids":["rel:manifest-dep:apache-hive--to--apache-tez","rel:manifest-dep:apache-tez--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"compute-processing","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-tez","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"dag-execution-engine\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-tez.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-tez"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-tez","producer":"corpus-manifest"},"route":"#/dossier/component/apache-tez"},{"id":"component:apache-zeppelin","display_name":"Apache Zeppelin","type":"application","role":"notebook-analytics","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-zeppelin","tracker-apache-zeppelin","wiki-apache-zeppelin"],"relationship_ids":["rel:manifest-dep:apache-zeppelin--to--apache-spark","rel:manifest-dep:apache-zeppelin--to--apache-hive","rel:manifest-dep:apache-zeppelin--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"unknown","promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-zeppelin","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"notebook-analytics\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-zeppelin.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 3 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-zeppelin"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-zeppelin","producer":"corpus-manifest"},"route":"#/dossier/component/apache-zeppelin"},{"id":"component:apache-zookeeper","display_name":"Apache ZooKeeper","type":"application","role":"coordination-service","lifecycle":"active","repository_ids":[],"surface_ids":["site-apache-zookeeper","tracker-apache-zookeeper","wiki-apache-zookeeper"],"relationship_ids":["rel:manifest-dep:apache-hbase--to--apache-zookeeper","rel:manifest-dep:apache-kafka--to--apache-zookeeper","rel:manifest-dep:apache-phoenix--to--apache-zookeeper"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"coordination-community","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-zookeeper","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"repository\" with role \"coordination-service\"."}],"created_by_producer_family":"portolan-system-map","why_present":"Named repository component present in the inspected target corpus.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-zookeeper"}],"evidence":{"state":"source-visible","source":"corpus-manifest#target:apache-zookeeper","producer":"corpus-manifest"},"route":"#/dossier/component/apache-zookeeper"},{"id":"component:apache-oozie","display_name":"Apache Oozie","type":"retired","role":"legacy-hadoop-workflow-scheduler","lifecycle":"retired","repository_ids":[],"surface_ids":["site-apache-oozie","tracker-apache-oozie","wiki-apache-oozie"],"relationship_ids":["rel:manifest-dep:apache-oozie--to--apache-hadoop"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"compute-processing","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-oozie","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"retired-project\" with role \"legacy-hadoop-workflow-scheduler\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-oozie.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 1 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Retired project used as a legacy control for lifecycle and evidence-state handling.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-oozie"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-oozie","producer":"corpus-manifest"},"route":"#/dossier/component/apache-oozie"},{"id":"component:apache-sqoop","display_name":"Apache Sqoop","type":"retired","role":"legacy-rdbms-hadoop-transfer","lifecycle":"retired","repository_ids":[],"surface_ids":["site-apache-sqoop","tracker-apache-sqoop","wiki-apache-sqoop"],"relationship_ids":["rel:manifest-dep:apache-sqoop--to--apache-hadoop","rel:manifest-dep:apache-sqoop--to--apache-hive"],"finding_ids":[],"unknown_ids":["unknown:atlas-facts-runtime-topology"],"c4_family":"integration-services","secondary_c4_families":[],"promotion_signals":[{"signal_type":"repository-metadata","source":"corpus-manifest#target:apache-sqoop","producer":"corpus-manifest","independence_group":"corpus-manifest","reason":"Corpus target kind \"retired-project\" with role \"legacy-rdbms-hadoop-transfer\"."},{"signal_type":"dependency-edge","source":"corpus-manifest#target:apache-sqoop.depends_on","producer":"corpus-manifest","independence_group":"corpus-manifest-dependencies","reason":"Declared 2 manifest dependency edge(s)."}],"created_by_producer_family":"portolan-system-map","why_present":"Retired project used as a legacy control for replacement and migration signals.","next_actions":[{"label":"Open dossier","target":"#/dossier/component/apache-sqoop"}],"evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-sqoop","producer":"corpus-manifest"},"route":"#/dossier/component/apache-sqoop"}],"repositories":[],"surfaces":[{"id":"surf:apache-bigtop-release-350","surface_type":"release-matrix","label":"Apache Bigtop 3.5.0 release","owner_id":"component:apache-hadoop","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:apache-bigtop-release-350","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"release\" attached to component:apache-hadoop.","why_it_matters":"Support/release matrix; records which component versions are compatible.","route":"#/dossier/surface/surf:apache-bigtop-release-350"},{"id":"surf:apache-bigtop-support-matrix-350","surface_type":"docs","label":"Apache Bigtop 3.5.0 support matrix","owner_id":"component:apache-hadoop","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Overview%2Bof%2BBigtop%2B3.5.0%2BSupport%2BMatrix","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:apache-bigtop-support-matrix-350","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"documentation\" attached to component:apache-hadoop.","why_it_matters":"Documentation/release surface; explains intended behavior and compatibility.","route":"#/dossier/surface/surf:apache-bigtop-support-matrix-350"},{"id":"surf:bigtop-binary-repos","surface_type":"binary-repo","label":"Bigtop installable binary repositories","owner_id":"component:apache-hadoop","url":"https://downloads.apache.org/bigtop/bigtop-3.5.0/repos/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:bigtop-binary-repos","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"binary-repository\" attached to component:apache-hadoop.","why_it_matters":"Binary/package repository surface; where installable artifacts are published.","route":"#/dossier/surface/surf:bigtop-binary-repos"},{"id":"surf:bigtop-docker-images","surface_type":"docker-image","label":"Bigtop Docker images","owner_id":"component:apache-hadoop","url":"https://hub.docker.com/u/bigtop","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:bigtop-docker-images","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"docker-image\" attached to component:apache-hadoop.","why_it_matters":"Docker image surface; containerized runtime artifacts.","route":"#/dossier/surface/surf:bigtop-docker-images"},{"id":"surf:bigtop-ci","surface_type":"ci","label":"Bigtop CI and smoke-test jobs","owner_id":"component:apache-hadoop","url":"https://ci.bigtop.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:bigtop-ci","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"runtime\" attached to component:apache-hadoop.","why_it_matters":"CI/verification surface; smoke-test and upstream-verification jobs.","route":"#/dossier/surface/surf:bigtop-ci"},{"id":"surf:apache-bigtop-jira","surface_type":"issue-tracker","label":"Apache Bigtop JIRA","owner_id":"component:apache-hadoop","url":"https://issues.apache.org/jira/browse/BIGTOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:apache-bigtop-jira","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"issue-tracker\" attached to component:apache-hadoop.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/surf:apache-bigtop-jira"},{"id":"surf:apache-bigtop-wiki","surface_type":"wiki","label":"Apache Bigtop Confluence","owner_id":"component:apache-hadoop","url":"https://cwiki.apache.org/confluence/display/BIGTOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:apache-bigtop-wiki","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"wiki\" attached to component:apache-hadoop.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/surf:apache-bigtop-wiki"},{"id":"surf:apache-bigtop-mailing-lists","surface_type":"mailing-list","label":"Apache Bigtop mailing lists","owner_id":"component:apache-hadoop","url":"https://bigtop.apache.org/mail-lists.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#target:apache-bigtop-mailing-lists","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface-only target of kind \"mailing-list\" attached to component:apache-hadoop.","why_it_matters":"Community/mailing-list surface; the coordination and announcement channel.","route":"#/dossier/surface/surf:apache-bigtop-mailing-lists"},{"id":"ref-bigtop-homepage","surface_type":"docs","label":"Apache Bigtop project overview","owner_id":"component:apache-hadoop","url":"https://bigtop.apache.org/index.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-bigtop-homepage","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"docs\" attached to component:apache-hadoop.","why_it_matters":"Documentation/release surface; explains intended behavior and compatibility.","route":"#/dossier/surface/ref-bigtop-homepage"},{"id":"ref-bigtop-github","surface_type":"other","label":"Apache Bigtop source repository","owner_id":"component:apache-hadoop","url":"https://github.com/apache/bigtop","state":"available","evidence":{"state":"source-visible","source":"atlas-surfaces.json#surface:ref-bigtop-github","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hadoop.","why_it_matters":"Contains packaging, deployment, test framework, smoke tests, Docker, and BOM source.","route":"#/dossier/surface/ref-bigtop-github"},{"id":"ref-bigtop-issue-tracking","surface_type":"issue-tracker","label":"Apache Bigtop issue tracking guide","owner_id":"component:apache-hadoop","url":"https://bigtop.apache.org/issue-tracking.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-bigtop-issue-tracking","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-hadoop.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/ref-bigtop-issue-tracking"},{"id":"ref-apache-attic-oozie","surface_type":"other","label":"Apache Attic entry for Oozie","owner_id":"component:apache-hadoop","url":"https://attic.apache.org/projects/oozie.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-apache-attic-oozie","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hadoop.","why_it_matters":"Marks Oozie as retired and preserves read-only resources.","route":"#/dossier/surface/ref-apache-attic-oozie"},{"id":"ref-apache-sqoop-retired","surface_type":"other","label":"Apache Sqoop retired project site","owner_id":"component:apache-hadoop","url":"https://sqoop.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-apache-sqoop-retired","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hadoop.","why_it_matters":"Marks Sqoop as retired while retaining release and repository links.","route":"#/dossier/surface/ref-apache-sqoop-retired"},{"id":"site-apache-bigtop-repo","surface_type":"other","label":"Apache Bigtop project site","owner_id":"component:apache-bigtop-repo","url":"https://bigtop.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-bigtop-repo","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-bigtop-repo.","why_it_matters":"Root repository for packaging, deployment, smoke testing, Docker, and component BOM metadata.","route":"#/dossier/surface/site-apache-bigtop-repo"},{"id":"site-apache-airflow","surface_type":"other","label":"Apache Airflow project site","owner_id":"component:apache-airflow","url":"https://airflow.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-airflow","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-airflow.","why_it_matters":"Apache Airflow project site","route":"#/dossier/surface/site-apache-airflow"},{"id":"site-alluxio","surface_type":"other","label":"Alluxio project site","owner_id":"component:alluxio","url":"https://www.alluxio.io/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-alluxio","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:alluxio.","why_it_matters":"Included in the Bigtop release BOM but not an Apache project.","route":"#/dossier/surface/site-alluxio"},{"id":"site-apache-flink","surface_type":"other","label":"Apache Flink project site","owner_id":"component:apache-flink","url":"https://flink.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-flink","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-flink.","why_it_matters":"Apache Flink project site","route":"#/dossier/surface/site-apache-flink"},{"id":"site-apache-hadoop","surface_type":"other","label":"Apache Hadoop project site","owner_id":"component:apache-hadoop","url":"https://hadoop.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-hadoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hadoop.","why_it_matters":"Apache Hadoop project site","route":"#/dossier/surface/site-apache-hadoop"},{"id":"site-apache-hbase","surface_type":"other","label":"Apache HBase project site","owner_id":"component:apache-hbase","url":"https://hbase.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-hbase","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hbase.","why_it_matters":"Apache HBase project site","route":"#/dossier/surface/site-apache-hbase"},{"id":"site-apache-hive","surface_type":"other","label":"Apache Hive project site","owner_id":"component:apache-hive","url":"https://hive.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-hive","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-hive.","why_it_matters":"Apache Hive project site","route":"#/dossier/surface/site-apache-hive"},{"id":"site-apache-kafka","surface_type":"other","label":"Apache Kafka project site","owner_id":"component:apache-kafka","url":"https://kafka.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-kafka","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-kafka.","why_it_matters":"Apache Kafka project site","route":"#/dossier/surface/site-apache-kafka"},{"id":"site-apache-livy","surface_type":"other","label":"Apache Livy project site","owner_id":"component:apache-livy","url":"https://livy.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-livy","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-livy.","why_it_matters":"Apache Livy project site","route":"#/dossier/surface/site-apache-livy"},{"id":"site-apache-phoenix","surface_type":"other","label":"Apache Phoenix project site","owner_id":"component:apache-phoenix","url":"https://phoenix.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-phoenix","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-phoenix.","why_it_matters":"Apache Phoenix project site","route":"#/dossier/surface/site-apache-phoenix"},{"id":"site-apache-ranger","surface_type":"other","label":"Apache Ranger project site","owner_id":"component:apache-ranger","url":"https://ranger.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-ranger","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-ranger.","why_it_matters":"Apache Ranger project site","route":"#/dossier/surface/site-apache-ranger"},{"id":"site-apache-solr","surface_type":"other","label":"Apache Solr project site","owner_id":"component:apache-solr","url":"https://solr.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-solr","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-solr.","why_it_matters":"Apache Solr project site","route":"#/dossier/surface/site-apache-solr"},{"id":"site-apache-spark","surface_type":"other","label":"Apache Spark project site","owner_id":"component:apache-spark","url":"https://spark.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-spark","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-spark.","why_it_matters":"Apache Spark project site","route":"#/dossier/surface/site-apache-spark"},{"id":"site-apache-tez","surface_type":"other","label":"Apache Tez project site","owner_id":"component:apache-tez","url":"https://tez.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-tez","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-tez.","why_it_matters":"Apache Tez project site","route":"#/dossier/surface/site-apache-tez"},{"id":"site-apache-zeppelin","surface_type":"other","label":"Apache Zeppelin project site","owner_id":"component:apache-zeppelin","url":"https://zeppelin.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-zeppelin","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-zeppelin.","why_it_matters":"Apache Zeppelin project site","route":"#/dossier/surface/site-apache-zeppelin"},{"id":"site-apache-zookeeper","surface_type":"other","label":"Apache ZooKeeper project site","owner_id":"component:apache-zookeeper","url":"https://zookeeper.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-zookeeper","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-zookeeper.","why_it_matters":"Apache ZooKeeper project site","route":"#/dossier/surface/site-apache-zookeeper"},{"id":"site-apache-oozie","surface_type":"other","label":"Apache Oozie project site","owner_id":"component:apache-oozie","url":"https://attic.apache.org/projects/oozie.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-oozie","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-oozie.","why_it_matters":"Retired project used as a legacy control for lifecycle and evidence-state handling.","route":"#/dossier/surface/site-apache-oozie"},{"id":"site-apache-sqoop","surface_type":"other","label":"Apache Sqoop project site","owner_id":"component:apache-sqoop","url":"https://sqoop.apache.org/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:site-apache-sqoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:apache-sqoop.","why_it_matters":"Retired project used as a legacy control for replacement and migration signals.","route":"#/dossier/surface/site-apache-sqoop"},{"id":"ref-target-bigtop-groovy","surface_type":"other","label":"Bigtop Groovy package","owner_id":"component:bigtop-groovy","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-target-bigtop-groovy","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:bigtop-groovy.","why_it_matters":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","route":"#/dossier/surface/ref-target-bigtop-groovy"},{"id":"ref-target-bigtop-jsvc","surface_type":"other","label":"Bigtop JSVC package","owner_id":"component:bigtop-jsvc","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-target-bigtop-jsvc","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:bigtop-jsvc.","why_it_matters":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","route":"#/dossier/surface/ref-target-bigtop-jsvc"},{"id":"ref-target-bigtop-select","surface_type":"other","label":"Bigtop Select package","owner_id":"component:bigtop-select","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-target-bigtop-select","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:bigtop-select.","why_it_matters":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","route":"#/dossier/surface/ref-target-bigtop-select"},{"id":"ref-target-bigtop-utils","surface_type":"other","label":"Bigtop Utils package","owner_id":"component:bigtop-utils","url":"https://cwiki.apache.org/confluence/display/BIGTOP/Bigtop%2B3.5.0%2BRelease","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:ref-target-bigtop-utils","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"other\" attached to component:bigtop-utils.","why_it_matters":"Bigtop-owned BOM entry; not treated as an independent ecosystem repository target.","route":"#/dossier/surface/ref-target-bigtop-utils"},{"id":"tracker-apache-bigtop-repo","surface_type":"issue-tracker","label":"Apache Bigtop tracker","owner_id":"component:apache-bigtop-repo","url":"https://issues.apache.org/jira/browse/BIGTOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-bigtop-repo","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-bigtop-repo.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-bigtop-repo"},{"id":"tracker-apache-airflow","surface_type":"issue-tracker","label":"Apache Airflow tracker","owner_id":"component:apache-airflow","url":"https://github.com/apache/airflow/issues","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-airflow","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-airflow.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-airflow"},{"id":"tracker-alluxio","surface_type":"issue-tracker","label":"Alluxio tracker","owner_id":"component:alluxio","url":"https://github.com/Alluxio/alluxio/issues","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-alluxio","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:alluxio.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-alluxio"},{"id":"tracker-apache-flink","surface_type":"issue-tracker","label":"Apache Flink tracker","owner_id":"component:apache-flink","url":"https://issues.apache.org/jira/browse/FLINK","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-flink","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-flink.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-flink"},{"id":"tracker-apache-hadoop","surface_type":"issue-tracker","label":"Apache Hadoop tracker","owner_id":"component:apache-hadoop","url":"https://issues.apache.org/jira/browse/HADOOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-hadoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-hadoop.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-hadoop"},{"id":"tracker-apache-hbase","surface_type":"issue-tracker","label":"Apache HBase tracker","owner_id":"component:apache-hbase","url":"https://issues.apache.org/jira/browse/HBASE","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-hbase","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-hbase.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-hbase"},{"id":"tracker-apache-hive","surface_type":"issue-tracker","label":"Apache Hive tracker","owner_id":"component:apache-hive","url":"https://issues.apache.org/jira/browse/HIVE","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-hive","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-hive.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-hive"},{"id":"tracker-apache-kafka","surface_type":"issue-tracker","label":"Apache Kafka tracker","owner_id":"component:apache-kafka","url":"https://issues.apache.org/jira/browse/KAFKA","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-kafka","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-kafka.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-kafka"},{"id":"tracker-apache-livy","surface_type":"issue-tracker","label":"Apache Livy tracker","owner_id":"component:apache-livy","url":"https://issues.apache.org/jira/browse/LIVY","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-livy","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-livy.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-livy"},{"id":"tracker-apache-phoenix","surface_type":"issue-tracker","label":"Apache Phoenix tracker","owner_id":"component:apache-phoenix","url":"https://issues.apache.org/jira/browse/PHOENIX","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-phoenix","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-phoenix.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-phoenix"},{"id":"tracker-apache-ranger","surface_type":"issue-tracker","label":"Apache Ranger tracker","owner_id":"component:apache-ranger","url":"https://issues.apache.org/jira/browse/RANGER","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-ranger","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-ranger.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-ranger"},{"id":"tracker-apache-solr","surface_type":"issue-tracker","label":"Apache Solr tracker","owner_id":"component:apache-solr","url":"https://issues.apache.org/jira/browse/SOLR","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-solr","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-solr.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-solr"},{"id":"tracker-apache-spark","surface_type":"issue-tracker","label":"Apache Spark tracker","owner_id":"component:apache-spark","url":"https://issues.apache.org/jira/browse/SPARK","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-spark","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-spark.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-spark"},{"id":"tracker-apache-tez","surface_type":"issue-tracker","label":"Apache Tez tracker","owner_id":"component:apache-tez","url":"https://issues.apache.org/jira/browse/TEZ","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-tez","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-tez.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-tez"},{"id":"tracker-apache-zeppelin","surface_type":"issue-tracker","label":"Apache Zeppelin tracker","owner_id":"component:apache-zeppelin","url":"https://issues.apache.org/jira/browse/ZEPPELIN","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-zeppelin","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-zeppelin.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-zeppelin"},{"id":"tracker-apache-zookeeper","surface_type":"issue-tracker","label":"Apache ZooKeeper tracker","owner_id":"component:apache-zookeeper","url":"https://issues.apache.org/jira/browse/ZOOKEEPER","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-zookeeper","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-zookeeper.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-zookeeper"},{"id":"tracker-apache-oozie","surface_type":"issue-tracker","label":"Apache Oozie tracker","owner_id":"component:apache-oozie","url":"https://issues.apache.org/jira/browse/OOZIE","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-oozie","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-oozie.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-oozie"},{"id":"tracker-apache-sqoop","surface_type":"issue-tracker","label":"Apache Sqoop tracker","owner_id":"component:apache-sqoop","url":"https://issues.apache.org/jira/browse/SQOOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:tracker-apache-sqoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"issue-tracker\" attached to component:apache-sqoop.","why_it_matters":"Issue tracker surface; where bugs, enhancements, and releases are tracked.","route":"#/dossier/surface/tracker-apache-sqoop"},{"id":"wiki-apache-bigtop-repo","surface_type":"wiki","label":"Apache Bigtop wiki","owner_id":"component:apache-bigtop-repo","url":"https://cwiki.apache.org/confluence/display/BIGTOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-bigtop-repo","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-bigtop-repo.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-bigtop-repo"},{"id":"wiki-apache-airflow","surface_type":"wiki","label":"Apache Airflow wiki","owner_id":"component:apache-airflow","url":"https://cwiki.apache.org/confluence/display/AIRFLOW","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-airflow","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-airflow.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-airflow"},{"id":"wiki-alluxio","surface_type":"wiki","label":"Alluxio wiki","owner_id":"component:alluxio","url":"https://github.com/Alluxio/alluxio/wiki","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-alluxio","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:alluxio.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-alluxio"},{"id":"wiki-apache-flink","surface_type":"wiki","label":"Apache Flink wiki","owner_id":"component:apache-flink","url":"https://cwiki.apache.org/confluence/display/FLINK","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-flink","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-flink.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-flink"},{"id":"wiki-apache-hadoop","surface_type":"wiki","label":"Apache Hadoop wiki","owner_id":"component:apache-hadoop","url":"https://cwiki.apache.org/confluence/display/HADOOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-hadoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-hadoop.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-hadoop"},{"id":"wiki-apache-hbase","surface_type":"wiki","label":"Apache HBase wiki","owner_id":"component:apache-hbase","url":"https://cwiki.apache.org/confluence/display/HBASE/Home","state":"unknown","evidence":{"state":"cannot_verify","source":"atlas-surfaces.json#surface:wiki-apache-hbase","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-hbase.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-hbase"},{"id":"wiki-apache-hive","surface_type":"wiki","label":"Apache Hive wiki","owner_id":"component:apache-hive","url":"https://cwiki.apache.org/confluence/display/HIVE","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-hive","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-hive.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-hive"},{"id":"wiki-apache-kafka","surface_type":"wiki","label":"Apache Kafka wiki","owner_id":"component:apache-kafka","url":"https://cwiki.apache.org/confluence/display/KAFKA","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-kafka","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-kafka.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-kafka"},{"id":"wiki-apache-livy","surface_type":"wiki","label":"Apache Livy wiki","owner_id":"component:apache-livy","url":"https://cwiki.apache.org/confluence/display/LIVY","state":"unknown","evidence":{"state":"cannot_verify","source":"atlas-surfaces.json#surface:wiki-apache-livy","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-livy.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-livy"},{"id":"wiki-apache-phoenix","surface_type":"wiki","label":"Apache Phoenix wiki","owner_id":"component:apache-phoenix","url":"https://cwiki.apache.org/confluence/display/PHOENIX/Home","state":"unknown","evidence":{"state":"cannot_verify","source":"atlas-surfaces.json#surface:wiki-apache-phoenix","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-phoenix.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-phoenix"},{"id":"wiki-apache-ranger","surface_type":"wiki","label":"Apache Ranger wiki","owner_id":"component:apache-ranger","url":"https://cwiki.apache.org/confluence/display/RANGER","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-ranger","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-ranger.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-ranger"},{"id":"wiki-apache-solr","surface_type":"wiki","label":"Apache Solr wiki","owner_id":"component:apache-solr","url":"https://cwiki.apache.org/confluence/display/SOLR","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-solr","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-solr.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-solr"},{"id":"wiki-apache-spark","surface_type":"wiki","label":"Apache Spark wiki","owner_id":"component:apache-spark","url":"https://cwiki.apache.org/confluence/display/SPARK","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-spark","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-spark.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-spark"},{"id":"wiki-apache-tez","surface_type":"wiki","label":"Apache Tez wiki","owner_id":"component:apache-tez","url":"https://cwiki.apache.org/confluence/display/TEZ","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-tez","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-tez.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-tez"},{"id":"wiki-apache-zeppelin","surface_type":"wiki","label":"Apache Zeppelin wiki","owner_id":"component:apache-zeppelin","url":"https://cwiki.apache.org/confluence/display/ZEPPELIN","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-zeppelin","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-zeppelin.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-zeppelin"},{"id":"wiki-apache-zookeeper","surface_type":"wiki","label":"Apache ZooKeeper wiki","owner_id":"component:apache-zookeeper","url":"https://cwiki.apache.org/confluence/display/ZOOKEEPER","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-zookeeper","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-zookeeper.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-zookeeper"},{"id":"wiki-apache-oozie","surface_type":"wiki","label":"Apache Oozie wiki","owner_id":"component:apache-oozie","url":"https://cwiki.apache.org/confluence/display/OOZIE","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-oozie","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-oozie.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-oozie"},{"id":"wiki-apache-sqoop","surface_type":"wiki","label":"Apache Sqoop wiki","owner_id":"component:apache-sqoop","url":"https://cwiki.apache.org/confluence/display/SQOOP","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:wiki-apache-sqoop","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"wiki\" attached to component:apache-sqoop.","why_it_matters":"Wiki surface; community-maintained documentation and planning.","route":"#/dossier/surface/wiki-apache-sqoop"},{"id":"docs-apache-hbase","surface_type":"docs","label":"Apache HBase docs","owner_id":"component:apache-hbase","url":"https://hbase.apache.org/book.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:docs-apache-hbase","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"docs\" attached to component:apache-hbase.","why_it_matters":"Documentation/release surface; explains intended behavior and compatibility.","route":"#/dossier/surface/docs-apache-hbase"},{"id":"docs-apache-livy","surface_type":"docs","label":"Apache Livy docs","owner_id":"component:apache-livy","url":"https://livy.apache.org/docs/latest/","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:docs-apache-livy","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"docs\" attached to component:apache-livy.","why_it_matters":"Documentation/release surface; explains intended behavior and compatibility.","route":"#/dossier/surface/docs-apache-livy"},{"id":"docs-apache-phoenix","surface_type":"docs","label":"Apache Phoenix docs","owner_id":"component:apache-phoenix","url":"https://phoenix.apache.org/resources.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:docs-apache-phoenix","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"docs\" attached to component:apache-phoenix.","why_it_matters":"Documentation/release surface; explains intended behavior and compatibility.","route":"#/dossier/surface/docs-apache-phoenix"},{"id":"list-apache-bigtop-repo","surface_type":"mailing-list","label":"Apache Bigtop mailing lists","owner_id":"component:apache-bigtop-repo","url":"https://bigtop.apache.org/mail-lists.html","state":"available","evidence":{"state":"metadata-visible","source":"atlas-surfaces.json#surface:list-apache-bigtop-repo","producer":"atlas-surfaces"},"created_by_producer_family":"atlas-surfaces","why_present":"Surface of type \"mailing-list\" attached to component:apache-bigtop-repo.","why_it_matters":"Community/mailing-list surface; the coordination and announcement channel.","route":"#/dossier/surface/list-apache-bigtop-repo"}],"relationships":[{"id":"rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo","relationship_type":"depends-on","from_id":"component:bigtop-groovy","to_id":"component:apache-bigtop-repo","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-groovy.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Bigtop Groovy package declares a dependency on apache-bigtop-repo.","summary":"Bigtop Groovy package depends on apache-bigtop-repo (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo"},{"id":"rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo","relationship_type":"depends-on","from_id":"component:bigtop-jsvc","to_id":"component:apache-bigtop-repo","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-jsvc.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Bigtop JSVC package declares a dependency on apache-bigtop-repo.","summary":"Bigtop JSVC package depends on apache-bigtop-repo (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo"},{"id":"rel:manifest-dep:bigtop-select--to--apache-bigtop-repo","relationship_type":"depends-on","from_id":"component:bigtop-select","to_id":"component:apache-bigtop-repo","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-select.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Bigtop Select package declares a dependency on apache-bigtop-repo.","summary":"Bigtop Select package depends on apache-bigtop-repo (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:bigtop-select--to--apache-bigtop-repo"},{"id":"rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo","relationship_type":"depends-on","from_id":"component:bigtop-utils","to_id":"component:apache-bigtop-repo","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:bigtop-utils.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Bigtop Utils package declares a dependency on apache-bigtop-repo.","summary":"Bigtop Utils package depends on apache-bigtop-repo (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"},{"id":"rel:manifest-dep:alluxio--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:alluxio","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:alluxio.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Alluxio declares a dependency on apache-hadoop.","summary":"Alluxio depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:alluxio--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-flink--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-flink","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-flink.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Flink declares a dependency on apache-hadoop.","summary":"Apache Flink depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-flink--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-hbase--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-hbase","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-hbase.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache HBase declares a dependency on apache-hadoop.","summary":"Apache HBase depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-hbase--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-hbase--to--apache-zookeeper","relationship_type":"depends-on","from_id":"component:apache-hbase","to_id":"component:apache-zookeeper","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-hbase.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache HBase declares a dependency on apache-zookeeper.","summary":"Apache HBase depends on apache-zookeeper (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-hbase--to--apache-zookeeper"},{"id":"rel:manifest-dep:apache-hive--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-hive","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-hive.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Hive declares a dependency on apache-hadoop.","summary":"Apache Hive depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-hive--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-hive--to--apache-tez","relationship_type":"depends-on","from_id":"component:apache-hive","to_id":"component:apache-tez","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-hive.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Hive declares a dependency on apache-tez.","summary":"Apache Hive depends on apache-tez (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-hive--to--apache-tez"},{"id":"rel:manifest-dep:apache-kafka--to--apache-zookeeper","relationship_type":"depends-on","from_id":"component:apache-kafka","to_id":"component:apache-zookeeper","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-kafka.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Kafka declares a dependency on apache-zookeeper.","summary":"Apache Kafka depends on apache-zookeeper (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-kafka--to--apache-zookeeper"},{"id":"rel:manifest-dep:apache-livy--to--apache-spark","relationship_type":"depends-on","from_id":"component:apache-livy","to_id":"component:apache-spark","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-livy.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Livy declares a dependency on apache-spark.","summary":"Apache Livy depends on apache-spark (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-livy--to--apache-spark"},{"id":"rel:manifest-dep:apache-livy--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-livy","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-livy.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Livy declares a dependency on apache-hadoop.","summary":"Apache Livy depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-livy--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-phoenix--to--apache-hbase","relationship_type":"depends-on","from_id":"component:apache-phoenix","to_id":"component:apache-hbase","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-phoenix.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Phoenix declares a dependency on apache-hbase.","summary":"Apache Phoenix depends on apache-hbase (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-hbase"},{"id":"rel:manifest-dep:apache-phoenix--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-phoenix","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-phoenix.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Phoenix declares a dependency on apache-hadoop.","summary":"Apache Phoenix depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-phoenix--to--apache-zookeeper","relationship_type":"depends-on","from_id":"component:apache-phoenix","to_id":"component:apache-zookeeper","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-phoenix.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Phoenix declares a dependency on apache-zookeeper.","summary":"Apache Phoenix depends on apache-zookeeper (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-phoenix--to--apache-zookeeper"},{"id":"rel:manifest-dep:apache-spark--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-spark","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-spark.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Spark declares a dependency on apache-hadoop.","summary":"Apache Spark depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-spark--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-tez--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-tez","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-tez.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Tez declares a dependency on apache-hadoop.","summary":"Apache Tez depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-tez--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-zeppelin--to--apache-spark","relationship_type":"depends-on","from_id":"component:apache-zeppelin","to_id":"component:apache-spark","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-zeppelin.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Zeppelin declares a dependency on apache-spark.","summary":"Apache Zeppelin depends on apache-spark (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-spark"},{"id":"rel:manifest-dep:apache-zeppelin--to--apache-hive","relationship_type":"depends-on","from_id":"component:apache-zeppelin","to_id":"component:apache-hive","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-zeppelin.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Zeppelin declares a dependency on apache-hive.","summary":"Apache Zeppelin depends on apache-hive (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-hive"},{"id":"rel:manifest-dep:apache-zeppelin--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-zeppelin","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-zeppelin.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Zeppelin declares a dependency on apache-hadoop.","summary":"Apache Zeppelin depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-zeppelin--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-oozie--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-oozie","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-oozie.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Oozie declares a dependency on apache-hadoop.","summary":"Apache Oozie depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-oozie--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-sqoop--to--apache-hadoop","relationship_type":"depends-on","from_id":"component:apache-sqoop","to_id":"component:apache-hadoop","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-sqoop.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Sqoop declares a dependency on apache-hadoop.","summary":"Apache Sqoop depends on apache-hadoop (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-sqoop--to--apache-hadoop"},{"id":"rel:manifest-dep:apache-sqoop--to--apache-hive","relationship_type":"depends-on","from_id":"component:apache-sqoop","to_id":"component:apache-hive","direction":"directed","evidence":{"state":"metadata-visible","source":"corpus-manifest#target:apache-sqoop.depends_on","producer":"corpus-manifest"},"created_by_producer_family":"corpus-manifest","why_present":"Apache Sqoop declares a dependency on apache-hive.","summary":"Apache Sqoop depends on apache-hive (manifest metadata).","route":"#/detail/relationship/rel:manifest-dep:apache-sqoop--to--apache-hive"}],"findings":[],"unknowns":[{"id":"unknown:atlas-facts-runtime-topology","summary":"Runtime calls, live deployments, secrets, and vendor configuration are not proven by this local atlas facts pack.","created_by_producer_family":"atlas-facts","evidence":{"state":"unknown","source":"gaps.jsonl#atlas-facts-runtime-topology","producer":"atlas-facts","reason":"Gap status: not_assessed."},"route":"#/detail/unknown/unknown:atlas-facts-runtime-topology"}]},"c4":{"context_boxes":[{"id":"c4-context:.","level":"context","display_name":"target","object_id":"c4-context:.","route":"#/dossier/c4-box/c4-context:."},{"id":"c4-context:component:apache-oozie","level":"context","display_name":"Apache Oozie","object_id":"component:apache-oozie","route":"#/dossier/c4-box/c4-context:component:apache-oozie"},{"id":"c4-context:component:apache-sqoop","level":"context","display_name":"Apache Sqoop","object_id":"component:apache-sqoop","route":"#/dossier/c4-box/c4-context:component:apache-sqoop"}],"families":[{"id":"c4-family:coordination-community","family":"coordination-community","display_name":"Coordination / community","purpose":"Coordination services, registries, community, and project-governance surfaces.","grouping_reason":"Components with coordination/registry/community/contribution/governance roles.","component_ids":["component:apache-bigtop-repo","component:apache-zookeeper"],"surface_count":7,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:coordination-community"}],"route":"#/dossier/c4-family/c4-family:coordination-community"},{"id":"c4-family:packaging-runtime","family":"packaging-runtime","display_name":"Packaging / runtime","purpose":"Package build, distribution, image, deploy, runtime, and installer roles.","grouping_reason":"Components with package-build/distribution/image/deploy/runtime/installer roles.","component_ids":["component:bigtop-groovy","component:bigtop-jsvc","component:bigtop-select","component:bigtop-utils"],"surface_count":4,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:packaging-runtime"}],"route":"#/dossier/c4-family/c4-family:packaging-runtime"},{"id":"c4-family:compute-processing","family":"compute-processing","display_name":"Compute / processing","purpose":"Batch, stream, workflow, scheduler, engine, and execution roles.","grouping_reason":"Components with batch/stream/workflow/scheduler/engine/execution roles.","component_ids":["component:apache-airflow","component:apache-flink","component:apache-spark","component:apache-tez","component:apache-oozie"],"surface_count":15,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:compute-processing"}],"route":"#/dossier/c4-family/c4-family:compute-processing"},{"id":"c4-family:data-systems","family":"data-systems","display_name":"Data systems","purpose":"Storage, database, warehouse, filesystem, metastore, and data-serving roles.","grouping_reason":"Components with storage/database/warehouse/indexing/query/data-serving roles.","component_ids":["component:alluxio","component:apache-hadoop","component:apache-hbase","component:apache-hive","component:apache-solr"],"surface_count":29,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:data-systems"}],"route":"#/dossier/c4-family/c4-family:data-systems"},{"id":"c4-family:unknown","family":"unknown","display_name":"Unclassified","purpose":"Components with insufficient local evidence for a confident C4 family.","grouping_reason":"No local role/kind signal matched a known C4 family.","component_ids":["component:apache-kafka","component:apache-phoenix","component:apache-zeppelin"],"surface_count":10,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:unknown"}],"route":"#/dossier/c4-family/c4-family:unknown"},{"id":"c4-family:integration-services","family":"integration-services","display_name":"Integration / services","purpose":"Connectors, plugins, adapters, clients, APIs, and cross-system integration.","grouping_reason":"Components with connector/plugin/adapter/client/api/integration roles.","component_ids":["component:apache-livy","component:apache-sqoop"],"surface_count":7,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:integration-services"}],"route":"#/dossier/c4-family/c4-family:integration-services"},{"id":"c4-family:platform-governance","family":"platform-governance","display_name":"Platform / governance","purpose":"Security, policy, release, governance, observability, and compatibility roles.","grouping_reason":"Components with security/policy/release/governance/observability/compatibility roles.","component_ids":["component:apache-ranger"],"surface_count":3,"finding_count":0,"unknown_count":1,"next_actions":[{"label":"Open family dossier","target":"#/dossier/c4-family/c4-family:platform-governance"}],"route":"#/dossier/c4-family/c4-family:platform-governance"}],"component_boxes":[{"id":"c4-component:component:apache-bigtop-repo","level":"component","display_name":"Apache Bigtop","object_id":"component:apache-bigtop-repo","route":"#/dossier/c4-box/c4-component:component:apache-bigtop-repo"},{"id":"c4-component:component:bigtop-groovy","level":"component","display_name":"Bigtop Groovy package","object_id":"component:bigtop-groovy","route":"#/dossier/c4-box/c4-component:component:bigtop-groovy"},{"id":"c4-component:component:bigtop-jsvc","level":"component","display_name":"Bigtop JSVC package","object_id":"component:bigtop-jsvc","route":"#/dossier/c4-box/c4-component:component:bigtop-jsvc"},{"id":"c4-component:component:bigtop-select","level":"component","display_name":"Bigtop Select package","object_id":"component:bigtop-select","route":"#/dossier/c4-box/c4-component:component:bigtop-select"},{"id":"c4-component:component:bigtop-utils","level":"component","display_name":"Bigtop Utils package","object_id":"component:bigtop-utils","route":"#/dossier/c4-box/c4-component:component:bigtop-utils"},{"id":"c4-component:component:apache-airflow","level":"component","display_name":"Apache Airflow","object_id":"component:apache-airflow","route":"#/dossier/c4-box/c4-component:component:apache-airflow"},{"id":"c4-component:component:alluxio","level":"component","display_name":"Alluxio","object_id":"component:alluxio","route":"#/dossier/c4-box/c4-component:component:alluxio"},{"id":"c4-component:component:apache-flink","level":"component","display_name":"Apache Flink","object_id":"component:apache-flink","route":"#/dossier/c4-box/c4-component:component:apache-flink"},{"id":"c4-component:component:apache-hadoop","level":"component","display_name":"Apache Hadoop","object_id":"component:apache-hadoop","route":"#/dossier/c4-box/c4-component:component:apache-hadoop"},{"id":"c4-component:component:apache-hbase","level":"component","display_name":"Apache HBase","object_id":"component:apache-hbase","route":"#/dossier/c4-box/c4-component:component:apache-hbase"},{"id":"c4-component:component:apache-hive","level":"component","display_name":"Apache Hive","object_id":"component:apache-hive","route":"#/dossier/c4-box/c4-component:component:apache-hive"},{"id":"c4-component:component:apache-kafka","level":"component","display_name":"Apache Kafka","object_id":"component:apache-kafka","route":"#/dossier/c4-box/c4-component:component:apache-kafka"},{"id":"c4-component:component:apache-livy","level":"component","display_name":"Apache Livy","object_id":"component:apache-livy","route":"#/dossier/c4-box/c4-component:component:apache-livy"},{"id":"c4-component:component:apache-phoenix","level":"component","display_name":"Apache Phoenix","object_id":"component:apache-phoenix","route":"#/dossier/c4-box/c4-component:component:apache-phoenix"},{"id":"c4-component:component:apache-ranger","level":"component","display_name":"Apache Ranger","object_id":"component:apache-ranger","route":"#/dossier/c4-box/c4-component:component:apache-ranger"},{"id":"c4-component:component:apache-solr","level":"component","display_name":"Apache Solr","object_id":"component:apache-solr","route":"#/dossier/c4-box/c4-component:component:apache-solr"},{"id":"c4-component:component:apache-spark","level":"component","display_name":"Apache Spark","object_id":"component:apache-spark","route":"#/dossier/c4-box/c4-component:component:apache-spark"},{"id":"c4-component:component:apache-tez","level":"component","display_name":"Apache Tez","object_id":"component:apache-tez","route":"#/dossier/c4-box/c4-component:component:apache-tez"},{"id":"c4-component:component:apache-zeppelin","level":"component","display_name":"Apache Zeppelin","object_id":"component:apache-zeppelin","route":"#/dossier/c4-box/c4-component:component:apache-zeppelin"},{"id":"c4-component:component:apache-zookeeper","level":"component","display_name":"Apache ZooKeeper","object_id":"component:apache-zookeeper","route":"#/dossier/c4-box/c4-component:component:apache-zookeeper"},{"id":"c4-component:component:apache-oozie","level":"component","display_name":"Apache Oozie","object_id":"component:apache-oozie","route":"#/dossier/c4-box/c4-component:component:apache-oozie"},{"id":"c4-component:component:apache-sqoop","level":"component","display_name":"Apache Sqoop","object_id":"component:apache-sqoop","route":"#/dossier/c4-box/c4-component:component:apache-sqoop"}]}};
+window.__originalFetch = window.fetch;
+window.fetch = async function(url) {
+  if (url === '/bundle/system-map.json') {
+    return { ok: true, json: async () => __DEMO_MAP };
+  }
+  if (url === '/bundle/manifest.json') {
+    return { ok: true, json: async () => ({ repo_count: __DEMO_MAP.objects.components.length }) };
+  }
+  if (url === '/bundle/captain-handoff.json') {
+    return { ok: false, json: async () => null };
+  }
+  return { ok: false, json: async () => null };
+};
+
+/**
+ * Portolan Atlas viewer — meaning-first UI.
+ *
+ * Primary data source: /bundle/system-map.json (the normalized system map from
+ * docs/captain-atlas/07-portolan-core-product-spec.md Task B).
+ *
+ * Route contract (Feature 9):
+ *   #/overview (default) / #/c4 / #/map / #/components / #/risks / #/surfaces
+ *   #/dossier/<kind>/<id>  — object dossier
+ *   #/detail/<kind>/<id>   — bounded relationship/finding detail
+ *
+ * DOM contract: every visible object element sets data-portolan-id +
+ *   data-portolan-kind; clickable elements set data-portolan-route.
+ */
+'use strict';
+const app = document.getElementById('app');
+const state = { map: null, view: 'overview', selectedId: '', selectedKind: '', c4Level: 'families', c4Family: '', mapShowSurfaces: false, query: '', ready: false, loadError: '', index: { byId: new Map() }, manifest: null, handoff: null };
+const NAV = [ {view:'overview',label:'Overview'},{view:'c4',label:'C4'},{view:'map',label:'Map'},{view:'components',label:'Components'},{view:'risks',label:'Risks'},{view:'surfaces',label:'Surfaces'} ];
+const C4_FAMILY_LABELS = { 'data-systems':'Data systems','compute-processing':'Compute / processing','platform-governance':'Platform / governance','packaging-runtime':'Packaging / runtime','coordination-community':'Coordination / community','integration-services':'Integration / services',unknown:'Unclassified' };
+const LIFECYCLE_LABELS = { active:'Active',external:'External',retired:'Retired / legacy','internal-support':'Internal support',unknown:'Lifecycle unknown' };
+const EVIDENCE_LABELS = { 'source-visible':'Source-visible','metadata-visible':'Metadata-visible','runtime-visible':'Runtime-visible','claim-only':'Claim only',unknown:'Unknown',cannot_verify:'Cannot verify' };
+
+async function fetchJson(p){const r=await fetch(p);if(!r.ok)return null;return r.json();}
+async function loadModel(){const [map,manifest,handoff]=await Promise.all([fetchJson('/bundle/system-map.json'),fetchJson('/bundle/manifest.json'),fetchJson('/bundle/captain-handoff.json')]);return {map,manifest,handoff};}
+function buildIndexes(map){
+  const byId=new Map();
+  if(!map||!map.objects)return {byId};
+  for(const c of map.objects.components||[])byId.set(c.id,{obj:c,kind:'component'});
+  for(const r of map.objects.repositories||[])byId.set(r.id,{obj:r,kind:'repository'});
+  for(const s of map.objects.surfaces||[])byId.set(s.id,{obj:s,kind:'surface'});
+  for(const r of map.objects.relationships||[])byId.set(r.id,{obj:r,kind:'relationship'});
+  for(const f of map.objects.findings||[])byId.set(f.id,{obj:f,kind:'finding'});
+  for(const u of map.objects.unknowns||[])byId.set(u.id,{obj:u,kind:'unknown'});
+  return {byId};
+}
+function parseHash(){
+  const hash=(window.location.hash||'').replace(/^#\/?/,'');
+  const parts=hash.split('/').filter(Boolean);
+  if((parts[0]==='dossier'||parts[0]==='detail')&&parts[1]&&parts[2])return {view:'dossier',mode:parts[0],kind:parts[1],id:parts.slice(2).join('/')};
+  const view=(parts[0]==='search'||NAV.some(n=>n.view===parts[0]))?parts[0]:'overview';
+  if(parts[0]==='c4'&&parts[1]==='context')return {view:'c4',c4Level:'context'};
+  if(parts[0]==='c4'&&parts[1]==='components')return {view:'c4',c4Level:'components',c4Family:parts[2]||''};
+  if(parts[0]==='c4')return {view:'c4',c4Level:'families'};
+  return {view};
+}
+function setHash(fragment){const target=fragment.startsWith('#')?fragment:`#${fragment}`;if(window.location.hash!==target)history.pushState(null,'',target);routeAndRender();}
+function routeFromHash(){const parsed=parseHash();state.view=parsed.view;if(parsed.c4Level)state.c4Level=parsed.c4Level;if(parsed.c4Family!==undefined)state.c4Family=parsed.c4Family||'';if(parsed.kind&&parsed.id){state.selectedKind=parsed.kind;state.selectedId=parsed.id;}else if(parsed.view!=='dossier'){state.selectedId='';state.selectedKind='';}}
+
+function el(tag,attrs,...children){
+  const node=document.createElement(tag);
+  if(attrs){for(const [k,v] of Object.entries(attrs)){if(v==null||v===false)continue;if(k==='class')node.className=v;else node.setAttribute(k,v);}}
+  for(const child of children){if(child==null||child===false)continue;node.appendChild(typeof child==='string'?document.createTextNode(child):child);}
+  return node;
+}
+function text(s){return document.createTextNode(String(s==null?'':s));}
+function routeLink(label,route,opts){
+  const o=opts||{};
+  const href=route.startsWith('#')?route:`#${route}`;
+  const a=el('a',{class:o.class||'route-link',href},text(label));
+  a.setAttribute('data-portolan-route',route);
+  if(o.id)a.setAttribute('data-portolan-id',o.id);
+  if(o.kind)a.setAttribute('data-portolan-kind',o.kind);
+  if(o.clickable===false){a.setAttribute('data-portolan-clickable','false');a.classList.add('is-disabled');a.title=o.reason||'Not clickable';}
+  else a.setAttribute('data-portolan-clickable','true');
+  a.addEventListener('click',(ev)=>{ev.preventDefault();setHash(route);});
+  return a;
+}
+function evidenceDot(st){
+  const map={'source-visible':'dot-source','metadata-visible':'dot-meta','runtime-visible':'dot-runtime','claim-only':'dot-claim',unknown:'dot-gap',cannot_verify:'dot-gap'};
+  const cls=map[st]||'dot-gap';
+  return el('span',{class:`dot ${cls}`,title:EVIDENCE_LABELS[st]||st});
+}
+function lifecycleBadge(lc){const label=LIFECYCLE_LABELS[lc]||'Lifecycle unknown';const cls=lc==='retired'?'badge-retired':lc==='active'?'badge-active':'badge-quiet';return el('span',{class:`badge ${cls}`},text(label));}
+function sectionKicker(label){return el('div',{class:'section-kicker'},text(label.toUpperCase()));}
+function refList(label,ids,kind){
+  if(!ids||ids.length===0)return el('div',{class:'ref-list empty'},sectionKicker(label),el('p',{class:'muted'},text('None recorded.')));
+  const links=ids.map(id=>{const entry=state.index.byId.get(id);const display=entry?entry.obj.display_name||entry.obj.label||id:id;const route=entry&&entry.obj.route?entry.obj.route:`#/detail/${kind||'unknown'}/${id}`;return routeLink(display,route,{id,kind:kind||(entry&&entry.kind)});});
+  return el('div',{class:'ref-list'},sectionKicker(label),el('div',{class:'route-button-grid'},...links));
+}
+
+function renderShell(){app.innerHTML='';app.appendChild(renderTopbar());const main=el('main',{class:'workspace'});app.appendChild(main);return main;}
+function renderTopbar(){
+  const topbar=el('header',{class:'topbar'});
+  const brand=el('div',{class:'brand'},el('span',{class:'brand-mark'},text('Portolan')));
+  const nav=el('nav',{class:'nav','aria-label':'Main navigation'});
+  for(const n of NAV){const cls=state.view===n.view?'nav-item is-active':'nav-item';const a=el('a',{class:cls,href:`#/${n.view}`},text(n.label));a.addEventListener('click',(ev)=>{ev.preventDefault();setHash(`/${n.view}`);});nav.appendChild(a);}
+  const search=el('div',{class:'search'},el('input',{type:'search',class:'search-input',placeholder:'Search components, surfaces, findings…',value:state.query,'aria-label':'Search system map'}));
+  const input=search.querySelector('input');
+  input.addEventListener('input',()=>{state.query=input.value;if(state.view!=='search')setHash('/search');else render();});
+  topbar.appendChild(brand);topbar.appendChild(nav);topbar.appendChild(search);
+  return topbar;
+}
+function render(){
+  if(!state.ready)return renderLoading();
+  if(state.loadError)return renderError(state.loadError);
+  const main=renderShell();
+  if(state.view==='overview')renderOverview(main);
+  else if(state.view==='c4')renderC4(main);
+  else if(state.view==='map')renderMap(main);
+  else if(state.view==='components')renderComponents(main);
+  else if(state.view==='search')renderSearch(main);
+  else if(state.view==='risks')renderRisks(main);
+  else if(state.view==='surfaces')renderSurfaces(main);
+  else if(state.view==='dossier')renderDossier(main);
+  window.scrollTo({top:0});
+}
+function renderLoading(){app.innerHTML='<main class="loading-screen" aria-live="polite"><div class="loading-mark">Portolan</div><p>Building local system map…</p></main>';}
+function renderError(msg){app.innerHTML='';app.appendChild(renderTopbar());app.appendChild(el('main',{class:'workspace'},el('div',{class:'panel error-panel'},el('h2',{},text('Could not load the system map')),el('p',{class:'muted'},text(msg||'The bundle may be incomplete.')))));}
+
+function renderOverview(main){
+  const map=state.map;const target=map.target||{};
+  const comps=(map.objects&&map.objects.components)||[];
+  const rels=(map.objects&&map.objects.relationships)||[];
+  const findings=(map.objects&&map.objects.findings)||[];
+  const unknowns=(map.objects&&map.objects.unknowns)||[];
+  const surfaces=(map.objects&&map.objects.surfaces)||[];
+  const panel=el('section',{class:'panel overview-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text(target.display_name||'Portolan target')));
+  panel.appendChild(el('p',{class:'muted target-root'},text(target.root||'')));
+  const firstScreen=el('div',{class:'hero-grid'});
+  firstScreen.appendChild(metricCard('Target',target.display_name||'—','What Portolan inspected'));
+  firstScreen.appendChild(metricCard('Components',String(comps.length),'Main components'));
+  firstScreen.appendChild(metricCard('Relationships',String(rels.length),'Observed connections'));
+  firstScreen.appendChild(metricCard('Findings',String(findings.length),'Risks and signals'));
+  firstScreen.appendChild(metricCard('Surfaces',String(surfaces.length),'Docs, CI, trackers, packages'));
+  firstScreen.appendChild(metricCard('Unknowns',String(unknowns.length),'Honest gaps'));
+  panel.appendChild(firstScreen);
+  const ranked=[...comps].sort((a,b)=>(b.relationship_ids||[]).length+(b.finding_ids||[]).length-(a.relationship_ids||[]).length-(a.finding_ids||[]).length).slice(0,8);
+  panel.appendChild(sectionKicker('Main components'));
+  const compGrid=el('div',{class:'route-button-grid'});for(const c of ranked)compGrid.appendChild(componentCard(c));panel.appendChild(compGrid);
+  panel.appendChild(sectionKicker('Role of this target'));
+  const integrator=comps.find(c=>c.type==='platform')||comps[0];
+  if(integrator)panel.appendChild(el('p',{class:'prose'},text(`${integrator.display_name} is the integrator/platform that owns the inspected components and surfaces. It sits in the ${C4_FAMILY_LABELS[integrator.c4_family]||integrator.c4_family} family.`)));
+  else panel.appendChild(el('p',{class:'muted'},text('No integrator component was identified in this target.')));
+  panel.appendChild(sectionKicker('Important relationships'));
+  const relList=el('div',{class:'route-button-grid'});for(const r of rels.slice(0,10))relList.appendChild(relationshipChip(r));
+  if(rels.length===0)panel.appendChild(el('p',{class:'muted'},text('No relationships observed.')));else panel.appendChild(relList);
+  panel.appendChild(sectionKicker('What is risky or suspicious'));
+  const riskList=el('div',{class:'route-button-grid'});for(const f of findings.slice(0,8))riskList.appendChild(findingChip(f));
+  if(findings.length===0)panel.appendChild(el('p',{class:'muted'},text('No findings recorded.')));else panel.appendChild(riskList);
+  panel.appendChild(sectionKicker('What is missing or unknown'));
+  const unkList=el('div',{class:'unknown-list'});
+  for(const u of unknowns.slice(0,8))unkList.appendChild(el('div',{class:'unknown-item','data-portolan-id':u.id,'data-portolan-kind':u.unknown ? 'unknown':'unknown'},routeLink(u.summary,u.route||('#/detail/unknown/'+u.id),{id:u.id,kind:'unknown',class:'unknown-summary'})));
+  if(unknowns.length===0)panel.appendChild(el('p',{class:'muted'},text('No unknowns recorded.')));else panel.appendChild(unkList);
+  panel.appendChild(sectionKicker('What to click next'));
+  const nextActions=el('div',{class:'route-button-grid'});
+  nextActions.appendChild(routeLink('Browse all components','/components',{}));
+  nextActions.appendChild(routeLink('Open the C4 lens','/c4',{}));
+  nextActions.appendChild(routeLink('See the component map','/map',{}));
+  nextActions.appendChild(routeLink('Review risks','/risks',{}));
+  nextActions.appendChild(routeLink('Inspect surfaces','/surfaces',{}));
+  panel.appendChild(nextActions);
+  main.appendChild(panel);
+}
+function metricCard(label,value,sub){return el('div',{class:'metric-card'},el('div',{class:'metric-label'},text(label)),el('div',{class:'metric-value'},text(value)),el('div',{class:'metric-sub muted'},text(sub||'')));}
+function componentCard(c){return el('div',{class:'card component-card'},routeLink(c.display_name,c.route,{id:c.id,kind:'component',class:'card-title'}),el('div',{class:'card-meta'},lifecycleBadge(c.lifecycle),el('span',{class:'badge badge-quiet'},text(C4_FAMILY_LABELS[c.c4_family]||c.c4_family)),evidenceDot(c.evidence&&c.evidence.state)),el('p',{class:'card-role muted'},text(c.role||c.type||'')));}
+function relationshipChip(r){const from=state.index.byId.get(r.from_id);const to=state.index.byId.get(r.to_id);const fromLabel=from?from.obj.display_name:r.from_id;const toLabel=to?to.obj.display_name:r.to_id;return el('a',{class:'chip rel-chip',href:`#${r.route}`,'data-portolan-id':r.id,'data-portolan-kind':'relationship','data-portolan-route':r.route,'data-portolan-clickable':'true'},text(`${fromLabel} → ${toLabel} (${r.relationship_type})`));}
+function findingChip(f){return el('a',{class:'chip finding-chip',href:`#${f.route}`,'data-portolan-id':f.id,'data-portolan-kind':'finding','data-portolan-route':f.route,'data-portolan-clickable':'true'},text(`${f.finding_type}${f.severity?' · '+f.severity:''}: ${f.summary}`));}
+
+function renderC4(main){
+  const panel=el('section',{class:'panel c4-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text('C4 lens')));
+  panel.appendChild(el('p',{class:'muted'},text('The same system map viewed as Context, Families, and Components. C4 is a lens, not observed runtime topology.')));
+  const levelNav=el('div',{class:'level-nav'});
+  for(const lv of ['context','families','components']){const cls=state.c4Level===lv?'level-item is-active':'level-item';const a=el('a',{class:cls,href:`#/c4/${lv}`},text(lv.charAt(0).toUpperCase()+lv.slice(1)));a.addEventListener('click',(ev)=>{ev.preventDefault();setHash(`/c4/${lv}`);});levelNav.appendChild(a);}
+  panel.appendChild(levelNav);
+  if(state.c4Level==='context')renderC4Context(panel);
+  else if(state.c4Level==='families')renderC4Families(panel);
+  else renderC4Components(panel);
+  main.appendChild(panel);
+}
+function renderC4Context(panel){
+  const boxes=(state.map.c4&&state.map.c4.context_boxes)||[];
+  panel.appendChild(sectionKicker('Context — target and external systems'));
+  const grid=el('div',{class:'route-button-grid'});
+  for(const b of boxes){const entry=state.index.byId.get(b.object_id);const label=b.display_name||(entry&&entry.obj.display_name)||b.object_id;grid.appendChild(routeLink(label,b.route,{id:b.id,kind:'c4-box',class:'card c4-context-card'}));}
+  panel.appendChild(grid);
+}
+function renderC4Families(panel){
+  const families=(state.map.c4&&state.map.c4.families)||[];
+  panel.appendChild(sectionKicker('Containers / Families — grouped by role'));
+  const grid=el('div',{class:'c4-family-grid'});
+  for(const f of families){
+    const card=el('a',{class:'card c4-family-card',href:`#${f.route}`,'data-portolan-id':f.id,'data-portolan-kind':'c4-family','data-portolan-route':f.route,'data-portolan-clickable':'true'});
+    card.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components/'+f.family);});
+    card.appendChild(el('div',{class:'card-title'},text(f.display_name)));
+    card.appendChild(el('p',{class:'muted'},text(f.purpose||'')));
+    card.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(`${f.component_ids.length} components`)),el('span',{class:'badge badge-quiet'},text(`${f.surface_count} surfaces`)),el('span',{class:'badge badge-quiet'},text(`${f.finding_count} findings`)),el('span',{class:'badge badge-quiet'},text(`${f.unknown_count} unknowns`))));
+    card.appendChild(el('p',{class:'muted card-reason'},text(f.grouping_reason||'')));
+    grid.appendChild(card);
+  }
+  panel.appendChild(grid);
+}
+function renderC4Components(panel){
+  const boxes=(state.map.c4&&state.map.c4.component_boxes)||[];
+  const families=(state.map.c4&&state.map.c4.families)||[];
+  // Family selector pills.
+  const sel=el('div',{class:'family-selector'});
+  const allCls=!state.c4Family?'family-pill is-active':'family-pill';
+  const allA=el('a',{class:allCls,href:'#/c4/components'},text('All families'));
+  allA.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components');});
+  sel.appendChild(allA);
+  for(const f of families){const cls=state.c4Family===f.family?'family-pill is-active':'family-pill';const a=el('a',{class:cls,href:'#/c4/components/'+f.family},text(f.display_name));a.addEventListener('click',(ev)=>{ev.preventDefault();setHash('/c4/components/'+f.family);});sel.appendChild(a);}
+  panel.appendChild(sel);
+  panel.appendChild(sectionKicker(state.c4Family?('Components — '+(C4_FAMILY_LABELS[state.c4Family]||state.c4Family)):'Components — by family'));
+  const byFamily=new Map();
+  for(const b of boxes){const entry=state.index.byId.get(b.object_id);const comp=entry&&entry.obj;const fam=comp?comp.c4_family:'unknown';if(!byFamily.has(fam))byFamily.set(fam,[]);byFamily.get(fam).push(b);}
+  for(const [fam,famBoxes] of byFamily){
+    if(state.c4Family&&fam!==state.c4Family)continue;
+    panel.appendChild(el('h3',{class:'family-heading'},text(C4_FAMILY_LABELS[fam]||fam)));
+    const grid=el('div',{class:'route-button-grid'});
+    for(const b of famBoxes){const entry=state.index.byId.get(b.object_id);const comp=entry&&entry.obj;const label=b.display_name||(entry&&entry.obj.display_name)||b.object_id;const card=el('div',{class:'card c4-component-card-block'},routeLink(label,b.route,{id:b.id,kind:'c4-box',class:'card-title'}));
+      if(comp){const compSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]).filter(sf=>sf.owner_id===comp.id);if(compSurfaces.length>0){card.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(compSurfaces.length+' surfaces'))));}
+        card.appendChild(el('div',{class:'route-button-grid'},...compSurfaces.slice(0,6).map(sf=>routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}))));}
+      grid.appendChild(card);}
+    panel.appendChild(grid);
+  }
+}
+
+function renderMap(main){
+  const panel=el('section',{class:'panel map-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text('Component map')));
+  panel.appendChild(el('p',{class:'muted'},text('Meaningful components and their important relationships. Surfaces are hidden by default — toggle below or use the Surfaces view.')));
+  const toggle=el('button',{class:'map-surface-toggle','data-portolan-clickable':'true'},text(state.mapShowSurfaces?'Hide attached surfaces':'Show attached surfaces'));
+  toggle.addEventListener('click',()=>{state.mapShowSurfaces=!state.mapShowSurfaces;render();});
+  panel.appendChild(toggle);
+  const comps=((state.map.objects&&state.map.objects.components)||[]);
+  const rels=((state.map.objects&&state.map.objects.relationships)||[]);
+  const canvas=el('div',{class:'map-canvas','data-testid':'portolan-map'});
+  const byFamily=new Map();
+  for(const c of comps){if(!byFamily.has(c.c4_family))byFamily.set(c.c4_family,[]);byFamily.get(c.c4_family).push(c);}
+  const familyOrder=['data-systems','compute-processing','platform-governance','packaging-runtime','coordination-community','integration-services','unknown'];
+  const lanes=el('div',{class:'domain-lanes'});
+  for(const fam of familyOrder){
+    const famComps=byFamily.get(fam)||[];if(famComps.length===0)continue;
+    const lane=el('div',{class:'map-lane'});
+    lane.appendChild(el('div',{class:'lane-label'},text(C4_FAMILY_LABELS[fam]||fam)));
+    for(const c of famComps){
+      const node=el('a',{class:'map-node',href:`#${c.route}`,'data-portolan-id':c.id,'data-portolan-kind':'component','data-portolan-route':c.route,'data-portolan-clickable':'true','data-testid':'portolan-map-node'});
+      node.addEventListener('click',(ev)=>{ev.preventDefault();setHash(c.route.replace(/^#/,''));});
+      node.appendChild(evidenceDot(c.evidence&&c.evidence.state));
+      node.appendChild(el('span',{class:'map-node-label'},text(c.display_name)));
+      if(c.lifecycle==='retired')node.classList.add('is-retired');
+      lane.appendChild(node);
+    }
+    lanes.appendChild(lane);
+  }
+  canvas.appendChild(lanes);
+  if(rels.length>0){const edgeList=el('div',{class:'edge-list'});edgeList.appendChild(sectionKicker('Relationships ('+rels.length+')'));for(const r of rels)edgeList.appendChild(relationshipChip(r));canvas.appendChild(edgeList);}
+  if(state.mapShowSurfaces){const surfStrip=el('div',{class:'map-surface-strip'});surfStrip.appendChild(sectionKicker('Attached surfaces (revealed)'));const allSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]);const sg=el('div',{class:'route-button-grid'});for(const sf of allSurfaces.slice(0,40))sg.appendChild(routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}));if(allSurfaces.length===0)surfStrip.appendChild(el('p',{class:'muted'},text('No surfaces.')));else surfStrip.appendChild(sg);panel.appendChild(surfStrip);}
+  panel.appendChild(canvas);
+  main.appendChild(panel);
+}
+
+function renderComponents(main){
+  const panel=el('section',{class:'panel components-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text('Components')));
+  const comps=((state.map.objects&&state.map.objects.components)||[]);
+  const q=(state.query||'').toLowerCase().trim();
+  const filtered=q?comps.filter(c=>(c.display_name||'').toLowerCase().includes(q)||(c.role||'').toLowerCase().includes(q)||(c.why_present||'').toLowerCase().includes(q)):comps;
+  panel.appendChild(el('p',{class:'muted'},text(`${filtered.length} of ${comps.length} components`)));
+  const grid=el('div',{class:'component-grid'});for(const c of filtered)grid.appendChild(componentCard(c));
+  panel.appendChild(grid);main.appendChild(panel);
+}
+
+function renderSearch(main){
+  const q=(state.query||'').toLowerCase().trim();
+  const panel=el('section',{class:'panel search-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text(q?('Results for "'+state.query+'"'):'Search')));
+  if(!q){panel.appendChild(el('p',{class:'muted'},text('Type to search components, repositories, surfaces, findings, and relationships.')));main.appendChild(panel);return;}
+  const o=state.map.objects||{};
+  // Search every object kind per Feature 9.
+  const matches=[];
+  const pushMatches=(arr,label)=>{for(const x of (arr||[])){const blob=JSON.stringify(x).toLowerCase();if(blob.includes(q))matches.push({obj:x,kind:label});}};
+  pushMatches(o.components,'component');
+  pushMatches(o.repositories,'repository');
+  pushMatches(o.surfaces,'surface');
+  pushMatches(o.relationships,'relationship');
+  pushMatches(o.findings,'finding');
+  pushMatches(o.unknowns,'unknown');
+  panel.appendChild(el('p',{class:'muted'},text(matches.length+' match(es) across all object kinds')));
+  // Group by kind.
+  const byKind={};
+  for(const m of matches){(byKind[m.kind]=byKind[m.kind]||[]).push(m);}
+  const kindOrder=['component','repository','surface','relationship','finding','unknown'];
+  for(const k of kindOrder){
+    const items=byKind[k];if(!items||!items.length)continue;
+    panel.appendChild(el('h3',{class:'family-heading'},text(k+' ('+items.length+')')));
+    const grid=el('div',{class:'route-button-grid'});
+    for(const m of items){
+      const obj=m.obj;const label=obj.display_name||obj.label||obj.summary||obj.id;
+      grid.appendChild(routeLink(label,obj.route||('#/detail/'+k+'/'+obj.id),{id:obj.id,kind:k,class:'card search-result-card'}));
+    }
+    panel.appendChild(grid);
+  }
+  if(matches.length===0)panel.appendChild(el('p',{class:'muted'},text('No objects match this query.')));
+  main.appendChild(panel);
+}
+function renderRisks(main){
+  const panel=el('section',{class:'panel risks-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text('Risks and findings')));
+  const findings=((state.map.objects&&state.map.objects.findings)||[]);
+  const comps=((state.map.objects&&state.map.objects.components)||[]);
+  const byComp=new Map();const unattached=[];
+  for(const f of findings){const affected=(f.affected_ids||[]).filter(id=>state.index.byId.has(id));if(affected.length===0){unattached.push(f);continue;}for(const id of affected){if(!byComp.has(id))byComp.set(id,[]);byComp.get(id).push(f);}}
+  for(const c of comps){const compFindings=byComp.get(c.id)||[];if(compFindings.length===0)continue;const group=el('div',{class:'risk-group'});group.appendChild(routeLink(c.display_name,c.route,{id:c.id,kind:'component',class:'risk-group-title'}));for(const f of compFindings)group.appendChild(findingChip(f));panel.appendChild(group);}
+  if(unattached.length>0){panel.appendChild(sectionKicker('Findings not attached to a component'));for(const f of unattached)panel.appendChild(findingChip(f));}
+  if(findings.length===0)panel.appendChild(el('p',{class:'muted'},text('No findings recorded.')));
+  main.appendChild(panel);
+}
+
+function renderSurfaces(main){
+  const panel=el('section',{class:'panel surfaces-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text('Surfaces')));
+  panel.appendChild(el('p',{class:'muted'},text('Documentation, CI, mailing lists, support matrix, package/runtime surfaces. Attached to their owning component, not shown as peer components.')));
+  const surfaces=((state.map.objects&&state.map.objects.surfaces)||[]);
+  const byType=new Map();for(const s of surfaces){if(!byType.has(s.surface_type))byType.set(s.surface_type,[]);byType.get(s.surface_type).push(s);}
+  const typeOrder=['docs','release-matrix','wiki','issue-tracker','mailing-list','ci','binary-repo','docker-image','runtime-endpoint','vendor-config','other'];
+  for(const t of typeOrder){const typeSurfaces=byType.get(t)||[];if(typeSurfaces.length===0)continue;panel.appendChild(el('h3',{class:'family-heading'},text(t)));const grid=el('div',{class:'surface-grid'});
+    for(const s of typeSurfaces){const owner=state.index.byId.get(s.owner_id);const ownerLabel=owner?owner.obj.display_name:s.owner_id;
+      const card=el('a',{class:'card surface-card',href:`#${s.route}`,'data-portolan-id':s.id,'data-portolan-kind':'surface','data-portolan-route':s.route,'data-portolan-clickable':'true'});
+      card.addEventListener('click',(ev)=>{ev.preventDefault();setHash(s.route.replace(/^#/,''));});
+      card.appendChild(el('div',{class:'card-title'},text(s.label)));
+      card.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(`owner: ${ownerLabel}`)),el('span',{class:`badge badge-${s.state==='available'?'active':'quiet'}`},text(s.state)),evidenceDot(s.evidence&&s.evidence.state)));
+      card.appendChild(el('p',{class:'muted card-reason'},text(s.why_it_matters||'')));
+      grid.appendChild(card);}
+    panel.appendChild(grid);}
+  if(surfaces.length===0)panel.appendChild(el('p',{class:'muted'},text('No surfaces recorded.')));
+  main.appendChild(panel);
+}
+
+function findById(id){if(state.index.byId.has(id))return state.index.byId.get(id);const candidates=[`component:${id}`,id.replace(/^component:/,"")];for(const c of candidates){if(state.index.byId.has(c))return state.index.byId.get(c);}return undefined;}
+function renderDossier(main){
+  const id=state.selectedId;const kind=state.selectedKind;
+  if(kind==='c4-family'){const fam=((state.map.c4&&state.map.c4.families)||[]).find(f=>f.id===id||f.id===`c4-family:${id}`);if(fam){renderFamilyDossier(main,fam);return;}}
+  const entry=findById(id);
+  if(!entry){main.appendChild(el('div',{class:'panel'},el('h2',{},text('Object not found')),el('p',{class:'muted'},text(`No object with id "${id}" (${kind}).`)),routeLink('Back to overview','/overview',{})));return;}
+  if(entry.kind==='component')renderComponentDossier(main,entry.obj);
+  else if(entry.kind==='repository')renderRepositoryDossier(main,entry.obj);
+  else if(entry.kind==='surface')renderSurfaceDossier(main,entry.obj);
+  else renderBoundedDetail(main,entry.obj,entry.kind);
+}
+function renderComponentDossier(main,c){
+  const panel=el('section',{class:'panel dossier-panel','data-portolan-id':c.id,'data-portolan-kind':'component'});
+  panel.appendChild(dossierHeader(c.display_name));
+  panel.appendChild(el('div',{class:'card-meta'},lifecycleBadge(c.lifecycle),el('span',{class:'badge badge-quiet'},text(`type: ${c.type}`)),el('span',{class:'badge badge-quiet'},text(`C4: ${C4_FAMILY_LABELS[c.c4_family]||c.c4_family}`)),evidenceDot(c.evidence&&c.evidence.state)));
+  panel.appendChild(dossierSection('What this is',c.role||c.type||'Not recorded. The adapter did not capture a concrete role for this component.'));
+  panel.appendChild(dossierSection('Why it is present',c.why_present||'—'));
+  if(c.lifecycle==='retired')panel.appendChild(dossierSection('Lifecycle','Retired or legacy. Retained because the corpus/BOM includes it or because it is useful for replacement and migration analysis.'));
+  panel.appendChild(dossierSection('Where it sits in C4',`Primary family: ${C4_FAMILY_LABELS[c.c4_family]||c.c4_family}.`+(c.secondary_c4_families&&c.secondary_c4_families.length?` Secondary: ${(c.secondary_c4_families||[]).map(f=>C4_FAMILY_LABELS[f]||f).join(', ')}.`:'')));
+  panel.appendChild(refList('Links and local paths',c.repository_ids,'repository'));
+  panel.appendChild(refList('Backing repositories',c.repository_ids,'repository'));
+  panel.appendChild(refList('Attached surfaces',c.surface_ids,'surface'));
+  panel.appendChild(refList('Relationships',c.relationship_ids,'relationship'));
+  panel.appendChild(refList('Findings and risks',c.finding_ids,'finding'));
+  panel.appendChild(refList('Unknowns and not-assessed areas',c.unknown_ids,'unknown'));
+  if((c.relationship_ids||[]).length===0)panel.appendChild(el('p',{class:'muted'},text('This component has no recorded relationships. That may be expected for an isolated component, or suspicious for a platform/integrator.')));
+  panel.appendChild(nextActionsSection(c.next_actions));
+  panel.appendChild(producerSection(c.evidence,c.created_by_producer_family));
+  main.appendChild(panel);
+}
+function renderRepositoryDossier(main,r){
+  const panel=el('section',{class:'panel dossier-panel','data-portolan-id':r.id,'data-portolan-kind':'repository'});
+  panel.appendChild(dossierHeader(r.display_name));
+  panel.appendChild(dossierSection('What this is',`Source repository with ${r.file_count||0} files.`));
+  panel.appendChild(dossierSection('Local path',r.path||'Path not recorded.'));
+  panel.appendChild(dossierSection('Source visibility',r.source_visibility_state||'not_assessed'));
+  panel.appendChild(dossierSection('Why it is present',r.why_present||'Backing repository discovered under the target root.'));
+  if(r.languages&&r.languages.length)panel.appendChild(dossierSection('Languages',r.languages.join(', ')));
+  panel.appendChild(refList('Components backed',r.component_ids,'component'));
+  panel.appendChild(refList('Top findings',r.top_finding_ids,'finding'));
+  panel.appendChild(refList('Gaps',r.gap_ids,'unknown'));
+  panel.appendChild(nextActionsSection([]));
+  panel.appendChild(producerSection(r.evidence,r.created_by_producer_family));
+  main.appendChild(panel);
+}
+function renderSurfaceDossier(main,s){
+  const owner=state.index.byId.get(s.owner_id);const ownerLabel=owner?owner.obj.display_name:s.owner_id;
+  const panel=el('section',{class:'panel dossier-panel','data-portolan-id':s.id,'data-portolan-kind':'surface'});
+  panel.appendChild(dossierHeader(s.label));
+  panel.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(`type: ${s.surface_type}`)),el('span',{class:'badge badge-quiet'},text(`owner: ${ownerLabel}`)),el('span',{class:`badge badge-${s.state==='available'?'active':'quiet'}`},text(s.state)),evidenceDot(s.evidence&&s.evidence.state)));
+  panel.appendChild(dossierSection('What this is',`${s.surface_type} surface attached to ${ownerLabel}.`));
+  panel.appendChild(dossierSection('Why it is present',s.why_present||'—'));
+  panel.appendChild(dossierSection('Why it matters',s.why_it_matters||'—'));
+  if(s.url||s.path)panel.appendChild(dossierSection('Link or path',s.url||s.path));
+  panel.appendChild(producerSection(s.evidence,s.created_by_producer_family));
+  main.appendChild(panel);
+}
+function renderFamilyDossier(main,f){
+  const panel=el('section',{class:'panel dossier-panel','data-portolan-id':f.id,'data-portolan-kind':'c4-family'});
+  panel.appendChild(dossierHeader(f.display_name));
+  panel.appendChild(dossierSection('Family purpose',f.purpose||'—'));
+  panel.appendChild(dossierSection('Grouping reason',f.grouping_reason||'—'));
+  panel.appendChild(el('div',{class:'card-meta'},el('span',{class:'badge badge-quiet'},text(`${f.component_ids.length} components`)),el('span',{class:'badge badge-quiet'},text(`${f.surface_count} surfaces`)),el('span',{class:'badge badge-quiet'},text(`${f.finding_count} findings`)),el('span',{class:'badge badge-quiet'},text(`${f.unknown_count} unknowns`))));
+  panel.appendChild(refList('Members',f.component_ids,'component'));
+  panel.appendChild(nextActionsSection(f.next_actions));
+  main.appendChild(panel);
+}
+function renderBoundedDetail(main,obj,kind){
+  const panel=el('section',{class:'panel dossier-panel','data-portolan-id':obj.id,'data-portolan-kind':kind});
+  panel.appendChild(dossierHeader(obj.summary||obj.id));
+  if(kind==='relationship'){const from=state.index.byId.get(obj.from_id);const to=state.index.byId.get(obj.to_id);panel.appendChild(dossierSection('Connected components',`${from?from.obj.display_name:obj.from_id} → ${to?to.obj.display_name:obj.to_id} (${obj.relationship_type})`));panel.appendChild(dossierSection('Summary',obj.summary||'—'));panel.appendChild(dossierSection('Direction',obj.direction||'unknown'));
+    if(obj.weight)panel.appendChild(dossierSection('Weight / count',String(obj.weight)));}
+  else if(kind==='finding'){panel.appendChild(dossierSection('Finding type',obj.finding_type||'—'));if(obj.severity)panel.appendChild(dossierSection('Severity',obj.severity));panel.appendChild(dossierSection('Summary',obj.summary||'—'));panel.appendChild(refList('Affected objects',obj.affected_ids,'component'));}
+  else if(kind==='unknown')panel.appendChild(dossierSection('Gap',obj.summary||'—'));
+  panel.appendChild(producerSection(obj.evidence,obj.created_by_producer_family));
+  main.appendChild(panel);
+}
+function dossierHeader(title){const h=el('div',{class:'dossier-header'});h.appendChild(el('h1',{class:'panel-title'},text(title)));h.appendChild(routeLink('← Back','/overview',{class:'back-link'}));return h;}
+function dossierSection(label,body){return el('div',{class:'dossier-section'},sectionKicker(label),el('p',{class:'prose'},text(body)));}
+function nextActionsSection(actions){const sec=el('div',{class:'dossier-section'});sec.appendChild(sectionKicker('Next useful actions'));if(!actions||actions.length===0){sec.appendChild(el('p',{class:'muted'},text('Open related objects above to drill deeper.')));return sec;}const grid=el('div',{class:'route-button-grid'});for(const a of actions)grid.appendChild(routeLink(a.label,a.target.replace(/^#/,''),{}));sec.appendChild(grid);return sec;}
+function producerSection(evidence,producerFamily){const sec=el('div',{class:'dossier-section'});sec.appendChild(sectionKicker('Producer and evidence'));const reason=(evidence&&evidence.reason)?` — ${evidence.reason}`:'';sec.appendChild(el('p',{class:'prose muted'},evidenceDot(evidence&&evidence.state),text(` Evidence: ${EVIDENCE_LABELS[evidence&&evidence.state]||(evidence&&evidence.state)||'unknown'} · Producer: ${producerFamily||(evidence&&evidence.producer)||'unknown'}${reason}`)));return sec;}
+
+async function init(){
+  try{
+    const model=await loadModel();
+    if(!model.map||!model.map.objects)throw new Error('system-map.json is missing or empty. Run a Portolan scan to generate it.');
+    state.map=model.map;state.manifest=model.manifest;state.handoff=model.handoff;state.index=buildIndexes(model.map);state.ready=true;
+  }catch(err){state.loadError=err.message||String(err);state.ready=true;}
+  routeAndRender();
+}
+function routeAndRender(){if(!state.ready){renderLoading();return;}routeFromHash();render();}
+window.addEventListener('hashchange',routeAndRender);
+init();
+
+  </script>
+</body>
+</html>
