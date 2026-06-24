@@ -17,6 +17,7 @@ CLAUDE_DANGEROUS_SKIP_PERMISSIONS=0
 KEEP_TMP=0
 OUT_DIR=""
 PREINSTALLED=0
+REQUIRE_SYSTEM_MAP=0
 PROMPT_MODE="exact"
 FIXTURE=""
 SOURCE_TARGET_ROOT=""
@@ -103,6 +104,7 @@ while [[ $# -gt 0 ]]; do
     --selected-code-line) require_opt_value --selected-code-line "${2:-}"; SELECTED_CODE_LINE="$2"; shift 2 ;;
     --out) require_opt_value --out "${2:-}"; OUT_DIR="$2"; shift 2 ;;
     --keep-tmp) KEEP_TMP=1; shift ;;
+    --require-system-map) REQUIRE_SYSTEM_MAP=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -490,6 +492,18 @@ validate_bundle() {
   [[ "$receipt_target_mutation" == "false" ]] || fail "$lane receipt records target mutation"
   [[ "$viewer_launch" == *"portolan-viewer.sh"* && "$viewer_launch" == *"--bundle"* ]] ||
     fail "$lane receipt missing viewer handoff argv"
+
+  # System-map gate: when --require-system-map is set, the agent must have
+  # produced a valid normalized system map with no surface peer components.
+  if [[ "$REQUIRE_SYSTEM_MAP" -eq 1 ]]; then
+    [[ -f "$bundle/system-map.json" ]] || fail "$lane did not create system-map.json (--require-system-map)"
+    "$ROOT/scripts/validate-system-map-schema.sh" "$bundle/system-map.json" >/dev/null ||
+      fail "$lane system-map.json failed schema + semantic validation"
+    local leaked
+    leaked=$(jq -r '[.objects.components[] | select(.id | test("support-matrix|mailing-list|bigtop-ci|binary-repo|docker-image"))] | length' "$bundle/system-map.json")
+    [[ "$leaked" == "0" ]] ||
+      fail "$lane system-map leaked $leaked surface-only target(s) as default-map components"
+  fi
 
   status_json=$("$target/.portolan/bin/portolan-scan.sh" --status "$target" "$bundle")
   jq -e '.compatibility == "fresh" and .reusable == true and .local_first.target_source_mutation == false' \

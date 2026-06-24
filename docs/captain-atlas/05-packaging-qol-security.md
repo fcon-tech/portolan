@@ -1,5 +1,9 @@
 # BDD Work Package: Packaging, QoL, And Local-First Safety
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Agent Assignment
 
 Make Portolan reliable enough that an agent can install, run, monitor, resume,

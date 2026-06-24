@@ -1147,6 +1147,7 @@ write_receipt() {
         manifest_path:($bundle + "/manifest.json"),
         receipt_path:$receipt,
         scorecard_path:($bundle + "/captain-atlas-scorecard.json"),
+        system_map_path:($bundle + "/system-map.json"),
         gaps_path:($bundle + "/gaps.jsonl"),
         gap_count:$gap_count
       },

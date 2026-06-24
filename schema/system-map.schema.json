@@ -1,0 +1,810 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/schema/system-map.schema.json",
+  "title": "Portolan System Map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_by",
+    "target",
+    "objects",
+    "c4"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "generated_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target": {
+      "$ref": "#/$defs/target"
+    },
+    "objects": {
+      "$ref": "#/$defs/objects"
+    },
+    "c4": {
+      "$ref": "#/$defs/c4"
+    }
+  },
+  "$defs": {
+    "evidence_state": {
+      "type": "string",
+      "enum": [
+        "source-visible",
+        "metadata-visible",
+        "runtime-visible",
+        "claim-only",
+        "unknown",
+        "cannot_verify"
+      ]
+    },
+    "object_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:/@+\\-]+$"
+    },
+    "route": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^#/(dossier|detail)/[A-Za-z0-9._:@+\\-]+/[A-Za-z0-9._:/@+\\-]+$"
+    },
+    "short_text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "object_ref_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/object_id"
+      }
+    },
+    "producer_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "target"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/short_text"
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "promotion_signal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_type",
+        "source",
+        "producer",
+        "independence_group"
+      ],
+      "properties": {
+        "signal_type": {
+          "type": "string",
+          "enum": [
+            "source-file",
+            "manifest",
+            "repository-metadata",
+            "configuration",
+            "docs-metadata",
+            "dependency-edge",
+            "runtime-evidence",
+            "oss-producer-output"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/short_text"
+        },
+        "producer": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "independence_group": {
+          "$ref": "#/$defs/short_text"
+        },
+        "reason": {
+          "$ref": "#/$defs/short_text"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "source",
+        "producer"
+      ],
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/evidence_state"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "producer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name",
+        "root",
+        "approved_output_area",
+        "approved_instruction_files"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_output_area": {
+          "type": "string",
+          "pattern": "(^|/)\\.portolan/?$"
+        },
+        "approved_instruction_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              ".cursor/rules/portolan-atlas.mdc",
+              "AGENTS.md",
+              "CLAUDE.md"
+            ]
+          }
+        }
+      }
+    },
+    "objects": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "components",
+        "repositories",
+        "surfaces",
+        "relationships",
+        "findings",
+        "unknowns"
+      ],
+      "properties": {
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/component"
+          }
+        },
+        "repositories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/repository"
+          }
+        },
+        "surfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/surface"
+          }
+        },
+        "relationships": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/relationship"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          }
+        },
+        "unknowns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/unknown"
+          }
+        }
+      }
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name",
+        "type",
+        "role",
+        "lifecycle",
+        "repository_ids",
+        "surface_ids",
+        "relationship_ids",
+        "finding_ids",
+        "unknown_ids",
+        "c4_family",
+        "promotion_signals",
+        "created_by_producer_family",
+        "why_present",
+        "next_actions",
+        "evidence",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "application",
+            "library",
+            "platform",
+            "retired",
+            "package",
+            "deployment",
+            "runtime",
+            "external",
+            "unknown"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": [
+            "active",
+            "external",
+            "retired",
+            "internal-support",
+            "unknown"
+          ]
+        },
+        "parent_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "repository_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "surface_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "relationship_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "finding_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "unknown_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "c4_family": {
+          "$ref": "#/$defs/c4_family"
+        },
+        "secondary_c4_families": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/c4_family"
+          }
+        },
+        "promotion_signals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/promotion_signal"
+          }
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "why_present": {
+          "$ref": "#/$defs/short_text"
+        },
+        "next_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/next_action"
+          }
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "display_name",
+        "source_visibility_state",
+        "languages",
+        "file_count",
+        "component_ids",
+        "producer_coverage",
+        "top_finding_ids",
+        "gap_ids",
+        "created_by_producer_family",
+        "why_present",
+        "evidence",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "component_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "source_visibility_state": {
+          "type": "string",
+          "enum": [
+            "source-visible",
+            "metadata-visible",
+            "unknown",
+            "cannot_verify"
+          ]
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/short_text"
+          }
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "producer_coverage": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "failed",
+              "blocked",
+              "not_assessed",
+              "assumed"
+            ]
+          }
+        },
+        "top_finding_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "gap_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "why_present": {
+          "$ref": "#/$defs/short_text"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "surface_type",
+        "label",
+        "owner_id",
+        "state",
+        "created_by_producer_family",
+        "why_present",
+        "evidence",
+        "why_it_matters",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "surface_type": {
+          "type": "string",
+          "enum": [
+            "docs",
+            "wiki",
+            "issue-tracker",
+            "ci",
+            "mailing-list",
+            "release-matrix",
+            "binary-repo",
+            "docker-image",
+            "runtime-endpoint",
+            "vendor-config",
+            "other"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "url": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "available",
+            "missing",
+            "unknown",
+            "not-assessed"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "why_present": {
+          "$ref": "#/$defs/short_text"
+        },
+        "why_it_matters": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "relationship_type",
+        "from_id",
+        "to_id",
+        "created_by_producer_family",
+        "why_present",
+        "evidence",
+        "summary",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "relationship_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "to_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "directed",
+            "undirected",
+            "unknown"
+          ]
+        },
+        "weight": {
+          "type": "number"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "why_present": {
+          "$ref": "#/$defs/short_text"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "finding_type",
+        "affected_ids",
+        "summary",
+        "created_by_producer_family",
+        "why_present",
+        "evidence",
+        "next_action",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "finding_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info",
+            "unknown"
+          ]
+        },
+        "affected_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/object_id"
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "measure": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "weight": {
+              "type": "number"
+            },
+            "sample": {
+              "type": "string"
+            }
+          }
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "why_present": {
+          "$ref": "#/$defs/short_text"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "next_action": {
+          "$ref": "#/$defs/next_action"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "summary",
+        "created_by_producer_family",
+        "evidence",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "owner_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_by_producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    },
+    "c4_family": {
+      "type": "string",
+      "enum": [
+        "data-systems",
+        "compute-processing",
+        "platform-governance",
+        "packaging-runtime",
+        "coordination-community",
+        "integration-services",
+        "unknown"
+      ]
+    },
+    "c4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_boxes",
+        "families",
+        "component_boxes"
+      ],
+      "properties": {
+        "context_boxes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/c4_box"
+          }
+        },
+        "families": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "family",
+              "display_name",
+              "purpose",
+              "grouping_reason",
+              "component_ids",
+              "surface_count",
+              "finding_count",
+              "unknown_count",
+              "next_actions",
+              "route"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/object_id"
+              },
+              "family": {
+                "$ref": "#/$defs/c4_family"
+              },
+              "display_name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "purpose": {
+                "$ref": "#/$defs/short_text"
+              },
+              "grouping_reason": {
+                "$ref": "#/$defs/short_text"
+              },
+              "component_ids": {
+                "$ref": "#/$defs/object_ref_list"
+              },
+              "surface_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "finding_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "unknown_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "next_actions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/next_action"
+                }
+              },
+              "route": {
+                "$ref": "#/$defs/route"
+              }
+            }
+          }
+        },
+        "component_boxes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/c4_box"
+          }
+        }
+      }
+    },
+    "c4_box": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "level",
+        "display_name",
+        "object_id",
+        "route"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "level": {
+          "type": "string",
+          "enum": [
+            "context",
+            "container",
+            "component"
+          ]
+        },
+        "display_name": {
+          "$ref": "#/$defs/short_text"
+        },
+        "object_id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
+    }
+  }
+}
