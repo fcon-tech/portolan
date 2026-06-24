@@ -45,7 +45,7 @@ function mapLifecycle(target) {
   if (['active', 'external', 'retired', 'internal-support', 'unknown'].includes(lc)) {
     return lc;
   }
-  if (lc === 'retired' || lc === 'legacy') return 'retired';
+  if (lc === 'legacy') return 'retired';
   return 'unknown';
 }
 

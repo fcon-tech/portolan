@@ -124,10 +124,12 @@ function assignC4Family(target) {
       return rule.family;
     }
   }
-  // Substring fallback: role contains a family keyword.
+  // Substring fallback: role contains a family keyword as a distinct hyphen-token
+  // (checked via token-split to avoid false positives like 'apiculture' -> 'api').
+  const roleTokens = role.split('-');
   for (const rule of C4_FAMILY_RULES) {
     for (const kw of rule.roles) {
-      if (role.includes(kw)) return rule.family;
+      if (roleTokens.indexOf(kw) !== -1) return rule.family;
     }
   }
   return 'unknown';

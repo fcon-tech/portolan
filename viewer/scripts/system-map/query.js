@@ -15,9 +15,12 @@ const path = require('path');
 const SCHEMA_VERSION = '0.1.0';
 const DEFAULT_LIMIT = 20;
 
+const MAX_LIMIT = 200;
+
 function parseLimit(raw, fallback = DEFAULT_LIMIT) {
   const n = parseInt(raw, 10);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(n, MAX_LIMIT);
 }
 
 function wrapResult(query, records, total, limit, warnings = [], options = {}) {
@@ -44,8 +47,25 @@ const PLURAL_MAP = {
   surface: 'surfaces', surfaces: 'surfaces',
 };
 
+// Explicit singular forms for id-prefix matching (replaces fragile /s$/ regex).
+const KIND_SINGULAR = {
+  components: 'component',
+  repositories: 'repository',
+  relationships: 'relationship',
+  findings: 'finding',
+  unknowns: 'unknown',
+  surfaces: 'surface',
+};
+
+// Fields searched by the text filter (avoid matching raw JSON property names).
+const SEARCH_FIELDS = ['display_name', 'label', 'summary', 'role', 'purpose',
+  'why_present', 'why_it_matters', 'finding_type', 'relationship_type', 'surface_type'];
+
 function querySystemMap(bundlePath, opts = {}) {
-  const limit = parseLimit(opts.limit, 200);
+  if (!bundlePath || typeof bundlePath !== 'string') {
+    throw new Error('querySystemMap: bundlePath must be a non-empty string');
+  }
+  const limit = parseLimit(opts.limit, DEFAULT_LIMIT);
   const section = (opts.section || 'components').toLowerCase();
   const kind = (opts.kind || opts.object_kind || '').toLowerCase();
   const warnings = [];
@@ -87,7 +107,7 @@ function querySystemMap(bundlePath, opts = {}) {
       c4_families: ((map.c4 && map.c4.families) || []).map((f) => ({
         id: f.id,
         display_name: f.display_name,
-        component_count: f.component_ids.length,
+        component_count: (f.component_ids || []).length,
       })),
     }];
   } else if (section === 'c4') {
@@ -102,19 +122,20 @@ function querySystemMap(bundlePath, opts = {}) {
   }
   // Filter by object kind when provided.
   if (kind) {
+    const singular = KIND_SINGULAR[kind] || kind.replace(/s$/, '');
     records = records.filter((r) => {
       const hay = String(
         r.surface_type || r.kind || r.type || r.relationship_type ||
           r.family || r.level || '',
       ).toLowerCase();
-      return hay === kind || String(r.id || '').toLowerCase().startsWith(kind.replace(/s$/, '') + ':');
+      return hay === kind || String(r.id || '').toLowerCase().startsWith(singular + ':');
     });
   }
-  // Optional text filter.
+  // Optional text filter — searches a targeted field allowlist (not raw JSON).
   const q = (opts.q || opts.text || '').toLowerCase();
   if (q) {
     records = records.filter((r) =>
-      JSON.stringify(r).toLowerCase().includes(q),
+      SEARCH_FIELDS.some((f) => String(r[f] || '').toLowerCase().includes(q)),
     );
   }
   // Optional id filter (exact match).
