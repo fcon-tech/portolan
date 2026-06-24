@@ -126,6 +126,73 @@ a:hover { color: var(--primary); }
 }
 
 /* ---- hero / metrics ---- */
+.overview-hero {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  align-items: center;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+.hero-identity { min-width: 0; }
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--lavender);
+  margin-bottom: 6px;
+}
+.hero-title { font-size: 30px; margin: 0 0 4px; }
+.hero-read { font-size: 15px; color: var(--text); max-width: 60ch; margin: 10px 0 14px; line-height: 1.55; }
+.hero-read strong { color: var(--lavender-soft); font-weight: 650; }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.cta-primary, .cta-secondary {
+  display: inline-block;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+.cta-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(107,127,255,0.28);
+}
+.cta-primary:hover { color: #fff; transform: translateY(-1px); box-shadow: 0 8px 26px rgba(107,127,255,0.4); }
+.cta-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+.cta-secondary:hover { background: var(--blue-tint); color: var(--text); }
+.donut-wrap { display: flex; align-items: center; justify-content: center; }
+.family-donut { flex-shrink: 0; }
+.donut-seg { transition: opacity 0.15s; cursor: default; }
+.donut-seg:hover { opacity: 0.82; }
+.donut-count { fill: var(--text); font-size: 30px; font-weight: 700; font-family: var(--font); }
+.donut-label { fill: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font); }
+.family-distribution { margin: 4px 0 8px; }
+.dist-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.dist-seg { transition: opacity 0.15s; }
+.dist-seg:hover { opacity: 0.8; }
+.dist-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.dist-leg-item { display: inline-flex; align-items: center; gap: 6px; }
+.dist-leg-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -226,49 +293,82 @@ a:hover { color: var(--primary); }
 .level-item.is-active { color: var(--text); background: var(--blue-tint); border-color: var(--line-strong); }
 .family-heading { margin: 24px 0 8px; font-size: 15px; color: var(--lavender); text-transform: uppercase; letter-spacing: 0.04em; }
 .c4-context-card, .c4-component-card { font-size: 14px; }
-.c4-family-card { cursor: pointer; }
+.c4-family-card { cursor: pointer; position: relative; padding-left: 18px; }
 .c4-family-card:hover { text-decoration: none; }
-
-/* ---- map ---- */
-.map-panel .map-canvas { margin-top: 16px; }
-.domain-lanes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+.c4-family-marker { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 12px 0 0 12px; }
+.c4-diagram-wrap {
+  background: radial-gradient(ellipse at center, rgba(26,29,58,0.4) 0%, var(--surface-3) 70%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  margin: 10px 0 18px;
+  overflow: hidden;
 }
-.map-lane {
+.c4-container-diagram { width: 100%; height: clamp(300px, 44vh, 520px); display: block; }
+.c4-fam-box { cursor: pointer; transition: opacity 0.15s; }
+.c4-fam-box:hover rect { stroke-width: 3; }
+.c4-box-title { font-size: 13px; font-weight: 650; font-family: var(--font); }
+.c4-box-sub { font-size: 11px; font-family: var(--font); }
+
+/* ---- map: SVG knowledge graph ---- */
+.map-panel .map-canvas.graph-stage { margin-top: 16px; }
+.map-intro { max-width: 78ch; }
+.graph-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 14px 0 4px;
+  padding: 12px 14px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 12px;
-  min-height: 120px;
 }
-.lane-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--lavender);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--line);
+.legend-item { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
 }
-.map-node {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  background: var(--surface);
+.graph-stage {
+  background: radial-gradient(ellipse at center, rgba(26,29,58,0.55) 0%, var(--surface-3) 70%);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 13px;
+  border-radius: 14px;
+  padding: 10px;
+  overflow: hidden;
 }
-.map-node:hover { border-color: var(--line-strong); color: var(--text); }
-.map-node.is-retired { opacity: 0.7; border-style: dashed; }
-.map-node-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.edge-list { margin-top: 24px; }
+.graph-svg {
+  width: 100%;
+  height: clamp(440px, 62vh, 720px);
+  display: block;
+  cursor: default;
+}
+.graph-edge {
+  stroke: rgba(168,181,255,0.22);
+  stroke-width: 1.2;
+  cursor: pointer;
+  transition: stroke 0.15s, stroke-width 0.15s, opacity 0.15s;
+}
+.graph-edge:hover { stroke: var(--lavender); stroke-width: 2; }
+.graph-edge.is-active { stroke: var(--lavender); stroke-width: 2.2; opacity: 1; }
+.graph-edge.is-dim { opacity: 0.07; }
+.graph-node { cursor: pointer; transition: opacity 0.15s; }
+.graph-node.is-dim { opacity: 0.18; }
+.graph-node:hover .node-core { stroke-width: 3; }
+.node-label {
+  fill: var(--text);
+  font-size: 11px;
+  font-family: var(--font);
+  text-anchor: middle;
+  pointer-events: none;
+  font-weight: 500;
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.graph-hint { margin-top: 8px; font-size: 12px; }
 
 /* ---- components list ---- */
 .components-panel .component-grid { margin-top: 12px; }
