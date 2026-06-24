@@ -59,7 +59,8 @@ function validateSystemMap(systemMap) {
 
   // surface owner resolves.
   for (const s of o.surfaces || []) {
-    if (!knownIds.has(s.owner_id)) fail(`surface "${s.id}" owner_id does not resolve: "${s.owner_id}"`);
+    if (!s.owner_id) fail(`surface "${s.id}" has no owner_id`);
+    else if (!knownIds.has(s.owner_id)) fail(`surface "${s.id}" owner_id does not resolve: "${s.owner_id}"`);
   }
 
   // route family (dossier/detail) matches object kind.
@@ -116,8 +117,12 @@ function validateSystemMap(systemMap) {
   const VALID_FAMILIES = new Set(['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown']);
   for (const c of o.components || []) {
     if (!VALID_FAMILIES.has(c.c4_family)) fail(`component "${c.id}" has invalid c4_family: "${c.c4_family}"`);
+    const seenSecondary = new Set();
     for (const sf of c.secondary_c4_families || []) {
+      if (!VALID_FAMILIES.has(sf)) fail(`component "${c.id}" has invalid secondary_c4_family: "${sf}"`);
       if (sf === c.c4_family) fail(`component "${c.id}" secondary_c4_families duplicates primary "${sf}"`);
+      if (seenSecondary.has(sf)) fail(`component "${c.id}" secondary_c4_families has internal duplicate "${sf}"`);
+      seenSecondary.add(sf);
     }
   }
 

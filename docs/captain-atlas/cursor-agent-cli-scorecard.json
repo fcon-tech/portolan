@@ -15,7 +15,13 @@
   "lane_state": "authenticated_completed",
   "run": {
     "command": "cursor-agent --print --output-format stream-json --force --trust --workspace <target-root> \"<first-run prompt: scan the target, then report success/component+surface counts/one risk>\"",
-    "flags_present": ["--print", "--output-format stream-json", "--force", "--trust", "--workspace"],
+    "flags_present": [
+      "--print",
+      "--output-format stream-json",
+      "--force",
+      "--trust",
+      "--workspace"
+    ],
     "duration_ms": 24398,
     "is_error": false,
     "exit_code": 0,
@@ -29,13 +35,14 @@
     "model_or_harness_version": "cursor-agent 2026.06.19-20-24-33-653a7fb; Composer 2.5",
     "target_root": "isolated temp git repo with 2 sub-repos (api-svc go module + web-client node package)",
     "output_location": "<target-root>/.portolan/atlas (produced; receipt.json status: completed)",
-    "questions_cursor_asked": "none — ran non-interactively with --force --trust",
+    "questions_cursor_asked": "none \u2014 ran non-interactively with --force --trust",
     "commands_cursor_ran": "portolan-scan.sh ... --core-only --producers config,ctags (captured in stream-json transcript)",
     "manual_interventions": "none",
-    "target_source_modified": "false — only .portolan/ created; source tree unchanged (git status clean except untracked .portolan/)",
+    "target_source_modified": false,
     "ui_opened_or_handoff": "not_applicable (headless --print run; viewer handoff verified separately by harness-viewer-system-map-smoke.sh)",
-    "first_useful_explanation": "'1. Success: Yes — scan completed with exit code 0 ... 2. Counts: system-map.json has 1 component and 0 surfaces (0 relationships). 3. Risk/unknown: Dependencies were not assessed — no Syft/CycloneDX producer output, so the dependency graph is unknown (unknown:gap-deps).'",
-    "failed_or_weak_steps": "none"
+    "first_useful_explanation": "'1. Success: Yes \u2014 scan completed with exit code 0 ... 2. Counts: system-map.json has 1 component and 0 surfaces (0 relationships). 3. Risk/unknown: Dependencies were not assessed \u2014 no Syft/CycloneDX producer output, so the dependency graph is unknown (unknown:gap-deps).'",
+    "failed_or_weak_steps": "none",
+    "target_source_modified_note": "only .portolan/ created; source tree unchanged (git status clean except untracked .portolan/)"
   },
   "bdd_feature_1_verdicts": {
     "cursor_discovers_portolan": "verified",
