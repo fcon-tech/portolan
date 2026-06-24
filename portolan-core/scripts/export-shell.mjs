@@ -63,6 +63,9 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.mu
 .dossier-section{margin-top:18px}.ref-list{margin-top:18px}.back-link{font-size:13px;color:var(--muted);display:inline-block;margin-top:16px}
 .prose{max-width:68ch}.map-intro{max-width:78ch}
 .is-disabled{opacity:.5;pointer-events:none}
+.triangulation-panel{margin-top:20px}.triangulation-absent{font-style:italic;padding:10px 14px;background:var(--surface-3);border:1px solid var(--line);border-radius:10px}
+.triangulation-summary{color:var(--text);max-width:68ch}.badge-conflict{color:#9a4a2e;border-color:rgba(154,74,46,.4);background:rgba(154,74,46,.08)}
+.triangulation-conflict-card{border-left:3px solid #9a4a2e}
 `;
 
 function main() {
