@@ -16,23 +16,27 @@ const assert = require('node:assert');
 
 const ROOT = path.join(__dirname, '..', '..');
 
+const EXECUTABLE = 'portolan-core/test/unit/bdd-scenarios.test.js';
+
 const bindings = [
   // Feature: Managed intake
-  { feature: 'managed-intake', scenario: 'Admiral names repositories only', binding: { unit: 'portolan-core/test/unit/open-behaviour-map.test.js' } },
-  { feature: 'managed-intake', scenario: 'Admiral names repos, docs, and a ticket source', binding: { unit: 'portolan-core/test/unit/query-atlas.test.js' } },
+  { feature: 'managed-intake', scenario: 'Admiral names repositories only', binding: { unit: EXECUTABLE, test: 'BDD [managed-intake]: Admiral names repositories only' } },
+  { feature: 'managed-intake', scenario: 'Admiral names repos, docs, and a ticket source', binding: { unit: EXECUTABLE, test: 'BDD [managed-intake]: Admiral names repos, docs, and a ticket source' } },
+
+  // Feature: /portolan:map entry
+  { feature: 'behaviour-map', scenario: 'First screen is an annotated overview, not an undifferentiated graph', binding: { unit: EXECUTABLE, test: 'BDD [/portolan:map]: first screen shows annotated overview (not undifferentiated graph)' } },
 
   // Feature: Behaviour map
-  { feature: 'behaviour-map', scenario: 'First screen is an annotated overview, not an undifferentiated graph', binding: { unit: 'portolan-core/test/unit/open-behaviour-map.test.js' } },
-  { feature: 'behaviour-map', scenario: 'The behaviour map shows units and typed edges', binding: { unit: 'portolan-core/test/unit/open-behaviour-map.test.js' } },
+  { feature: 'behaviour-map', scenario: 'The behaviour map shows units and typed edges', binding: { unit: EXECUTABLE, test: 'BDD [behaviour-map]: units and typed edges render; clicking a unit opens dossier' } },
   { feature: 'behaviour-map', scenario: 'Zoom controls detail without losing structure', binding: { unit: 'portolan-core/test/unit/graph-layout.test.js' } },
 
   // Feature: Region drill-down
-  { feature: 'region-drill-down', scenario: 'Drilling into a family cluster shows its statistical profile', binding: { unit: 'portolan-core/test/unit/drill-to-region.test.js' } },
-  { feature: 'region-drill-down', scenario: 'A single-unit region is valid', binding: { unit: 'portolan-core/test/unit/drill-to-region.test.js' } },
+  { feature: 'region-drill-down', scenario: 'Drilling into a family cluster shows its statistical profile', binding: { unit: EXECUTABLE, test: 'BDD [region-drill-down]: drilling into a cluster shows a statistical profile' } },
+  { feature: 'region-drill-down', scenario: 'A single-unit region is valid', binding: { unit: EXECUTABLE, test: 'BDD [region-drill-down]: single-unit region is valid (edge_density 0)' } },
 
   // Feature: Honest absence
-  { feature: 'honest-absence', scenario: 'Behaviour-only atlas when no intentions/representations ingested', binding: { unit: 'portolan-core/test/unit/query-atlas.test.js' } },
-  { feature: 'honest-absence', scenario: 'Container level honest-empty without runtime evidence', binding: { unit: 'portolan-core/test/unit/confidence.test.js' } },
+  { feature: 'honest-absence', scenario: 'Behaviour-only atlas when no intentions/representations ingested', binding: { unit: EXECUTABLE, test: 'BDD [honest-absence]: behaviour-only atlas when no intentions/representations ingested' } },
+  { feature: 'honest-absence', scenario: 'Container level honest-empty without runtime evidence', binding: { unit: EXECUTABLE, test: 'BDD [honest-absence]: confidence is target-state (not in 0.1.0 schema) but the contract is defined' } },
 ];
 
 // --- self-verification tests (run by node --test) ---
