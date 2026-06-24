@@ -37,7 +37,7 @@ function parseHash(){
   const hash=(window.location.hash||'').replace(/^#\/?/,'');
   const parts=hash.split('/').filter(Boolean);
   if((parts[0]==='dossier'||parts[0]==='detail')&&parts[1]&&parts[2])return {view:'dossier',mode:parts[0],kind:parts[1],id:parts.slice(2).join('/')};
-  const view=NAV.some(n=>n.view===parts[0])?parts[0]:'overview';
+  const view=(parts[0]==='search'||NAV.some(n=>n.view===parts[0]))?parts[0]:'overview';
   if(parts[0]==='c4'&&parts[1]==='context')return {view:'c4',c4Level:'context'};
   if(parts[0]==='c4'&&parts[1]==='components')return {view:'c4',c4Level:'components',c4Family:parts[2]||''};
   if(parts[0]==='c4')return {view:'c4',c4Level:'families'};
@@ -86,7 +86,7 @@ function renderTopbar(){
   for(const n of NAV){const cls=state.view===n.view?'nav-item is-active':'nav-item';const a=el('a',{class:cls,href:`#/${n.view}`},text(n.label));a.addEventListener('click',(ev)=>{ev.preventDefault();setHash(`/${n.view}`);});nav.appendChild(a);}
   const search=el('div',{class:'search'},el('input',{type:'search',class:'search-input',placeholder:'Search components, surfaces, findings…',value:state.query,'aria-label':'Search system map'}));
   const input=search.querySelector('input');
-  input.addEventListener('input',()=>{state.query=input.value;if(state.view!=='components')setHash('/components');else render();});
+  input.addEventListener('input',()=>{state.query=input.value;if(state.view!=='search')setHash('/search');else render();});
   topbar.appendChild(brand);topbar.appendChild(nav);topbar.appendChild(search);
   return topbar;
 }
@@ -98,6 +98,7 @@ function render(){
   else if(state.view==='c4')renderC4(main);
   else if(state.view==='map')renderMap(main);
   else if(state.view==='components')renderComponents(main);
+  else if(state.view==='search')renderSearch(main);
   else if(state.view==='risks')renderRisks(main);
   else if(state.view==='surfaces')renderSurfaces(main);
   else if(state.view==='dossier')renderDossier(main);
@@ -245,7 +246,7 @@ function renderMap(main){
     lanes.appendChild(lane);
   }
   canvas.appendChild(lanes);
-  if(rels.length>0){const edgeList=el('div',{class:'edge-list'});edgeList.appendChild(sectionKicker('Relationships'));for(const r of rels.slice(0,40))edgeList.appendChild(relationshipChip(r));canvas.appendChild(edgeList);}
+  if(rels.length>0){const edgeList=el('div',{class:'edge-list'});edgeList.appendChild(sectionKicker('Relationships ('+rels.length+')'));for(const r of rels)edgeList.appendChild(relationshipChip(r));canvas.appendChild(edgeList);}
   if(state.mapShowSurfaces){const surfStrip=el('div',{class:'map-surface-strip'});surfStrip.appendChild(sectionKicker('Attached surfaces (revealed)'));const allSurfaces=((state.map.objects&&state.map.objects.surfaces)||[]);const sg=el('div',{class:'route-button-grid'});for(const sf of allSurfaces.slice(0,40))sg.appendChild(routeLink(sf.label,sf.route,{id:sf.id,kind:'surface',class:'chip surface-chip'}));if(allSurfaces.length===0)surfStrip.appendChild(el('p',{class:'muted'},text('No surfaces.')));else surfStrip.appendChild(sg);panel.appendChild(surfStrip);}
   panel.appendChild(canvas);
   main.appendChild(panel);
@@ -262,6 +263,39 @@ function renderComponents(main){
   panel.appendChild(grid);main.appendChild(panel);
 }
 
+function renderSearch(main){
+  const q=(state.query||'').toLowerCase().trim();
+  const panel=el('section',{class:'panel search-panel'});
+  panel.appendChild(el('h1',{class:'panel-title'},text(q?('Results for "'+state.query+'"'):'Search')));
+  if(!q){panel.appendChild(el('p',{class:'muted'},text('Type to search components, repositories, surfaces, findings, and relationships.')));main.appendChild(panel);return;}
+  const o=state.map.objects||{};
+  // Search every object kind per Feature 9.
+  const matches=[];
+  const pushMatches=(arr,label)=>{for(const x of (arr||[])){const blob=JSON.stringify(x).toLowerCase();if(blob.includes(q))matches.push({obj:x,kind:label});}};
+  pushMatches(o.components,'component');
+  pushMatches(o.repositories,'repository');
+  pushMatches(o.surfaces,'surface');
+  pushMatches(o.relationships,'relationship');
+  pushMatches(o.findings,'finding');
+  pushMatches(o.unknowns,'unknown');
+  panel.appendChild(el('p',{class:'muted'},text(matches.length+' match(es) across all object kinds')));
+  // Group by kind.
+  const byKind={};
+  for(const m of matches){(byKind[m.kind]=byKind[m.kind]||[]).push(m);}
+  const kindOrder=['component','repository','surface','relationship','finding','unknown'];
+  for(const k of kindOrder){
+    const items=byKind[k];if(!items||!items.length)continue;
+    panel.appendChild(el('h3',{class:'family-heading'},text(k+' ('+items.length+')')));
+    const grid=el('div',{class:'route-button-grid'});
+    for(const m of items){
+      const obj=m.obj;const label=obj.display_name||obj.label||obj.summary||obj.id;
+      grid.appendChild(routeLink(label,obj.route||('#/detail/'+k+'/'+obj.id),{id:obj.id,kind:k,class:'card search-result-card'}));
+    }
+    panel.appendChild(grid);
+  }
+  if(matches.length===0)panel.appendChild(el('p',{class:'muted'},text('No objects match this query.')));
+  main.appendChild(panel);
+}
 function renderRisks(main){
   const panel=el('section',{class:'panel risks-panel'});
   panel.appendChild(el('h1',{class:'panel-title'},text('Risks and findings')));
