@@ -5,10 +5,12 @@
   "description": "Local atlas viewer for Portolan landscape bundles",
   "scripts": {
     "build": "node scripts/build-static.js",
-    "serve": "node scripts/serve.js"
+    "serve": "node scripts/serve.js",
+    "test": "node --test"
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.17.0"
   }
 }
