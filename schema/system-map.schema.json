@@ -14,7 +14,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "0.1.0"
+      "enum": ["0.1.0", "0.2.0"]
     },
     "generated_by": {
       "type": "string",
@@ -45,6 +45,63 @@
         "unknown",
         "cannot_verify"
       ]
+    },
+    "confidence_level": {
+      "type": "string",
+      "enum": [
+        "ironclad",
+        "hypothesis-with-facts",
+        "hypothesis",
+        "speculation"
+      ],
+      "description": "Charter 08 Trust Contract. Orthogonal to evidence.state: evidence.state describes the source of an observation; confidence describes the trustworthiness of an assertion. Added in 0.2.0; optional in 0.1.0 artifacts."
+    },
+    "agent_hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "claim",
+        "producer_family",
+        "confidence",
+        "evidence"
+      ],
+      "description": "Charter 08 agent-producer data path. An agent producer's hypothesis-with-evidence, written into the snapshot. Deterministic producers emit ironclad only; agent producers emit the other three levels.",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/object_id"
+        },
+        "claim": {
+          "$ref": "#/$defs/short_text"
+        },
+        "producer_family": {
+          "$ref": "#/$defs/producer_family"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence_level"
+        },
+        "evidence": {
+          "$ref": "#/$defs/evidence"
+        },
+        "affected_ids": {
+          "$ref": "#/$defs/object_ref_list"
+        },
+        "finding_type": {
+          "type": "string",
+          "enum": [
+            "duplication",
+            "dead-code",
+            "architectural-principle-violation",
+            "stale-documentation",
+            "missing-intention",
+            "triangulation-conflict",
+            "other"
+          ]
+        },
+        "route": {
+          "$ref": "#/$defs/route"
+        }
+      }
     },
     "object_id": {
       "type": "string",
@@ -146,6 +203,10 @@
         },
         "reason": {
           "type": "string"
+        },
+        "confidence": {
+          "$ref": "#/$defs/confidence_level",
+          "description": "Optional in 0.1.0; expected in 0.2.0 when the assertion is agent-produced. Orthogonal to state."
         }
       }
     },
@@ -235,6 +296,13 @@
           "items": {
             "$ref": "#/$defs/unknown"
           }
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/agent_hypothesis"
+          },
+          "description": "Optional in 0.1.0. Agent-producer hypotheses with confidence tags (charter 08 Part-1b)."
         }
       }
     },

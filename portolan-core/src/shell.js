@@ -22,6 +22,8 @@ const { openBehaviourMap } = require('./use-cases/open-behaviour-map');
 const { drillToDossier } = require('./use-cases/drill-to-dossier');
 const { drillToRegion } = require('./use-cases/drill-to-region');
 const { queryAtlas } = require('./use-cases/query-atlas');
+const { triangulate, canTriangulate } = require('./use-cases/triangulate');
+const { getHypotheses } = require('./use-cases/add-hypothesis');
 const { createThemeProvider } = require('./adapters/theme-tokens');
 const { createHashNavigator } = require('./adapters/hash-navigator');
 const { createSvgGraphRenderer } = require('./adapters/svg-graph-renderer');
@@ -53,6 +55,7 @@ function createPortolanShell(opts) {
   const atlas = opts.atlas;
   const theme = createThemeProvider();
   const navigator = createHashNavigator();
+  const triangulationEnabled = false; // overlay off by default; admiral toggles
 
   if (!doc) throw new Error('createPortolanShell requires a document (inject for tests)');
   if (!atlas) throw new Error('createPortolanShell requires a pre-loaded atlas');
@@ -172,7 +175,44 @@ function createPortolanShell(opts) {
     for (const c of ranked) compGrid.appendChild(unitCard(c));
     panel.appendChild(compGrid);
 
+    // Triangulation overlay panel (charter 08 Part-1b)
+    panel.appendChild(renderTriangulationPanel());
+
     main.appendChild(panel);
+  }
+
+  function renderTriangulationPanel() {
+    const wrap = el('div', { class: 'triangulation-panel' });
+    wrap.appendChild(el('div', { class: 'section-kicker' }, text('TRIANGULATION')));
+    if (!canTriangulate(atlas)) {
+      // Honest absence: behaviour-only atlas
+      wrap.appendChild(el('p', { class: 'muted triangulation-absent' },
+        text('No intentions or representations ingested — this is a behaviour-only atlas. Triangulation is unavailable; this is a valid complete result.')));
+      return wrap;
+    }
+    const result = triangulate(atlas);
+    if (result.conflicts.length === 0) {
+      wrap.appendChild(el('p', { class: 'muted' },
+        text(`${getHypotheses(atlas).length} agent hypotheses present; no triangulation conflicts detected. The three truths agree.`)));
+      return wrap;
+    }
+    wrap.appendChild(el('p', { class: 'triangulation-summary' },
+      text(`${result.conflicts.length} triangulation conflict(s) found across ${Object.keys(result.byUnit).length} unit(s). Where intentions/representations disagree with behaviour, the units are highlighted below.`)));
+    const conflictList = el('div', { class: 'route-button-grid' });
+    for (const unitId of Object.keys(result.byUnit)) {
+      const unitConflicts = result.byUnit[unitId];
+      const comp = (atlas.objects.components || []).find(c => c.id === unitId);
+      const label = comp ? (comp.display_name || comp.id) : unitId;
+      const card = el('div', { class: 'card triangulation-conflict-card' });
+      card.appendChild(routeLink(label, comp ? comp.route : '#/overview', { id: unitId, kind: 'component', class: 'card-title' }));
+      card.appendChild(el('span', { class: 'badge badge-conflict' }, text(unitConflicts.length + ' conflict' + (unitConflicts.length === 1 ? '' : 's'))));
+      for (const c of unitConflicts.slice(0, 3)) {
+        card.appendChild(el('p', { class: 'muted card-reason' }, text(c.claim + ' (' + c.confidence + ')')));
+      }
+      conflictList.appendChild(card);
+    }
+    wrap.appendChild(conflictList);
+    return wrap;
   }
 
   function metricCard(label, value, sub) {
