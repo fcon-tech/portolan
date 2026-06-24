@@ -1,10 +1,19 @@
-# BDD Work Package: Atlas App Shell
+# Supporting BDD Work Package: Local UI Shell
+
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
 
 ## Agent Assignment
 
-Design and validate the generated local atlas app. The reference bar is
-Understand Anything style exploration: map first, drill-down everywhere, reports
-close to the graph, and a polished UI.
+Design and validate the generated local Portolan UI. This package is a
+supporting note for product UI work; the controlling scope for the next
+implementation pass is `07-portolan-core-product-spec.md`.
+
+The reference bar is Understand Anything style exploration: polished,
+relationship-aware, drill-down everywhere, with reports close to the objects
+they explain. Do not interpret this as permission to make the first screen an
+undifferentiated graph.
 
 ## Product Question
 
@@ -13,10 +22,10 @@ static report or a list of findings?
 
 ## Scope
 
-- Local app shell generated from an atlas bundle.
+- Local app shell generated from a Portolan bundle and normalized system map.
 - Desktop-first UX.
-- Graph/map, repo/component pages, relationship exploration, risk panels, and
-  report drill-down.
+- Overview, C4, map, repo/component pages, relationship exploration, risk
+  panels, surfaces, and report drill-down.
 - No hosted service requirement.
 
 ## Out Of Scope
@@ -28,10 +37,11 @@ static report or a list of findings?
 
 ## Implementation Slice
 
-- Owned surfaces: atlas app information architecture, required bundle fields,
+- Owned surfaces: local UI information architecture, required bundle fields,
   screenshot checklist, and app acceptance notes.
 - First vertical slice: one bundle-backed overview screen with target identity,
-  repo/component counts, coverage gaps, top risks, and map entry point.
+  repo/component counts, coverage gaps, top risks, and map entry point. The map
+  is an exploration surface, not the whole product.
 - Artifact: screenshot set and checklist result for Bigtop or another large
   local target plus one smaller non-JVM target when available.
 - Verify: cold-reader five-minute test against the generated app; do not count
@@ -42,13 +52,13 @@ static report or a list of findings?
 ## BDD
 
 ```gherkin
-Feature: Captain opens a useful local atlas app
+Feature: Captain opens a useful local Portolan UI
 
 Scenario: First screen orients the captain
-  Given an atlas bundle exists
-  When the captain opens the atlas app
+  Given a Portolan bundle and normalized system map exist
+  When the captain opens the local UI
   Then the first screen shows target name, repo count, component count, coverage, and top risks
-  And the captain can see a graph or map without opening a separate report
+  And the captain can reach a graph or map without opening a separate report
   And the first screen does not require reading documentation to understand where to start
 
 Scenario: Map supports drill-down
@@ -65,13 +75,13 @@ Scenario: Reports are attached to map objects
 
 Scenario: Large graphs remain legible
   Given a target with dozens or hundreds of repos
-  When the atlas app loads
+  When the local UI loads
   Then the app groups, filters, searches, and zooms without collapsing into unreadable clutter
   And the captain can switch between overview, repo cluster, and detail views
 
 Scenario: Weak or missing data is visible but not dominant
   Given some facts are partial or unknown
-  When the captain explores the atlas
+  When the captain explores the local UI
   Then gaps are shown near the affected objects
   And gaps do not drown out the landscape overview
 ```

@@ -1,9 +1,13 @@
 # BDD Work Package: OSS Kill Gates
 
+> Supporting note only. For the next implementation pass,
+> `07-portolan-core-product-spec.md` is the controlling specification. If this
+> file conflicts with `07`, follow `07`.
+
 ## Agent Assignment
 
 Attack Portolan from the market and OSS side. Find where existing tools already
-solve the captain-atlas scenario, and decide whether Portolan should die, wrap,
+solve the Portolan first-run scenario, and decide whether Portolan should die, wrap,
 or build.
 
 ## Product Question
