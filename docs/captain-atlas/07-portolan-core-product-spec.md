@@ -1,5 +1,17 @@
 # Portolan Core Product Specification
 
+> **PARTIALLY SUPERSEDED — read `08-portolan-product-charter.md` first.**
+>
+> This file remains the **frozen contract authority** for the already-implemented
+> `system-map` schema, builder, and viewer surfaces. Its **product concepts**
+> (corpus manifest as mandatory start, C4 as the skeleton, role taxonomy as
+> canonical grouping, "Containers/Families" as one level, retired-as-external
+> context, manual CLI first-run) are **superseded** by
+> `08-portolan-product-charter.md`. See the "Superseded Concepts" table at the
+> end of `08` for the full mapping. Where `07` and `08` conflict on concepts,
+> `08` wins; where `07` defines the implemented contract, `07` holds until a
+> migration task reconciles it with `08`.
+
 ## Reader And Goal
 
 Reader: an implementation agent working from a goal prompt.

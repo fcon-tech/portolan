@@ -2,10 +2,17 @@
 
 This is the active product specification surface for Portolan.
 
-For the next implementation pass, start with
-`07-portolan-core-product-spec.md`. It is the one-file goal specification that
-corrects the graph-first demo drift and defines the required product behavior:
-Cursor first-run, typed entities, C4, dossiers, surfaces, BDD, and testing.
+**Start with `08-portolan-product-charter.md`.** It is the governing product
+charter for Part 1 (the admiral's atlas). It defines product identity, roles
+(admiral, participants, fleet), the discovered ontology, the trust/confidence
+contract, the navigation model (graph + zoom, behaviour map primary,
+triangulation as a layer, C4 as one optional map), UX principles
+(zero-copied-commands install), and the Part 1 / Part 2 boundary.
+
+`07-portolan-core-product-spec.md` is **partially superseded**: it remains the
+frozen contract authority for the already-implemented `system-map` schema,
+builder, and viewer, but its product concepts are superseded by `08`. See the
+"Superseded Concepts" table at the end of `08`.
 
 > **Failed-spike note (Task A).** The previous public graph dashboard (the
 > node-link map where repositories, docs, CI, support matrix, mailing lists,
@@ -15,11 +22,12 @@ Cursor first-run, typed entities, C4, dossiers, surfaces, BDD, and testing.
 > `schema/system-map.schema.json`) is the product direction. Do not continue
 > the graph-first topology by adding another panel or tooltip layer.
 
-The user gives Cursor Composer, Cursor Agent CLI, or another shell-capable
-coding agent a Portolan link plus a target software ecosystem. The agent
-installs Portolan, runs bounded local discovery, produces a structured system
-map and local UI, and explains components, relationships, risks, gaps, and
-drill-down routes.
+The admiral drops a Portolan link to an agent and leans back. The agent
+installs Portolan autonomously, runs managed conversational intake with the
+admiral, and participants in the expedition (deterministic static analyzers +
+agent producers) build a snapshot. `/portolan:map` opens the behaviour map.
+The admiral reads units, typed edges, surfaces, and confidence; drills into
+dossiers; and enables triangulation to see where the three truths disagree.
 
 For automated acceptance, Cursor means the terminal/headless Cursor Agent lane
 (`cursor-agent` or `cursor agent`) using the same instructions a Composer user
@@ -27,11 +35,14 @@ receives. GUI Cursor behavior is useful confirmation, not the primary product
 gate.
 
 These files are designed for parallel agents, but they are not equal sources of
-truth for the next implementation pass. The next goal-agent implementation must
-follow `07-portolan-core-product-spec.md` as the controlling scope.
+truth. Authority is **two-dimensional**: `08` wins on **product concepts**;
+`07` wins on the **frozen 0.1.0 system-map contract** (schema, builder, viewer)
+until a 0.2.0 migration reconciles them. `00`–`06` are supporting notes
+subordinate to both.
 
-If `00-product-contract.md` through `06-oss-kill-gates.md` contradict `07`, use
-`07`. Treat the older package files as supporting notes until they are reconciled.
+If `00-product-contract.md` through `06-oss-kill-gates.md` contradict `08` or
+`07`, use `08`/`07`. Treat the older package files as supporting notes until
+they are reconciled.
 
 ## Work Packages
 
@@ -39,12 +50,13 @@ If `00-product-contract.md` through `06-oss-kill-gates.md` contradict `07`, use
 | --- | --- | --- |
 | `00-product-contract.md` | Orchestrator | Supporting scorecard and claim boundary for the agent first-run result. |
 | `01-cursor-composer-first-run.md` | Harness agent | Supporting Cursor first-run prompt, transcript, and scorecard notes. |
-| `02-atlas-app-shell.md` | Product UI agent | Supporting UI shell notes; `07` wins on overview-first and graph-drift rules. |
+| `02-atlas-app-shell.md` | Product UI agent | Supporting UI shell notes; `08` wins on product concepts, `07` on the frozen contract. |
 | `03-landscape-intelligence-producers.md` | Data agent | Supporting fact-family matrix mapped to local producers and bundle fields. |
 | `04-agent-qna-drilldown.md` | Agent UX agent | Supporting bounded query contract for answers and selected-code lookup. |
 | `05-packaging-qol-security.md` | Platform agent | Supporting doctor/dry-run/receipt/status contract for the target-local run. |
 | `06-oss-kill-gates.md` | Competitive agent | Supporting kill / pack / build scorecard for every major capability. |
-| `07-portolan-core-product-spec.md` | Goal agent | One-file implementation spec for rebuilding the product slice around typed entities, C4, dossiers, Cursor first-run, and BDD. |
+| `07-portolan-core-product-spec.md` | Contract agent | Frozen system-map contract (schema, builder, viewer). Product concepts superseded by `08`. |
+| `08-portolan-product-charter.md` | Goal agent | **Governing** product charter for Part 1: identity, roles, ontology, trust, navigation, UX, Part 1/2 boundary. |
 
 ## Package Ownership
 
