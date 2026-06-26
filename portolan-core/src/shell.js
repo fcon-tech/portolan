@@ -1589,10 +1589,12 @@ function createPortolanShell(opts) {
 
     panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('COMPONENT INVESTIGATION')));
     panel.appendChild(el('h1', { class: 'panel-title' }, text(data.displayName)));
-    // Top summary: a concise "what is this and why does it matter?".
+    // Top summary: a concise "what is this and why does it matter?". The source
+    // boundary of the purpose claim is shown once as a badge (not duplicated).
     panel.appendChild(dossierSection('Why this matters', data.purpose.explanation || data.purpose.summary || ''));
-    panel.appendChild(dossierSection('Why this matters (source)', data.purpose.sourceBoundary));
-    panel.appendChild(sourceBoundaryBadge(data.purpose.sourceBoundary));
+    const purposeMeta = el('div', { class: 'card-meta' });
+    purposeMeta.appendChild(sourceBoundaryBadge(data.purpose.sourceBoundary));
+    panel.appendChild(purposeMeta);
 
     // §1 Ecosystem Placement
     panel.appendChild(investigationSection('ECOSYSTEM PLACEMENT', 'ecosystem-placement', () => {

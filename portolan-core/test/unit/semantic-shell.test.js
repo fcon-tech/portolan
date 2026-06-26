@@ -190,3 +190,21 @@ test('an investigation page shows the source-boundary badges (not a single confi
   const boundaries = new Set(attrNodes(root, 'data-portolan-source-boundary').map(n => n.attrs['data-portolan-source-boundary']));
   assert.ok(boundaries.size >= 2, `expected >= 2 distinct source boundaries, got ${[...boundaries]}`);
 });
+
+// captain-atlas 17 hard rule (admiral correction #2): the renderer must PREVENT
+// object-as-text rather than masking it as "[object Object]". The shell's text()
+// helper throws a TypeError on any non-primitive so the bug surfaces (and the
+// browser harness fails) instead of being hidden. Pin this contract so a future
+// refactor that reverts to String(s) is caught at unit-test speed.
+test('text() rejects object values with a TypeError (does not mask [object Object])', () => {
+  const si = loadSemanticInvestigation();
+  // Corrupt one concept's explanation to an object so conceptCard -> text()
+  // hits the guard. The shell must throw rather than render "[object Object]".
+  const solr = si.components.find(c => c.id === 'component:apache-solr');
+  solr.internal_concepts[0].explanation = { leaked: 'object' };
+  assert.throws(
+    () => makeShell(si, SOLR_INV),
+    /non-string/,
+    'text() must throw a TypeError naming non-string, not render [object Object]'
+  );
+});
