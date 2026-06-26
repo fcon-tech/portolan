@@ -170,7 +170,7 @@ function fixtureNavAtlas() {
   };
 }
 
-function renderAt(hash, navAtlas) {
+function renderAt(hash, navAtlas, atlas) {
   const doc = mockDoc();
   const root = mockRoot();
   // The shell's hash-navigator reads window.location.hash. Stub a minimal
@@ -186,8 +186,9 @@ function renderAt(hash, navAtlas) {
   // navAtlas === null means "no nav atlas" (the graceful-absence path); only
   // fall back to the fixture when navAtlas is undefined (the default).
   const effectiveNav = navAtlas === null ? null : (navAtlas || fixtureNavAtlas());
+  const effectiveAtlas = atlas || fixtureAtlas();
   try {
-    const shell = createPortolanShell({ root, atlas: fixtureAtlas(), navAtlas: effectiveNav, document: doc });
+    const shell = createPortolanShell({ root, atlas: effectiveAtlas, navAtlas: effectiveNav, document: doc });
     shell.render();
     shell.destroy();
     return root;
@@ -359,4 +360,184 @@ test('receipt view renders machine status, agent self-status, and disagreements'
   assert.ok(findText(root, 'verified'), 'machine status visible');
   assert.ok(findText(root, 'contaminated'), 'agent self-status visible');
   assert.ok(findText(root, 'STATUS DISAGREEMENTS') || findText(root, 'machine=clean'), 'disagreement visible');
+});
+
+// ===========================================================================
+// captain-atlas 16 — Drill-down decision semantics (BEHAVIOR-level)
+//
+// These tests exercise the actual click→view behavior through the mock DOM,
+// not grep of renderer literals. They prove each primary click lands on a
+// typed detail that answers a decision question, never a generic dossier.
+// ===========================================================================
+
+// A richer atlas WITH relationships, so edge-click behavior can be tested.
+function fixtureAtlasWithRels() {
+  const base = fixtureAtlas();
+  base.objects.components = [
+    { id: 'component:a', display_name: 'A', c4_family: 'unknown', route: '#/dossier/component/a', relationship_ids: ['rel:1'], why_present: 'why a', role: 'role a' },
+    { id: 'component:b', display_name: 'B', c4_family: 'unknown', route: '#/dossier/component/b', relationship_ids: ['rel:1'] },
+  ];
+  base.objects.relationships = [
+    { id: 'rel:1', relationship_type: 'depends-on', from_id: 'component:a', to_id: 'component:b',
+      direction: 'directed', evidence: { state: 'metadata-visible', source: 'manifest', producer: 'corpus-manifest' },
+      created_by_producer_family: 'corpus-manifest', why_present: 'A depends on B.', summary: 'A depends on B (metadata).',
+      route: '#/detail/relationship/rel:1' },
+  ];
+  base.c4 = { context_boxes: [{ id: 'c4-context:.', display_name: 'Target', route: '#/overview' }], families: [], component_boxes: [] };
+  return base;
+}
+
+function renderWith(hash, atlas, navAtlas) {
+  const doc = mockDoc();
+  const root = mockRoot();
+  const origWindow = global.window;
+  global.window = { location: { hash: '#' + hash }, history: { pushState() {} }, addEventListener() {}, removeEventListener() {} };
+  try {
+    const shell = createPortolanShell({ root, atlas: atlas || fixtureAtlasWithRels(), navAtlas: navAtlas === null ? null : (navAtlas || fixtureNavAtlas()), document: doc });
+    shell.render();
+    shell.destroy();
+    return root;
+  } finally {
+    global.window = origWindow;
+  }
+}
+
+// --- BDD #1: Navigation labels are reader-facing ---
+test('drilldown: top nav uses reader-facing labels, not internal jargon', () => {
+  const root = renderAt('/overview');
+  assert.ok(findText(root, 'Overview'), 'Overview label');
+  assert.ok(findText(root, 'System Routes'), 'System Routes label');
+  assert.ok(findText(root, 'Structure Map'), 'Structure Map label');
+  assert.ok(findText(root, 'Mapped Areas'), 'Mapped Areas label');
+  assert.ok(findText(root, 'Hazards'), 'Hazards label');
+  assert.ok(findText(root, 'Next Checks'), 'Next Checks label');
+  assert.ok(findText(root, 'Run Log'), 'Run Log label');
+  assert.ok(findText(root, 'C4'), 'C4 label');
+});
+
+test('drilldown: Fleet is NOT a primary top-nav label', () => {
+  const root = renderAt('/overview');
+  // No nav item whose visible label is exactly "Fleet".
+  const navTexts = [];
+  walk(root, n => { if (n.tagName === 'a' && n.attrs && n.attrs.class && n.attrs.class.includes('nav-item')) navTexts.push(String(n.textContent)); });
+  assert.ok(!navTexts.some(t => t.trim() === 'Fleet'), 'no Fleet primary tab');
+});
+
+test('drilldown: each section renders a one-sentence explanation', () => {
+  const root = renderAt('/routes');
+  assert.ok(findAttr(root, 'data-portolan-section-intro', 'true'), 'routes section intro');
+  const cov = renderAt('/coverage');
+  assert.ok(findAttr(cov, 'data-portolan-section-intro', 'true'), 'coverage section intro');
+  const haz = renderAt('/findings');
+  assert.ok(findAttr(haz, 'data-portolan-section-intro', 'true'), 'hazards section intro');
+  const nc = renderAt('/unknowns');
+  assert.ok(findAttr(nc, 'data-portolan-section-intro', 'true'), 'next-checks section intro');
+});
+
+// --- BDD #2: Relationship clicks explain the edge ---
+test('drilldown: clicking a relationship opens a relationship detail, not a generic dossier', () => {
+  const root = renderWith('/relationship/rel:1');
+  const panel = mainPanel(root);
+  assert.strictEqual(panel.attrs['data-portolan-view'], 'relationship-detail', 'relationship-detail view');
+  assert.strictEqual(panel.attrs['data-portolan-kind'], 'relationship', 'relationship kind');
+  // answers source/target/type/what-it-proves/does-not-prove
+  assert.ok(findText(root, 'depends-on'), 'relationship type visible');
+  assert.ok(findText(root, 'A'), 'source visible');
+  assert.ok(findText(root, 'B'), 'target visible');
+  assert.ok(findText(root, 'WHAT THIS RELATIONSHIP PROVES'), 'proves section');
+  assert.ok(findText(root, 'WHAT IT DOES NOT PROVE'), 'does-not-prove section');
+});
+
+test('drilldown: relationship detail never claims runtime proof', () => {
+  const root = renderWith('/relationship/rel:1');
+  // the does-not-prove copy mentions runtime
+  const allText = allNodes(root).map(n => String(n.textContent || '')).join(' ');
+  assert.match(allText.toLowerCase(), /runtime/);
+});
+
+// --- BDD #3: Route stages drill into evidence ---
+test('drilldown: clicking a route stage opens a focused stage detail', () => {
+  const root = renderWith('/stage/route:self:command-dispatch/1');
+  const panel = mainPanel(root);
+  assert.strictEqual(panel.attrs['data-portolan-view'], 'stage-detail', 'stage-detail view');
+  assert.strictEqual(panel.attrs['data-portolan-kind'], 'stage-detail', 'stage-detail kind');
+  assert.ok(findText(root, 'STAGE DETAIL'), 'stage detail eyebrow');
+  assert.ok(findText(root, 'WHAT THIS STAGE PROVES'), 'proves section');
+  assert.ok(findText(root, 'WHAT IT DOES NOT PROVE'), 'does-not-prove section');
+});
+
+test('drilldown: route diagram nodes are clickable stage targets', () => {
+  const root = renderAt('/route/route:self:command-dispatch');
+  assert.ok(findAttr(root, 'data-portolan-kind', 'stage-target'), 'diagram node is a stage target');
+});
+
+// --- BDD #4: C4 is honest-empty when runtime/deploy evidence is absent ---
+test('drilldown: C4 view shows Context, honest-empty Container, limited Component, out-of-scope Code', () => {
+  const root = renderAt('/c4', undefined, fixtureAtlasWithRels());
+  const panel = mainPanel(root);
+  assert.strictEqual(panel.attrs['data-portolan-view'], 'c4', 'c4 view');
+  assert.ok(findText(root, 'CONTEXT · always present'), 'context level');
+  assert.ok(findAttr(root, 'data-portolan-c4', 'container-honest-empty'), 'container honest-empty marker');
+  assert.ok(findAttr(root, 'data-portolan-c4', 'component-limited'), 'component limited/derived marker');
+  assert.ok(findAttr(root, 'data-portolan-c4', 'code-out-of-scope'), 'code out-of-scope marker');
+});
+
+test('drilldown: C4 Container is not fabricated from repo names or families', () => {
+  // atlas with families but no container_boxes -> container stays empty.
+  const atlas = fixtureAtlasWithRels();
+  atlas.c4.families = [{ id: 'c4-family:data', display_name: 'Data', route: '#/overview' }];
+  const root = renderAt('/c4', undefined, atlas);
+  assert.ok(findAttr(root, 'data-portolan-c4', 'container-honest-empty'), 'container still honest-empty');
+});
+
+// --- BDD #5: Evidence chips open evidence detail ---
+test('drilldown: clicking an evidence chip opens an evidence detail', () => {
+  const root = renderWith('/evidence/ev:1');
+  const panel = mainPanel(root);
+  assert.strictEqual(panel.attrs['data-portolan-view'], 'evidence-detail', 'evidence-detail view');
+  assert.strictEqual(panel.attrs['data-portolan-kind'], 'evidence-detail', 'evidence-detail kind');
+  assert.ok(findText(root, 'WHAT THIS EVIDENCE PROVES'), 'proves section');
+  // source-visible never implies runtime proof
+  assert.ok(findAttr(root, 'data-portolan-truth', 'source-not-runtime'), 'source-not-runtime truth marker');
+});
+
+// --- BDD #6: Run Log separates artifact validation from evidence usability ---
+test('drilldown: Run Log shows three separate evidence-usable axes', () => {
+  const root = renderAt('/receipt');
+  assert.ok(findAttr(root, 'data-portolan-kind', 'evidence-usability'), 'evidence-usability section');
+  assert.ok(findText(root, 'ARTIFACT VALIDATION'), 'artifact axis label');
+  assert.ok(findText(root, 'EVIDENCE USABILITY'), 'evidence axis label');
+  assert.ok(findText(root, 'RUNTIME ASSESSMENT'), 'runtime axis label');
+});
+
+test('drilldown: Run Log flags artifact_validated + weak evidence honestly', () => {
+  // fixture has verified machine_status + only ambiguous/missing anchors -> weak.
+  const root = renderAt('/receipt');
+  // The caveat marker appears when artifact=verified and evidence is weak/none.
+  // The fixture's evidence row is precise, so usability is 'anchored' — caveat
+  // should NOT appear. Verify the caveat only appears under the right condition.
+  const weakNav = fixtureNavAtlas();
+  // force weak evidence: drop the precise anchor.
+  weakNav.navigationIndex.forEach(s => { if (s.anchor_status) { s.anchor_status = 'ambiguous'; s.source_excerpt = null; } });
+  weakNav.evidence.forEach(e => { if (e.anchor_status) { e.anchor_status = 'ambiguous'; e.source_excerpt = null; } });
+  const weakRoot = renderAt('/receipt', weakNav);
+  assert.ok(findAttr(weakRoot, 'data-portolan-truth', 'artifact-not-evidence'), 'caveat shown when artifact verified but evidence weak');
+});
+
+// --- Hard fail guard: no click lands on a generic dossier without explanation ---
+test('drilldown: component node click opens the nav-enriched component dossier, not a bare generic dossier', () => {
+  const root = renderAt('/dossier/component/component:a', undefined, fixtureAtlasWithRels());
+  const panel = mainPanel(root);
+  assert.strictEqual(panel.attrs['data-portolan-view'], 'component-dossier', 'component-dossier view');
+  assert.strictEqual(panel.attrs['data-portolan-kind'], 'component', 'component kind');
+  // The enriched dossier answers route participation + next action.
+  assert.ok(findText(root, 'Next useful action') || findText(root, 'SYSTEM ROUTES'), 'dossier answers decision questions');
+});
+
+test('drilldown: probe detail shows reverse-derived route context when probe lacks direct refs', () => {
+  // A probe row with NO route_refs, but referenced by a stage.
+  const nav = fixtureNavAtlas();
+  nav.unknownProbes = [{ unknown_id: 'unknown:u1', subject_id: 'region:go-cli', blocked_surface: 'build', state: 'blocked', why_unknown: 'x', next_probe: 'y', probe_risk: 'low', requires_permission: ['runtime'], route_refs: [], finding_refs: [], evidence_refs: [] }];
+  const root = renderAt('/probe/unknown:u1', nav);
+  assert.ok(findText(root, 'reverse-derived'), 'reverse-derived context explained');
 });

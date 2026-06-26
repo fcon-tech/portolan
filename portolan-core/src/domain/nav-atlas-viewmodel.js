@@ -18,6 +18,7 @@
 const {
   buildJourneys, buildRouteDiagram, coverageRegions, topProbes, topFindings, handoffQueries,
 } = require('./atlas-reading');
+const { evidenceUsabilityReport } = require('./atlas-evidence-usability');
 
 /**
  * Build the shell view-model from a parsed nav-atlas.
@@ -105,6 +106,10 @@ function buildNavViewModel(navAtlas) {
   const topProbeRows = topProbes(up, 3);
   const topFindingRows = topFindings(fi, 3);
   const handoff = handoffQueries(navAtlas);
+  // Three-axis evidence usability (captain-atlas 16): artifact validation is
+  // NOT evidence depth. Computed once here so the Run Log and route dossiers
+  // share one verdict.
+  const evidenceUsability = evidenceUsabilityReport(navAtlas);
 
   return {
     routesByFamily,
@@ -121,6 +126,8 @@ function buildNavViewModel(navAtlas) {
     topProbes: topProbeRows,
     topFindings: topFindingRows,
     handoff,
+    // drill-down semantics (captain-atlas 16)
+    evidenceUsability,
   };
 }
 

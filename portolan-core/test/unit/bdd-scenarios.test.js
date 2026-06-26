@@ -437,3 +437,127 @@ test('BDD [atlas-reading-experience]: Human review can reject repo-map regressio
   }
 });
 
+// ===========================================================================
+// Feature: Atlas drill-down semantics (captain-atlas 16)
+//
+// These scenarios assert the drill-down decision semantics at the
+// domain/use-case level: relationship detail, stage detail, evidence detail,
+// reverse-derived probe context, C4 honest-empty, and 3-axis evidence
+// usability. The shell-level click behavior is covered by
+// shell-navigation.test.js; here we prove the MODELS answer the decision
+// questions against the real profiles.
+// ===========================================================================
+
+const {
+  relationshipDetail, stageDetail, evidenceDetail, c4Model, deriveReverseRefs,
+} = require('../../src/domain/atlas-detail');
+const { evidenceUsabilityReport } = require('../../src/domain/atlas-evidence-usability');
+
+test('BDD [atlas-drilldown-semantics]: Navigation labels are reader-facing', () => {
+  // The shell tab array is reader-facing by construction (verified in
+  // shell-navigation.test.js). Here we assert the navigation model carries the
+  // reader-facing concepts: journeys (not "repo graph"), route diagrams, and
+  // section copy. The reading model must not expose internal jargon as primary.
+  const nav = readingNavFromProfile(BIGTOP_PROFILE);
+  const journeys = buildJourneys(nav);
+  assert.ok(journeys.length, 'journeys present');
+  // No journey title is a raw JSONL field restatement.
+  for (const j of journeys) {
+    assert.ok(!/^route_family:/.test(j.title), 'title is not an internal field restatement');
+  }
+});
+
+test('BDD [atlas-drilldown-semantics]: Relationship clicks explain the edge', () => {
+  // Build a minimal atlas with one relationship and assert the detail answers
+  // source/target/type/direction/evidence + proves/does-not-prove.
+  const atlas = {
+    objects: {
+      components: [
+        { id: 'component:a', display_name: 'A', c4_family: 'unknown', route: '#/dossier/component/a' },
+        { id: 'component:b', display_name: 'B', c4_family: 'unknown', route: '#/dossier/component/b' },
+      ],
+      relationships: [
+        { id: 'rel:1', relationship_type: 'depends-on', from_id: 'component:a', to_id: 'component:b',
+          direction: 'directed', evidence: { state: 'metadata-visible', source: 'manifest', producer: 'corpus-manifest' },
+          created_by_producer_family: 'corpus-manifest', why_present: 'A depends on B.', summary: 'A depends on B (metadata).' },
+      ],
+    },
+    c4: { context_boxes: [], families: [], component_boxes: [] },
+  };
+  const d = relationshipDetail(atlas, { navigationIndex: [], findings: [], unknownProbes: [], evidence: [] }, 'rel:1');
+  assert.ok(d, 'relationship resolved');
+  assert.strictEqual(d.from.label, 'A');
+  assert.strictEqual(d.to.label, 'B');
+  assert.strictEqual(d.relationshipType, 'depends-on');
+  assert.ok(d.whatItProves.length > 10);
+  assert.match(d.whatItDoesNotProve.toLowerCase(), /runtime/);
+  // absent relationship -> null, never a generic dossier
+  assert.strictEqual(relationshipDetail(atlas, { navigationIndex: [] }, 'rel:nope'), null);
+});
+
+test('BDD [atlas-drilldown-semantics]: Route stages drill into evidence', () => {
+  const nav = readingNavFromProfile(BIGTOP_PROFILE);
+  const firstStage = nav.navigationIndex[0];
+  const routeId = firstStage.route_id;
+  const s = stageDetail(nav, routeId, firstStage.stage_index);
+  assert.ok(s, 'stage resolved');
+  assert.ok(s.role.length > 0, 'role present');
+  assert.ok(s.sourceEvidenceState.length > 0, 'evidence state present');
+  assert.ok(s.whatItProves.length > 5, 'proves present');
+  assert.ok(s.whatItDoesNotProve.length > 5, 'does-not-prove present');
+  // missing/ambiguous anchors are explained in plain language (not hidden)
+  assert.ok(typeof s.anchorExplanation === 'string' || s.anchorExplanation === null, 'anchor explanation is a string or null');
+});
+
+test('BDD [atlas-drilldown-semantics]: Unknown probes keep route context', () => {
+  const nav = readingNavFromProfile(PORTOLAN_SELF_PROFILE);
+  // Pick a probe and strip its route_refs to force reverse-derivation.
+  const probe = nav.unknownProbes[0];
+  const stripped = { ...nav, unknownProbes: nav.unknownProbes.map(p => p.unknown_id === probe.unknown_id ? { ...p, route_refs: [] } : p) };
+  const idx = deriveReverseRefs(stripped);
+  const ctx = idx.get(probe.unknown_id);
+  assert.ok(ctx, 'probe has a reverse-ref entry even without direct route_refs');
+  // The reverse context recovers route linkage from stages referencing the probe.
+  assert.ok(ctx.routes.size > 0 || ctx.stages.length > 0, 'reverse-derived route/stage context present');
+});
+
+test('BDD [atlas-drilldown-semantics]: Evidence anchors state what they prove', () => {
+  const nav = readingNavFromProfile(BIGTOP_PROFILE);
+  // Enrich one evidence row with a precise anchor so detail is resolvable.
+  nav.evidence = nav.evidence.map((e, i) => i === 0 ? { ...e, anchor_status: 'precise', line_start: 1, line_end: 3, source_excerpt: '1 │ x' } : e);
+  const e = evidenceDetail(nav, nav.evidence[0].evidence_id);
+  assert.ok(e, 'evidence resolved');
+  assert.strictEqual(e.anchorStatus, 'precise');
+  assert.ok(e.whatItProves.length > 5);
+  // Source-visible evidence never implies runtime/build/test proof.
+  assert.match(e.whatItDoesNotProve.toLowerCase(), /runtime/);
+});
+
+test('BDD [atlas-drilldown-semantics]: C4 is honest-empty when runtime/deploy evidence is absent', () => {
+  // The Bigtop demo map has no container_boxes -> Container must be honest-empty.
+  const atlas = {
+    objects: { components: [], relationships: [] },
+    c4: { context_boxes: [{ id: 'c4-context:.', display_name: 'Target' }], families: [{ id: 'f', display_name: 'F', component_ids: [] }], component_boxes: [] },
+  };
+  const m = c4Model(atlas);
+  assert.ok(m.context.length >= 1, 'Context always present');
+  assert.strictEqual(m.container.present, false, 'Container honest-empty');
+  assert.ok(m.container.explanation.length > 10, 'honest-empty explanation');
+  assert.strictEqual(m.component.limited, true, 'Component limited/derived');
+  assert.strictEqual(m.code.inScope, false, 'Code out of scope');
+  // Families present but container stays empty — never fabricated from names.
+  assert.strictEqual(m.container.boxes.length, 0);
+});
+
+test('BDD [atlas-drilldown-semantics]: Run Log separates artifact validation from evidence usability', () => {
+  const nav = readingNavFromProfile(BIGTOP_PROFILE);
+  nav.receiptValidation = { machine_status: 'verified' };
+  const r = evidenceUsabilityReport(nav);
+  // The three axes are distinct fields, never collapsed.
+  assert.strictEqual(r.artifactValidation, 'verified');
+  assert.ok(['anchored', 'partial', 'weak', 'none'].includes(r.evidenceUsability));
+  assert.ok(['runtime_verified', 'runtime_partial', 'runtime_not_assessed'].includes(r.runtimeAssessment));
+  // artifact validation != evidence usability: they can differ.
+  assert.ok(r.artifactValidation !== r.evidenceUsability, 'axes are distinct concepts');
+});
+

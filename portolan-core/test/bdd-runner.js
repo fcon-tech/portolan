@@ -54,6 +54,15 @@ const bindings = [
   { feature: 'atlas-reading-experience', scenario: 'Findings and probes guide the next expedition', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Findings and probes guide the next expedition' } },
   { feature: 'atlas-reading-experience', scenario: 'Coverage shows system scale', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Coverage shows system scale' } },
   { feature: 'atlas-reading-experience', scenario: 'Human review can reject repo-map regressions', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Human review can reject repo-map regressions' } },
+
+  // Feature: Atlas drill-down semantics (captain-atlas 16)
+  { feature: 'atlas-drilldown-semantics', scenario: 'Navigation labels are reader-facing', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Navigation labels are reader-facing' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Relationship clicks explain the edge', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Relationship clicks explain the edge' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Route stages drill into evidence', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Route stages drill into evidence' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Unknown probes keep route context', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Unknown probes keep route context' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Evidence anchors state what they prove', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Evidence anchors state what they prove' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'C4 is honest-empty when runtime/deploy evidence is absent', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: C4 is honest-empty when runtime/deploy evidence is absent' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Run Log separates artifact validation from evidence usability', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Run Log separates artifact validation from evidence usability' } },
 ];
 
 // --- self-verification tests (run by node --test) ---

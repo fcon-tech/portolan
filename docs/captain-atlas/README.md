@@ -63,6 +63,7 @@ they are reconciled.
 | `13-atlas-navigation-index.md` | Atlas-index agent | Product-scope candidate from Bigtop plus Portolan-self: generated routes, coverage, findings, unknown probes, evidence, and receipt validation. |
 | `14-atlas-navigation-index-acceptance-review.md` | Review agent | Acceptance and product review of the first Atlas Navigation Index implementation, including verified checks, blocked `/portolan:map`, and known risks. |
 | `15-atlas-reading-experience.md` | Reading-experience agent | UX-first correction: Bigtop must read as a system atlas with journeys, route diagrams, dossiers, evidence snippets, risks, unknowns, and next probes; the repo graph becomes a secondary Fleet map. |
+| `16-atlas-drilldown-decision-semantics.md` | Drill-down agent | Decision-semantics correction: reader-facing navigation labels, meaningful click targets, relationship/probe/evidence details, honest-empty C4, and evidence usability separate from artifact validation. |
 
 ## Package Ownership
 
