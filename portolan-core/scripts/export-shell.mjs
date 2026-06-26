@@ -15,6 +15,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assemble } from './assemble.mjs';
+import { safeInlineJson } from './safe-inline-json.mjs';
+import { readJsonl } from './read-jsonl.mjs';
+import { escapeHtmlText } from './html-escape.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SRC = path.resolve(__dirname, '..', 'src');
@@ -26,9 +29,152 @@ function parseArgs(argv) {
     if (a === '--system-map' && argv[i + 1]) args.systemMap = path.resolve(argv[++i]);
     else if (a === '--out' && argv[i + 1]) args.out = path.resolve(argv[++i]);
     else if (a === '--title' && argv[i + 1]) args.title = argv[++i];
+    else if (a === '--nav-bundle' && argv[i + 1]) args.navBundle = path.resolve(argv[++i]);
+    else if (a === '--target-root' && argv[i + 1]) args.targetRoot = path.resolve(argv[++i]);
     else if (a === '--help' || a === '-h') args.help = true;
   }
   return args;
+}
+
+/**
+ * Load the navigation atlas from a nav-bundle dir, or null if absent.
+ * Returns the parsed artifact set the shell expects.
+ */
+function loadNavAtlas(navBundleDir) {
+  if (!navBundleDir || !fs.existsSync(navBundleDir)) return null;
+  const navAtlas = {
+    navigationIndex: readJsonl(path.join(navBundleDir, 'navigation-index.jsonl')),
+    coverageMatrix: readJsonl(path.join(navBundleDir, 'coverage-matrix.jsonl')),
+    findings: readJsonl(path.join(navBundleDir, 'atlas-findings.jsonl')),
+    unknownProbes: readJsonl(path.join(navBundleDir, 'unknown-probes.jsonl')),
+    evidence: readJsonl(path.join(navBundleDir, 'evidence.jsonl')),
+  };
+  try {
+    navAtlas.receiptValidation = JSON.parse(fs.readFileSync(path.join(navBundleDir, 'receipt-validation.json'), 'utf8'));
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      console.error(`warning: receipt-validation.json is corrupt; nav atlas dropped: ${e.message}`);
+      return null;
+    }
+    navAtlas.receiptValidation = {};
+  }
+  return navAtlas;
+}
+
+/**
+ * Extract source excerpts (captain-atlas 15 §5) into the IN-MEMORY navAtlas only.
+ *
+ * For every navigation-index stage and evidence row with a resolvable target-
+ * relative source_path, read up to 12 lines around the anchor and attach:
+ *   - source_excerpt: a line-numbered string (max 12 lines)
+ *   - anchor_status: 'precise' | 'ambiguous' | 'missing' | 'missing-file'
+ *
+ * This NEVER mutates the on-disk JSONL — the enriched rows live only in the
+ * inlined __NAV_ATLAS. It never fetches remote URLs (only target-relative
+ * paths), never traverses forbidden roots, and never fabricates a precise
+ * anchor: a 0/0 line range with multiple matches is 'ambiguous', not 'precise'.
+ *
+ * Rules (doc 15 §5):
+ *   - max 12 lines per snippet;
+ *   - preserve line numbers;
+ *   - ambiguous anchor -> 'ambiguous', no fake precise lines;
+ *   - missing file -> 'missing-file', stage kept visible.
+ */
+const MAX_SNIPPET_LINES = 12;
+// Roots that must NEVER be read as evidence (boundary control, mirrors the
+// fs-atlas-nav-source adapter).
+const FORBIDDEN_SEGMENTS = new Set(['.portolan', '.git', 'node_modules', 'research', 'output', '.cursor']);
+
+function isForbidden(rel) {
+  if (!rel) return true;
+  const parts = rel.split(/[\\/]/);
+  return parts.some(p => FORBIDDEN_SEGMENTS.has(p));
+}
+
+// Containment check: the resolved absolute path must stay INSIDE targetRoot.
+// Rejects absolute source_path, '..' traversal. NOTE: path.resolve does NOT
+// resolve symlinks, so the caller MUST re-check the realpath after resolving
+// symlinks (a symlink inside target pointing outside would otherwise pass).
+function isInside(targetRoot, absPath) {
+  const root = path.resolve(targetRoot) + path.sep;
+  return (absPath + path.sep).startsWith(root);
+}
+
+function extractSnippets(navAtlas, targetRoot) {
+  if (!navAtlas || !targetRoot) return navAtlas;
+  let readCount = 0;
+  let snippetCount = 0;
+  const enrich = (row) => {
+    if (!row || !row.source_path || row.anchor_status) return; // don't re-resolve
+    if (isForbidden(row.source_path)) { row.anchor_status = 'missing-file'; return; }
+    // Resolve the lexical path first (rejects '..' traversal + absolute paths).
+    // Use path.resolve consistently (NOT path.join) so isInside and the read
+    // agree, and so an absolute source_path cannot replace the root.
+    const root = path.resolve(targetRoot) + path.sep;
+    const abs = path.resolve(targetRoot, row.source_path);
+    if (!(abs + path.sep).startsWith(root)) { row.anchor_status = 'missing-file'; return; }
+    // Re-check against the REAL path (resolves symlinks): a symlink inside the
+    // target that points outside must still be rejected. readFileSync follows
+    // symlinks, so this guard runs first.
+    let real = abs;
+    try {
+      real = fs.realpathSync(abs);
+      if (!isInside(targetRoot, real)) { row.anchor_status = 'missing-file'; return; }
+    } catch {
+      row.anchor_status = 'missing-file';
+      return;
+    }
+    let content;
+    try {
+      content = fs.readFileSync(real, 'utf8');
+    } catch {
+      row.anchor_status = 'missing-file';
+      return;
+    }
+    readCount++;
+    const lines = content.split(/\r\n|\r|\n/);
+    // Resolve the anchor. A precise line range (line_start>0) wins. Otherwise,
+    // if the row carries a source_anchor substring, try to locate it.
+    let start = Number(row.line_start) || 0;
+    let end = Number(row.line_end) || 0;
+    let status;
+    if (start > 0 && end > 0) {
+      status = 'precise';
+    } else {
+      const needle = row.source_anchor || '';
+      if (needle) {
+        const hits = [];
+        for (let i = 0; i < lines.length; i++) if (lines[i].includes(needle)) hits.push(i + 1);
+        if (hits.length === 1) { start = end = hits[0]; status = 'precise'; }
+        else if (hits.length > 1) { status = 'ambiguous'; }
+        else { status = 'missing'; }
+      } else {
+        // No anchor and no line range: existence-only; show the file head as a
+        // pointer, but classify honestly as unresolved (no precise location).
+        status = 'unresolved';
+      }
+    }
+    row.anchor_status = status;
+    if (status === 'precise') {
+      // Center the snippet on the anchor line, bounded to [1, len], max 12 lines.
+      const center = Math.max(1, start);
+      const half = Math.floor(MAX_SNIPPET_LINES / 2);
+      let s = Math.max(1, center - half);
+      let e = Math.min(lines.length, s + MAX_SNIPPET_LINES - 1);
+      s = Math.max(1, e - MAX_SNIPPET_LINES + 1);
+      const out = [];
+      for (let i = s; i <= e; i++) {
+        const ln = String(i).padStart(4, ' ');
+        out.push(ln + ' │ ' + (lines[i - 1] || ''));
+      }
+      row.source_excerpt = out.join('\n');
+      snippetCount++;
+    }
+  };
+  for (const row of (navAtlas.navigationIndex || [])) enrich(row);
+  for (const row of (navAtlas.evidence || [])) enrich(row);
+  console.error(`export-shell: snippet extraction — ${readCount} source file(s) read, ${snippetCount} precise snippet(s) attached (in-memory only; on-disk JSONL untouched)`);
+  return navAtlas;
 }
 
 const BASE_CSS = `
@@ -66,12 +212,71 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.mu
 .triangulation-panel{margin-top:20px}.triangulation-absent{font-style:italic;padding:10px 14px;background:var(--surface-3);border:1px solid var(--line);border-radius:10px}
 .triangulation-summary{color:var(--text);max-width:68ch}.badge-conflict{color:#9a4a2e;border-color:rgba(154,74,46,.4);background:rgba(154,74,46,.08)}
 .triangulation-conflict-card{border-left:3px solid #9a4a2e}
+.nav-route-list{margin-top:8px}.route-family-group{margin-top:18px}
+.route-row{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.route-row .route-row-title{font-weight:600;flex:1 1 320px}
+.route-stage{background:var(--surface-3);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px}
+.route-stage .stage-head{font-weight:600;font-size:13px}.route-stage .stage-meta{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);word-break:break-all}
+.badge-quality-high{color:#1d5e63;border-color:rgba(29,94,99,.4)}.badge-quality-medium{color:#9a4a2e;border-color:rgba(154,74,46,.4)}.badge-quality-low{color:#6f6450;border-color:rgba(111,100,80,.4)}
+.badge-runtime{color:#9a4a2e;border-color:rgba(154,74,46,.4);background:rgba(154,74,46,.06)}
+.receipt-status{padding:10px 14px;border-radius:10px;margin-top:8px}.receipt-status.verified{background:rgba(29,94,99,.08);border:1px solid rgba(29,94,99,.3)}
+.receipt-status.failed{background:rgba(154,74,46,.08);border:1px solid rgba(154,74,46,.3)}.receipt-status.blocked,.receipt-status.not_assessed{background:var(--surface-3);border:1px solid var(--line)}
+.validation-check{font-family:ui-monospace,monospace;font-size:12px;padding:4px 0;display:flex;gap:8px}
+.check-icon-verified{color:#1d5e63}.check-icon-failed{color:#9a4a2e}.check-icon-blocked,.check-icon-not_assessed{color:var(--muted)}
+/* reading experience (captain-atlas 15) — parchment tokens only, no new palette */
+.walkthrough-panel{display:flex;flex-direction:column;gap:6px}
+.walkthrough-summary{max-width:74ch;font-size:16px;margin:8px 0 4px}
+.fleet-affordance{font-size:13px;margin:2px 0 6px}.cta-secondary{display:inline-block;padding:5px 12px;border-radius:8px;background:var(--surface-3);border:1px solid var(--line-strong);color:var(--accent);font-weight:600;font-size:13px}
+.journey-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:8px}
+.journey-card,.risk-card,.probe-card{display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--accent)}
+.journey-card{border-left-color:var(--accent)}.risk-card{border-left-color:#9a4a2e}.probe-card{border-left-color:#6f6450}
+.journey-title{font-size:17px;line-height:1.25}
+.journey-summary{margin:2px 0}.journey-why{font-size:13px;margin:0}
+.journey-facts{margin:6px 0 0;display:flex;flex-direction:column;gap:6px}
+.fact-row{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:13px}
+.fact-term{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.04em;align-self:start;padding-top:1px}
+.fact-detail{margin:0;line-height:1.4}
+.journey-next{display:flex;gap:8px;align-items:flex-start;margin-top:6px;padding:8px 10px;background:var(--surface-3);border:1px solid var(--line);border-radius:8px}
+.journey-next-text{font-size:13px;line-height:1.45}
+.risk-summary,.probe-why{margin:0;font-size:13px}
+.risk-why{margin:0;font-size:12px}
+.probe-perms{margin:4px 0 0;font-size:12px;font-family:ui-monospace,monospace}
+.handoff-section{margin-top:18px;padding:14px 16px;background:var(--surface-3);border:1px solid var(--line);border-radius:12px}
+.handoff-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.handoff-row{display:grid;grid-template-columns:200px 1fr;gap:10px;align-items:center;font-size:12px}
+.handoff-label{color:var(--muted);font-weight:600;font-size:12px}
+.handoff-cmd{font-family:ui-monospace,monospace;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 8px;display:block;white-space:pre-wrap;word-break:break-all;color:var(--text)}
+.route-thesis{font-size:16px;max-width:72ch;margin:8px 0;border-left:3px solid var(--accent);padding-left:12px}
+.route-diagram-wrap{margin-top:14px}
+.route-diagram{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin-top:6px}
+.route-diagram-node{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;min-width:150px;max-width:230px;display:flex;flex-direction:column;gap:4px}
+.route-diagram-node.anchor-precise{border-left:3px solid #1d5e63}
+.route-diagram-node.anchor-ambiguous,.route-diagram-node.anchor-missing,.route-diagram-node.anchor-missing-file,.route-diagram-node.anchor-unresolved{border-left:3px solid #9a4a2e;opacity:.92}
+.route-diagram-arrow{align-self:center;font-size:20px;color:var(--line-strong);font-weight:700}
+.rd-stage{font-weight:650;font-size:13px;line-height:1.25}.rd-role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.rd-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.stage-card{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.stage-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.stage-index{color:var(--muted);font-weight:700}.stage-title{font-weight:650;font-size:14px}.stage-role{font-size:11px}
+.stage-meta{font-family:ui-monospace,monospace;font-size:12px;color:var(--muted);word-break:break-all;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stage-path{background:var(--surface-3);padding:2px 6px;border-radius:5px}
+.stage-anchor{font-family:var(--font);font-style:italic}
+.source-snippet{background:var(--surface-3);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:4px 0 0;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12px;line-height:1.5}
+.snippet-line{display:block}
+.anchor-explanation{font-style:italic;margin:2px 0 0;font-size:13px}
+.anchor-badge-precise{color:#1d5e63;border-color:rgba(29,94,99,.4)}.anchor-badge-ambiguous,.anchor-badge-missing,.anchor-badge-missing-file,.anchor-badge-unresolved{color:#9a4a2e;border-color:rgba(154,74,46,.4)}
+.route-truth{font-style:italic;padding:8px 10px;background:rgba(154,74,46,.06);border:1px solid rgba(154,74,46,.25);border-radius:8px}
+.route-next{margin-top:14px}
+.coverage-scale{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:8px;margin-bottom:8px}
+.coverage-metric{padding:10px 12px}.coverage-region{margin-top:14px}
+.coverage-card .coverage-links{margin:4px 0 0;font-size:11px;font-family:ui-monospace,monospace}
+.nav-item-secondary{margin-left:auto;background:var(--surface-3)}
 `;
 
 function main() {
   const args = parseArgs(process.argv);
   if (args.help || !args.systemMap || !args.out) {
-    console.error('usage: export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."]');
+    console.error('usage: export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."] [--nav-bundle <dir>] [--target-root <dir>]');
     process.exit(args.help ? 0 : 2);
   }
   const map = JSON.parse(fs.readFileSync(args.systemMap, 'utf8'));
@@ -82,23 +287,33 @@ function main() {
 
   // Assemble the clean stack from shell.js entry.
   const bundle = assemble(path.join(SRC, 'shell.js'), { name: '__PORTOLAN' });
-  const mapJson = JSON.stringify(map);
+  let navAtlas = loadNavAtlas(args.navBundle);
+  // Enrich the IN-MEMORY nav-atlas with source snippets + anchor status when a
+  // target root is supplied (captain-atlas 15 §5). The on-disk JSONL is NEVER
+  // mutated — enriched rows live only in the inlined __NAV_ATLAS.
+  if (navAtlas && args.targetRoot) navAtlas = extractSnippets(navAtlas, args.targetRoot);
+  // safeInlineJson escapes U+2028/U+2029 and < so the inlined blobs cannot
+  // break the <script> (applied to BOTH atlas and nav-atlas).
+  const mapJson = safeInlineJson(map);
+  const navJson = navAtlas ? safeInlineJson(navAtlas) : 'null';
+  const navArgLine = navAtlas ? ', navAtlas: __NAV_ATLAS' : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${args.title}</title>
+<title>${escapeHtmlText(args.title)}</title>
 <style>${BASE_CSS}</style>
 </head>
 <body>
 <div id="app"></div>
 <script>
 var __ATLAS = ${mapJson};
+var __NAV_ATLAS = ${navJson};
 ${bundle}
 (function(){
-  var shell = __PORTOLAN.createPortolanShell({ root: document.getElementById('app'), atlas: __ATLAS });
+  var shell = __PORTOLAN.createPortolanShell({ root: document.getElementById('app'), atlas: __ATLAS${navArgLine} });
   // render once; hashchange handled by the navigator inside the shell
   shell.render();
   // if no hash, default to overview
@@ -113,7 +328,8 @@ ${bundle}
   const comps = map.objects.components;
   const rels = map.objects.relationships || [];
   const fams = (map.c4 && map.c4.families) || [];
-  console.error(`exported clean-stack shell → ${args.out} (${comps.length} units, ${rels.length} relationships, ${fams.length} families, ${Buffer.byteLength(html)} bytes)`);
+  const navCount = navAtlas ? `${navAtlas.navigationIndex.length} nav-stages, ${navAtlas.findings.length} findings, ${navAtlas.unknownProbes.length} probes` : 'no nav-atlas';
+  console.error(`exported clean-stack shell → ${args.out} (${comps.length} units, ${rels.length} relationships, ${fams.length} families, ${navCount}, ${Buffer.byteLength(html)} bytes)`);
 }
 
 main();

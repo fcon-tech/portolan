@@ -57,6 +57,12 @@ they are reconciled.
 | `06-oss-kill-gates.md` | Competitive agent | Supporting kill / pack / build scorecard for every major capability. |
 | `07-portolan-core-product-spec.md` | Contract agent | Frozen system-map contract (schema, builder, viewer). Product concepts superseded by `08`. |
 | `08-portolan-product-charter.md` | Goal agent | **Governing** product charter for Part 1: identity, roles, ontology, trust, navigation, UX, Part 1/2 boundary. |
+| `10-agent-frontier-to-spec-roadmap.md` | Product research agent | Governing loop from clean agent frontier runs to shaped artifacts, delta analysis, ranked roadmap, and selected one-day specs. |
+| `11-bigtop-route-index-coverage-matrix.md` | Route-index agent | Validated candidate Bigtop slice: source-anchored component routes, coverage matrix, and validation gates. |
+| `12-source-boundary-ledger.md` | Boundary agent | Research-control spec: machine-readable source boundary ledger and safe inventory for clean frontier runs; not a selected product-scope slice. |
+| `13-atlas-navigation-index.md` | Atlas-index agent | Product-scope candidate from Bigtop plus Portolan-self: generated routes, coverage, findings, unknown probes, evidence, and receipt validation. |
+| `14-atlas-navigation-index-acceptance-review.md` | Review agent | Acceptance and product review of the first Atlas Navigation Index implementation, including verified checks, blocked `/portolan:map`, and known risks. |
+| `15-atlas-reading-experience.md` | Reading-experience agent | UX-first correction: Bigtop must read as a system atlas with journeys, route diagrams, dossiers, evidence snippets, risks, unknowns, and next probes; the repo graph becomes a secondary Fleet map. |
 
 ## Package Ownership
 
