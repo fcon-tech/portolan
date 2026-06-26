@@ -65,7 +65,7 @@
         "local_corpus": ["evidence:solr-bigtop-recipe"],
         "curated_knowledge": ["source:solr-refguide", "source:solr-curated-architecture"],
         "agent_hypotheses": ["risk:solr-deploy-topology", "risk:solr-hdfs-integration"],
-        "not_assessed": ["gap:solr-runtime-topology", "gap:solr-query-benchmarks"]
+        "not_assessed": ["gap:solr-runtime-topology", "gap:solr-query-benchmarks", "gap:solr-recipe-source-anchor"]
       },
       "next_expedition": [
         { "producer": "runtime/deploy probe", "action": "Capture the actual SolrCloud topology (shards/replicas/ZooKeeper ensemble) from a running instance in an approved sandbox.", "why": "Turns the agent-hypothesis deploy-topology risk into local-corpus/runtime evidence.", "closes_gap": "gap:solr-runtime-topology" },
