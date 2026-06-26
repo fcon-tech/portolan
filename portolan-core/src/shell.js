@@ -29,6 +29,19 @@ const { createHashNavigator } = require('./adapters/hash-navigator');
 const { createSvgGraphRenderer } = require('./adapters/svg-graph-renderer');
 const { FAMILY_META } = require('./domain/family-lens');
 const { buildRegionProfile } = require('./domain/region-profile');
+const { buildNavViewModel } = require('./domain/nav-atlas-viewmodel');
+const { stageLabel } = require('./domain/atlas-reading');
+const { openNavigationRoute } = require('./use-cases/open-navigation-route');
+const { openCoverageSubject } = require('./use-cases/open-coverage-subject');
+const { openFinding } = require('./use-cases/open-finding');
+const { openUnknownProbe } = require('./use-cases/open-unknown-probe');
+const { openReceipt } = require('./use-cases/open-receipt');
+// captain-atlas 16 drill-down detail use-cases (bounded panels, not generic dossiers).
+const { openRelationship } = require('./use-cases/open-relationship');
+const { openStage } = require('./use-cases/open-stage');
+const { openEvidence } = require('./use-cases/open-evidence');
+const { openC4 } = require('./use-cases/open-c4');
+const { openComponentDossier } = require('./use-cases/open-component-dossier');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {
@@ -53,12 +66,16 @@ function createPortolanShell(opts) {
   const root = opts.root;
   const doc = opts.document || (typeof document !== 'undefined' ? document : null);
   const atlas = opts.atlas;
+  const navAtlas = opts.navAtlas || null;
   const theme = createThemeProvider();
   const navigator = createHashNavigator();
   const triangulationEnabled = false; // overlay off by default; admiral toggles
 
   if (!doc) throw new Error('createPortolanShell requires a document (inject for tests)');
   if (!atlas) throw new Error('createPortolanShell requires a pre-loaded atlas');
+
+  // Build the navigation view-model once (routes/coverage/findings/probes/receipt).
+  const navVm = navAtlas ? buildNavViewModel(navAtlas) : null;
 
   // ---- DOM helpers (presentation only) ----
   function el(tag, attrs) {
@@ -95,9 +112,16 @@ function createPortolanShell(opts) {
   }
 
   // ---- view dispatch ----
+  // When a nav-atlas is present the FIRST screen is the system walkthrough, not
+  // the graph (captain-atlas 15 §1). The graph is demoted to a secondary "Fleet"
+  // map (§9). `currentView()` maps the bare '/overview' hash to 'walkthrough'
+  // when navVm exists so the default route is the walkthrough.
   function currentView() {
     const frag = navigator.current();
     const head = frag.split('/')[0] || 'overview';
+    if (head === 'overview' && navVm) return 'walkthrough';
+    if (head === 'map') return 'fleet';
+    if (head === 'structure') return 'fleet'; // "Structure Map" tab -> Fleet map view
     return head;
   }
 
@@ -105,12 +129,39 @@ function createPortolanShell(opts) {
     root.innerHTML = '';
     root.appendChild(renderTopbar());
     const main = el('main', { class: 'workspace' });
-    const view = currentView();
-    if (view === 'overview') renderOverview(main);
-    else if (view === 'map') renderMap(main);
-    else if (view === 'dossier') renderDossierView(main);
-    else if (view === 'components') renderComponentsList(main);
-    else renderOverview(main); // fallback
+    const frag = navigator.current();
+    // nav-atlas single-item dossiers: /route/<id>, /coverage/<id>, /finding/<id>,
+    // /probe/<id> (singular). Checked first because they share the prefix with
+    // nothing else and need the full id (which may contain '/'). decode
+    // defensively — a malformed percent-encoding in a hand-edited hash must not
+    // crash render().
+    const decode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
+    if (frag.startsWith('route/')) renderRouteDossier(main, decode(frag.slice('route/'.length)));
+    else if (frag.startsWith('coverage/')) renderCoverageDossier(main, decode(frag.slice('coverage/'.length)));
+    else if (frag.startsWith('finding/')) renderFindingDossier(main, decode(frag.slice('finding/'.length)));
+    else if (frag.startsWith('probe/')) renderUnknownProbeDossier(main, decode(frag.slice('probe/'.length)));
+    // captain-atlas 16 bounded drill-down details (never generic dossiers).
+    else if (frag.startsWith('relationship/')) renderRelationshipDetail(main, decode(frag.slice('relationship/'.length)));
+    else if (frag.startsWith('stage/')) renderStageDetailRoute(main, frag.slice('stage/'.length));
+    else if (frag.startsWith('evidence/')) renderEvidenceDetail(main, decode(frag.slice('evidence/'.length)));
+    else if (frag.startsWith('dossier/component/')) renderComponentDossier(main, decode(frag.slice('dossier/component/'.length)));
+    else {
+      const view = currentView();
+      if (view === 'walkthrough') renderWalkthrough(main);
+      else if (view === 'overview') renderOverview(main);
+      else if (view === 'fleet') renderMap(main);
+      else if (view === 'map') renderMap(main);
+      else if (view === 'dossier') renderDossierView(main);
+      else if (view === 'components') renderComponentsList(main);
+      else if (view === 'routes') renderRoutesView(main);
+      else if (view === 'coverage') renderCoverageView(main);
+      else if (view === 'findings') renderFindingsView(main);
+      else if (view === 'unknowns') renderUnknownsView(main);
+      else if (view === 'receipt') renderReceiptView(main);
+      else if (view === 'c4') renderC4View(main);
+      else if (navVm) renderWalkthrough(main); // fallback to walkthrough when nav exists
+      else renderOverview(main); // fallback
+    }
     root.appendChild(main);
   }
 
@@ -118,14 +169,231 @@ function createPortolanShell(opts) {
     const topbar = el('header', { class: 'topbar' });
     topbar.appendChild(el('div', { class: 'brand' }, el('span', { class: 'brand-mark' }, text('Portolan'))));
     const nav = el('nav', { class: 'nav' });
-    for (const v of ['overview', 'map', 'components']) {
-      const cls = currentView() === v ? 'nav-item is-active' : 'nav-item';
-      const a = el('a', { class: cls, href: `#/${v}` }, text(v.charAt(0).toUpperCase() + v.slice(1)));
-      a.addEventListener('click', (ev) => { ev.preventDefault(); navigator.route('/' + v); });
+    // When a nav-atlas exists, the primary tabs are reading surfaces; the graph
+    // is reframed as a secondary "Fleet" map (§9). It carries a stable marker so
+    // the harness can prove it is not the default.
+    let tabs;
+    if (navVm) {
+      // captain-atlas 16 §Navigation Labels: reader-facing labels, each
+      // understandable without Portolan internals. "Fleet" is NOT a primary
+      // label — the graph is the "Structure Map" (secondary). Maritime flavor
+      // appears only as secondary explanatory copy, never as a tab.
+      tabs = [
+        { id: 'overview', label: 'Overview', view: 'walkthrough' },
+        { id: 'routes', label: 'System Routes', view: 'routes' },
+        { id: 'structure', label: 'Structure Map', view: 'fleet', secondary: true },
+        { id: 'coverage', label: 'Mapped Areas', view: 'coverage' },
+        { id: 'findings', label: 'Hazards', view: 'findings' },
+        { id: 'unknowns', label: 'Next Checks', view: 'unknowns' },
+        { id: 'receipt', label: 'Run Log', view: 'receipt' },
+        { id: 'c4', label: 'C4', view: 'c4' },
+      ];
+    } else {
+      tabs = [
+        { id: 'overview', label: 'Overview', view: 'overview' },
+        { id: 'map', label: 'Map', view: 'map' },
+        { id: 'components', label: 'Components', view: 'components' },
+      ];
+    }
+    for (const t of tabs) {
+      const cls = (currentView() === t.view ? 'nav-item is-active' : 'nav-item') + (t.secondary ? ' nav-item-secondary' : '');
+      const a = el('a', { class: cls, href: `#/${t.id}` }, text(t.label));
+      a.setAttribute('data-portolan-nav', t.view);
+      if (t.secondary) a.setAttribute('data-portolan-secondary', 'fleet');
+      a.addEventListener('click', (ev) => { ev.preventDefault(); navigator.route('/' + t.id); });
       nav.appendChild(a);
     }
     topbar.appendChild(nav);
     return topbar;
+  }
+
+  // ---- Walkthrough: the system-reading first screen (captain-atlas 15 §1) ----
+  // This is what /portolan:map opens to when a nav-atlas is present. It shows
+  // target identity, a "what this system is" paragraph, 3-5 named journeys, the
+  // top risks, the top next probes, a next-expedition section, agent handoff,
+  // and a SECONDARY affordance to open the Fleet map. The graph is never the
+  // default hero here. The panel carries data-portolan-view="walkthrough" so the
+  // harness can prove the default screen is the walkthrough (not grep).
+  function renderWalkthrough(main) {
+    const t = (atlas.target) || {};
+    const panel = el('section', { class: 'panel walkthrough-panel' });
+    panel.setAttribute('data-portolan-view', 'walkthrough');
+
+    panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('PORTOLAN ATLAS · SYSTEM WALKTHROUGH')));
+    panel.appendChild(el('h1', { class: 'panel-title hero-title' }, text(t.display_name || 'Portolan target')));
+    if (t.root) panel.appendChild(el('p', { class: 'muted target-root' }, text(t.root)));
+
+    // "What this system is" — synthesized from the journey catalogue so it
+    // teaches meaning, not component counts.
+    panel.appendChild(el('p', { class: 'hero-read walkthrough-summary' }, text(systemSummary())));
+    panel.appendChild(sectionIntro('What this landscape appears to be and what matters first. Read the journeys to understand the system, then drill into routes, hazards, and next checks for evidence and gaps.'));
+
+    // Fleet affordance is SECONDARY (§9): one quiet link, not the hero.
+    const fleetLine = el('p', { class: 'muted fleet-affordance' });
+    fleetLine.appendChild(text('Need the component/repository graph? '));
+    fleetLine.appendChild(routeLink('Open the Fleet map →', '/map', { class: 'cta-secondary' }));
+    panel.appendChild(fleetLine);
+
+    // Named system journeys (§1, §2).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('SYSTEM JOURNEYS')));
+    const journeyGrid = el('div', { class: 'journey-grid', 'data-portolan-kind': 'journeys' });
+    for (const j of navVm.journeys) journeyGrid.appendChild(journeyCard(j));
+    panel.appendChild(journeyGrid);
+
+    // Top risks (§1, §6) — findings that explain system risk, not a flat list.
+    if (navVm.topFindings.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('TOP RISKS')));
+      const riskGrid = el('div', { class: 'journey-grid' });
+      for (const f of navVm.topFindings) riskGrid.appendChild(riskCard(f));
+      panel.appendChild(riskGrid);
+    }
+
+    // Top 3 next probes (§7) — a plan, not a passive list.
+    if (navVm.topProbes.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('NEXT EXPEDITION · TOP PROBES')));
+      const probeGrid = el('div', { class: 'journey-grid', 'data-portolan-kind': 'top-probes' });
+      for (const p of navVm.topProbes) probeGrid.appendChild(probeCard(p));
+      panel.appendChild(probeGrid);
+    }
+
+    // Agent handoff (§10).
+    panel.appendChild(renderHandoffSection());
+
+    main.appendChild(panel);
+  }
+
+  // One-paragraph "what this system is", derived from the journey catalogue so
+  // it teaches the system, not the unit count. Falls back honestly when sparse.
+  function systemSummary() {
+    const journeys = navVm.journeys || [];
+    if (!journeys.length) {
+      return 'A navigation atlas is present but contains no system journeys yet. Open Coverage to see the mapped fleet.';
+    }
+    const routeJ = journeys.find(j => j.kind === 'route');
+    const conf = journeys.find(j => j.kind === 'confidence_boundary');
+    const cov = journeys.find(j => j.kind === 'fleet_coverage');
+    const parts = [];
+    if (routeJ) {
+      parts.push(routeJ.journeySummary.split(/(?<=\.)\s/)[0]);
+    }
+    if (conf) {
+      parts.push('Portolan can trace the static chain but cannot confirm anything builds, provisions, or runs.');
+    }
+    if (cov) {
+      parts.push(cov.known + '.');
+    }
+    return parts.join(' ') || journeys[0].journeySummary;
+  }
+
+  // A journey card answers the six questions (§2): what / why / involved /
+  // known / not-assessed / next. Teaches meaning; never restates route_family.
+  function journeyCard(j) {
+    const card = el('div', { class: 'card journey-card', 'data-portolan-kind': 'journey', 'data-portolan-id': j.journeyId });
+    const head = el('div', { class: 'journey-head' });
+    if (j.routeId) {
+      head.appendChild(routeLink(j.title, `/route/${encodeURIComponent(j.routeId)}`, { id: j.journeyId, kind: 'journey', class: 'card-title journey-title' }));
+    } else {
+      head.appendChild(el('div', { class: 'card-title journey-title' }, text(j.title)));
+    }
+    const tags = el('div', { class: 'card-meta' });
+    if (j.kind === 'confidence_boundary') tags.appendChild(el('span', { class: 'badge badge-runtime' }, text('confidence boundary')));
+    else if (j.kind === 'fleet_coverage') tags.appendChild(el('span', { class: 'badge badge-quiet' }, text('fleet coverage')));
+    else tags.appendChild(el('span', { class: 'badge badge-quality-medium' }, text('system journey')));
+    head.appendChild(tags);
+    card.appendChild(head);
+
+    card.appendChild(el('p', { class: 'prose journey-summary' }, text(j.journeySummary)));
+    card.appendChild(el('p', { class: 'muted journey-why' }, text('Why it matters: ' + j.whyItMatters)));
+
+    const facts = el('dl', { class: 'journey-facts' });
+    facts.appendChild(factRow('Known', j.known));
+    facts.appendChild(factRow('Not assessed', j.notAssessed));
+    if (j.involvedSubjects && j.involvedSubjects.length) facts.appendChild(factRow('Involved', j.involvedSubjects.slice(0, 4).join(', ')));
+    if (j.topFindingTitles && j.topFindingTitles.length) facts.appendChild(factRow('Top risks', j.topFindingTitles.join(' · ')));
+    card.appendChild(facts);
+
+    const next = el('div', { class: 'journey-next' });
+    next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Next expedition')));
+    next.appendChild(el('span', { class: 'journey-next-text' }, text(j.nextStep)));
+    card.appendChild(next);
+
+    return card;
+  }
+
+  function factRow(term, detail) {
+    const row = el('div', { class: 'fact-row' });
+    row.appendChild(el('dt', { class: 'fact-term' }, text(term)));
+    row.appendChild(el('dd', { class: 'fact-detail' }, text(detail)));
+    return row;
+  }
+
+  // A finding rendered as a risk that explains system risk (§6): what / where /
+  // why-care / evidence / next-check.
+  function riskCard(f) {
+    const card = el('div', { class: 'card risk-card', 'data-portolan-kind': 'finding', 'data-portolan-id': f.finding_id });
+    card.appendChild(routeLink(f.title, `/finding/${encodeURIComponent(f.finding_id)}`, { id: f.finding_id, kind: 'finding', class: 'card-title' }));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-runtime' }, text(f.severity)));
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(f.finding_type)));
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(f.confidence)));
+    card.appendChild(meta);
+    if (f.summary) card.appendChild(el('p', { class: 'prose risk-summary' }, text(f.summary)));
+    const why = el('p', { class: 'muted risk-why' });
+    why.appendChild(text('Where it attaches: '));
+    const where = (f.subject_ids && f.subject_ids.length ? f.subject_ids : (f.route_refs || []));
+    why.appendChild(text(where.slice(0, 3).join(', ') || '—'));
+    card.appendChild(why);
+    // §6: "what evidence supports it?" — surface the evidence refs that back the
+    // risk so the card answers the question, not just the where/why.
+    if (f.evidence_refs && f.evidence_refs.length) {
+      const ev = el('p', { class: 'muted risk-evidence' });
+      ev.appendChild(text('Evidence: ' + f.evidence_refs.slice(0, 4).join(', ')));
+      card.appendChild(ev);
+    }
+    if (f.next_raw_check) {
+      const next = el('div', { class: 'journey-next' });
+      next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Next check')));
+      next.appendChild(el('span', { class: 'journey-next-text' }, text(f.next_raw_check)));
+      card.appendChild(next);
+    }
+    return card;
+  }
+
+  // An unknown probe rendered as an expedition step (§7): what unknown / why /
+  // permission class / next probe / expected outcome.
+  function probeCard(p) {
+    const card = el('div', { class: 'card probe-card', 'data-portolan-kind': 'probe', 'data-portolan-id': p.unknown_id });
+    card.appendChild(routeLink(p.blocked_surface, `/probe/${encodeURIComponent(p.unknown_id)}`, { id: p.unknown_id, kind: 'probe', class: 'card-title' }));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-runtime' }, text(p.state)));
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('risk: ' + p.probe_risk)));
+    card.appendChild(meta);
+    card.appendChild(el('p', { class: 'muted probe-why' }, text('Why unknown: ' + p.why_unknown)));
+    const next = el('div', { class: 'journey-next' });
+    next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Next probe')));
+    next.appendChild(el('span', { class: 'journey-next-text' }, text(p.next_probe)));
+    card.appendChild(next);
+    if (p.requires_permission && p.requires_permission.length) {
+      card.appendChild(el('p', { class: 'muted probe-perms' }, text('Requires: ' + p.requires_permission.join(', '))));
+    }
+    return card;
+  }
+
+  // Agent handoff (§10): copyable query commands for a follow-up agent.
+  function renderHandoffSection() {
+    const sec = el('div', { class: 'handoff-section', 'data-portolan-kind': 'handoff' });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text('AGENT HANDOFF · NEXT EXPEDITION')));
+    sec.appendChild(el('p', { class: 'muted' }, text('Copyable commands a follow-up agent can run against the navigation bundle to continue the expedition.')));
+    const list = el('div', { class: 'handoff-list' });
+    for (const q of navVm.handoff) {
+      const row = el('div', { class: 'handoff-row' });
+      row.appendChild(el('span', { class: 'handoff-label' }, text(q.label)));
+      const code = el('code', { class: 'handoff-cmd', 'data-portolan-handoff': q.id }, text(q.command));
+      row.appendChild(code);
+      list.appendChild(row);
+    }
+    sec.appendChild(list);
+    return sec;
   }
 
   // ---- Overview: annotated summary (NOT an undifferentiated graph) ----
@@ -153,6 +421,13 @@ function createPortolanShell(opts) {
     grid.appendChild(metricCard('Surfaces', String(surfaces.length), 'Docs, CI, trackers'));
     grid.appendChild(metricCard('Findings', String(findings.length), 'Risks and signals'));
     grid.appendChild(metricCard('Unknowns', String(unknowns.length), 'Honest gaps'));
+    if (navVm) {
+      grid.appendChild(metricCardLink('Routes', String(navVm.counts.routes), 'System routes', '/routes'));
+      grid.appendChild(metricCardLink('Coverage', String(navVm.counts.coverage), 'Expected subjects', '/coverage'));
+      grid.appendChild(metricCardLink('Atlas findings', String(navVm.counts.findings), 'Structural signals', '/findings'));
+      grid.appendChild(metricCardLink('Probes', String(navVm.counts.probes), 'Unknown + next probe', '/unknowns'));
+      grid.appendChild(metricCardLink('Receipt', navVm.receipt.machineStatus, 'Machine verdict', '/receipt'));
+    }
     panel.appendChild(grid);
 
     // family distribution bar
@@ -221,6 +496,15 @@ function createPortolanShell(opts) {
       el('div', { class: 'metric-value' }, text(value)),
       el('div', { class: 'metric-sub muted' }, text(sub || '')));
   }
+  // metric card whose whole body navigates to a route (overview affordance).
+  function metricCardLink(label, value, sub, route) {
+    const card = el('div', { class: 'metric-card', style: 'cursor:pointer' });
+    card.appendChild(el('div', { class: 'metric-label' }, text(label)));
+    card.appendChild(el('div', { class: 'metric-value' }, text(String(value))));
+    card.appendChild(el('div', { class: 'metric-sub muted' }, text(sub || '')));
+    card.addEventListener('click', () => navigator.route(route.replace(/^\//, '')));
+    return card;
+  }
 
   function unitCard(c) {
     const card = el('div', { class: 'card unit-card' });
@@ -235,11 +519,27 @@ function createPortolanShell(opts) {
   }
 
   // ---- Map: behaviour map via clean use-case + SVG renderer adapter ----
+  // When a nav-atlas is present this is the SECONDARY Fleet map (captain-atlas
+  // 15 §9): one click away, reframed as Fleet, links back to journeys. It
+  // carries data-portolan-view="fleet" so the harness can prove it is not the
+  // default screen.
   function renderMap(main) {
     const panel = el('section', { class: 'panel map-panel' });
-    panel.appendChild(el('h1', { class: 'panel-title' }, text('Behaviour map')));
-    panel.appendChild(el('p', { class: 'muted map-intro' },
-      text('Each node is a landscape unit; lines are declared dependencies. Size shows connectivity, colour shows family. Click a unit to open its dossier.')));
+    panel.setAttribute('data-portolan-view', navVm ? 'fleet' : 'map');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(navVm ? 'Structure Map' : 'Behaviour map')));
+    // captain-atlas 16: the Structure Map also carries a section-intro marker
+    // so every section explains itself consistently (doc-16 §Navigation Labels).
+    const intro = sectionIntro(navVm
+      ? 'A supporting map of the component fleet (repositories and their declared dependencies). This is secondary to the system walkthrough: each node is a landscape unit, each line is a declared dependency. Click a unit to open its dossier; click a line to open the relationship detail.'
+      : 'Each node is a landscape unit; lines are declared dependencies. Size shows connectivity, colour shows family. Click a unit to open its dossier.');
+    intro.className = 'muted section-intro map-intro';
+    panel.appendChild(intro);
+    if (navVm) {
+      const back = el('p', { class: 'muted' });
+      back.appendChild(text('← '));
+      back.appendChild(routeLink('Back to the system walkthrough', '/overview', { class: 'cta-secondary' }));
+      panel.appendChild(back);
+    }
 
     // legend
     const legend = el('div', { class: 'graph-legend' });
@@ -263,10 +563,19 @@ function createPortolanShell(opts) {
     renderer.onEvent((ev) => {
       if (ev.type === 'node-click') {
         const node = model.nodes.find(n => n.id === ev.id);
-        if (node && node.route) navigator.route(node.route.replace(/^#/, ''));
+        if (node && node.id) {
+          // captain-atlas 16: node click opens the nav-enriched component
+          // dossier, NOT the generic dossier. The dossier answers route
+          // participation, coverage, hazards, probes, and C4 placement.
+          navigator.route('/dossier/component/' + encodeURIComponent(node.id));
+        }
       } else if (ev.type === 'edge-click') {
         const edge = model.edges.find(e => e.id === ev.id);
-        if (edge && edge.route) navigator.route(edge.route.replace(/^#/, ''));
+        // captain-atlas 16: edge click opens a RELATIONSHIP DETAIL panel that
+        // explains the edge (source/target/type/direction/evidence/what it
+        // proves/does not prove). It must NEVER fall through to a generic
+        // component/repo dossier.
+        if (edge && edge.id) navigator.route('/relationship/' + encodeURIComponent(edge.id));
       }
     });
 
@@ -334,6 +643,527 @@ function createPortolanShell(opts) {
     return sec;
   }
 
+  // ---- Navigation atlas views (routes / coverage / findings / unknowns / receipt) ----
+  // These are THIN MAPPERS over the view-model + open-* use-cases. All logic
+  // lives in domain/use-cases; the shell only turns results into DOM, mirroring
+  // how renderMap delegates graph building to openBehaviourMap.
+
+  function navEmpty(main, msg) {
+    const panel = el('section', { class: 'panel' });
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Navigation index unavailable')));
+    panel.appendChild(el('p', { class: 'muted' }, text(msg || 'No navigation atlas was generated for this target.')));
+    main.appendChild(panel);
+  }
+
+  function qualityBadge(q) {
+    const cls = q === 'high' ? 'badge badge-quality-high' : q === 'medium' ? 'badge badge-quality-medium' : 'badge badge-quality-low';
+    return el('span', { class: cls }, text('quality: ' + q));
+  }
+
+  function renderRoutesView(main) {
+    if (!navVm) return navEmpty(main);
+    const panel = el('section', { class: 'panel' });
+    panel.setAttribute('data-portolan-view', 'routes');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('System Routes')));
+    panel.appendChild(sectionIntro('How code and config move through source, build, deploy, test, and runtime. Open this to follow a journey end to end; click a route to open its diagram and reading dossier, and to see where confidence stops.'));
+    const list = el('div', { class: 'nav-route-list' });
+    for (const [family, routes] of navVm.routesByFamily) {
+      const group = el('div', { class: 'route-family-group' });
+      group.appendChild(el('div', { class: 'section-kicker' }, text(family.toUpperCase())));
+      for (const r of routes) {
+        const row = el('div', { class: 'route-row' });
+        row.appendChild(routeLink(r.route_title, `/route/${r.route_id}`, { id: r.route_id, kind: 'route', class: 'route-row-title' }));
+        row.appendChild(qualityBadge(r.route_quality));
+        // subject + source evidence state (spec §Route List required row fields)
+        if (r.subjects && r.subjects.size) {
+          row.appendChild(el('span', { class: 'badge badge-quiet' }, text([...r.subjects].join(', '))));
+        }
+        if (r.sourceStates && r.sourceStates.size) {
+          row.appendChild(el('span', { class: 'badge badge-quiet' }, text(`source: ${[...r.sourceStates].sort().join('/')}`)));
+        }
+        row.appendChild(el('span', { class: 'badge badge-quiet' }, text(`${r.stages.length} stages`)));
+        row.appendChild(el('span', { class: 'badge badge-quiet' }, text(`${r.findingCount} findings`)));
+        row.appendChild(el('span', { class: 'badge badge-quiet' }, text(`${r.probeCount} probes`)));
+        // runtime assessment (spec §Route List)
+        if (r.runtimeAssessments && r.runtimeAssessments.size) {
+          row.appendChild(el('span', { class: 'badge badge-runtime' }, text(`runtime: ${[...r.runtimeAssessments].sort().join('/')}`)));
+        }
+        group.appendChild(row);
+      }
+      list.appendChild(group);
+    }
+    panel.appendChild(list);
+    main.appendChild(panel);
+  }
+
+  function renderRouteDossier(main, routeId) {
+    if (!navAtlas) return navEmpty(main);
+    const data = openNavigationRoute(navAtlas, routeId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    panel.setAttribute('data-portolan-view', 'route-dossier');
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Route not found')));
+      panel.appendChild(routeLink('← Back to routes', '/routes', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    // 1. Route thesis (§4): what this route explains.
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(data.routeTitle)));
+    panel.appendChild(el('div', { class: 'card-meta' },
+      el('span', { class: 'badge badge-quiet' }, text(data.routeFamily)),
+      qualityBadge(data.routeQuality)));
+    panel.appendChild(el('p', { class: 'prose route-thesis' }, text(data.thesis)));
+    if (data.routeQualityNote) panel.appendChild(el('p', { class: 'muted' }, text(data.routeQualityNote)));
+    // captain-atlas 16 §System Route: evidence usability status for this route,
+    // shown as two badges so artifact validation is never conflated with
+    // evidence depth or runtime verification.
+    const euMeta = el('div', { class: 'card-meta route-evidence-usability', 'data-portolan-kind': 'route-evidence-usability' });
+    euMeta.appendChild(el('span', { class: `badge eu-axis-badge eu-evidence-${data.evidenceUsability}` }, text('evidence: ' + data.evidenceUsability)));
+    euMeta.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime: ' + data.runtimeAssessment)));
+    panel.appendChild(euMeta);
+
+    // 2. Diagram (§3): the route as an ordered system path, NOT a table.
+    panel.appendChild(renderRouteDiagram(data.diagram, data.routeId));
+
+    // 3. Stage cards (§4): one card per stage, with anchor-quality honesty.
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('STAGE CARDS')));
+    for (const s of data.stages) panel.appendChild(stageCard(s));
+
+    // Make source-visible-but-runtime-not-assessed obvious (truth preservation).
+    const rt = data.stages.some(s => s.runtime_assessment === 'not_assessed' || s.runtime_assessment === 'blocked');
+    if (rt) panel.appendChild(el('p', { class: 'muted route-truth', 'data-portolan-truth': 'source-not-runtime' }, text('Stages are source-visible but runtime-unverified — do not infer runtime proof from static source.')));
+
+    // 4. Evidence (§4, §5).
+    if (data.evidence.length) panel.appendChild(navRefList('Evidence', data.evidence.map(e => ({ id: e.evidence_id, label: `${e.evidence_id} (${e.evidence_state})`, kind: 'evidence' }))));
+
+    // 5. Risks (§6): findings as risk cards, not a flat ref list.
+    if (data.findings.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('RISKS · ATTACHED FINDINGS')));
+      const grid = el('div', { class: 'route-button-grid' });
+      for (const f of data.findings) grid.appendChild(riskCard(f));
+      panel.appendChild(grid);
+    }
+
+    // 6. Unknowns (§7): probes as expedition steps.
+    if (data.probes.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('UNKNOWNS · NEXT PROBES')));
+      const grid = el('div', { class: 'route-button-grid' });
+      for (const p of data.probes) grid.appendChild(probeCard(p));
+      panel.appendChild(grid);
+    }
+
+    // 7. Next expedition (§4).
+    if (data.nextRawCheck) {
+      const next = el('div', { class: 'journey-next route-next' });
+      next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Next expedition')));
+      next.appendChild(el('span', { class: 'journey-next-text' }, text(data.nextRawCheck)));
+      panel.appendChild(next);
+    }
+    panel.appendChild(routeLink('← Back to routes', '/routes', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  // Route diagram (§3): a linear ordered flow of stage nodes joined by arrows.
+  // Implemented with HTML/CSS (no graph library). Each node carries role,
+  // evidence state, runtime/build/test assessment, and finding/probe badges.
+  // captain-atlas 16: each node is CLICKABLE -> focuses a stage detail.
+  function renderRouteDiagram(diagram, routeId) {
+    const wrap = el('div', { class: 'route-diagram-wrap' });
+    wrap.setAttribute('data-portolan-kind', 'route-diagram');
+    wrap.appendChild(el('div', { class: 'section-kicker' }, text('ROUTE DIAGRAM')));
+    if (!diagram || !diagram.nodes || !diagram.nodes.length) {
+      wrap.appendChild(el('p', { class: 'muted' }, text('No diagram nodes.')));
+      return wrap;
+    }
+    const flow = el('div', { class: 'route-diagram', role: 'img', 'aria-label': 'Route diagram: ordered stages' });
+    diagram.nodes.forEach((n, i) => {
+      const stageRoute = routeId ? `/stage/${encodeURIComponent(routeId)}/${n.stageIndex}` : null;
+      const node = stageRoute
+        ? el('a', { class: `route-diagram-node anchor-${n.anchorStatus}`, href: '#' + stageRoute, 'data-portolan-kind': 'stage-target', 'data-portolan-stage': String(n.stageIndex) })
+        : el('div', { class: `route-diagram-node anchor-${n.anchorStatus}` });
+      node.appendChild(el('div', { class: 'rd-stage' }, text(String(n.stageIndex) + '. ' + n.label)));
+      node.appendChild(el('div', { class: 'rd-role' }, text(n.role)));
+      const badges = el('div', { class: 'rd-badges' });
+      badges.appendChild(el('span', { class: 'badge badge-quiet' }, text(n.evidenceState)));
+      badges.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime: ' + n.runtimeAssessment)));
+      if (n.findingCount) badges.appendChild(el('span', { class: 'badge badge-conflict' }, text(n.findingCount + ' finding' + (n.findingCount === 1 ? '' : 's'))));
+      if (n.probeCount) badges.appendChild(el('span', { class: 'badge badge-quality-medium' }, text(n.probeCount + ' probe' + (n.probeCount === 1 ? '' : 's'))));
+      node.appendChild(badges);
+      if (stageRoute) {
+        node.setAttribute('data-portolan-clickable', 'true');
+        node.addEventListener('click', (ev) => { ev.preventDefault(); navigator.route(stageRoute.replace(/^\//, '')); });
+      }
+      flow.appendChild(node);
+      if (i < diagram.nodes.length - 1) flow.appendChild(el('div', { class: 'route-diagram-arrow', 'aria-hidden': 'true' }, text('→')));
+    });
+    wrap.appendChild(flow);
+    return wrap;
+  }
+
+  // One stage card (§4): role, subject, source path, anchor status, snippet OR
+  // honest explanation, runtime/build/test status, why it matters.
+  function stageCard(s) {
+    const card = el('div', { class: `card stage-card anchor-${s.anchorStatus}`, 'data-portolan-kind': 'stage', 'data-portolan-anchor': s.anchorStatus });
+    const head = el('div', { class: 'stage-head' });
+    head.appendChild(el('span', { class: 'stage-index' }, text(String(s.stage_index) + '.')));
+    // captain-atlas 16: stage title is a link to the focused stage detail.
+    head.appendChild(routeLink(stageLabel(s), `/stage/${encodeURIComponent(s.route_id)}/${s.stage_index}`, { kind: 'stage-target', class: 'stage-title stage-title-link' }));
+    head.appendChild(el('span', { class: 'badge badge-quiet stage-role' }, text(s.role)));
+    card.appendChild(head);
+
+    const meta = el('div', { class: 'stage-meta' });
+    // Source path + line range ONLY when the anchor is precise (a real line
+    // number exists). A 0/0 range is never rendered as a precise line.
+    if (s.anchorStatus === 'precise' && s.line_start) {
+      meta.appendChild(el('code', { class: 'stage-path' }, text(`${s.source_path}:${s.line_start}${s.line_end && s.line_end !== s.line_start ? '-' + s.line_end : ''}`)));
+    } else {
+      meta.appendChild(el('code', { class: 'stage-path' }, text(s.source_path || '—')));
+    }
+    if (s.source_anchor) meta.appendChild(el('span', { class: 'stage-anchor' }, text(' — ' + s.source_anchor)));
+    if (s.subject_id) meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(s.subject_id)));
+    card.appendChild(meta);
+
+    // Snippet OR honest anchor explanation (§5). Never fabricate a snippet.
+    if (s.anchorStatus === 'precise' && s.source_excerpt) {
+      card.appendChild(snippetBlock(s.source_excerpt));
+    } else if (s.anchorExplanation) {
+      card.appendChild(el('p', { class: 'muted anchor-explanation', 'data-portolan-anchor-explanation': s.anchorStatus }, text(s.anchorExplanation)));
+    }
+
+    const badges = el('div', { class: 'card-meta' });
+    badges.appendChild(el('span', { class: 'badge badge-quiet' }, text('source: ' + (s.source_evidence_state || 'not_assessed'))));
+    badges.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime/build/test: ' + (s.runtime_assessment || 'not_assessed'))));
+    badges.appendChild(el('span', { class: 'badge anchor-badge-' + s.anchorStatus }, text('anchor: ' + s.anchorStatus)));
+    card.appendChild(badges);
+
+    if (s.next_raw_check) {
+      const next = el('div', { class: 'journey-next' });
+      next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Why it matters')));
+      next.appendChild(el('span', { class: 'journey-next-text' }, text(s.next_raw_check)));
+      card.appendChild(next);
+    }
+    return card;
+  }
+
+  // Stage label is sourced from the domain (atlas-reading.stageLabel) so the
+  // diagram and the stage card render identically — no duplicate prettifier.
+
+  // A line-numbered source snippet (§5). max 12 lines, line numbers preserved.
+  function snippetBlock(excerpt) {
+    const lines = String(excerpt).split(/\r\n|\r|\n/).slice(0, 12);
+    const wrap = el('pre', { class: 'source-snippet', 'data-portolan-kind': 'snippet' });
+    for (const ln of lines) {
+      const row = el('div', { class: 'snippet-line' });
+      // ln may already carry a line-number prefix from the adapter; render as-is.
+      row.appendChild(el('code', {}, text(ln)));
+      wrap.appendChild(row);
+    }
+    return wrap;
+  }
+
+  function renderCoverageView(main) {
+    if (!navVm) return navEmpty(main);
+    const panel = el('section', { class: 'panel' });
+    panel.setAttribute('data-portolan-view', 'coverage');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Mapped Areas')));
+    const regions = navVm.coverageRegions;
+    panel.appendChild(sectionIntro('What is covered, partial, route-less, missing, or not assessed across the landscape. Open this to see the fleet at a glance; click a region to drill into its route, hazards, or next checks.'));
+    // Scale summary (§8): counts by route status + central/peripheral.
+    const scale = el('div', { class: 'coverage-scale', 'data-portolan-kind': 'coverage-scale' });
+    scale.appendChild(coverageMetric('Total subjects', regions.counts.total));
+    scale.appendChild(coverageMetric('Covered', regions.counts.covered));
+    scale.appendChild(coverageMetric('Partial', regions.counts.partial));
+    scale.appendChild(coverageMetric('Route-less', regions.counts.routeless));
+    scale.appendChild(coverageMetric('Missing', regions.counts.missing));
+    scale.appendChild(coverageMetric('Central', regions.counts.central));
+    scale.appendChild(coverageMetric('Peripheral', regions.counts.peripheral));
+    panel.appendChild(scale);
+
+    // Regions with representative subjects linking into routes/findings/probes.
+    panel.appendChild(coverageRegion('Covered regions (complete route)', regions.covered));
+    panel.appendChild(coverageRegion('Partial regions (partial route)', regions.partial));
+    panel.appendChild(coverageRegion('Route-less regions (no meaningful route)', regions.routeless));
+    if (regions.missing.length) panel.appendChild(coverageRegion('Missing regions', regions.missing));
+    main.appendChild(panel);
+  }
+
+  function coverageMetric(label, value) {
+    return el('div', { class: 'metric-card coverage-metric' },
+      el('div', { class: 'metric-label' }, text(label)),
+      el('div', { class: 'metric-value' }, text(String(value))));
+  }
+
+  function coverageRegion(label, rows) {
+    const sec = el('div', { class: 'coverage-region' });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text(label.toUpperCase() + ' · ' + rows.length)));
+    if (!rows.length) {
+      sec.appendChild(el('p', { class: 'muted' }, text('None.')));
+      return sec;
+    }
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const c of rows.slice(0, 24)) {
+      const card = el('div', { class: 'card coverage-card' });
+      card.appendChild(routeLink(c.subject_label, `/coverage/${encodeURIComponent(c.subject_id)}`, { id: c.subject_id, kind: 'coverage', class: 'card-title' }));
+      const meta = el('div', { class: 'card-meta' });
+      meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(c.subject_type)));
+      meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('route: ' + (c.route_status || '—'))));
+      meta.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime: ' + (c.runtime_status || '—'))));
+      card.appendChild(meta);
+      if (c.route_refs && c.route_refs.length) card.appendChild(el('p', { class: 'muted coverage-links' }, text('routes: ' + c.route_refs.slice(0, 3).join(', '))));
+      // §8: routes, findings, AND unknowns attached to each region should be
+      // visible. Surface finding/probe counts as badges so a region shows all
+      // three attachment kinds, not just routes.
+      const extras = el('div', { class: 'card-meta' });
+      if (c.finding_refs && c.finding_refs.length) extras.appendChild(el('span', { class: 'badge badge-conflict' }, text(c.finding_refs.length + ' finding' + (c.finding_refs.length === 1 ? '' : 's'))));
+      if (c.known_unknown_ids && c.known_unknown_ids.length) extras.appendChild(el('span', { class: 'badge badge-quality-medium' }, text(c.known_unknown_ids.length + ' probe' + (c.known_unknown_ids.length === 1 ? '' : 's'))));
+      if (extras.children.length) card.appendChild(extras);
+      grid.appendChild(card);
+    }
+    sec.appendChild(grid);
+    return sec;
+  }
+
+  function renderCoverageDossier(main, subjectId) {
+    if (!navAtlas) return navEmpty(main);
+    const data = openCoverageSubject(navAtlas, subjectId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Coverage subject not found')));
+      panel.appendChild(routeLink('← Back to coverage', '/coverage', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    const c = data.coverage;
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(c.subject_label)));
+    panel.appendChild(el('div', { class: 'card-meta' },
+      el('span', { class: 'badge badge-quiet' }, text(c.subject_type)),
+      el('span', { class: 'badge badge-quiet' }, text(`promotion: ${c.promotion_state}`))));
+    if (c.source_path) panel.appendChild(dossierSection('Source path', c.source_path));
+    panel.appendChild(dossierSection('Status', `route: ${c.route_status} · findings: ${c.finding_status} · runtime: ${c.runtime_status} · test: ${c.test_status}`));
+    if ((data.routeStages && data.routeStages.length) || data.routeIds.length) panel.appendChild(navRefList('Linked routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.findings.length) panel.appendChild(navRefList('Linked findings', data.findings.map(f => ({ id: f.finding_id, label: f.title, kind: 'finding' }))));
+    if (data.probes.length) panel.appendChild(navRefList('Linked unknown probes', data.probes.map(p => ({ id: p.unknown_id, label: p.blocked_surface, kind: 'probe' }))));
+    panel.appendChild(routeLink('← Back to coverage', '/coverage', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  function renderFindingsView(main) {
+    if (!navVm) return navEmpty(main);
+    const panel = el('section', { class: 'panel' });
+    panel.setAttribute('data-portolan-view', 'findings');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Hazards')));
+    panel.appendChild(sectionIntro('Structural risks and findings — why each one matters and what evidence supports it. Open this to see what could break; click a hazard to read where it attaches and what check would reduce the uncertainty.'));
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const f of navVm.findingIndex.values()) grid.appendChild(riskCard(f));
+    panel.appendChild(grid);
+    main.appendChild(panel);
+  }
+
+  function renderFindingDossier(main, findingId) {
+    if (!navAtlas) return navEmpty(main);
+    const data = openFinding(navAtlas, findingId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Finding not found')));
+      panel.appendChild(routeLink('← Back to findings', '/findings', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    const f = data.finding;
+    panel.setAttribute('data-portolan-kind', 'finding');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(f.title)));
+    panel.appendChild(el('div', { class: 'card-meta' },
+      el('span', { class: 'badge badge-quiet' }, text(`type: ${f.finding_type}`)),
+      el('span', { class: 'badge badge-quiet' }, text(`severity: ${f.severity}`)),
+      el('span', { class: 'badge badge-quiet' }, text(`confidence: ${f.confidence}`)),
+      el('span', { class: 'badge badge-quiet' }, text(`provenance: ${f.artifact_provenance}`))));
+    panel.appendChild(dossierSection('Summary', f.summary));
+    if (f.subject_ids && f.subject_ids.length) panel.appendChild(dossierSection('Subjects', f.subject_ids.join(', ')));
+    if (data.contextDerived) {
+      panel.appendChild(el('p', { class: 'muted finding-context-derived' },
+        text('Route context below was reverse-derived from where this finding is referenced — the finding row itself carries no direct route refs.')));
+    }
+    if (data.routeIds.length) panel.appendChild(navRefList('Routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.stageRefs && data.stageRefs.length) panel.appendChild(linkedStagesList('Related stages', data.stageRefs));
+    if (data.evidence.length) panel.appendChild(navRefList('Evidence', data.evidence.map(e => ({ id: e.evidence_id, label: `${e.evidence_id} (${e.evidence_state})`, kind: 'evidence' }))));
+    if (f.next_raw_check) panel.appendChild(dossierSection('Next check to reduce uncertainty', f.next_raw_check));
+    panel.appendChild(routeLink('← Back to hazards', '/findings', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  function renderUnknownsView(main) {
+    if (!navVm) return navEmpty(main);
+    const panel = el('section', { class: 'panel' });
+    panel.setAttribute('data-portolan-view', 'unknowns');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Next Checks')));
+    panel.appendChild(sectionIntro('Unknowns and probes an agent can run with permission. Open this to see what is not yet assessed; click a check to read what is unknown, why Portolan cannot claim it, what permission it needs, and what it would prove if it ran.'));
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const p of navVm.probeIndex.values()) grid.appendChild(probeCard(p));
+    panel.appendChild(grid);
+    main.appendChild(panel);
+  }
+
+  function renderUnknownProbeDossier(main, unknownId) {
+    if (!navAtlas) return navEmpty(main);
+    const data = openUnknownProbe(navAtlas, unknownId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Unknown probe not found')));
+      panel.appendChild(routeLink('← Back to unknown probes', '/unknowns', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    const p = data.probe;
+    panel.setAttribute('data-portolan-kind', 'probe');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(p.blocked_surface)));
+    panel.appendChild(el('div', { class: 'card-meta' },
+      el('span', { class: 'badge badge-runtime' }, text(`state: ${p.state}`)),
+      el('span', { class: 'badge badge-quiet' }, text(`risk: ${p.probe_risk}`))));
+    panel.appendChild(dossierSection('Why unknown', p.why_unknown));
+    panel.appendChild(dossierSection('Next probe', p.next_probe));
+    if (p.requires_permission && p.requires_permission.length) panel.appendChild(dossierSection('Required permissions', p.requires_permission.join(', ')));
+    // captain-atlas 16: if the probe row lacked direct route refs but context
+    // was reverse-derived, say so explicitly so the admiral knows the linkage
+    // is inferred from where the probe is referenced, not declared.
+    if (data.contextDerived) {
+      panel.appendChild(el('p', { class: 'muted probe-context-derived' },
+        text('Route/stage context below was reverse-derived from where this probe is referenced — the probe row itself carries no direct route refs.')));
+    }
+    if (data.routeIds.length) panel.appendChild(navRefList('Linked routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.stageRefs && data.stageRefs.length) panel.appendChild(linkedStagesList('Linked stages', data.stageRefs));
+    if (data.findings.length) panel.appendChild(navRefList('Linked findings', data.findings.map(f => ({ id: f.finding_id, label: f.title, kind: 'finding' }))));
+    panel.appendChild(routeLink('← Back to next checks', '/unknowns', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  // ---- Run Log (captain-atlas 16: receipt validation + 3-axis evidence usability) ----
+  // The Run Log shows artifact validation, evidence usability, and runtime
+  // assessment as SEPARATE sections. The hard rule (doc 16): artifact_validated
+  // must not be displayed as if the atlas is evidence-rich.
+  function renderReceiptView(main) {
+    if (!navVm) return navEmpty(main);
+    const data = openReceipt(navAtlas.receiptValidation, navAtlas);
+    const panel = el('section', { class: 'panel' });
+    panel.setAttribute('data-portolan-view', 'receipt');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Run Log')));
+    panel.appendChild(sectionIntro('What Portolan generated, validated, blocked, or could not assess. Open this to tell whether an expedition receipt is clean, failed, blocked, or disputed — and how strong the underlying evidence actually is.'));
+
+    // ---- Three independent evidence-usable axes (captain-atlas 16) ----
+    if (data.evidenceUsability) {
+      const eu = data.evidenceUsability;
+      const euWrap = el('div', { class: 'evidence-usability-grid', 'data-portolan-kind': 'evidence-usability' });
+      euWrap.appendChild(euAxisCard('ARTIFACT VALIDATION', eu.artifactValidation, eu.copy.artifactValidation, 'axis-artifact'));
+      euWrap.appendChild(euAxisCard('EVIDENCE USABILITY', eu.evidenceUsability, eu.copy.evidenceUsability, 'axis-evidence'));
+      euWrap.appendChild(euAxisCard('RUNTIME ASSESSMENT', eu.runtimeAssessment, eu.copy.runtimeAssessment, 'axis-runtime'));
+      panel.appendChild(euWrap);
+      // Stage-count context so the admiral sees what the usability verdict is over.
+      panel.appendChild(el('p', { class: 'muted evidence-stage-counts' },
+        text(`${eu.stageCounts.total} stage(s): ${eu.stageCounts.visibleEvidence} with visible evidence, ${eu.stageCounts.preciseAnchors} with precise source anchors.`)));
+      // Hard rule: make it impossible to misread artifact_validated as evidence-rich.
+      // The caveat fires for anything short of fully-anchored evidence (weak/none/partial),
+      // because 'partial' can also be misread as evidence-rich (k2p6 minor #10).
+      if (eu.artifactValidation === 'verified' && eu.evidenceUsability !== 'anchored') {
+        const strength = eu.evidenceUsability === 'partial'
+          ? 'only partial — some stages have precise anchors while others do not'
+          : eu.evidenceUsability === 'weak'
+            ? 'weak — key stages lack precise source anchors'
+            : 'absent — no source-visible evidence with anchors was found';
+        panel.appendChild(el('p', { class: 'muted evidence-caveat', 'data-portolan-truth': 'artifact-not-evidence' },
+          text(`The bundle validates structurally, but evidence usability is ${strength}. Artifacts parsing is not the same as an evidence-rich atlas. Do not treat the 'verified' artifact status as proof of source-depth.`)));
+      }
+    }
+
+    panel.appendChild(el('p', { class: 'muted' }, text(`target: ${data.targetId}`)));
+    const status = el('div', { class: `receipt-status ${data.machineStatus}` });
+    status.appendChild(el('div', { class: 'section-kicker' }, text('MACHINE STATUS')));
+    status.appendChild(el('p', { class: 'prose' }, text(data.machineStatus)));
+    panel.appendChild(status);
+    panel.appendChild(dossierSection('Agent self-status', `${data.agentSelfStatus} (agent self-status is evidence, not authority)`));
+    if (data.hasDisagreement) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('STATUS DISAGREEMENTS')));
+      for (const d of data.disagreements) {
+        panel.appendChild(el('p', { class: 'prose' }, text(`${d.subject}: machine=${d.machine_status}, agent=${d.agent_self_status} — ${d.reason}`)));
+      }
+    }
+    // Surface failed + blocked checks first (the actionable ones), using the
+    // pre-filtered arrays from openReceipt.
+    if (data.failedChecks.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('FAILED CHECKS')));
+      for (const c of data.failedChecks) panel.appendChild(checkRow(c));
+    }
+    if (data.blockedChecks.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('BLOCKED CHECKS')));
+      for (const c of data.blockedChecks) panel.appendChild(checkRow(c));
+    }
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('ALL VALIDATION CHECKS')));
+    for (const c of data.validationChecks) panel.appendChild(checkRow(c));
+    if (data.receiptSources && Object.keys(data.receiptSources).length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('RECEIPT SOURCES')));
+      for (const [k, v] of Object.entries(data.receiptSources)) {
+        panel.appendChild(el('p', { class: 'muted', style: 'font-size:12px' }, text(`${k}: ${v}`)));
+      }
+    }
+    main.appendChild(panel);
+  }
+
+  // One three-axis card: verdict + plain-language copy.
+  function euAxisCard(label, verdict, copy, cls) {
+    const card = el('div', { class: `card eu-axis-card ${cls}` });
+    card.appendChild(el('div', { class: 'section-kicker' }, text(label)));
+    card.appendChild(el('div', { class: `eu-axis-verdict eu-verdict-${verdict}` }, text(verdict)));
+    card.appendChild(el('p', { class: 'muted eu-axis-copy' }, text(copy)));
+    return card;
+  }
+
+  // refList variant for nav-atlas ids (no system-map object lookup).
+  // Render one validation-check row (icon + id + summary).
+  function checkRow(c) {
+    const icon = c.status === 'verified' ? '✓' : c.status === 'failed' ? '✗' : c.status === 'blocked' ? '⊘' : '?';
+    return el('div', { class: 'validation-check' },
+      el('span', { class: `check-icon-${c.status}` }, text(icon)),
+      el('span', {}, text(`${c.check_id}: ${c.summary}`)));
+  }
+
+  function navRefList(label, items) {
+    const sec = el('div', { class: 'ref-list' });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text(label.toUpperCase())));
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const it of items) {
+      if (it.kind === 'evidence') {
+        // captain-atlas 16: evidence chips now open an evidence DETAIL panel
+        // (path/anchor quality/snippet/what it proves), instead of being a
+        // dead span. Never a generic dossier.
+        const route = `/evidence/${encodeURIComponent(it.id)}`;
+        grid.appendChild(routeLink(it.label, route, { id: it.id, kind: 'evidence', class: 'chip' }));
+      } else {
+        const route = it.kind === 'route' ? `/route/${encodeURIComponent(it.id)}`
+          : it.kind === 'coverage' ? `/coverage/${encodeURIComponent(it.id)}`
+          : it.kind === 'finding' ? `/finding/${encodeURIComponent(it.id)}`
+          : it.kind === 'probe' ? `/probe/${encodeURIComponent(it.id)}`
+          : '#/overview';
+        grid.appendChild(routeLink(it.label, route, { id: it.id, kind: it.kind, class: 'chip' }));
+      }
+    }
+    sec.appendChild(grid);
+    return sec;
+  }
+
+  // Linked-stages list for the evidence detail (captain-atlas 16). Stage routes
+  // are TWO segments /stage/<routeId>/<stageIndex>; the generic navRefList
+  // encodes a single id into one segment, which the stage router cannot parse.
+  // Build the links directly so evidence -> stage navigation is live.
+  function linkedStagesList(label, stageRefs) {
+    const sec = el('div', { class: 'ref-list' });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text(label.toUpperCase())));
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const s of stageRefs) {
+      const stageRoute = `/stage/${encodeURIComponent(s.routeId)}/${s.stageIndex}`;
+      grid.appendChild(routeLink(s.label + ' (' + s.routeId + ' #' + s.stageIndex + ')', stageRoute, { id: s.routeId, kind: 'stage-target', class: 'chip' }));
+    }
+    sec.appendChild(grid);
+    return sec;
+  }
+
   // ---- Components list ----
   function renderComponentsList(main) {
     const comps = (atlas.objects && atlas.objects.components) || [];
@@ -343,6 +1173,290 @@ function createPortolanShell(opts) {
     const grid = el('div', { class: 'component-grid' });
     for (const c of comps) grid.appendChild(unitCard(c));
     panel.appendChild(grid);
+    main.appendChild(panel);
+  }
+
+  // ---- captain-atlas 16: drill-down detail panels + C4 + section intros ----
+
+  // One-sentence section explanation (doc 16 §Navigation Labels): what this
+  // section is, why open it, what's clickable, what clicking reveals. Carries a
+  // stable marker so the harness can prove each section explains itself.
+  function sectionIntro(copy) {
+    return el('p', { class: 'muted section-intro', 'data-portolan-section-intro': 'true' }, text(copy));
+  }
+
+  // Relationship detail (doc 16 §Relationship): explains the EDGE, not a node.
+  // Never falls through to a generic component/repo dossier.
+  function renderRelationshipDetail(main, relId) {
+    const data = openRelationship(atlas, navAtlas, relId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    panel.setAttribute('data-portolan-view', 'relationship-detail');
+    panel.setAttribute('data-portolan-kind', 'relationship');
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Relationship not found')));
+      panel.appendChild(el('p', { class: 'muted' }, text(`No relationship with id "${relId}". This edge has no safe detail — it is recorded but not explainable from the current data.`)));
+      panel.appendChild(routeLink('← Back to the Structure Map', '/structure', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('RELATIONSHIP DETAIL')));
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(`${data.relationshipType} · ${data.direction}`)));
+    panel.appendChild(el('p', { class: 'prose' }, text(data.summary || data.whyPresent || 'A declared relationship between two landscape units.')));
+    const fromTo = el('div', { class: 'rel-from-to' });
+    fromTo.appendChild(relEndpoint(data.from, 'from'));
+    fromTo.appendChild(el('div', { class: 'route-diagram-arrow', 'aria-hidden': 'true' }, text('→')));
+    fromTo.appendChild(relEndpoint(data.to, 'to'));
+    panel.appendChild(fromTo);
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('evidence: ' + data.evidenceState)));
+    if (data.producerFamily) meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('producer: ' + data.producerFamily)));
+    panel.appendChild(meta);
+    if (data.whyPresent) panel.appendChild(dossierSection('Why this relationship is in the atlas', data.whyPresent));
+    panel.appendChild(dossierSection('What this relationship proves', data.whatItProves));
+    panel.appendChild(dossierSection('What it does not prove', data.whatItDoesNotProve));
+    if (data.routeIds.length) panel.appendChild(navRefList('Route context', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.hazardIds.length) panel.appendChild(navRefList('Attached hazards', data.hazardIds.map(id => ({ id, label: id, kind: 'finding' }))));
+    if (data.probeIds.length) panel.appendChild(navRefList('Attached next checks', data.probeIds.map(id => ({ id, label: id, kind: 'probe' }))));
+    panel.appendChild(routeLink('← Back to the Structure Map', '/structure', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  function relEndpoint(endpoint, role) {
+    const wrap = el('div', { class: `rel-endpoint rel-${role}` });
+    if (endpoint && endpoint.route) {
+      wrap.appendChild(routeLink(endpoint.label, endpoint.route, { id: endpoint.id, kind: 'component', class: 'rel-endpoint-link' }));
+    } else {
+      wrap.appendChild(el('span', { class: 'rel-endpoint-label' }, text(endpoint ? endpoint.label : '—')));
+    }
+    wrap.appendChild(el('div', { class: 'rd-role' }, text(role)));
+    return wrap;
+  }
+
+  // Stage detail (doc 16 §Route Stage): a focused view of one stage, reachable
+  // from the route diagram node or a stage card. Answers role / source anchor /
+  // evidence state / runtime status / attached hazards+probes / proves / does
+  // not prove.
+  function renderStageDetailRoute(main, fragTail) {
+    // fragTail = "<routeId>/<stageIndex>" — routeId may contain slashes? No:
+    // route ids are colon-delimited (route:bigtop:...) and never contain '/'.
+    // The stageIndex is the last segment.
+    const parts = fragTail.split('/');
+    const stageIndex = parts.pop();
+    const routeId = decodeURIComponent(parts.join('/'));
+    renderStageDetail(main, routeId, stageIndex);
+  }
+
+  function renderStageDetail(main, routeId, stageIndex) {
+    const data = openStage(navAtlas, routeId, stageIndex);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    panel.setAttribute('data-portolan-view', 'stage-detail');
+    panel.setAttribute('data-portolan-kind', 'stage-detail');
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Stage not found')));
+      panel.appendChild(el('p', { class: 'muted' }, text(`No stage ${stageIndex} in route "${routeId}".`)));
+      panel.appendChild(routeLink('← Back to the route', `/route/${encodeURIComponent(routeId)}`, { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('STAGE DETAIL')));
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(`${data.label}`)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-quiet stage-role' }, text(data.role)));
+    meta.appendChild(el('span', { class: `badge anchor-badge-${data.anchorStatus}` }, text('anchor: ' + data.anchorStatus)));
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('source: ' + data.sourceEvidenceState)));
+    meta.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime/build/test: ' + data.runtimeAssessment)));
+    panel.appendChild(meta);
+    panel.appendChild(routeLink('← Back to the route', `/route/${encodeURIComponent(routeId)}`, { class: 'back-link' }));
+
+    if (data.sourcePath) {
+      const pathLine = data.anchorStatus === 'precise' && data.lineStart
+        ? `${data.sourcePath}:${data.lineStart}${data.lineEnd && data.lineEnd !== data.lineStart ? '-' + data.lineEnd : ''}`
+        : data.sourcePath;
+      panel.appendChild(dossierSection('Source path', pathLine));
+    }
+    if (data.sourceAnchor) panel.appendChild(dossierSection('Source anchor', data.sourceAnchor));
+    if (data.subjectId) panel.appendChild(dossierSection('Subject', data.subjectId));
+    // Snippet OR honest anchor explanation (never fabricate a snippet).
+    if (data.anchorStatus === 'precise' && data.sourceExcerpt) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('SOURCE EXCERPT')));
+      panel.appendChild(snippetBlock(data.sourceExcerpt));
+    } else if (data.anchorExplanation) {
+      panel.appendChild(el('p', { class: 'muted anchor-explanation', 'data-portolan-anchor-explanation': data.anchorStatus }, text(data.anchorExplanation)));
+    }
+    panel.appendChild(dossierSection('What this stage proves', data.whatItProves));
+    panel.appendChild(dossierSection('What it does not prove', data.whatItDoesNotProve));
+    if (data.hazardRefs.length) panel.appendChild(navRefList('Attached hazards', data.hazardRefs.map(id => ({ id, label: id, kind: 'finding' }))));
+    if (data.probeRefs.length) panel.appendChild(navRefList('Attached next checks', data.probeRefs.map(id => ({ id, label: id, kind: 'probe' }))));
+    if (data.evidenceRefs.length) panel.appendChild(navRefList('Evidence', data.evidenceRefs.map(id => ({ id, label: id, kind: 'evidence' }))));
+    if (data.nextRawCheck) panel.appendChild(dossierSection('Next useful action', data.nextRawCheck));
+    main.appendChild(panel);
+  }
+
+  // Evidence detail (doc 16 §Evidence Anchor): path / anchor quality / excerpt
+  // or missing explanation / what it proves / linked route/stage/finding/probe.
+  // Source-visible evidence NEVER implies runtime/build/test verification.
+  function renderEvidenceDetail(main, evidenceId) {
+    const data = openEvidence(navAtlas, evidenceId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    panel.setAttribute('data-portolan-view', 'evidence-detail');
+    panel.setAttribute('data-portolan-kind', 'evidence-detail');
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Evidence not found')));
+      panel.appendChild(el('p', { class: 'muted' }, text(`No evidence with id "${evidenceId}".`)));
+      panel.appendChild(routeLink('← Back', '/overview', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('EVIDENCE DETAIL')));
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(data.evidenceId)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: `badge anchor-badge-${data.anchorStatus}` }, text('anchor: ' + data.anchorStatus)));
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('state: ' + data.evidenceState)));
+    if (data.artifactProvenance) meta.appendChild(el('span', { class: 'badge badge-quiet' }, text('provenance: ' + data.artifactProvenance)));
+    panel.appendChild(meta);
+    if (data.sourcePath) panel.appendChild(dossierSection('Local path', data.sourcePath));
+    if (data.sourceAnchor) panel.appendChild(dossierSection('Anchor type', data.sourceAnchor));
+    if (data.anchorStatus === 'precise' && data.lineStart) {
+      panel.appendChild(dossierSection('Line range', `${data.lineStart}${data.lineEnd && data.lineEnd !== data.lineStart ? '-' + data.lineEnd : ''}`));
+    }
+    if (data.observation) panel.appendChild(dossierSection('Observation', data.observation));
+    if (data.anchorStatus === 'precise' && data.sourceExcerpt) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('SOURCE EXCERPT (max 12 lines)')));
+      panel.appendChild(snippetBlock(data.sourceExcerpt));
+    } else if (data.anchorExplanation) {
+      panel.appendChild(el('p', { class: 'muted anchor-explanation', 'data-portolan-anchor-explanation': data.anchorStatus }, text(data.anchorExplanation)));
+    }
+    panel.appendChild(dossierSection('What this evidence proves', data.whatItProves));
+    panel.appendChild(el('p', { class: 'muted evidence-truth', 'data-portolan-truth': 'source-not-runtime' }, text(data.whatItDoesNotProve)));
+    if (data.routeIds.length) panel.appendChild(navRefList('Linked routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    // Linked stages: build TWO-SEGMENT /stage/<routeId>/<stageIndex> links
+    // directly, consistent with route diagram nodes. (The generic navRefList
+    // encodes the whole id into one segment, which breaks the stage router
+    // that expects <routeId>/<stageIndex> as two segments.)
+    if (data.stageRefs.length) panel.appendChild(linkedStagesList('Linked stages', data.stageRefs));
+    if (data.findingIds.length) panel.appendChild(navRefList('Linked findings', data.findingIds.map(id => ({ id, label: id, kind: 'finding' }))));
+    if (data.probeIds.length) panel.appendChild(navRefList('Linked probes', data.probeIds.map(id => ({ id, label: id, kind: 'probe' }))));
+    panel.appendChild(routeLink('← Back', '/overview', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  // Component dossier (doc 16 §Repository Or Component): nav-enriched. Answers
+  // what it is / why present / route participation / coverage / hazards /
+  // probes / evidence / C4 placement or honest absence / next action.
+  function renderComponentDossier(main, componentId) {
+    const data = openComponentDossier(atlas, navAtlas, componentId);
+    const panel = el('section', { class: 'panel dossier-panel' });
+    panel.setAttribute('data-portolan-view', 'component-dossier');
+    panel.setAttribute('data-portolan-kind', 'component');
+    if (!data) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Object not found')));
+      panel.appendChild(el('p', { class: 'muted' }, text(`No component with id "${componentId}".`)));
+      panel.appendChild(routeLink('← Back', '/structure', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+    const c = data.component;
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(c.display_name || c.id)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(`kind: component`)));
+    if (c.c4_family) meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(FAMILY_LABELS[c.c4_family] || c.c4_family)));
+    panel.appendChild(meta);
+    if (c.why_present) panel.appendChild(dossierSection('Why it is present in the atlas', c.why_present));
+    if (c.role) panel.appendChild(dossierSection('Role', c.role));
+    // Route participation.
+    if (data.routeIds.length) {
+      panel.appendChild(navRefList('System routes this participates in', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    } else {
+      panel.appendChild(dossierSection('System routes', 'This component participates in no mapped system route. It appears in the atlas as a landscape unit, but its build/test/runtime path is not traced.'));
+    }
+    // Coverage state.
+    if (data.coverage) {
+      const cov = data.coverage;
+      panel.appendChild(dossierSection('Coverage', `route: ${cov.route_status} · findings: ${cov.finding_status} · runtime: ${cov.runtime_status} · test: ${cov.test_status}`));
+    }
+    // C4 placement or honest absence.
+    if (data.c4Placement) {
+      panel.appendChild(dossierSection('C4 placement', data.c4Placement.present
+        ? 'Placed at the C4 Component level.'
+        : data.c4Placement.note));
+    }
+    if (data.hazards.length) panel.appendChild(navRefList('Attached hazards', data.hazards.map(id => ({ id, label: id, kind: 'finding' }))));
+    if (data.probes.length) panel.appendChild(navRefList('Attached next checks', data.probes.map(id => ({ id, label: id, kind: 'probe' }))));
+    if (data.evidence.length) panel.appendChild(navRefList('Evidence anchors', data.evidence.map(e => ({ id: e.evidence_id, label: `${e.evidence_id} (${e.evidence_state})`, kind: 'evidence' }))));
+    // Related system-map objects (surfaces, relationships) via the existing
+    // generic resolver — these are component-relative, not generic fallthrough.
+    const generic = drillToDossier(atlas, componentId, 'component');
+    if (generic && generic.related) {
+      if (generic.related.relationships.length) panel.appendChild(refList('Relationships', generic.related.relationships));
+      if (generic.related.surfaces.length) panel.appendChild(refList('Surfaces', generic.related.surfaces));
+    }
+    if (data.nextAction) {
+      const next = el('div', { class: 'journey-next' });
+      next.appendChild(el('span', { class: 'badge badge-quality-high' }, text('Next useful action')));
+      next.appendChild(el('span', { class: 'journey-next-text' }, text(data.nextAction)));
+      panel.appendChild(next);
+    }
+    panel.appendChild(routeLink('← Back to the Structure Map', '/structure', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  // C4 view (doc 16 §C4 Contract): an optional map, NOT a renamed repo graph.
+  // Context always present; Container honest-empty when no runtime/deploy
+  // evidence; Component from promoted units (limited/derived); Code
+  // out-of-scope.
+  function renderC4View(main) {
+    const model = openC4(atlas);
+    const panel = el('section', { class: 'panel c4-panel' });
+    panel.setAttribute('data-portolan-view', 'c4');
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('C4')));
+    panel.appendChild(sectionIntro('An optional decomposition view: Context (the system and its externals), Container (runtime/deploy units), Component (promoted units), and Code (out of scope). Open this to see how deep the model goes — and where it honestly stops.'));
+    // Context level (always present).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('CONTEXT · always present')));
+    if (!model.context.length) {
+      panel.appendChild(el('p', { class: 'muted' }, text('No context boxes recorded. The target system is the implicit context.')));
+    } else {
+      const ctx = el('div', { class: 'route-button-grid c4-context-grid' });
+      for (const b of model.context) {
+        ctx.appendChild(routeLink(b.display_name || b.id, b.route || '#/overview', { id: b.id, kind: 'context', class: 'chip c4-box' }));
+      }
+      panel.appendChild(ctx);
+    }
+    // Container level (honest-empty when absent).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('CONTAINER')));
+    if (model.container.present) {
+      const ctr = el('div', { class: 'route-button-grid c4-container-grid' });
+      for (const b of model.container.boxes) {
+        ctr.appendChild(routeLink(b.display_name || b.id, b.route || '#/overview', { id: b.id, kind: 'container', class: 'chip c4-box' }));
+      }
+      panel.appendChild(ctr);
+    } else {
+      const empty = el('div', { class: 'c4-honest-empty', 'data-portolan-c4': 'container-honest-empty' });
+      empty.appendChild(el('p', { class: 'muted' }, text(model.container.explanation)));
+      panel.appendChild(empty);
+    }
+    // Component level (promoted units only; limited/derived label).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('COMPONENT · promoted units')));
+    if (model.component.limited) {
+      panel.appendChild(el('p', { class: 'muted c4-limited', 'data-portolan-c4': 'component-limited' }, text(model.component.note)));
+    }
+    const comp = el('div', { class: 'route-button-grid c4-component-grid' });
+    for (const b of model.component.boxes) {
+      comp.appendChild(routeLink(b.display_name || b.id, b.route || '#/overview', { id: b.id, kind: 'component', class: 'chip c4-box' }));
+    }
+    // captain-atlas 16 §C4: Component uses PROMOTED UNITS ONLY. Do NOT infer
+    // component boxes from families, repo names, colors, or grouping — families
+    // are a separate structural axis, not a C4 Component level. When no
+    // explicit component boxes exist, show an honest-empty state instead.
+    if (comp.children.length) {
+      panel.appendChild(comp);
+    } else {
+      const empty = el('div', { class: 'c4-honest-empty', 'data-portolan-c4': 'component-honest-empty' });
+      empty.appendChild(el('p', { class: 'muted' }, text('No promoted Component boxes. Components are not inferred from families or repository names — open the Structure Map to see landscape units, or promote specific units to populate this level.')));
+      panel.appendChild(empty);
+    }
+    // Code level (out of scope).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('CODE · out of scope')));
+    panel.appendChild(el('p', { class: 'muted c4-code-handoff', 'data-portolan-c4': 'code-out-of-scope' }, text(model.code.nextAction)));
     main.appendChild(panel);
   }
 

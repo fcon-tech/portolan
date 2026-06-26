@@ -22,7 +22,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -70,7 +70,8 @@ function main() {
     const bundleDir = path.join(snapshotDir, 'bundle');
     if (fs.existsSync(bundleDir)) {
       try {
-        execSync(`bash "${REPO_ROOT}/scripts/build-system-map.sh" "${bundleDir}" "${args.target}"`, { stdio: 'inherit' });
+        // execFileSync (array form) avoids shell injection from interpolated paths.
+        execFileSync('bash', [`${REPO_ROOT}/scripts/build-system-map.sh`, bundleDir, args.target], { stdio: 'inherit' });
       } catch (e) {
         console.error('snapshot build failed; the target may not have a bundle yet');
         process.exit(1);
@@ -83,12 +84,50 @@ function main() {
   }
 
   // Export the clean-stack shell + atlas to a portable HTML.
+  // First generate the additive navigation index (captain-atlas 13) into the
+  // snapshot dir, then pass it as --nav-bundle so atlas.html carries the nav
+  // surfaces. This is additive; if generation fails we still export the atlas
+  // (nav surfaces simply absent), but we print a clear warning.
+  const navBundleDir = path.join(snapshotDir, 'navigation-index');
+  let navGenerated = false;
+  try {
+    execFileSync('node', [path.join(__dirname, 'build-atlas-navigation-index.mjs'), '--target', args.target, '--out', navBundleDir], { stdio: 'inherit' });
+    // The build script exits non-zero on validation failure but still writes a
+    // receipt, so presence alone is not enough — check machine_status. A corrupt
+    // receipt is a distinct failure from a failed generation.
+    const receiptPath = path.join(navBundleDir, 'receipt-validation.json');
+    try {
+      navGenerated = fs.existsSync(receiptPath)
+        && JSON.parse(fs.readFileSync(receiptPath, 'utf8')).machine_status !== 'failed';
+    } catch (re) {
+      console.error(`warning: receipt-validation.json is present but unparseable; nav surfaces dropped: ${re.message}`);
+      navGenerated = false;
+    }
+  } catch (e) {
+    console.error(`warning: navigation-index generation failed; atlas.html will be exported without nav surfaces.`);
+    console.error(e.stack || e);
+  }
+
   const outFile = path.join(snapshotDir, 'atlas.html');
-  execSync(`node "${path.join(__dirname, 'export-shell.mjs')}" --system-map "${snapshotFile}" --out "${outFile}" --title "Portolan Atlas — ${intake.target_root}"`, { stdio: 'inherit' });
+  // execFileSync (array form): no shell, so interpolated paths/title cannot inject.
+  const exportArgs = [path.join(__dirname, 'export-shell.mjs'), '--system-map', snapshotFile, '--out', outFile, '--title', `Portolan Atlas — ${intake.target_root}`, '--target-root', args.target];
+  if (navGenerated) exportArgs.push('--nav-bundle', navBundleDir);
+  try {
+    execFileSync('node', exportArgs, { stdio: 'inherit' });
+  } catch (e) {
+    console.error('error: atlas export failed.');
+    console.error(e.stack || e);
+    process.exit(1);
+  }
 
   if (args.open) {
-    const opener = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
-    try { execSync(`${opener} "${outFile}"`); } catch (e) { /* non-fatal */ }
+    // 'start' is a cmd.exe builtin, not an executable, so on win32 invoke via cmd.
+    if (process.platform === 'win32') {
+      try { execFileSync('cmd.exe', ['/c', 'start', '', outFile]); } catch (e) { /* non-fatal */ }
+    } else {
+      const opener = process.platform === 'darwin' ? 'open' : 'xdg-open';
+      try { execFileSync(opener, [outFile]); } catch (e) { /* non-fatal */ }
+    }
   }
   console.error(`\nPortolan atlas ready: ${outFile}`);
   console.error(`Open it in a browser, or the agent serves it at the printed path.`);
