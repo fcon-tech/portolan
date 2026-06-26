@@ -152,6 +152,23 @@ test('a selected component dossier/component route reroutes to the investigation
   assert.ok(!findAttr(root, 'data-portolan-view', 'component-dossier'), 'selected component must NOT render the generic component dossier');
 });
 
+test('a selected component BARE short-id route also reroutes to the investigation (doc 17 hard rule)', () => {
+  // The system-map uses component:<id>, but a hand-edited hash or external link
+  // may pass the short form. A selected component must not fall back through
+  // the bare route. (Reproduces the reviewer's MAJOR finding.)
+  const si = loadSemanticInvestigation();
+  const { root } = makeShell(si, '/dossier/component/apache-solr');
+  assert.ok(findAttr(root, 'data-portolan-view', 'semantic-investigation'), 'short-id route must render the investigation, not the generic dossier');
+  assert.ok(!findAttr(root, 'data-portolan-view', 'component-dossier'), 'short-id route must NOT render the generic component dossier');
+});
+
+test('a non-selected component keeps its generic dossier (no false reroute)', () => {
+  const si = loadSemanticInvestigation();
+  // apache-zookeeper is a neighbour but not in the selected sample.
+  const { root } = makeShell(si, '/dossier/component/apache-zookeeper');
+  assert.ok(findAttr(root, 'data-portolan-view', 'component-dossier'), 'a non-selected component must render the generic dossier');
+});
+
 test('the ecosystem map renders capability regions and a visible overlap pair', () => {
   const si = loadSemanticInvestigation();
   const { root } = makeShell(si, '/ecosystem');

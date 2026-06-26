@@ -90,6 +90,24 @@ function createPortolanShell(opts) {
   const semanticVm = semanticInvestigation ? buildSemanticViewModel(semanticInvestigation) : null;
   const selectedComponentIds = semanticVm ? new Set(semanticInvestigation.sample.components) : new Set();
 
+  // captain-atlas 17: selected-detection must be tolerant of BOTH id forms.
+  // The system-map routes/components use `component:<id>` (e.g.
+  // component:apache-solr), but a hand-edited hash or an external link may pass
+  // the short form `apache-solr`. A selected component must NEVER fall back to
+  // a generic dossier through the bare/short route (doc 17 hard rule), so this
+  // helper resolves a route id to its canonical `component:` form before the
+  // selected-set membership test. Returns the canonical id when selected, else null.
+  function resolveSelectedComponentId(routeId) {
+    if (!routeId) return null;
+    if (selectedComponentIds.has(routeId)) return routeId;
+    // Try the component:-prefixed form if the id has no kind prefix of its own.
+    if (!routeId.includes(':')) {
+      const prefixed = 'component:' + routeId;
+      if (selectedComponentIds.has(prefixed)) return prefixed;
+    }
+    return null;
+  }
+
   // ---- DOM helpers (presentation only) ----
   function el(tag, attrs) {
     const node = doc.createElement(tag);
@@ -175,9 +193,11 @@ function createPortolanShell(opts) {
     else if (frag.startsWith('dossier/component/')) {
       const cid = decode(frag.slice('dossier/component/'.length));
       // captain-atlas 17: a SELECTED component must NEVER fall back to a generic
-      // dossier. Reroute to its investigation. A non-selected component keeps
-      // the generic dossier.
-      if (selectedComponentIds.has(cid)) renderSemanticInvestigation(main, cid);
+      // dossier — including via a bare/short-id route (e.g. /dossier/component/
+      // apache-solr when the sample id is component:apache-solr). Resolve to the
+      // canonical selected id; if selected, render the investigation.
+      const selectedId = resolveSelectedComponentId(cid);
+      if (selectedId) renderSemanticInvestigation(main, selectedId);
       else renderComponentDossier(main, cid);
     }
     else {
@@ -610,10 +630,11 @@ function createPortolanShell(opts) {
           // captain-atlas 17: a SELECTED component opens its semantic
           // investigation (ecosystem/purpose/internal model/risks/overlap), not
           // the generic dossier. Non-selected components keep the nav-enriched
-          // dossier (captain-atlas 16). This closes the graph-node-click
-          // fallback path for selected components.
-          if (selectedComponentIds.has(node.id)) {
-            navigator.route('/investigation/' + encodeURIComponent(node.id));
+          // dossier (captain-atlas 16). resolveSelectedComponentId tolerates
+          // both id forms so the click path cannot fall back for a selected node.
+          const selectedId = resolveSelectedComponentId(node.id);
+          if (selectedId) {
+            navigator.route('/investigation/' + encodeURIComponent(selectedId));
           } else {
             navigator.route('/dossier/component/' + encodeURIComponent(node.id));
           }
