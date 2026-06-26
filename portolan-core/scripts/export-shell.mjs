@@ -28,7 +28,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--system-map' && argv[i + 1]) args.systemMap = path.resolve(argv[++i]);
     else if (a === '--out' && argv[i + 1]) args.out = path.resolve(argv[++i]);
-    else if (a === '--title' && argv[i + 1]) args.title = argv[i];
+    else if (a === '--title' && argv[i + 1]) args.title = argv[++i];
     else if (a === '--nav-bundle' && argv[i + 1]) args.navBundle = path.resolve(argv[++i]);
     else if (a === '--target-root' && argv[i + 1]) args.targetRoot = path.resolve(argv[++i]);
     else if (a === '--semantic-investigation' && argv[i + 1]) args.semanticInvestigation = path.resolve(argv[++i]);

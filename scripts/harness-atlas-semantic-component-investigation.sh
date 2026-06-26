@@ -284,15 +284,26 @@ async function main() {
   record('overlap-bidirectional', bidirOk ? 'verified' : 'failed',
     bidirOk ? 'bidirectional pair with >= 3 dimensions' : 'no qualifying bidirectional pair');
 
-  // Open Spark -> find Flink overlap card -> open Flink -> find Spark.
+  // Symmetric overlap probe: pick the FIRST bidirectional pair with >=3 dims
+  // from the inlined data (data-driven, not hardcoded component names), then
+  // confirm opening either side surfaces the other as an overlap card. Doc 17
+  // Sample Policy: acceptance must not be written around fixed names.
   {
-    const spark = 'component:apache-spark', flink = 'component:apache-flink';
-    await open(page, 'investigation/' + encodeURIComponent(spark));
-    const sparkShowsFlink = await page.locator('[data-portolan-overlap="' + flink + '"]').count();
-    await open(page, 'investigation/' + encodeURIComponent(flink));
-    const flinkShowsSpark = await page.locator('[data-portolan-overlap="' + spark + '"]').count();
-    record('overlap-symmetric', (sparkShowsFlink > 0 && flinkShowsSpark > 0) ? 'verified' : 'failed',
-      'spark->flink=' + sparkShowsFlink + ', flink->spark=' + flinkShowsSpark);
+    const qualifying = overlapPairs.filter(p => {
+      const reverse = overlapPairs.some(q => q.from === p.to && q.to === p.from);
+      return reverse && p.dims >= 3;
+    });
+    if (qualifying.length === 0) {
+      record('overlap-symmetric', 'failed', 'no qualifying bidirectional pair to probe');
+    } else {
+      const { from, to } = qualifying[0];
+      await open(page, 'investigation/' + encodeURIComponent(from));
+      const fromShowsTo = await page.locator('[data-portolan-overlap="' + to + '"]').count();
+      await open(page, 'investigation/' + encodeURIComponent(to));
+      const toShowsFrom = await page.locator('[data-portolan-overlap="' + from + '"]').count();
+      record('overlap-symmetric', (fromShowsTo > 0 && toShowsFrom > 0) ? 'verified' : 'failed',
+        from + '->' + to + '=' + fromShowsTo + ', ' + to + '->' + from + '=' + toShowsFrom);
+    }
   }
 
   // --- ecosystem map ---
@@ -334,22 +345,27 @@ async function main() {
 
   await browser.close();
 
-  // Build the manual-review-question -> evidence map.
+  // Build the manual-review-question -> evidence map. Each question records
+  // the selector/section that answers it + the dominant source boundary, but
+  // the VERDICT for the reading-quality questions is not_assessed (machine
+  // proves the surface exists + counts; whether a cold reviewer can answer the
+  // question is the human review gate). Only the bidirectionality questions
+  // (q5/q6) are machine-verifiable and carry verified/failed.
   const acceptance = {
     target: 'apache-bigtop',
     selected_components: ids,
     checks,
     manual_review_gate: {
-      q1_ecosystem_placement: { selector: '[data-portolan-section="ecosystem-placement"]', verdict: 'verified', source_boundary: 'curated-knowledge' },
-      q2_purpose: { selector: '[data-portolan-section="purpose-capabilities"]', verdict: 'verified', source_boundary: 'curated-knowledge' },
-      q3_internal_model: { selector: '[data-portolan-section="internal-model"]', verdict: 'verified', source_boundary: 'curated-knowledge' },
-      q4_risks: { selector: '[data-portolan-section="risks"]', verdict: 'verified', source_boundary: 'agent-hypothesis' },
+      q1_ecosystem_placement: { selector: '[data-portolan-section="ecosystem-placement"]', surface_present: 'verified', reading_quality: 'not_assessed', source_boundary: 'curated-knowledge' },
+      q2_purpose: { selector: '[data-portolan-section="purpose-capabilities"]', surface_present: 'verified', reading_quality: 'not_assessed', source_boundary: 'curated-knowledge' },
+      q3_internal_model: { selector: '[data-portolan-section="internal-model"]', surface_present: 'verified', reading_quality: 'not_assessed', source_boundary: 'curated-knowledge' },
+      q4_risks: { selector: '[data-portolan-section="risks"]', surface_present: 'verified', reading_quality: 'not_assessed', source_boundary: 'agent-hypothesis' },
       q5_overlap_components: { selector: '[data-portolan-overlap]', verdict: bidirOk ? 'verified' : 'failed', source_boundary: 'curated-knowledge' },
       q6_overlap_similar_different: { selector: '[data-portolan-section="overlap-alternatives"]', verdict: bidirOk ? 'verified' : 'failed', source_boundary: 'curated-knowledge' },
-      q7_evidence_boundary: { selector: '[data-portolan-section="evidence-boundary"]', verdict: 'verified', source_boundary: 'multi' },
+      q7_evidence_boundary: { selector: '[data-portolan-section="evidence-boundary"]', surface_present: 'verified', reading_quality: 'not_assessed', source_boundary: 'multi' },
     },
     screenshots: fs.readdirSync(outDir).filter(f => f.endsWith('.png')),
-    human_review_boundary: 'This harness proves the surfaces, counts, bidirectionality, and click contract. The seven semantic-question verdicts are machine-verified as present; their READING QUALITY is the human review gate.',
+    human_review_boundary: 'This harness proves the surfaces, counts, bidirectionality, and click contract. For q1-q4/q7 the surface presence is machine-verified but the reading quality is not_assessed (human gate). Only q5/q6 (bidirectionality) are fully machine-verified.',
   };
   fs.writeFileSync(resultPath, JSON.stringify(acceptance, null, 2) + '\n');
 
