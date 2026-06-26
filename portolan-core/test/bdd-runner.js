@@ -37,6 +37,32 @@ const bindings = [
   // Feature: Honest absence
   { feature: 'honest-absence', scenario: 'Behaviour-only atlas when no intentions/representations ingested', binding: { unit: EXECUTABLE, test: 'BDD [honest-absence]: behaviour-only atlas when no intentions/representations ingested' } },
   { feature: 'honest-absence', scenario: 'Container level honest-empty without runtime evidence', binding: { unit: EXECUTABLE, test: 'BDD [honest-absence]: confidence is target-state (not in 0.1.0 schema) but the contract is defined' } },
+
+  // Feature: Atlas navigation index (captain-atlas 13)
+  { feature: 'atlas-navigation-index', scenario: 'Bigtop package route is navigable', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Bigtop package route is navigable' } },
+  { feature: 'atlas-navigation-index', scenario: 'Portolan-self implementation route is navigable', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Portolan-self implementation route is navigable' } },
+  { feature: 'atlas-navigation-index', scenario: 'Coverage exposes missing and partial regions', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Coverage exposes missing and partial regions' } },
+  { feature: 'atlas-navigation-index', scenario: 'Findings are first-class atlas objects', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Findings are first-class atlas objects' } },
+  { feature: 'atlas-navigation-index', scenario: 'Unknown probes preserve not-assessed truth', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Unknown probes preserve not-assessed truth' } },
+  { feature: 'atlas-navigation-index', scenario: 'Receipt validation does not trust agent self-status blindly', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Receipt validation does not trust agent self-status blindly' } },
+  { feature: 'atlas-navigation-index', scenario: 'Generated atlas is compared to raw-agent frontier', binding: { unit: EXECUTABLE, test: 'BDD [atlas-navigation-index]: Generated atlas is compared to raw-agent frontier' } },
+
+  // Feature: Atlas reading experience (captain-atlas 15)
+  { feature: 'atlas-reading-experience', scenario: 'The first screen is a system walkthrough', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: The first screen is a system walkthrough' } },
+  { feature: 'atlas-reading-experience', scenario: 'Package journey reads as a system route', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Package journey reads as a system route' } },
+  { feature: 'atlas-reading-experience', scenario: 'Route dossier explains evidence and uncertainty', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Route dossier explains evidence and uncertainty' } },
+  { feature: 'atlas-reading-experience', scenario: 'Findings and probes guide the next expedition', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Findings and probes guide the next expedition' } },
+  { feature: 'atlas-reading-experience', scenario: 'Coverage shows system scale', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Coverage shows system scale' } },
+  { feature: 'atlas-reading-experience', scenario: 'Human review can reject repo-map regressions', binding: { unit: EXECUTABLE, test: 'BDD [atlas-reading-experience]: Human review can reject repo-map regressions' } },
+
+  // Feature: Atlas drill-down semantics (captain-atlas 16)
+  { feature: 'atlas-drilldown-semantics', scenario: 'Navigation labels are reader-facing', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Navigation labels are reader-facing' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Relationship clicks explain the edge', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Relationship clicks explain the edge' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Route stages drill into evidence', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Route stages drill into evidence' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Unknown probes keep route context', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Unknown probes keep route context' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Evidence anchors state what they prove', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Evidence anchors state what they prove' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'C4 is honest-empty when runtime/deploy evidence is absent', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: C4 is honest-empty when runtime/deploy evidence is absent' } },
+  { feature: 'atlas-drilldown-semantics', scenario: 'Run Log separates artifact validation from evidence usability', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Run Log separates artifact validation from evidence usability' } },
 ];
 
 // --- self-verification tests (run by node --test) ---
@@ -59,8 +85,13 @@ test('bdd: every referenced unit test file exists on disk', () => {
 test('bdd: every feature file exists on disk', () => {
   const features = [...new Set(bindings.map(b => b.feature))];
   for (const f of features) {
-    const fp = path.join(__dirname, 'features', `feature-p1a-${f}.feature`);
-    assert.ok(fs.existsSync(fp), `feature file does not exist: feature-p1a-${f}.feature`);
+    // Features are named feature-p1a-<name>.feature (Part-1a) or
+    // feature-p1b-<name>.feature (Part-1b). Accept either prefix.
+    const candidates = [
+      path.join(__dirname, 'features', `feature-p1a-${f}.feature`),
+      path.join(__dirname, 'features', `feature-p1b-${f}.feature`),
+    ];
+    assert.ok(candidates.some(p => fs.existsSync(p)), `feature file does not exist: feature-p1{a|b}-${f}.feature`);
   }
 });
 
