@@ -74,7 +74,7 @@ function main() {
   si.sources = registry.sources || [];
 
   // Validate BEFORE writing. Never emit an invalid contract.
-  const violations = validateShape(si, { offline: true });
+  const violations = validateShape(si);
   if (violations.length) {
     console.error(`\n${violations.length} semantic-investigation violation(s); not writing output:`);
     for (const v of violations) {

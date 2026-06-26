@@ -44,11 +44,9 @@ const { openC4 } = require('./use-cases/open-c4');
 const { openComponentDossier } = require('./use-cases/open-component-dossier');
 // captain-atlas 17 semantic component investigation (bounded investigation
 // pages + ecosystem placement map; the semantic layer over the atlas).
-const { openSemanticInvestigation, overlapRelationsFor, ecosystemPlacementMap, buildSemanticViewModel } = require('./use-cases/open-semantic-investigation');
-// resolveSourceRef is a pure domain lookup needed by sourceCardLink to resolve
-// curated/source-card links at render time. Imported once (not a dynamic
-// require inside a renderer) for consistency with the rest of the shell.
-const { resolveSourceRef } = require('./domain/semantic-investigation');
+// All semantic accessors (incl. resolveSourceRef) come through the use-case so
+// the shell depends only on use-cases, not the domain (Clean Architecture rule).
+const { openSemanticInvestigation, overlapRelationsFor, ecosystemPlacementMap, buildSemanticViewModel, resolveSourceRef } = require('./use-cases/open-semantic-investigation');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {

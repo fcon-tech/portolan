@@ -171,6 +171,25 @@ test('investigationForComponent returns null for a non-sample id', () => {
   assert.strictEqual(investigationForComponent(si, 'component:zz'), null);
 });
 
+test('investigationForComponent returns null for a component present in the sidecar but NOT selected (deepseek M1)', () => {
+  // A component that exists in si.components but is not in sample.components
+  // must NOT render a full investigation — it gets a typed not-investigated panel.
+  const si = baseFixture();
+  const unselected = fixtureComponent('component:unselected', {});
+  si.components.push(unselected);
+  // sample.components stays ['component:a','component:b','component:c'].
+  assert.strictEqual(investigationForComponent(si, 'component:unselected'), null);
+  // a selected id still resolves.
+  assert.ok(investigationForComponent(si, 'component:a'));
+});
+
+test('validateShape handles null and empty object without throwing', () => {
+  assert.ok(validateShape(null).some(v => v.code === 'not-object'));
+  // an empty object has no sample -> sample-reason + sample-size violations, no throw.
+  const v = validateShape({});
+  assert.ok(Array.isArray(v) && v.length > 0);
+});
+
 // ===========================================================================
 // ecosystemPlacementMap
 // ===========================================================================
@@ -323,6 +342,6 @@ test('the committed Bigtop fixture validates (load + validateShape)', () => {
   const dir = path.join(__dirname, '..', 'fixtures', 'semantic-investigation');
   const si = JSON.parse(fs.readFileSync(path.join(dir, 'semantic-investigation.bigtop.json'), 'utf8'));
   si.sources = JSON.parse(fs.readFileSync(path.join(dir, 'sources.json'), 'utf8')).sources;
-  const violations = validateShape(si, { offline: true });
+  const violations = validateShape(si);
   assert.deepStrictEqual(violations, [], `expected no violations, got: ${JSON.stringify(violations)}`);
 });

@@ -248,6 +248,14 @@ function investigationForComponent(si, componentId) {
   const vm = buildSemanticViewModel(si);
   const component = vm.componentsById.get(componentId);
   if (!component) return null;
+  // Only SELECTED sample components get an investigation. A component present
+  // in the sidecar but not in sample.components is not "selected" — return null
+  // so the shell renders a typed not-investigated panel (doc 17 + admiral
+  // correction: null is a hard failure for selected ids, a typed gap for
+  // non-selected ones). This closes the contract gap where a non-selected
+  // component rendered a full 8-section investigation.
+  const selected = new Set(((si && si.sample && si.sample.components) || []));
+  if (!selected.has(componentId)) return null;
   return decorateComponent(si, vm, component);
 }
 
@@ -326,8 +334,12 @@ function overlapRelationsFor(si, componentId) {
   for (const [otherId, edges] of neighbors) {
     const reverse = vm.overlapGraph.get(otherId);
     const bidirectional = !!(reverse && reverse.has(componentId));
+    // Dimension union must match buildSemanticViewModel/ecosystemPlacementMap:
+    // BOTH directions. Otherwise the component page could show fewer dimensions
+    // than the ecosystem map for the same pair (consistency bug).
     const dims = new Set();
     for (const e of edges) for (const d of e.dimensions) dims.add(d);
+    if (reverse) for (const e of reverse.get(componentId)) for (const d of e.dimensions) dims.add(d);
     out.push({ otherId, edges, dimensions: [...dims], bidirectional });
   }
   return out;
@@ -368,8 +380,7 @@ function ecosystemPlacementMap(si, selectedIds) {
  *
  * Each violation: { code: string, message: string, componentId?: string }
  */
-function validateShape(si, opts) {
-  const offline = opts && opts.offline; // skip network/url sanity
+function validateShape(si) {
   const violations = [];
   if (!si || typeof si !== 'object') {
     return [{ code: 'not-object', message: 'semantic investigation is not an object' }];
@@ -394,7 +405,7 @@ function validateShape(si, opts) {
       violations.push({ code: 'sample-missing-component', message: `sample references ${id} but no component data exists`, componentId: id });
       continue;
     }
-    const v = validateComponent(si, vm, component, { offline });
+    const v = validateComponent(si, vm, component);
     for (const x of v) x.componentId = x.componentId || id;
     violations.push(...v);
     if (isAllNotAssessed(component)) allNotAssessedCount++;
@@ -425,9 +436,8 @@ function validateShape(si, opts) {
   return violations;
 }
 
-function validateComponent(si, vm, component, opts) {
+function validateComponent(si, vm, component) {
   const violations = [];
-  const offline = opts && opts.offline;
 
   // Purpose with source boundary.
   if (!component.purpose || !component.purpose.summary) {

@@ -17,6 +17,7 @@ const {
   overlapRelationsFor,
   ecosystemPlacementMap,
   buildSemanticViewModel,
+  resolveSourceRef,
 } = require('../domain/semantic-investigation');
 
 function openSemanticInvestigation(si, componentId) {
@@ -26,8 +27,10 @@ function openSemanticInvestigation(si, componentId) {
 module.exports = {
   openSemanticInvestigation,
   // Re-export the accessors the shell needs for the ecosystem map + overlap
-  // sections so it depends only on this use-case, not the domain directly.
+  // sections + source-card resolution so it depends only on this use-case, not
+  // the domain directly (Clean Architecture dependency rule).
   overlapRelationsFor,
   ecosystemPlacementMap,
   buildSemanticViewModel,
+  resolveSourceRef,
 };
