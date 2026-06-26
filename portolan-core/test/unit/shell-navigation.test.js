@@ -564,3 +564,37 @@ test('drilldown: Structure Map section carries a section-intro marker', () => {
   const root = renderAt('/structure');
   assert.ok(findAttr(root, 'data-portolan-section-intro', 'true'), 'structure map section intro marked');
 });
+
+// --- k2p6 Major 1: route dossier shows per-route evidence usability ---
+test('drilldown: route dossier shows per-route evidence usability badges', () => {
+  const root = renderAt('/route/route:self:command-dispatch');
+  assert.ok(findAttr(root, 'data-portolan-kind', 'route-evidence-usability'), 'route evidence-usability section');
+  // evidence usability badge present (anchored|partial|weak|none)
+  const allText = allNodes(root).map(n => String(n.textContent || '')).join(' ');
+  assert.ok(/evidence: (anchored|partial|weak|none)/.test(allText), 'evidence usability verdict visible');
+  assert.ok(/runtime: runtime_(verified|partial|not_assessed)/.test(allText), 'runtime assessment visible');
+});
+
+// --- k2p6 Major 2: finding/probe dossiers render linked stages ---
+test('drilldown: finding dossier renders related stages (stageRefs)', () => {
+  const root = renderAt('/finding/finding:f1');
+  // The fixture finding is referenced by stage 1 of the route -> stageRefs non-empty.
+  assert.ok(findText(root, 'RELATED STAGES') || findText(root, 'Command dispatch route'), 'finding shows related stages');
+});
+
+test('drilldown: probe dossier renders linked stages (stageRefs)', () => {
+  const root = renderAt('/probe/unknown:u1');
+  assert.ok(findText(root, 'LINKED STAGES') || findText(root, 'Command dispatch route'), 'probe shows linked stages');
+});
+
+// --- k2p6 Major 3: C4 Component must not infer from families ---
+test('drilldown: C4 Component shows honest-empty, not family clusters, when no component boxes', () => {
+  // atlas with families but NO component boxes -> Component honest-empty.
+  const atlas = fixtureAtlasWithRels();
+  atlas.c4.families = [{ id: 'c4-family:data', display_name: 'Data', route: '#/overview' }];
+  atlas.c4.component_boxes = [];
+  const root = renderAt('/c4', undefined, atlas);
+  assert.ok(findAttr(root, 'data-portolan-c4', 'component-honest-empty'), 'component honest-empty (no family inference)');
+  // the family must NOT appear as a component-level box
+  assert.ok(!findText(root, 'Data'), 'family name not promoted to Component level');
+});

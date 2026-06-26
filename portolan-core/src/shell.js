@@ -714,6 +714,13 @@ function createPortolanShell(opts) {
       qualityBadge(data.routeQuality)));
     panel.appendChild(el('p', { class: 'prose route-thesis' }, text(data.thesis)));
     if (data.routeQualityNote) panel.appendChild(el('p', { class: 'muted' }, text(data.routeQualityNote)));
+    // captain-atlas 16 §System Route: evidence usability status for this route,
+    // shown as two badges so artifact validation is never conflated with
+    // evidence depth or runtime verification.
+    const euMeta = el('div', { class: 'card-meta route-evidence-usability', 'data-portolan-kind': 'route-evidence-usability' });
+    euMeta.appendChild(el('span', { class: `badge eu-axis-badge eu-evidence-${data.evidenceUsability}` }, text('evidence: ' + data.evidenceUsability)));
+    euMeta.appendChild(el('span', { class: 'badge badge-runtime' }, text('runtime: ' + data.runtimeAssessment)));
+    panel.appendChild(euMeta);
 
     // 2. Diagram (§3): the route as an ordered system path, NOT a table.
     panel.appendChild(renderRouteDiagram(data.diagram, data.routeId));
@@ -977,6 +984,7 @@ function createPortolanShell(opts) {
         text('Route context below was reverse-derived from where this finding is referenced — the finding row itself carries no direct route refs.')));
     }
     if (data.routeIds.length) panel.appendChild(navRefList('Routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.stageRefs && data.stageRefs.length) panel.appendChild(linkedStagesList('Related stages', data.stageRefs));
     if (data.evidence.length) panel.appendChild(navRefList('Evidence', data.evidence.map(e => ({ id: e.evidence_id, label: `${e.evidence_id} (${e.evidence_state})`, kind: 'evidence' }))));
     if (f.next_raw_check) panel.appendChild(dossierSection('Next check to reduce uncertainty', f.next_raw_check));
     panel.appendChild(routeLink('← Back to hazards', '/findings', { class: 'back-link' }));
@@ -1022,6 +1030,7 @@ function createPortolanShell(opts) {
         text('Route/stage context below was reverse-derived from where this probe is referenced — the probe row itself carries no direct route refs.')));
     }
     if (data.routeIds.length) panel.appendChild(navRefList('Linked routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
+    if (data.stageRefs && data.stageRefs.length) panel.appendChild(linkedStagesList('Linked stages', data.stageRefs));
     if (data.findings.length) panel.appendChild(navRefList('Linked findings', data.findings.map(f => ({ id: f.finding_id, label: f.title, kind: 'finding' }))));
     panel.appendChild(routeLink('← Back to next checks', '/unknowns', { class: 'back-link' }));
     main.appendChild(panel);
@@ -1051,9 +1060,16 @@ function createPortolanShell(opts) {
       panel.appendChild(el('p', { class: 'muted evidence-stage-counts' },
         text(`${eu.stageCounts.total} stage(s): ${eu.stageCounts.visibleEvidence} with visible evidence, ${eu.stageCounts.preciseAnchors} with precise source anchors.`)));
       // Hard rule: make it impossible to misread artifact_validated as evidence-rich.
-      if (eu.artifactValidation === 'verified' && (eu.evidenceUsability === 'weak' || eu.evidenceUsability === 'none')) {
+      // The caveat fires for anything short of fully-anchored evidence (weak/none/partial),
+      // because 'partial' can also be misread as evidence-rich (k2p6 minor #10).
+      if (eu.artifactValidation === 'verified' && eu.evidenceUsability !== 'anchored') {
+        const strength = eu.evidenceUsability === 'partial'
+          ? 'only partial — some stages have precise anchors while others do not'
+          : eu.evidenceUsability === 'weak'
+            ? 'weak — key stages lack precise source anchors'
+            : 'absent — no source-visible evidence with anchors was found';
         panel.appendChild(el('p', { class: 'muted evidence-caveat', 'data-portolan-truth': 'artifact-not-evidence' },
-          text('The bundle validates structurally, but evidence usability is weak — artifacts parse, yet key stages lack precise source anchors. Do not treat this as an evidence-rich atlas.')));
+          text(`The bundle validates structurally, but evidence usability is ${strength}. Artifacts parsing is not the same as an evidence-rich atlas. Do not treat the 'verified' artifact status as proof of source-depth.`)));
       }
     }
 
@@ -1427,13 +1443,17 @@ function createPortolanShell(opts) {
     for (const b of model.component.boxes) {
       comp.appendChild(routeLink(b.display_name || b.id, b.route || '#/overview', { id: b.id, kind: 'component', class: 'chip c4-box' }));
     }
-    if (!model.component.boxes.length && model.component.families.length) {
-      // No explicit component boxes, but families exist: show family clusters.
-      for (const f of model.component.families) {
-        comp.appendChild(routeLink(f.display_name || f.id, f.route || '#/overview', { id: f.id, kind: 'c4-family', class: 'chip c4-box' }));
-      }
+    // captain-atlas 16 §C4: Component uses PROMOTED UNITS ONLY. Do NOT infer
+    // component boxes from families, repo names, colors, or grouping — families
+    // are a separate structural axis, not a C4 Component level. When no
+    // explicit component boxes exist, show an honest-empty state instead.
+    if (comp.children.length) {
+      panel.appendChild(comp);
+    } else {
+      const empty = el('div', { class: 'c4-honest-empty', 'data-portolan-c4': 'component-honest-empty' });
+      empty.appendChild(el('p', { class: 'muted' }, text('No promoted Component boxes. Components are not inferred from families or repository names — open the Structure Map to see landscape units, or promote specific units to populate this level.')));
+      panel.appendChild(empty);
     }
-    if (comp.children.length) panel.appendChild(comp); else panel.appendChild(el('p', { class: 'muted' }, text('No promoted units.')));
     // Code level (out of scope).
     panel.appendChild(el('div', { class: 'section-kicker' }, text('CODE · out of scope')));
     panel.appendChild(el('p', { class: 'muted c4-code-handoff', 'data-portolan-c4': 'code-out-of-scope' }, text(model.code.nextAction)));

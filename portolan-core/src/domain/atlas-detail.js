@@ -403,9 +403,12 @@ function componentNextAction(comp, coverage, probeIds) {
  */
 function c4Model(atlas) {
   const c4 = (atlas && atlas.c4) || {};
-  const context = c4.context_boxes || [];
+  const declaredContext = c4.context_boxes || [];
   const allBoxes = c4.component_boxes || [];
-  const families = c4.families || [];
+  // Context boxes live in `context_boxes`, but the schema also allows them in
+  // `component_boxes` with level === 'context'. Merge both so no context is
+  // silently dropped (k2p6 minor #8).
+  const context = [...declaredContext, ...allBoxes.filter(b => b && b.level === 'context')];
 
   // C4 boxes are all modelled as `component_boxes` entries distinguished by
   // their `level` field (schema/system-map.schema.json: c4_box.level enum
@@ -428,10 +431,12 @@ function c4Model(atlas) {
       };
 
   // Component uses promoted units only. Limited/derived when runtime/deploy
-  // evidence is absent (family-promoted, not deploy-observed).
+  // evidence is absent (family-promoted, not deploy-observed). Families are NOT
+  // surfaced here as component boxes — they are a separate structural axis
+  // (captain-atlas 16: "C4 must not infer containers from repository names,
+  // family colors, or visual grouping").
   const component = {
     boxes: componentBoxes,
-    families,
     limited: !hasRuntimeDeployEvidence,
     note: hasRuntimeDeployEvidence
       ? 'Component boxes are observed from the model.'

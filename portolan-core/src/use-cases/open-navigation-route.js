@@ -20,6 +20,7 @@
 const {
   buildRouteDiagram, routeThesis, stageRole, anchorStatus, anchorExplanation,
 } = require('../domain/atlas-reading');
+const { classifyEvidenceUsability, classifyRuntimeAxis } = require('../domain/atlas-evidence-usability');
 
 function openNavigationRoute(navAtlas, routeId) {
   const ni = (navAtlas && navAtlas.navigationIndex) || [];
@@ -69,6 +70,10 @@ function openNavigationRoute(navAtlas, routeId) {
     findings: resolve(findingIds, 'finding_id', (navAtlas && navAtlas.findings) || []),
     probes: resolve(probeIds, 'unknown_id', (navAtlas && navAtlas.unknownProbes) || []),
     evidence: resolve(evidenceIds, 'evidence_id', (navAtlas && navAtlas.evidence) || []),
+    // captain-atlas 16 §System Route: evidence usability status for the route
+    // (distinct from artifact validation). Computed from the route's own stages.
+    evidenceUsability: classifyEvidenceUsability(stages),
+    runtimeAssessment: classifyRuntimeAxis(stages),
     nextRawCheck: stages[stages.length - 1].next_raw_check || '',
   };
 }
