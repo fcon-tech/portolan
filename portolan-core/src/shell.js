@@ -45,6 +45,10 @@ const { openComponentDossier } = require('./use-cases/open-component-dossier');
 // captain-atlas 17 semantic component investigation (bounded investigation
 // pages + ecosystem placement map; the semantic layer over the atlas).
 const { openSemanticInvestigation, overlapRelationsFor, ecosystemPlacementMap, buildSemanticViewModel } = require('./use-cases/open-semantic-investigation');
+// resolveSourceRef is a pure domain lookup needed by sourceCardLink to resolve
+// curated/source-card links at render time. Imported once (not a dynamic
+// require inside a renderer) for consistency with the rest of the shell.
+const { resolveSourceRef } = require('./domain/semantic-investigation');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {
@@ -1533,7 +1537,6 @@ function createPortolanShell(opts) {
   // card label as a resolvable local reference. Never invents a link.
   function sourceCardLink(sourceRef) {
     if (!sourceRef) return el('span', { class: 'muted' }, text('no source ref'));
-    const { resolveSourceRef } = require('./domain/semantic-investigation');
     const r = resolveSourceRef(semanticInvestigation, sourceRef);
     if (!r.resolves) {
       return el('span', { class: 'muted', 'data-portolan-source-unresolved': 'true' }, text('unresolved source: ' + sourceRef));
@@ -1839,10 +1842,20 @@ function createPortolanShell(opts) {
   // capability, so a different DOM marker and a different data source.
   // =========================================================================
   function renderEcosystemMap(main) {
-    const map = ecosystemPlacementMap(semanticInvestigation);
     const panel = el('section', { class: 'panel ecosystem-map' });
     panel.setAttribute('data-portolan-view', 'ecosystem');
     panel.setAttribute('data-portolan-kind', 'ecosystem-map');
+    // Guard: if a user lands on #/ecosystem with no semantic investigation
+    // loaded, render a typed empty state instead of crashing on
+    // semanticInvestigation.sample (defensive — currentView() also gates the
+    // tab, but a hand-edited hash must not throw).
+    if (!semanticVm) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Semantic Map')));
+      panel.appendChild(el('p', { class: 'muted' }, text('No semantic investigation is loaded for this atlas, so there is no capability-region map to show. Open the Structure Map for the unit/edge chart.')));
+      main.appendChild(panel);
+      return;
+    }
+    const map = ecosystemPlacementMap(semanticInvestigation, selectedComponentIds);
     panel.appendChild(el('h1', { class: 'panel-title' }, text('Semantic Map · capability regions')));
     panel.appendChild(sectionIntro('Where the investigated components sit by capability, and where they overlap or act as alternatives. This is a capability view, not the repository graph — open the Structure Map for the unit/edge chart.'));
     if (semanticInvestigation.sample && semanticInvestigation.sample.selection_reason) {

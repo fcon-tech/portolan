@@ -184,6 +184,46 @@ test('ecosystemPlacementMap groups components by capability region', () => {
   assert.ok(map.overlapPairs.length >= 1);
 });
 
+test('ecosystemPlacementMap places only SELECTED components (not every sidecar component)', () => {
+  // Add a 4th component that is NOT in the sample; it must not appear on the map.
+  const si = baseFixture({
+    components: [
+      ...baseFixture().components,
+      fixtureComponent('component:unselected', {}),
+    ],
+  });
+  const selectedOnly = new Set(si.sample.components);
+  const map = ecosystemPlacementMap(si, selectedOnly);
+  const placed = new Set();
+  for (const r of map.regions) for (const c of r.components) placed.add(c.id);
+  assert.ok(!placed.has('component:unselected'), 'an unselected sidecar component must not be placed on the map');
+  for (const id of selectedOnly) assert.ok(placed.has(id), `selected component ${id} should be placed`);
+});
+
+test('a local-corpus claim with an unresolvable evidence ref fails validation', () => {
+  const si = baseFixture();
+  // Point a concept's source_ref at an evidence id not in any boundary ledger.
+  si.components[0].internal_concepts[0].source_boundary = 'local-corpus';
+  si.components[0].internal_concepts[0].source_ref = 'evidence:does-not-exist';
+  const codes = validateShape(si).map(v => v.code);
+  assert.ok(codes.includes('source-unresolved'), 'an unresolvable local-corpus evidence ref must fail');
+});
+
+test('a local-corpus evidence ref resolves against per-component evidence_boundary', () => {
+  // resolveSourceRef must read each component's evidence_boundary.local_corpus.
+  const si = baseFixture();
+  si.sources = si.sources || [];
+  const r = resolveSourceRef(si, 'evidence:e1');
+  assert.strictEqual(r.resolves, true, 'evidence:e1 is in a component boundary and must resolve');
+});
+
+test('validateShape rejects an unknown semantic relation type', () => {
+  const si = baseFixture();
+  si.components[0].semantic_relations.push({ type: 'made_up_relation', target_id: 'component:b', dimensions: ['capability:p'], explanation: 'x', source_boundary: 'curated-knowledge', source_ref: 'source:note-a' });
+  const codes = validateShape(si).map(v => v.code);
+  assert.ok(codes.includes('bad-relation-type'), 'an unknown relation type must fail');
+});
+
 // ===========================================================================
 // validateShape (the contract gate)
 // ===========================================================================

@@ -103,12 +103,20 @@ function resolveSourceRef(si, sourceRef) {
   const id = sourceRef.slice(colon + 1);
 
   if (kind === 'evidence') {
-    // Local-corpus evidence: resolvable when a local_corpus evidence id is
-    // declared in the boundary ledger. The generator wires these to navAtlas
-    // evidence; here we only check the boundary ledger membership.
-    const localIds = new Set((si.evidenceBoundary && si.evidenceBoundary.local_corpus) || []);
+    // Local-corpus evidence: resolvable when the id is declared as a local_corpus
+    // entry on ANY component's evidence_boundary. The data contract stores the
+    // boundary ledger per component (component.evidence_boundary.local_corpus),
+    // not as a single top-level field. Aggregate across components so an
+    // evidence:<id> ref resolves regardless of which component declares it.
+    const localIds = new Set();
+    for (const c of (si.components || [])) {
+      for (const e of (((c.evidence_boundary || {}).local_corpus) || [])) localIds.add(e);
+    }
+    // Also honour a top-level si.evidenceBoundary.local_corpus if a producer
+    // ever emits one (forward-compatible).
+    for (const e of (((si.evidenceBoundary || {}).local_corpus) || [])) localIds.add(e);
     if (localIds.has(sourceRef)) return { resolves: true, sourceCard: { id: sourceRef, kind: 'local-corpus' } };
-    return { resolves: false, reason: `evidence ref "${sourceRef}" not in local_corpus boundary` };
+    return { resolves: false, reason: `evidence ref "${sourceRef}" not in any component's local_corpus boundary` };
   }
   // Intra-investigation refs (risk/concept/capability/gap) self-resolve when the
   // referenced object exists in the component's data.
@@ -331,11 +339,16 @@ function overlapRelationsFor(si, componentId) {
  * relations drawn as connectors. This is NOT the repository graph — it is a
  * capability-region view (doc 17 §Ecosystem Placement Map).
  */
-function ecosystemPlacementMap(si) {
+function ecosystemPlacementMap(si, selectedIds) {
   const vm = buildSemanticViewModel(si);
+  // Only SELECTED components are placed on the map. The map is the sample's
+  // capability placement, not a dump of every component in the sidecar. When no
+  // selectedIds is given, fall back to the sample set.
+  const selected = selectedIds instanceof Set ? selectedIds : new Set(((si && si.sample && si.sample.components) || []));
   const regions = ((si && si.regions) || []).map(r => {
     const placed = [];
     for (const c of (si.components || [])) {
+      if (!selected.has(c.id)) continue;
       if ((c.ecosystem_regions || []).includes(r.id)) {
         placed.push({ id: c.id, label: c.display_name || c.id });
       }
@@ -451,13 +464,27 @@ function validateComponent(si, vm, component, opts) {
     }
   }
 
-  // Every curated-knowledge claim must resolve to a source card.
+  // Every ASSESSED claim must resolve to a source card or boundary entry — not
+  // only curated-knowledge. local-corpus evidence refs must resolve against the
+  // per-component boundary ledger; agent-hypothesis claims must at least carry a
+  // ref. not_assessed claims need no ref. This catches the class of bug where a
+  // local-corpus evidence:<id> points at an id not in any boundary ledger.
   for (const claim of iterClaims(component)) {
-    if (claim.sourceBoundary === 'curated-knowledge' && !resolveSourceRef(si, claim.sourceRef).resolves) {
-      violations.push({ code: 'curated-unresolved', message: `${component.id}: curated-knowledge claim "${claim.label || claim.id}" has no resolvable source card (source_ref="${claim.sourceRef || ''}")`, componentId: component.id });
-    }
     if (!SOURCE_BOUNDARIES.has(claim.sourceBoundary)) {
       violations.push({ code: 'bad-boundary', message: `${component.id}: claim "${claim.label || claim.id}" has unknown source_boundary "${claim.sourceBoundary}"`, componentId: component.id });
+      continue;
+    }
+    if (claim.sourceBoundary === 'not_assessed') continue;
+    if (!resolveSourceRef(si, claim.sourceRef).resolves) {
+      const code = claim.sourceBoundary === 'curated-knowledge' ? 'curated-unresolved' : 'source-unresolved';
+      violations.push({ code, message: `${component.id}: ${claim.sourceBoundary} claim "${claim.label || claim.id}" has no resolvable source (source_ref="${claim.sourceRef || ''}")`, componentId: component.id });
+    }
+  }
+
+  // Relation type must be a known semantic relation.
+  for (const rel of (component.semantic_relations || [])) {
+    if (!RELATION_TYPES.has(rel.type)) {
+      violations.push({ code: 'bad-relation-type', message: `${component.id}: semantic_relation to "${rel.target_id}" has unknown type "${rel.type}"`, componentId: component.id });
     }
   }
 

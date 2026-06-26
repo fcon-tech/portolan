@@ -46,7 +46,13 @@ function main() {
     console.error(`error: fixture not found: ${args.fixture}`);
     process.exit(1);
   }
-  const si = JSON.parse(fs.readFileSync(args.fixture, 'utf8'));
+  let si;
+  try {
+    si = JSON.parse(fs.readFileSync(args.fixture, 'utf8'));
+  } catch (e) {
+    console.error(`error: fixture is not valid JSON: ${args.fixture}: ${e.message}`);
+    process.exit(1);
+  }
 
   // Load + inline the source registry into the output so the bundle is
   // self-contained (the shell reads sources off the inlined object, not a
@@ -58,7 +64,13 @@ function main() {
     console.error(`error: source-card registry not found: ${sourcesPath}`);
     process.exit(1);
   }
-  const registry = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+  let registry;
+  try {
+    registry = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+  } catch (e) {
+    console.error(`error: source-card registry is not valid JSON: ${sourcesPath}: ${e.message}`);
+    process.exit(1);
+  }
   si.sources = registry.sources || [];
 
   // Validate BEFORE writing. Never emit an invalid contract.

@@ -47,7 +47,13 @@ function main() {
     console.error(`error: input not found: ${args.input}`);
     process.exit(1);
   }
-  const si = JSON.parse(fs.readFileSync(args.input, 'utf8'));
+  let si;
+  try {
+    si = JSON.parse(fs.readFileSync(args.input, 'utf8'));
+  } catch (e) {
+    console.error(`error: input is not valid JSON: ${args.input}: ${e.message}`);
+    process.exit(1);
+  }
 
   // Resolve the source-card registry + load it into the object so the domain
   // validator's resolveSourceRef can resolve source:<id> refs.
@@ -57,7 +63,13 @@ function main() {
     console.error(`error: source-card registry not found: ${sourcesPath}`);
     process.exit(1);
   }
-  const registry = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+  let registry;
+  try {
+    registry = JSON.parse(fs.readFileSync(sourcesPath, 'utf8'));
+  } catch (e) {
+    console.error(`error: source-card registry is not valid JSON: ${sourcesPath}: ${e.message}`);
+    process.exit(1);
+  }
   si.sources = registry.sources || [];
 
   // Offline verification that every curated-note card points at a REAL local

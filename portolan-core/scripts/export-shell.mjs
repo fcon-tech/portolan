@@ -314,7 +314,13 @@ function main() {
     console.error('usage: export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."] [--nav-bundle <dir>] [--target-root <dir>] [--semantic-investigation <si.json>]');
     process.exit(args.help ? 0 : 2);
   }
-  const map = JSON.parse(fs.readFileSync(args.systemMap, 'utf8'));
+  let map;
+  try {
+    map = JSON.parse(fs.readFileSync(args.systemMap, 'utf8'));
+  } catch (e) {
+    console.error(`error: system-map is not valid JSON: ${args.systemMap}: ${e.message}`);
+    process.exit(1);
+  }
   if (!map.objects || !Array.isArray(map.objects.components)) {
     console.error('error: not a valid system-map (missing objects.components)');
     process.exit(1);
@@ -336,7 +342,11 @@ function main() {
     if (!fs.existsSync(args.semanticInvestigation)) {
       console.error(`warning: semantic-investigation not found: ${args.semanticInvestigation}`);
     } else {
-      semanticInvestigation = JSON.parse(fs.readFileSync(args.semanticInvestigation, 'utf8'));
+      try {
+        semanticInvestigation = JSON.parse(fs.readFileSync(args.semanticInvestigation, 'utf8'));
+      } catch (e) {
+        console.error(`warning: semantic-investigation is not valid JSON: ${args.semanticInvestigation}: ${e.message}`);
+      }
     }
   }
   // safeInlineJson escapes U+2028/U+2029 and < so the inlined blobs cannot
