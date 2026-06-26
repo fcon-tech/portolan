@@ -172,6 +172,10 @@ const FORBIDDEN = ['[object Object]', 'Object not found'];
 const GENERIC_COPY = ['Named repository component present'];
 
 const checks = [];
+// Collect EVERY first-class internal link seen across all opened pages, then
+// visit the deduplicated set. Collecting once at the end would miss links on
+// the investigation pages (the ecosystem map replaces them in the DOM).
+const seenHrefs = new Set();
 let shotIdx = 0;
 function shot(page, label) {
   shotIdx += 1;
@@ -179,6 +183,21 @@ function shot(page, label) {
   return page.screenshot({ path: path.join(outDir, name), fullPage: true }).then(() => name);
 }
 function record(id, verdict, detail) { checks.push({ id, verdict, detail: detail || '' }); }
+
+// Collect first-class internal (#/) links from the currently-rendered panel.
+async function collectLinks(page) {
+  const found = await page.evaluate(() => {
+    const out = new Set();
+    for (const sel of ['.semantic-investigation a', '.ecosystem-map a']) {
+      for (const a of document.querySelectorAll(sel)) {
+        const h = a.getAttribute('href') || '';
+        if (h.startsWith('#/')) out.add(h.slice(1));
+      }
+    }
+    return [...out];
+  });
+  for (const h of found) seenHrefs.add(h);
+}
 
 async function readSelectedIds(page) {
   // Pull the selected component ids out of the inlined data blob. The shell
@@ -230,6 +249,7 @@ async function main() {
   for (const id of ids) {
     const enc = encodeURIComponent(id);
     await open(page, 'investigation/' + enc);
+    await collectLinks(page); // gather this investigation page's links while it's in the DOM
     const body = await page.locator('body').innerText();
     // All 8 sections present.
     const missing = [];
@@ -298,8 +318,10 @@ async function main() {
     } else {
       const { from, to } = qualifying[0];
       await open(page, 'investigation/' + encodeURIComponent(from));
+      await collectLinks(page);
       const fromShowsTo = await page.locator('[data-portolan-overlap="' + to + '"]').count();
       await open(page, 'investigation/' + encodeURIComponent(to));
+      await collectLinks(page);
       const toShowsFrom = await page.locator('[data-portolan-overlap="' + from + '"]').count();
       record('overlap-symmetric', (fromShowsTo > 0 && toShowsFrom > 0) ? 'verified' : 'failed',
         from + '->' + to + '=' + fromShowsTo + ', ' + to + '->' + from + '=' + toShowsFrom);
@@ -308,6 +330,7 @@ async function main() {
 
   // --- ecosystem map ---
   await open(page, 'ecosystem');
+  await collectLinks(page);
   const regionCount = await countAttr(page, 'data-portolan-region');
   const pairCount = await countAttr(page, 'data-portolan-overlap-pair');
   record('ecosystem-regions', regionCount >= 1 ? 'verified' : 'failed', regionCount + ' regions');
@@ -318,19 +341,12 @@ async function main() {
     ecosystemMapMarker > 0 ? 'distinct ecosystem-map marker' : 'no distinct marker');
   await shot(page, 'ecosystem-map');
 
-  // --- click every first-class visible link on each investigation page + map ---
-  // Collect hrefs from the investigation pages + ecosystem map, then visit each
-  // internal (#/) one and assert no forbidden artifact on the destination.
-  const visitedHrefs = await page.evaluate(() => {
-    const out = new Set();
-    for (const sel of ['.semantic-investigation a', '.ecosystem-map a']) {
-      for (const a of document.querySelectorAll(sel)) {
-        const h = a.getAttribute('href') || '';
-        if (h.startsWith('#/')) out.add(h.slice(1));
-      }
-    }
-    return [...out];
-  });
+  // --- click every first-class visible link collected across all pages ---
+  // seenHrefs was accumulated while each investigation page + the ecosystem map
+  // was in the DOM (a single end-of-run collect would miss the investigation
+  // links, since the ecosystem map replaces them). Visit each deduplicated
+  // internal (#/) href and assert no forbidden artifact on the destination.
+  const visitedHrefs = [...seenHrefs];
   let clickFailures = 0;
   for (const h of visitedHrefs) {
     try {
