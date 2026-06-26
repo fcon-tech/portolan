@@ -541,3 +541,26 @@ test('drilldown: probe detail shows reverse-derived route context when probe lac
   const root = renderAt('/probe/unknown:u1', nav);
   assert.ok(findText(root, 'reverse-derived'), 'reverse-derived context explained');
 });
+
+// --- Regression: M-1 evidence->stage links must be live (two-segment route) ---
+test('drilldown: evidence detail stage links use a resolvable two-segment /stage/<route>/<index> route', () => {
+  const root = renderWith('/evidence/ev:1');
+  // Find the linked-stages link and verify its href is a two-segment stage
+  // route (not a single-segment # that breaks the stage router).
+  const stageLinks = allNodes(root).filter(n =>
+    n.tagName === 'a' && n.attrs && n.attrs['data-portolan-kind'] === 'stage-target' &&
+    String(n.attrs.href || '').includes('/stage/'));
+  assert.ok(stageLinks.length > 0, 'evidence detail has linked-stage links');
+  for (const link of stageLinks) {
+    const href = String(link.attrs.href || '');
+    // href like "#/stage/route:self:command-dispatch/1" — TWO segments after /stage/
+    const tail = href.replace(/^#\/stage\//, '');
+    assert.ok(tail.includes('/'), 'stage route has two segments: ' + href);
+  }
+});
+
+// --- Regression: m-2 Structure Map carries a section-intro marker ---
+test('drilldown: Structure Map section carries a section-intro marker', () => {
+  const root = renderAt('/structure');
+  assert.ok(findAttr(root, 'data-portolan-section-intro', 'true'), 'structure map section intro marked');
+});

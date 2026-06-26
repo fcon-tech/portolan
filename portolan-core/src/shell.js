@@ -40,7 +40,8 @@ const { openReceipt } = require('./use-cases/open-receipt');
 const { openRelationship } = require('./use-cases/open-relationship');
 const { openStage } = require('./use-cases/open-stage');
 const { openEvidence } = require('./use-cases/open-evidence');
-const { c4Model, componentDossierFromNav } = require('./domain/atlas-detail');
+const { openC4 } = require('./use-cases/open-c4');
+const { openComponentDossier } = require('./use-cases/open-component-dossier');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {
@@ -526,10 +527,12 @@ function createPortolanShell(opts) {
     const panel = el('section', { class: 'panel map-panel' });
     panel.setAttribute('data-portolan-view', navVm ? 'fleet' : 'map');
     panel.appendChild(el('h1', { class: 'panel-title' }, text(navVm ? 'Structure Map' : 'Behaviour map')));
-    const intro = el('p', { class: 'muted map-intro' },
-      text(navVm
-        ? 'A supporting map of the component fleet (repositories and their declared dependencies). This is secondary to the system walkthrough: each node is a landscape unit, each line is a declared dependency. Click a unit to open its dossier; click a line to open the relationship detail.'
-        : 'Each node is a landscape unit; lines are declared dependencies. Size shows connectivity, colour shows family. Click a unit to open its dossier.'));
+    // captain-atlas 16: the Structure Map also carries a section-intro marker
+    // so every section explains itself consistently (doc-16 §Navigation Labels).
+    const intro = sectionIntro(navVm
+      ? 'A supporting map of the component fleet (repositories and their declared dependencies). This is secondary to the system walkthrough: each node is a landscape unit, each line is a declared dependency. Click a unit to open its dossier; click a line to open the relationship detail.'
+      : 'Each node is a landscape unit; lines are declared dependencies. Size shows connectivity, colour shows family. Click a unit to open its dossier.');
+    intro.className = 'muted section-intro map-intro';
     panel.appendChild(intro);
     if (navVm) {
       const back = el('p', { class: 'muted' });
@@ -1121,10 +1124,25 @@ function createPortolanShell(opts) {
           : it.kind === 'coverage' ? `/coverage/${encodeURIComponent(it.id)}`
           : it.kind === 'finding' ? `/finding/${encodeURIComponent(it.id)}`
           : it.kind === 'probe' ? `/probe/${encodeURIComponent(it.id)}`
-          : it.kind === 'stage-target' ? `/stage/${encodeURIComponent(it.id)}`
           : '#/overview';
         grid.appendChild(routeLink(it.label, route, { id: it.id, kind: it.kind, class: 'chip' }));
       }
+    }
+    sec.appendChild(grid);
+    return sec;
+  }
+
+  // Linked-stages list for the evidence detail (captain-atlas 16). Stage routes
+  // are TWO segments /stage/<routeId>/<stageIndex>; the generic navRefList
+  // encodes a single id into one segment, which the stage router cannot parse.
+  // Build the links directly so evidence -> stage navigation is live.
+  function linkedStagesList(label, stageRefs) {
+    const sec = el('div', { class: 'ref-list' });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text(label.toUpperCase())));
+    const grid = el('div', { class: 'route-button-grid' });
+    for (const s of stageRefs) {
+      const stageRoute = `/stage/${encodeURIComponent(s.routeId)}/${s.stageIndex}`;
+      grid.appendChild(routeLink(s.label + ' (' + s.routeId + ' #' + s.stageIndex + ')', stageRoute, { id: s.routeId, kind: 'stage-target', class: 'chip' }));
     }
     sec.appendChild(grid);
     return sec;
@@ -1295,7 +1313,11 @@ function createPortolanShell(opts) {
     panel.appendChild(dossierSection('What this evidence proves', data.whatItProves));
     panel.appendChild(el('p', { class: 'muted evidence-truth', 'data-portolan-truth': 'source-not-runtime' }, text(data.whatItDoesNotProve)));
     if (data.routeIds.length) panel.appendChild(navRefList('Linked routes', data.routeIds.map(id => ({ id, label: id, kind: 'route' }))));
-    if (data.stageRefs.length) panel.appendChild(navRefList('Linked stages', data.stageRefs.map(s => ({ id: `${s.routeId}#${s.stageIndex}`, label: s.label + ' (' + s.routeId + ' #' + s.stageIndex + ')', kind: 'stage-target' }))));
+    // Linked stages: build TWO-SEGMENT /stage/<routeId>/<stageIndex> links
+    // directly, consistent with route diagram nodes. (The generic navRefList
+    // encodes the whole id into one segment, which breaks the stage router
+    // that expects <routeId>/<stageIndex> as two segments.)
+    if (data.stageRefs.length) panel.appendChild(linkedStagesList('Linked stages', data.stageRefs));
     if (data.findingIds.length) panel.appendChild(navRefList('Linked findings', data.findingIds.map(id => ({ id, label: id, kind: 'finding' }))));
     if (data.probeIds.length) panel.appendChild(navRefList('Linked probes', data.probeIds.map(id => ({ id, label: id, kind: 'probe' }))));
     panel.appendChild(routeLink('← Back', '/overview', { class: 'back-link' }));
@@ -1306,7 +1328,7 @@ function createPortolanShell(opts) {
   // what it is / why present / route participation / coverage / hazards /
   // probes / evidence / C4 placement or honest absence / next action.
   function renderComponentDossier(main, componentId) {
-    const data = componentDossierFromNav(atlas, navAtlas, componentId);
+    const data = openComponentDossier(atlas, navAtlas, componentId);
     const panel = el('section', { class: 'panel dossier-panel' });
     panel.setAttribute('data-portolan-view', 'component-dossier');
     panel.setAttribute('data-portolan-kind', 'component');
@@ -1367,7 +1389,7 @@ function createPortolanShell(opts) {
   // evidence; Component from promoted units (limited/derived); Code
   // out-of-scope.
   function renderC4View(main) {
-    const model = c4Model(atlas);
+    const model = openC4(atlas);
     const panel = el('section', { class: 'panel c4-panel' });
     panel.setAttribute('data-portolan-view', 'c4');
     panel.appendChild(el('h1', { class: 'panel-title' }, text('C4')));

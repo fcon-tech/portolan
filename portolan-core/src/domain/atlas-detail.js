@@ -358,7 +358,13 @@ function componentDossierFromNav(atlas, navAtlas, componentId) {
 function c4PlacementForComponent(atlas, componentId) {
   const c4 = (atlas && atlas.c4) || {};
   const boxes = c4.component_boxes || [];
-  const box = boxes.find(b => b && (b.component_id === componentId || b.id === 'c4-component:' + componentId));
+  // c4_box references its subject via `object_id` (schema/system-map.schema.json),
+  // not `component_id`. Match on object_id, then on the conventional id forms.
+  const box = boxes.find(b => b && (
+    b.object_id === componentId ||
+    b.id === 'c4-component:' + componentId ||
+    b.id === componentId
+  ));
   if (box) return { level: 'component', present: true };
   return { level: 'component', present: false, note: 'No explicit C4 Component box — placement is inferred from family, not runtime/deploy evidence.' };
 }
@@ -398,12 +404,21 @@ function componentNextAction(comp, coverage, probeIds) {
 function c4Model(atlas) {
   const c4 = (atlas && atlas.c4) || {};
   const context = c4.context_boxes || [];
-  const containerBoxes = c4.container_boxes || [];
-  const componentBoxes = c4.component_boxes || [];
+  const allBoxes = c4.component_boxes || [];
   const families = c4.families || [];
 
-  // Container is honest-empty unless real runtime/deploy boxes exist.
-  const hasRuntimeDeployEvidence = Array.isArray(containerBoxes) && containerBoxes.length > 0;
+  // C4 boxes are all modelled as `component_boxes` entries distinguished by
+  // their `level` field (schema/system-map.schema.json: c4_box.level enum
+  // context|container|component). There is NO separate `container_boxes`
+  // array — reading one would always be undefined, leaving Container
+  // permanently honest-empty even when container evidence exists. Filter by
+  // level instead (captain-atlas 16 §C4 Contract).
+  const containerBoxes = allBoxes.filter(b => b && b.level === 'container');
+  const componentBoxes = allBoxes.filter(b => b && b.level === 'component');
+
+  // Container is honest-empty unless real runtime/deploy boxes exist. Never
+  // fabricated from repo names, families, colors, or layout.
+  const hasRuntimeDeployEvidence = containerBoxes.length > 0;
   const container = hasRuntimeDeployEvidence
     ? { present: true, boxes: containerBoxes, explanation: '' }
     : {

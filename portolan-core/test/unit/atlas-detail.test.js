@@ -183,10 +183,25 @@ test('c4Model: Context always present, Container honest-empty when container_box
   assert.strictEqual(m.code.inScope, false);
 });
 
-test('c4Model: Container present only when runtime/deploy boxes exist', () => {
-  const m = c4Model(atlasWith({ c4: { context_boxes: [], container_boxes: [{ id: 'ctr:1', display_name: 'API' }], families: [], component_boxes: [] } }));
+test('c4Model: Container present only when component_boxes contain level=container', () => {
+  // Containers are modelled as component_boxes entries with level === 'container'
+  // (schema: c4_box.level enum context|container|component). There is NO
+  // separate container_boxes array.
+  const m = c4Model(atlasWith({ c4: { context_boxes: [], families: [], component_boxes: [
+    { id: 'ctr:1', display_name: 'API', level: 'container', object_id: 'x', route: '#/overview' },
+    { id: 'comp:1', display_name: 'C1', level: 'component', object_id: 'y', route: '#/overview' },
+  ] } }));
   assert.strictEqual(m.container.present, true);
   assert.strictEqual(m.container.boxes.length, 1);
+  assert.strictEqual(m.component.boxes.length, 1, 'component boxes filtered by level');
+});
+
+test('c4Model: Container stays honest-empty when only component-level boxes exist', () => {
+  const m = c4Model(atlasWith({ c4: { context_boxes: [], families: [], component_boxes: [
+    { id: 'comp:1', display_name: 'C1', level: 'component', object_id: 'y', route: '#/overview' },
+  ] } }));
+  assert.strictEqual(m.container.present, false, 'no container-level boxes -> honest-empty');
+  assert.strictEqual(m.component.boxes.length, 1);
 });
 
 test('c4Model: Component is limited/derived when runtime/deploy evidence absent', () => {
