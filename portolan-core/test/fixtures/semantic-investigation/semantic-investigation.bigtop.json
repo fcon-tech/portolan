@@ -1,0 +1,207 @@
+{
+  "_comment": "Semantic component investigation contract (captain-atlas 17). Fixture-backed for this slice: the data shape is producer-compatible (a future producer overwrites this file with real output). Every claim carries a source_boundary and a resolvable source_ref. The Spark<->Flink overlap is declared on BOTH components. Component ids match docs/site/atlas/system-map.demo.json. Swap this sample for another eligible set by editing only this fixture + sources.json — the contract, validator, shell, and harness are data-driven.",
+  "target": { "id": "apache-bigtop", "display_name": "Apache Bigtop" },
+  "capabilities": [
+    { "id": "capability:search-index", "label": "Search & indexing" },
+    { "id": "capability:processing", "label": "Distributed processing" },
+    { "id": "capability:streaming", "label": "Stream processing" },
+    { "id": "capability:coordination", "label": "Workflow scheduling & coordination" },
+    { "id": "capability:storage-foundation", "label": "Storage & compute foundation" },
+    { "id": "capability:packaging", "label": "Packaging & integration" }
+  ],
+  "regions": [
+    { "id": "capability:search-region", "label": "Search region", "description": "Components that index and query documents over large corpora.", "capabilities": ["capability:search-index"] },
+    { "id": "capability:compute-region", "label": "Compute & streaming region", "description": "Components that move and transform data across a cluster. Overlap lives here: Spark and Flink both process big data but with different streaming models.", "capabilities": ["capability:processing", "capability:streaming"] },
+    { "id": "capability:orchestration-region", "label": "Orchestration region", "description": "Components that schedule and coordinate work, including retired/legacy schedulers with an honest source boundary.", "capabilities": ["capability:coordination"] },
+    { "id": "capability:platform-region", "label": "Platform foundation region", "description": "The Hadoop filesystem/YARN foundation the other regions build on.", "capabilities": ["capability:storage-foundation", "capability:packaging"] }
+  ],
+  "sources_ref": "sources.json",
+  "sample": {
+    "selection_reason": "Four components prove the portable contract without encoding product facts around fixed names: Solr (a component with a clear search/indexing capability and a rich internal model), Spark and Flink (a meaningful semantic overlap pair in the compute/streaming region, bidirectionally related across 3+ dimensions), and Oozie (a retired, metadata-only component that forces an honest not_assessed/curated source boundary). The selection exercises every required relation type and source boundary; swapping it for another eligible set requires editing only this fixture and the source cards.",
+    "components": [
+      "component:apache-solr",
+      "component:apache-spark",
+      "component:apache-flink",
+      "component:apache-oozie"
+    ]
+  },
+  "components": [
+    {
+      "id": "component:apache-solr",
+      "display_name": "Apache Solr",
+      "ecosystem_regions": ["capability:search-region"],
+      "purpose": {
+        "summary": "Solr is the ecosystem's search and indexing server: it ingests documents into an inverted index and answers term, boolean, and ranked queries at scale. In Bigtop it is the search capability, packaged as a versioned component and wired into the smoke-test and deployment surface.",
+        "source_boundary": "curated-knowledge",
+        "source_ref": "source:solr-curated-architecture"
+      },
+      "capabilities": [
+        { "id": "capability:search-index", "label": "Search & indexing", "source_boundary": "curated-knowledge", "source_ref": "source:solr-refguide" },
+        { "id": "capability:packaging", "label": "Packaging & integration (via Bigtop recipe)", "source_boundary": "local-corpus", "source_ref": "evidence:solr-bigtop-recipe" }
+      ],
+      "internal_concepts": [
+        { "id": "concept:solr-inverted-index", "label": "Inverted index", "explanation": "Documents are tokenized into an inverted index (term to postings). This is what makes term and boolean queries fast; schema/analyser choices directly affect recall and ranking.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" },
+        { "id": "concept:solr-schema", "label": "Managed schema", "explanation": "Field definitions, analysers, and tokenisers declared in a schema. The schema decides how text is split and matched; a wrong analyser is a query-quality bug, not a code bug.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" },
+        { "id": "concept:solr-query", "label": "Query / parser", "explanation": "Queries are parsed (standard or eDisMax) against the schema. Relevance functions (BM25) and boosts live here, separate from the index.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-refguide" },
+        { "id": "concept:solr-shard", "label": "Shard", "explanation": "A collection is split into shards, each a horizontal slice of the index, sharded by document hash. The shard count is fixed at collection creation and expensive to change.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" },
+        { "id": "concept:solr-replica", "label": "Replica & SolrCloud coordination", "explanation": "Each shard has replicas (leaders/followers). SolrCloud uses ZooKeeper and an Overseer node to elect leaders and route updates, so coordination is an operational concern, not just an index concern.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" }
+      ],
+      "integration_surfaces": [
+        { "kind": "package_recipe", "label": "Bigtop Solr packaging recipe", "source_boundary": "local-corpus", "evidence_ref": "evidence:solr-bigtop-recipe", "explanation": "Bigtop packages Solr as a versioned component (bigtop-packages/ Solr recipe); the version is pinned in the BOM." },
+        { "kind": "api", "label": "Solr HTTP query API", "source_boundary": "curated-knowledge", "evidence_ref": "source:solr-refguide", "explanation": "Solr exposes an HTTP request API for queries and updates; clients integrate over HTTP." },
+        { "kind": "deployment", "label": "SolrCloud deployment topology", "source_boundary": "agent-hypothesis", "evidence_ref": "risk:solr-deploy-topology", "explanation": "A SolrCloud deployment needs ZooKeeper ensembles and shard/replica planning; the exact deployed topology in this target is not verified from the static corpus." }
+      ],
+      "semantic_relations": [
+        { "type": "depends_on", "target_id": "component:apache-zookeeper", "dimensions": ["capability:coordination"], "explanation": "SolrCloud depends on ZooKeeper for cluster coordination and leader election.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" },
+        { "type": "integrates_with", "target_id": "component:apache-hadoop", "dimensions": ["capability:storage-foundation"], "explanation": "Solr can store its index on HDFS and integrates with the Hadoop filesystem layer.", "source_boundary": "agent-hypothesis", "source_ref": "risk:solr-hdfs-integration" },
+        { "type": "packaged_by_target", "target_id": "component:apache-bigtop-repo", "dimensions": ["capability:packaging"], "explanation": "Bigtop packages Solr into the distribution as a versioned, smoke-tested component.", "source_boundary": "local-corpus", "source_ref": "evidence:solr-bigtop-recipe" }
+      ],
+      "risks": [
+        { "id": "risk:solr-shard-count", "label": "Shard count is expensive to change", "explanation": "The number of shards is fixed at collection creation. Underestimating it forces a costly reindex/re-split as data grows, which is a capacity-planning trap specific to Solr.", "source_boundary": "curated-knowledge", "source_ref": "source:solr-curated-architecture" },
+        { "id": "risk:solr-deploy-topology", "label": "Deployed topology not statically verifiable", "explanation": "The exact SolrCloud topology (shard/replica placement, ZooKeeper ensemble) cannot be confirmed from packaging manifests alone; a runtime/deploy probe is needed. Treating the recipe as the topology would be a false-completeness bug.", "source_boundary": "agent-hypothesis", "source_ref": "risk:solr-deploy-topology" },
+        { "id": "risk:solr-hdfs-integration", "label": "HDFS-backed index performance assumption", "explanation": "Storing the index on HDFS trades local-disk latency for cluster storage; assuming HDFS-backed indexing performs like local storage is a component-specific operational risk.", "source_boundary": "agent-hypothesis", "source_ref": "risk:solr-hdfs-integration" }
+      ],
+      "evidence_boundary": {
+        "local_corpus": ["evidence:solr-bigtop-recipe"],
+        "curated_knowledge": ["source:solr-refguide", "source:solr-curated-architecture"],
+        "agent_hypotheses": ["risk:solr-deploy-topology", "risk:solr-hdfs-integration"],
+        "not_assessed": ["gap:solr-runtime-topology", "gap:solr-query-benchmarks", "gap:solr-recipe-source-anchor"]
+      },
+      "next_expedition": [
+        { "producer": "runtime/deploy probe", "action": "Capture the actual SolrCloud topology (shards/replicas/ZooKeeper ensemble) from a running instance in an approved sandbox.", "why": "Turns the agent-hypothesis deploy-topology risk into local-corpus/runtime evidence.", "closes_gap": "gap:solr-runtime-topology" },
+        { "producer": "source-anchored producer", "action": "Pin the exact Bigtop Solr recipe version and any applied patches by scanning bigtop-packages/src/solr/.", "why": "Confirms the packaging integration surface at source level.", "closes_gap": "gap:solr-recipe-source-anchor" }
+      ]
+    },
+    {
+      "id": "component:apache-spark",
+      "display_name": "Apache Spark",
+      "ecosystem_regions": ["capability:compute-region"],
+      "purpose": {
+        "summary": "Spark is a distributed data-processing engine for batch and micro-batch workloads over large datasets. In Bigtop it is the primary compute engine in the compute/streaming region, used for ETL, analytics, and structured streaming.",
+        "source_boundary": "curated-knowledge",
+        "source_ref": "source:spark-curated-model"
+      },
+      "capabilities": [
+        { "id": "capability:processing", "label": "Distributed processing", "source_boundary": "curated-knowledge", "source_ref": "source:spark-docs" },
+        { "id": "capability:streaming", "label": "Micro-batch streaming (Structured Streaming)", "source_boundary": "curated-knowledge", "source_ref": "source:spark-docs" }
+      ],
+      "internal_concepts": [
+        { "id": "concept:spark-rdd", "label": "RDD", "explanation": "The Resilient Distributed Dataset: a fault-tolerant, partitioned, lazily-evaluated collection. The original low-level API and the lineage basis for recovery.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-curated-model" },
+        { "id": "concept:spark-dataframe", "label": "DataFrame / Dataset", "explanation": "The higher-level tabular API with a schema, over RDDs. Most production code uses DataFrames because the optimizer can reason about them.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-curated-model" },
+        { "id": "concept:spark-catalyst", "label": "Catalyst optimizer", "explanation": "Turns DataFrame operations into an optimized physical plan. It is why logically-equivalent pipelines can have very different performance.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-docs" },
+        { "id": "concept:spark-dag-scheduler", "label": "DAG scheduler", "explanation": "Breaks a job into stages of tasks along shuffle boundaries and submits them. Stage count and shuffle volume dominate job performance.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-curated-model" },
+        { "id": "concept:spark-executor", "label": "Executor", "explanation": "A JVM process on a worker that runs tasks and holds cached data. Memory pressure (cache vs shuffle vs user objects) is the most common operational failure.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-curated-model" }
+      ],
+      "integration_surfaces": [
+        { "kind": "package_recipe", "label": "Bigtop Spark packaging recipe", "source_boundary": "local-corpus", "evidence_ref": "evidence:bigtop-bom", "explanation": "Bigtop packages Spark as a versioned component; the version is pinned in the BOM and the support matrix." },
+        { "kind": "api", "label": "Spark session / DataFrame API", "source_boundary": "curated-knowledge", "evidence_ref": "source:spark-docs", "explanation": "Spark is driven through a SparkSession building DataFrames; this is the integration surface application code targets." },
+        { "kind": "deployment", "label": "YARN / cluster deployment", "source_boundary": "local-corpus", "evidence_ref": "evidence:hadoop-corpus", "explanation": "Spark runs on YARN (Hadoop) as the cluster manager in this ecosystem; the depends_on Hadoop relation reflects this." }
+      ],
+      "semantic_relations": [
+        { "type": "depends_on", "target_id": "component:apache-hadoop", "dimensions": ["capability:storage-foundation"], "explanation": "Spark runs against Hadoop's filesystem and typically uses YARN as its cluster manager.", "source_boundary": "local-corpus", "source_ref": "evidence:hadoop-corpus" },
+        { "type": "overlaps_with", "target_id": "component:apache-flink", "dimensions": ["capability:processing", "capability:streaming", "capability:packaging"], "explanation": "Spark and Flink are both distributed compute engines over partitioned data in the same compute/streaming region, both depend on Hadoop, and both are packaged by Bigtop. They overlap in problem space, ecosystem placement, and API surface.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-flink-overlap" },
+        { "type": "contrasts_with", "target_id": "component:apache-flink", "dimensions": ["capability:streaming"], "explanation": "Spark uses micro-batch streaming (throughput/simple), Flink is a true streaming engine (low latency, stateful exactly-once). This is the decisive axis that justifies the ecosystem containing both.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-flink-overlap" }
+      ],
+      "risks": [
+        { "id": "risk:spark-executor-memory", "label": "Executor memory pressure", "explanation": "Spark executors share memory across caching, shuffling, and user objects. Memory mis-sizing causes spilling and OOMs that look like data bugs — a component-specific failure mode.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-curated-model" },
+        { "id": "risk:spark-shuffle-skew", "label": "Shuffle skew dominates performance", "explanation": "Because the DAG scheduler plans stages around shuffle boundaries, a skewed key distribution silently makes a job run far longer than its data size suggests. This is a Spark-specific tuning trap.", "source_boundary": "agent-hypothesis", "source_ref": "risk:spark-shuffle-skew" }
+      ],
+      "evidence_boundary": {
+        "local_corpus": ["evidence:bigtop-bom", "evidence:hadoop-corpus"],
+        "curated_knowledge": ["source:spark-docs", "source:spark-curated-model", "source:spark-flink-overlap"],
+        "agent_hypotheses": ["risk:spark-shuffle-skew"],
+        "not_assessed": ["gap:spark-runtime-benchmarks"]
+      },
+      "next_expedition": [
+        { "producer": "runtime probe", "action": "Capture Spark job stage/shuffle metrics from a representative run to validate the shuffle-skew hypothesis.", "why": "Turns the shuffle-skew agent hypothesis into measured evidence.", "closes_gap": "gap:spark-runtime-benchmarks" }
+      ]
+    },
+    {
+      "id": "component:apache-flink",
+      "display_name": "Apache Flink",
+      "ecosystem_regions": ["capability:compute-region"],
+      "purpose": {
+        "summary": "Flink is a stream-processing engine (with a batch API layered on streaming) for stateful, low-latency pipelines. In Bigtop it sits beside Spark in the compute/streaming region as the true-streaming alternative.",
+        "source_boundary": "curated-knowledge",
+        "source_ref": "source:flink-curated-model"
+      },
+      "capabilities": [
+        { "id": "capability:streaming", "label": "True stream processing (event-at-a-time)", "source_boundary": "curated-knowledge", "source_ref": "source:flink-docs" },
+        { "id": "capability:processing", "label": "Distributed processing (bounded streams / batch)", "source_boundary": "curated-knowledge", "source_ref": "source:flink-docs" }
+      ],
+      "internal_concepts": [
+        { "id": "concept:flink-datastream", "label": "DataStream", "explanation": "The core streaming API: a possibly-unbounded stream of events transformed through a pipeline. Flink models batch as a bounded stream, not the other way around.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-curated-model" },
+        { "id": "concept:flink-job-graph", "label": "Job graph", "explanation": "The pipeline compiles to a JobGraph of operators executed by a JobManager (coordination) and TaskManagers (workers). This is the runtime shape of a Flink job.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-curated-model" },
+        { "id": "concept:flink-checkpoint", "label": "Checkpoint", "explanation": "Fault tolerance via distributed snapshots (checkpoint barriers flowing through the stream). This is the basis of Flink's exactly-once guarantee.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-docs" },
+        { "id": "concept:flink-state-backend", "label": "State backend", "explanation": "Operator state (keyed/operator) is stored in a state backend (e.g. RocksDB). Stateful streaming correctness depends on how state is keyed, checkpointed, and restored.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-curated-model" },
+        { "id": "concept:flink-windowing", "label": "Windowing", "explanation": "Window operators group unbounded streams into finite windows (tumbling/sliding/session) over event/processing time. Window + watermark semantics are where most correctness bugs live.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-curated-model" }
+      ],
+      "integration_surfaces": [
+        { "kind": "package_recipe", "label": "Bigtop Flink packaging recipe", "source_boundary": "local-corpus", "evidence_ref": "evidence:bigtop-bom", "explanation": "Bigtop packages Flink as a versioned component; the version is pinned in the BOM." },
+        { "kind": "api", "label": "DataStream / Table API", "source_boundary": "curated-knowledge", "evidence_ref": "source:flink-docs", "explanation": "Flink is driven through the DataStream and Table APIs; this is the integration surface for streaming applications." },
+        { "kind": "deployment", "label": "JobManager/TaskManager deployment", "source_boundary": "agent-hypothesis", "evidence_ref": "risk:flink-deploy-topology", "explanation": "A Flink deployment needs JobManager/TaskManager sizing and a state backend choice; the exact deployed topology is not verified from the static corpus." }
+      ],
+      "semantic_relations": [
+        { "type": "depends_on", "target_id": "component:apache-hadoop", "dimensions": ["capability:storage-foundation"], "explanation": "Flink can use Hadoop's filesystem for state checkpoints and YARN as a cluster manager.", "source_boundary": "local-corpus", "source_ref": "evidence:hadoop-corpus" },
+        { "type": "overlaps_with", "target_id": "component:apache-spark", "dimensions": ["capability:processing", "capability:streaming", "capability:packaging"], "explanation": "Flink and Spark are both distributed compute engines over partitioned data in the same compute/streaming region, both depend on Hadoop, and both are packaged by Bigtop. They overlap in problem space, ecosystem placement, and API surface.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-flink-overlap" },
+        { "type": "contrasts_with", "target_id": "component:apache-spark", "dimensions": ["capability:streaming"], "explanation": "Flink is a true streaming engine (event-at-a-time, low latency, stateful exactly-once); Spark uses micro-batch streaming. From Flink's side the contrast is the same streaming/state/latency trade-off.", "source_boundary": "curated-knowledge", "source_ref": "source:spark-flink-overlap" }
+      ],
+      "risks": [
+        { "id": "risk:flink-state-correctness", "label": "Stateful correctness depends on state design", "explanation": "Because Flink's exactly-once guarantee rests on how operator state is keyed and checkpointed, a subtle keying mistake produces silently-wrong results that still checkpoint cleanly. This is a Flink-specific correctness trap.", "source_boundary": "curated-knowledge", "source_ref": "source:flink-curated-model" },
+        { "id": "risk:flink-deploy-topology", "label": "Deployed topology not statically verifiable", "explanation": "The JobManager/TaskManager layout and state backend cannot be confirmed from packaging manifests alone; a runtime probe is needed. Assuming the recipe reflects the deployment is a false-completeness bug.", "source_boundary": "agent-hypothesis", "source_ref": "risk:flink-deploy-topology" }
+      ],
+      "evidence_boundary": {
+        "local_corpus": ["evidence:bigtop-bom", "evidence:hadoop-corpus"],
+        "curated_knowledge": ["source:flink-docs", "source:flink-curated-model", "source:spark-flink-overlap"],
+        "agent_hypotheses": ["risk:flink-deploy-topology"],
+        "not_assessed": ["gap:flink-runtime-benchmarks"]
+      },
+      "next_expedition": [
+        { "producer": "runtime/deploy probe", "action": "Capture the actual JobManager/TaskManager topology and state backend from a running Flink cluster in an approved sandbox.", "why": "Turns the deploy-topology agent hypothesis into runtime evidence.", "closes_gap": "gap:flink-runtime-benchmarks" }
+      ]
+    },
+    {
+      "id": "component:apache-oozie",
+      "display_name": "Apache Oozie",
+      "ecosystem_regions": ["capability:orchestration-region"],
+      "purpose": {
+        "summary": "Oozie was the Hadoop workflow scheduler: it ran DAGs of Hadoop actions (MapReduce, Hive, Pig, shell) on time/data triggers. In Bigtop it is the retired/legacy orchestration component with a metadata-only source boundary.",
+        "source_boundary": "curated-knowledge",
+        "source_ref": "source:oozie-attic"
+      },
+      "capabilities": [
+        { "id": "capability:coordination", "label": "Workflow scheduling & coordination", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-curated-model" }
+      ],
+      "internal_concepts": [
+        { "id": "concept:oozie-workflow", "label": "Workflow (hPDL DAG)", "explanation": "A DAG of Hadoop actions (MapReduce, Pig, Hive, fs, shell) defined in XML (hPDL). Control nodes (start/end/fork-join/decision) structure the flow.", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-curated-model" },
+        { "id": "concept:oozie-coordinator", "label": "Coordinator", "explanation": "A time/data trigger that schedules recurring workflow runs (frequency plus data-availability predicates). The scheduling layer on top of workflows.", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-curated-model" },
+        { "id": "concept:oozie-bundle", "label": "Bundle", "explanation": "A higher-level grouping of coordinators, to manage a pipeline of pipelines together.", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-curated-model" },
+        { "id": "concept:oozie-hcatalog", "label": "HCatalog integration", "explanation": "Oozie can trigger on Hive table partition availability via HCatalog, tying workflows to the Hive metastore.", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-curated-model" },
+        { "id": "concept:oozie-runtime", "label": "Runtime execution semantics", "explanation": "Not_assessed: how the current workflow XML actually executes at runtime cannot be verified from this corpus because Oozie is retired and metadata-visible only. A runtime/deploy probe would be needed, but the project's retired status makes that low value.", "source_boundary": "not_assessed", "source_ref": "" }
+      ],
+      "integration_surfaces": [
+        { "kind": "package_recipe", "label": "Bigtop Oozie packaging recipe (metadata-only)", "source_boundary": "local-corpus", "evidence_ref": "evidence:bigtop-bom", "explanation": "Oozie appears in the Bigtop BOM/support matrix as a packaged component, but only metadata-visible; the recipe source is not pinned." },
+        { "kind": "api", "label": "Oozie REST/HTTP API", "source_boundary": "curated-knowledge", "evidence_ref": "source:oozie-curated-model", "explanation": "Oozie exposed an HTTP API to submit and monitor workflows; documented but not runtime-verified in this corpus." },
+        { "kind": "not_assessed", "label": "Live deployment", "source_boundary": "not_assessed", "evidence_ref": "", "explanation": "Whether a live Oozie server runs in this target is not_assessed; the project is retired (Apache Attic)." }
+      ],
+      "semantic_relations": [
+        { "type": "depends_on", "target_id": "component:apache-hadoop", "dimensions": ["capability:storage-foundation"], "explanation": "Oozie scheduled Hadoop actions (MapReduce, Hive) and depended on the Hadoop cluster to execute them.", "source_boundary": "local-corpus", "source_ref": "evidence:hadoop-corpus" },
+        { "type": "packaged_by_target", "target_id": "component:apache-bigtop-repo", "dimensions": ["capability:packaging"], "explanation": "Bigtop packaged Oozie into the distribution while it was active; it is retained as a retired/legacy component.", "source_boundary": "local-corpus", "source_ref": "evidence:bigtop-bom" }
+      ],
+      "risks": [
+        { "id": "risk:oozie-retired", "label": "Retired project (Apache Attic)", "explanation": "Oozie is retired and moved to the Apache Attic: no new releases or fixes. Relying on it for new pipelines is a maintenance dead-end — a component-specific lifecycle risk the investigation must surface, not hide.", "source_boundary": "curated-knowledge", "source_ref": "source:oozie-attic" },
+        { "id": "risk:oozie-recipe-unpinned", "label": "Packaging recipe not source-pinned", "explanation": "Because Oozie is metadata-visible only in this corpus, the exact recipe version and any applied patches are not pinned at source. Treating the BOM entry as the recipe would be a false-completeness bug.", "source_boundary": "agent-hypothesis", "source_ref": "risk:oozie-recipe-unpinned" }
+      ],
+      "evidence_boundary": {
+        "local_corpus": ["evidence:bigtop-bom", "evidence:hadoop-corpus"],
+        "curated_knowledge": ["source:oozie-attic", "source:oozie-curated-model"],
+        "agent_hypotheses": ["risk:oozie-recipe-unpinned"],
+        "not_assessed": ["gap:oozie-runtime", "gap:oozie-recipe-source-anchor"]
+      },
+      "next_expedition": [
+        { "producer": "source-anchored producer", "action": "Scan bigtop-packages/src/oozie/ to pin the exact recipe version and patches, turning the metadata-only package surface into a source-anchored one.", "why": "Closes the recipe-source-anchor gap and de-risks the metadata-only boundary.", "closes_gap": "gap:oozie-recipe-source-anchor" },
+        { "producer": "lifecycle producer", "action": "Confirm the retired/Attic status and whether any live Oozie instance remains in the target.", "why": "Resolves whether the not_assessed runtime gap is a real unknown or simply 'confirmed retired, not running'.", "closes_gap": "gap:oozie-runtime" }
+      ]
+    }
+  ]
+}

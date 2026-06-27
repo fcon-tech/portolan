@@ -1,0 +1,98 @@
+{
+  "_comment": "Source-card registry for the semantic-investigation sample. Each card must be LOCALLY MEANINGFUL (doc 17): a claim_scope stating what it backs. official-doc cards carry a URL + claim_scope; curated-note cards also point at a checked-in notes/*.md so resolvability is verifiable offline. URL-only entries without claim_scope are REJECTED by the validator (rule: no invisible sources).",
+  "sources": [
+    {
+      "id": "solr-refguide",
+      "label": "Apache Solr Reference Guide",
+      "kind": "official-doc",
+      "url": "https://solr.apache.org/guide/",
+      "claim_scope": "Solr index, schema, query, shard, replica, and SolrCloud coordination concepts.",
+      "summary": "Official Solr documentation covering the inverted index, managed schema, the query parser/eDisMax, sharding by hash, and the Overseer/ZooKeeper coordination model."
+    },
+    {
+      "id": "solr-curated-architecture",
+      "label": "Curated note: Solr architectural concepts",
+      "kind": "curated-note",
+      "note_path": "notes/solr-architecture.md",
+      "claim_scope": "Internal-model concepts for Solr (index/schema/query/shard/replica) and their relationships, curated for the Portolan investigation contract.",
+      "summary": "A checked-in curated note explaining how Solr's concepts fit together, so a cold reader understands the component without fetching external docs."
+    },
+    {
+      "id": "solr-bigtop-recipe",
+      "label": "Bigtop Solr package recipe (local corpus)",
+      "kind": "local-corpus-anchor",
+      "claim_scope": "Solr's packaging/integration surface inside the Bigtop distribution (the bigtop-packages/ Solr recipe and version pinning in the BOM).",
+      "summary": "Evidence that Bigtop packages Solr as a versioned component and wires it into the smoke-test and deployment surface."
+    },
+    {
+      "id": "spark-docs",
+      "label": "Apache Spark documentation",
+      "kind": "official-doc",
+      "url": "https://spark.apache.org/docs/latest/",
+      "claim_scope": "Spark RDD/DataFrame, Catalyst optimizer, DAG scheduler, executor model, and structured streaming concepts.",
+      "summary": "Official Spark docs covering the resilient distributed dataset abstraction, the DataFrame/Dataset API, the Catalyst query optimizer, the DAG scheduler + executors, and the micro-batch streaming model."
+    },
+    {
+      "id": "spark-curated-model",
+      "label": "Curated note: Spark internal model",
+      "kind": "curated-note",
+      "note_path": "notes/spark-model.md",
+      "claim_scope": "Internal-model concepts for Spark (RDD, DataFrame, DAG scheduler, executor, Catalyst) curated for the investigation contract.",
+      "summary": "A checked-in curated note explaining Spark's conceptual architecture for the admiral."
+    },
+    {
+      "id": "flink-docs",
+      "label": "Apache Flink documentation",
+      "kind": "official-doc",
+      "url": "https://flink.apache.org/",
+      "claim_scope": "Flink DataStream API, job graph, checkpointing, state backends, and windowing/processing-time model.",
+      "summary": "Official Flink docs covering the DataStream API, the JobManager/TaskManager graph, exactly-once checkpoint barriers, state backends, and window operators."
+    },
+    {
+      "id": "flink-curated-model",
+      "label": "Curated note: Flink internal model",
+      "kind": "curated-note",
+      "note_path": "notes/flink-model.md",
+      "claim_scope": "Internal-model concepts for Flink (DataStream, job graph, checkpoint, state backend, windowing) curated for the investigation contract.",
+      "summary": "A checked-in curated note explaining Flink's conceptual architecture for the admiral."
+    },
+    {
+      "id": "spark-flink-overlap",
+      "label": "Curated note: Spark vs Flink overlap analysis",
+      "kind": "curated-note",
+      "note_path": "notes/spark-flink-overlap.md",
+      "claim_scope": "The semantic overlap and contrast between Spark and Flink across streaming model, API surface, state semantics, and latency model.",
+      "summary": "A checked-in curated note analysing where Spark and Flink overlap (distributed compute over Hadoop) and where they diverge (micro-batch vs true streaming), supporting the bidirectional overlaps_with/contrasts_with relations."
+    },
+    {
+      "id": "oozie-attic",
+      "label": "Apache Attic entry for Oozie",
+      "kind": "official-doc",
+      "url": "https://attic.apache.org/projects/oozie.html",
+      "claim_scope": "Oozie lifecycle (retired, moved to the Attic) and its legacy role as a Hadoop workflow scheduler.",
+      "summary": "Official Apache Attic record marking Oozie as retired and preserving read-only resources, confirming its metadata-only source boundary."
+    },
+    {
+      "id": "oozie-curated-model",
+      "label": "Curated note: Oozie internal model",
+      "kind": "curated-note",
+      "note_path": "notes/oozie-model.md",
+      "claim_scope": "Internal-model concepts for Oozie (workflow, coordinator, bundle, HCatalog integration) and the not_assessed boundaries forced by its retired/metadata-only state.",
+      "summary": "A checked-in curated note explaining Oozie's conceptual architecture and explicitly marking which parts cannot be verified from the current corpus."
+    },
+    {
+      "id": "bigtop-bom",
+      "label": "Bigtop BOM / support matrix (local corpus)",
+      "kind": "local-corpus-anchor",
+      "claim_scope": "Component version declarations and integration relationships inside the Bigtop 3.5.0 distribution.",
+      "summary": "Evidence of how Bigtop pins component versions and declares dependency/integration relationships across the ecosystem."
+    },
+    {
+      "id": "hadoop-corpus",
+      "label": "Apache Hadoop as corpus hub (local corpus)",
+      "kind": "local-corpus-anchor",
+      "claim_scope": "Hadoop's role as the filesystem/YARN/MR foundation that Solr, Spark, Flink, Hive, and HBase depend on.",
+      "summary": "Evidence from the corpus that Hadoop is the ecosystem hub other components depend_on, establishing the downstream/upstream placement of the selected components."
+    }
+  ]
+}
