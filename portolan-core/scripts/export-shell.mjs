@@ -31,6 +31,7 @@ function parseArgs(argv) {
     else if (a === '--title' && argv[i + 1]) args.title = argv[++i];
     else if (a === '--nav-bundle' && argv[i + 1]) args.navBundle = path.resolve(argv[++i]);
     else if (a === '--target-root' && argv[i + 1]) args.targetRoot = path.resolve(argv[++i]);
+    else if (a === '--semantic-investigation' && argv[i + 1]) args.semanticInvestigation = path.resolve(argv[++i]);
     else if (a === '--help' || a === '-h') args.help = true;
   }
   return args;
@@ -298,15 +299,28 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.mu
 .c4-limited{font-style:italic;font-size:12px;margin-bottom:6px}
 .c4-code-handoff{font-style:italic;font-size:13px}
 .finding-context-derived,.probe-context-derived{font-style:italic;font-size:12px;padding:6px 10px;background:var(--surface-3);border:1px solid var(--line);border-radius:8px}
+/* captain-atlas 17 semantic investigation + ecosystem map — parchment tokens only */
+.semantic-investigation .dossier-section{margin-top:16px}
+.ecosystem-map .ecosystem-region-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:8px}
+.ecosystem-region{display:flex;flex-direction:column;gap:8px}
+.ecosystem-placement{border-left:3px solid var(--accent)}
+.ecosystem-overlap{border-left:3px solid var(--primary)}
+.semantic-investigation .badge[data-portolan-source-boundary]{font-size:10px}
 `;
 
 function main() {
   const args = parseArgs(process.argv);
   if (args.help || !args.systemMap || !args.out) {
-    console.error('usage: export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."] [--nav-bundle <dir>] [--target-root <dir>]');
+    console.error('usage: export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."] [--nav-bundle <dir>] [--target-root <dir>] [--semantic-investigation <si.json>]');
     process.exit(args.help ? 0 : 2);
   }
-  const map = JSON.parse(fs.readFileSync(args.systemMap, 'utf8'));
+  let map;
+  try {
+    map = JSON.parse(fs.readFileSync(args.systemMap, 'utf8'));
+  } catch (e) {
+    console.error(`error: system-map is not valid JSON: ${args.systemMap}: ${e.message}`);
+    process.exit(1);
+  }
   if (!map.objects || !Array.isArray(map.objects.components)) {
     console.error('error: not a valid system-map (missing objects.components)');
     process.exit(1);
@@ -319,11 +333,29 @@ function main() {
   // target root is supplied (captain-atlas 15 §5). The on-disk JSONL is NEVER
   // mutated — enriched rows live only in the inlined __NAV_ATLAS.
   if (navAtlas && args.targetRoot) navAtlas = extractSnippets(navAtlas, args.targetRoot);
+  // captain-atlas 17: load the semantic-investigation sidecar (optional). When
+  // present, it powers the component investigation pages and the ecosystem
+  // placement map. Absent => the semantic surfaces are simply not rendered
+  // (additive — existing flows are unaffected).
+  let semanticInvestigation = null;
+  if (args.semanticInvestigation) {
+    if (!fs.existsSync(args.semanticInvestigation)) {
+      console.error(`warning: semantic-investigation not found: ${args.semanticInvestigation}`);
+    } else {
+      try {
+        semanticInvestigation = JSON.parse(fs.readFileSync(args.semanticInvestigation, 'utf8'));
+      } catch (e) {
+        console.error(`warning: semantic-investigation is not valid JSON: ${args.semanticInvestigation}: ${e.message}`);
+      }
+    }
+  }
   // safeInlineJson escapes U+2028/U+2029 and < so the inlined blobs cannot
-  // break the <script> (applied to BOTH atlas and nav-atlas).
+  // break the <script> (applied to atlas, nav-atlas, and semantic-investigation).
   const mapJson = safeInlineJson(map);
   const navJson = navAtlas ? safeInlineJson(navAtlas) : 'null';
+  const siJson = semanticInvestigation ? safeInlineJson(semanticInvestigation) : 'null';
   const navArgLine = navAtlas ? ', navAtlas: __NAV_ATLAS' : '';
+  const siArgLine = semanticInvestigation ? ', semanticInvestigation: __SEMANTIC_INVESTIGATION' : '';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -338,9 +370,10 @@ function main() {
 <script>
 var __ATLAS = ${mapJson};
 var __NAV_ATLAS = ${navJson};
+var __SEMANTIC_INVESTIGATION = ${siJson};
 ${bundle}
 (function(){
-  var shell = __PORTOLAN.createPortolanShell({ root: document.getElementById('app'), atlas: __ATLAS${navArgLine} });
+  var shell = __PORTOLAN.createPortolanShell({ root: document.getElementById('app'), atlas: __ATLAS${navArgLine}${siArgLine} });
   // render once; hashchange handled by the navigator inside the shell
   shell.render();
   // if no hash, default to overview
@@ -356,7 +389,8 @@ ${bundle}
   const rels = map.objects.relationships || [];
   const fams = (map.c4 && map.c4.families) || [];
   const navCount = navAtlas ? `${navAtlas.navigationIndex.length} nav-stages, ${navAtlas.findings.length} findings, ${navAtlas.unknownProbes.length} probes` : 'no nav-atlas';
-  console.error(`exported clean-stack shell → ${args.out} (${comps.length} units, ${rels.length} relationships, ${fams.length} families, ${navCount}, ${Buffer.byteLength(html)} bytes)`);
+  const siCount = semanticInvestigation ? `${semanticInvestigation.sample.components.length} investigated components` : 'no semantic-investigation';
+  console.error(`exported clean-stack shell → ${args.out} (${comps.length} units, ${rels.length} relationships, ${fams.length} families, ${navCount}, ${siCount}, ${Buffer.byteLength(html)} bytes)`);
 }
 
 main();

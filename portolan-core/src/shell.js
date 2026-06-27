@@ -42,6 +42,11 @@ const { openStage } = require('./use-cases/open-stage');
 const { openEvidence } = require('./use-cases/open-evidence');
 const { openC4 } = require('./use-cases/open-c4');
 const { openComponentDossier } = require('./use-cases/open-component-dossier');
+// captain-atlas 17 semantic component investigation (bounded investigation
+// pages + ecosystem placement map; the semantic layer over the atlas).
+// All semantic accessors (incl. resolveSourceRef) come through the use-case so
+// the shell depends only on use-cases, not the domain (Clean Architecture rule).
+const { openSemanticInvestigation, overlapRelationsFor, ecosystemPlacementMap, buildSemanticViewModel, resolveSourceRef } = require('./use-cases/open-semantic-investigation');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {
@@ -67,6 +72,7 @@ function createPortolanShell(opts) {
   const doc = opts.document || (typeof document !== 'undefined' ? document : null);
   const atlas = opts.atlas;
   const navAtlas = opts.navAtlas || null;
+  const semanticInvestigation = opts.semanticInvestigation || null;
   const theme = createThemeProvider();
   const navigator = createHashNavigator();
   const triangulationEnabled = false; // overlay off by default; admiral toggles
@@ -76,6 +82,31 @@ function createPortolanShell(opts) {
 
   // Build the navigation view-model once (routes/coverage/findings/probes/receipt).
   const navVm = navAtlas ? buildNavViewModel(navAtlas) : null;
+
+  // captain-atlas 17: build the semantic-investigation view-model once when the
+  // sidecar is present. The sample set drives which components are "selected"
+  // (i.e. get an investigation page instead of a generic dossier). When absent,
+  // the semantic surfaces are simply not rendered.
+  const semanticVm = semanticInvestigation ? buildSemanticViewModel(semanticInvestigation) : null;
+  const selectedComponentIds = semanticVm ? new Set(semanticInvestigation.sample.components) : new Set();
+
+  // captain-atlas 17: selected-detection must be tolerant of BOTH id forms.
+  // The system-map routes/components use `component:<id>` (e.g.
+  // component:apache-solr), but a hand-edited hash or an external link may pass
+  // the short form `apache-solr`. A selected component must NEVER fall back to
+  // a generic dossier through the bare/short route (doc 17 hard rule), so this
+  // helper resolves a route id to its canonical `component:` form before the
+  // selected-set membership test. Returns the canonical id when selected, else null.
+  function resolveSelectedComponentId(routeId) {
+    if (!routeId) return null;
+    if (selectedComponentIds.has(routeId)) return routeId;
+    // Try the component:-prefixed form if the id has no kind prefix of its own.
+    if (!routeId.includes(':')) {
+      const prefixed = 'component:' + routeId;
+      if (selectedComponentIds.has(prefixed)) return prefixed;
+    }
+    return null;
+  }
 
   // ---- DOM helpers (presentation only) ----
   function el(tag, attrs) {
@@ -95,7 +126,17 @@ function createPortolanShell(opts) {
     }
     return node;
   }
-  function text(s) { return doc.createTextNode(String(s == null ? '' : s)); }
+  // text() coerces a value into a text node. It intentionally REJECTS objects
+  // rather than silently rendering "[object Object]" — per captain-atlas 17 the
+  // renderer must prevent object-as-text, and the harness must FAIL if such a
+  // bug ever reaches the DOM. Pass a string (or number); pass nothing for null.
+  // An object here is a real bug that must surface, not be hidden.
+  function text(s) {
+    if (s == null) return doc.createTextNode('');
+    if (typeof s === 'string') return doc.createTextNode(s);
+    if (typeof s === 'number' || typeof s === 'boolean') return doc.createTextNode(String(s));
+    throw new TypeError('text() received a non-string value of type ' + typeof s + ' — pass a primitive, not an object. Rendering it would produce "[object Object]".');
+  }
 
   // builds a clickable link carrying the DOM contract attributes
   function routeLink(label, route, o) {
@@ -122,6 +163,7 @@ function createPortolanShell(opts) {
     if (head === 'overview' && navVm) return 'walkthrough';
     if (head === 'map') return 'fleet';
     if (head === 'structure') return 'fleet'; // "Structure Map" tab -> Fleet map view
+    if (head === 'ecosystem' && semanticVm) return 'ecosystem';
     return head;
   }
 
@@ -144,7 +186,20 @@ function createPortolanShell(opts) {
     else if (frag.startsWith('relationship/')) renderRelationshipDetail(main, decode(frag.slice('relationship/'.length)));
     else if (frag.startsWith('stage/')) renderStageDetailRoute(main, frag.slice('stage/'.length));
     else if (frag.startsWith('evidence/')) renderEvidenceDetail(main, decode(frag.slice('evidence/'.length)));
-    else if (frag.startsWith('dossier/component/')) renderComponentDossier(main, decode(frag.slice('dossier/component/'.length)));
+    // captain-atlas 17: semantic component investigation page. Checked BEFORE
+    // dossier/component so a selected component's investigation wins over its
+    // generic dossier for any path that resolves here.
+    else if (frag.startsWith('investigation/')) renderSemanticInvestigation(main, decode(frag.slice('investigation/'.length)));
+    else if (frag.startsWith('dossier/component/')) {
+      const cid = decode(frag.slice('dossier/component/'.length));
+      // captain-atlas 17: a SELECTED component must NEVER fall back to a generic
+      // dossier — including via a bare/short-id route (e.g. /dossier/component/
+      // apache-solr when the sample id is component:apache-solr). Resolve to the
+      // canonical selected id; if selected, render the investigation.
+      const selectedId = resolveSelectedComponentId(cid);
+      if (selectedId) renderSemanticInvestigation(main, selectedId);
+      else renderComponentDossier(main, cid);
+    }
     else {
       const view = currentView();
       if (view === 'walkthrough') renderWalkthrough(main);
@@ -159,6 +214,7 @@ function createPortolanShell(opts) {
       else if (view === 'unknowns') renderUnknownsView(main);
       else if (view === 'receipt') renderReceiptView(main);
       else if (view === 'c4') renderC4View(main);
+      else if (view === 'ecosystem') renderEcosystemMap(main);
       else if (navVm) renderWalkthrough(main); // fallback to walkthrough when nav exists
       else renderOverview(main); // fallback
     }
@@ -182,6 +238,7 @@ function createPortolanShell(opts) {
         { id: 'overview', label: 'Overview', view: 'walkthrough' },
         { id: 'routes', label: 'System Routes', view: 'routes' },
         { id: 'structure', label: 'Structure Map', view: 'fleet', secondary: true },
+        { id: 'ecosystem', label: 'Semantic Map', view: 'ecosystem' },
         { id: 'coverage', label: 'Mapped Areas', view: 'coverage' },
         { id: 'findings', label: 'Hazards', view: 'findings' },
         { id: 'unknowns', label: 'Next Checks', view: 'unknowns' },
@@ -194,8 +251,14 @@ function createPortolanShell(opts) {
         { id: 'map', label: 'Map', view: 'map' },
         { id: 'components', label: 'Components', view: 'components' },
       ];
+      // The Semantic Map tab also appears without a nav-atlas when a semantic
+      // investigation is present, so the investigation surfaces are reachable
+      // even from the minimal atlas shell.
+      if (semanticVm) tabs.splice(1, 0, { id: 'ecosystem', label: 'Semantic Map', view: 'ecosystem' });
     }
     for (const t of tabs) {
+      // The Semantic Map tab exists only when a semantic investigation is present.
+      if (t.view === 'ecosystem' && !semanticVm) continue;
       const cls = (currentView() === t.view ? 'nav-item is-active' : 'nav-item') + (t.secondary ? ' nav-item-secondary' : '');
       const a = el('a', { class: cls, href: `#/${t.id}` }, text(t.label));
       a.setAttribute('data-portolan-nav', t.view);
@@ -564,10 +627,17 @@ function createPortolanShell(opts) {
       if (ev.type === 'node-click') {
         const node = model.nodes.find(n => n.id === ev.id);
         if (node && node.id) {
-          // captain-atlas 16: node click opens the nav-enriched component
-          // dossier, NOT the generic dossier. The dossier answers route
-          // participation, coverage, hazards, probes, and C4 placement.
-          navigator.route('/dossier/component/' + encodeURIComponent(node.id));
+          // captain-atlas 17: a SELECTED component opens its semantic
+          // investigation (ecosystem/purpose/internal model/risks/overlap), not
+          // the generic dossier. Non-selected components keep the nav-enriched
+          // dossier (captain-atlas 16). resolveSelectedComponentId tolerates
+          // both id forms so the click path cannot fall back for a selected node.
+          const selectedId = resolveSelectedComponentId(node.id);
+          if (selectedId) {
+            navigator.route('/investigation/' + encodeURIComponent(selectedId));
+          } else {
+            navigator.route('/dossier/component/' + encodeURIComponent(node.id));
+          }
         }
       } else if (ev.type === 'edge-click') {
         const edge = model.edges.find(e => e.id === ev.id);
@@ -1457,6 +1527,405 @@ function createPortolanShell(opts) {
     // Code level (out of scope).
     panel.appendChild(el('div', { class: 'section-kicker' }, text('CODE · out of scope')));
     panel.appendChild(el('p', { class: 'muted c4-code-handoff', 'data-portolan-c4': 'code-out-of-scope' }, text(model.code.nextAction)));
+    main.appendChild(panel);
+  }
+
+  // =========================================================================
+  // captain-atlas 17: semantic component investigation + ecosystem map.
+  // The investigation page answers the seven semantic questions (ecosystem
+  // placement, purpose, internal model, integration, risks, overlaps, evidence
+  // boundary) for a SELECTED component. A selected component must NEVER fall
+  // back to a generic dossier. A null investigation for a selected id is a HARD
+  // FAILURE — the page renders a typed "investigation missing" error, not a
+  // dossier.
+  // =========================================================================
+
+  // The source-boundary badge for a claim. The four boundaries are an
+  // orthogonal axis to evidence.state (doc 17). Visible so the admiral can read
+  // the main story first, then inspect the boundary.
+  function sourceBoundaryBadge(boundary) {
+    const cls = boundary === 'local-corpus' ? 'badge badge-quality-high'
+      : boundary === 'curated-knowledge' ? 'badge badge-quality-medium'
+        : boundary === 'agent-hypothesis' ? 'badge badge-quality-low'
+          : 'badge badge-runtime';
+    return el('span', { class: cls, 'data-portolan-source-boundary': boundary }, text(boundary));
+  }
+
+  // A source-card link. Resolves the ref against the registry; if it resolves
+  // to a card with a URL, link externally (clearly marked); otherwise show the
+  // card label as a resolvable local reference. Never invents a link.
+  function sourceCardLink(sourceRef) {
+    if (!sourceRef) return el('span', { class: 'muted' }, text('no source ref'));
+    const r = resolveSourceRef(semanticInvestigation, sourceRef);
+    if (!r.resolves) {
+      return el('span', { class: 'muted', 'data-portolan-source-unresolved': 'true' }, text('unresolved source: ' + sourceRef));
+    }
+    const card = r.sourceCard || {};
+    const label = card.label || sourceRef;
+    if (card.url) {
+      // External official-doc handoff: clearly marked, opens in a new tab.
+      const a = el('a', { class: 'chip', href: card.url, target: '_blank', rel: 'noopener noreferrer' }, text(label + ' ↗'));
+      a.setAttribute('data-portolan-source-card', sourceRef);
+      return a;
+    }
+    // A locally-resolvable card (curated note / local-corpus anchor /
+    // intra-investigation ref). Mark it so the harness can prove resolvability.
+    const span = el('span', { class: 'chip', 'data-portolan-source-card': sourceRef, 'data-portolan-source-kind': card.kind || '' }, text(label));
+    return span;
+  }
+
+  // The 8 required investigation sections, rendered from generated data (never
+  // hardcoded DOM text — the harness proves the UI consumes the inlined
+  // semanticInvestigation object).
+  function renderSemanticInvestigation(main, componentId) {
+    const panel = el('section', { class: 'panel dossier-panel semantic-investigation' });
+    panel.setAttribute('data-portolan-view', 'semantic-investigation');
+    panel.setAttribute('data-portolan-kind', 'investigation');
+
+    // HARD FAILURE: a selected component with no investigation data is a
+    // product contract failure, not a graceful gap. Render a typed error and
+    // do NOT fall back to a generic dossier.
+    if (!semanticVm) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Investigation unavailable')));
+      panel.appendChild(el('p', { class: 'muted' }, text('This component is marked for semantic investigation, but no investigation data is present. This is a data contract failure.')));
+      panel.appendChild(routeLink('← Back to the Semantic Map', '/ecosystem', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+
+    const data = openSemanticInvestigation(semanticInvestigation, componentId);
+    const isSelected = selectedComponentIds.has(componentId);
+    if (!data) {
+      // Non-selected component: a typed not-investigated panel (NOT a fallback
+      // to a generic dossier). For a SELECTED component this branch is
+      // unreachable in practice (the validator guarantees the data), but we
+      // guard explicitly: if reached for a selected id, it is a hard failure.
+      panel.appendChild(el('h1', { class: 'panel-title' }, text(isSelected ? 'Investigation data missing' : 'Not investigated')));
+      panel.appendChild(el('p', { class: 'muted' }, text(isSelected
+        ? `This selected component (${componentId}) has no investigation data. This is a contract failure.`
+        : `This component is not part of the semantic investigation sample. Open the Structure Map for its landscape-unit dossier.`)));
+      panel.appendChild(routeLink('← Back to the Semantic Map', '/ecosystem', { class: 'back-link' }));
+      main.appendChild(panel);
+      return;
+    }
+
+    panel.appendChild(el('div', { class: 'hero-eyebrow' }, text('COMPONENT INVESTIGATION')));
+    panel.appendChild(el('h1', { class: 'panel-title' }, text(data.displayName)));
+    // Top summary: a concise "what is this and why does it matter?". The source
+    // boundary of the purpose claim is shown once as a badge (not duplicated).
+    panel.appendChild(dossierSection('Why this matters', data.purpose.explanation || data.purpose.summary || ''));
+    const purposeMeta = el('div', { class: 'card-meta' });
+    purposeMeta.appendChild(sourceBoundaryBadge(data.purpose.sourceBoundary));
+    panel.appendChild(purposeMeta);
+
+    // §1 Ecosystem Placement
+    panel.appendChild(investigationSection('ECOSYSTEM PLACEMENT', 'ecosystem-placement', () => {
+      const wrap = el('div', {});
+      if (data.ecosystemRegions.length) {
+        const regionList = el('div', { class: 'card-meta' });
+        for (const r of data.ecosystemRegions) {
+          regionList.appendChild(el('span', { class: 'chip' }, text(r.label || r.id)));
+        }
+        wrap.appendChild(regionList);
+      } else {
+        wrap.appendChild(el('p', { class: 'muted' }, text('Not placed in a named capability region.')));
+      }
+      // Adjacent relations (depends_on / integrates_with / packaged_by) — the
+      // ecosystem neighbourhood, not a repo dependency list.
+      const neighbour = data.semanticRelations.filter(rel => rel.type !== 'overlaps_with' && rel.type !== 'contrasts_with');
+      if (neighbour.length) {
+        wrap.appendChild(el('div', { class: 'section-kicker' }, text('NEIGHBOURS')));
+        const grid = el('div', { class: 'route-button-grid' });
+        for (const rel of neighbour) {
+          const comp = semanticVm.componentsById.get(rel.targetId);
+          const route = selectedComponentIds.has(rel.targetId)
+            ? `/investigation/${encodeURIComponent(rel.targetId)}`
+            : (comp && comp.route ? comp.route : `/dossier/component/${encodeURIComponent(rel.targetId)}`);
+          grid.appendChild(relationChip(rel, route));
+        }
+        wrap.appendChild(grid);
+      }
+      return wrap;
+    }));
+
+    // §2 Purpose And Capabilities
+    panel.appendChild(investigationSection('PURPOSE AND CAPABILITIES', 'purpose-capabilities', () => {
+      const wrap = el('div', {});
+      const capList = el('div', { class: 'card-meta' });
+      for (const cap of data.capabilities) {
+        const chip = el('span', { class: 'chip' }, text(cap.label));
+        chip.appendChild(el('span', { class: 'muted', style: 'margin-left:6px;font-size:11px' }, text(cap.sourceBoundary)));
+        capList.appendChild(chip);
+      }
+      wrap.appendChild(capList);
+      return wrap;
+    }));
+
+    // §3 Internal Model (concept cards)
+    panel.appendChild(investigationSection('INTERNAL MODEL', 'internal-model', () => {
+      const wrap = el('div', {});
+      if (!data.internalConcepts.length) {
+        wrap.appendChild(el('p', { class: 'muted' }, text('The internal model is not_assessed for this component.')));
+        if (data.nextExpedition.length) {
+          wrap.appendChild(el('p', { class: 'muted', style: 'font-style:italic' }, text('Next producer: ' + (data.nextExpedition[0].producer || data.nextExpedition[0].action || ''))));
+        }
+        return wrap;
+      }
+      const grid = el('div', { class: 'journey-grid' });
+      for (const concept of data.internalConcepts) {
+        grid.appendChild(conceptCard(concept));
+      }
+      wrap.appendChild(grid);
+      return wrap;
+    }));
+
+    // §4 Integration Surface
+    panel.appendChild(investigationSection('INTEGRATION SURFACE', 'integration-surface', () => {
+      const wrap = el('div', {});
+      const grid = el('div', { class: 'journey-grid' });
+      for (const surf of data.integrationSurfaces) {
+        grid.appendChild(integrationCard(surf));
+      }
+      wrap.appendChild(grid);
+      return wrap;
+    }));
+
+    // §5 Problems, Risks, And Peculiarities
+    panel.appendChild(investigationSection('PROBLEMS, RISKS, AND PECULIARITIES', 'risks', () => {
+      const grid = el('div', { class: 'journey-grid' });
+      for (const risk of data.risks) {
+        grid.appendChild(riskInvestigationCard(risk));
+      }
+      return grid;
+    }));
+
+    // §6 Overlap And Alternatives (bidirectional overlap pair)
+    panel.appendChild(investigationSection('OVERLAP AND ALTERNATIVES', 'overlap-alternatives', () => {
+      const wrap = el('div', {});
+      const overlaps = overlapRelationsFor(semanticInvestigation, componentId);
+      if (!overlaps.length) {
+        wrap.appendChild(el('p', { class: 'muted' }, text('No overlap or alternative relations for this component.')));
+        return wrap;
+      }
+      const grid = el('div', { class: 'journey-grid' });
+      for (const ov of overlaps) {
+        grid.appendChild(overlapCard(ov));
+      }
+      wrap.appendChild(grid);
+      return wrap;
+    }));
+
+    // §7 Evidence And Confidence Boundary (4 buckets, never one badge)
+    panel.appendChild(investigationSection('EVIDENCE AND CONFIDENCE BOUNDARY', 'evidence-boundary', () => {
+      const wrap = el('div', {});
+      wrap.appendChild(el('p', { class: 'muted section-intro' }, text('Each claim above is labelled by where it comes from. This is the boundary: which statements are local corpus evidence, which are curated knowledge, which are agent hypotheses, and what cannot yet be said.')));
+      const grid = el('div', { class: 'evidence-usability-grid' });
+      const b = data.evidenceBoundary || {};
+      grid.appendChild(boundaryBucketCard('LOCAL CORPUS', (b.local_corpus || []).length, 'Derived from inspected target files/artifacts.'));
+      grid.appendChild(boundaryBucketCard('CURATED KNOWLEDGE', (b.curated_knowledge || []).length, 'Stable curated knowledge with a resolvable source card.'));
+      grid.appendChild(boundaryBucketCard('AGENT HYPOTHESES', (b.agent_hypotheses || []).length, 'Agent inference, labelled and reversible.'));
+      grid.appendChild(boundaryBucketCard('NOT ASSESSED', (b.not_assessed || []).length, 'The atlas cannot say this yet — see Next Expedition.'));
+      wrap.appendChild(grid);
+      // List the not_assessed gaps explicitly so they are visible, not hidden.
+      if ((b.not_assessed || []).length) {
+        const gaps = el('div', { class: 'route-button-grid' });
+        for (const g of b.not_assessed) gaps.appendChild(el('span', { class: 'chip' }, text(g)));
+        wrap.appendChild(el('div', { class: 'section-kicker' }, text('NOT-ASSESSED GAPS')));
+        wrap.appendChild(gaps);
+      }
+      return wrap;
+    }));
+
+    // §8 Next Expedition
+    panel.appendChild(investigationSection('NEXT EXPEDITION', 'next-expedition', () => {
+      const wrap = el('div', {});
+      if (!data.nextExpedition.length) {
+        wrap.appendChild(el('p', { class: 'muted' }, text('No specific next-expedition actions for this component.')));
+        return wrap;
+      }
+      const list = el('div', { class: 'journey-grid' });
+      for (const n of data.nextExpedition) {
+        list.appendChild(nextExpeditionCard(n));
+      }
+      wrap.appendChild(list);
+      return wrap;
+    }));
+
+    panel.appendChild(routeLink('← Back to the Semantic Map', '/ecosystem', { class: 'back-link' }));
+    main.appendChild(panel);
+  }
+
+  // A labelled investigation section wrapper carrying a stable data attribute so
+  // the harness can assert section presence + minimum content counts.
+  function investigationSection(label, sectionKey, bodyFn) {
+    const sec = el('div', { class: 'dossier-section', 'data-portolan-section': sectionKey });
+    sec.appendChild(el('div', { class: 'section-kicker' }, text(label)));
+    sec.appendChild(bodyFn());
+    return sec;
+  }
+
+  function conceptCard(concept) {
+    const card = el('div', { class: 'card journey-card', 'data-portolan-concept': concept.id });
+    card.appendChild(el('div', { class: 'card-title' }, text(concept.label || concept.id)));
+    card.appendChild(el('p', { class: 'prose' }, text(concept.explanation)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(sourceBoundaryBadge(concept.sourceBoundary));
+    card.appendChild(meta);
+    card.appendChild(sourceCardLink(concept.sourceRef));
+    return card;
+  }
+
+  function integrationCard(surf) {
+    const card = el('div', { class: 'card journey-card', 'data-portolan-integration': surf.kind });
+    card.appendChild(el('div', { class: 'card-title' }, text(surf.label)));
+    card.appendChild(el('p', { class: 'prose' }, text(surf.explanation)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(el('span', { class: 'badge badge-quiet' }, text(surf.kind)));
+    meta.appendChild(sourceBoundaryBadge(surf.sourceBoundary));
+    card.appendChild(meta);
+    return card;
+  }
+
+  function riskInvestigationCard(risk) {
+    const card = el('div', { class: 'card risk-card', 'data-portolan-risk': risk.id });
+    card.appendChild(el('div', { class: 'card-title' }, text(risk.label || risk.id)));
+    card.appendChild(el('p', { class: 'risk-summary' }, text(risk.explanation)));
+    const meta = el('div', { class: 'card-meta' });
+    meta.appendChild(sourceBoundaryBadge(risk.sourceBoundary));
+    card.appendChild(meta);
+    card.appendChild(sourceCardLink(risk.sourceRef));
+    return card;
+  }
+
+  // An overlap/alternative card. Shows the OTHER component as a link, the
+  // relation type, the dimensions, and the bidirectionality status so the
+  // reader sees the pair is declared both ways.
+  function overlapCard(ov) {
+    const card = el('div', { class: 'card journey-card', 'data-portolan-overlap': ov.otherId });
+    const other = semanticVm.componentsById.get(ov.otherId);
+    const otherLabel = (other && other.display_name) || ov.otherId;
+    // Link to the other component's investigation (selected) or dossier.
+    const route = selectedComponentIds.has(ov.otherId)
+      ? `/investigation/${encodeURIComponent(ov.otherId)}`
+      : (other && other.route ? other.route : `/dossier/component/${encodeURIComponent(ov.otherId)}`);
+    const head = el('div', { class: 'card-title' });
+    head.appendChild(routeLink(otherLabel, route, { id: ov.otherId, kind: 'investigation', class: 'stage-title-link' }));
+    card.appendChild(head);
+    const relTypes = ov.edges.map(e => e.type).join(', ');
+    card.appendChild(el('p', { class: 'prose' }, text('Relation: ' + relTypes + (ov.bidirectional ? ' · bidirectional' : ' · one-directional (declared on this side only)'))));
+    // Dimensions: the union of overlap/contrast dimensions.
+    if (ov.dimensions.length) {
+      const dims = el('div', { class: 'card-meta' });
+      for (const d of ov.dimensions) dims.appendChild(el('span', { class: 'chip' }, text(d)));
+      card.appendChild(dims);
+    }
+    // Explanation from the first edge (the curated reasoning).
+    if (ov.edges.length && ov.edges[0].explanation) {
+      card.appendChild(el('p', { class: 'muted risk-why' }, text(ov.edges[0].explanation)));
+    }
+    card.appendChild(sourceCardLink(ov.edges[0] && ov.edges[0].sourceRef));
+    return card;
+  }
+
+  function relationChip(rel, route) {
+    const chip = el('span', { class: 'route-diagram-node', 'data-portolan-relation': rel.type });
+    chip.appendChild(routeLink(rel.targetLabel, route, { id: rel.targetId, kind: 'investigation', class: 'stage-title-link' }));
+    chip.appendChild(el('div', { class: 'rd-role' }, text(rel.type)));
+    return chip;
+  }
+
+  function boundaryBucketCard(label, count, copy) {
+    // The label encodes the source boundary (e.g. "LOCAL CORPUS" -> local-corpus).
+    const boundaryKey = label.toLowerCase().replace(/\s+/g, '-');
+    const card = el('div', { class: 'card eu-axis-card', 'data-portolan-boundary-bucket': boundaryKey });
+    card.appendChild(el('div', { class: 'section-kicker' }, text(label)));
+    card.appendChild(el('div', { class: 'eu-axis-verdict' }, text(String(count))));
+    card.appendChild(el('p', { class: 'muted eu-axis-copy' }, text(copy)));
+    return card;
+  }
+
+  function nextExpeditionCard(n) {
+    const card = el('div', { class: 'card probe-card', 'data-portolan-next-expedition': n.closes_gap || '' });
+    card.appendChild(el('div', { class: 'card-title' }, text(n.producer || n.action || 'Next producer')));
+    if (n.action) card.appendChild(el('p', { class: 'prose' }, text(n.action)));
+    if (n.why) card.appendChild(el('p', { class: 'muted risk-why' }, text(n.why)));
+    if (n.closes_gap) card.appendChild(el('span', { class: 'chip' }, text('closes: ' + n.closes_gap)));
+    return card;
+  }
+
+  // =========================================================================
+  // Ecosystem Placement Map (captain-atlas 17 §Ecosystem Placement Map).
+  // A capability-region view: regions as columns, selected components placed in
+  // them, bidirectional overlap/alternative relations drawn as connectors. This
+  // is NOT the repository graph (Structure Map) — it is a fresh lane layout by
+  // capability, so a different DOM marker and a different data source.
+  // =========================================================================
+  function renderEcosystemMap(main) {
+    const panel = el('section', { class: 'panel ecosystem-map' });
+    panel.setAttribute('data-portolan-view', 'ecosystem');
+    panel.setAttribute('data-portolan-kind', 'ecosystem-map');
+    // Guard: if a user lands on #/ecosystem with no semantic investigation
+    // loaded, render a typed empty state instead of crashing on
+    // semanticInvestigation.sample (defensive — currentView() also gates the
+    // tab, but a hand-edited hash must not throw).
+    if (!semanticVm) {
+      panel.appendChild(el('h1', { class: 'panel-title' }, text('Semantic Map')));
+      panel.appendChild(el('p', { class: 'muted' }, text('No semantic investigation is loaded for this atlas, so there is no capability-region map to show. Open the Structure Map for the unit/edge chart.')));
+      main.appendChild(panel);
+      return;
+    }
+    const map = ecosystemPlacementMap(semanticInvestigation, selectedComponentIds);
+    panel.appendChild(el('h1', { class: 'panel-title' }, text('Semantic Map · capability regions')));
+    panel.appendChild(sectionIntro('Where the investigated components sit by capability, and where they overlap or act as alternatives. This is a capability view, not the repository graph — open the Structure Map for the unit/edge chart.'));
+    if (semanticInvestigation.sample && semanticInvestigation.sample.selection_reason) {
+      panel.appendChild(el('p', { class: 'muted section-intro' }, text('Sample: ' + semanticInvestigation.sample.selection_reason)));
+    }
+
+    // Regions as lanes.
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('CAPABILITY REGIONS')));
+    const grid = el('div', { class: 'ecosystem-region-grid', 'data-portolan-kind': 'ecosystem-regions' });
+    for (const region of map.regions) {
+      const lane = el('div', { class: 'card ecosystem-region', 'data-portolan-region': region.id });
+      lane.appendChild(el('div', { class: 'card-title' }, text(region.label)));
+      if (region.description) lane.appendChild(el('p', { class: 'muted risk-why' }, text(region.description)));
+      const placed = el('div', { class: 'route-button-grid' });
+      for (const comp of region.components) {
+        // Placed selected components link to their investigation; placement
+        // chips carry a stable marker so the harness can prove placement.
+        const route = selectedComponentIds.has(comp.id)
+          ? `/investigation/${encodeURIComponent(comp.id)}`
+          : `/dossier/component/${encodeURIComponent(comp.id)}`;
+        const chip = routeLink(comp.label, route, { id: comp.id, kind: 'investigation', class: 'chip ecosystem-placement' });
+        chip.setAttribute('data-portolan-placement', comp.id);
+        placed.appendChild(chip);
+      }
+      if (!region.components.length) placed.appendChild(el('span', { class: 'muted' }, text('No investigated components placed here.')));
+      lane.appendChild(placed);
+      grid.appendChild(lane);
+    }
+    panel.appendChild(grid);
+
+    // Overlap/alternative relations (the visible connectors).
+    panel.appendChild(el('div', { class: 'section-kicker' }, text('OVERLAP / ALTERNATIVE RELATIONS')));
+    const overlapWrap = el('div', { class: 'journey-grid', 'data-portolan-kind': 'ecosystem-overlaps' });
+    for (const p of map.overlapPairs) {
+      const aComp = semanticVm.componentsById.get(p.a);
+      const bComp = semanticVm.componentsById.get(p.b);
+      const card = el('div', { class: 'card journey-card ecosystem-overlap', 'data-portolan-overlap-pair': `${p.a}__${p.b}` });
+      const head = el('div', { class: 'card-title' });
+      head.appendChild(routeLink(aComp ? aComp.display_name : p.a, `/investigation/${encodeURIComponent(p.a)}`, { id: p.a, kind: 'investigation', class: 'stage-title-link' }));
+      head.appendChild(el('span', { style: 'margin:0 6px' }, text('↔')));
+      head.appendChild(routeLink(bComp ? bComp.display_name : p.b, `/investigation/${encodeURIComponent(p.b)}`, { id: p.b, kind: 'investigation', class: 'stage-title-link' }));
+      card.appendChild(head);
+      card.appendChild(el('p', { class: 'prose' }, text('Bidirectional overlap across ' + p.dimensions.length + ' dimension(s).')));
+      const dims = el('div', { class: 'card-meta' });
+      for (const d of p.dimensions) dims.appendChild(el('span', { class: 'chip' }, text(d)));
+      card.appendChild(dims);
+      overlapWrap.appendChild(card);
+    }
+    if (!map.overlapPairs.length) overlapWrap.appendChild(el('p', { class: 'muted' }, text('No bidirectional overlap/alternative relations.')));
+    panel.appendChild(overlapWrap);
+
     main.appendChild(panel);
   }
 

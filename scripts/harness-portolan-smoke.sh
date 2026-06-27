@@ -141,8 +141,11 @@ grep -q 'id="app"' <<<"$HTML"
 grep -q 'app.js' <<<"$HTML"
 grep -q 'styles.css' <<<"$HTML"
 APP_JS=$(curl -sf "$BASE/app.js")
-grep -q 'Enterprise landscape atlas' <<<"$APP_JS"
-grep -q 'Search component, issue, wiki, finding' <<<"$APP_JS"
+# Assert the built viewer serves real viewer content (the strings were refreshed
+# to match the current meaning-first viewer; the old assertions referenced
+# strings removed in the viewer refactor, which left CI red).
+grep -q 'PORTOLAN ATLAS' <<<"$APP_JS"
+grep -q 'Search components, surfaces, findings' <<<"$APP_JS"
 STYLES_CSS=$(curl -sf "$BASE/styles.css")
 grep -q -- '--primary' <<<"$STYLES_CSS"
 grep -q 'map-canvas' <<<"$STYLES_CSS"
