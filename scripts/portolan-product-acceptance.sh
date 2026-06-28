@@ -622,6 +622,17 @@ run_viewer_checks() {
   fi
 }
 
+run_atlas_checks() {
+  # The primary reading layer is portolan-core; its atlas first-paint smoke is
+  # the fatal first-paint gate (the superseded viewer smoke above is non-fatal).
+  # Skipped (non-fatal) if Playwright/chromium is unavailable in this env.
+  echo "==> atlas first-paint smoke (primary reading layer)" >&2
+  if ! "$ROOT/scripts/harness-atlas-first-paint-smoke.sh"; then
+    echo "warning: portolan-core atlas first-paint smoke failed" >&2
+    return 1
+  fi
+}
+
 run_harness_checks() {
   run "agent install smoke" "$ROOT/scripts/harness-agent-install-smoke.sh"
   if [[ "$RUN_AGENT_RUNTIME" -eq 1 ]]; then
@@ -1633,6 +1644,7 @@ run_test_corpora_archive_checks
 run_go_checks
 run_schema_checks
 run_viewer_checks
+run_atlas_checks
 run_clean_copy_install_check
 run_exported_multirepo_fixture_check
 run_polyglot_multirepo_fixture_check
