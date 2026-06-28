@@ -6,8 +6,6 @@ Defines the mandatory trust contract: every assertion carries a confidence
 level bound to its producer family. Confidence is orthogonal to evidence source
 and is the product's spine, not a feature.
 
-Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § Trust
-Contract (migrated).
 
 ## Requirements
 

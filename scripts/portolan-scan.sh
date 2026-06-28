@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-command Portolan scan: tool check → recipes → bundle → viewer.
-# See harness/SKILL.md and openspec/legacy/captain-atlas/.
+# See harness/SKILL.md.
 set -euo pipefail
 
 ORIGINAL_ARGS=("$@")
@@ -1745,12 +1745,14 @@ if [[ "$NO_VIEWER" -eq 1 ]]; then
   exit 0
 fi
 
-command -v node >/dev/null || { log "node is required for viewer"; exit 1; }
+command -v node >/dev/null || { log "node is required for atlas export"; exit 1; }
 
-cd "$ROOT/viewer"
-set_phase "viewer-build"
-node scripts/build-static.js
+set_phase "atlas-export"
+write_receipt 0 "atlas_exporting"
+# Charter-08: scan exports the atlas as inlined HTML via /portolan:map (no HTTP
+# server). --no-viewer skips this; --open (handled by the caller) opens it.
+node "$ROOT/portolan-core/scripts/portolan-map.mjs" --bundle "$BUNDLE_DIR"
 set_phase "receipt"
-write_receipt 0 "viewer_starting"
-log "viewer: http://127.0.0.1:$PORT/ (Ctrl+C to stop)"
-exec node scripts/serve.js --bundle "$BUNDLE_DIR" --port "$PORT"
+write_receipt 0 "completed"
+log "atlas: $BUNDLE_DIR/atlas.html (open in a browser)"
+exit 0

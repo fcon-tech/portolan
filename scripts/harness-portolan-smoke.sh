@@ -128,49 +128,12 @@ full_n=$(wc -l <"$TRUNC_BUNDLE/hotspots-full.jsonl" | tr -d ' ')
 bud_n=$(wc -l <"$TRUNC_BUNDLE/hotspots.jsonl" | tr -d ' ')
 test "$full_n" -gt "$bud_n" || { echo "truncation: full=$full_n budgeted=$bud_n" >&2; exit 1; }
 
-cd "$ROOT/viewer"
-node scripts/build-static.js
-node scripts/serve.js --bundle "$FIXTURE_BUNDLE" --port "$VIEWER_PORT" &
-PID=$!
-sleep 1
-
-BASE="http://127.0.0.1:$VIEWER_PORT"
-HTML=$(curl -sf "$BASE/")
-grep -q '<title>Portolan Atlas</title>' <<<"$HTML"
-grep -q 'id="app"' <<<"$HTML"
-grep -q 'app.js' <<<"$HTML"
-grep -q 'styles.css' <<<"$HTML"
-APP_JS=$(curl -sf "$BASE/app.js")
-# Assert the built viewer serves real viewer content (the strings were refreshed
-# to match the current meaning-first viewer; the old assertions referenced
-# strings removed in the viewer refactor, which left CI red).
-grep -q 'PORTOLAN ATLAS' <<<"$APP_JS"
-grep -q 'Search components, surfaces, findings' <<<"$APP_JS"
-STYLES_CSS=$(curl -sf "$BASE/styles.css")
-grep -q -- '--primary' <<<"$STYLES_CSS"
-grep -q 'map-canvas' <<<"$STYLES_CSS"
-curl -sf "$BASE/bundle/manifest.json" | jq -e '.hotspot_count >= 1' >/dev/null
-HOTSPOTS_JSONL=$(curl -sf "$BASE/bundle/hotspots.jsonl")
-grep -q duplication <<<"$HOTSPOTS_JSONL"
-SOURCE_SNIPPET=$(curl -sf "$BASE/source?path=sample.go&line=1")
-grep -q 'Run' <<<"$SOURCE_SNIPPET"
-
-FORBIDDEN_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/source?path=../../../etc/passwd&line=1")
-test "$FORBIDDEN_CODE" = "403"
-
-SYMLINK_TARGET="$FIXTURE_TARGET/leak-outside"
-rm -f "$SYMLINK_TARGET"
-ln -sf /etc/passwd "$SYMLINK_TARGET"
-SYMLINK_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/source?path=leak-outside&line=1")
-rm -f "$SYMLINK_TARGET"
-test "$SYMLINK_CODE" = "403"
-
-curl -sf "$BASE/bundle/landscape-card.json" | jq -e '.identity.name' >/dev/null
-curl -sf "$BASE/bundle/landscape-report.json" | jq -e '.sections | length >= 1' >/dev/null
-curl -sf "$BASE/bundle/atlas-surfaces.json" | jq -e '.coverage.repo_count >= 1' >/dev/null
-curl -sf "$BASE/bundle/atlas-facts.json" | jq -e '.coverage.component_count >= 1' >/dev/null
-curl -sf "$BASE/bundle/atlas-surface-content.json" | jq -e '.coverage.route_count >= 1' >/dev/null
-curl -sf "$BASE/api/hotspots?limit=3" | jq -e '.schema_version and (.records | length) >= 1' >/dev/null
+# Charter-08: the atlas is exported as inlined HTML via /portolan:map (no HTTP
+# viewer server). Source-sandbox behaviour is covered by the query-bundle
+# source/selected-code unit tests + harness-bundle-query-smoke.
+node "$ROOT/portolan-core/scripts/portolan-map.mjs" --bundle "$FIXTURE_BUNDLE"
+test -s "$FIXTURE_BUNDLE/atlas.html"
+grep -q '<title>Portolan Atlas' "$FIXTURE_BUNDLE/atlas.html"
 
 "$ROOT/scripts/harness-bundle-query-smoke.sh"
 "$ROOT/scripts/harness-bundle-query-mcp-smoke.sh"

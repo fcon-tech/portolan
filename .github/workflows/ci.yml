@@ -31,10 +31,10 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: viewer/package-lock.json
+          cache-dependency-path: portolan-core/package-lock.json
 
-      - name: Install viewer deps (MCP)
-        run: npm ci --prefix viewer
+      - name: Install portolan-core deps (MCP + ajv)
+        run: npm ci --prefix portolan-core
 
       - name: Go vet
         run: go vet ./...

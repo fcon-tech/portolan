@@ -11,7 +11,7 @@
  * Per the source-boundary rules (spec §Source Boundaries):
  *  - These profiles are FIXTURE RULES, not target-derived facts. Every emitted
  *    row carries artifact_provenance: fixture_backed.
- *  - For portolan-self, the profiles do NOT read openspec/legacy/captain-atlas/*.md as
+ *  - For portolan-self, the profiles do NOT read living spec docs as
  *    source truth. The route/finding interpretations below are hand-authored
  *    fixture rules grounded in allowed source paths.
  *  - Prior agent evidence (synthesis/run paths) appears ONLY in frontierRows
@@ -38,7 +38,7 @@ const path = require('path');
  *  - Bigtop STRONG:    <target>/repos/apache-bigtop-repo exists.
  *  - Bigtop ACCEPTABLE: a target-relative bigtop.bom exists under repos/.
  *  - (Never use bare pom.xml as a Bigtop signal — too generic.)
- *  - portolan-self:    portolan-core/ AND viewer/ AND schema/ all exist.
+ *  - portolan-self:    portolan-core/ AND schema/ both exist.
  *
  * An explicit `explicit` profile ('bigtop' | 'portolan-self') always overrides
  * auto-detection, but still runs a capability pre-check against `sourceAdapter`
@@ -67,7 +67,6 @@ function selectProfile(targetRoot, sourceAdapter, explicit) {
   if (explicit === 'portolan-self') {
     const missing = [];
     if (!exists('portolan-core')) missing.push('portolan-core');
-    if (!exists('viewer')) missing.push('viewer');
     if (!exists('schema')) missing.push('schema');
     if (missing.length) return { id: 'unsupported_target', profile: null, reason: 'explicit portolan-self profile selected but expected roots missing', missingRoots: missing };
     return { id: 'portolan-self', profile: PORTOLAN_SELF_PROFILE, reason: 'explicit --profile portolan-self' };
@@ -80,10 +79,10 @@ function selectProfile(targetRoot, sourceAdapter, explicit) {
   if (findFile('bigtop.bom', 'repos')) {
     return { id: 'bigtop', profile: BIGTOP_PROFILE, reason: 'auto: acceptable signal bigtop.bom under repos/' };
   }
-  if (exists('portolan-core') && exists('viewer') && exists('schema')) {
-    return { id: 'portolan-self', profile: PORTOLAN_SELF_PROFILE, reason: 'auto: portolan-core + viewer + schema' };
+  if (exists('portolan-core') && exists('schema')) {
+    return { id: 'portolan-self', profile: PORTOLAN_SELF_PROFILE, reason: 'auto: portolan-core + schema' };
   }
-  return { id: 'unsupported_target', profile: null, reason: 'no profile signal matched (no apache-bigtop-repo, no bigtop.bom under repos/, no portolan-core+viewer+schema)' };
+  return { id: 'unsupported_target', profile: null, reason: 'no profile signal matched (no apache-bigtop-repo, no bigtop.bom under repos/, no portolan-core+schema)' };
 }
 
 /**
@@ -329,7 +328,7 @@ const BIGTOP_PROFILE = {
       gap_or_next_step: 'Use the multi-corpus acceptance bundle (build-atlas-navigation-index.mjs --combine) to assess.',
     },
     {
-      frontier_capability: 'portolan-self duplicate/drift/version-skew finding',
+      frontier_capability: 'portolan-self legacy/current version-skew finding',
       raw_agent_evidence: 'portolan-self-boundary-v2-frontier-analysis.md (separate corpus)',
       generated_artifact: 'not generated for a single-corpus Bigtop target',
       viewer_surface: 'n/a for single-corpus Bigtop target',
@@ -359,14 +358,14 @@ const BIGTOP_PROFILE = {
 // PORTOLAN-SELF PROFILE
 // ===========================================================================
 // portolan-self is a single-repo implementation/toolchain corpus. Routes are
-// command dispatch, harness/script workflow, bundle generation, schema
-// validation, and viewer/API source-snippet behavior. A duplicate-validator
-// finding (viewer + core both validate system-map semantics) and blocked
-// runtime/build/test probes are first-class. Agent self-status disagreed with
-// machine validation in the boundary-v2 run — that disagreement is recorded.
+// command dispatch, harness/script workflow, bundle generation, and schema
+// validation. A legacy/current-overlap finding (Go CLI + portolan-core both
+// handle system-map concerns) and blocked runtime/build/test probes are
+// first-class. Agent self-status disagreed with machine validation in the
+// boundary-v2 run — that disagreement is recorded.
 //
-// Source regions (allowed inventory): Go CLI/internal, harness/scripts, viewer,
-// JavaScript core, schemas/contracts, fixtures/tests.
+// Source regions (allowed inventory): Go CLI/internal, harness/scripts,
+// JavaScript core (portolan-core), schemas/contracts, fixtures/tests.
 
 const PORTOLAN_SELF_PROFILE = {
   id: 'portolan-self',
@@ -472,9 +471,9 @@ const PORTOLAN_SELF_PROFILE = {
     {
       route_id: 'route:self:schema-validation',
       route_family: 'schema_validation',
-      route_title: 'System-map schema and validator route (duplicated across stacks)',
-      route_quality: 'medium',
-      next_raw_check: 'Compare validator behavior against the same fixture in both stacks.',
+      route_title: 'System-map schema and semantic validator route',
+      route_quality: 'high',
+      next_raw_check: 'Validate a fixture system-map against both the JSON schema and the semantic validator.',
       stages: [
         {
           stage: 'schema', stage_index: 1,
@@ -483,7 +482,7 @@ const PORTOLAN_SELF_PROFILE = {
           source_anchor: 'frozen system-map JSON schema',
           path_role: 'schema', lifecycle: 'active',
           source_evidence_state: 'source-visible', runtime_assessment: 'not_assessed',
-          evidence_refs: ['ev:self-schema'], finding_refs: ['finding:self-duplicate-validator'],
+          evidence_refs: ['ev:self-schema'], finding_refs: [],
           unknown_probe_refs: ['unknown:self-tests'],
           anchor_candidate: { key: 'self-schema', file: 'schema/system-map.schema.json', substring: 'schema_version' },
           next_raw_check: 'Confirm the schema declares schema_version 0.1.0/0.2.0.',
@@ -495,55 +494,10 @@ const PORTOLAN_SELF_PROFILE = {
           source_anchor: 'clean-stack semantic validator',
           path_role: 'validator', lifecycle: 'active',
           source_evidence_state: 'source-visible', runtime_assessment: 'not_assessed',
-          evidence_refs: ['ev:self-core-validator'], finding_refs: ['finding:self-duplicate-validator'],
+          evidence_refs: ['ev:self-core-validator'], finding_refs: [],
           unknown_probe_refs: ['unknown:self-tests'],
           anchor_candidate: { key: 'self-core-validator', file: 'portolan-core/src/domain/atlas-validate.js', substring: 'validateSystemMap' },
-          next_raw_check: 'Diff the two validators against the same fixture.',
-        },
-        {
-          stage: 'validator-viewer', stage_index: 3,
-          subject_id: 'region:viewer', subject_type: 'source_region',
-          source_path: 'viewer/scripts/system-map/validate.js',
-          source_anchor: 'frozen viewer semantic validator',
-          path_role: 'validator', lifecycle: 'active',
-          source_evidence_state: 'source-visible', runtime_assessment: 'not_assessed',
-          evidence_refs: ['ev:self-viewer-validator'], finding_refs: ['finding:self-duplicate-validator', 'finding:self-legacy-current-overlap'],
-          unknown_probe_refs: ['unknown:self-tests'],
-          anchor_candidate: { key: 'self-viewer-validator', file: 'viewer/scripts/system-map/validate.js', substring: 'validateSystemMap' },
-          next_raw_check: 'Diff the two validators against the same fixture.',
-        },
-      ],
-    },
-    {
-      route_id: 'route:self:viewer-source-snippet',
-      route_family: 'viewer_api',
-      route_title: 'Viewer source-preview request reaches a fail-closed file boundary',
-      route_quality: 'medium',
-      next_raw_check: 'Run the viewer source-preview smoke with a disposable bundle.',
-      stages: [
-        {
-          stage: 'viewer-api', stage_index: 1,
-          subject_id: 'region:viewer', subject_type: 'source_region',
-          source_path: 'viewer/scripts/serve.js',
-          source_anchor: 'viewer HTTP server routing /api and /source',
-          path_role: 'viewer_api', lifecycle: 'active',
-          source_evidence_state: 'source-visible', runtime_assessment: 'not_assessed',
-          evidence_refs: ['ev:self-serve'], finding_refs: [],
-          unknown_probe_refs: ['unknown:self-browser-render'],
-          anchor_candidate: { key: 'self-serve', file: 'viewer/scripts/serve.js', substring: 'createServer' },
-          next_raw_check: 'Confirm /source is sandboxed to repo roots.',
-        },
-        {
-          stage: 'source-boundary-check', stage_index: 2,
-          subject_id: 'region:viewer', subject_type: 'source_region',
-          source_path: 'viewer/scripts/serve.js',
-          source_anchor: 'realpath/path-traversal guard before source preview',
-          path_role: 'source_snippet_boundary', lifecycle: 'active',
-          source_evidence_state: 'source-visible', runtime_assessment: 'not_assessed',
-          evidence_refs: ['ev:self-serve'], finding_refs: [],
-          unknown_probe_refs: ['unknown:self-browser-render'],
-          anchor_candidate: { key: 'self-serve', file: 'viewer/scripts/serve.js', substring: 'realpath' },
-          next_raw_check: 'Attempt a traversal payload against /source in a disposable run.',
+          next_raw_check: 'Validate a fixture system-map with the semantic validator.',
         },
       ],
     },
@@ -552,27 +506,15 @@ const PORTOLAN_SELF_PROFILE = {
   // --- findings -------------------------------------------------------------
   findings: [
     {
-      finding_id: 'finding:self-duplicate-validator',
-      finding_type: 'duplicate_risk', severity: 'major',
-      title: 'System-map validation behavior appears duplicated across stacks',
-      summary: 'viewer/scripts/system-map/validate.js and portolan-core/src/domain/atlas-validate.js both validate system-map semantics, creating drift risk.',
-      subject_ids: ['region:viewer', 'region:portolan-core'],
-      route_refs: ['route:self:schema-validation'],
-      state: 'not_assessed', confidence: 'hypothesis-with-facts',
-      producer_family: 'agent-producer', artifact_provenance: 'fixture_backed',
-      evidence_refs: ['ev:self-core-validator', 'ev:self-viewer-validator'],
-      next_raw_check: 'Compare both validators against the same fixture and record divergences.',
-    },
-    {
       finding_id: 'finding:self-legacy-current-overlap',
       finding_type: 'legacy_current_overlap', severity: 'minor',
       title: 'Legacy Go CLI and clean-stack JS core overlap on system-map concerns',
-      summary: 'The legacy Go CLI (internal/) and the new portolan-core JS stack both handle system-map building/querying. The legacy CLI is intentionally thin, but overlap creates version-skew risk.',
-      subject_ids: ['region:go-cli', 'region:portolan-core', 'region:viewer'],
+      summary: 'The legacy Go CLI (internal/) and the portolan-core JS stack both handle system-map building/querying. The legacy CLI is intentionally thin, but overlap creates version-skew risk.',
+      subject_ids: ['region:go-cli', 'region:portolan-core'],
       route_refs: ['route:self:command-dispatch', 'route:self:schema-validation'],
       state: 'not_assessed', confidence: 'hypothesis-with-facts',
       producer_family: 'agent-producer', artifact_provenance: 'fixture_backed',
-      evidence_refs: ['ev:self-app-dispatch', 'ev:self-viewer-validator'],
+      evidence_refs: ['ev:self-app-dispatch'],
       next_raw_check: 'Inventory which system-map behaviors live in each stack.',
     },
   ],
@@ -584,8 +526,8 @@ const PORTOLAN_SELF_PROFILE = {
       'Run `go build ./...` in a disposable checkout.', 'low', ['runtime']),
     probe('unknown:self-tests', 'region:scripts', 'test suites (go + node --test)',
       'blocked', 'No test suites were executed in this slice.',
-      'Run `go test ./...`, `npm test` in viewer and portolan-core.', 'low', ['runtime']),
-    probe('unknown:self-browser-render', 'region:viewer', 'browser rendering of atlas.html',
+      'Run `go test ./...`, `npm test` in portolan-core.', 'low', ['runtime']),
+    probe('unknown:self-browser-render', 'region:portolan-core', 'browser rendering of atlas.html',
       'not_assessed', 'No browser smoke was run.',
       'Open a generated atlas.html headlessly and assert the overview renders.', 'low', ['runtime']),
     probe('unknown:self-ci', 'region:scripts', 'CI health',
@@ -610,10 +552,6 @@ const PORTOLAN_SELF_PROFILE = {
       'source-visible', 'Declares the frozen 0.1.0/0.2.0 system-map schema.', 'region:schemas'),
     ev('ev:self-core-validator', 'portolan-core/src/domain/atlas-validate.js', 'clean-stack semantic validator',
       'source-visible', 'Pure validateSystemMap() enforcing semantic invariants.', 'region:portolan-core'),
-    ev('ev:self-viewer-validator', 'viewer/scripts/system-map/validate.js', 'frozen viewer semantic validator',
-      'source-visible', 'Near-duplicate of the core validator in the frozen viewer stack.', 'region:viewer'),
-    ev('ev:self-serve', 'viewer/scripts/serve.js', 'viewer HTTP server',
-      'source-visible', 'serve.js hosts /api, /source (sandboxed), and bundle files.', 'region:viewer'),
   ],
 
   // --- frontier comparison rows --------------------------------------------
@@ -654,9 +592,9 @@ const PORTOLAN_SELF_PROFILE = {
       gap_or_next_step: 'Add below-region module zoom (Candidate F) for the viewer and core internals.',
     },
     {
-      frontier_capability: 'portolan-self duplicate/drift/version-skew finding',
-      raw_agent_evidence: 'portolan-self-boundary-v2-frontier-analysis.md (duplicate validator + legacy/current overlap)',
-      generated_artifact: 'atlas-findings.jsonl finding:self-duplicate-validator + finding:self-legacy-current-overlap',
+      frontier_capability: 'portolan-self legacy/current version-skew finding',
+      raw_agent_evidence: 'portolan-self-boundary-v2-frontier-analysis.md (legacy/current overlap)',
+      generated_artifact: 'atlas-findings.jsonl finding:self-legacy-current-overlap',
       viewer_surface: 'Findings dossier',
       status: 'matches_frontier',
       gap_or_next_step: 'Run the diff probe (unknown:self-tests) to confirm divergence.',

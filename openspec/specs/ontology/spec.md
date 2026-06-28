@@ -6,7 +6,6 @@ Defines the discovered ontology of the landscape: the minimal kernel of unit,
 surface, finding, external node, grouping, and typed edge. Structure is
 discovered, not prescribed; a fixed taxonomy is not imposed.
 
-Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § Ontology
 (migrated).
 
 ## Requirements

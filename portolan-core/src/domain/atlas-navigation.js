@@ -128,7 +128,7 @@ const FRONTIER_REQUIRED_ROWS = [
   'Bigtop version-boundary or runtime unknown',
   'Bigtop coverage gap',
   'portolan-self implementation/toolchain route',
-  'portolan-self duplicate/drift/version-skew finding',
+  'portolan-self legacy/current version-skew finding',
   'portolan-self blocked runtime/build/test probe',
   'receipt-validation disagreement between agent self-status and machine status',
 ];
@@ -710,16 +710,15 @@ function validateFullMode(bundle, checks, errors, mode) {
     const families = new Set(ni.map(n => n.route_family));
     const hasCommandOrScript = families.has('command') || families.has('script_workflow');
     const hasBundleOrSchema = families.has('bundle_generation') || families.has('schema_validation');
-    const hasViewer = families.has('viewer_api');
-    const hasDupFinding = fi.some(f => f.finding_type === 'duplicate_risk' || f.finding_type === 'version_skew' || f.finding_type === 'legacy_current_overlap');
+    const hasOverlapFinding = fi.some(f => f.finding_type === 'version_skew' || f.finding_type === 'legacy_current_overlap');
     const hasBlockedProbe = up.some(p => p.state === 'blocked' || p.state === 'not_assessed');
     // required source-region coverage
-    const requiredRegions = ['region:go-cli', 'region:scripts', 'region:viewer', 'region:portolan-core', 'region:schemas', 'region:fixtures', 'region:docs'];
+    const requiredRegions = ['region:go-cli', 'region:scripts', 'region:portolan-core', 'region:schemas', 'region:fixtures', 'region:docs'];
     const haveRegions = requiredRegions.filter(r => coverageSubjectIds.has(r));
-    if (hasCommandOrScript && hasBundleOrSchema && hasViewer && hasDupFinding && hasBlockedProbe && haveRegions.length === requiredRegions.length) {
-      checks.push(verified('required-self-rows', `implementation routes + duplicate finding + blocked probe + ${haveRegions.length}/${requiredRegions.length} coverage regions`));
+    if (hasCommandOrScript && hasBundleOrSchema && hasOverlapFinding && hasBlockedProbe && haveRegions.length === requiredRegions.length) {
+      checks.push(verified('required-self-rows', `implementation routes + overlap finding + blocked probe + ${haveRegions.length}/${requiredRegions.length} coverage regions`));
     } else {
-      checks.push(failed('required-self-rows', `missing required portolan-self rows (cmd/script=${hasCommandOrScript}, bundle/schema=${hasBundleOrSchema}, viewer=${hasViewer}, dupFinding=${hasDupFinding}, blockedProbe=${hasBlockedProbe}, regions=${haveRegions.length}/${requiredRegions.length})`));
+      checks.push(failed('required-self-rows', `missing required portolan-self rows (cmd/script=${hasCommandOrScript}, bundle/schema=${hasBundleOrSchema}, overlapFinding=${hasOverlapFinding}, blockedProbe=${hasBlockedProbe}, regions=${haveRegions.length}/${requiredRegions.length})`));
     }
   }
 
@@ -970,7 +969,7 @@ function checkFrontierComparison(md, targetId) {
     || matchesExceeds('Bigtop version-boundary or runtime unknown')
     || matchesExceeds('Bigtop coverage gap');
   const selfAny = matchesExceeds('portolan-self implementation/toolchain route')
-    || matchesExceeds('portolan-self duplicate/drift/version-skew finding')
+    || matchesExceeds('portolan-self legacy/current version-skew finding')
     || matchesExceeds('portolan-self blocked runtime/build/test probe')
     || matchesExceeds('receipt-validation disagreement between agent self-status and machine status');
   let passOk;

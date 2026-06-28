@@ -3,4 +3,4 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-exec node "$ROOT/viewer/scripts/bundle-query-cli.js" "$@"
+exec node "$ROOT/portolan-core/scripts/bundle-query-cli.mjs" "$@"

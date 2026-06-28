@@ -179,9 +179,9 @@ function memSource(subjects, presence) {
   };
 }
 const BIGTOP_PRESENT = { 'repos/apache-bigtop-repo': true };
-const SELF_PRESENT = { 'portolan-core': true, viewer: true, schema: true };
+const SELF_PRESENT = { 'portolan-core': true, schema: true };
 const BIGTOP_SUBJECTS = [{ subject_id: 'repo:apache-bigtop-repo', subject_type: 'repository', subject_label: 'bigtop-repo', source_path: 'repos/apache-bigtop-repo', exists: true, expected_by: 'enum', promotion_state: 'promoted' }];
-const SELF_SUBJECTS = ['go-cli', 'scripts', 'viewer', 'portolan-core', 'schemas', 'fixtures', 'docs'].map(r => ({
+const SELF_SUBJECTS = ['go-cli', 'scripts', 'portolan-core', 'schemas', 'fixtures', 'docs'].map(r => ({
   subject_id: `region:${r}`, subject_type: 'source_region', subject_label: r, source_path: r, exists: true, expected_by: 'enum', promotion_state: 'promoted',
 }));
 
@@ -219,10 +219,9 @@ test('BDD [atlas-navigation-index]: Portolan-self implementation route is naviga
   const result = buildAtlasNavigationIndex({ targetRoot: '/self', sourceAdapter: memSource(SELF_SUBJECTS, SELF_PRESENT) });
   const b = result.bundle;
   const families = new Set(b.navigationIndex.map(n => n.route_family));
-  // command/script, bundle/schema, viewer/api routes
+  // command/script, bundle/schema routes
   assert.ok(families.has('command') || families.has('script_workflow'));
   assert.ok(families.has('bundle_generation') || families.has('schema_validation'));
-  assert.ok(families.has('viewer_api'));
   // the route links to at least one finding and one unknown probe
   assert.ok(b.findings.length >= 1);
   assert.ok(b.unknownProbes.length >= 1);

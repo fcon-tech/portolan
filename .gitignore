@@ -2,8 +2,7 @@
 /bin/
 /dist/
 /output/
-viewer/dist/
-viewer/node_modules/
+node_modules/
 **/portolan-smoke/
 .cursor/
 /.portolan/

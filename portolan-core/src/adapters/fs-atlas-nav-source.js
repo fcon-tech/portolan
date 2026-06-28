@@ -8,7 +8,7 @@
  *   Bigtop:       enumerate repos/* non-dot dirs as repository subjects; NEVER
  *                 read .portolan/, .cursor/, output/, research/ under the target.
  *   portolan-self: enumerate the six allowed source regions; NEVER read
- *                  openspec/legacy/captain-atlas/*.md as source truth.
+ *                  openspec/specs/*.md as source truth.
  *
  * Anchor matching (per profile.anchor_candidate):
  *   - single substring match in the declared file -> record line_start/line_end.
@@ -30,7 +30,6 @@ const BIGTOP_FORBIDDEN = new Set(['.portolan', '.cursor', 'output', 'research', 
 const SELF_REGIONS = [
   { id: 'region:go-cli', label: 'Go CLI / internal', rel: ['cmd', 'internal'], expected_by: 'source-region-enumerator' },
   { id: 'region:scripts', label: 'Harness / scripts', rel: ['scripts', 'harness'], expected_by: 'source-region-enumerator' },
-  { id: 'region:viewer', label: 'Viewer', rel: ['viewer'], expected_by: 'source-region-enumerator' },
   { id: 'region:portolan-core', label: 'JavaScript core (portolan-core)', rel: ['portolan-core'], expected_by: 'source-region-enumerator' },
   { id: 'region:schemas', label: 'Schemas / contracts', rel: ['schema', 'contracts'], expected_by: 'source-region-enumerator' },
   { id: 'region:fixtures', label: 'Fixtures / tests', rel: ['internal/testfixtures', 'tests'], expected_by: 'source-region-enumerator' },

@@ -54,4 +54,4 @@ if [[ -n "$OUT_MD" ]]; then
   ARGS+=(--out-md "$OUT_MD")
 fi
 
-node "$ROOT/viewer/scripts/captain-handoff.js" "${ARGS[@]}" "$BUNDLE"
+node "$ROOT/portolan-core/scripts/captain-handoff.mjs" "${ARGS[@]}" "$BUNDLE"

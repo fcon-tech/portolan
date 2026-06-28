@@ -12,4 +12,4 @@ fi
 BUNDLE_DIR=$(cd "$1" && pwd)
 TARGET_ROOT="${2:-}"
 
-node "$ROOT/viewer/scripts/evidence-promotion-atlas.js" build "$BUNDLE_DIR" "$TARGET_ROOT"
+node "$ROOT/portolan-core/scripts/build-evidence-promotion-atlas.mjs" build "$BUNDLE_DIR" "$TARGET_ROOT"

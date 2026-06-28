@@ -37,12 +37,9 @@ The living specs (each: Purpose + Requirements + Scenarios, RFC 2119):
 - `openspec/specs/drilldown-semantics/` — reader-facing drill-down labels/targets.
 - `openspec/specs/semantic-investigation/` — component investigation contract.
 
-`openspec/legacy/captain-atlas/` is the verbatim pre-OpenSpec spec surface,
-retained for history only — NOT authority. The charter (`legacy/captain-atlas/
-08-portolan-product-charter.md`) and behavior-defining work packages were
-migrated into the living specs above; the rest (roadmaps, scorecards, the frozen
-0.1.0 contract `07`) is kept verbatim as historical record. See
-`openspec/legacy/README.md`.
+`openspec/legacy/` holds retired surfaces (history only — NOT authority). The
+pre-OpenSpec captain-atlas spec surface was migrated into the living specs above
+and then removed; see `openspec/legacy/README.md`.
 
 ## The One Entry Point: /portolan:map
 

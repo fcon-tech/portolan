@@ -4,8 +4,7 @@
  *
  * Assembles the shell + all portolan-core modules (via assemble.mjs), inlines a
  * system-map.json as the atlas, and emits one self-contained index.html that
- * runs in any browser (file://, GitHub Pages, USB stick). Mirrors the frozen
- * viewer's export-single-file.mjs.
+ * runs in any browser (file://, GitHub Pages, USB stick).
  *
  * Usage: node scripts/export-shell.mjs --system-map <map.json> --out <index.html> [--title "..."]
  */

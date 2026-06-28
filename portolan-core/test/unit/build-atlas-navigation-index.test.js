@@ -32,7 +32,6 @@ const BIGTOP_SUBJECTS = [
 const SELF_SUBJECTS = [
   { subject_id: 'region:go-cli', subject_type: 'source_region', subject_label: 'Go CLI', source_path: 'cmd', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
   { subject_id: 'region:scripts', subject_type: 'source_region', subject_label: 'Scripts', source_path: 'scripts', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
-  { subject_id: 'region:viewer', subject_type: 'source_region', subject_label: 'Viewer', source_path: 'viewer', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
   { subject_id: 'region:portolan-core', subject_type: 'source_region', subject_label: 'Core', source_path: 'portolan-core', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
   { subject_id: 'region:schemas', subject_type: 'source_region', subject_label: 'Schemas', source_path: 'schema', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
   { subject_id: 'region:fixtures', subject_type: 'source_region', subject_label: 'Fixtures', source_path: 'internal/testfixtures', exists: true, expected_by: 'enum', promotion_state: 'promoted' },
@@ -65,7 +64,7 @@ test('build: portolan-self profile produces coverage for six regions', () => {
   const r = buildAtlasNavigationIndex({ targetRoot: '/self', sourceAdapter: src });
   assert.strictEqual(r.profileId, 'portolan-self');
   const regionIds = r.bundle.coverageMatrix.map(c => c.subject_id);
-  for (const req of ['region:go-cli', 'region:scripts', 'region:viewer', 'region:portolan-core', 'region:schemas', 'region:fixtures', 'region:docs']) {
+  for (const req of ['region:go-cli', 'region:scripts', 'region:portolan-core', 'region:schemas', 'region:fixtures', 'region:docs']) {
     assert.ok(regionIds.includes(req), `${req} in coverage`);
   }
 });

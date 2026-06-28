@@ -5,14 +5,14 @@
       "subject": "apache-bigtop",
       "predicate": "claims",
       "object": "missing-one-command-map-bundle",
-      "source": "openspec/legacy/captain-atlas/00-product-contract.md"
+      "source": "openspec/specs/atlas-identity/spec.md"
     },
     {
       "id": "claim-bigtop-needs-relationship-detection",
       "subject": "apache-bigtop",
       "predicate": "claims",
       "object": "missing-relationship-detection",
-      "source": "openspec/legacy/captain-atlas/00-product-contract.md"
+      "source": "openspec/specs/ontology/spec.md"
     }
   ]
 }

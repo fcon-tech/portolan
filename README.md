@@ -32,6 +32,24 @@ Use Portolan when you want an agent to answer questions like:
 Portolan is especially useful when the target is messy, multi-repo, legacy, or
 partly black-box.
 
+## Quick Start: /portolan:map
+
+The single charter-08 entry point. After managed intake (or over an existing
+scan bundle), open the atlas:
+
+```bash
+# Primary: intake-driven (the root Portolan skill runs managed conversational
+# intake, then /portolan:map builds the snapshot and opens the atlas).
+node portolan-core/scripts/portolan-map.mjs --target <target-root> [--open]
+
+# Over a scan-produced bundle (scripted / harness mode, no intake):
+node portolan-core/scripts/portolan-map.mjs --bundle <bundle-dir> [--open]
+```
+
+This exports an inlined, portable `atlas.html` (no HTTP server). The
+harness-install flow below produces the same end state through target-local
+wrappers for Cursor/OpenCode/Codex/Claude.
+
 ## Architecture (engine + reading layer)
 
 Portolan has two distinct layers, not two products:
@@ -39,17 +57,17 @@ Portolan has two distinct layers, not two products:
 - **Engine (producer): `internal/` (Go) + `scripts/*.sh` (bash).** The only thing
   that scans a target — runs ripgrep/ctags/jscpd/syft/semgrep, parses output,
   emits the evidence bundle (`*.jsonl`) + `system-map.json`. This is what the
-  Harness-First Quick Start below drives.
-- **Reading layer (consumer): `portolan-core/` (the charter-08 direction)
-  renders the atlas from the engine's output. The single entry point is
-  `/portolan:map` (`node portolan-core/scripts/portolan-map.mjs --target <root>`).
-  The older `viewer/` app is the superseded 0.1.0 contract surface, removed by
-  the 0.2.0 big-bang migration; see `AGENTS.md`.
+  Harness-Install Flow below drives.
+- **Reading layer (consumer): `portolan-core/` (Clean Architecture: domain →
+  use-cases → ports → adapters) renders the atlas from the engine's output. The
+  single entry point is `/portolan:map`
+  (`node portolan-core/scripts/portolan-map.mjs --target <root>`). The former
+  `viewer/` app (0.1.0) has been removed; see `AGENTS.md`.
 
-## Harness-First Quick Start (recommended)
+## Harness-Install Flow (agent wrappers; produces the same atlas via target-local commands)
 
 Portolan is primarily a **harness supplement**: portable skill, OSS recipes,
-guardrails, queryable bundle, and local atlas viewer. It is not a Go module you
+guardrails, queryable bundle, and local atlas. It is not a Go module you
 must install first.
 
 Generate the prompt from the two inputs the captain actually knows. `PORTOLAN`
@@ -88,7 +106,7 @@ checks the generated bundle through `portolan-bundle-query`, and runs the local
 baseline checks. Without `--require-agent-runtime`, unavailable agent CLIs are
 reported as `not_assessed` instead of success.
 
-**Agent command** (doctor -> plan -> bundle; open viewer separately):
+**Agent command** (doctor -> plan -> bundle; open the atlas via `/portolan:map`):
 
 ```bash
 scripts/portolan-install.sh <target-root> --harness all --bundle-dir <bundle-dir>
@@ -97,13 +115,13 @@ scripts/portolan-install.sh <target-root> --harness all --bundle-dir <bundle-dir
 <target-root>/.portolan/bin/portolan-scan.sh <target-root> <bundle-dir> --yes --skip-install --no-viewer
 ```
 
-Omit `--no-viewer` only for a human-run command where blocking in the viewer is
-fine. Remove `--skip-install` only after explicit approval to install missing
-local OSS tools. See `scripts/portolan-scan.sh --help`.
+Omit `--no-viewer` only for a human-run command where exporting the atlas as
+inlined HTML is fine. Remove `--skip-install` only after explicit approval to
+install missing local OSS tools. See `scripts/portolan-scan.sh --help`.
 
-The viewer opens as a map-first atlas: landscape overview, component graph,
-relationship drill-down, ranked risks, gaps, search, filters, agent handoff
-commands, and click-to-source preview for local files.
+The atlas (`atlas.html`) opens as a map-first landscape: overview, component
+graph, relationship drill-down, ranked risks, gaps, search, filters, agent
+handoff commands, and click-to-source preview for local files.
 See [`docs/agent/QUICKSTART.md`](docs/agent/QUICKSTART.md).
 
 Developer fallback for extending producers: use [`harness/SKILL.md`](harness/SKILL.md)
@@ -116,7 +134,7 @@ Query the harness bundle at answer time (agent-first; no pre-built Q&A pack):
 <target-root>/.portolan/bin/portolan-bundle-query.sh search --bundle <bundle-dir> --q "auth" --limit 30
 ```
 
-The local viewer exposes the same contract at `/api/hotspots`, `/api/search`, etc.
+The same bounded-query families are available through the MCP server below.
 
 **MCP (Cursor/Codex):** `PORTOLAN_BUNDLE_DIR=<bundle> scripts/portolan-bundle-query-mcp.sh` — see [`harness/recipes/bundle-query-mcp.md`](harness/recipes/bundle-query-mcp.md).
 
@@ -156,9 +174,9 @@ validation fixtures, not the main product path.
 These routes are current and boundary-limited. Some public surfaces are initial
 community infrastructure rather than proof of broad adoption or support.
 
-- Install: use the [Harness-First Quick Start](#harness-first-quick-start-recommended) above.
+- Install: use the [Harness-Install Flow](#harness-install-flow-agent-wrappers-produces-the-same-atlas-via-target-local-commands) above (or `/portolan:map` directly).
 - Example run: use the [Demo Runbook](docs/demo-runbook.md) or run the
-  [Harness-First Quick Start](#harness-first-quick-start-recommended) against
+  [Harness-Install Flow](#harness-install-flow-agent-wrappers-produces-the-same-atlas-via-target-local-commands) against
   any local target you can inspect.
 - Product specs: read the [OpenSpec living specs](openspec/specs/) before
   changing product direction; propose changes via `/opsx:propose`.

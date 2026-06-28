@@ -39,7 +39,6 @@ function minimalSubjects(profile) {
   return [
     { subject_id: 'region:go-cli', subject_type: 'source_region', subject_label: 'Go CLI', source_path: 'cmd', exists: true, expected_by: 'test', promotion_state: 'promoted' },
     { subject_id: 'region:scripts', subject_type: 'source_region', subject_label: 'Scripts', source_path: 'scripts', exists: true, expected_by: 'test', promotion_state: 'promoted' },
-    { subject_id: 'region:viewer', subject_type: 'source_region', subject_label: 'Viewer', source_path: 'viewer', exists: true, expected_by: 'test', promotion_state: 'promoted' },
     { subject_id: 'region:portolan-core', subject_type: 'source_region', subject_label: 'Core', source_path: 'portolan-core', exists: true, expected_by: 'test', promotion_state: 'promoted' },
     { subject_id: 'region:schemas', subject_type: 'source_region', subject_label: 'Schemas', source_path: 'schema', exists: true, expected_by: 'test', promotion_state: 'promoted' },
     { subject_id: 'region:fixtures', subject_type: 'source_region', subject_label: 'Fixtures', source_path: 'internal/testfixtures', exists: true, expected_by: 'test', promotion_state: 'promoted' },
@@ -93,11 +92,11 @@ test('buildNavigationBundle: missing anchor downgrades route_quality', () => {
 
 test('buildNavigationBundle: ambiguous anchor downgrades route_quality and records note', () => {
   const enum1 = enumeratedFound(PORTOLAN_SELF_PROFILE, 'portolan-self:test');
-  enum1.anchors.set('self-serve', { found: true, lineStart: 0, lineEnd: 0, matchCount: 3 });
+  enum1.anchors.set('self-app-dispatch', { found: true, lineStart: 0, lineEnd: 0, matchCount: 3 });
   const b = buildNavigationBundle(PORTOLAN_SELF_PROFILE, enum1);
-  const serveRoute = b.navigationIndex.filter(n => n.route_id === 'route:self:viewer-source-snippet');
-  assert.ok(serveRoute.some(s => /ambiguous/i.test(s.route_quality_note || '')), 'ambiguous anchor noted');
-  assert.ok(serveRoute.every(s => s.route_quality !== 'high'), 'ambiguous anchor downgrades route quality');
+  const route = b.navigationIndex.filter(n => n.route_id === 'route:self:command-dispatch');
+  assert.ok(route.some(s => /ambiguous/i.test(s.route_quality_note || '')), 'ambiguous anchor noted');
+  assert.ok(route.some(s => s.route_quality !== 'high'), 'ambiguous anchor downgrades route quality');
 });
 
 test('buildNavigationBundle: runtime_assessment never verified', () => {
@@ -245,10 +244,10 @@ test('selectProfile: no signal -> unsupported_target', () => {
 });
 
 test('selectProfile: explicit profile with missing roots -> unsupported + missingRoots', () => {
-  const adapter = { exists: (r) => r !== 'viewer', findFile: () => false };
+  const adapter = { exists: (r) => r !== 'portolan-core', findFile: () => false };
   const sel = selectProfile('/x', adapter, 'portolan-self');
   assert.strictEqual(sel.id, 'unsupported_target');
-  assert.deepEqual(sel.missingRoots, ['viewer']);
+  assert.deepEqual(sel.missingRoots, ['portolan-core']);
 });
 
 test('stableTargetId: stable per target basename', () => {

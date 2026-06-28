@@ -1,0 +1,3 @@
+schema: spec-driven
+created: 2026-06-28
+goal: Single /portolan:map entry point; viewer/ removed; no parallel imperative stack
