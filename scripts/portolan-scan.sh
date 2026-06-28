@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One-command Portolan scan: tool check → recipes → bundle → viewer.
-# See harness/SKILL.md and docs/captain-atlas/.
+# See harness/SKILL.md and openspec/legacy/captain-atlas/.
 set -euo pipefail
 
 ORIGINAL_ARGS=("$@")

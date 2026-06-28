@@ -54,6 +54,11 @@ jobs:
         run: node scripts/check-dependency-rule.js
         working-directory: portolan-core
 
+      - name: Validate OpenSpec specs
+        run: |
+          npm install -g @fission-ai/openspec@^1.4.1
+          openspec validate --specs
+
       - name: Validate schemas
         run: |
           jq empty schema/*.json internal/testfixtures/oss-adapter-contract/*.json

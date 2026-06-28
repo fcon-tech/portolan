@@ -2,7 +2,7 @@
  * Portolan Atlas viewer — meaning-first UI.
  *
  * Primary data source: /bundle/system-map.json (the normalized system map from
- * docs/captain-atlas/07-portolan-core-product-spec.md Task B).
+ * openspec/legacy/captain-atlas/07-portolan-core-product-spec.md Task B).
  *
  * Route contract (Feature 9):
  *   #/overview (default) / #/c4 / #/map / #/components / #/risks / #/surfaces

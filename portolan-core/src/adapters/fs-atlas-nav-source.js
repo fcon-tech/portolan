@@ -8,7 +8,7 @@
  *   Bigtop:       enumerate repos/* non-dot dirs as repository subjects; NEVER
  *                 read .portolan/, .cursor/, output/, research/ under the target.
  *   portolan-self: enumerate the six allowed source regions; NEVER read
- *                  docs/captain-atlas/*.md as source truth.
+ *                  openspec/legacy/captain-atlas/*.md as source truth.
  *
  * Anchor matching (per profile.anchor_candidate):
  *   - single substring match in the declared file -> record line_start/line_end.

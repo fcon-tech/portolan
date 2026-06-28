@@ -18,31 +18,31 @@ The current product target is simple:
 
 ## Active Product Contract
 
-Use `docs/captain-atlas/` as the active product specification surface.
+The active product specification surface is **OpenSpec**: `openspec/specs/` is
+the living source of truth, `openspec/changes/` holds proposed work. Spec work
+flows through the OpenSpec workflow (`/opsx:propose` → `/opsx:apply` →
+`/opsx:archive`); validate with `openspec validate --specs`.
 
-Do not use deleted or historical planning artifacts as source of truth. They
-were removed because they encoded false tracks, stale claims, and
-implementation drift.
+The living specs (each: Purpose + Requirements + Scenarios, RFC 2119):
 
-Authority order: `08` (product concepts) > `07` (frozen system-map contract) >
-`00`–`06` (supporting notes).
+- `openspec/specs/atlas-identity/` — what Portolan IS; roles; Part 1/2 boundary.
+- `openspec/specs/intake/` — managed conversational intake; typed intake result.
+- `openspec/specs/ontology/` — units, surfaces, findings, edges, groupings.
+- `openspec/specs/confidence/` — the trust contract (ironclad → speculation).
+- `openspec/specs/navigation/` — `/portolan:map`, the enumerated maps, dossier.
+- `openspec/specs/three-truths/` — behaviour/intentions/representations + triangulation.
+- `openspec/specs/ux-principles/` — zero-copied-commands, one entry point.
+- `openspec/specs/visual-style/` — cartographic/plain display-style contract.
+- `openspec/specs/reading-experience/` — the atlas as a readable system atlas.
+- `openspec/specs/drilldown-semantics/` — reader-facing drill-down labels/targets.
+- `openspec/specs/semantic-investigation/` — component investigation contract.
 
-The active documents are:
-
-- `docs/captain-atlas/README.md`: work package index.
-- `docs/captain-atlas/08-portolan-product-charter.md`: **governing** product
-  charter for Part 1 (the admiral's atlas). Defines identity, roles
-  (admiral/participants/fleet), discovered ontology, trust/confidence
-  contract, navigation model, C4-as-one-optional-map, UX principles, and the
-  Part 1 / Part 2 boundary.
-- `docs/captain-atlas/07-portolan-core-product-spec.md`: **partially
-  superseded.** Remains the frozen contract authority for the
-  already-implemented `system-map` schema, builder, and viewer. Its product
-  concepts are superseded by `08` (see the "Superseded Concepts" table at the
-  end of `08`).
-- `docs/captain-atlas/00-product-contract.md` through
-  `docs/captain-atlas/06-oss-kill-gates.md`: supporting work-package notes.
-  Use them only when they do not contradict `08` or `07`.
+`openspec/legacy/captain-atlas/` is the verbatim pre-OpenSpec spec surface,
+retained for history only — NOT authority. The charter (`legacy/captain-atlas/
+08-portolan-product-charter.md`) and behavior-defining work packages were
+migrated into the living specs above; the rest (roadmaps, scorecards, the frozen
+0.1.0 contract `07`) is kept verbatim as historical record. See
+`openspec/legacy/README.md`.
 
 ## The One Entry Point: /portolan:map
 
@@ -62,9 +62,9 @@ The admiral types no command beyond the initial prompt.
 
 ## Architecture: Deterministic Core + Reading Layer
 
-Authority: `docs/captain-atlas/08-portolan-product-charter.md`. The product is
-moving to the charter-08 world (the 0.2.0 big-bang migration) — a proper
-reading layer and a proper collector — not a gradual cutover.
+Authority: `openspec/specs/atlas-identity/` (migrated from the charter). The
+product is moving to the charter-08 world (the 0.2.0 big-bang migration) — a
+proper reading layer and a proper collector — not a gradual cutover.
 
 Portolan has two distinct layers, not two competing products:
 
@@ -125,22 +125,22 @@ market theater.
 ## Engineering Rules
 
 - Keep changes small and testable.
-- Preserve the harness-first path unless a captain-atlas BDD scenario proves it
-  is insufficient.
+- Preserve the harness-first path unless an OpenSpec scenario proves it is
+  insufficient.
 - Keep the legacy Go CLI thin; new product behavior should usually live in
-  harness scripts, viewer app, schema/contracts, importers, or generated bundle
-  artifacts.
+  harness scripts, schema/contracts, importers, or generated bundle artifacts.
 - Add dependencies only after documenting fit, maintenance, license, privacy,
   and integration cost.
 - Do not hide failed or not-assessed checks.
 
 ## Delivery Rules
 
-When implementing one BDD work package:
+When implementing an OpenSpec change:
 
-- Work from the matching `docs/captain-atlas/*.md` file.
+- Work from the matching change under `openspec/changes/` (or the living spec
+  under `openspec/specs/`).
 - Record what scenario is being served.
-- Keep parallel-agent work package boundaries clean.
+- Keep parallel-agent change boundaries clean.
 - Verify with the smallest command set that proves the scenario.
 - If a scenario cannot be proven, record the blocker and whether the answer is
   kill, pack, or build.

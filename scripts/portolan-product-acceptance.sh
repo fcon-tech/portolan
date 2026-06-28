@@ -372,7 +372,7 @@ run_public_surface_checks() {
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
     "$ROOT/harness/codex-claude" \
-    "$ROOT/docs/captain-atlas" \
+    "$ROOT/openspec/legacy/captain-atlas" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose old Bigtop-10/limit-repos experiment route" >&2
     exit 1
@@ -462,20 +462,20 @@ run_captain_prompt_check() {
 run_captain_atlas_checks() {
   echo "==> captain-atlas docs" >&2
   local required=(
-    "$ROOT/docs/captain-atlas/README.md"
-    "$ROOT/docs/captain-atlas/00-product-contract.md"
-    "$ROOT/docs/captain-atlas/01-cursor-composer-first-run.md"
-    "$ROOT/docs/captain-atlas/02-atlas-app-shell.md"
-    "$ROOT/docs/captain-atlas/03-landscape-intelligence-producers.md"
-    "$ROOT/docs/captain-atlas/04-agent-qna-drilldown.md"
-    "$ROOT/docs/captain-atlas/05-packaging-qol-security.md"
-    "$ROOT/docs/captain-atlas/06-oss-kill-gates.md"
+    "$ROOT/openspec/legacy/captain-atlas/README.md"
+    "$ROOT/openspec/legacy/captain-atlas/00-product-contract.md"
+    "$ROOT/openspec/legacy/captain-atlas/01-cursor-composer-first-run.md"
+    "$ROOT/openspec/legacy/captain-atlas/02-atlas-app-shell.md"
+    "$ROOT/openspec/legacy/captain-atlas/03-landscape-intelligence-producers.md"
+    "$ROOT/openspec/legacy/captain-atlas/04-agent-qna-drilldown.md"
+    "$ROOT/openspec/legacy/captain-atlas/05-packaging-qol-security.md"
+    "$ROOT/openspec/legacy/captain-atlas/06-oss-kill-gates.md"
   )
   local path
   for path in "${required[@]}"; do
     [[ -f "$path" ]] || fail "missing captain-atlas package: $path"
   done
-  local oss_scorecard="$ROOT/docs/captain-atlas/oss-kill-gates-scorecard.json"
+  local oss_scorecard="$ROOT/openspec/legacy/captain-atlas/oss-kill-gates-scorecard.json"
   [[ -f "$oss_scorecard" ]] || fail "missing OSS kill-gates scorecard: $oss_scorecard"
   jq -e '
     .scenario == "captain-atlas-oss-kill-gates" and
@@ -516,7 +516,7 @@ run_captain_atlas_checks() {
   if find "$ROOT/.agents/skills" -maxdepth 1 -type d -name 'speckit-*' 2>/dev/null | grep -q .; then
     fail "removed Speckit skill directories are present under .agents/skills"
   fi
-  rg -q '^## Package Ownership$' "$ROOT/docs/captain-atlas/README.md" ||
+  rg -q '^## Package Ownership$' "$ROOT/openspec/legacy/captain-atlas/README.md" ||
     fail "captain-atlas index must define package ownership"
   for path in "${required[@]:1}"; do
     rg -q '^## Implementation Slice$' "$path" ||
@@ -534,7 +534,7 @@ run_captain_atlas_checks() {
     "$ROOT/AGENTS.md" \
     "$ROOT/README.md" \
     "$ROOT/CONTRIBUTING.md" \
-    "$ROOT/docs/captain-atlas" \
+    "$ROOT/openspec/legacy/captain-atlas" \
     "$ROOT/docs/agent" \
     "$ROOT/docs/ru" \
     "$ROOT/docs/onboarding.md" \
@@ -553,7 +553,7 @@ run_captain_atlas_checks() {
     "$ROOT/AGENTS.md" \
     "$ROOT/README.md" \
     "$ROOT/CONTRIBUTING.md" \
-    "$ROOT/docs/captain-atlas" \
+    "$ROOT/openspec/legacy/captain-atlas" \
     "$ROOT/docs/agent" \
     "$ROOT/docs/ru" \
     "$ROOT/docs/onboarding.md" \
