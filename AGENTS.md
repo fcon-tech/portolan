@@ -133,6 +133,22 @@ market theater.
   and integration cost.
 - Do not hide failed or not-assessed checks.
 
+### Engineering standards (portolan-core) — locked in
+
+Authority: `openspec/specs/engineering-standards/`. The portolan-core reading
+layer follows Clean Architecture, the dependency rule, SOLID, and TDD. These are
+enforced, not aspirational:
+
+- **Clean Architecture + dependency rule.** Layers `domain → use-cases → ports →
+  adapters`; dependencies point strictly inward. Enforced by
+  `portolan-core/scripts/check-dependency-rule.js` (runs in CI; 0 violations).
+- **SOLID / dependency inversion.** Outward concerns (fs, rendering, navigation)
+  cross the boundary through ports; adapters implement ports; use-cases depend on
+  ports, never on concrete adapters.
+- **TDD.** Every executable OpenSpec scenario is bound to a real, passing unit
+  test; the BDD runner (`portolan-core/test/bdd-runner.js`) verifies the chain
+  `openspec/specs → test/features → unit`. New behavior lands with its binding.
+
 ## Delivery Rules
 
 When implementing an OpenSpec change:
