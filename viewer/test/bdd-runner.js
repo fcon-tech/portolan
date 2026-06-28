@@ -1,7 +1,7 @@
 /**
  * BDD runner: binds each spec scenario (in test/features/*.feature) to its
  * concrete test or harness command. This is the scenario→test traceability
- * required by docs/captain-atlas/07-portolan-core-product-spec.md BDD Principles.
+ * required by openspec/legacy/captain-atlas/07-portolan-core-product-spec.md BDD Principles.
  *
  * A binding is either:
  *   { unit: '<test-file>' }           — a node:test unit test
@@ -14,9 +14,9 @@
 
 const bindings = [
   // Feature 1: Cursor First Run
-  { feature: 1, scenario: 'Cursor discovers Portolan without hidden hints', binding: { artifact: 'docs/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_discovers_portolan', verdict: 'verified' } },
-  { feature: 1, scenario: 'Cursor keeps the target read-only by default', binding: { artifact: 'docs/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_keeps_target_read_only', verdict: 'verified' } },
-  { feature: 1, scenario: 'Cursor produces a usable handoff', binding: { artifact: 'docs/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_produces_usable_handoff', verdict: 'verified' } },
+  { feature: 1, scenario: 'Cursor discovers Portolan without hidden hints', binding: { artifact: 'openspec/legacy/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_discovers_portolan', verdict: 'verified' } },
+  { feature: 1, scenario: 'Cursor keeps the target read-only by default', binding: { artifact: 'openspec/legacy/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_keeps_target_read_only', verdict: 'verified' } },
+  { feature: 1, scenario: 'Cursor produces a usable handoff', binding: { artifact: 'openspec/legacy/captain-atlas/cursor-agent-cli-scorecard.json', key: 'bdd_feature_1_verdicts.cursor_produces_usable_handoff', verdict: 'verified' } },
 
   // Feature 2: Entity Stratification
   { feature: 2, scenario: 'Documentation surface is attached, not floated', binding: { unit: 'viewer/test/classify.test.js', harness: 'scripts/harness-system-map-smoke.sh' }, verdict: 'verified' },
@@ -44,15 +44,15 @@ const bindings = [
   { feature: 5, scenario: 'Overview is the default route', binding: { harness: 'scripts/harness-viewer-system-map-smoke.sh' }, verdict: 'verified' },
 
   // Feature 6: Agent Q&A And Selected Code
-  { feature: 6, scenario: 'Agent answers a landscape question from bounded queries', binding: { unit: 'viewer/test/query-system-map.test.js', artifact: 'docs/captain-atlas/agent-qa-rubric.md' }, verdict: 'verified' },
-  { feature: 6, scenario: 'Agent explains selected code', binding: { unit: 'viewer/test/query-system-map.test.js', artifact: 'docs/captain-atlas/agent-qa-rubric.md' }, verdict: 'verified' },
+  { feature: 6, scenario: 'Agent answers a landscape question from bounded queries', binding: { unit: 'viewer/test/query-system-map.test.js', artifact: 'openspec/legacy/captain-atlas/agent-qa-rubric.md' }, verdict: 'verified' },
+  { feature: 6, scenario: 'Agent explains selected code', binding: { unit: 'viewer/test/query-system-map.test.js', artifact: 'openspec/legacy/captain-atlas/agent-qa-rubric.md' }, verdict: 'verified' },
 
   // Feature 7: Repeatability Beyond Bigtop
-  { feature: 7, scenario: 'Non-Bigtop target uses the same first-run path', binding: { unit: 'viewer/test/classify.test.js', artifact: 'docs/captain-atlas/bdd-feature-report.md' }, verdict: 'verified' },
+  { feature: 7, scenario: 'Non-Bigtop target uses the same first-run path', binding: { unit: 'viewer/test/classify.test.js', artifact: 'openspec/legacy/captain-atlas/bdd-feature-report.md' }, verdict: 'verified' },
 
   // Feature 8: Read-Only And Local-First Proof
-  { feature: 8, scenario: 'Source tree remains unchanged', binding: { artifact: 'docs/captain-atlas/cursor-agent-cli-scorecard.json', key: 'scorecard_fields.target_source_modified' }, verdict: 'verified' },
-  { feature: 8, scenario: 'Target network and installation actions are explicit', binding: { artifact: 'docs/captain-atlas/network-install-approval.md' }, verdict: 'verified' },
+  { feature: 8, scenario: 'Source tree remains unchanged', binding: { artifact: 'openspec/legacy/captain-atlas/cursor-agent-cli-scorecard.json', key: 'scorecard_fields.target_source_modified' }, verdict: 'verified' },
+  { feature: 8, scenario: 'Target network and installation actions are explicit', binding: { artifact: 'openspec/legacy/captain-atlas/network-install-approval.md' }, verdict: 'verified' },
 
   // Feature 9: UI Route And DOM Contract
   { feature: 9, scenario: 'Visible objects expose stable test hooks', binding: { unit: 'viewer/test/ids.test.js', harness: 'scripts/harness-viewer-system-map-smoke.sh' }, verdict: 'verified' },

@@ -34,7 +34,7 @@ fi
 
 if [[ ${#POSITIONAL[@]} -lt 1 ]]; then
   echo "usage: $0 [--self] [--run] <bundle-dir>" >&2
-  echo "See docs/captain-atlas/04-agent-qna-drilldown.md" >&2
+  echo "See openspec/legacy/captain-atlas/04-agent-qna-drilldown.md" >&2
   exit 2
 fi
 

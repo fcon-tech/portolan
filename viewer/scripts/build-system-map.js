@@ -11,7 +11,7 @@
  * Output contract: schema/system-map.schema.json (schema_version 0.1.0).
  *
  * Classification is deterministic and reproducible from local facts only. See
- * docs/captain-atlas/07-portolan-core-product-spec.md:
+ * openspec/legacy/captain-atlas/07-portolan-core-product-spec.md:
  *   - Component Promotion Rule (Entity Model section)
  *   - Surface Detection Rules (Entity Model section)
  *   - C4 grouping + family priority order (C4 Rules section)

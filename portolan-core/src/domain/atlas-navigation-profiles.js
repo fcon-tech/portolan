@@ -11,7 +11,7 @@
  * Per the source-boundary rules (spec §Source Boundaries):
  *  - These profiles are FIXTURE RULES, not target-derived facts. Every emitted
  *    row carries artifact_provenance: fixture_backed.
- *  - For portolan-self, the profiles do NOT read docs/captain-atlas/*.md as
+ *  - For portolan-self, the profiles do NOT read openspec/legacy/captain-atlas/*.md as
  *    source truth. The route/finding interpretations below are hand-authored
  *    fixture rules grounded in allowed source paths.
  *  - Prior agent evidence (synthesis/run paths) appears ONLY in frontierRows

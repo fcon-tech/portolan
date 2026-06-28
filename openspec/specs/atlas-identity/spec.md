@@ -6,7 +6,7 @@ Defines what Portolan IS: a local-first cartographic atlas of a code landscape,
 produced as a one-shot snapshot by deterministic analyzers and agent producers.
 This spec is the identity anchor; every other spec derives from it.
 
-Source authority: `docs/captain-atlas/08-portolan-product-charter.md` § Product
+Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § Product
 Identity, Roles, Part 1 / Part 2 Boundary (migrated).
 
 ## Requirements

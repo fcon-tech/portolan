@@ -160,9 +160,8 @@ community infrastructure rather than proof of broad adoption or support.
 - Example run: use the [Demo Runbook](docs/demo-runbook.md) or run the
   [Harness-First Quick Start](#harness-first-quick-start-recommended) against
   any local target you can inspect.
-- Captain Atlas specs: read
-  [Captain Atlas BDD Work Packages](docs/captain-atlas/README.md) before
-  changing product direction or assigning parallel agents.
+- Product specs: read the [OpenSpec living specs](openspec/specs/) before
+  changing product direction; propose changes via `/opsx:propose`.
 - Product claims: read [Product Claims](docs/product-claims.md) before reusing
   public wording.
 - Product quality: read
@@ -276,7 +275,7 @@ Important limits:
 English:
 
 - [Documentation Onboarding](docs/onboarding.md)
-- [Captain Atlas BDD Work Packages](docs/captain-atlas/README.md)
+- [OpenSpec living specs](openspec/specs/) (product behavior source of truth)
 - [Product Claims](docs/product-claims.md)
 - [Release Guide](docs/release.md)
 - [Product Boundary](docs/product-boundary.md)

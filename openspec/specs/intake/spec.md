@@ -6,7 +6,7 @@ Defines managed conversational intake: how the expedition starts. The agent asks
 the admiral what they have (not a filled-in manifest), persists a typed intake
 result, and the deterministic core consumes it without re-asking.
 
-Source authority: `docs/captain-atlas/08-portolan-product-charter.md` § Intake
+Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § Intake
 Model, UX Principles (migrated); Gherkin: feature-p1a-managed-intake.feature.
 
 ## Requirements
