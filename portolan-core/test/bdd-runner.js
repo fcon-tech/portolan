@@ -1,8 +1,10 @@
 /**
- * BDD runner for Part-1a: binds each scenario in test/features/*.feature to its
- * concrete unit test in portolan-core. Traceability harness (same pattern as the
- * frozen viewer/test/bdd-runner.js) — verifies each scenario has a binding to a
- * real, passing test, and that referenced files exist.
+ * BDD runner for Part-1a/1b: binds each scenario in test/features/*.feature to
+ * its concrete unit test in portolan-core, AND to the canonical OpenSpec living
+ * spec that owns the scenario (openspec/specs/<domain>/spec.md). Traceability
+ * harness — verifies each scenario has a binding to a real, passing test, that
+ * referenced files exist, and that every feature is anchored to an OpenSpec
+ * spec (the scenario source of truth).
  *
  * Run `node test/bdd-runner.js` to print the scenario binding table.
  */
@@ -17,6 +19,19 @@ const assert = require('node:assert');
 const ROOT = path.join(__dirname, '..', '..');
 
 const EXECUTABLE = 'portolan-core/test/unit/bdd-scenarios.test.js';
+
+// Each executable feature is anchored to an OpenSpec living spec (the canonical
+// scenario source of truth). The binding chain is:
+//   openspec/specs/<domain>/spec.md  →  test/features/*.feature  →  unit test
+const FEATURE_TO_OPENSPEC = {
+  'managed-intake': 'specs/intake',
+  'behaviour-map': 'specs/navigation',
+  'region-drill-down': 'specs/navigation',
+  'honest-absence': 'specs/three-truths',
+  'atlas-navigation-index': 'specs/reading-experience',
+  'atlas-reading-experience': 'specs/reading-experience',
+  'atlas-drilldown-semantics': 'specs/drilldown-semantics',
+};
 
 const bindings = [
   // Feature: Managed intake
@@ -95,14 +110,25 @@ test('bdd: every feature file exists on disk', () => {
   }
 });
 
+test('bdd: every feature is anchored to an existing OpenSpec living spec', () => {
+  const features = [...new Set(bindings.map(b => b.feature))];
+  for (const f of features) {
+    const specRel = FEATURE_TO_OPENSPEC[f];
+    assert.ok(specRel, `feature ${f} has no OpenSpec spec mapping`);
+    const specFile = path.join(ROOT, 'openspec', specRel, 'spec.md');
+    assert.ok(fs.existsSync(specFile), `OpenSpec spec does not exist: openspec/${specRel}/spec.md (for feature ${f})`);
+  }
+});
+
 // --- printable table (when run directly) ---
 if (require.main === module) {
-  console.log('Feature | Scenario | Binding | Verdict');
-  console.log('--- | --- | --- | ---');
+  console.log('Feature | Scenario | OpenSpec | Binding | Verdict');
+  console.log('--- | --- | --- | --- | ---');
   for (const b of bindings) {
     const exists = fs.existsSync(path.join(ROOT, b.binding.unit));
-    console.log(`${b.feature} | ${b.scenario} | ${b.binding.unit} | ${exists ? 'bound' : 'MISSING'}`);
+    const spec = FEATURE_TO_OPENSPEC[b.feature] || '';
+    console.log(`${b.feature} | ${b.scenario} | openspec/${spec} | ${b.binding.unit} | ${exists ? 'bound' : 'MISSING'}`);
   }
 }
 
-module.exports = { bindings };
+module.exports = { bindings, FEATURE_TO_OPENSPEC };
