@@ -32,6 +32,20 @@ Use Portolan when you want an agent to answer questions like:
 Portolan is especially useful when the target is messy, multi-repo, legacy, or
 partly black-box.
 
+## Architecture (engine + reading layer)
+
+Portolan has two distinct layers, not two products:
+
+- **Engine (producer): `internal/` (Go) + `scripts/*.sh` (bash).** The only thing
+  that scans a target — runs ripgrep/ctags/jscpd/syft/semgrep, parses output,
+  emits the evidence bundle (`*.jsonl`) + `system-map.json`. This is what the
+  Harness-First Quick Start below drives.
+- **Reading layer (consumer): `portolan-core/` (the charter-08 direction)
+  renders the atlas from the engine's output. The single entry point is
+  `/portolan:map` (`node portolan-core/scripts/portolan-map.mjs --target <root>`).
+  The older `viewer/` app is the superseded 0.1.0 contract surface, removed by
+  the 0.2.0 big-bang migration; see `AGENTS.md`.
+
 ## Harness-First Quick Start (recommended)
 
 Portolan is primarily a **harness supplement**: portable skill, OSS recipes,

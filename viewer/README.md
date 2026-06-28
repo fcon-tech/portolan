@@ -1,8 +1,15 @@
-# Portolan Atlas Viewer
+# Portolan Atlas Viewer (0.1.0 contract — superseded)
+
+> **Status (2026-06-28): SUPERSEDED.** The charter-08 reading layer is
+> `portolan-core/` (the `/portolan:map` entry point). This viewer is the
+> historical meaning-first UI and the frozen `system-map` schema authority,
+> retained until the 0.2.0 big-bang migration removes it. Do not add features
+> here; treat it as reference-only. See `AGENTS.md` § "Architecture:
+> Deterministic Core + Reading Layer".
 
 Local map-first atlas app for Portolan scan bundles.
 
-The viewer is the human-facing half of the captain-atlas flow: it loads a local
+The viewer was the human-facing half of the captain-atlas flow: it loads a local
 bundle, shows target identity, repo/component shape, relationship edges, risks,
 gaps, and drill-down routes back to local bundle records and source snippets.
 It does not call remote services or mutate the target.
