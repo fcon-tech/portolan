@@ -55,14 +55,36 @@ node portolan-core/scripts/portolan-map.mjs --target <target-root> [--open]
 
 This is `/portolan:map`. It: (1) loads the intake result from
 `<target>/.portolan/intake.json` (errors with the exact remediation if absent),
-(2) builds the snapshot via the deterministic core if stale, (3) exports the
-clean-stack shell + inlined atlas to `<target>/.portolan/atlas.html`, and (4)
-optionally opens it. The admiral types no command beyond the initial prompt.
+(2) builds the snapshot by delegating to the deterministic core
+(`scripts/build-system-map.sh`) if stale, (3) exports the clean-stack shell +
+inlined atlas to `<target>/.portolan/atlas.html`, and (4) optionally opens it.
+The admiral types no command beyond the initial prompt.
 
-The clean stack (`portolan-core/`) is the Part-1a direction: domain → use-cases
-→ ports → adapters, dependency rule enforced. The frozen `viewer/` remains the
-0.1.0 contract until cutover. Both render the same Bigtop demo (22 units, 24
-relationships, 7 families) — feature-parity proven headlessly.
+## Architecture: Deterministic Core + Reading Layer
+
+Authority: `docs/captain-atlas/08-portolan-product-charter.md`. The product is
+moving to the charter-08 world (the 0.2.0 big-bang migration) — a proper
+reading layer and a proper collector — not a gradual cutover.
+
+Portolan has two distinct layers, not two competing products:
+
+1. **Deterministic core (the collector / producer) — `internal/` (Go) +
+   `scripts/*.sh` (bash).** The only thing that actually scans a target: runs
+   ripgrep/ctags/jscpd/syft/semgrep, parses output, and emits the evidence
+   bundle (`*.jsonl`) + `system-map.json`. Not replaceable by the reading layer.
+2. **Reading layer (consumer) — reads the core's output and presents the
+   atlas.** Two implementations exist in-tree:
+   - **`portolan-core/` — the charter-08 reading layer.** Clean Architecture
+     (domain → use-cases → ports → adapters, dependency rule enforced), 429
+     unit tests, the `/portolan:map` entry point, and the `atlas.html` export.
+     This is the direction.
+   - **`viewer/` — the 0.1.0 contract surface.** The historical meaning-first
+     UI and the frozen `system-map` schema authority. It is **superseded**, not
+     maintained: do not add features; treat as reference-only. It is removed by
+     the 0.2.0 big-bang migration.
+
+Both reading layers render the same Bigtop demo (22 units, 24 relationships, 7
+families) — feature-parity proven headlessly.
 
 ## Mandatory Decision Gate
 
