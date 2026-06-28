@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build Portolan bundle from target root and producer outputs under
-# <bundle-dir>/producers/. See harness/SKILL.md and openspec/legacy/captain-atlas/.
+# <bundle-dir>/producers/. See harness/SKILL.md.
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then

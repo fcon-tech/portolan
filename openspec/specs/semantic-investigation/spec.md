@@ -8,9 +8,6 @@ peculiarities, and its overlaps or alternatives — as a portable capability
 proven on a small swappable sample, with every semantic assertion labeled by
 source boundary. This is a semantic system landscape, not a repository catalog.
 
-Source authority:
-`openspec/legacy/captain-atlas/17-semantic-component-investigation-contract.md` (migrated).
-
 ## Requirements
 
 ### Requirement: Investigations teach semantic meaning, not repository metadata

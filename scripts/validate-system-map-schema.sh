@@ -18,8 +18,8 @@ MAP_FILE=$1
   exit 1
 }
 
-if ! (cd "$ROOT/viewer" && node -e "require('ajv')" >/dev/null 2>&1); then
-  "$ROOT/scripts/npm-wsl.sh" ci --prefix "$ROOT/viewer"
+if ! (cd "$ROOT/portolan-core" && node -e "require('ajv')" >/dev/null 2>&1); then
+  npm --prefix "$ROOT/portolan-core" install >/dev/null 2>&1
 fi
 
-node "$ROOT/viewer/scripts/validate-system-map.js" "$MAP_FILE"
+node "$ROOT/portolan-core/scripts/validate-system-map.mjs" "$MAP_FILE"

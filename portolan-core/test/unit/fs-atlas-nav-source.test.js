@@ -42,7 +42,7 @@ function bigtopTree() {
 // Build a tmp portolan-self-like tree.
 function selfTree() {
   const dir = registerTmp(fs.mkdtempSync(path.join(os.tmpdir(), 'nav-self-')));
-  for (const r of ['cmd/portolan', 'internal', 'scripts', 'viewer', 'portolan-core', 'schema', 'internal/testfixtures']) {
+  for (const r of ['cmd/portolan', 'internal', 'scripts', 'portolan-core', 'schema', 'internal/testfixtures']) {
     fs.mkdirSync(path.join(dir, r), { recursive: true });
   }
   fs.writeFileSync(path.join(dir, 'cmd', 'portolan', 'main.go'), 'package main\nfunc main(){ app.Run() }\n');
@@ -61,11 +61,11 @@ test('enumerateSubjects(bigtop): lists repos/* non-dot dirs, skips forbidden', (
   for (const s of subjects) { assert.strictEqual(s.exists, true); assert.strictEqual(s.promotion_state, 'promoted'); }
 });
 
-test('enumerateSubjects(portolan-self): lists the six required regions', () => {
+test('enumerateSubjects(portolan-self): lists the required regions', () => {
   const src = createFsAtlasNavSource(selfTree());
   const subjects = src.enumerateSubjects('portolan-self');
   const ids = subjects.map(s => s.subject_id);
-  for (const required of ['region:go-cli', 'region:scripts', 'region:viewer', 'region:portolan-core', 'region:schemas', 'region:fixtures']) {
+  for (const required of ['region:go-cli', 'region:scripts', 'region:portolan-core', 'region:schemas', 'region:fixtures']) {
     assert.ok(ids.includes(required), `${required} enumerated`);
   }
 });

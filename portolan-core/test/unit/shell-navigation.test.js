@@ -139,11 +139,6 @@ function fixtureNavAtlas() {
         runtime_status: 'not_assessed', test_status: 'not_assessed', coverage_quality: 'medium',
         route_refs: [RID], finding_refs: ['finding:f1'], known_unknown_ids: ['unknown:u1'], top_evidence_refs: ['ev:1'],
         artifact_provenance: 'fixture_backed', producer_id: 'p' },
-      { coverage_id: 'coverage:c2', subject_id: 'region:viewer', subject_type: 'source_region', subject_label: 'Viewer',
-        source_path: 'viewer', expected_by: 'enum', promotion_state: 'promoted', route_status: 'missing', finding_status: 'none',
-        runtime_status: 'not_assessed', test_status: 'not_assessed', coverage_quality: 'low',
-        route_refs: [], finding_refs: [], known_unknown_ids: [], top_evidence_refs: [],
-        artifact_provenance: 'fixture_backed', producer_id: 'p' },
     ],
     findings: [
       { finding_id: 'finding:f1', finding_type: 'duplicate_risk', severity: 'major', title: 'Dup finding',
@@ -340,7 +335,7 @@ test('coverage view shows scale metrics and regions', () => {
   assert.ok(findAttr(root, 'data-portolan-view', 'coverage'), 'coverage view marker');
   assert.ok(findAttr(root, 'data-portolan-kind', 'coverage-scale'), 'coverage scale present');
   assert.ok(findText(root, 'Route-less regions') || findText(root, 'ROUTE-LESS'), 'route-less region visible');
-  assert.ok(findText(root, 'Viewer'), 'a subject is visible');
+  assert.ok(findText(root, 'Go CLI'), 'a subject is visible');
 });
 
 test('coverage dossier renders promotion and runtime status', () => {

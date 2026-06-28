@@ -8,7 +8,6 @@ click either opens a meaningful dossier/detail, hands off to external evidence
 with an explanation, or is disabled with a reason. Also defines the honest-empty
 C4 contract and the separation of evidence usability from artifact validation.
 
-Source authority: `openspec/legacy/captain-atlas/16-atlas-drilldown-decision-semantics.md`
 (migrated).
 
 ## Requirements

@@ -301,13 +301,6 @@ run_public_surface_checks() {
     echo "public surfaces expose prototype/internal wording" >&2
     exit 1
   fi
-  if rg -n -i \
-    -e "$banned_internal|$banned_viewer" \
-    "$ROOT/viewer/src" \
-    --glob '!**/node_modules/**'; then
-    echo "viewer source exposes prototype/internal wording" >&2
-    exit 1
-  fi
   echo "==> public source-checkout route wording" >&2
   if rg -n \
     -e "$banned_source_route|$banned_checkout_first" \
@@ -328,7 +321,6 @@ run_public_surface_checks() {
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
     "$ROOT/harness/codex-claude" \
-    "$ROOT/viewer/src" \
     --glob '!**/node_modules/**' \
     --glob '!**/atlas/index.html' \
     --glob '!**/atlas/system-map.demo.json' \
@@ -372,7 +364,6 @@ run_public_surface_checks() {
     "$ROOT/harness/cursor" \
     "$ROOT/harness/opencode" \
     "$ROOT/harness/codex-claude" \
-    "$ROOT/openspec/legacy/captain-atlas" \
     --glob '!**/node_modules/**'; then
     echo "public surfaces expose old Bigtop-10/limit-repos experiment route" >&2
     exit 1
@@ -459,49 +450,8 @@ run_captain_prompt_check() {
   fi
 }
 
-run_captain_atlas_checks() {
-  echo "==> captain-atlas docs" >&2
-  local required=(
-    "$ROOT/openspec/legacy/captain-atlas/README.md"
-    "$ROOT/openspec/legacy/captain-atlas/00-product-contract.md"
-    "$ROOT/openspec/legacy/captain-atlas/01-cursor-composer-first-run.md"
-    "$ROOT/openspec/legacy/captain-atlas/02-atlas-app-shell.md"
-    "$ROOT/openspec/legacy/captain-atlas/03-landscape-intelligence-producers.md"
-    "$ROOT/openspec/legacy/captain-atlas/04-agent-qna-drilldown.md"
-    "$ROOT/openspec/legacy/captain-atlas/05-packaging-qol-security.md"
-    "$ROOT/openspec/legacy/captain-atlas/06-oss-kill-gates.md"
-  )
-  local path
-  for path in "${required[@]}"; do
-    [[ -f "$path" ]] || fail "missing captain-atlas package: $path"
-  done
-  local oss_scorecard="$ROOT/openspec/legacy/captain-atlas/oss-kill-gates-scorecard.json"
-  [[ -f "$oss_scorecard" ]] || fail "missing OSS kill-gates scorecard: $oss_scorecard"
-  jq -e '
-    .scenario == "captain-atlas-oss-kill-gates" and
-    (.rows | type == "array") and
-    (.rows | length >= 12) and
-    ([.rows[].id] as $ids |
-      (["understand-anything","codegraph-class","repomix-class","serena-class","sourcegraph-cody-class","backstage-class","graph-layout-class","semgrep","jscpd","syft-cyclonedx","ctags","semantic-index-class"] - $ids) == []
-    ) and
-    (.rows | all(
-      (.id | length > 0) and
-      (.capability | length > 0) and
-      (.candidate | length > 0) and
-      (.status | IN("run","inspected","partially_inspected","not_assessed")) and
-      (.fit | length > 0) and
-      (.license | length > 0) and
-      (.local_first | length > 0) and
-      (.privacy | length > 0) and
-      (.integration_cost | length > 0) and
-      (.recommendation | IN("kill","pack","build")) and
-      (.portolan_boundary | length > 0)
-    )) and
-    (.rows | map(select(.recommendation == "build" and (.status != "run" and .status != "inspected"))) | length == 0) and
-    (.rows | any(.recommendation == "pack")) and
-    (.rows | any(.status == "not_assessed"))
-  ' "$oss_scorecard" >/dev/null ||
-    fail "OSS kill-gates scorecard is missing required capability decisions or evidence states"
+run_removed_machinery_checks() {
+  echo "==> removed planning-machinery scan" >&2
   local removed_path
   local removed_paths=(
     "$ROOT/.specify"
@@ -516,32 +466,17 @@ run_captain_atlas_checks() {
   if find "$ROOT/.agents/skills" -maxdepth 1 -type d -name 'speckit-*' 2>/dev/null | grep -q .; then
     fail "removed Speckit skill directories are present under .agents/skills"
   fi
-  rg -q '^## Package Ownership$' "$ROOT/openspec/legacy/captain-atlas/README.md" ||
-    fail "captain-atlas index must define package ownership"
-  for path in "${required[@]:1}"; do
-    rg -q '^## Implementation Slice$' "$path" ||
-      fail "captain-atlas package lacks implementation slice: $path"
-    rg -q '^- Owned surfaces:' "$path" ||
-      fail "captain-atlas package lacks owned surfaces: $path"
-    rg -q '^- First vertical slice:' "$path" ||
-      fail "captain-atlas package lacks first vertical slice: $path"
-    rg -q '^- Verify:' "$path" ||
-      fail "captain-atlas package lacks verification line: $path"
-  done
   local removed_product_patterns
   removed_product_patterns='Spec''Kit|spec''kit|product-''backlog|docs/''specs|\.''specify'
   if rg -n -i "$removed_product_patterns" \
     "$ROOT/AGENTS.md" \
     "$ROOT/README.md" \
     "$ROOT/CONTRIBUTING.md" \
-    "$ROOT/openspec/legacy/captain-atlas" \
     "$ROOT/docs/agent" \
     "$ROOT/docs/ru" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/product-claims.md" \
     "$ROOT/harness" \
-    "$ROOT/viewer/scripts" \
-    "$ROOT/viewer/src" \
     "$ROOT/scripts" \
     --glob '!portolan-product-acceptance.sh' \
     --glob '!**/node_modules/**'; then
@@ -553,14 +488,11 @@ run_captain_atlas_checks() {
     "$ROOT/AGENTS.md" \
     "$ROOT/README.md" \
     "$ROOT/CONTRIBUTING.md" \
-    "$ROOT/openspec/legacy/captain-atlas" \
     "$ROOT/docs/agent" \
     "$ROOT/docs/ru" \
     "$ROOT/docs/onboarding.md" \
     "$ROOT/docs/product-claims.md" \
     "$ROOT/harness" \
-    "$ROOT/viewer/scripts" \
-    "$ROOT/viewer/src" \
     "$ROOT/scripts" \
     --glob '!portolan-product-acceptance.sh' \
     --glob '!**/node_modules/**'; then
@@ -602,24 +534,13 @@ run_schema_checks() {
 }
 
 run_viewer_checks() {
-  run "viewer/query JS syntax" node --check "$ROOT/viewer/scripts/bundle-query.js"
-  run "viewer/query CLI syntax" node --check "$ROOT/viewer/scripts/bundle-query-cli.js"
-  run "viewer/query MCP syntax" node --check "$ROOT/viewer/scripts/bundle-query-mcp.js"
-  run "viewer/query eval syntax" node --check "$ROOT/viewer/scripts/query-eval.js"
-  run "viewer serve syntax" node --check "$ROOT/viewer/scripts/serve.js"
-  run "viewer app syntax" node --check "$ROOT/viewer/src/app.js"
-  echo "==> viewer static build" >&2
-  (cd "$ROOT/viewer" && node scripts/build-static.js)
-  # The viewer is the superseded 0.1.0 contract surface (see AGENTS.md §
-  # "Architecture: Deterministic Core + Reading Layer"). Its first-paint smoke
-  # has a stale assertion on 'Enterprise landscape atlas' text that no longer
-  # exists in the fixture data. Rather than maintain a superseded UI smoke, run
-  # it as a non-fatal warning; the intended successor is a portolan-core atlas
-  # smoke (0.2.0 big-bang migration).
-  echo "==> viewer first-paint smoke (superseded, non-fatal)" >&2
-  if ! "$ROOT/scripts/harness-viewer-first-paint-smoke.sh"; then
-    echo "warning: viewer first-paint smoke failed (superseded 0.1.0 viewer, stale assertion); not fatal." >&2
-  fi
+  # Charter-08 reading layer is portolan-core (viewer/ superseded and removed).
+  run "portolan-core/build-snapshot syntax" node --check "$ROOT/portolan-core/src/use-cases/build-snapshot.js"
+  run "portolan-core/query-bundle syntax" node --check "$ROOT/portolan-core/src/use-cases/query-bundle.js"
+  run "portolan-core/build-handoff syntax" node --check "$ROOT/portolan-core/src/use-cases/build-handoff.js"
+  run "portolan-core/run-query-eval syntax" node --check "$ROOT/portolan-core/src/use-cases/run-query-eval.js"
+  run "portolan-core/build-promotion-atlas syntax" node --check "$ROOT/portolan-core/src/use-cases/build-promotion-atlas.js"
+  run "portolan-core/validate-promotion-atlas syntax" node --check "$ROOT/portolan-core/src/use-cases/validate-promotion-atlas.js"
 }
 
 run_atlas_checks() {
@@ -895,18 +816,25 @@ run_clean_copy_install_check() {
   rg -q 'Query Handoff' "$target/.portolan/atlas/captain-handoff.md"
   node - "$target/.portolan/atlas" <<'NODE'
 const bundle = process.argv[2];
-const bundleQuery = require('./viewer/scripts/bundle-query');
-const handoff = require('./viewer/scripts/captain-handoff');
+const { createBundleArtifactReader } = require('./portolan-core/src/adapters/bundle-artifact-reader');
+const { createSourceFilePort } = require('./portolan-core/src/adapters/source-file');
+const queryBundle = require('./portolan-core/src/use-cases/query-bundle');
+const handoff = require('./portolan-core/src/use-cases/build-handoff');
 
-const originalDispatch = bundleQuery.dispatch;
-bundleQuery.dispatch = (bundlePath, family, opts) => {
+const reader = createBundleArtifactReader(bundle);
+const manifest = reader.readJson('manifest.json');
+const sourceFile = createSourceFilePort({ reader, targetRoot: (manifest && manifest.target_root) || '' });
+const ctx = { reader, sourceFile, bundlePath: reader.bundleDir };
+
+const originalDispatch = queryBundle.dispatch;
+queryBundle.dispatch = (c, family, opts) => {
   if (family === 'repos') {
     throw new Error('forced repos failure');
   }
-  return originalDispatch(bundlePath, family, opts);
+  return originalDispatch(c, family, opts);
 };
 
-const report = handoff.buildHandoff(bundle);
+const report = handoff.buildHandoff(ctx);
 if (report.verdict !== 'not_assessed') {
   console.error(`expected not_assessed when a required query fails, got ${report.verdict}`);
   process.exit(1);
@@ -938,27 +866,15 @@ if (fallbackMarkdown.includes('portolan-viewer.sh --bundle /tmp/portolan fallbac
 }
 NODE
 
+  # Charter-08: the installed viewer wrapper opens the atlas as inlined HTML
+  # via /portolan:map (no HTTP server). Verify it produces atlas.html.
   "$target/.portolan/bin/portolan-viewer.sh" \
-    --bundle "$target/.portolan/atlas" \
-    --port "$port" >"$viewer_log" 2>&1 &
-  pid=$!
-  sleep 1
-  if ! curl -sf "http://127.0.0.1:$port/" | grep -q '<title>Portolan Atlas</title>'; then
-    kill "$pid" 2>/dev/null || true
-    wait "$pid" 2>/dev/null || true
+    --bundle "$target/.portolan/atlas" >"$viewer_log" 2>&1
+  if [[ ! -s "$target/.portolan/atlas/atlas.html" ]] \
+    || ! grep -q '<title>Portolan Atlas' "$target/.portolan/atlas/atlas.html"; then
     sed 's/^/viewer-wrapper: /' "$viewer_log" >&2
-    fail "installed viewer wrapper did not serve the viewer HTML"
+    fail "installed viewer wrapper did not export the atlas HTML"
   fi
-  if ! curl -sf "http://127.0.0.1:$port/bundle/manifest.json" |
-    jq -e '.repo_count == 1 and .core_only == true' >/dev/null; then
-    kill "$pid" 2>/dev/null || true
-    wait "$pid" 2>/dev/null || true
-    sed 's/^/viewer-wrapper: /' "$viewer_log" >&2
-    fail "installed viewer wrapper did not serve the expected manifest"
-  fi
-  kill "$pid" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
-  pid=""
 
   "$target/.portolan/bin/portolan-scan.sh" \
     --clean \
@@ -1242,32 +1158,18 @@ run_fresh_multirepo_first_run_check() {
     (.records | any(.from_repo == $api and .to_repo == $worker and (.routes.from_atlas | contains($api)) and (.routes.to_atlas | contains($worker))))
   ' <<<"$rels_json" >/dev/null
 
-  port=$(choose_free_port)
+  # Charter-08: the viewer wrapper exports the atlas as inlined HTML. Verify
+  # the multi-repo bundle produces atlas.html + the manifest/handoff it carries.
   "$target/.portolan/bin/portolan-viewer.sh" \
-    --bundle "$bundle" \
-    --port "$port" >"$viewer_log" 2>&1 &
-  pid=$!
-  for _ in $(seq 1 80); do
-    if curl -sf "http://127.0.0.1:$port/" >/dev/null 2>&1; then
-      break
-    fi
-    kill -0 "$pid" 2>/dev/null || {
-      sed 's/^/viewer-wrapper: /' "$viewer_log" >&2
-      fail "fresh multi-repo viewer exited before readiness"
-    }
-    sleep 0.1
-  done
-  curl -sf "http://127.0.0.1:$port/" | grep -q '<title>Portolan Atlas</title>' ||
-    fail "fresh multi-repo viewer did not serve atlas HTML"
-  curl -sf "http://127.0.0.1:$port/bundle/manifest.json" |
-    jq -e '.repo_count == 2 and .relationship_count >= 2' >/dev/null ||
-    fail "fresh multi-repo viewer did not serve expected manifest"
-  curl -sf "http://127.0.0.1:$port/bundle/captain-handoff.json" |
-    jq -e '.scenario == "captain-atlas-handoff" and .verdict == "verified" and .counts.repos == 2 and .statuses.relationship_drill_down == "verified"' >/dev/null ||
-    fail "fresh multi-repo viewer did not serve verified captain handoff"
-  kill "$pid" 2>/dev/null || true
-  wait "$pid" 2>/dev/null || true
-  pid=""
+    --bundle "$bundle" >"$viewer_log" 2>&1 ||
+    { sed 's/^/viewer-wrapper: /' "$viewer_log" >&2; fail "fresh multi-repo viewer wrapper failed"; }
+  grep -q '<title>Portolan Atlas' "$bundle/atlas.html" ||
+    fail "fresh multi-repo viewer did not export atlas HTML"
+  jq -e '.repo_count == 2 and .relationship_count >= 2' "$bundle/manifest.json" >/dev/null ||
+    fail "fresh multi-repo bundle did not carry expected manifest"
+  jq -e '.scenario == "captain-atlas-handoff" and .verdict == "verified" and .counts.repos == 2 and .statuses.relationship_drill_down == "verified"' \
+    "$bundle/captain-handoff.json" >/dev/null ||
+    fail "fresh multi-repo bundle did not carry verified captain handoff"
 
   rm -rf "$tmp"
 }
@@ -1639,7 +1541,7 @@ run_diff_check() {
 run_shell_syntax
 run_public_surface_checks
 run_captain_prompt_check
-run_captain_atlas_checks
+run_removed_machinery_checks
 run_test_corpora_archive_checks
 run_go_checks
 run_schema_checks

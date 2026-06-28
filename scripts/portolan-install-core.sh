@@ -699,9 +699,9 @@ BUNDLE_DIR=$BUNDLE_DIR_SH
 if [[ \$# -eq 0 ]]; then
   set -- --bundle "\$BUNDLE_DIR"
 fi
-cd "\$PORTOLAN_PATH/viewer"
-node scripts/build-static.js
-exec node scripts/serve.js "\$@"
+# Charter-08: the viewer wrapper opens the atlas as inlined HTML via /portolan:map
+# (no HTTP server). Preserves the --bundle handoff contract.
+exec node "\$PORTOLAN_PATH/portolan-core/scripts/portolan-map.mjs" "\$@"
 EOF
 }
 

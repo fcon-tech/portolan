@@ -6,7 +6,6 @@ Defines the product UX principles (not feature polish): zero-copied-commands
 install, conversational intake, one entry point, self-contained agentic
 instructions, and visual quality as part of the product.
 
-Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § UX
 Principles (migrated).
 
 ## Requirements

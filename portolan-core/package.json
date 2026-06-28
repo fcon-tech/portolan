@@ -8,5 +8,9 @@
     "test": "node --test test/unit/*.test.js && node --test test/bdd-runner.js",
     "test:deps": "node scripts/check-dependency-rule.js"
   },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "ajv": "^8.17.0"
+  },
   "license": "MIT"
 }

@@ -17,9 +17,9 @@ for file in atlas-surfaces.json atlas-facts.json atlas-surface-content.json prom
   }
 done
 
-if ! (cd "$ROOT/viewer" && node -e "require('ajv')" >/dev/null 2>&1); then
-  "$ROOT/scripts/npm-wsl.sh" ci --prefix "$ROOT/viewer"
+if ! (cd "$ROOT/portolan-core" && node -e "require('ajv')" >/dev/null 2>&1); then
+  npm --prefix "$ROOT/portolan-core" install >/dev/null 2>&1
 fi
 
-node "$ROOT/viewer/scripts/validate-atlas-schemas.js" "$BUNDLE_DIR"
+node "$ROOT/portolan-core/scripts/validate-atlas-schemas.mjs" "$BUNDLE_DIR"
 "$ROOT/scripts/validate-evidence-promotion-atlas.sh" "$BUNDLE_DIR"

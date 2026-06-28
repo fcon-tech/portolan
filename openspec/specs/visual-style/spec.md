@@ -7,7 +7,6 @@ Defines the presentation contract for the atlas's two switchable display styles
 palettes, decorative cartographic chrome, and the accessibility guarantees both
 styles must hold.
 
-Source authority: `openspec/legacy/captain-atlas/09-portolan-visual-style-specification.md`
 (migrated). Runtime token values live in the theme adapter; this spec states the
 behavioral requirement, not the individual hex values.
 

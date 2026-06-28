@@ -7,7 +7,6 @@ first screen of system journeys, route diagrams, reading dossiers, evidence
 snippets, risks, unknown probes as expedition steps, scale-bearing coverage, and
 the repository graph demoted to a supporting Fleet map.
 
-Source authority: `openspec/legacy/captain-atlas/15-atlas-reading-experience.md`
 (migrated).
 
 ## Requirements

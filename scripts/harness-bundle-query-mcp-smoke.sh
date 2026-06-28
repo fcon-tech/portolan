@@ -7,15 +7,15 @@ FIXTURE_TARGET="$ROOT/internal/testfixtures/portolan-bundle/target"
 FIXTURE_BUNDLE=$(mktemp -d)
 trap 'rm -rf "$FIXTURE_BUNDLE"' EXIT
 
-if [[ ! -d "$ROOT/viewer/node_modules/@modelcontextprotocol/sdk" ]]; then
-  "$ROOT/scripts/npm-wsl.sh" ci --prefix "$ROOT/viewer" >/dev/null
+if [[ ! -d "$ROOT/portolan-core/node_modules/@modelcontextprotocol/sdk" ]]; then
+  npm --prefix "$ROOT/portolan-core" install >/dev/null 2>&1
 fi
 
 mkdir -p "$FIXTURE_BUNDLE/producers"
 cp -a "$ROOT/internal/testfixtures/portolan-bundle/producers/." "$FIXTURE_BUNDLE/producers/"
 "$ROOT/scripts/build-portolan-bundle.sh" "$FIXTURE_TARGET" "$FIXTURE_BUNDLE"
 
-node "$ROOT/viewer/scripts/bundle-query-mcp-smoke-client.js" "$FIXTURE_BUNDLE" \
+node "$ROOT/portolan-core/scripts/bundle-query-mcp-smoke-client.js" "$FIXTURE_BUNDLE" \
   | grep -q 'bundle-query-mcp-smoke-client: ok'
 
 # --list-tools base + claims + repos/relationships + atlas query
@@ -30,7 +30,7 @@ PORTOLAN_BUNDLE_DIR="$FIXTURE_BUNDLE" "$ROOT/scripts/portolan-bundle-query-mcp.s
     ' >/dev/null
 
 # claims family: missing claims.jsonl must warn, not fail
-node "$ROOT/viewer/scripts/bundle-query-cli.js" claims --bundle "$FIXTURE_BUNDLE" \
+"$ROOT/scripts/portolan-bundle-query.sh" claims --bundle "$FIXTURE_BUNDLE" \
   | jq -e '.records == [] and (.warnings | length) >= 1' >/dev/null
 
 echo "harness-bundle-query-mcp-smoke: ok"

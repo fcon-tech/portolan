@@ -34,7 +34,7 @@ fi
 
 if [[ ${#POSITIONAL[@]} -lt 1 ]]; then
   echo "usage: $0 [--self] [--run] <bundle-dir>" >&2
-  echo "See openspec/legacy/captain-atlas/04-agent-qna-drilldown.md" >&2
+  echo "See openspec/specs/ for the agent Q&A drilldown contract." >&2
   exit 2
 fi
 
@@ -46,7 +46,7 @@ if [[ "$RUN" -eq 1 ]]; then
   if [[ -z "$OUT" ]]; then
     OUT="$BUNDLE/captain-qna-eval.json"
   fi
-  node "$ROOT/viewer/scripts/query-eval.js" --out "$OUT" "$BUNDLE"
+  node "$ROOT/portolan-core/scripts/query-eval.mjs" --out "$OUT" "$BUNDLE"
   echo "query-eval: wrote $OUT"
 	  jq -e '
 	    .scenario == "captain-agent-qna-drilldown" and

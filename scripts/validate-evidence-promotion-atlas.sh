@@ -12,4 +12,4 @@ fi
 BUNDLE_DIR=$(cd "$1" && pwd)
 shift
 
-node "$ROOT/viewer/scripts/evidence-promotion-atlas.js" validate "$BUNDLE_DIR" "$@"
+node "$ROOT/portolan-core/scripts/build-evidence-promotion-atlas.mjs" validate "$BUNDLE_DIR" "$@"

@@ -7,7 +7,6 @@ enumerated maps, navigation gestures, the C4 honest-empty projection, the
 triangulation highlight layer, the dossier drill-down, and the two display
 styles.
 
-Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` §
 Navigation Model (migrated); Gherkin: feature-p1a-behaviour-map.feature,
 feature-p1a-region-drill-down.feature, feature-p1b-atlas-*.feature.
 

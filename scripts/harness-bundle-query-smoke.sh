@@ -56,31 +56,7 @@ test -f "$FIXTURE_BUNDLE/symbol-index.jsonl"
 
 jq empty "$ROOT/harness/contracts/bundle-query-result.schema.json"
 
-# HTTP parity via serve.js
-cd "$ROOT/viewer"
-node scripts/build-static.js
-PORT=$(node -e 'const net=require("net"); const s=net.createServer(); s.listen(0,"127.0.0.1",()=>{console.log(s.address().port); s.close();});')
-node scripts/serve.js --bundle "$FIXTURE_BUNDLE" --port "$PORT" &
-PID=$!
-trap 'kill "${PID:-}" 2>/dev/null || true; rm -rf "$FIXTURE_BUNDLE" "${MULTI_FIX:-}"' EXIT
-sleep 1
-
-BASE="http://127.0.0.1:$PORT"
-curl -sf "$BASE/api/hotspots?kind=duplication&limit=3" | jq -e '.records | length >= 1' >/dev/null
-curl -sf "$BASE/api/search?q=package&limit=3" | jq -e '.records | type == "array"' >/dev/null
-curl -sf "$BASE/api/selected-code?repo=$FIXTURE_REPO&path=sample.go&line=4&limit=5" \
-  | jq -e '
-      .query.family == "selected-code" and
-      (.records | length == 1) and
-      .records[0].selection.path == "sample.go" and
-      (.records[0].bounded_records.source | length >= 1) and
-      (.records[0].routes.atlas | contains("view=atlas")) and
-      (.records[0].routes.source | contains("/source?")) and
-      (.records[0].follow_up_queries | length >= 1)
-    ' >/dev/null
-RAW_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/bundle/symbol-index.jsonl")
-test "$RAW_CODE" = "403" || { echo "expected symbol-index raw download gate, got HTTP $RAW_CODE" >&2; exit 1; }
-curl -sf "$BASE/bundle/symbol-index.jsonl?download=1" | jq -s -e 'any(.[]; .name == "Run")' >/dev/null
+trap 'rm -rf "$FIXTURE_BUNDLE" "${MULTI_FIX:-}"' EXIT
 
 # map-bridge sidecar (094)
 mkdir -p "$FIXTURE_BUNDLE/map-bridge"
@@ -246,17 +222,6 @@ jq -nc '{id:"fact-stale",stratum:"promoted_fact",family:"source_code",fact_kind:
       .total_records_relation == "lower_bound" and
       (.warnings | any(test("lower bound")))
     ' >/dev/null
-curl -sf "$BASE/api/repos?limit=3" | jq -e '.records | length >= 1' >/dev/null
-curl -sf "$BASE/api/relationships?limit=3" | jq -e '.records | type == "array"' >/dev/null
-curl -sf "$BASE/api/promotion-health?limit=20" | jq -e '.records | length >= 15' >/dev/null
-curl -sf "$BASE/api/promotion-health?family=source_code&stratum=promotion_health&limit=20" \
-  | jq -e '(.records | length >= 1) and all(.records[]; .family == "source_code" and .stratum == "promotion_health")' >/dev/null
-curl -sf "$BASE/api/promoted-facts?family=source_code&stratum=promoted_fact&limit=20" \
-  | jq -e '(.records | length >= 1) and all(.records[]; .family == "source_code" and .stratum == "promoted_fact")' >/dev/null
-curl -sf "$BASE/api/raw-artifacts?family=source_code&stratum=raw_evidence&limit=20" \
-  | jq -e '(.records | length >= 1) and all(.records[]; .family == "source_code" and .stratum == "raw_evidence")' >/dev/null
-curl -sf "$BASE/api/classified-sources?family=source_code&stratum=classified_source&limit=20" \
-  | jq -e '(.records | length >= 1) and all(.records[]; .family == "source_code" and .stratum == "classified_source")' >/dev/null
 
 # source full read (107): whole file with line cap
 "$Q" source --bundle "$FIXTURE_BUNDLE" --path sample.go --line 1 --full \

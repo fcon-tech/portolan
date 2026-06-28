@@ -6,7 +6,6 @@ Defines how the landscape is understood through three versions of the truth
 (behaviour, intentions, representations) and how triangulation highlights where
 they disagree, with graceful degradation when only one truth is present.
 
-Source authority: `openspec/legacy/captain-atlas/08-portolan-product-charter.md` § The
 Three Truths (migrated); Gherkin: feature-p1a-honest-absence.feature.
 
 ## Requirements

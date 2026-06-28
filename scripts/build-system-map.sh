@@ -15,4 +15,4 @@ fi
 BUNDLE_DIR=$(cd "$1" && pwd)
 TARGET_ROOT="${2:-}"
 
-node "$ROOT/viewer/scripts/build-system-map.js" build "$BUNDLE_DIR" "$TARGET_ROOT"
+node "$ROOT/portolan-core/scripts/build-system-map.mjs" build "$BUNDLE_DIR" "$TARGET_ROOT"
