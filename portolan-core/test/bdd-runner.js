@@ -31,6 +31,7 @@ const FEATURE_TO_OPENSPEC = {
   'atlas-navigation-index': 'specs/reading-experience',
   'atlas-reading-experience': 'specs/reading-experience',
   'atlas-drilldown-semantics': 'specs/drilldown-semantics',
+  'symbol-reference-edges': 'specs/ontology',
 };
 
 const bindings = [
@@ -78,6 +79,10 @@ const bindings = [
   { feature: 'atlas-drilldown-semantics', scenario: 'Evidence anchors state what they prove', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Evidence anchors state what they prove' } },
   { feature: 'atlas-drilldown-semantics', scenario: 'C4 is honest-empty when runtime/deploy evidence is absent', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: C4 is honest-empty when runtime/deploy evidence is absent' } },
   { feature: 'atlas-drilldown-semantics', scenario: 'Run Log separates artifact validation from evidence usability', binding: { unit: EXECUTABLE, test: 'BDD [atlas-drilldown-semantics]: Run Log separates artifact validation from evidence usability' } },
+
+  // Feature: Symbol reference edges (ontology)
+  { feature: 'symbol-reference-edges', scenario: 'A reference relationship renders as a typed edge', binding: { unit: EXECUTABLE, test: 'BDD [symbol-reference-edges]: A reference relationship renders as a typed edge' } },
+  { feature: 'symbol-reference-edges', scenario: 'A reference edge is explained honestly, not as a complete call graph', binding: { unit: EXECUTABLE, test: 'BDD [symbol-reference-edges]: A reference edge is explained honestly, not as a complete call graph' } },
 ];
 
 // --- self-verification tests (run by node --test) ---
