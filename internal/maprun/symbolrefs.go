@@ -22,17 +22,18 @@ const symbolIndexDir = ".portolan/symbol-index"
 const maxSymbolIndexExportBytes int64 = 64 * 1024 * 1024
 
 type symbolReferenceResult struct {
-	Nodes    []graph.Node
-	Edges    []graph.Edge
-	Findings []Finding
-	Records  []coverage.Record
+	Nodes         []graph.Node
+	Edges         []graph.Edge
+	Findings      []Finding
+	Records       []coverage.Record
+	parsedExports int
 }
 
 // hasExports reports whether at least one symbol-index export was discovered
 // and successfully parsed. Used by Run() to suppress the stale
 // "symbol evidence not assessed" finding when exports ARE present.
 func (r symbolReferenceResult) hasExports() bool {
-	return len(r.Edges) > 0 || len(r.Records) > 0
+	return r.parsedExports > 0
 }
 
 // importSymbolReferences discovers operator-supplied symbol-index JSON exports
@@ -66,7 +67,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 	externalNodes := map[string]graph.Node{}
 
 	for _, exportPath := range exports {
-		info, err := os.Stat(exportPath)
+		info, err := os.Lstat(exportPath)
 		if err != nil || info.Mode()&os.ModeSymlink != 0 {
 			result.Records = append(result.Records, coverage.Record{
 				ID:            "symbol-ref-export-" + stableID(exportPath),
@@ -105,6 +106,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 			})
 			continue
 		}
+		result.parsedExports++
 
 		// Build symbol -> defining-document map from owns edges.
 		defDocBySymbol := map[string]string{}
@@ -131,8 +133,23 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 					continue
 				}
 				defDoc := defDocBySymbol[edge.To]
+				if defDoc == "" {
+					continue
+				}
 				fromRepo := repoIndex.repoForDocument(refDoc)
 				if fromRepo == "" {
+					recID := "symbol-ref-unmapped-src-" + hashHex(refDoc+"\x00"+edge.To)
+					if !seenRecords[recID] {
+						seenRecords[recID] = true
+						result.Records = append(result.Records, coverage.Record{
+							ID:            recID,
+							Kind:          "symbol-reference",
+							Status:        "cannot_verify",
+							EvidenceState: string(graph.CannotVerify),
+							Source:        exportPath,
+							Reason:        "resolved reference source document " + refDoc + " could not be mapped to a discovered repository",
+						})
+					}
 					continue
 				}
 				toRepo := repoIndex.repoForDocument(defDoc)
@@ -192,7 +209,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 					continue
 				}
 				fromRepo := repoIndex.repoForDocument(refDoc)
-				recID := "symbol-ref-unresolved-" + stableID(refDoc+":"+edge.To)
+				recID := "symbol-ref-unresolved-" + hashHex(refDoc+"\x00"+edge.To)
 				if seenRecords[recID] {
 					continue
 				}
@@ -299,7 +316,7 @@ func buildRepoIndex(root string, repos []selection.Target) repoLookup {
 }
 
 func (rl repoLookup) repoForDocument(docPath string) string {
-	docPath = filepath.ToSlash(docPath)
+	docPath = filepath.ToSlash(filepath.Clean(docPath))
 	// Normalize absolute paths against root.
 	if filepath.IsAbs(docPath) {
 		if rel, err := filepath.Rel(rl.root, docPath); err == nil {
