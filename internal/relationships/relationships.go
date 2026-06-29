@@ -263,5 +263,10 @@ func detectManifest(path string, format ManifestFormat, root string, result *Res
 			Path:   path,
 			Reason: fmt.Sprintf("manifest format %q recognized but not yet implemented", format),
 		})
+	default:
+		result.Issues = append(result.Issues, Issue{
+			Path:   path,
+			Reason: fmt.Sprintf("unknown manifest format %q", format),
+		})
 	}
 }
