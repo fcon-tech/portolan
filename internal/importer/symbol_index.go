@@ -156,27 +156,27 @@ func ParseSymbolIndex(inputPath string) (graph.Graph, error) {
 					},
 				})
 			}
-		kind := "owns"
-		reasonMsg := "symbol occurrence listed by local export; not a complete call graph"
-		if strings.EqualFold(strings.TrimSpace(symbol.Role), "reference") {
-			if definitions[symbolIDValue] {
-				kind = "references"
-				reasonMsg = "reference resolves to a definition in the local export; not a complete call graph"
-			} else {
-				kind = "unknown"
-				reasonMsg = "reference target not resolvable in the local export; recorded as unknown, not guessed"
+			kind := "owns"
+			reasonMsg := "symbol occurrence listed by local export; not a complete call graph"
+			if strings.EqualFold(strings.TrimSpace(symbol.Role), "reference") {
+				if definitions[symbolIDValue] {
+					kind = "references"
+					reasonMsg = "reference resolves to a definition in the local export; not a complete call graph"
+				} else {
+					kind = "unknown"
+					reasonMsg = "reference target not resolvable in the local export; recorded as unknown, not guessed"
+				}
 			}
-		}
-		g.Edges = append(g.Edges, graph.Edge{
-			From: docID,
-			To:   symbolID,
-			Kind: kind,
-			Evidence: graph.Evidence{
-				State:  graph.MetadataVisible,
-				Source: symbolIndexSource(inputPath, docIDValue, symbol.Range),
-				Reason: symbolIndexReason(symbol.Role, reasonMsg),
-			},
-		})
+			g.Edges = append(g.Edges, graph.Edge{
+				From: docID,
+				To:   symbolID,
+				Kind: kind,
+				Evidence: graph.Evidence{
+					State:  graph.MetadataVisible,
+					Source: symbolIndexSource(inputPath, docIDValue, symbol.Range),
+					Reason: symbolIndexReason(symbol.Role, reasonMsg),
+				},
+			})
 		}
 	}
 
