@@ -782,7 +782,8 @@ test('BDD [semantic-investigation-producer]: Agent claims are bounded and labell
     ] }] },
   });
   const a = si.components.find(c => c.id === 'c:a');
-  assert.ok(a.purpose.summary.includes('[Agent:'), 'agent contribution is labelled');
+  // Agent purpose is a separate agent-hypothesis claim.
+  assert.ok(a.agent_claims && a.agent_claims.some(c => c.source_boundary === 'agent-hypothesis'), 'agent contribution is labelled as agent-hypothesis');
   const agentRisks = a.risks.filter(r => r.id.startsWith('risk:agent-'));
   assert.strictEqual(agentRisks.length, 3, 'bounded to 3');
 });

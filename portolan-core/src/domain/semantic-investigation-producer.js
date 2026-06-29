@@ -121,12 +121,6 @@ function generateSemanticInvestigation(systemMap, options) {
 
   // --- enforce evidence anchors (spec 19) --------------------------------
   const { si: anchored } = enforceEvidenceAnchors(si);
-
-  // Strip internal flags before returning.
-  for (const comp of anchored.components) {
-    delete comp._agentClaimed;
-  }
-
   return anchored;
 }
 
@@ -415,15 +409,23 @@ function layerAgentClaims(si, agentClaims) {
   for (const comp of si.components) {
     const ac = claimMap.get(comp.id);
     if (!ac) continue;
-    // Agent purpose claims augment but do not override.
-    if (ac.purpose && !comp._agentClaimed) {
-      comp.purpose = {
-        summary: comp.purpose.summary + ' [Agent: ' + ac.purpose + ']',
-        source_boundary: comp.purpose.source_boundary,
-        source_ref: comp.purpose.source_ref,
-      };
-      comp._agentClaimed = true;
+    // Agent contributions are stored as separate agent-hypothesis claims
+    // on an agent_claims array, clearly labelled and confidence-tagged.
+    // They MUST NOT override deterministic evidence.
+    comp.agent_claims = comp.agent_claims || [];
+
+    // Agent purpose: stored as a separate claim, not appended to the
+    // deterministic purpose text.
+    if (ac.purpose) {
+      comp.agent_claims.push({
+        id: `agent-claim:${sanitize(comp.id)}-purpose`,
+        label: 'Agent purpose assessment',
+        explanation: ac.purpose,
+        source_boundary: 'agent-hypothesis',
+        source_ref: `risk:agent-${sanitize(comp.id)}-purpose`,
+      });
     }
+
     // Agent risks are appended (bounded to 3 per page).
     // Each agent risk gets a self-resolving risk:<id> ref so
     // enforceEvidenceAnchors leaves it as 'agent-hypothesis'.
