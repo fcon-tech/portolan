@@ -256,13 +256,17 @@ func detectManifest(path string, format ManifestFormat, root string, result *Res
 		detectGradle(path, root, result, nodeIDs, edgeIDs)
 	case FormatNpm:
 		detectNpmPackageJson(path, root, result, nodeIDs, edgeIDs)
-	case FormatPython, FormatCargo, FormatSwiftPM, FormatPubspec, FormatGemfile:
+	case FormatPython, FormatCargo, FormatGemfile:
 		// Registered but not yet implemented. Emit an issue so the reader
 		// knows the manifest was seen but not parsed.
 		result.Issues = append(result.Issues, Issue{
 			Path:   path,
 			Reason: fmt.Sprintf("manifest format %q recognized but not yet implemented", format),
 		})
+	case FormatSwiftPM:
+		detectSwiftPackageSwift(path, root, result, nodeIDs, edgeIDs)
+	case FormatPubspec:
+		detectPubspecYaml(path, root, result, nodeIDs, edgeIDs)
 	default:
 		result.Issues = append(result.Issues, Issue{
 			Path:   path,
