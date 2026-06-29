@@ -225,6 +225,7 @@ function createPortolanShell(opts) {
       else if (view === 'c4') renderC4View(main);
       else if (view === 'ecosystem') renderEcosystemMap(main);
       else if (view === 'scales') renderMultiscaleView(main);
+      else if (view === 'atlas-findings') renderAtlasFindings(main);
       else if (navVm) renderWalkthrough(main); // fallback to walkthrough when nav exists
       else renderOverview(main); // fallback
     }
@@ -259,14 +260,12 @@ function createPortolanShell(opts) {
     } else {
       tabs = [
         { id: 'overview', label: 'Overview', view: 'overview' },
-        { id: 'map', label: 'Map', view: 'map' },
+        { id: 'ecosystem', label: 'Semantic Map', view: 'ecosystem' },
         { id: 'scales', label: 'Scales', view: 'scales' },
+        { id: 'map', label: 'Structure Map', view: 'map' },
+        { id: 'findings', label: 'Findings', view: 'atlas-findings' },
         { id: 'components', label: 'Components', view: 'components' },
       ];
-      // The Semantic Map tab also appears without a nav-atlas when a semantic
-      // investigation is present, so the investigation surfaces are reachable
-      // even from the minimal atlas shell.
-      if (semanticVm) tabs.splice(1, 0, { id: 'ecosystem', label: 'Semantic Map', view: 'ecosystem' });
     }
     for (const t of tabs) {
       // The Semantic Map tab exists only when a semantic investigation is present.
@@ -524,6 +523,53 @@ function createPortolanShell(opts) {
     const compGrid = el('div', { class: 'route-button-grid' });
     for (const c of ranked) compGrid.appendChild(unitCard(c));
     panel.appendChild(compGrid);
+
+    // Key findings (overlap + structural) — visible even without nav-atlas
+    if (findings.length) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('KEY FINDINGS')));
+      const findingGrid = el('div', { class: 'route-button-grid', 'data-portolan-kind': 'overview-findings' });
+      for (const f of findings.slice(0, 6)) {
+        const card = el('div', { class: 'card finding-overview-card' });
+        card.setAttribute('data-portolan-finding-type', f.finding_type || '');
+        const title = el('div', { class: 'card-title' });
+        if (f.severity) {
+          const sc = f.severity === 'major' || f.severity === 'critical' ? 'badge badge-warning' : 'badge badge-quiet';
+          title.appendChild(el('span', { class: sc }, text(f.severity)));
+        }
+        title.appendChild(text(f.summary || f.id));
+        card.appendChild(title);
+        if (f.affected_ids && f.affected_ids.length) {
+          const aff = el('div', { class: 'card-meta' });
+          for (const aid of f.affected_ids.slice(0, 3)) {
+            const comp = comps.find(c => c.id === aid);
+            aff.appendChild(el('span', { class: 'chip' }, text(comp ? (comp.display_name || comp.id) : aid)));
+          }
+          card.appendChild(aff);
+        }
+        findingGrid.appendChild(card);
+      }
+      // Link to full findings view
+      const moreFindings = el('p', { class: 'muted' });
+      moreFindings.appendChild(routeLink(`All ${findings.length} findings →`, '/findings', { class: 'cta-secondary' }));
+      findingGrid.appendChild(moreFindings);
+      panel.appendChild(findingGrid);
+    }
+
+    // Semantic investigation call-to-action
+    if (semanticVm && selectedComponentIds.size > 0) {
+      panel.appendChild(el('div', { class: 'section-kicker' }, text('SEMANTIC INVESTIGATIONS')));
+      const siGrid = el('div', { class: 'route-button-grid' });
+      for (const cid of selectedComponentIds) {
+        const comp = comps.find(c => c.id === cid);
+        if (!comp) continue;
+        siGrid.appendChild(routeLink(
+          comp.display_name || comp.id,
+          '/investigation/' + encodeURIComponent(cid),
+          { class: 'card si-overview-card', id: cid, kind: 'investigation' }
+        ));
+      }
+      panel.appendChild(siGrid);
+    }
 
     // Triangulation overlay panel (charter 08 Part-1b)
     panel.appendChild(renderTriangulationPanel());
@@ -2037,6 +2083,73 @@ function createPortolanShell(opts) {
         section.appendChild(card);
       }
 
+      panel.appendChild(section);
+    }
+
+    main.appendChild(panel);
+  }
+
+  // ---- atlas findings view (works without nav-atlas) ----
+  function renderAtlasFindings(main) {
+    const findings = (atlas.objects && atlas.objects.findings) || [];
+    const panel = el('section', { class: 'panel findings-panel' });
+    panel.setAttribute('data-portolan-view', 'atlas-findings');
+    panel.appendChild(el('h2', { class: 'panel-title' }, text('Findings')));
+    panel.appendChild(el('p', { class: 'muted panel-read' },
+      text('Risks, overlaps, and signals discovered by the deterministic core. Each finding attaches to one or more landscape units.')));
+
+    if (!findings.length) {
+      panel.appendChild(el('p', { class: 'muted' }, text('No findings recorded.')));
+      main.appendChild(panel);
+      return;
+    }
+
+    // Group by finding_type for readability.
+    const byType = new Map();
+    for (const f of findings) {
+      const t = f.finding_type || 'finding';
+      if (!byType.has(t)) byType.set(t, []);
+      byType.get(t).push(f);
+    }
+
+    for (const [type, group] of byType) {
+      const section = el('div', { class: 'findings-section' });
+      section.appendChild(el('div', { class: 'section-kicker' }, text(type.replace(/-/g, ' ').toUpperCase())));
+      for (const f of group) {
+        const card = el('div', { class: 'card finding-card' });
+        card.setAttribute('data-portolan-kind', 'finding');
+        card.setAttribute('data-portolan-id', f.id);
+        card.setAttribute('data-portolan-finding-type', f.finding_type || '');
+
+        const title = el('div', { class: 'card-title' });
+        if (f.severity) {
+          const sevClass = f.severity === 'critical' ? 'badge badge-danger' :
+                           f.severity === 'major' ? 'badge badge-warning' :
+                           f.severity === 'minor' ? 'badge badge-quiet' : 'badge badge-quiet';
+          title.appendChild(el('span', { class: sevClass }, text(f.severity)));
+        }
+        title.appendChild(text(f.summary || f.id));
+        card.appendChild(title);
+
+        // Affected components as clickable links
+        if (f.affected_ids && f.affected_ids.length) {
+          const affected = el('div', { class: 'card-meta' });
+          for (const aid of f.affected_ids) {
+            const comp = (atlas.objects.components || []).find(c => c.id === aid);
+            const label = comp ? (comp.display_name || comp.id) : aid;
+            affected.appendChild(routeLink(label, '/dossier/component/' + encodeURIComponent(aid), { class: 'chip', id: aid, kind: 'component' }));
+          }
+          card.appendChild(affected);
+        }
+
+        // Evidence state
+        if (f.evidence && f.evidence.state) {
+          card.appendChild(el('div', { class: 'card-meta' },
+            el('span', { class: 'badge badge-quiet' }, text(f.evidence.state))));
+        }
+
+        section.appendChild(card);
+      }
       panel.appendChild(section);
     }
 
