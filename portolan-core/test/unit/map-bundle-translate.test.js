@@ -71,6 +71,21 @@ test('translateMapBundle: evidence state mapping (cannot-verify → cannot_verif
   assert.equal(artifacts.atlasSurfaces.targets[0].evidence_state, 'cannot_verify');
 });
 
+test('translateMapBundle: evidence state mapping (underscore cannot_verify from Go graph)', () => {
+  const artifacts = translateMapBundle({
+    graph: { nodes: [{ id: 'r', kind: 'repository', label: 'R', evidence: { state: 'cannot_verify' } }], edges: [] },
+  });
+  assert.equal(artifacts.atlasSurfaces.targets[0].evidence_state, 'cannot_verify');
+});
+
+test('translateMapBundle: not_assessed evidence state preserved', () => {
+  const artifacts = translateMapBundle({
+    graph: { nodes: [], edges: [] },
+    coverage: { records: [{ id: 'g1', evidence_state: 'not_assessed', status: 'not_assessed', reason: 'x' }] },
+  });
+  assert.equal(artifacts.gaps[0].evidence_state, 'not_assessed');
+});
+
 test('translateMapBundle: handles empty/missing graph gracefully', () => {
   const artifacts = translateMapBundle({ graph: null, summary: null, findings: null, coverage: null });
   assert.equal(artifacts.atlasSurfaces.targets.length, 0);
