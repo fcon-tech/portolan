@@ -89,9 +89,9 @@ var DefaultRegistry = []LanguageConfig{
 	},
 }
 
-// manifestFilenames returns the set of manifest filenames the registry
-// recognizes, mapped to their format.
-func manifestFilenames() map[string]ManifestFormat {
+// manifestFilenamesCache is built once (memoized) to avoid rebuilding the
+// map for every file in a large tree.
+var manifestFilenamesCache = func() map[string]ManifestFormat {
 	m := make(map[string]ManifestFormat)
 	for _, lang := range DefaultRegistry {
 		for _, spec := range lang.Manifests {
@@ -99,6 +99,11 @@ func manifestFilenames() map[string]ManifestFormat {
 		}
 	}
 	return m
+}()
+
+// manifestFilenames returns the memoized set of manifest filenames.
+func manifestFilenames() map[string]ManifestFormat {
+	return manifestFilenamesCache
 }
 
 // ---------------------------------------------------------------------------
@@ -150,8 +155,19 @@ func detectMavenPom(path string, result *Result, nodeIDs, edgeIDs map[string]str
 		if dep.GroupID == "" || dep.ArtifactID == "" {
 			continue
 		}
+		// Skip Maven property-interpolated coordinates (e.g.
+		// ${scala.binary.version}). These cannot be resolved without the
+		// full <properties> block + parent POM inheritance. Emit an issue
+		// so the reader knows a dep was skipped.
+		if strings.Contains(dep.GroupID, "${") || strings.Contains(dep.ArtifactID, "${") {
+			result.Issues = append(result.Issues, Issue{
+				Path:   path,
+				Reason: fmt.Sprintf("skip dependency with property placeholder: %s:%s", dep.GroupID, dep.ArtifactID),
+			})
+			continue
+		}
 		depLabel := dep.GroupID + ":" + dep.ArtifactID
-		if dep.Version != "" {
+		if dep.Version != "" && !strings.Contains(dep.Version, "${") {
 			depLabel += ":" + dep.Version
 		}
 		depID := "maven:" + dep.GroupID + ":" + dep.ArtifactID
@@ -165,10 +181,13 @@ func detectMavenPom(path string, result *Result, nodeIDs, edgeIDs map[string]str
 //   implementation 'group:artifact:version'
 //   api "group:artifact:version"
 //   project(':module-name')
-//   implementation platform('group:artifact:version')
+//   implementation platform('group:artifact:version')  (BOM import)
+//   classpath 'group:artifact:version'                 (buildscript)
 var (
-	gradleStringDep = regexp.MustCompile(`(?:implementation|api|compileOnly|runtimeOnly|testImplementation|testApi)\s*[(]?\s*['"]([^'"]+)['"]`)
-	gradleProjectDep = regexp.MustCompile(`(?:implementation|api|compileOnly|runtimeOnly)\s*[(]?\s*project\s*\(\s*['"]([^'"]+)['"]\s*\)`)
+	// gradleStringDep matches GAV coordinates in string declarations.
+	// Anchored to avoid false positives inside string literals or comments.
+	gradleStringDep = regexp.MustCompile(`^\s*(?:implementation|api|compileOnly|runtimeOnly|testImplementation|testApi|classpath|platform)\s*[(]?\s*['"]([^'"]+)['"]`)
+	gradleProjectDep = regexp.MustCompile(`^\s*(?:implementation|api|compileOnly|runtimeOnly)\s*[(]?\s*project\s*\(\s*['"]([^'"]+)['"]\s*\)`)
 )
 
 // detectGradle parses a build.gradle / build.gradle.kts and emits depends-on
@@ -189,7 +208,9 @@ func detectGradle(path string, result *Result, nodeIDs, edgeIDs map[string]struc
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "*") {
+		// Skip comments. Use precise prefixes to avoid false positives on
+		// code lines starting with '*' (e.g. *Pattern.compile).
+		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "/*") || strings.HasPrefix(line, "* ") {
 			continue
 		}
 
@@ -237,9 +258,11 @@ func detectNpmPackageJson(path string, result *Result, nodeIDs, edgeIDs map[stri
 	}
 
 	type npmPackage struct {
-		Name            string            `json:"name"`
-		Dependencies    map[string]string `json:"dependencies"`
-		DevDependencies map[string]string `json:"devDependencies"`
+		Name                 string            `json:"name"`
+		Dependencies         map[string]string `json:"dependencies"`
+		DevDependencies      map[string]string `json:"devDependencies"`
+		PeerDependencies     map[string]string `json:"peerDependencies"`
+		OptionalDependencies map[string]string `json:"optionalDependencies"`
 	}
 
 	var pkg npmPackage
@@ -264,6 +287,24 @@ func detectNpmPackageJson(path string, result *Result, nodeIDs, edgeIDs map[stri
 	}
 	// devDependencies are also edges — they describe the landscape.
 	for name, version := range pkg.DevDependencies {
+		depID := "npm:" + name
+		depLabel := name + ":" + version
+		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+		addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+		result.ManifestRequireCount++
+	}
+	// peerDependencies — host packages MUST satisfy them; they are part of
+	// the runtime dependency graph.
+	for name, version := range pkg.PeerDependencies {
+		depID := "npm:" + name
+		depLabel := name + ":" + version
+		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+		addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+		result.ManifestRequireCount++
+	}
+	// optionalDependencies — installed if available, but part of the declared
+	// landscape.
+	for name, version := range pkg.OptionalDependencies {
 		depID := "npm:" + name
 		depLabel := name + ":" + version
 		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
