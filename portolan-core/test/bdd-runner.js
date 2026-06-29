@@ -41,6 +41,8 @@ const bindings = [
 
   // Feature: /portolan:map entry
   { feature: 'behaviour-map', scenario: 'First screen is an annotated overview, not an undifferentiated graph', binding: { unit: EXECUTABLE, test: 'BDD [/portolan:map]: first screen shows annotated overview (not undifferentiated graph)' } },
+  { feature: 'behaviour-map', scenario: 'Snapshot is collected when stale or absent', binding: { unit: EXECUTABLE, test: 'BDD [/portolan:map]: snapshot collected from map-bundle is non-empty' } },
+  { feature: 'behaviour-map', scenario: 'Snapshot is reused when fresh', binding: { unit: EXECUTABLE, test: 'BDD [/portolan:map]: snapshot reuse is deterministic for unchanged input' } },
 
   // Feature: Behaviour map
   { feature: 'behaviour-map', scenario: 'The behaviour map shows units and typed edges', binding: { unit: EXECUTABLE, test: 'BDD [behaviour-map]: units and typed edges render; clicking a unit opens dossier' } },

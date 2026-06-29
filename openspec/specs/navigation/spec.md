@@ -26,6 +26,19 @@ dossier/detail route contract.
 - AND it does NOT show an undifferentiated node-link graph as the first screen
 - AND a clear affordance opens the full behaviour map
 
+#### Scenario: Snapshot is collected when stale or absent
+- GIVEN a target with no snapshot or a stale snapshot
+- WHEN the agent runs /portolan:map
+- THEN the snapshot is collected via the deterministic Go core
+- AND the atlas opens with the fresh snapshot
+- AND the collected snapshot is non-empty (at least one component)
+
+#### Scenario: Snapshot is reused when fresh
+- GIVEN a target with a fresh snapshot (tree signature unchanged)
+- WHEN the agent runs /portolan:map
+- THEN the snapshot is reused without rebuilding
+- AND the atlas opens from the existing snapshot
+
 ### Requirement: Enumerated maps
 The atlas SHALL contain these discrete maps: an Overview map (first screen,
 annotated summary), a Behaviour map (full node-link graph of units + typed
