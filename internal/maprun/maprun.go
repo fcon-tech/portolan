@@ -2330,7 +2330,7 @@ func relationshipFindings(root string, result relationships.Result) []Finding {
 			findings = append(findings, Finding{
 				ID:             "finding-relationships-manifest-dependencies-observed",
 				Kind:           "relationships",
-				Summary:        fmt.Sprintf("Detected %d manifest dependency relationships from local go.mod files.", result.ManifestRequireCount),
+				Summary:        fmt.Sprintf("Detected %d manifest dependency relationships from local manifests (go.mod, pom.xml, build.gradle, package.json).", result.ManifestRequireCount),
 				Severity:       "info",
 				EvidenceState:  string(graph.MetadataVisible),
 				EvidenceSource: root,
@@ -3200,8 +3200,13 @@ func sortFindings(findings []Finding) {
 // isManifestSourceNode returns true for node IDs created by manifest parsers
 // (maven:, gradle:, npm:, package: prefixes from go.mod). These represent
 // the MODULE that declares dependencies; the target repository IS the module,
-// so edges from these nodes are bridged to the target ID.
+// so edges from these nodes are bridged to the target ID. Handles the
+// :rel: prefix added by prefixRelationshipGraph in multi-target mode.
 func isManifestSourceNode(id string) bool {
+	// Strip the :rel: namespace prefix if present (multi-target mode).
+	if i := strings.Index(id, ":rel:"); i >= 0 {
+		id = id[i+len(":rel:"):]
+	}
 	return strings.HasPrefix(id, "maven:") ||
 		strings.HasPrefix(id, "gradle:") ||
 		strings.HasPrefix(id, "npm:") ||
