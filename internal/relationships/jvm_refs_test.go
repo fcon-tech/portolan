@@ -101,8 +101,8 @@ public class C {}
 	// Star import should be not_assessed (ambiguous)
 	for _, e := range result.Edges {
 		if e.Kind == "references" && e.To == "jvm:org.example.pkg.*" {
-			if e.Evidence.State != "unknown" {
-				t.Errorf("expected unknown evidence for star import, got %s", e.Evidence.State)
+			if e.Evidence.State != "not_assessed" {
+				t.Errorf("expected not_assessed evidence for star import, got %s", e.Evidence.State)
 			}
 		}
 	}

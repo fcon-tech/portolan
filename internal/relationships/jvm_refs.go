@@ -26,9 +26,12 @@ var (
 	// packageDecl matches: package org.apache.spark.sql;
 	packageDecl = regexp.MustCompile(`^\s*package\s+([\w.]+)`)
 	// importDecl matches: import org.apache.spark.sql.Dataset;
-	importDecl = regexp.MustCompile(`^\s*import\s+(?:static\s+)?([\w.*]+)`)
-	// classDecl matches: public class Dataset / abstract interface Relatable
-	classDecl = regexp.MustCompile(`^\s*(?:public|private|protected|abstract|final|static)?\s*(?:class|interface|enum|object|trait|case class|case object|record)\s+(\w+)`)
+	// Also matches Scala _ wildcard imports and selective imports.
+	importDecl = regexp.MustCompile(`^\s*import\s+(?:static\s+)?([\w.*_]+)`)
+	// classDecl matches declarations with zero or more leading modifiers.
+	// Supports Java/Kotlin/Scala modifier keywords including multi-modifier
+	// declarations like "public final class Foo".
+	classDecl = regexp.MustCompile(`^\s*(?:(?:public|private|protected|abstract|final|static|sealed|open|data|value|inline|non-sealed)\s+)*(?:(?:enum|data|value|sealed)\s+)?(?:class|interface|enum|object|trait|record)\s+(\w+)`)
 )
 
 // DetectJVMReferences scans JVM source files (.java, .kt, .scala) for import
@@ -80,21 +83,32 @@ func DetectJVMReferences(root string) Result {
 	for _, path := range jvmFiles {
 		imports := parseJVMImports(path)
 		for _, imp := range imports {
-			// Check for star import (wildcard).
-			if strings.HasSuffix(imp, ".*") {
-				pkg := strings.TrimSuffix(imp, ".*")
+			// Handle Scala selective imports: import x.y.{ A, B }
+			// (already partially handled by regex — the brace content is
+			// captured if no space; but if there's a brace, we need special
+			// handling). Skip selective imports for now (honest gap).
+			if strings.Contains(imp, "{") {
+				continue
+			}
+
+			// Check for star/wildcard import (Java * or Scala _).
+			isStar := strings.HasSuffix(imp, ".*") || strings.HasSuffix(imp, "._")
+			if isStar {
+				pkg := ""
+				if strings.HasSuffix(imp, ".*") {
+					pkg = strings.TrimSuffix(imp, ".*")
+				} else {
+					pkg = strings.TrimSuffix(imp, "._")
+				}
 				files, found := packageFiles[pkg]
 				if !found || len(files) == 0 {
-					// Package not in perimeter — external.
 					extID := "jvm:" + pkg
 					addPackageNode(&result, nodeIDs, extID, pkg, graph.MetadataVisible, path)
 					addEdge(&result, edgeIDs, moduleID, extID, "references", graph.MetadataVisible, path)
 				} else {
-					// Star import spans files — ambiguous target.
-					// Record as not_assessed edge.
 					extID := "jvm:" + pkg + ".*"
-					addPackageNode(&result, nodeIDs, extID, pkg+".* (star import — ambiguous)", graph.Unknown, path)
-					addEdge(&result, edgeIDs, moduleID, extID, "references", graph.Unknown, path)
+					addPackageNode(&result, nodeIDs, extID, pkg+".* (star import — ambiguous)", graph.MetadataVisible, path)
+					addEdge(&result, edgeIDs, moduleID, extID, "references", "not_assessed", path)
 				}
 				continue
 			}
@@ -102,11 +116,23 @@ func DetectJVMReferences(root string) Result {
 			// Exact FQN lookup.
 			defPath, found := fqnIndex[imp]
 			if found {
-				// Resolved to an in-perimeter file — internal reference.
 				depID := "jvm:" + imp
 				addPackageNode(&result, nodeIDs, depID, imp, graph.MetadataVisible, defPath)
 				addEdge(&result, edgeIDs, moduleID, depID, "references", graph.MetadataVisible, path)
 			} else {
+				// Try stripping the last segment (static import of a member:
+				// import static org.example.Util.square → resolve to
+				// org.example.Util).
+				lastDot := strings.LastIndex(imp, ".")
+				if lastDot > 0 {
+					parent := imp[:lastDot]
+					if defPath2, found2 := fqnIndex[parent]; found2 {
+						depID := "jvm:" + parent
+						addPackageNode(&result, nodeIDs, depID, parent, graph.MetadataVisible, defPath2)
+						addEdge(&result, edgeIDs, moduleID, depID, "references", graph.MetadataVisible, path)
+						continue
+					}
+				}
 				// Not in perimeter — external reference.
 				extID := "jvm:" + imp
 				addPackageNode(&result, nodeIDs, extID, imp, graph.MetadataVisible, path)
@@ -144,7 +170,8 @@ func findJVMSourceFiles(root string) []string {
 }
 
 // parseJVMDeclarations extracts the package and top-level class/interface
-// names from a JVM source file.
+// names from a JVM source file. Only top-level declarations are collected
+// (inner classes are skipped by stopping at the first opening brace).
 func parseJVMDeclarations(path string) (package_ string, classes []string) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -154,15 +181,29 @@ func parseJVMDeclarations(path string) (package_ string, classes []string) {
 
 	scanner := bufio.NewScanner(f)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	braceDepth := 0
 	for scanner.Scan() {
 		line := scanner.Text()
+		// Skip comments.
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") || strings.HasPrefix(trimmed, "*") {
+			continue
+		}
 		if package_ == "" {
 			if m := packageDecl.FindStringSubmatch(line); m != nil {
 				package_ = strings.TrimSuffix(m[1], ";")
 			}
 		}
-		if m := classDecl.FindStringSubmatch(line); m != nil {
-			classes = append(classes, m[1])
+		// Only collect class declarations at brace depth 0 (top-level).
+		if braceDepth == 0 {
+			if m := classDecl.FindStringSubmatch(line); m != nil {
+				classes = append(classes, m[1])
+			}
+		}
+		// Track brace depth (simplified — counts all braces on the line).
+		braceDepth += strings.Count(line, "{") - strings.Count(line, "}")
+		if braceDepth < 0 {
+			braceDepth = 0
 		}
 	}
 	return
@@ -181,6 +222,11 @@ func parseJVMImports(path string) []string {
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
 		line := scanner.Text()
+		// Skip comments.
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "//") || strings.HasPrefix(trimmed, "/*") || strings.HasPrefix(trimmed, "*") {
+			continue
+		}
 		if m := importDecl.FindStringSubmatch(line); m != nil {
 			imp := strings.TrimSuffix(m[1], ";")
 			if imp != "" {
