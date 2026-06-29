@@ -370,3 +370,41 @@ func TestImportSymbolReferencesMalformedExport(t *testing.T) {
 		t.Fatalf("expected a cannot_verify coverage record for malformed export; got %#v", result.Records)
 	}
 }
+
+func TestImportSymbolReferencesUnmappedSourceDoc(t *testing.T) {
+	root, repos := setupSymbolRefLandscape(t)
+	writeSymbolIndexExport(t, exportPath(root), map[string]interface{}{
+		"producer": "test-scip",
+		"documents": []map[string]interface{}{
+			{
+				"path":     "unknown-repo/src/app.js",
+				"language": "javascript",
+				"symbols": []map[string]interface{}{
+					{"id": "sym foo()", "name": "foo", "kind": "function", "role": "reference", "range": "1:1-1:10"},
+				},
+			},
+			{
+				"path":     "repo-b/src/lib.js",
+				"language": "javascript",
+				"symbols": []map[string]interface{}{
+					{"id": "sym foo()", "name": "foo", "kind": "function", "role": "definition", "range": "1:1-1:3"},
+				},
+			},
+		},
+	})
+
+	result := importSymbolReferences(root, repos)
+
+	if len(result.Edges) != 0 {
+		t.Fatalf("edges = %d, want 0 (source doc not in any repo)", len(result.Edges))
+	}
+	foundUnmapped := false
+	for _, rec := range result.Records {
+		if strings.Contains(rec.ID, "unmapped-src") && rec.Status == "cannot_verify" {
+			foundUnmapped = true
+		}
+	}
+	if !foundUnmapped {
+		t.Fatalf("expected a cannot_verify record for unmapped source doc; got %#v", result.Records)
+	}
+}

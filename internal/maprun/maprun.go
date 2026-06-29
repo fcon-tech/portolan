@@ -348,6 +348,7 @@ func Run(opts Options) (Result, error) {
 	if symbolRefs.hasExports() {
 		findings = suppressFinding(findings, "finding-relationships-symbol-evidence-not-assessed")
 	}
+	sortGraph(&g)
 	skippedSurfaces := []string{
 		"relationship-non-go-source",
 		"relationship-runtime-inference",
@@ -1215,7 +1216,7 @@ func dedupeFindings(findings []Finding) []Finding {
 }
 
 func suppressFinding(findings []Finding, id string) []Finding {
-	filtered := findings[:0]
+	filtered := make([]Finding, 0, len(findings))
 	for _, f := range findings {
 		if f.ID != id {
 			filtered = append(filtered, f)
