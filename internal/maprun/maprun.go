@@ -291,15 +291,23 @@ func Run(opts Options) (Result, error) {
 			return Result{}, err
 		}
 		if !stale {
-			// Verify key artifacts exist before trusting the skip — a partially
-			// deleted bundle must not produce a false "up to date".
-			if _, statErr := os.Stat(filepath.Join(outAbs, "summary.json")); statErr != nil {
+			// Verify all key artifacts exist before trusting the skip — a
+			// partially deleted bundle must not produce a false "up to date".
+			artifacts := artifactsFor(outAbs)
+			missing := false
+			for _, p := range []string{artifacts.Run, artifacts.Coverage, artifacts.Graph, artifacts.GraphIndex, artifacts.Findings, artifacts.Summary} {
+				if _, statErr := os.Stat(p); statErr != nil {
+					missing = true
+					break
+				}
+			}
+			if missing {
 				stale = true
-				reason = "prior bundle incomplete (summary.json missing)"
+				reason = "prior bundle incomplete (artifacts missing)"
 			} else {
 				return Result{
 					OutputPath:  filepath.Clean(outAbs),
-					Artifacts:   artifactsFor(filepath.Clean(outAbs)),
+					Artifacts:   artifacts,
 					Skipped:     true,
 					StaleReason: reason,
 				}, nil

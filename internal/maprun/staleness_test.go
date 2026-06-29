@@ -145,3 +145,29 @@ func TestMapIfStaleRejectsSymlinkedOutput(t *testing.T) {
 		t.Fatal("expected error when --if-stale output is a symlink")
 	}
 }
+
+func TestMapIfStaleRebuildsWhenArtifactDeleted(t *testing.T) {
+	root := makeTargetRoot(t)
+	out := filepath.Join(root, ".portolan", "run")
+
+	if _, err := Run(Options{RootPath: root, OutputPath: out, IfStale: true}); err != nil {
+		t.Fatalf("first Run: %v", err)
+	}
+
+	// Delete a key artifact so the bundle is incomplete.
+	if err := os.Remove(filepath.Join(out, "graph.json")); err != nil {
+		t.Fatalf("remove graph.json: %v", err)
+	}
+
+	result, err := Run(Options{RootPath: root, OutputPath: out, IfStale: true})
+	if err != nil {
+		t.Fatalf("second Run: %v", err)
+	}
+	if result.Skipped {
+		t.Fatal("must rebuild when a key artifact is missing, not skip")
+	}
+	// The rebuild must restore the deleted artifact.
+	if _, err := os.Stat(filepath.Join(out, "graph.json")); err != nil {
+		t.Fatalf("graph.json not restored after rebuild: %v", err)
+	}
+}
