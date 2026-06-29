@@ -46,7 +46,7 @@ func Detect(root string) Result {
 		default:
 			// Dispatch to multi-language manifest parsers via the registry.
 			if format, ok := manifests[base]; ok {
-				detectManifest(path, format, &result, nodeIDs, edgeIDs)
+				detectManifest(path, format, root, &result, nodeIDs, edgeIDs)
 			}
 		}
 	}
@@ -75,6 +75,20 @@ func Detect(root string) Result {
 	return result
 }
 
+var skipDirs = map[string]bool{
+	".portolan":   true,
+	"node_modules": true,
+	"vendor":       true,
+	"target":       true,
+	"build":        true,
+	"dist":         true,
+	".git":         true,
+	"__pycache__":  true,
+	".gradle":      true,
+	".idea":        true,
+	".vscode":      true,
+}
+
 func relationshipFiles(root string) ([]string, []Issue) {
 	var files []string
 	var issues []Issue
@@ -86,18 +100,12 @@ func relationshipFiles(root string) ([]string, []Issue) {
 		if path == root {
 			return nil
 		}
-		rel, relErr := filepath.Rel(root, path)
-		if relErr != nil {
-			return nil
-		}
-		rel = filepath.ToSlash(rel)
-		if hasPortolanPath(rel) {
-			if entry.IsDir() {
+		// Skip generated/dependency directories.
+		if entry.IsDir() {
+			base := filepath.Base(path)
+			if skipDirs[base] {
 				return filepath.SkipDir
 			}
-			return nil
-		}
-		if entry.IsDir() {
 			return nil
 		}
 		base := filepath.Base(path)
@@ -240,15 +248,20 @@ func isManifestFile(filename string) bool {
 }
 
 // detectManifest dispatches to the appropriate manifest parser based on format.
-func detectManifest(path string, format ManifestFormat, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+func detectManifest(path string, format ManifestFormat, root string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
 	switch format {
 	case FormatMaven:
-		detectMavenPom(path, result, nodeIDs, edgeIDs)
+		detectMavenPom(path, root, result, nodeIDs, edgeIDs)
 	case FormatGradle:
-		detectGradle(path, result, nodeIDs, edgeIDs)
+		detectGradle(path, root, result, nodeIDs, edgeIDs)
 	case FormatNpm:
-		detectNpmPackageJson(path, result, nodeIDs, edgeIDs)
-	default:
-		// Future formats (Python, Cargo, Swift, etc.) — not yet implemented.
+		detectNpmPackageJson(path, root, result, nodeIDs, edgeIDs)
+	case FormatPython, FormatCargo, FormatSwiftPM, FormatPubspec, FormatGemfile:
+		// Registered but not yet implemented. Emit an issue so the reader
+		// knows the manifest was seen but not parsed.
+		result.Issues = append(result.Issues, Issue{
+			Path:   path,
+			Reason: fmt.Sprintf("manifest format %q recognized but not yet implemented", format),
+		})
 	}
 }
