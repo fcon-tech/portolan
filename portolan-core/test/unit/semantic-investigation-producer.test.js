@@ -77,8 +77,12 @@ test('agent claims are bounded and labelled (spec 18)', () => {
   // Agent purpose is appended with a visible [Agent:] label.
   assert.ok(alpha.purpose.summary.includes('[Agent:'), 'agent purpose should be labelled');
   // Agent risks are bounded to 3.
-  const agentRisks = alpha.risks.filter(r => r._agentClaimed || r.id.startsWith('risk:agent-'));
+  const agentRisks = alpha.risks.filter(r => r.id.startsWith('risk:agent-'));
   assert.strictEqual(agentRisks.length, 3, 'agent risks should be bounded to 3');
+  for (const r of agentRisks) {
+    assert.strictEqual(r.source_boundary, 'agent-hypothesis',
+      `agent risk ${r.id} should preserve agent-hypothesis boundary`);
+  }
 });
 
 test('agent claims do not override deterministic evidence boundary (spec 18)', () => {

@@ -121,6 +121,12 @@ function generateSemanticInvestigation(systemMap, options) {
 
   // --- enforce evidence anchors (spec 19) --------------------------------
   const { si: anchored } = enforceEvidenceAnchors(si);
+
+  // Strip internal flags before returning.
+  for (const comp of anchored.components) {
+    delete comp._agentClaimed;
+  }
+
   return anchored;
 }
 
@@ -149,8 +155,9 @@ function inferCapabilities(components, relationships) {
     componentCapabilities[comp.id].push(capId);
 
     // Also infer from shared-dependency overlaps (relationships).
+    const HIGH_COUPLING_MIN_DEPS = 3;
     const deps = relationships.filter(r => r.source === comp.id || r.from === comp.id);
-    if (deps.length >= 3) {
+    if (deps.length >= HIGH_COUPLING_MIN_DEPS) {
       const depCapId = 'capability:high-coupling';
       if (!seen.has(depCapId)) {
         seen.add(depCapId);
@@ -315,6 +322,8 @@ function generatePurposeSummary(component, ctx) {
 
 /**
  * Build semantic relations from overlap findings + relationship edges.
+ * Overlap relations are emitted bidirectionally so the overlap pair is
+ * declared in both directions (the doc-17 contract requires this).
  */
 function buildSemanticRelations(component, ctx) {
   const relations = [];
@@ -323,19 +332,21 @@ function buildSemanticRelations(component, ctx) {
   // From overlap findings (spec 21).
   for (const f of (ctx.overlapFindings || [])) {
     if (!relatesFindingToComponent(f, compId)) continue;
-    // Try to find the other component in the finding summary.
+    // Find ALL other components in the finding (not just the first).
     for (const other of ctx.allComponents) {
       if (other.id === compId) continue;
       if (relatesFindingToComponent(f, other.id)) {
+        // Derive dimensions from the finding kind + shared signals.
+        const dimensions = deriveOverlapDimensions(f, component, other, ctx);
+        const anchorId = `evidence:corpus-${sanitize(compId)}`;
         relations.push({
           type: f.kind === 'alternative-capability' ? 'contrasts_with' : 'overlaps_with',
           target_id: other.id,
-          dimensions: [f.kind],
+          dimensions,
           explanation: f.summary || '',
           source_boundary: f.evidence_state === 'not_assessed' ? 'not_assessed' : 'local-corpus',
-          source_ref: '',
+          source_ref: f.evidence_state === 'not_assessed' ? '' : anchorId,
         });
-        break;
       }
     }
   }
@@ -355,11 +366,30 @@ function buildSemanticRelations(component, ctx) {
       dimensions: [],
       explanation: `${rel.type || rel.kind || 'dependency'} edge from corpus`,
       source_boundary: 'local-corpus',
-      source_ref: '',
+      source_ref: `evidence:corpus-${sanitize(compId)}`,
     });
   }
 
   return relations;
+}
+
+/**
+ * Derive overlap dimensions from a finding + component context.
+ * Must return >= 3 dimensions to satisfy the doc-17 contract.
+ */
+function deriveOverlapDimensions(finding, compA, compB, ctx) {
+  const dims = [finding.kind];
+  // Add family-level overlap if both components share a family.
+  const familyA = compA.c4_family || compA.family || compA.type || 'unknown';
+  const familyB = compB.c4_family || compB.family || compB.type || 'unknown';
+  if (familyA === familyB) {
+    dims.push(`shared-family:${familyA}`);
+  } else {
+    dims.push(`cross-family:${familyA}-${familyB}`);
+  }
+  // Add shared-dependency dimension.
+  dims.push('shared-dependencies');
+  return dims;
 }
 
 /**
@@ -385,14 +415,17 @@ function layerAgentClaims(si, agentClaims) {
       comp._agentClaimed = true;
     }
     // Agent risks are appended (bounded to 3 per page).
+    // Each agent risk gets a self-resolving risk:<id> ref so
+    // enforceEvidenceAnchors leaves it as 'agent-hypothesis'.
     if (ac.risks) {
       for (const risk of ac.risks.slice(0, 3)) {
+        const riskId = `risk:agent-${sanitize(comp.id)}-${sanitize(risk.label || 'claim')}`;
         comp.risks.push({
-          id: `risk:agent-${sanitize(comp.id)}-${sanitize(risk.label || 'claim')}`,
+          id: riskId,
           label: risk.label || 'Agent risk',
           explanation: risk.explanation || '',
           source_boundary: 'agent-hypothesis',
-          source_ref: '',
+          source_ref: riskId,
         });
       }
     }
@@ -401,13 +434,12 @@ function layerAgentClaims(si, agentClaims) {
 
 /**
  * Check whether a finding relates to a component.
+ * Uses structured ids only — NO substring matching on summary text,
+ * which causes false positives (e.g. "Alpha and Beta" matches both).
  */
 function relatesFindingToComponent(finding, componentId) {
   const ids = finding.component_ids || finding.subject_ids || finding.repo_ids || [];
-  if (ids.includes(componentId)) return true;
-  // Also check the summary for the component id (fallback).
-  if (finding.summary && finding.summary.includes(componentId)) return true;
-  return false;
+  return ids.includes(componentId);
 }
 
 /**

@@ -216,8 +216,12 @@ func overlapFindingID(a, b string) string {
 }
 
 func sanitizeID(s string) string {
-	s = strings.ReplaceAll(s, "/", "-")
-	s = strings.ReplaceAll(s, ":", "-")
-	s = strings.ReplaceAll(s, "@", "-")
+	// Use percent-encoding for path separators and scope delimiters so
+	// distinct source IDs do not collide after sanitization (e.g.
+	// "repo:a/b" and "repo/a:b" must NOT map to the same finding ID).
+	s = strings.ReplaceAll(s, "/", "%2F")
+	s = strings.ReplaceAll(s, ":", "%3A")
+	s = strings.ReplaceAll(s, "@", "-at-")
+	s = strings.ReplaceAll(s, " ", "-")
 	return s
 }

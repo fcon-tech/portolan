@@ -128,7 +128,7 @@ function buildMultiscaleModel(systemMap, semanticInvestigation) {
       for (const concept of concepts) {
         const entry = {
           level: 'module',
-          id: concept.id || `concept:${comp.id}-${comp.children.length}`,
+          id: `module:${comp.id}:${concept.id || comp.children.length}`,
           label: concept.label || concept.id || 'concept',
           evidence: {
             source: concept.source_boundary || 'not_assessed',
