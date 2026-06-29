@@ -205,6 +205,14 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}.mu
 .graph-stage{background:radial-gradient(ellipse at center,rgba(224,210,180,.5),var(--surface-3));border:1px solid var(--line);border-radius:14px;padding:10px;margin-top:16px;overflow:hidden}
 .graph-svg{width:100%;height:clamp(440px,62vh,720px);display:block}
 .graph-edge{stroke:rgba(124,90,42,.4);stroke-width:1.2;cursor:pointer}.graph-edge:hover{stroke:var(--primary);stroke-width:2}
+.graph-edge--dependency{stroke:rgba(124,90,42,.32);stroke-dasharray:5 4}
+.graph-edge--structural{stroke:var(--accent,#7c5a2a);stroke-width:1.6}
+.graph-edge-legend{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:10px;font-size:12px;color:var(--muted)}
+.graph-edge-swatch{display:inline-block;width:22px;height:0;border-top:3px solid rgba(124,90,42,.4);border-radius:2px}
+.graph-edge-swatch--structural{border-top-color:var(--accent,#7c5a2a);border-top-width:4px}
+.graph-edge-swatch--dependency{border-top-style:dashed}
+.landscape-honesty-notice{margin-top:12px;padding:12px 14px;background:var(--surface-3);border:1px solid var(--line-strong,#cdb98a);border-left:3px solid var(--accent,#7c5a2a);border-radius:10px;max-width:78ch}
+.landscape-honesty-notice__title{font-weight:600;color:var(--text);margin:0 0 4px}
 .graph-node{cursor:pointer}.node-label{fill:var(--text);font-size:11px;font-family:var(--font);text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
 .dossier-section{margin-top:18px}.ref-list{margin-top:18px}.back-link{font-size:13px;color:var(--muted);display:inline-block;margin-top:16px}
 .prose{max-width:68ch}.map-intro{max-width:78ch}

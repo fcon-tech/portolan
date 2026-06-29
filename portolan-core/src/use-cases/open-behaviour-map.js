@@ -15,6 +15,7 @@
 'use strict';
 
 const { layoutRadialClusters, computeBounds } = require('../domain/graph-layout');
+const { isStructuralEdge } = require('../domain/landscape-structure');
 
 /**
  * Build a render-ready behaviour-map model.
@@ -22,8 +23,8 @@ const { layoutRadialClusters, computeBounds } = require('../domain/graph-layout'
  * @param {object} atlas - the parsed system-map; uses objects.components + objects.relationships
  * @returns {{nodes: Array, edges: Array, bounds: object}}
  *   nodes: [{id, family, lifecycle, label, route, evidenceState, degree, x, y, r}]
- *   edges: [{id, fromId, toId, route, relationshipType, from:{x,y,r}, to:{x,y,r},
- *            x1,y1,x2,y2}] — endpoints trimmed to node borders
+ *   edges: [{id, fromId, toId, route, relationshipType, structural, from:{x,y,r},
+ *            to:{x,y,r}, x1,y1,x2,y2}] — endpoints trimmed to node borders
  *   bounds: {minX,minY,maxX,maxY,width,height}
  */
 function openBehaviourMap(atlas) {
@@ -57,6 +58,7 @@ function openBehaviourMap(atlas) {
         toId: r.to_id,
         route: r.route,
         relationshipType: r.relationship_type,
+        structural: isStructuralEdge(r),
       });
     }
   }

@@ -593,3 +593,46 @@ test('drilldown: C4 Component shows honest-empty, not family clusters, when no c
   // the family must NOT appear as a component-level box
   assert.ok(!findText(root, 'Data'), 'family name not promoted to Component level');
 });
+
+// ===========================================================================
+// bigtop-deep-landscape-demo: landscape honesty contract on the map view.
+// (openspec/specs/reading-experience — "Landscape view shows connected
+// structure, not a flat inventory".)
+// ===========================================================================
+
+test('landscape honesty: dependency-only snapshot admits the limitation on the map', () => {
+  // fixtureAtlasWithRels has a single `depends-on` edge (dependency-only).
+  const root = renderWith('/map', fixtureAtlasWithRels(), null);
+  const mapPanel = mainPanel(root);
+  assert.ok(mapPanel, 'map panel rendered');
+  assert.ok(findAttr(mapPanel, 'data-portolan-kind', 'landscape-honesty'), 'honesty notice present');
+  assert.ok(findAttr(mapPanel, 'data-portolan-structure', 'dependency-only'), 'marked dependency-only');
+  assert.ok(findText(mapPanel, 'Dependency-only landscape'), 'notice title in plain language');
+  assert.ok(!findAttr(mapPanel, 'data-portolan-structure', 'structural'), 'no structural legend when dependency-only');
+});
+
+test('landscape honesty: structural edges show an edge legend, no limitation notice', () => {
+  const atlas = fixtureAtlasWithRels();
+  // add a structural `references` edge alongside the dependency edge.
+  atlas.objects.relationships.push({
+    id: 'rel:ref', relationship_type: 'references', from_id: 'component:a', to_id: 'component:b',
+    direction: 'directed', evidence: { state: 'metadata-visible', producer: 'symbol-index' },
+    created_by_producer_family: 'symbol-index', why_present: 'reference resolved', summary: 'A references B.',
+    route: '#/detail/relationship/rel:ref',
+  });
+  const root = renderWith('/map', atlas, null);
+  const mapPanel = mainPanel(root);
+  assert.ok(mapPanel, 'map panel rendered');
+  assert.ok(!findAttr(mapPanel, 'data-portolan-kind', 'landscape-honesty'), 'no honesty notice when structure exists');
+  assert.ok(findAttr(mapPanel, 'data-portolan-kind', 'edge-legend'), 'structural edge legend present');
+  assert.ok(findAttr(mapPanel, 'data-portolan-structure', 'structural'), 'marked structural');
+});
+
+test('landscape honesty: empty relationships render neither notice nor legend', () => {
+  // fixtureAtlas has zero relationships — nothing to disguise, nothing to legend.
+  const root = renderWith('/map', fixtureAtlas(), null);
+  const mapPanel = mainPanel(root);
+  assert.ok(mapPanel, 'map panel rendered');
+  assert.ok(!findAttr(mapPanel, 'data-portolan-kind', 'landscape-honesty'), 'no honesty notice with zero edges');
+  assert.ok(!findAttr(mapPanel, 'data-portolan-kind', 'edge-legend'), 'no edge legend with zero edges');
+});

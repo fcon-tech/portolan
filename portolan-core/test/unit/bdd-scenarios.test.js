@@ -662,3 +662,62 @@ test('BDD [symbol-reference-edges]: A reference edge is explained honestly, not 
   assert.ok(/not a complete call graph/i.test(detail.whyPresent), 'honest not-a-complete-call-graph caveat present');
 });
 
+// ---- Feature: Deep landscape demo (reading-experience) ----
+// bigtop-deep-landscape-demo: the landscape view shows connected structure, not
+// a flat inventory; dependency-only state is admitted in plain language.
+
+test('BDD [deep-landscape-demo]: Landscape shows connected groupings and cross-component edges', () => {
+  const { openLandscapeStructure } = require('../../src/use-cases/open-landscape-structure');
+  const atlas = {
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', c4_family: 'data-systems', route: '#/dossier/component/a' },
+        { id: 'c:b', display_name: 'B', c4_family: 'data-systems', route: '#/dossier/component/b' },
+        { id: 'c:c', display_name: 'C', c4_family: 'compute-processing', route: '#/dossier/component/c' },
+      ],
+      relationships: [
+        // a structural cross-component edge (code-level reference)
+        { id: 'r:ref', from_id: 'c:a', to_id: 'c:b', relationship_type: 'references', direction: 'directed', evidence: { state: 'metadata-visible' } },
+        // a shared-dependency cluster edge
+        { id: 'r:dep', from_id: 'c:a', to_id: 'c:c', relationship_type: 'shared-dependency', direction: 'undirected', evidence: { state: 'metadata-visible' } },
+      ],
+    },
+  };
+  const model = openBehaviourMap(atlas);
+  const structure = openLandscapeStructure(atlas);
+
+  // Typed edges connect components into groupings/hubs (degree > 0 on the hub).
+  assert.strictEqual(model.edges.length, 2, 'both edges render');
+  const structuralEdges = model.edges.filter(e => e.structural);
+  assert.strictEqual(structuralEdges.length, 1, 'one structural edge');
+  assert.strictEqual(structuralEdges[0].relationshipType, 'references', 'structural edge typed references');
+  const hub = model.nodes.find(n => n.id === 'c:a');
+  assert.ok(hub && hub.degree >= 2, 'hub component connects multiple edges');
+
+  // The system shape is legible (structural edges recognised, not disguised).
+  assert.strictEqual(structure.hasStructuralEdges, true, 'structure detected');
+  assert.strictEqual(structure.limitationNotice, null, 'no dependency-only notice when structure exists');
+});
+
+test('BDD [deep-landscape-demo]: Dependency-only landscape is admitted, not disguised', () => {
+  const { openLandscapeStructure } = require('../../src/use-cases/open-landscape-structure');
+  const atlas = {
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', c4_family: 'data-systems', route: '#/dossier/component/a' },
+        { id: 'c:b', display_name: 'B', c4_family: 'data-systems', route: '#/dossier/component/b' },
+      ],
+      relationships: [
+        // only shared-dependency edges — no structural edges
+        { id: 'r:dep', from_id: 'c:a', to_id: 'c:b', relationship_type: 'shared-dependency', direction: 'undirected', evidence: { state: 'metadata-visible' } },
+      ],
+    },
+  };
+  const structure = openLandscapeStructure(atlas);
+  assert.strictEqual(structure.hasStructuralEdges, false, 'no structural edges');
+  assert.ok(structure.limitationNotice, 'plain-language limitation notice present');
+  // It must NOT present shared dependencies as code-level architecture.
+  assert.match(structure.limitationNotice, /dependency/i);
+  assert.match(structure.limitationNotice, /not code-level architecture/i);
+});
+

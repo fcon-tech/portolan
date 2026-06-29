@@ -71,12 +71,13 @@ function createSvgGraphRenderer(container, opts = {}) {
     const edgeLayer = svgEl('g', { class: 'edge-layer' });
     for (const e of model.edges) {
       const line = svgEl('line', {
-        class: 'graph-edge',
+        class: e.structural ? 'graph-edge graph-edge--structural' : 'graph-edge graph-edge--dependency',
         x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2,
         'data-portolan-id': e.id,
         'data-portolan-kind': 'relationship',
         'data-portolan-route': e.route,
         'data-portolan-clickable': 'true',
+        'data-relationship-type': e.relationshipType || '',
         'data-from': e.fromId, 'data-to': e.toId,
         'marker-end': 'url(#graph-arrow)',
       });

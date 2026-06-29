@@ -228,6 +228,23 @@ if [[ "$cross_edges" -eq 0 ]]; then
   esac
 fi
 
+# Landscape structure accounting (bigtop-deep-landscape-demo honesty contract).
+# Structural edges (typed `references` — code-level calls/references resolved
+# from a symbol-index export) are what make the landscape read as connected
+# code, not a repo list of shared dependencies. Until the scip-producer slice
+# runs on Bigtop, structural edges are expected to be absent: this is a visible,
+# NON-fatal warning (the honesty rule degrades gracefully). It becomes a hard
+# "not a repo list" gate once structural edges flow.
+if [[ -f "$BUNDLE/relationships.jsonl" ]]; then
+  total_rels=$(wc -l <"$BUNDLE/relationships.jsonl" | tr -d '[:space:]')
+  structural_rels=$(jq -r 'select((.type // "") == "references") | .id' "$BUNDLE/relationships.jsonl" 2>/dev/null | wc -l | tr -d '[:space:]')
+  if [[ "$structural_rels" -eq 0 && "$total_rels" -gt 0 ]]; then
+    warn "landscape is dependency-only: 0 structural (references) edges across $total_rels relationship(s); the Fleet map reads as shared-dependency clusters, not connected code (awaiting scip-producer)"
+  elif [[ "$structural_rels" -gt 0 ]]; then
+    warn "landscape has $structural_rels structural edge(s) across $total_rels relationship(s): connected-structure condition met"
+  fi
+fi
+
 # Symbol query smoke (bundle-query)
 if [[ -x "$ROOT/scripts/validate-atlas-schemas.sh" ]]; then
   "$ROOT/scripts/validate-atlas-schemas.sh" "$BUNDLE"
