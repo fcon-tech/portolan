@@ -79,6 +79,9 @@ const MIN_SAMPLE_COMPONENTS = 3;
  *   - "evidence:<id>" — a local-corpus evidence anchor (validated structurally;
  *                       runtime resolution against navAtlas evidence is the
  *                       generator's job)
+ *   - "receipt:<id>"  — a command receipt (spec 19): a machine-checkable anchor
+ *                       proving a command was executed. Resolves when the id
+ *                       matches an entry in si.command_receipts.
  *   - "risk:<id>" / "gap:<id>" / "concept:<id>" / "capability:<id>"
  *                       — intra-investigation refs (self-resolvable)
  *
@@ -118,6 +121,19 @@ function resolveSourceRef(si, sourceRef) {
     if (localIds.has(sourceRef)) return { resolves: true, sourceCard: { id: sourceRef, kind: 'local-corpus' } };
     return { resolves: false, reason: `evidence ref "${sourceRef}" not in any component's local_corpus boundary` };
   }
+
+  // Spec 19: command-receipt anchor. A receipt:<id> ref resolves when the id
+  // matches an entry in si.command_receipts. A command receipt is a
+  // machine-checkable anchor: { id, command, exit_code, output_excerpt,
+  // timestamp }. It proves a command was executed — the output excerpt is the
+  // evidence, not an agent's claim.
+  if (kind === 'receipt') {
+    const receipts = (si.command_receipts || []);
+    const receipt = receipts.find(r => r.id === id);
+    if (receipt) return { resolves: true, sourceCard: { id: sourceRef, kind: 'command-receipt', receipt } };
+    return { resolves: false, reason: `command receipt "${id}" not in si.command_receipts` };
+  }
+
   // Intra-investigation refs (risk/concept/capability/gap) self-resolve when the
   // referenced object exists in the component's data.
   if (kind === 'risk' || kind === 'concept' || kind === 'capability' || kind === 'gap') {
@@ -554,6 +570,112 @@ function* iterClaims(component) {
   for (const rel of (component.semantic_relations || [])) yield { id: rel.target_id, label: rel.type + ' ' + rel.target_id, sourceBoundary: rel.source_boundary || 'not_assessed', sourceRef: rel.source_ref || '' };
 }
 
+// ---------------------------------------------------------------------------
+// Evidence anchor enforcement (spec 19)
+// ---------------------------------------------------------------------------
+
+/**
+ * Enforce evidence anchors on a semantic investigation (spec 19).
+ *
+ * Every assessed claim (source_boundary != not_assessed) MUST carry a
+ * resolvable evidence anchor — a source card, local source anchor, or command
+ * receipt. An assessed claim WITHOUT a resolvable anchor is DOWNGRADED to
+ * not_assessed: it MUST NOT be presented as verified without backing.
+ *
+ * This function returns a NEW semantic-investigation object (shallow-cloned)
+ * with downgraded claims. The original is not mutated.
+ *
+ * @param {object} si the parsed semantic investigation
+ * @returns {{ si: object, downgraded: Array<{componentId:string,claimId:string,reason:string}> }}
+ */
+function enforceEvidenceAnchors(si) {
+  if (!si || typeof si !== 'object') return { si, downgraded: [] };
+  const downgraded = [];
+
+  // Deep clone is expensive; instead, shallow-clone the top level and the
+  // components array, and clone only the component objects we modify.
+  const out = { ...si };
+  out.components = (si.components || []).map(component => {
+    let modified = false;
+    const patched = { ...component };
+
+    // purpose
+    if (component.purpose && component.purpose.source_boundary && component.purpose.source_boundary !== 'not_assessed') {
+      const r = resolveSourceRef(si, component.purpose.source_ref || '');
+      if (!r.resolves) {
+        patched.purpose = { ...component.purpose, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+        downgraded.push({ componentId: component.id, claimId: 'purpose', reason: r.reason || 'missing source_ref' });
+        modified = true;
+      }
+    }
+
+    // capabilities
+    if (component.capabilities && component.capabilities.length) {
+      patched.capabilities = component.capabilities.map(cap => {
+        if (!cap.source_boundary || cap.source_boundary === 'not_assessed') return cap;
+        const r = resolveSourceRef(si, cap.source_ref || '');
+        if (r.resolves) return cap;
+        downgraded.push({ componentId: component.id, claimId: cap.id, reason: r.reason || 'missing source_ref' });
+        return { ...cap, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+      });
+      modified = true;
+    }
+
+    // internal_concepts
+    if (component.internal_concepts && component.internal_concepts.length) {
+      patched.internal_concepts = component.internal_concepts.map(con => {
+        if (!con.source_boundary || con.source_boundary === 'not_assessed') return con;
+        const r = resolveSourceRef(si, con.source_ref || '');
+        if (r.resolves) return con;
+        downgraded.push({ componentId: component.id, claimId: con.id, reason: r.reason || 'missing source_ref' });
+        return { ...con, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+      });
+      modified = true;
+    }
+
+    // risks
+    if (component.risks && component.risks.length) {
+      patched.risks = component.risks.map(risk => {
+        if (!risk.source_boundary || risk.source_boundary === 'not_assessed') return risk;
+        const r = resolveSourceRef(si, risk.source_ref || '');
+        if (r.resolves) return risk;
+        downgraded.push({ componentId: component.id, claimId: risk.id, reason: r.reason || 'missing source_ref' });
+        return { ...risk, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+      });
+      modified = true;
+    }
+
+    // integration_surfaces
+    if (component.integration_surfaces && component.integration_surfaces.length) {
+      patched.integration_surfaces = component.integration_surfaces.map(surf => {
+        if (!surf.source_boundary || surf.source_boundary === 'not_assessed') return surf;
+        const ref = surf.evidence_ref || surf.source_ref || '';
+        const r = resolveSourceRef(si, ref);
+        if (r.resolves) return surf;
+        downgraded.push({ componentId: component.id, claimId: surf.label || surf.kind, reason: r.reason || 'missing source_ref' });
+        return { ...surf, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+      });
+      modified = true;
+    }
+
+    // semantic_relations
+    if (component.semantic_relations && component.semantic_relations.length) {
+      patched.semantic_relations = component.semantic_relations.map(rel => {
+        if (!rel.source_boundary || rel.source_boundary === 'not_assessed') return rel;
+        const r = resolveSourceRef(si, rel.source_ref || '');
+        if (r.resolves) return rel;
+        downgraded.push({ componentId: component.id, claimId: rel.type + ' ' + rel.target_id, reason: r.reason || 'missing source_ref' });
+        return { ...rel, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
+      });
+      modified = true;
+    }
+
+    return modified ? patched : component;
+  });
+
+  return { si: out, downgraded };
+}
+
 module.exports = {
   SOURCE_BOUNDARIES,
   RELATION_TYPES,
@@ -569,4 +691,5 @@ module.exports = {
   overlapRelationsFor,
   ecosystemPlacementMap,
   validateShape,
+  enforceEvidenceAnchors,
 };
