@@ -34,13 +34,20 @@ func Detect(root string) Result {
 	result := Result{Issues: issues}
 	nodeIDs := map[string]struct{}{}
 	edgeIDs := map[string]struct{}{}
+	manifests := manifestFilenames()
 
 	for _, path := range files {
+		base := filepath.Base(path)
 		switch {
-		case filepath.Base(path) == "go.mod":
+		case base == "go.mod":
 			detectGoMod(path, &result, nodeIDs, edgeIDs)
 		case strings.HasSuffix(path, ".go"):
 			detectGoImports(root, path, &result, nodeIDs, edgeIDs)
+		default:
+			// Dispatch to multi-language manifest parsers via the registry.
+			if format, ok := manifests[base]; ok {
+				detectManifest(path, format, &result, nodeIDs, edgeIDs)
+			}
 		}
 	}
 
@@ -93,7 +100,11 @@ func relationshipFiles(root string) ([]string, []Issue) {
 		if entry.IsDir() {
 			return nil
 		}
-		if filepath.Base(path) == "go.mod" || strings.HasSuffix(path, ".go") {
+		base := filepath.Base(path)
+		isRelevant := base == "go.mod" ||
+			strings.HasSuffix(path, ".go") ||
+			isManifestFile(base)
+		if isRelevant {
 			files = append(files, path)
 		}
 		return nil
@@ -219,4 +230,25 @@ func hasPortolanPath(path string) bool {
 		}
 	}
 	return false
+}
+
+// isManifestFile checks if a filename is a recognized manifest in the
+// language registry.
+func isManifestFile(filename string) bool {
+	_, ok := manifestFilenames()[filename]
+	return ok
+}
+
+// detectManifest dispatches to the appropriate manifest parser based on format.
+func detectManifest(path string, format ManifestFormat, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+	switch format {
+	case FormatMaven:
+		detectMavenPom(path, result, nodeIDs, edgeIDs)
+	case FormatGradle:
+		detectGradle(path, result, nodeIDs, edgeIDs)
+	case FormatNpm:
+		detectNpmPackageJson(path, result, nodeIDs, edgeIDs)
+	default:
+		// Future formats (Python, Cargo, Swift, etc.) — not yet implemented.
+	}
 }
