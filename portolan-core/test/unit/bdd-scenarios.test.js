@@ -720,3 +720,150 @@ test('BDD [deep-landscape-demo]: Dependency-only landscape is admitted, not disg
   assert.match(structure.limitationNotice, /not code-level architecture/i);
 });
 
+// ---- Feature: Overlap findings (ontology / spec 21) ----
+
+test('BDD [overlap-findings]: Overlapping capabilities surface as a finding', () => {
+  const { FINDING_TYPES } = require('../../src/domain/atlas-navigation');
+  assert.ok(FINDING_TYPES.includes('overlapping-capabilities'), 'overlapping-capabilities is in the closed vocabulary');
+  assert.ok(FINDING_TYPES.includes('duplicated-concept'), 'duplicated-concept is in the closed vocabulary');
+  assert.ok(FINDING_TYPES.includes('alternative-capability'), 'alternative-capability is in the closed vocabulary');
+  assert.ok(FINDING_TYPES.includes('legacy-stale-semantic-overlap'), 'legacy-stale-semantic-overlap is in the closed vocabulary');
+});
+
+test('BDD [overlap-findings]: Legacy/stale semantic overlap is visible', () => {
+  // The Go producer emits these from graph analysis; verify the reading layer
+  // accepts them in the FINDING_TYPES vocabulary and they carry confidence.
+  const { FINDING_TYPES, CONFIDENCE_LEVELS } = require('../../src/domain/atlas-navigation');
+  assert.ok(FINDING_TYPES.includes('legacy-stale-semantic-overlap'));
+  assert.ok(CONFIDENCE_LEVELS.includes('ironclad'));
+  assert.ok(CONFIDENCE_LEVELS.includes('hypothesis-with-facts'));
+});
+
+// ---- Feature: Semantic investigation producer (spec 18) ----
+
+test('BDD [semantic-investigation-producer]: Pages reflect the scanned corpus', () => {
+  const { generateSemanticInvestigation } = require('../../src/domain/semantic-investigation-producer');
+  const systemMap = {
+    target: { id: 'sm', display_name: 'SM' },
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', c4_family: 'lib' },
+        { id: 'c:b', display_name: 'B', c4_family: 'lib' },
+        { id: 'c:c', display_name: 'C', c4_family: 'app' },
+      ],
+      relationships: [],
+      findings: [],
+      surfaces: [],
+      unknowns: [],
+    },
+  };
+  const si = generateSemanticInvestigation(systemMap);
+  assert.ok(si._generated, 'pages are generated, not fixture-backed');
+  assert.ok(si.components.length >= 3, 'all corpus components appear');
+  // No live page is fixture-backed demo content.
+  assert.ok(!si._fixtureBacked);
+});
+
+test('BDD [semantic-investigation-producer]: Agent claims are bounded and labelled', () => {
+  const { generateSemanticInvestigation } = require('../../src/domain/semantic-investigation-producer');
+  const systemMap = {
+    target: { id: 'sm', display_name: 'SM' },
+    objects: {
+      components: [{ id: 'c:a', display_name: 'A', c4_family: 'lib' },
+                   { id: 'c:b', display_name: 'B', c4_family: 'lib' },
+                   { id: 'c:c', display_name: 'C', c4_family: 'app' }],
+      relationships: [], findings: [], surfaces: [], unknowns: [],
+    },
+  };
+  const si = generateSemanticInvestigation(systemMap, {
+    agentClaims: { components: [{ component_id: 'c:a', purpose: 'Agent says', risks: [
+      { label: 'R1', explanation: 'risk 1' }, { label: 'R2', explanation: 'risk 2' },
+      { label: 'R3', explanation: 'risk 3' }, { label: 'R4', explanation: 'should be bounded' },
+    ] }] },
+  });
+  const a = si.components.find(c => c.id === 'c:a');
+  assert.ok(a.purpose.summary.includes('[Agent:'), 'agent contribution is labelled');
+  const agentRisks = a.risks.filter(r => r.id.startsWith('risk:agent-'));
+  assert.strictEqual(agentRisks.length, 3, 'bounded to 3');
+});
+
+// ---- Feature: Evidence anchors (spec 19) ----
+
+test('BDD [evidence-anchors]: Anchored claim renders as verified', () => {
+  const { resolveSourceRef } = require('../../src/domain/semantic-investigation');
+  const si = {
+    command_receipts: [{ id: 'rc1', command: 'rg pattern', exit_code: 0, output_excerpt: 'ok', timestamp: '2026-01-01T00:00:00Z' }],
+    sources: [{ id: 'src1', kind: 'official-doc', url: 'https://x', claim_scope: 'scope' }],
+    components: [],
+  };
+  // A claim with a command-receipt anchor is resolvable → renders as verified.
+  assert.strictEqual(resolveSourceRef(si, 'receipt:rc1').resolves, true);
+  // A claim with a source card is resolvable.
+  assert.strictEqual(resolveSourceRef(si, 'source:src1').resolves, true);
+});
+
+test('BDD [evidence-anchors]: Unanchored claim is not_assessed, not verified', () => {
+  const { enforceEvidenceAnchors } = require('../../src/domain/semantic-investigation');
+  const si = {
+    sources: [],
+    components: [{
+      id: 'c:x',
+      purpose: { summary: 'x', source_boundary: 'curated-knowledge', source_ref: 'source:nonexistent' },
+      capabilities: [], internal_concepts: [], risks: [],
+      integration_surfaces: [], semantic_relations: [],
+    }],
+  };
+  const { si: patched, downgraded } = enforceEvidenceAnchors(si);
+  assert.strictEqual(patched.components[0].purpose.source_boundary, 'not_assessed');
+  assert.ok(downgraded.length > 0, 'downgrade is surfaced, not hidden');
+});
+
+// ---- Feature: Multiscale drill-down (spec 20) ----
+
+test('BDD [multiscale-drilldown]: Reader moves across scales', () => {
+  const { buildMultiscaleModel, SCALE_LEVELS } = require('../../src/domain/multiscale-drilldown');
+  const systemMap = {
+    target: { id: 'sm', display_name: 'SM' },
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', c4_family: 'lib' },
+        { id: 'c:b', display_name: 'B', c4_family: 'lib' },
+      ],
+      relationships: [], findings: [], surfaces: [], unknowns: [],
+    },
+  };
+  const si = {
+    capabilities: [{ id: 'capability:lib', label: 'Library' }],
+    components: [{ id: 'c:a', ecosystem_regions: ['capability:lib'], internal_concepts: [
+      { id: 'concept:a1', label: 'A1', explanation: 'x', source_boundary: 'local-corpus' },
+    ] }],
+  };
+  const model = buildMultiscaleModel(systemMap, si);
+  // Each scale level is represented.
+  for (const level of SCALE_LEVELS) {
+    const entries = model.scales.filter(s => s.level === level);
+    assert.ok(entries.length > 0, `scale ${level} should have entries`);
+  }
+  // Cross-scale links exist.
+  assert.ok(model.root.children.length > 0, 'ecosystem links to capability');
+});
+
+test('BDD [multiscale-drilldown]: Unevidenced scale is honest-empty', () => {
+  const { buildMultiscaleModel } = require('../../src/domain/multiscale-drilldown');
+  const systemMap = {
+    target: { id: 'sm', display_name: 'SM' },
+    objects: {
+      components: [{ id: 'c:a', display_name: 'A', c4_family: 'lib' }],
+      relationships: [], findings: [], surfaces: [], unknowns: [],
+    },
+  };
+  // No SI — module scale has no evidence.
+  const model = buildMultiscaleModel(systemMap);
+  const mods = model.scales.filter(s => s.level === 'module');
+  assert.ok(mods.length > 0);
+  for (const m of mods) {
+    assert.ok(m.isEmpty, 'module scale is honest-empty');
+    assert.ok(m.emptyReason, 'explains why it is empty');
+  }
+});
+

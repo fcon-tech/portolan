@@ -33,6 +33,10 @@ const FEATURE_TO_OPENSPEC = {
   'atlas-drilldown-semantics': 'specs/drilldown-semantics',
   'symbol-reference-edges': 'specs/ontology',
   'deep-landscape-demo': 'specs/reading-experience',
+  'overlap-findings': 'specs/ontology',
+  'semantic-investigation-producer': 'specs/semantic-investigation',
+  'evidence-anchors': 'specs/semantic-investigation',
+  'multiscale-drilldown': 'specs/navigation',
 };
 
 const bindings = [
@@ -90,6 +94,22 @@ const bindings = [
   // Feature: Deep landscape demo (reading-experience)
   { feature: 'deep-landscape-demo', scenario: 'Landscape shows connected groupings and cross-component edges', binding: { unit: EXECUTABLE, test: 'BDD [deep-landscape-demo]: Landscape shows connected groupings and cross-component edges' } },
   { feature: 'deep-landscape-demo', scenario: 'Dependency-only landscape is admitted, not disguised', binding: { unit: EXECUTABLE, test: 'BDD [deep-landscape-demo]: Dependency-only landscape is admitted, not disguised' } },
+
+  // Feature: Overlap findings (ontology / spec 21)
+  { feature: 'overlap-findings', scenario: 'Overlapping capabilities surface as a finding', binding: { unit: EXECUTABLE, test: 'BDD [overlap-findings]: Overlapping capabilities surface as a finding' } },
+  { feature: 'overlap-findings', scenario: 'Legacy/stale semantic overlap is visible', binding: { unit: EXECUTABLE, test: 'BDD [overlap-findings]: Legacy/stale semantic overlap is visible' } },
+
+  // Feature: Semantic investigation producer (spec 18)
+  { feature: 'semantic-investigation-producer', scenario: 'Pages reflect the scanned corpus', binding: { unit: EXECUTABLE, test: 'BDD [semantic-investigation-producer]: Pages reflect the scanned corpus' } },
+  { feature: 'semantic-investigation-producer', scenario: 'Agent claims are bounded and labelled', binding: { unit: EXECUTABLE, test: 'BDD [semantic-investigation-producer]: Agent claims are bounded and labelled' } },
+
+  // Feature: Evidence anchors (spec 19)
+  { feature: 'evidence-anchors', scenario: 'Anchored claim renders as verified', binding: { unit: EXECUTABLE, test: 'BDD [evidence-anchors]: Anchored claim renders as verified' } },
+  { feature: 'evidence-anchors', scenario: 'Unanchored claim is not_assessed, not verified', binding: { unit: EXECUTABLE, test: 'BDD [evidence-anchors]: Unanchored claim is not_assessed, not verified' } },
+
+  // Feature: Multiscale drill-down (spec 20)
+  { feature: 'multiscale-drilldown', scenario: 'Reader moves across scales', binding: { unit: EXECUTABLE, test: 'BDD [multiscale-drilldown]: Reader moves across scales' } },
+  { feature: 'multiscale-drilldown', scenario: 'Unevidenced scale is honest-empty', binding: { unit: EXECUTABLE, test: 'BDD [multiscale-drilldown]: Unevidenced scale is honest-empty' } },
 ];
 
 // --- self-verification tests (run by node --test) ---
