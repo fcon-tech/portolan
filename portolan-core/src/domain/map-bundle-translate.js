@@ -58,6 +58,8 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
 
   const repoNodes = nodes.filter((n) => n && n.kind === 'repository');
   const repoIds = new Set(repoNodes.map((n) => n.id));
+  const externalNodes = nodes.filter((n) => n && n.kind === 'external');
+  const externalIds = new Set(externalNodes.map((n) => n.id));
 
   // ---- atlasSurfaces.targets ----
   const targets = repoNodes.map((n) => ({
@@ -73,6 +75,18 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
         && (e.kind === 'imports' || e.kind === 'depends-on' || e.kind === 'depends_on'))
       .map((e) => e.to))],
   }));
+  // External nodes (out-of-perimeter references) are surface-only targets.
+  for (const n of externalNodes) {
+    targets.push({
+      id: n.id,
+      label: n.label || n.id,
+      kind: 'external',
+      lifecycle: 'external',
+      role: 'external-boundary',
+      evidence_state: mapEvidenceState(n.evidence && n.evidence.state),
+      path: '',
+    });
+  }
 
   // ---- repos ----
   const repos = repoNodes.map((n) => ({
@@ -81,10 +95,12 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
     name: n.label || n.id,
   }));
 
-  // ---- relationships (repo→repo edges) ----
+  // ---- relationships (repo→repo and repo→external edges) ----
   // Use a running index so parallel edges (same from/to/kind) are not collapsed.
+  // Include repo→external edges so out-of-perimeter references reach the atlas.
+  const relationshipTargetIds = new Set([...repoIds, ...externalIds]);
   const relationships = edges
-    .filter((e) => e && repoIds.has(e.from) && repoIds.has(e.to))
+    .filter((e) => e && repoIds.has(e.from) && relationshipTargetIds.has(e.to) && e.to !== e.from)
     .map((e, i) => ({
       id: stableId('edge', String(i), e.from, e.to, e.kind || 'observes'),
       from_repo: e.from,
@@ -139,7 +155,7 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
     components: [],
     surface_directory: [],
     edges: edges
-      .filter((e) => e && repoIds.has(e.from) && repoIds.has(e.to))
+      .filter((e) => e && repoIds.has(e.from) && relationshipTargetIds.has(e.to) && e.to !== e.from)
       .map((e) => ({ from: e.from, to: e.to, kind: e.kind || 'observes' })),
     gaps,
   };
