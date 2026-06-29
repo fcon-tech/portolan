@@ -96,7 +96,7 @@ func TestDetectOverlapFindings_LegacyStaleOverlap(t *testing.T) {
 	g.Nodes = []graph.Node{
 		{ID: "repo-a", Kind: "repository", Label: "Repo A", Evidence: graph.Evidence{State: graph.SourceVisible}},
 		{ID: "repo-b", Kind: "repository", Label: "Repo B", Evidence: graph.Evidence{State: graph.SourceVisible}},
-		{ID: "stale-dep", Kind: "external", Label: "Stale Dep", Evidence: graph.Evidence{State: graph.Unknown}},
+		{ID: "stale-dep", Kind: "external", Label: "Deprecated Stale Dep", Evidence: graph.Evidence{State: graph.Unknown}},
 	}
 	g.Edges = []graph.Edge{
 		{From: "repo-a", To: "stale-dep", Kind: "depends-on"},
@@ -113,10 +113,34 @@ func TestDetectOverlapFindings_LegacyStaleOverlap(t *testing.T) {
 	}
 
 	if staleFinding == nil {
-		t.Fatal("expected a legacy-stale-semantic-overlap finding")
+		t.Fatal("expected a legacy-stale-semantic-overlap finding for a deprecated target")
 	}
 	if staleFinding.Confidence <= 0 {
 		t.Error("expected confidence > 0 for legacy-stale overlap")
+	}
+	if len(staleFinding.SubjectIDs) < 2 {
+		t.Errorf("expected >= 2 subject_ids, got %d", len(staleFinding.SubjectIDs))
+	}
+}
+
+func TestDetectOverlapFindings_NoLegacyStaleForNormalExternalDeps(t *testing.T) {
+	g := graph.New()
+	g.Nodes = []graph.Node{
+		{ID: "repo-a", Kind: "repository", Label: "Repo A", Evidence: graph.Evidence{State: graph.SourceVisible}},
+		{ID: "repo-b", Kind: "repository", Label: "Repo B", Evidence: graph.Evidence{State: graph.SourceVisible}},
+		{ID: "ext-dep", Kind: "external", Label: "Normal Lib", Evidence: graph.Evidence{State: graph.Unknown}},
+	}
+	g.Edges = []graph.Edge{
+		{From: "repo-a", To: "ext-dep", Kind: "depends-on"},
+		{From: "repo-b", To: "ext-dep", Kind: "references"},
+	}
+
+	findings := detectOverlapFindings(g)
+
+	for _, f := range findings {
+		if f.Kind == "legacy-stale-semantic-overlap" {
+			t.Fatal("should NOT emit legacy-stale for a normal external dep without retirement signal")
+		}
 	}
 }
 

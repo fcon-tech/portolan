@@ -225,19 +225,18 @@ function buildComponentPage(component, ctx) {
   });
 
   // Internal concepts: we don't have symbol-level data yet, so mark honestly.
-  const hasSymbolData = false; // Future: check for symbol-index data
-  const internalConcepts = hasSymbolData ? [] : [];
+  const internalConcepts = [];
 
   // Risks: derive from findings.
   const risks = compFindings
     .filter(f => f.kind !== 'inventory' && f.severity !== 'info')
     .slice(0, 5)
     .map(f => ({
-      id: `risk:${sanitize(component.id)}-${sanitize(f.kind || f.id)}`,
+      id: `risk:${sanitize(component.id)}-${sanitize(f.id || f.kind)}`,
       label: f.summary || f.kind || 'finding',
       explanation: f.summary || '',
       source_boundary: 'local-corpus',
-      source_ref: '',
+      source_ref: `evidence:corpus-${sanitize(component.id)}`,
     }));
 
   // If no corpus-derived risks, add a not_assessed placeholder.
@@ -375,11 +374,12 @@ function buildSemanticRelations(component, ctx) {
 
 /**
  * Derive overlap dimensions from a finding + component context.
- * Must return >= 3 dimensions to satisfy the doc-17 contract.
+ * Returns real semantic axes (not finding-kind labels) so the overlap pair
+ * carries meaningful content.
  */
 function deriveOverlapDimensions(finding, compA, compB, ctx) {
-  const dims = [finding.kind];
-  // Add family-level overlap if both components share a family.
+  const dims = [];
+  // Family-level overlap axis.
   const familyA = compA.c4_family || compA.family || compA.type || 'unknown';
   const familyB = compB.c4_family || compB.family || compB.type || 'unknown';
   if (familyA === familyB) {
@@ -387,8 +387,18 @@ function deriveOverlapDimensions(finding, compA, compB, ctx) {
   } else {
     dims.push(`cross-family:${familyA}-${familyB}`);
   }
-  // Add shared-dependency dimension.
+  // Shared-dependency axis.
   dims.push('shared-dependencies');
+  // Capability surface axis (from the finding kind, mapped to a dimension).
+  if (finding.kind === 'alternative-capability') {
+    dims.push('alternative-implementation');
+  } else if (finding.kind === 'duplicated-concept') {
+    dims.push('concept-duplication');
+  } else if (finding.kind === 'legacy-stale-semantic-overlap') {
+    dims.push('legacy-reference');
+  } else {
+    dims.push('capability-overlap');
+  }
   return dims;
 }
 

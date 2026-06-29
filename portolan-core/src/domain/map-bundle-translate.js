@@ -174,6 +174,7 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
         severity: f.severity || 'info',
         summary: f.summary || '',
         evidence_state: mapEvidenceState(f.evidence_state),
+        component_ids: f.subject_ids || [],
       });
     }
   }

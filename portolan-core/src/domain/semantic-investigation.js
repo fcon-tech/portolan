@@ -611,63 +611,73 @@ function enforceEvidenceAnchors(si) {
 
     // capabilities
     if (component.capabilities && component.capabilities.length) {
+      let capsChanged = false;
       patched.capabilities = component.capabilities.map(cap => {
         if (!cap.source_boundary || cap.source_boundary === 'not_assessed') return cap;
         const r = resolveSourceRef(si, cap.source_ref || '');
         if (r.resolves) return cap;
+        capsChanged = true;
         downgraded.push({ componentId: component.id, claimId: cap.id, reason: r.reason || 'missing source_ref' });
         return { ...cap, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
       });
-      modified = true;
+      if (capsChanged) modified = true;
     }
 
     // internal_concepts
     if (component.internal_concepts && component.internal_concepts.length) {
+      let conceptsChanged = false;
       patched.internal_concepts = component.internal_concepts.map(con => {
         if (!con.source_boundary || con.source_boundary === 'not_assessed') return con;
         const r = resolveSourceRef(si, con.source_ref || '');
         if (r.resolves) return con;
+        conceptsChanged = true;
         downgraded.push({ componentId: component.id, claimId: con.id, reason: r.reason || 'missing source_ref' });
         return { ...con, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
       });
-      modified = true;
+      if (conceptsChanged) modified = true;
     }
 
     // risks
     if (component.risks && component.risks.length) {
+      let risksChanged = false;
       patched.risks = component.risks.map(risk => {
         if (!risk.source_boundary || risk.source_boundary === 'not_assessed') return risk;
         const r = resolveSourceRef(si, risk.source_ref || '');
         if (r.resolves) return risk;
+        risksChanged = true;
         downgraded.push({ componentId: component.id, claimId: risk.id, reason: r.reason || 'missing source_ref' });
         return { ...risk, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
       });
-      modified = true;
+      if (risksChanged) modified = true;
     }
 
     // integration_surfaces
     if (component.integration_surfaces && component.integration_surfaces.length) {
+      let surfsChanged = false;
       patched.integration_surfaces = component.integration_surfaces.map(surf => {
         if (!surf.source_boundary || surf.source_boundary === 'not_assessed') return surf;
         const ref = surf.evidence_ref || surf.source_ref || '';
         const r = resolveSourceRef(si, ref);
         if (r.resolves) return surf;
+        surfsChanged = true;
         downgraded.push({ componentId: component.id, claimId: surf.label || surf.kind, reason: r.reason || 'missing source_ref' });
         return { ...surf, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
       });
-      modified = true;
+      if (surfsChanged) modified = true;
     }
 
     // semantic_relations
     if (component.semantic_relations && component.semantic_relations.length) {
+      let relsChanged = false;
       patched.semantic_relations = component.semantic_relations.map(rel => {
         if (!rel.source_boundary || rel.source_boundary === 'not_assessed') return rel;
         const r = resolveSourceRef(si, rel.source_ref || '');
         if (r.resolves) return rel;
+        relsChanged = true;
         downgraded.push({ componentId: component.id, claimId: rel.type + ' ' + rel.target_id, reason: r.reason || 'missing source_ref' });
         return { ...rel, source_boundary: 'not_assessed', _downgraded: `unresolved source_ref: ${r.reason || 'missing'}` };
       });
-      modified = true;
+      if (relsChanged) modified = true;
     }
 
     return modified ? patched : component;
