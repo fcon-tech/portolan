@@ -289,3 +289,84 @@ func TestRunMapSymbolReferencesReachGraph(t *testing.T) {
 		t.Fatalf("findings.jsonl does not contain symbol-references-resolved finding")
 	}
 }
+
+func TestRunMapSymbolReferencesOutOfPerimeter(t *testing.T) {
+	root, repos := setupSymbolRefLandscape(t)
+	writeSymbolIndexExport(t, exportPath(root), map[string]interface{}{
+		"producer": "test-scip",
+		"documents": []map[string]interface{}{
+			{
+				"path":     "repo-a/src/app.js",
+				"language": "javascript",
+				"symbols": []map[string]interface{}{
+					{"id": "sym extLib()", "name": "extLib", "kind": "function", "role": "reference", "range": "1:1-1:10"},
+				},
+			},
+			{
+				"path":     "external-pkg/src/index.js",
+				"language": "javascript",
+				"symbols": []map[string]interface{}{
+					{"id": "sym extLib()", "name": "extLib", "kind": "function", "role": "definition", "range": "1:1-1:3"},
+				},
+			},
+		},
+	})
+
+	out := filepath.Join(root, ".portolan", "run")
+	result, err := Run(Options{RootPath: root, OutputPath: out, Force: true})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	data, err := os.ReadFile(result.Artifacts.Graph)
+	if err != nil {
+		t.Fatalf("read graph.json: %v", err)
+	}
+	var g graph.Graph
+	if err := json.Unmarshal(data, &g); err != nil {
+		t.Fatalf("unmarshal graph.json: %v", err)
+	}
+
+	foundExternal := false
+	for _, node := range g.Nodes {
+		if node.Kind == "external" && strings.HasPrefix(node.ID, "external:symbol-ref:") {
+			foundExternal = true
+			if node.Evidence.State != graph.MetadataVisible {
+				t.Fatalf("external node evidence = %s, want metadata-visible", node.Evidence.State)
+			}
+		}
+	}
+	if !foundExternal {
+		t.Fatalf("graph.json has no external node for out-of-perimeter reference; nodes = %d", len(g.Nodes))
+	}
+
+	foundExtEdge := false
+	for _, edge := range g.Edges {
+		if edge.Kind == "references" && edge.From == repos[0].ID && strings.HasPrefix(edge.To, "external:symbol-ref:") {
+			foundExtEdge = true
+		}
+	}
+	if !foundExtEdge {
+		t.Fatalf("graph.json has no references edge from %s to external node", repos[0].ID)
+	}
+}
+
+func TestImportSymbolReferencesMalformedExport(t *testing.T) {
+	root, repos := setupSymbolRefLandscape(t)
+	writeSymbolIndexExport(t, exportPath(root), `{not valid json`)
+
+	result := importSymbolReferences(root, repos)
+
+	if len(result.Edges) != 0 {
+		t.Fatalf("edges = %d, want 0 for malformed export", len(result.Edges))
+	}
+	foundCannotVerify := false
+	for _, rec := range result.Records {
+		if rec.Status == "cannot_verify" && rec.EvidenceState == string(graph.CannotVerify) {
+			foundCannotVerify = true
+		}
+	}
+	if !foundCannotVerify {
+		t.Fatalf("expected a cannot_verify coverage record for malformed export; got %#v", result.Records)
+	}
+}

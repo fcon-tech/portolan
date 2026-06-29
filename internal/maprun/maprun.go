@@ -345,6 +345,9 @@ func Run(opts Options) (Result, error) {
 	g.Nodes = append(g.Nodes, symbolRefs.Nodes...)
 	g.Edges = append(g.Edges, symbolRefs.Edges...)
 	findings = append(findings, symbolRefs.Findings...)
+	if symbolRefs.hasExports() {
+		findings = suppressFinding(findings, "finding-relationships-symbol-evidence-not-assessed")
+	}
 	skippedSurfaces := []string{
 		"relationship-non-go-source",
 		"relationship-runtime-inference",
@@ -1209,6 +1212,16 @@ func dedupeFindings(findings []Finding) []Finding {
 		deduped = append(deduped, finding)
 	}
 	return deduped
+}
+
+func suppressFinding(findings []Finding, id string) []Finding {
+	filtered := findings[:0]
+	for _, f := range findings {
+		if f.ID != id {
+			filtered = append(filtered, f)
+		}
+	}
+	return filtered
 }
 
 func graphForTarget(target selection.Target) (graph.Graph, []string) {

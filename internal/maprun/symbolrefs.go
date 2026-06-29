@@ -2,8 +2,10 @@ package maprun
 
 import (
 	"fmt"
+	"hash/fnv"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/fcon-tech/portolan/internal/coverage"
@@ -14,6 +16,11 @@ import (
 
 const symbolIndexDir = ".portolan/symbol-index"
 
+// maxSymbolIndexExportBytes caps the size of a single symbol-index export read
+// in-process during root-path map collection. Mirrors the selection-path
+// maxSelectedToolOutputBytes bound so a multi-GB export cannot OOM the collector.
+const maxSymbolIndexExportBytes int64 = 64 * 1024 * 1024
+
 type symbolReferenceResult struct {
 	Nodes    []graph.Node
 	Edges    []graph.Edge
@@ -21,19 +28,27 @@ type symbolReferenceResult struct {
 	Records  []coverage.Record
 }
 
+// hasExports reports whether at least one symbol-index export was discovered
+// and successfully parsed. Used by Run() to suppress the stale
+// "symbol evidence not assessed" finding when exports ARE present.
+func (r symbolReferenceResult) hasExports() bool {
+	return len(r.Edges) > 0 || len(r.Records) > 0
+}
+
 // importSymbolReferences discovers operator-supplied symbol-index JSON exports
 // under <root>/.portolan/symbol-index/, imports each via the importer, and lifts
 // the resolved reference edges to repo-level graph edges so they reach the
 // system-map as typed `references` relationships.
 //
-// Granularity reconciliation: the importer emits document→symbol edges. This
-// function lifts them to repo→repo edges by mapping document paths back to
-// discovered repos (longest-prefix match, with a basename fallback for exports
-// whose paths are repo-relative). Three outcomes per reference:
+// Document paths in exports may be root-relative (e.g. "repos/repo-a/src/x.js")
+// or repo-basename-relative (e.g. "repo-a/src/x.js"). Absolute paths are
+// normalized against root before matching. Matching uses longest-prefix on the
+// root-relative path, with a basename fallback.
 //
-//   - Cross-repo resolved → repo→repo `references` edge (metadata-visible).
-//   - Out-of-perimeter resolved → external node + `references` edge.
-//   - Unresolved → coverage `unknown` record; never a guessed edge.
+// Three outcomes per reference:
+//   - Cross-repo resolved -> repo->repo `references` edge (metadata-visible).
+//   - Out-of-perimeter resolved -> external node + `references` edge.
+//   - Unresolved -> coverage `unknown` record; never a guessed edge.
 //
 // Intra-repo references are not lifted: they are within a single landscape unit
 // and do not produce a cross-unit relationship.
@@ -46,17 +61,52 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 	}
 
 	repoIndex := buildRepoIndex(root, repos)
-
 	seenEdges := map[string]bool{}
+	seenRecords := map[string]bool{}
 	externalNodes := map[string]graph.Node{}
 
 	for _, exportPath := range exports {
+		info, err := os.Stat(exportPath)
+		if err != nil || info.Mode()&os.ModeSymlink != 0 {
+			result.Records = append(result.Records, coverage.Record{
+				ID:            "symbol-ref-export-" + stableID(exportPath),
+				Kind:          "symbol-reference",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        exportPath,
+				Reason:        "symbol-index export is a symlink or unreadable; skipped",
+			})
+			continue
+		}
+		if info.Size() > maxSymbolIndexExportBytes {
+			result.Records = append(result.Records, coverage.Record{
+				ID:            "symbol-ref-export-oversized-" + stableID(exportPath),
+				Kind:          "symbol-reference",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        exportPath,
+				Reason:        fmt.Sprintf("symbol-index export is %d bytes (limit %d); skipped", info.Size(), maxSymbolIndexExportBytes),
+			})
+			continue
+		}
+
 		impGraph, _ := importer.ParseSymbolIndex(exportPath)
 
-		// Build symbol → defining-document map from owns edges.
-		// An `owns` edge from a document node to a symbol node means that
-		// document contains the symbol with a non-reference role (typically a
-		// definition). The source→document owns edges are excluded.
+		// Detect cannot_verify source nodes emitted by ParseSymbolIndex on
+		// read/parse/empty failure and surface them as coverage records.
+		if isImporterCannotVerify(impGraph) {
+			result.Records = append(result.Records, coverage.Record{
+				ID:            "symbol-ref-export-malformed-" + stableID(exportPath),
+				Kind:          "symbol-reference",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        exportPath,
+				Reason:        "symbol-index export could not be parsed or contained no documents",
+			})
+			continue
+		}
+
+		// Build symbol -> defining-document map from owns edges.
 		defDocBySymbol := map[string]string{}
 		for _, edge := range impGraph.Edges {
 			if edge.Kind != "owns" {
@@ -106,7 +156,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 						},
 					})
 				} else {
-					extID := "external:symbol-ref:" + stableID(defDoc)
+					extID := "external:symbol-ref:" + hashHex(defDoc)
 					if _, ok := externalNodes[extID]; !ok {
 						externalNodes[extID] = graph.Node{
 							ID:    extID,
@@ -142,19 +192,23 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 					continue
 				}
 				fromRepo := repoIndex.repoForDocument(refDoc)
-				repoForRecord := fromRepo
-				if repoForRecord == "" {
-					repoForRecord = "(unknown-repo)"
+				recID := "symbol-ref-unresolved-" + stableID(refDoc+":"+edge.To)
+				if seenRecords[recID] {
+					continue
+				}
+				seenRecords[recID] = true
+				reason := "symbol reference has no matching definition in the export; recorded as unknown, not guessed"
+				if fromRepo != "" {
+					reason = fromRepo + ": " + reason
 				}
 				result.Records = append(result.Records, coverage.Record{
-					ID:            "symbol-ref-unresolved-" + stableID(refDoc+":"+edge.To),
+					ID:            recID,
 					Kind:          "symbol-reference",
 					Status:        "unknown",
 					EvidenceState: string(graph.Unknown),
 					Source:        exportPath,
-					Reason:        "symbol reference has no matching definition in the export; recorded as unknown, not guessed",
+					Reason:        reason,
 				})
-				_ = repoForRecord
 			}
 		}
 	}
@@ -175,7 +229,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 		result.Findings = append(result.Findings, Finding{
 			ID:             "finding-symbol-references-unresolved",
 			Kind:           "relationships",
-			Summary:        fmt.Sprintf("%d symbol reference(s) could not be resolved in the local export; recorded as unknown.", len(result.Records)),
+			Summary:        fmt.Sprintf("%d symbol reference(s) could not be resolved or verified in the local export(s); recorded as unknown or cannot_verify.", len(result.Records)),
 			Severity:       "info",
 			EvidenceState:  string(graph.Unknown),
 			EvidenceSource: strings.Join(exports, "; "),
@@ -185,6 +239,15 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 	}
 
 	return result
+}
+
+func isImporterCannotVerify(g graph.Graph) bool {
+	for _, node := range g.Nodes {
+		if node.ID == "symbol-index:source" && node.Evidence.State == graph.CannotVerify {
+			return true
+		}
+	}
+	return false
 }
 
 func discoverSymbolIndexExports(root string) []string {
@@ -204,10 +267,12 @@ func discoverSymbolIndexExports(root string) []string {
 		}
 		paths = append(paths, filepath.Join(dir, name))
 	}
+	sort.Strings(paths)
 	return paths
 }
 
 type repoLookup struct {
+	root    string
 	entries []repoEntry
 }
 
@@ -230,11 +295,17 @@ func buildRepoIndex(root string, repos []selection.Target) repoLookup {
 			basename: filepath.Base(repo.Path),
 		})
 	}
-	return repoLookup{entries: entries}
+	return repoLookup{root: root, entries: entries}
 }
 
 func (rl repoLookup) repoForDocument(docPath string) string {
 	docPath = filepath.ToSlash(docPath)
+	// Normalize absolute paths against root.
+	if filepath.IsAbs(docPath) {
+		if rel, err := filepath.Rel(rl.root, docPath); err == nil {
+			docPath = filepath.ToSlash(rel)
+		}
+	}
 	bestMatch := ""
 	bestLen := 0
 	for _, e := range rl.entries {
@@ -265,4 +336,10 @@ func stripPrefix(s, prefix string) string {
 		return s[len(prefix):]
 	}
 	return ""
+}
+
+func hashHex(s string) string {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(s))
+	return fmt.Sprintf("%016x", h.Sum64())
 }
