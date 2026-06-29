@@ -143,13 +143,30 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
     gaps,
   };
 
+  // ---- hotspots (from Go findings.jsonl → scan-bundle hotspot shape) ----
+  // composeSystemMap reads hotspots and maps them to system-map.objects.findings.
+  const hotspots = [];
+  if (Array.isArray(findings)) {
+    for (const f of findings) {
+      if (!f || !f.id) continue;
+      hotspots.push({
+        id: f.id,
+        kind: f.kind || 'finding',
+        repo_id: '',
+        severity: f.severity || 'info',
+        summary: f.summary || '',
+        evidence_state: mapEvidenceState(f.evidence_state),
+      });
+    }
+  }
+
   return {
     atlasSurfaces,
     atlasFacts,
     repoProfiles: { schema_version: '0.1.0', repos: [] },
     manifest: null,
     relationships,
-    hotspots: [],
+    hotspots,
     gaps,
     repos,
   };

@@ -86,6 +86,20 @@ test('translateMapBundle: not_assessed evidence state preserved', () => {
   assert.equal(artifacts.gaps[0].evidence_state, 'not_assessed');
 });
 
+test('translateMapBundle: findings mapped to hotspots', () => {
+  const artifacts = translateMapBundle({
+    graph: { nodes: [], edges: [] },
+    findings: [
+      { id: 'f1', kind: 'duplication', severity: 'high', summary: 'dup found', evidence_state: 'source-visible' },
+      { id: 'f2', kind: 'relationships', severity: 'medium', summary: 'dep edge', evidence_state: 'cannot_verify' },
+    ],
+  });
+  assert.equal(artifacts.hotspots.length, 2);
+  assert.equal(artifacts.hotspots[0].id, 'f1');
+  assert.equal(artifacts.hotspots[0].severity, 'high');
+  assert.equal(artifacts.hotspots[1].evidence_state, 'cannot_verify');
+});
+
 test('translateMapBundle: handles empty/missing graph gracefully', () => {
   const artifacts = translateMapBundle({ graph: null, summary: null, findings: null, coverage: null });
   assert.equal(artifacts.atlasSurfaces.targets.length, 0);
