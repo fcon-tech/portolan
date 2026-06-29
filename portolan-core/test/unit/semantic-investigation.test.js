@@ -16,7 +16,8 @@ const assert = require('node:assert');
 const {
   resolveSourceRef, hasLocalMeaning, buildSemanticViewModel,
   investigationForComponent, overlapRelationsFor, ecosystemPlacementMap,
-  validateShape, MIN_INTERNAL_CONCEPTS, MIN_RISKS, MIN_OVERLAP_DIMENSIONS,
+  validateShape, enforceEvidenceAnchors,
+  MIN_INTERNAL_CONCEPTS, MIN_RISKS, MIN_OVERLAP_DIMENSIONS,
 } = require('../../src/domain/semantic-investigation');
 
 // ---------------------------------------------------------------------------
@@ -344,4 +345,108 @@ test('the committed Bigtop fixture validates (load + validateShape)', () => {
   si.sources = JSON.parse(fs.readFileSync(path.join(dir, 'sources.json'), 'utf8')).sources;
   const violations = validateShape(si);
   assert.deepStrictEqual(violations, [], `expected no violations, got: ${JSON.stringify(violations)}`);
+});
+
+// ===========================================================================
+// Spec 19: command-receipt anchor + evidence anchor enforcement
+// ===========================================================================
+
+test('resolveSourceRef resolves a command-receipt anchor (spec 19)', () => {
+  const si = {
+    command_receipts: [
+      { id: 'rc1', command: 'rg --json "pattern"', exit_code: 0, output_excerpt: '3 matches', timestamp: '2026-06-29T10:00:00Z' },
+    ],
+    sources: [],
+  };
+  const r = resolveSourceRef(si, 'receipt:rc1');
+  assert.strictEqual(r.resolves, true);
+  assert.strictEqual(r.sourceCard.kind, 'command-receipt');
+  assert.strictEqual(r.sourceCard.receipt.command, 'rg --json "pattern"');
+});
+
+test('resolveSourceRef rejects an unknown command-receipt id (spec 19)', () => {
+  const si = { command_receipts: [], sources: [] };
+  const r = resolveSourceRef(si, 'receipt:missing');
+  assert.strictEqual(r.resolves, false);
+  assert.match(r.reason, /not in si.command_receipts/);
+});
+
+test('enforceEvidenceAnchors downgrades unanchored claims to not_assessed (spec 19)', () => {
+  const si = {
+    sources: [{ id: 'good', kind: 'official-doc', url: 'https://x', claim_scope: 'scope' }],
+    command_receipts: [{ id: 'rc1', command: 'cmd', exit_code: 0, output_excerpt: 'ok', timestamp: '2026-01-01T00:00:00Z' }],
+    components: [{
+      id: 'component:x',
+      purpose: { summary: 'x', source_boundary: 'curated-knowledge', source_ref: 'source:good' },
+      capabilities: [
+        { id: 'cap:ok', label: 'OK', source_boundary: 'curated-knowledge', source_ref: 'source:good' },
+        { id: 'cap:bad', label: 'Bad', source_boundary: 'curated-knowledge', source_ref: 'source:nonexistent' },
+      ],
+      internal_concepts: [
+        { id: 'concept:1', label: 'C1', explanation: 'explanation', source_boundary: 'local-corpus', source_ref: 'receipt:rc1' },
+        { id: 'concept:2', label: 'C2', explanation: 'explanation', source_boundary: 'local-corpus', source_ref: 'evidence:nonexistent' },
+      ],
+      risks: [],
+      integration_surfaces: [],
+      semantic_relations: [],
+      evidence_boundary: { local_corpus: [], curated_knowledge: [], agent_hypotheses: [], not_assessed: [] },
+    }],
+  };
+
+  const { si: patched, downgraded } = enforceEvidenceAnchors(si);
+
+  // The anchored claims keep their boundary.
+  assert.strictEqual(patched.components[0].purpose.source_boundary, 'curated-knowledge');
+  assert.strictEqual(patched.components[0].capabilities[0].source_boundary, 'curated-knowledge');
+  assert.strictEqual(patched.components[0].internal_concepts[0].source_boundary, 'local-corpus');
+
+  // The unanchored claims are downgraded.
+  assert.strictEqual(patched.components[0].capabilities[1].source_boundary, 'not_assessed');
+  assert.strictEqual(patched.components[0].internal_concepts[1].source_boundary, 'not_assessed');
+
+  // Downgrade ledger records what was downgraded and why.
+  assert.strictEqual(downgraded.length, 2);
+  assert.ok(downgraded.some(d => d.claimId === 'cap:bad'));
+  assert.ok(downgraded.some(d => d.claimId === 'concept:2'));
+});
+
+test('enforceEvidenceAnchors does not mutate the original (spec 19)', () => {
+  const si = {
+    sources: [],
+    components: [{
+      id: 'component:y',
+      purpose: { summary: 'y', source_boundary: 'curated-knowledge', source_ref: 'source:missing' },
+      capabilities: [],
+      internal_concepts: [],
+      risks: [],
+      integration_surfaces: [],
+      semantic_relations: [],
+    }],
+  };
+  const original = JSON.parse(JSON.stringify(si));
+  enforceEvidenceAnchors(si);
+  assert.deepStrictEqual(si, original, 'original must not be mutated');
+});
+
+test('enforceEvidenceAnchors leaves not_assessed claims alone (spec 19)', () => {
+  const si = {
+    sources: [],
+    components: [{
+      id: 'component:z',
+      purpose: { summary: 'z', source_boundary: 'not_assessed', source_ref: '' },
+      capabilities: [],
+      internal_concepts: [],
+      risks: [],
+      integration_surfaces: [],
+      semantic_relations: [],
+    }],
+  };
+  const { downgraded } = enforceEvidenceAnchors(si);
+  assert.strictEqual(downgraded.length, 0);
+});
+
+test('enforceEvidenceAnchors handles empty/null input (spec 19)', () => {
+  assert.deepStrictEqual(enforceEvidenceAnchors(null).downgraded, []);
+  assert.deepStrictEqual(enforceEvidenceAnchors({}).downgraded, []);
+  assert.deepStrictEqual(enforceEvidenceAnchors({ components: [] }).downgraded, []);
 });
