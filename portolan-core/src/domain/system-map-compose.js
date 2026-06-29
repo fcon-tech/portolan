@@ -468,7 +468,8 @@ function composeSystemMap(artifacts, opts = {}) {
       const dedupKey = `${ownerId}|${surfaceType}|${sr.url || ''}`;
       if (seenSurfaceKeys.has(dedupKey)) continue;
       seenSurfaceKeys.add(dedupKey);
-      knownIds.add(surfaceId);
+    knownIds.add(surfaceId);
+    knownIds.add(t.id);
       surfaces.push({
         id: surfaceId,
         surface_type: surfaceType,
@@ -689,10 +690,13 @@ function composeSystemMap(artifacts, opts = {}) {
   }
   for (const c of components) {
     const existing = new Set(c.relationship_ids || []);
-    for (const rid of relsByEndpoint.get(c.id) || []) {
-      if (!existing.has(rid)) {
-        existing.add(rid);
-        c.relationship_ids.push(rid);
+    const tid = c.id.replace(/^component:/, '');
+    for (const ep of [c.id, tid]) {
+      for (const rid of relsByEndpoint.get(ep) || []) {
+        if (!existing.has(rid)) {
+          existing.add(rid);
+          c.relationship_ids.push(rid);
+        }
       }
     }
     c.relationship_ids = c.relationship_ids.slice(0, 30);

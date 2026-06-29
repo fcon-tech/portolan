@@ -70,7 +70,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 		info, err := os.Lstat(exportPath)
 		if err != nil || info.Mode()&os.ModeSymlink != 0 {
 			result.Records = append(result.Records, coverage.Record{
-				ID:            "symbol-ref-export-" + stableID(exportPath),
+				ID:            "symbol-ref-export-" + hashHex(exportPath),
 				Kind:          "symbol-reference",
 				Status:        "cannot_verify",
 				EvidenceState: string(graph.CannotVerify),
@@ -79,9 +79,20 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 			})
 			continue
 		}
+		if !info.Mode().IsRegular() {
+			result.Records = append(result.Records, coverage.Record{
+				ID:            "symbol-ref-export-not-regular-" + hashHex(exportPath),
+				Kind:          "symbol-reference",
+				Status:        "cannot_verify",
+				EvidenceState: string(graph.CannotVerify),
+				Source:        exportPath,
+				Reason:        "symbol-index export is not a regular file (FIFO/device/socket); skipped",
+			})
+			continue
+		}
 		if info.Size() > maxSymbolIndexExportBytes {
 			result.Records = append(result.Records, coverage.Record{
-				ID:            "symbol-ref-export-oversized-" + stableID(exportPath),
+				ID:            "symbol-ref-export-oversized-" + hashHex(exportPath),
 				Kind:          "symbol-reference",
 				Status:        "cannot_verify",
 				EvidenceState: string(graph.CannotVerify),
@@ -97,7 +108,7 @@ func importSymbolReferences(root string, repos []selection.Target) symbolReferen
 		// read/parse/empty failure and surface them as coverage records.
 		if isImporterCannotVerify(impGraph) {
 			result.Records = append(result.Records, coverage.Record{
-				ID:            "symbol-ref-export-malformed-" + stableID(exportPath),
+				ID:            "symbol-ref-export-malformed-" + hashHex(exportPath),
 				Kind:          "symbol-reference",
 				Status:        "cannot_verify",
 				EvidenceState: string(graph.CannotVerify),
