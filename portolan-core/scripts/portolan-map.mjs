@@ -55,17 +55,24 @@ function findPortolanBinary(target) {
   candidates.push(path.join(target, '.portolan', 'bin', 'portolan'));
   candidates.push(path.join(REPO_ROOT, '.portolan', 'bin', 'portolan'));
   for (const candidate of candidates) {
-    try { fs.accessSync(candidate, fs.constants.X_OK); return candidate; } catch (e) { /* try next */ }
+    try {
+      // Must be a regular file — accessSync(X_OK) succeeds on directories too.
+      const stat = fs.statSync(candidate);
+      if (stat.isFile()) return candidate;
+    } catch (e) { /* try next */ }
   }
   try {
-    execFileSync('sh', ['-c', 'command -v portolan >/dev/null 2>&1'], { stdio: 'ignore' });
+    execFileSync('sh', ['-c', 'command -v portolan'], { stdio: 'ignore' });
     return 'portolan';
   } catch (e) { /* not on PATH */ }
   // Last resort: bootstrap from the source checkout (needs Go + module cache).
   try {
     execFileSync('sh', [path.join(REPO_ROOT, 'scripts', 'bootstrap-portolan')], { stdio: 'inherit' });
     const bootstrapped = path.join(REPO_ROOT, '.portolan', 'bin', 'portolan');
-    try { fs.accessSync(bootstrapped, fs.constants.X_OK); return bootstrapped; } catch (e) { /* fall through */ }
+    try {
+      const stat = fs.statSync(bootstrapped);
+      if (stat.isFile()) return bootstrapped;
+    } catch (e) { /* fall through */ }
   } catch (e) { /* bootstrap failed */ }
   console.error('error: portolan binary not found and could not be bootstrapped.');
   console.error('  Install Portolan (scripts/portolan-install-core.sh), set PORTOLAN_BIN,');
@@ -73,47 +80,62 @@ function findPortolanBinary(target) {
   process.exit(1);
 }
 
-// Ensure a normalized system-map.json exists for the target. Returns its path.
+// Ensure a normalized system-map.json exists and is fresh for the target.
+// Returns its path.
 //
-// Resolution order:
-//   1. Legacy scan-produced bundle at .portolan/bundle/system-map.json
-//      (preserves targets mapped by portolan-scan.sh before this change).
-//   2. Collect via the Go core into .portolan/run (rebuild if stale, skip if
-//      fresh), then normalize the bundle into system-map.json.
-//
-// This closes the /portolan:map initiation gap: the admiral drops a link and
-// the agent collects, instead of erroring for a missing pre-built bundle.
+// Flow:
+//   1. Collect via the Go core into .portolan/run (rebuild if stale, skip if
+//      fresh). Capture stdout to detect rebuild vs skip.
+//   2. Normalize the bundle into system-map.json when it was rebuilt OR when
+//      it is missing (a skip with an existing system-map.json is a no-op).
+//   3. Legacy scan-produced bundle at .portolan/bundle/system-map.json is a
+//      last-resort fallback when the Go core cannot produce a run bundle.
 function ensureSnapshot(target) {
   const portolanDir = path.join(target, '.portolan');
-  const legacySystemMap = path.join(portolanDir, 'bundle', 'system-map.json');
-  if (fs.existsSync(legacySystemMap)) {
-    return legacySystemMap;
-  }
-
   const runDir = path.join(portolanDir, 'run');
   const runSystemMap = path.join(runDir, 'system-map.json');
 
   // Collect: rebuild if the tree signature changed, skip if fresh.
   const portolanBin = findPortolanBinary(target);
+  let rebuilt = true;
   try {
     // execFileSync (array form) avoids shell injection from interpolated paths.
-    execFileSync(portolanBin, ['map', '--root', target, '--out', runDir, '--if-stale'], { stdio: 'inherit' });
+    // Pipe stdout so we can detect rebuild vs skip; stderr inherits for visibility.
+    const stdout = execFileSync(portolanBin, ['map', '--root', target, '--out', runDir, '--if-stale'], {
+      stdio: ['inherit', 'pipe', 'inherit'],
+      encoding: 'utf8',
+    });
+    rebuilt = !stdout.includes('up to date');
   } catch (e) {
-    console.error('error: snapshot collection failed.');
+    console.error('error: snapshot collection failed:', e.message);
+    if (e.stderr) console.error(e.stderr.toString().trim());
     process.exit(1);
   }
 
-  // Normalize the bundle into system-map.json when it is missing (e.g. a fresh
-  // collect, or a stale-but-skipped bundle that was never normalized).
-  if (!fs.existsSync(runSystemMap)) {
+  // Normalize the bundle into system-map.json when it was rebuilt OR when
+  // system-map.json is missing (e.g. first run, or a skipped bundle that was
+  // never normalized). When the map was skipped AND system-map.json exists,
+  // we reuse it — the bundle is unchanged.
+  if (rebuilt || !fs.existsSync(runSystemMap)) {
     try {
       execFileSync('bash', [path.join(REPO_ROOT, 'scripts', 'build-system-map.sh'), runDir, target], { stdio: 'inherit' });
     } catch (e) {
-      console.error('error: system-map normalization failed.');
+      console.error('error: system-map normalization failed:', e.message);
       process.exit(1);
     }
   }
-  return runSystemMap;
+  // If the Go core produced a system-map.json, use it.
+  if (fs.existsSync(runSystemMap)) {
+    return runSystemMap;
+  }
+  // Last-resort fallback: a pre-existing scan-produced system-map.json.
+  const legacySystemMap = path.join(portolanDir, 'bundle', 'system-map.json');
+  if (fs.existsSync(legacySystemMap)) {
+    console.error('warning: using legacy scan-produced system-map.json; run --force to re-collect.');
+    return legacySystemMap;
+  }
+  console.error('error: no system-map.json could be produced.');
+  process.exit(1);
 }
 
 function main() {

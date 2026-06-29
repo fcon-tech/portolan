@@ -258,6 +258,9 @@ func Run(opts Options) (Result, error) {
 	}
 
 	if opts.SelectionPath != "" {
+		if opts.IfStale {
+			return Result{}, errors.New("--if-stale is not supported with --selection (root path only)")
+		}
 		return runSelection(opts)
 	}
 
@@ -268,6 +271,18 @@ func Run(opts Options) (Result, error) {
 		outAbs, err := filepath.Abs(opts.OutputPath)
 		if err != nil {
 			return Result{}, fmt.Errorf("resolve output: %w", err)
+		}
+		// Validate the existing output path before trusting its signature: a
+		// symlinked or non-directory output must not produce a false skip.
+		if info, err := os.Lstat(outAbs); err == nil {
+			if info.Mode()&os.ModeSymlink != 0 {
+				return Result{}, fmt.Errorf("output path must not be a symlink: %s", outAbs)
+			}
+			if !info.IsDir() {
+				return Result{}, fmt.Errorf("output path must be a directory: %s", outAbs)
+			}
+		} else if !os.IsNotExist(err) {
+			return Result{}, fmt.Errorf("inspect output path: %w", err)
 		}
 		sigPath := filepath.Join(outAbs, treeSignatureFile)
 		stale, reason, err := staleness.IsStale(opts.RootPath, sigPath)

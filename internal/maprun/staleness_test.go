@@ -116,3 +116,32 @@ func TestMapIfStaleArtifactsPopulatedOnSkip(t *testing.T) {
 		t.Fatalf("output path = %q, want %q", result.OutputPath, out)
 	}
 }
+
+func TestMapIfStaleRejectedWithSelection(t *testing.T) {
+	root := makeTargetRoot(t)
+	out := filepath.Join(root, ".portolan", "run")
+	selPath := filepath.Join(t.TempDir(), "sel.json")
+	if err := os.WriteFile(selPath, []byte(`{"schema_version":"0.1.0","targets":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Run(Options{RootPath: root, SelectionPath: selPath, OutputPath: out, IfStale: true})
+	if err == nil {
+		t.Fatal("expected error when --if-stale is combined with --selection")
+	}
+}
+
+func TestMapIfStaleRejectsSymlinkedOutput(t *testing.T) {
+	root := makeTargetRoot(t)
+	realOut := filepath.Join(root, ".portolan", "real-run")
+	if _, err := Run(Options{RootPath: root, OutputPath: realOut, IfStale: true}); err != nil {
+		t.Fatalf("first Run: %v", err)
+	}
+	linkOut := filepath.Join(t.TempDir(), "link-run")
+	if err := os.Symlink(realOut, linkOut); err != nil {
+		t.Skipf("symlink not supported: %v", err)
+	}
+	_, err := Run(Options{RootPath: root, OutputPath: linkOut, IfStale: true})
+	if err == nil {
+		t.Fatal("expected error when --if-stale output is a symlink")
+	}
+}
