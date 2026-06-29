@@ -113,7 +113,8 @@ func manifestFilenames() map[string]ManifestFormat {
 // detectMavenPom parses a pom.xml and emits depends-on edges for declared
 // dependencies. It reads <dependencies><dependency> blocks but NOT
 // <dependencyManagement> (which are version constraints, not active deps).
-func detectMavenPom(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+// Maven property placeholders (${...}) in coordinates are skipped.
+func detectMavenPom(path, root string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read pom.xml: %v", err)})
@@ -141,13 +142,17 @@ func detectMavenPom(path string, result *Result, nodeIDs, edgeIDs map[string]str
 		return
 	}
 
-	// The source node is the module defined by this POM.
+	// The source node is the module defined by this POM. Use groupId:artifactId
+	// when available, falling back to directory name. Include the relative path
+	// to avoid collisions between modules with the same coordinates in
+	// different repos.
+	relDir, _ := filepath.Rel(root, filepath.Dir(path))
+	relDir = filepath.ToSlash(relDir)
 	moduleLabel := pom.GroupID + ":" + pom.ArtifactID
 	if pom.GroupID == "" || pom.ArtifactID == "" {
-		// Fall back to directory name.
 		moduleLabel = filepath.Base(filepath.Dir(path))
 	}
-	moduleID := "maven:" + moduleLabel
+	moduleID := "maven:" + relDir + ":" + moduleLabel
 
 	addPackageNode(result, nodeIDs, moduleID, moduleLabel, graph.MetadataVisible, path)
 
@@ -193,16 +198,19 @@ var (
 // detectGradle parses a build.gradle / build.gradle.kts and emits depends-on
 // edges. Gradle is a Groovy/Kotlin DSL; the parser uses bounded regex
 // extraction (not a full AST).
-func detectGradle(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+func detectGradle(path, root string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read build.gradle: %v", err)})
 		return
 	}
 
-	// The source node is the Gradle project (directory name as label).
+	// The source node is the Gradle project. Use relative path to avoid
+	// collisions between same-named directories in different repos.
+	relDir, _ := filepath.Rel(root, filepath.Dir(path))
+	relDir = filepath.ToSlash(relDir)
 	dirLabel := filepath.Base(filepath.Dir(path))
-	moduleID := "gradle:" + dirLabel
+	moduleID := "gradle:" + relDir + ":" + dirLabel
 	addPackageNode(result, nodeIDs, moduleID, dirLabel, graph.MetadataVisible, path)
 
 	lines := strings.Split(string(data), "\n")
@@ -237,6 +245,14 @@ func detectGradle(path string, result *Result, nodeIDs, edgeIDs map[string]struc
 			if len(parts) < 2 {
 				continue // Not a GAV coordinate; skip (could be a file path etc.)
 			}
+			// Skip Gradle property-interpolated coordinates (same as Maven).
+			if strings.Contains(parts[0], "$") || strings.Contains(parts[1], "$") {
+				result.Issues = append(result.Issues, Issue{
+					Path:   path,
+					Reason: fmt.Sprintf("skip Gradle dependency with property placeholder: %s", dep),
+				})
+				continue
+			}
 			depID := "maven:" + parts[0] + ":" + parts[1]
 			addPackageNode(result, nodeIDs, depID, dep, graph.MetadataVisible, path)
 			addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
@@ -250,7 +266,7 @@ func detectGradle(path string, result *Result, nodeIDs, edgeIDs map[string]struc
 // ---------------------------------------------------------------------------
 
 // detectNpmPackageJson parses a package.json and emits depends-on edges.
-func detectNpmPackageJson(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+func detectNpmPackageJson(path, root string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read package.json: %v", err)})
@@ -275,7 +291,9 @@ func detectNpmPackageJson(path string, result *Result, nodeIDs, edgeIDs map[stri
 	if moduleLabel == "" {
 		moduleLabel = filepath.Base(filepath.Dir(path))
 	}
-	moduleID := "npm:" + moduleLabel
+	relDir, _ := filepath.Rel(root, filepath.Dir(path))
+	relDir = filepath.ToSlash(relDir)
+	moduleID := "npm:" + relDir + ":" + moduleLabel
 	addPackageNode(result, nodeIDs, moduleID, moduleLabel, graph.MetadataVisible, path)
 
 	for name, version := range pkg.Dependencies {

@@ -430,3 +430,46 @@ func TestDetectSortsResults(t *testing.T) {
 		t.Error("nodes are not sorted by ID")
 	}
 }
+
+func TestDetectSkipsNodeModulesAndBuildDirs(t *testing.T) {
+	dir := t.TempDir()
+
+	// Real package.json at root.
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"app","dependencies":{"express":"^4.0.0"}}`), 0644)
+
+	// node_modules should be SKIPPED.
+	nmDir := filepath.Join(dir, "node_modules", "express")
+	os.MkdirAll(nmDir, 0755)
+	os.WriteFile(filepath.Join(nmDir, "package.json"), []byte(`{"name":"express","dependencies":{"accepts":"^1.0.0"}}`), 0644)
+
+	// target should be SKIPPED (Maven build output).
+	targetDir := filepath.Join(dir, "target")
+	os.MkdirAll(targetDir, 0755)
+	os.WriteFile(filepath.Join(targetDir, "pom.xml"), []byte(`<project><groupId>x</groupId><artifactId>y</artifactId></project>`), 0644)
+
+	result := Detect(dir)
+
+	// Only express should appear (from root package.json), NOT accepts (from
+	// node_modules/express) and NOT x:y (from target/pom.xml).
+	depEdges := 0
+	for _, e := range result.Edges {
+		if e.Kind == "depends-on" {
+			depEdges++
+		}
+	}
+	if depEdges != 1 {
+		t.Errorf("expected 1 edge (node_modules + target skipped), got %d", depEdges)
+	}
+}
+
+func TestDetectUnimplementedFormatEmitsIssue(t *testing.T) {
+	dir := t.TempDir()
+	// Cargo.toml is registered but not yet implemented.
+	os.WriteFile(filepath.Join(dir, "Cargo.toml"), []byte(`[dependencies]\nserde = "1.0"`), 0644)
+
+	result := Detect(dir)
+	if len(result.Issues) == 0 {
+		t.Error("expected an issue for unimplemented Cargo.toml format")
+	}
+}
