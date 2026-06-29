@@ -56,14 +56,24 @@ func TestDetectOverlapFindings_OverlappingCapabilities(t *testing.T) {
 
 	if dupConceptFinding == nil {
 		t.Error("expected a duplicated-concept not_assessed placeholder")
-	} else if dupConceptFinding.EvidenceState != "not_assessed" {
-		t.Errorf("expected duplicated-concept to be not_assessed, got %s", dupConceptFinding.EvidenceState)
+	} else {
+		if dupConceptFinding.EvidenceState != "not_assessed" {
+			t.Errorf("expected duplicated-concept to be not_assessed, got %s", dupConceptFinding.EvidenceState)
+		}
+		if len(dupConceptFinding.SubjectIDs) == 0 {
+			t.Error("expected duplicated-concept to be unit-attached (non-empty SubjectIDs)")
+		}
 	}
 
 	if altCapFinding == nil {
 		t.Error("expected an alternative-capability not_assessed placeholder")
-	} else if altCapFinding.EvidenceState != "not_assessed" {
-		t.Errorf("expected alternative-capability to be not_assessed, got %s", altCapFinding.EvidenceState)
+	} else {
+		if altCapFinding.EvidenceState != "not_assessed" {
+			t.Errorf("expected alternative-capability to be not_assessed, got %s", altCapFinding.EvidenceState)
+		}
+		if len(altCapFinding.SubjectIDs) == 0 {
+			t.Error("expected alternative-capability to be unit-attached (non-empty SubjectIDs)")
+		}
 	}
 }
 
