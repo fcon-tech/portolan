@@ -973,6 +973,31 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		if prefixRelationships {
 			prefixRelationshipGraph(target.ID, &relationshipResult)
 		}
+		// Bridge manifest edges from module/package nodes to the target
+		// repository. The relationship detector creates edges like
+		// maven:module -> maven:dep, but the reading layer only keeps edges
+		// whose 'from' is a repository node. Remap manifest edge sources to
+		// target.ID so manifest dependencies connect to the repo in the atlas.
+		// Go source import edges (from source:...) are NOT remapped.
+		depNodeIDs := make(map[string]bool)
+		for _, edge := range relationshipResult.Edges {
+			if isManifestSourceNode(edge.From) {
+				depNodeIDs[edge.To] = true
+			}
+		}
+		for i := range relationshipResult.Edges {
+			if isManifestSourceNode(relationshipResult.Edges[i].From) {
+				relationshipResult.Edges[i].From = target.ID
+			}
+		}
+		// Filter nodes: keep only dependency nodes + Go source nodes.
+		filteredNodes := make([]graph.Node, 0, len(relationshipResult.Nodes))
+		for _, node := range relationshipResult.Nodes {
+			if depNodeIDs[node.ID] || !isManifestSourceNode(node.ID) {
+				filteredNodes = append(filteredNodes, node)
+			}
+		}
+		relationshipResult.Nodes = filteredNodes
 		g.Nodes = append(g.Nodes, relationshipResult.Nodes...)
 		g.Edges = append(g.Edges, relationshipResult.Edges...)
 		if prefixRelationships {
@@ -3170,4 +3195,15 @@ func sortFindings(findings []Finding) {
 		}
 		return findings[i].ID < findings[j].ID
 	})
+}
+
+// isManifestSourceNode returns true for node IDs created by manifest parsers
+// (maven:, gradle:, npm:, package: prefixes from go.mod). These represent
+// the MODULE that declares dependencies; the target repository IS the module,
+// so edges from these nodes are bridged to the target ID.
+func isManifestSourceNode(id string) bool {
+	return strings.HasPrefix(id, "maven:") ||
+		strings.HasPrefix(id, "gradle:") ||
+		strings.HasPrefix(id, "npm:") ||
+		strings.HasPrefix(id, "package:")
 }
