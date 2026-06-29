@@ -74,6 +74,24 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 	g := graph.New()
 	g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.MetadataVisible, "local symbol-index export imported from "+producer))
 
+	// Pre-pass: collect definition symbol identities so that reference-role
+	// symbols can be resolved against them. References that resolve to a
+	// definition present in the export become `references` edges; references
+	// with no resolvable definition become `unknown` edges, never guessed.
+	definitions := map[string]bool{}
+	for _, document := range raw.Documents {
+		for _, symbol := range document.Symbols {
+			if !strings.EqualFold(strings.TrimSpace(symbol.Role), "definition") {
+				continue
+			}
+			if v := strings.TrimSpace(symbol.ID); v != "" {
+				definitions[v] = true
+			} else if v := strings.TrimSpace(symbol.Name); v != "" {
+				definitions[v] = true
+			}
+		}
+	}
+
 	seenDocuments := map[string]struct{}{}
 	seenSymbols := map[string]struct{}{}
 	for _, document := range raw.Documents {
@@ -128,16 +146,27 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 					},
 				})
 			}
-			g.Edges = append(g.Edges, graph.Edge{
-				From: docID,
-				To:   symbolID,
-				Kind: "owns",
-				Evidence: graph.Evidence{
-					State:  graph.MetadataVisible,
-					Source: symbolIndexSource(opts.InputPath, docIDValue, symbol.Range),
-					Reason: symbolIndexReason(symbol.Role, "symbol occurrence listed by local export; not a complete call graph"),
-				},
-			})
+		kind := "owns"
+		reasonMsg := "symbol occurrence listed by local export; not a complete call graph"
+		if strings.EqualFold(strings.TrimSpace(symbol.Role), "reference") {
+			if definitions[symbolIDValue] {
+				kind = "references"
+				reasonMsg = "reference resolves to a definition in the local export; not a complete call graph"
+			} else {
+				kind = "unknown"
+				reasonMsg = "reference target not resolvable in the local export; recorded as unknown, not guessed"
+			}
+		}
+		g.Edges = append(g.Edges, graph.Edge{
+			From: docID,
+			To:   symbolID,
+			Kind: kind,
+			Evidence: graph.Evidence{
+				State:  graph.MetadataVisible,
+				Source: symbolIndexSource(opts.InputPath, docIDValue, symbol.Range),
+				Reason: symbolIndexReason(symbol.Role, reasonMsg),
+			},
+		})
 		}
 	}
 
