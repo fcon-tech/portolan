@@ -126,3 +126,27 @@ test('translateMapBundle: parallel edges (same from/to/kind) are not collapsed',
   const targetA = artifacts.atlasSurfaces.targets.find((t) => t.id === 'a');
   assert.deepEqual(targetA.depends_on, ['b'], 'depends_on deduplicated to unique repos');
 });
+
+test('translateMapBundle: references edges (symbol-index) become typed relationships', () => {
+  const artifacts = translateMapBundle({
+    graph: {
+      nodes: [repoNode('repo-a', 'Repo A'), repoNode('repo-b', 'Repo B')],
+      edges: [
+        {
+          from: 'repo-a',
+          to: 'repo-b',
+          kind: 'references',
+          evidence: { state: 'metadata-visible', source: '.portolan/symbol-index/export.json' },
+        },
+      ],
+    },
+  });
+  assert.equal(artifacts.relationships.length, 1, 'references edge should produce a relationship');
+  assert.equal(artifacts.relationships[0].type, 'references');
+  assert.equal(artifacts.relationships[0].from_repo, 'repo-a');
+  assert.equal(artifacts.relationships[0].to_repo, 'repo-b');
+  assert.equal(artifacts.relationships[0].evidence_state, 'metadata-visible');
+  // references must NOT populate depends_on (it is not a declared dependency)
+  const targetA = artifacts.atlasSurfaces.targets.find((t) => t.id === 'repo-a');
+  assert.deepEqual(targetA.depends_on, [], 'references should not populate depends_on');
+});

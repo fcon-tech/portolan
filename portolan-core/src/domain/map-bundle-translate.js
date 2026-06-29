@@ -69,7 +69,8 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
     evidence_state: mapEvidenceState(n.evidence && n.evidence.state),
     path: (n.evidence && n.evidence.source) || '',
     depends_on: [...new Set(edges
-      .filter((e) => e && e.from === n.id && repoIds.has(e.to) && e.to !== n.id)
+      .filter((e) => e && e.from === n.id && repoIds.has(e.to) && e.to !== n.id
+        && (e.kind === 'imports' || e.kind === 'depends-on' || e.kind === 'depends_on'))
       .map((e) => e.to))],
   }));
 

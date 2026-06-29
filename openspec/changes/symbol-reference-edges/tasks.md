@@ -44,43 +44,64 @@ Spec + implementation change. Depends on `agent-atlas-foundation`.
       `evidenceState=metadata-visible`, and the not-a-complete-call-graph
       caveat). 456 unit + 4 BDD self-tests green.
 
-## End-to-end wiring — NOT YET DONE (the feature is NOT live)
+## End-to-end wiring — DONE (the feature is live)
 
-The importer emits `references` edges into a standalone `graph.json`, but that
-output is a dead end in the current pipeline. `build-portolan-bundle.sh` never
-invokes `portolan import`; `relationships.jsonl` is built only by
-`scripts/scan-cross-repo.sh`, which emits `shared-dependency` and
-`cross-repo-duplication` only. So reference edges never reach the bundle, the
-system-map, or the atlas. The reading-layer BDD test is hand-fed (it proves the
-reading layer CAN render a `references` relationship, not that the pipeline
-DELIVERS one).
+The importer emits `references` edges into a standalone `graph.json`. The Go map
+collector (`internal/maprun`) now discovers operator-supplied symbol-index JSON
+exports under `<root>/.portolan/symbol-index/*.json`, imports each via
+`importer.ParseSymbolIndex`, and lifts the resolved reference edges to repo-level
+graph edges that reach the system-map as typed `references` relationships through
+the existing `translateMapBundle` → `composeSystemMap` path.
 
-Open tasks before this change is genuinely done:
+### Design decisions (granularity reconciliation)
 
-- [ ] Bridge importer graph edges into the bundle's relationships stream (or have
-      the Go scan ingest symbol-index and emit relationships directly). This is
-      the missing slice that makes the feature live end-to-end.
-- [ ] Reconcile granularity: importer edges are symbol/document-level
-      (`symbol-index:symbol:...`, `symbol-index:document:...`); `relationships.jsonl`
-      is repo-level (`from_repo`/`to_repo`). Decide and document how a
-      symbol-reference edge is carried as a relationship (e.g. lift to the owning
-      repo/document, keep a symbol-level relationship kind, or both).
-- [ ] End-to-end test: run the importer on a fixture, build the bundle, compose
-      the system-map, assert a `references` relationship is present and rendered.
-- [ ] Implement the out-of-perimeter → external-node scenario (currently only
-      resolved → `references` and unresolved → `unknown` are handled).
+- **Lift to repo level.** Symbol/document-level edges are lifted to repo→repo
+  edges by mapping document paths back to discovered repos (longest-prefix match
+  with a basename fallback for exports whose paths are repo-relative). Only
+  cross-repo and out-of-perimeter references produce edges; intra-repo references
+  are within a single landscape unit and do not produce a cross-unit relationship.
+- **Deduplication.** Multiple references between the same repo pair collapse to a
+  single repo→repo `references` edge (the edge evidence carries the not-a-complete-
+  call-graph caveat; per-symbol drill-down is a follow-on).
+- **depends_on separation.** `references` edges do NOT populate `depends_on` on
+  atlas targets — only `imports`/`depends-on` edges do. A code reference is not a
+  declared manifest dependency.
+
+### Implementation
+
+- [x] `internal/importer/symbol_index.go`: extracted `ParseSymbolIndex(inputPath)`
+      from `RunSymbolIndex` so the map collector can import in-process without an
+      output-path side effect. `RunSymbolIndex` delegates after validating CLI args.
+- [x] `internal/maprun/symbolrefs.go`: `importSymbolReferences(root, repos)` —
+      discovers exports, imports each, lifts to repo-level edges, returns
+      graph nodes/edges + findings + coverage records. Three outcomes per
+      reference: cross-repo → `references` edge; out-of-perimeter → external node
+      + `references` edge; unresolved → coverage `unknown` record (never guessed).
+- [x] `internal/maprun/maprun.go` `Run()`: merged `symbolReferenceResult` into the
+      map bundle's graph, findings, and coverage after root discovery.
+- [x] `portolan-core/src/domain/map-bundle-translate.js`: `depends_on` now filters
+      to `imports`/`depends-on`/`depends_on` kinds so `references` edges do not
+      pollute the declared-dependency list.
+
+### Tests
+
+- [x] `internal/maprun/symbolrefs_test.go`: 7 tests — cross-repo, out-of-perimeter,
+      unresolved, intra-repo skip, no-exports no-op, dedup, and E2E through
+      `Run()` proving `references` edges reach `graph.json` and the resolved-
+      references finding reaches `findings.jsonl`.
+- [x] `portolan-core/test/unit/map-bundle-translate.test.js`: added test proving
+      `references` edges become typed relationships without populating `depends_on`.
+- [x] Out-of-perimeter → external-node scenario implemented (external node flagged
+      external, not crawled).
 
 ## Validation
 
-- [x] `openspec validate --specs` passes (15/15).
-- [x] `go test ./internal/app` green — importer unit behaviour: resolved →
-      `references`, unresolved → `unknown`, cross-repo resolve on the Bigtop
-      fixture.
-- [x] BDD runner self-tests green; 2 reading-layer scenarios bound to
-      `specs/ontology`.
-- [ ] **END-TO-END NOT VERIFIED** — see "End-to-end wiring" above. The importer
-      unit tests and the reading-layer BDD tests do NOT together prove a
-      `references` edge reaches an atlas. That remains open.
+- [x] `openspec validate --all` passes (20/20).
+- [x] `go test ./...` green — all packages.
+- [x] portolan-core: 471 unit + 4 BDD + 0 dep-rule violations.
+- [x] **END-TO-END VERIFIED** — `TestRunMapSymbolReferencesReachGraph` proves a
+      `references` edge reaches `graph.json`; `map-bundle-translate.test.js` proves
+      it becomes a typed relationship in the system-map artifacts.
 
 ## Out of scope (follow-on)
 
