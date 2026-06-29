@@ -179,6 +179,12 @@ func TestDetectNpmPackageJson(t *testing.T) {
   },
   "devDependencies": {
     "jest": "^29.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.0"
   }
 }`
 	if err := os.WriteFile(pkgPath, []byte(pkgContent), 0644); err != nil {
@@ -193,9 +199,102 @@ func TestDetectNpmPackageJson(t *testing.T) {
 			depEdges++
 		}
 	}
-	// 2 deps + 1 devDep = 3
-	if depEdges != 3 {
-		t.Errorf("expected 3 depends-on edges, got %d", depEdges)
+	// 2 deps + 1 devDep + 1 peerDep + 1 optionalDep = 5
+	if depEdges != 5 {
+		t.Errorf("expected 5 depends-on edges, got %d", depEdges)
+	}
+}
+
+func TestDetectMavenSkipsPropertyPlaceholders(t *testing.T) {
+	dir := t.TempDir()
+	pomPath := filepath.Join(dir, "pom.xml")
+	pomContent := `<project>
+  <groupId>com.example</groupId>
+  <artifactId>app</artifactId>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_${scala.binary.version}</artifactId>
+      <version>3.5.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>32.0</version>
+    </dependency>
+  </dependencies>
+</project>`
+	os.WriteFile(pomPath, []byte(pomContent), 0644)
+
+	result := Detect(dir)
+
+	depEdges := 0
+	for _, e := range result.Edges {
+		if e.Kind == "depends-on" {
+			depEdges++
+		}
+	}
+	// Only guava — spark-core is skipped due to ${} placeholder
+	if depEdges != 1 {
+		t.Errorf("expected 1 depends-on edge (property placeholder skipped), got %d", depEdges)
+	}
+	// Should emit an issue for the skipped dep
+	if len(result.Issues) == 0 {
+		t.Error("expected an issue for the skipped property-placeholder dependency")
+	}
+}
+
+func TestDetectGradleBuildscriptClasspath(t *testing.T) {
+	dir := t.TempDir()
+	gradlePath := filepath.Join(dir, "build.gradle")
+	gradleContent := `
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:3.1.0'
+    }
+}
+dependencies {
+    implementation 'org.apache.spark:spark-core_2.12:3.5.0'
+}`
+	os.WriteFile(gradlePath, []byte(gradleContent), 0644)
+
+	result := Detect(dir)
+
+	depEdges := 0
+	for _, e := range result.Edges {
+		if e.Kind == "depends-on" {
+			depEdges++
+		}
+	}
+	// 1 buildscript classpath + 1 implementation = 2
+	if depEdges != 2 {
+		t.Errorf("expected 2 depends-on edges (including buildscript), got %d", depEdges)
+	}
+}
+
+func TestDetectGradleIgnoresComments(t *testing.T) {
+	dir := t.TempDir()
+	gradlePath := filepath.Join(dir, "build.gradle")
+	gradleContent := `
+// implementation 'commented.out:dep:1.0'
+/* implementation 'block.commented:dep:2.0' */
+dependencies {
+    implementation 'real.dep:lib:3.0'
+}`
+	os.WriteFile(gradlePath, []byte(gradleContent), 0644)
+
+	result := Detect(dir)
+
+	depEdges := 0
+	for _, e := range result.Edges {
+		if e.Kind == "depends-on" {
+			depEdges++
+		}
+	}
+	// Only the real dep — comments are skipped
+	if depEdges != 1 {
+		t.Errorf("expected 1 depends-on edge (comments ignored), got %d", depEdges)
 	}
 }
 
