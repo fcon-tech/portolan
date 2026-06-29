@@ -74,8 +74,11 @@ test('agent claims are bounded and labelled (spec 18)', () => {
   };
   const si = generateSemanticInvestigation(baseSystemMap(), { agentClaims });
   const alpha = si.components.find(c => c.id === 'component:alpha');
-  // Agent purpose is appended with a visible [Agent:] label.
-  assert.ok(alpha.purpose.summary.includes('[Agent:'), 'agent purpose should be labelled');
+  // Agent purpose is a separate agent-hypothesis claim, not appended to deterministic text.
+  assert.ok(alpha.agent_claims && alpha.agent_claims.length > 0, 'agent claims should exist');
+  const purposeClaim = alpha.agent_claims.find(c => c.label.includes('purpose'));
+  assert.ok(purposeClaim, 'agent purpose claim should exist');
+  assert.strictEqual(purposeClaim.source_boundary, 'agent-hypothesis');
   // Agent risks are bounded to 3.
   const agentRisks = alpha.risks.filter(r => r.id.startsWith('risk:agent-'));
   assert.strictEqual(agentRisks.length, 3, 'agent risks should be bounded to 3');

@@ -36,20 +36,37 @@ func detectOverlapFindings(g graph.Graph) []Finding {
 
 	// duplicated-concept and alternative-capability require semantic signal
 	// (symbol-level naming/reference overlap) that the current Go collector
-	// does not yet produce. Emit honest not_assessed placeholders naming the
-	// next producer needed, so the reader knows these were considered, not
-	// forgotten.
+	// does not yet produce. Emit honest not_assessed placeholders that are
+	// still unit-attached (all repos) and carry confidence per the trust
+	// contract, so the reader knows these were considered, not forgotten.
 	if len(repoDeps) >= 2 {
-		findings = append(findings, notAssessedFinding(
-			"finding-overlap-duplicated-concept-not-assessed",
-			"duplicated-concept",
-			"Duplicated-concept detection requires symbol-level naming overlap analysis; no supported semantic producer was observed for this map run.",
-		))
-		findings = append(findings, notAssessedFinding(
-			"finding-overlap-alternative-capability-not-assessed",
-			"alternative-capability",
-			"Alternative-capability detection requires capability-clustering analysis; no supported semantic producer was observed for this map run.",
-		))
+		allRepoIDs := make([]string, 0, len(repoDeps))
+		for id := range repoDeps {
+			allRepoIDs = append(allRepoIDs, id)
+		}
+		sort.Strings(allRepoIDs)
+		findings = append(findings, Finding{
+			ID:             "finding-overlap-duplicated-concept-not-assessed",
+			Kind:           "duplicated-concept",
+			Summary:        "Duplicated-concept detection requires symbol-level naming overlap analysis; no supported semantic producer was observed for this map run.",
+			Severity:       "info",
+			EvidenceState:  "not_assessed",
+			EvidenceSource: "portolan map (overlap detection)",
+			Confidence:     0,
+			Status:         "not_assessed",
+			SubjectIDs:     allRepoIDs,
+		})
+		findings = append(findings, Finding{
+			ID:             "finding-overlap-alternative-capability-not-assessed",
+			Kind:           "alternative-capability",
+			Summary:        "Alternative-capability detection requires capability-clustering analysis; no supported semantic producer was observed for this map run.",
+			Severity:       "info",
+			EvidenceState:  "not_assessed",
+			EvidenceSource: "portolan map (overlap detection)",
+			Confidence:     0,
+			Status:         "not_assessed",
+			SubjectIDs:     allRepoIDs,
+		})
 	}
 
 	return findings
