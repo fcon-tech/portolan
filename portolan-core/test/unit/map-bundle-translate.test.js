@@ -93,4 +93,7 @@ test('translateMapBundle: parallel edges (same from/to/kind) are not collapsed',
   assert.equal(artifacts.relationships.length, 3, 'all three edges should produce distinct relationships');
   const ids = artifacts.relationships.map((r) => r.id);
   assert.equal(new Set(ids).size, 3, 'relationship ids must be unique');
+  // depends_on must be deduplicated despite parallel edges
+  const targetA = artifacts.atlasSurfaces.targets.find((t) => t.id === 'a');
+  assert.deepEqual(targetA.depends_on, ['b'], 'depends_on deduplicated to unique repos');
 });

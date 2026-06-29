@@ -64,9 +64,9 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
     role: 'local-repo',
     evidence_state: mapEvidenceState(n.evidence && n.evidence.state),
     path: (n.evidence && n.evidence.source) || '',
-    depends_on: edges
+    depends_on: [...new Set(edges
       .filter((e) => e && e.from === n.id && repoIds.has(e.to) && e.to !== n.id)
-      .map((e) => e.to),
+      .map((e) => e.to))],
   }));
 
   // ---- repos ----
