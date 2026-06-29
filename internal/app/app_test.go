@@ -883,7 +883,8 @@ func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
 	assertEvidenceState(t, findNode(t, result, "symbol-index:symbol:scip-go gomod example.com/app cmd/app/main.go main()."), "metadata-visible")
 	assertEvidenceState(t, findNode(t, result, "symbol-index:symbol:serena://internal/app/App"), "metadata-visible")
 	assertEvidenceState(t, findEdge(t, result, "symbol-index:source", "symbol-index:document:cmd/app/main.go", "owns"), "metadata-visible")
-	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:scip-go gomod fmt Println().", "owns"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:scip-go gomod fmt Println().", "unknown"), "metadata-visible")
+	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:serena://internal/app/App", "references"), "metadata-visible")
 }
 
 func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
@@ -5094,7 +5095,7 @@ func assertSchemaShape(t *testing.T, graph map[string]any) {
 		t.Fatalf("generated_by is required")
 	}
 	validNodeKinds := map[string]bool{"repository": true, "service": true, "package": true, "runtime": true, "team": true, "claim": true, "duplication": true, "configuration": true, "unknown": true}
-	validEdgeKinds := map[string]bool{"owns": true, "depends-on": true, "exposes": true, "imports": true, "observes": true, "claims": true, "unknown": true}
+	validEdgeKinds := map[string]bool{"owns": true, "depends-on": true, "exposes": true, "imports": true, "observes": true, "claims": true, "unknown": true, "references": true}
 	validStates := map[string]bool{"source-visible": true, "metadata-visible": true, "runtime-visible": true, "claim-only": true, "unknown": true, "cannot_verify": true}
 	for _, item := range graph["nodes"].([]any) {
 		node := item.(map[string]any)

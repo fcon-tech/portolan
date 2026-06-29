@@ -18,6 +18,13 @@
           "kind": "function",
           "role": "reference",
           "range": "4:2-4:13"
+        },
+        {
+          "id": "serena://internal/app/App",
+          "name": "App",
+          "kind": "type",
+          "role": "reference",
+          "range": "4:14-4:18"
         }
       ]
     },
