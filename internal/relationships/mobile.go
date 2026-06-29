@@ -18,6 +18,7 @@ import (
 var (
 	swiftPackageURL  = regexp.MustCompile(`\.package\(\s*url:\s*"([^"]+)"`)
 	swiftPackagePath = regexp.MustCompile(`\.package\(\s*path:\s*"([^"]+)"`)
+	pubspecDep       = regexp.MustCompile(`^[\s]+([\w_-]+):\s*(.*)$`)
 )
 
 // detectSwiftPackageSwift parses a Package.swift file and emits depends-on
@@ -111,7 +112,7 @@ func detectPubspecYaml(path, root string, result *Result, nodeIDs, edgeIDs map[s
 			continue
 		}
 		// Parse dependency entry: "  http: ^0.13.0" or "  flutter:\n    sdk: flutter"
-		depMatch := regexp.MustCompile(`^[\s]+([\w_-]+):\s*(.*)$`).FindStringSubmatch(line)
+		depMatch := pubspecDep.FindStringSubmatch(line)
 		if depMatch == nil || len(depMatch) < 3 {
 			continue
 		}
