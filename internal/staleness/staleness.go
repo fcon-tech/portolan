@@ -48,13 +48,14 @@ var defaultExcludes = map[string]bool{
 }
 
 // Signature is a persisted tree signature plus enough provenance to interpret
-// it across runs.
+// it across runs. RootFingerprint is a short hash of the resolved root path —
+// it enables cross-root reuse detection without leaking the absolute path.
 type Signature struct {
-	Algorithm   string    `json:"algorithm"`
-	Hash        string    `json:"hash"`
-	FileCount   int       `json:"file_count"`
-	Root        string    `json:"root"`
-	GeneratedAt time.Time `json:"generated_at"`
+	Algorithm       string    `json:"algorithm"`
+	Hash            string    `json:"hash"`
+	FileCount       int       `json:"file_count"`
+	RootFingerprint string    `json:"root_fingerprint"`
+	GeneratedAt     time.Time `json:"generated_at"`
 }
 
 // Options configures the walk. The zero value uses the defaults.
@@ -145,11 +146,11 @@ func Compute(root string, opts ...Options) (Signature, error) {
 		h.Write([]byte{0})
 	}
 	return Signature{
-		Algorithm:   Algorithm,
-		Hash:        hex.EncodeToString(h.Sum(nil)),
-		FileCount:   len(entries),
-		Root:        resolved,
-		GeneratedAt: time.Now().UTC(),
+		Algorithm:       Algorithm,
+		Hash:            hex.EncodeToString(h.Sum(nil)),
+		FileCount:       len(entries),
+		RootFingerprint: rootFingerprint(resolved),
+		GeneratedAt:     time.Now().UTC(),
 	}, nil
 }
 
@@ -171,6 +172,9 @@ func IsStale(root, storedPath string, opts ...Options) (bool, string, error) {
 	}
 	if stored.Algorithm != current.Algorithm {
 		return true, fmt.Sprintf("signature algorithm changed (%q -> %q)", stored.Algorithm, current.Algorithm), nil
+	}
+	if stored.RootFingerprint != current.RootFingerprint {
+		return true, "signature recorded for a different root", nil
 	}
 	if stored.Hash != current.Hash {
 		return true, "target tree changed", nil
@@ -249,4 +253,13 @@ func resolveRoot(root string) (string, error) {
 		return "", errors.New("staleness: root must be a directory")
 	}
 	return resolved, nil
+}
+
+// rootFingerprint returns a short, non-reversible hash of the resolved root
+// path. It is persisted in the signature so IsStale can detect cross-root reuse
+// (a signature file from root A applied to root B) without leaking the
+// absolute filesystem path.
+func rootFingerprint(resolved string) string {
+	h := sha256.Sum256([]byte(resolved))
+	return hex.EncodeToString(h[:])[:12]
 }

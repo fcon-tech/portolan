@@ -158,3 +158,45 @@ test('buildSnapshot: prefers hotspots-full.jsonl when present', async () => {
   assert.strictEqual(map.objects.findings.length, 1);
   assert.strictEqual(map.objects.findings[0].id, 'full-only');
 });
+
+// ---- map-bundle detection (Go portolan map --root output) ----
+
+function mapBundleReader(graph, summary, coverage) {
+  return {
+    readJson: (name) => {
+      if (name === 'graph.json') return graph;
+      if (name === 'summary.json') return summary;
+      if (name === 'coverage.json') return coverage;
+      return null;
+    },
+    readJsonl: () => [],
+    exists: (name) => name === 'graph.json',
+    listProducerDirs: () => [],
+    bundleDir: '/fake-map',
+  };
+}
+
+test('buildSnapshot: detects Go map-bundle format and produces non-empty components', async () => {
+  const graph = {
+    nodes: [
+      { id: 'svc-a', kind: 'repository', label: 'Service A', evidence: { state: 'source-visible', source: '/r/svc-a' } },
+      { id: 'svc-b', kind: 'repository', label: 'Service B', evidence: { state: 'source-visible', source: '/r/svc-b' } },
+    ],
+    edges: [
+      { from: 'svc-a', to: 'svc-b', kind: 'imports', evidence: { state: 'metadata-visible' } },
+    ],
+  };
+  const summary = { root: '/r', generated_at: '2026-01-01T00:00:00Z', graph: { nodes: 2, edges: 1 } };
+  const reader = mapBundleReader(graph, summary, null);
+  const map = await buildSnapshot({ reader, targetRoot: '/r', generatedAt: 'T1' });
+  assert.ok(map.objects.components.length > 0, 'map-bundle should produce at least one component');
+  assert.ok(map.objects.relationships.length > 0, 'map-bundle edges should produce relationships');
+});
+
+test('buildSnapshot: scan-bundle format takes priority over map-bundle when atlas-surfaces.json present', async () => {
+  const reader = fakeReader(minimalArtifacts());
+  reader.exists = (name) => name === 'atlas-surfaces.json' || name === 'hotspots.jsonl';
+  const map = await buildSnapshot({ reader, targetRoot: '/landscape', generatedAt: 'T1' });
+  // scan-bundle produces the minimalArtifacts components (app-a, lib-b)
+  assert.strictEqual(map.objects.components.length, 2);
+});

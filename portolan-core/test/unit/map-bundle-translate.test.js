@@ -78,3 +78,19 @@ test('translateMapBundle: handles empty/missing graph gracefully', () => {
   assert.equal(artifacts.repos.length, 0);
   assert.equal(artifacts.atlasSurfaces.schema_version, '0.1.0');
 });
+
+test('translateMapBundle: parallel edges (same from/to/kind) are not collapsed', () => {
+  const artifacts = translateMapBundle({
+    graph: {
+      nodes: [repoNode('a', 'A'), repoNode('b', 'B')],
+      edges: [
+        edge('a', 'b', 'imports'),
+        edge('a', 'b', 'imports'), // parallel edge
+        edge('a', 'b', 'depends-on'),
+      ],
+    },
+  });
+  assert.equal(artifacts.relationships.length, 3, 'all three edges should produce distinct relationships');
+  const ids = artifacts.relationships.map((r) => r.id);
+  assert.equal(new Set(ids).size, 3, 'relationship ids must be unique');
+});

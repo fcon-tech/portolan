@@ -77,13 +77,14 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
   }));
 
   // ---- relationships (repo→repo edges) ----
+  // Use a running index so parallel edges (same from/to/kind) are not collapsed.
   const relationships = edges
     .filter((e) => e && repoIds.has(e.from) && repoIds.has(e.to))
-    .map((e) => ({
-      id: stableId('edge', e.from, e.to, e.kind || 'observes'),
+    .map((e, i) => ({
+      id: stableId('edge', String(i), e.from, e.to, e.kind || 'observes'),
       from_repo: e.from,
       to_repo: e.to,
-      type: (e.kind || 'relationship').replace(/-/g, '-'),
+      type: e.kind || 'relationship',
       evidence_state: mapEvidenceState(e.evidence && e.evidence.state),
       producer: 'portolan-map',
       summary: `${e.from} ↔ ${e.to} (${e.kind || 'relationship'})`,

@@ -267,6 +267,7 @@ func Run(opts Options) (Result, error) {
 	// Staleness short-circuit (root path only): skip the rebuild when the tree
 	// signature recorded in the existing bundle still matches the target. This
 	// is the agent-atlas "build if stale" contract for /portolan:map.
+	var staleReason string
 	if opts.IfStale {
 		outAbs, err := filepath.Abs(opts.OutputPath)
 		if err != nil {
@@ -290,15 +291,23 @@ func Run(opts Options) (Result, error) {
 			return Result{}, err
 		}
 		if !stale {
-			return Result{
-				OutputPath:  filepath.Clean(outAbs),
-				Artifacts:   artifactsFor(filepath.Clean(outAbs)),
-				Skipped:     true,
-				StaleReason: reason,
-			}, nil
+			// Verify key artifacts exist before trusting the skip — a partially
+			// deleted bundle must not produce a false "up to date".
+			if _, statErr := os.Stat(filepath.Join(outAbs, "summary.json")); statErr != nil {
+				stale = true
+				reason = "prior bundle incomplete (summary.json missing)"
+			} else {
+				return Result{
+					OutputPath:  filepath.Clean(outAbs),
+					Artifacts:   artifactsFor(filepath.Clean(outAbs)),
+					Skipped:     true,
+					StaleReason: reason,
+				}, nil
+			}
 		}
 		// Refreshing in place: the rebuild must overwrite the existing bundle.
 		opts.Force = true
+		staleReason = reason
 	}
 
 	root, out, err := validateStartup(opts)
@@ -396,7 +405,7 @@ func Run(opts Options) (Result, error) {
 			return Result{}, fmt.Errorf("write tree signature: %w", err)
 		}
 	}
-	return Result{OutputPath: out, Artifacts: artifacts}, nil
+	return Result{OutputPath: out, Artifacts: artifacts, StaleReason: staleReason}, nil
 }
 
 // artifactsFor builds the canonical Artifacts layout for a given output dir. It
