@@ -3519,7 +3519,7 @@ func TestRunMapDetectsGoModDependencyRelationships(t *testing.T) {
 	}
 	result := readGraph(t, filepath.Join(out, "graph.json"))
 	for _, dep := range []string{"package:github.com/example/direct", "package:example.com/block/dependency"} {
-		edge := findEdge(t, result, "package:example.com/relationship-fixture", dep, "depends-on")
+		edge := findEdge(t, result, "root", dep, "depends-on")
 		evidence := edge["evidence"].(map[string]any)
 		if evidence["state"] != "metadata-visible" {
 			t.Fatalf("edge %s evidence = %#v, want metadata-visible", dep, evidence)
