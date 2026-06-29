@@ -3136,6 +3136,19 @@ func isWithin(path, root string) bool {
 }
 
 func sortGraph(g *graph.Graph) {
+	// Classify package nodes as external — they are dependencies outside the
+	// expedition perimeter. In-perimeter units are repository/application
+	// nodes from the selection targets. Package nodes are declared
+	// dependencies (maven:, gradle:, npm:, package: prefixes) and are
+	// external by definition unless promoted to a component by the reading
+	// layer. This classification is REQUIRED so the reading layer
+	// (map-bundle-translate) includes them in the atlas — it only processes
+	// repository and external nodes.
+	for i := range g.Nodes {
+		if g.Nodes[i].Kind == "package" {
+			g.Nodes[i].Kind = "external"
+		}
+	}
 	sort.Slice(g.Nodes, func(i, j int) bool {
 		return g.Nodes[i].ID < g.Nodes[j].ID
 	})

@@ -143,16 +143,13 @@ func detectMavenPom(path, root string, result *Result, nodeIDs, edgeIDs map[stri
 	}
 
 	// The source node is the module defined by this POM. Use groupId:artifactId
-	// when available, falling back to directory name. Include the relative path
-	// to avoid collisions between modules with the same coordinates in
-	// different repos.
-	relDir, _ := filepath.Rel(root, filepath.Dir(path))
-	relDir = filepath.ToSlash(relDir)
+	// as the canonical ID — Maven modules are uniquely identified by coordinates,
+	// not by directory path.
 	moduleLabel := pom.GroupID + ":" + pom.ArtifactID
 	if pom.GroupID == "" || pom.ArtifactID == "" {
 		moduleLabel = filepath.Base(filepath.Dir(path))
 	}
-	moduleID := "maven:" + relDir + ":" + moduleLabel
+	moduleID := "maven:" + moduleLabel
 
 	addPackageNode(result, nodeIDs, moduleID, moduleLabel, graph.MetadataVisible, path)
 
