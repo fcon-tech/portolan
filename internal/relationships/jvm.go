@@ -1,0 +1,279 @@
+package relationships
+
+import (
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+
+	"github.com/fcon-tech/portolan/internal/graph"
+)
+
+// ---------------------------------------------------------------------------
+// Language registry (declarative)
+// ---------------------------------------------------------------------------
+
+// ManifestFormat identifies a manifest file format.
+type ManifestFormat string
+
+const (
+	FormatMaven   ManifestFormat = "maven"
+	FormatGradle  ManifestFormat = "gradle"
+	FormatNpm     ManifestFormat = "npm"
+	FormatPython  ManifestFormat = "python"
+	FormatCargo   ManifestFormat = "cargo"
+	FormatGemfile ManifestFormat = "gemfile"
+	FormatSwiftPM ManifestFormat = "swift-pm"
+	FormatPubspec ManifestFormat = "pubspec"
+)
+
+// LanguageConfig declares a language's manifest detection rules.
+type LanguageConfig struct {
+	ID         string
+	Extensions []string
+	Manifests  []ManifestSpec
+}
+
+// ManifestSpec declares a manifest filename and its format.
+type ManifestSpec struct {
+	Filename string
+	Format   ManifestFormat
+}
+
+// DefaultRegistry is the built-in language registry.
+var DefaultRegistry = []LanguageConfig{
+	{
+		ID:         "go",
+		Extensions: []string{".go"},
+		Manifests:  []ManifestSpec{{Filename: "go.mod", Format: "go-mod"}},
+	},
+	{
+		ID:         "java",
+		Extensions: []string{".java", ".kt", ".scala"},
+		Manifests: []ManifestSpec{
+			{Filename: "pom.xml", Format: FormatMaven},
+			{Filename: "build.gradle", Format: FormatGradle},
+			{Filename: "build.gradle.kts", Format: FormatGradle},
+		},
+	},
+	{
+		ID:         "javascript",
+		Extensions: []string{".js", ".ts", ".jsx", ".tsx"},
+		Manifests:  []ManifestSpec{{Filename: "package.json", Format: FormatNpm}},
+	},
+	{
+		ID:         "python",
+		Extensions: []string{".py"},
+		Manifests: []ManifestSpec{
+			{Filename: "requirements.txt", Format: FormatPython},
+			{Filename: "pyproject.toml", Format: FormatPython},
+		},
+	},
+	{
+		ID:         "rust",
+		Extensions: []string{".rs"},
+		Manifests:  []ManifestSpec{{Filename: "Cargo.toml", Format: FormatCargo}},
+	},
+	{
+		ID:         "swift",
+		Extensions: []string{".swift"},
+		Manifests:  []ManifestSpec{{Filename: "Package.swift", Format: FormatSwiftPM}},
+	},
+	{
+		ID:         "dart",
+		Extensions: []string{".dart"},
+		Manifests:  []ManifestSpec{{Filename: "pubspec.yaml", Format: FormatPubspec}},
+	},
+}
+
+// manifestFilenames returns the set of manifest filenames the registry
+// recognizes, mapped to their format.
+func manifestFilenames() map[string]ManifestFormat {
+	m := make(map[string]ManifestFormat)
+	for _, lang := range DefaultRegistry {
+		for _, spec := range lang.Manifests {
+			m[spec.Filename] = spec.Format
+		}
+	}
+	return m
+}
+
+// ---------------------------------------------------------------------------
+// JVM manifest detection (Maven + Gradle)
+// ---------------------------------------------------------------------------
+
+// detectMavenPom parses a pom.xml and emits depends-on edges for declared
+// dependencies. It reads <dependencies><dependency> blocks but NOT
+// <dependencyManagement> (which are version constraints, not active deps).
+func detectMavenPom(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read pom.xml: %v", err)})
+		return
+	}
+
+	type mavenDependency struct {
+		GroupID    string `xml:"groupId"`
+		ArtifactID string `xml:"artifactId"`
+		Version    string `xml:"version"`
+		Scope      string `xml:"scope"`
+	}
+
+	// Parse the full POM structure, extracting only active dependencies
+	// (not dependencyManagement).
+	type pomProject struct {
+		GroupID      string           `xml:"groupId"`
+		ArtifactID   string           `xml:"artifactId"`
+		Dependencies []mavenDependency `xml:"dependencies>dependency"`
+	}
+
+	var pom pomProject
+	if err := xml.Unmarshal(data, &pom); err != nil {
+		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("parse pom.xml: %v", err)})
+		return
+	}
+
+	// The source node is the module defined by this POM.
+	moduleLabel := pom.GroupID + ":" + pom.ArtifactID
+	if pom.GroupID == "" || pom.ArtifactID == "" {
+		// Fall back to directory name.
+		moduleLabel = filepath.Base(filepath.Dir(path))
+	}
+	moduleID := "maven:" + moduleLabel
+
+	addPackageNode(result, nodeIDs, moduleID, moduleLabel, graph.MetadataVisible, path)
+
+	for _, dep := range pom.Dependencies {
+		if dep.GroupID == "" || dep.ArtifactID == "" {
+			continue
+		}
+		depLabel := dep.GroupID + ":" + dep.ArtifactID
+		if dep.Version != "" {
+			depLabel += ":" + dep.Version
+		}
+		depID := "maven:" + dep.GroupID + ":" + dep.ArtifactID
+		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+		addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+		result.ManifestRequireCount++
+	}
+}
+
+// Gradle dependency declaration patterns. These cover the common forms:
+//   implementation 'group:artifact:version'
+//   api "group:artifact:version"
+//   project(':module-name')
+//   implementation platform('group:artifact:version')
+var (
+	gradleStringDep = regexp.MustCompile(`(?:implementation|api|compileOnly|runtimeOnly|testImplementation|testApi)\s*[(]?\s*['"]([^'"]+)['"]`)
+	gradleProjectDep = regexp.MustCompile(`(?:implementation|api|compileOnly|runtimeOnly)\s*[(]?\s*project\s*\(\s*['"]([^'"]+)['"]\s*\)`)
+)
+
+// detectGradle parses a build.gradle / build.gradle.kts and emits depends-on
+// edges. Gradle is a Groovy/Kotlin DSL; the parser uses bounded regex
+// extraction (not a full AST).
+func detectGradle(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read build.gradle: %v", err)})
+		return
+	}
+
+	// The source node is the Gradle project (directory name as label).
+	dirLabel := filepath.Base(filepath.Dir(path))
+	moduleID := "gradle:" + dirLabel
+	addPackageNode(result, nodeIDs, moduleID, dirLabel, graph.MetadataVisible, path)
+
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "//") || strings.HasPrefix(line, "*") {
+			continue
+		}
+
+		// project(':module') — internal module dependency.
+		for _, match := range gradleProjectDep.FindAllStringSubmatch(line, -1) {
+			if len(match) < 2 {
+				continue
+			}
+			depLabel := match[1]
+			depID := "gradle:" + strings.TrimPrefix(depLabel, ":")
+			addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+			addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+			result.ManifestRequireCount++
+		}
+
+		// 'group:artifact:version' — external dependency.
+		for _, match := range gradleStringDep.FindAllStringSubmatch(line, -1) {
+			if len(match) < 2 {
+				continue
+			}
+			dep := match[1]
+			// Only match GAV-style declarations (group:artifact:version).
+			parts := strings.Split(dep, ":")
+			if len(parts) < 2 {
+				continue // Not a GAV coordinate; skip (could be a file path etc.)
+			}
+			depID := "maven:" + parts[0] + ":" + parts[1]
+			addPackageNode(result, nodeIDs, depID, dep, graph.MetadataVisible, path)
+			addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+			result.ManifestRequireCount++
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
+// NPM (package.json) dependency detection
+// ---------------------------------------------------------------------------
+
+// detectNpmPackageJson parses a package.json and emits depends-on edges.
+func detectNpmPackageJson(path string, result *Result, nodeIDs, edgeIDs map[string]struct{}) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("read package.json: %v", err)})
+		return
+	}
+
+	type npmPackage struct {
+		Name            string            `json:"name"`
+		Dependencies    map[string]string `json:"dependencies"`
+		DevDependencies map[string]string `json:"devDependencies"`
+	}
+
+	var pkg npmPackage
+	if err := jsonUnmarshal(data, &pkg); err != nil {
+		result.Issues = append(result.Issues, Issue{Path: path, Reason: fmt.Sprintf("parse package.json: %v", err)})
+		return
+	}
+
+	moduleLabel := pkg.Name
+	if moduleLabel == "" {
+		moduleLabel = filepath.Base(filepath.Dir(path))
+	}
+	moduleID := "npm:" + moduleLabel
+	addPackageNode(result, nodeIDs, moduleID, moduleLabel, graph.MetadataVisible, path)
+
+	for name, version := range pkg.Dependencies {
+		depID := "npm:" + name
+		depLabel := name + ":" + version
+		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+		addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+		result.ManifestRequireCount++
+	}
+	// devDependencies are also edges — they describe the landscape.
+	for name, version := range pkg.DevDependencies {
+		depID := "npm:" + name
+		depLabel := name + ":" + version
+		addPackageNode(result, nodeIDs, depID, depLabel, graph.MetadataVisible, path)
+		addEdge(result, edgeIDs, moduleID, depID, "depends-on", graph.MetadataVisible, path)
+		result.ManifestRequireCount++
+	}
+}
+
+// jsonUnmarshal wraps encoding/json.Unmarshal so the import lives in this file
+// (the Go-focused relationships.go does not need it).
+func jsonUnmarshal(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
+}
