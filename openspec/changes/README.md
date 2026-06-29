@@ -111,6 +111,11 @@ Concrete slices that implement a change's requirement but need no new spec:
 
 ## Status honesty
 
+- `agent-base-collect-query` (derived slice) is **implemented**: the Go
+  `internal/staleness` package + `portolan map --if-stale` provide the
+  collect→query→JSON substrate with tree-signature staleness, and
+  `portolan-map.mjs` now collects via the Go core instead of erroring on a
+  missing pre-built bundle (closes the `/portolan:map` initiation gap).
 - `symbol-reference-edges` is **not** end-to-end done. The importer emits
   `references` edges in isolation (Go unit-tested), but they do not reach the
   atlas (see `importer-bundle-bridge`). Its `tasks.md` records this explicitly.

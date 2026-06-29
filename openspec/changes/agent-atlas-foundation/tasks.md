@@ -20,9 +20,11 @@ Implementation slices are follow-on changes.
 
 ## Follow-on implementation slices (separate changes, listed for traceability)
 
-- `agent-base-collect-query` (Go): `cmd/portolan` collect → query → JSON as the
-  Node-free agent entry point; tree-signature staleness module; closes the
-  `/portolan:map` initiation gap (conformance to `navigation` "build if stale").
+- `agent-base-collect-query` (Go): **implemented.** `internal/staleness` tree-
+      signature module + `portolan map --if-stale` provide the Node-free
+      collect→query→JSON substrate; `portolan-map.mjs` now collects via the Go
+      core instead of erroring (closes the `/portolan:map` initiation gap,
+      conforming to `navigation` "build if stale").
 - `migrate-scan-sh-to-go` (Go): migrate `portolan-scan.sh` collector internals
   (sharding, producer execution) into `internal/`; reduce the shell to a thin
   driver. Phased; touches one producer family at a time.
