@@ -237,11 +237,14 @@ fi
 # "not a repo list" gate once structural edges flow.
 if [[ -f "$BUNDLE/relationships.jsonl" ]]; then
   total_rels=$(wc -l <"$BUNDLE/relationships.jsonl" | tr -d '[:space:]')
-  structural_rels=$(jq -r 'select((.type // "") == "references") | .id' "$BUNDLE/relationships.jsonl" 2>/dev/null | wc -l | tr -d '[:space:]')
+  # Producers serialize edges under two field names: shell producers use `type`
+  # (e.g. scan-cross-repo.sh), Go producers use `kind` (internal/graph,
+  # internal/importer). Check both so a Go-emitted `references` edge is counted.
+  structural_rels=$(jq -r 'select(((.type // .kind // "")) == "references") | .id' "$BUNDLE/relationships.jsonl" 2>/dev/null | wc -l | tr -d '[:space:]')
   if [[ "$structural_rels" -eq 0 && "$total_rels" -gt 0 ]]; then
     warn "landscape is dependency-only: 0 structural (references) edges across $total_rels relationship(s); the Fleet map reads as shared-dependency clusters, not connected code (awaiting scip-producer)"
   elif [[ "$structural_rels" -gt 0 ]]; then
-    warn "landscape has $structural_rels structural edge(s) across $total_rels relationship(s): connected-structure condition met"
+    echo "harness-bigtop-acceptance: note: landscape has $structural_rels structural edge(s) across $total_rels relationship(s): connected-structure condition met"
   fi
 fi
 

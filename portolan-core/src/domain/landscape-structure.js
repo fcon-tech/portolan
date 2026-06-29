@@ -34,6 +34,13 @@ const STRUCTURAL_EDGE_TYPES = new Set([
   'override',
 ]);
 
+// Plain-language caveat shown when a landscape has edges but none of them are
+// code-level/structural. Phrased around dependencies because that is the real
+// producer case (shared-dependency / depends-on); the wording avoids claiming
+// the edges ARE all dependencies — only that no code-level structure exists.
+const DEPENDENCY_ONLY_NOTICE =
+  'Only dependency-level structure is available for this landscape — shared and declared dependencies from manifests and SBOMs. No code-level edges (calls, references, implementations) have been produced yet, so this view shows which components share libraries, not how the code actually connects. Treat it as a dependency map, not code-level architecture.';
+
 function edgeType(rel) {
   return String(rel && (rel.relationship_type || rel.type) || '').trim().toLowerCase();
 }
@@ -92,7 +99,7 @@ function summarizeLandscapeStructure(relationships) {
   // are structural — i.e. the view would otherwise read as "components that
   // share libraries," which is a dependency graph, not code-level architecture.
   const limitationNotice = (!hasStructuralEdges && dependencyEdgeCount > 0)
-    ? 'Only dependency-level structure is available for this landscape — shared and declared dependencies from manifests and SBOMs. No code-level edges (calls, references, implementations) have been produced yet, so this view shows which components share libraries, not how the code actually connects. Treat it as a dependency map, not code-level architecture.'
+    ? DEPENDENCY_ONLY_NOTICE
     : null;
 
   return {
@@ -108,6 +115,7 @@ function summarizeLandscapeStructure(relationships) {
 
 module.exports = {
   STRUCTURAL_EDGE_TYPES,
+  DEPENDENCY_ONLY_NOTICE,
   edgeType,
   isStructuralEdge,
   isDependencyEdge,

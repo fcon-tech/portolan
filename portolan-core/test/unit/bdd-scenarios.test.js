@@ -14,6 +14,7 @@ const assert = require('node:assert');
 const { runIntake } = require('../../src/use-cases/run-intake');
 const { validateIntakeResult } = require('../../src/domain/intake-result');
 const { openBehaviourMap } = require('../../src/use-cases/open-behaviour-map');
+const { openLandscapeStructure } = require('../../src/use-cases/open-landscape-structure');
 const { drillToRegion } = require('../../src/use-cases/drill-to-region');
 const { buildRegionProfile } = require('../../src/domain/region-profile');
 const { confidenceForProducer, resolveConflict, isEvidenceCompatible } = require('../../src/domain/confidence');
@@ -667,7 +668,6 @@ test('BDD [symbol-reference-edges]: A reference edge is explained honestly, not 
 // a flat inventory; dependency-only state is admitted in plain language.
 
 test('BDD [deep-landscape-demo]: Landscape shows connected groupings and cross-component edges', () => {
-  const { openLandscapeStructure } = require('../../src/use-cases/open-landscape-structure');
   const atlas = {
     objects: {
       components: [
@@ -700,7 +700,6 @@ test('BDD [deep-landscape-demo]: Landscape shows connected groupings and cross-c
 });
 
 test('BDD [deep-landscape-demo]: Dependency-only landscape is admitted, not disguised', () => {
-  const { openLandscapeStructure } = require('../../src/use-cases/open-landscape-structure');
   const atlas = {
     objects: {
       components: [
