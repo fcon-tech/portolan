@@ -20,7 +20,7 @@ Last updated: 2026-06-29.
 |---|---|---|---|---|---|
 | 1 | `agent-atlas-foundation` | 0 | atlas-identity, engineering-standards | **APPLIED + ARCHIVED** 2026-06-29 | Portolan = agent-atlas (base, Go, Node-free) + human-atlas (opt-in JS skin); language by consumer fit |
 | 2 | `symbol-reference-edges` | 1 | ontology | spec+partial-impl | typed `references` edges from symbol-index role data |
-| 3 | `bigtop-deep-landscape-demo` | 3 | reading-experience | spec-only | landscape reads as connected structure, not a repo list |
+| 3 | `bigtop-deep-landscape-demo` | 3 | reading-experience | **spec+partial-impl** | landscape reads as connected structure, not a repo list |
 | 18 | `semantic-investigation-producer` | 2 | semantic-investigation | spec-only | generate semantic pages from corpus + bounded agent claims (not fixture-backed) |
 | 19 | `semantic-evidence-anchors` | 2 | semantic-investigation | spec-only | every claim carries an anchor or `not_assessed` |
 | 20 | `multiscale-system-drilldown` | 2 | navigation | spec-only | ecosystem → capability → component → module/concept |
@@ -120,7 +120,17 @@ Concrete slices that implement a change's requirement but need no new spec:
   are folded into the living atlas-identity and engineering-standards specs;
   the navigation spec gained "collect if stale" + "reuse when fresh" BDD
   scenarios bound to unit tests.
-- `symbol-reference-edges` is **not** end-to-end done. The importer emits
-  `references` edges in isolation (Go unit-tested), but they do not reach the
-  atlas (see `importer-bundle-bridge`). Its `tasks.md` records this explicitly.
+- `symbol-reference-edges` is **end-to-end done**: the importer emits
+  `references` edges, the map collector bridges them into repo-level graph
+  edges (`internal/maprun/symbolrefs.go`), and the reading layer renders them.
+  See `importer-bundle-bridge` above.
+- `bigtop-deep-landscape-demo` is **spec + partial-impl**. The dependency-only
+  honesty slice is implemented and code+spec reviewed to LGTM (minimax +
+  deepseek): the reading layer classifies edges into structural vs dependency,
+  renders a plain-language limitation notice when only dependency edges exist,
+  and renders structural edges distinctly with an edge legend when present
+  (scenarios 1a + 1b bound to passing BDD tests). The full structural Bigtop
+  showcase (regenerated demo with real structural edges + the hard "not a repo
+  list" harness gate) is deferred to the `scip-producer` slice; scenarios 2a/2b
+  are recorded as commented-out in the feature file.
 - Everything else is `spec-only` unless an implementation slice above lands.
