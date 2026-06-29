@@ -26,4 +26,8 @@ reading.
 
 - Feeds `semantic-investigation-producer` (overlap findings enrich pages) and
   the multiscale capability scale (`multiscale-system-drilldown`).
+- Adds findings ON TOP of the living requirement "Overlap and alternatives are
+  bidirectional" in `openspec/specs/semantic-investigation/`, which already
+  defines `overlaps_with` as a semantic relation. An overlap can be BOTH a
+  relation and a finding; this change does not replace the relation.
 - Out of scope: the detection heuristics per kind (design TBD).
