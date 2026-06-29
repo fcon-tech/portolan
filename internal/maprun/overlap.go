@@ -123,6 +123,7 @@ func detectOverlappingCapabilities(repoDeps repoDependencyMap, repoLabels map[st
 				EvidenceSource: "portolan map (overlap detection)",
 				Confidence:     0.7,
 				Status:         "observed",
+				SubjectIDs:     []string{a, b},
 			})
 		}
 	}
@@ -143,14 +144,19 @@ func detectLegacyStaleOverlap(g graph.Graph, repoLabels map[string]string) []Fin
 	}
 
 	// Find edges from perimeter nodes to non-perimeter (external/stale) targets.
+	// Only emit legacy-stale when the target has a retirement signal (e.g. the
+	// target's label or id contains 'retired', 'deprecated', 'legacy', 'stale').
+	// This avoids conflating normal third-party deps with retired components.
 	staleReferenced := make(map[string][]string) // targetId -> []sourceId
 	for _, edge := range g.Edges {
 		if edge.Kind != "depends-on" && edge.Kind != "references" && edge.Kind != "imports" {
 			continue
 		}
 		if perimeterIDs[edge.From] && !perimeterIDs[edge.To] {
-			// The target is outside the perimeter. If multiple active units
-			// reference it, it is a candidate for legacy-stale overlap.
+			// Check for a retirement signal on the target.
+			if !hasRetirementSignal(edge.To, g) {
+				continue
+			}
 			staleReferenced[edge.To] = append(staleReferenced[edge.To], edge.From)
 		}
 	}
@@ -185,6 +191,7 @@ func detectLegacyStaleOverlap(g graph.Graph, repoLabels map[string]string) []Fin
 			EvidenceSource: "portolan map (overlap detection)",
 			Confidence:     0.6,
 			Status:         "observed",
+			SubjectIDs:     sources,
 		})
 	}
 
@@ -216,12 +223,37 @@ func overlapFindingID(a, b string) string {
 }
 
 func sanitizeID(s string) string {
-	// Use percent-encoding for path separators and scope delimiters so
-	// distinct source IDs do not collide after sanitization (e.g.
-	// "repo:a/b" and "repo/a:b" must NOT map to the same finding ID).
+	// Escape % first so percent-encoded sequences from earlier calls don't
+	// collide with literal percent signs in source IDs.
+	s = strings.ReplaceAll(s, "%", "%25")
 	s = strings.ReplaceAll(s, "/", "%2F")
 	s = strings.ReplaceAll(s, ":", "%3A")
 	s = strings.ReplaceAll(s, "@", "-at-")
 	s = strings.ReplaceAll(s, " ", "-")
 	return s
+}
+
+// hasRetirementSignal checks whether a non-perimeter target carries a
+// retirement indicator in its id or label (e.g. 'retired', 'deprecated',
+// 'legacy', 'stale', 'archived'). This prevents the legacy-stale detector
+// from flagging normal third-party dependencies.
+func hasRetirementSignal(targetID string, g graph.Graph) bool {
+	lower := strings.ToLower(targetID)
+	for _, kw := range []string{"retired", "deprecated", "legacy", "stale", "archived"} {
+		if strings.Contains(lower, kw) {
+			return true
+		}
+	}
+	for _, node := range g.Nodes {
+		if node.ID == targetID {
+			label := strings.ToLower(node.Label)
+			for _, kw := range []string{"retired", "deprecated", "legacy", "stale", "archived"} {
+				if strings.Contains(label, kw) {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
 }

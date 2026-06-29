@@ -64,14 +64,15 @@ type RunMetadata struct {
 }
 
 type Finding struct {
-	ID             string  `json:"id"`
-	Kind           string  `json:"kind"`
-	Summary        string  `json:"summary"`
-	Severity       string  `json:"severity"`
-	EvidenceState  string  `json:"evidence_state"`
-	EvidenceSource string  `json:"evidence_source"`
-	Confidence     float64 `json:"confidence"`
-	Status         string  `json:"status"`
+	ID             string   `json:"id"`
+	Kind           string   `json:"kind"`
+	Summary        string   `json:"summary"`
+	Severity       string   `json:"severity"`
+	EvidenceState  string   `json:"evidence_state"`
+	EvidenceSource string   `json:"evidence_source"`
+	Confidence     float64  `json:"confidence"`
+	Status         string   `json:"status"`
+	SubjectIDs     []string `json:"subject_ids,omitempty"`
 }
 
 const SchemaVersion = "0.1.0"
@@ -370,7 +371,7 @@ func Run(opts Options) (Result, error) {
 		Root:            root,
 		OutputPath:      out,
 		Artifacts:       artifacts,
-		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-tool-output-import", "configuration-surface-detection", "technical-debt-findings"},
+		EnabledSurfaces: []string{"source-inventory", "relationship-detection", "duplication-tool-output-import", "configuration-surface-detection", "technical-debt-findings", "overlap-detection"},
 		SkippedSurfaces: skippedSurfaces,
 		Warnings:        warnings,
 	}
