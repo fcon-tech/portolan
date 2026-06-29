@@ -15,6 +15,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const { composeSystemMap } = require('../../src/domain/system-map-compose');
+const { validateSystemMap } = require('../../src/domain/atlas-validate');
 const { buildSnapshot } = require('../../src/use-cases/build-snapshot');
 
 // A minimal corpus bundle: one promoted component + one surface-only target +
@@ -199,4 +200,52 @@ test('buildSnapshot: scan-bundle format takes priority over map-bundle when atla
   const map = await buildSnapshot({ reader, targetRoot: '/landscape', generatedAt: 'T1' });
   // scan-bundle produces the minimalArtifacts components (app-a, lib-b)
   assert.strictEqual(map.objects.components.length, 2);
+});
+
+test('composeSystemMap: external targets produce valid repo->external relationships', () => {
+  const artifacts = {
+    atlasSurfaces: {
+      schema_version: '0.1.0',
+      target_root: '/landscape',
+      targets: [
+        { id: 'repo-a', label: 'Repo A', kind: 'repository', lifecycle: 'active', depends_on: [] },
+        { id: 'external:symbol-ref:abc123', label: 'external-pkg/src/index.js', kind: 'external', lifecycle: 'external', role: 'external-boundary', depends_on: [] },
+      ],
+      surfaces: [],
+      gaps: [],
+    },
+    atlasFacts: { schema_version: '0.1.0', target_root: '/landscape', components: [], edges: [], gaps: [] },
+    repoProfiles: { schema_version: '0.1.0', repos: [] },
+    manifest: {},
+    relationships: [
+      {
+        id: 'edge-1',
+        from_repo: 'repo-a',
+        to_repo: 'external:symbol-ref:abc123',
+        type: 'references',
+        evidence_state: 'metadata-visible',
+        producer: 'portolan-map',
+        summary: 'repo-a references external:symbol-ref:abc123 (references)',
+      },
+    ],
+    hotspots: [],
+    gaps: [],
+    repos: [{ id: 'repo-a', name: 'Repo A', path: '/landscape/repo-a' }],
+  };
+
+  const map = composeSystemMap(artifacts, { targetRoot: '/landscape' });
+
+  const refRel = map.objects.relationships.find((r) => r.relationship_type === 'references');
+  assert.ok(refRel, 'repo->external references relationship should be present');
+  assert.strictEqual(refRel.from_id, 'component:repo-a');
+  assert.strictEqual(refRel.to_id, 'surf:external:symbol-ref:abc123');
+
+  const extSurface = map.objects.surfaces.find((s) => s.label === 'external-pkg/src/index.js');
+  assert.ok(extSurface, 'external target should become a surface');
+
+  const comp = map.objects.components.find((c) => c.id === 'component:repo-a');
+  assert.ok(comp.relationship_ids.includes(refRel.id), 'repo-a component should be linked to the external relationship');
+
+  const validation = validateSystemMap(map);
+  assert.deepStrictEqual(validation.errors, [], 'system-map with external relationship should validate without errors');
 });

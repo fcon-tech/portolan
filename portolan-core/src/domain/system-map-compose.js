@@ -406,6 +406,7 @@ function composeSystemMap(artifacts, opts = {}) {
     if (seenSurfaceKeys.has(dedupKey)) continue;
     seenSurfaceKeys.add(dedupKey);
     knownIds.add(surfaceId);
+    knownIds.add(t.id);
     surfaces.push({
       id: surfaceId,
       surface_type: surfaceType,
@@ -468,8 +469,7 @@ function composeSystemMap(artifacts, opts = {}) {
       const dedupKey = `${ownerId}|${surfaceType}|${sr.url || ''}`;
       if (seenSurfaceKeys.has(dedupKey)) continue;
       seenSurfaceKeys.add(dedupKey);
-    knownIds.add(surfaceId);
-    knownIds.add(t.id);
+      knownIds.add(surfaceId);
       surfaces.push({
         id: surfaceId,
         surface_type: surfaceType,
@@ -523,11 +523,27 @@ function composeSystemMap(artifacts, opts = {}) {
     }
   }
 
+  // Build an endpoint-resolution map: target ID -> component ID (promotable)
+  // or surface ID (surface-only). This normalizes relationship endpoints so
+  // they resolve to real object IDs during validation.
+  const surfaceIdByTargetId = new Map();
+  for (const t of corpusTargets) {
+    if (!t || isPromotableComponent(t)) continue;
+    surfaceIdByTargetId.set(t.id, `surf:${t.id}`);
+  }
+  function resolveEndpoint(rawId) {
+    return componentByTargetId.get(rawId)
+      || surfaceIdByTargetId.get(rawId)
+      || rawId;
+  }
+
   for (const r of relationships) {
     if (!r || !r.id) continue;
     const relId = `rel:${r.id}`;
-    const fromId = r.from_repo || (r.repos && r.repos[0]) || '';
-    const toId = r.to_repo || (r.repos && r.repos[1]) || '';
+    const rawFrom = r.from_repo || (r.repos && r.repos[0]) || '';
+    const rawTo = r.to_repo || (r.repos && r.repos[1]) || '';
+    const fromId = resolveEndpoint(rawFrom);
+    const toId = resolveEndpoint(rawTo);
     if (!fromId || !toId) continue;
     addRelationship({
       id: relId,
