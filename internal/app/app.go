@@ -1092,6 +1092,13 @@ local inventories and --root for bounded local discovery of the root, direct
 child Git repositories, and repos/* Git repositories. The command makes no
 network calls, does not mutate selected repositories, and writes only to the
 selected output directory.
+
+Symbol-index exports: place SCIP/Serena-style symbol-index JSON files under
+<root>/.portolan/symbol-index/*.json before running "portolan map --root" to
+surface cross-repo symbol reference edges (typed "references" relationships)
+in the atlas. Document paths in the export may be root-relative or
+repo-basename-relative. References are metadata-visible and not a complete
+call graph.
 `)
 }
 

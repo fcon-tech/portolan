@@ -5174,7 +5174,7 @@ func assertSchemaShape(t *testing.T, graph map[string]any) {
 	if graph["generated_by"] == "" {
 		t.Fatalf("generated_by is required")
 	}
-	validNodeKinds := map[string]bool{"repository": true, "service": true, "package": true, "runtime": true, "team": true, "claim": true, "duplication": true, "configuration": true, "unknown": true}
+	validNodeKinds := map[string]bool{"repository": true, "service": true, "package": true, "runtime": true, "team": true, "claim": true, "duplication": true, "configuration": true, "unknown": true, "external": true}
 	validEdgeKinds := map[string]bool{"owns": true, "depends-on": true, "exposes": true, "imports": true, "observes": true, "claims": true, "unknown": true, "references": true}
 	validStates := map[string]bool{"source-visible": true, "metadata-visible": true, "runtime-visible": true, "claim-only": true, "unknown": true, "cannot_verify": true}
 	for _, item := range graph["nodes"].([]any) {
