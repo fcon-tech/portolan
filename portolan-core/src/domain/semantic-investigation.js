@@ -568,6 +568,7 @@ function* iterClaims(component) {
   for (const r of (component.risks || [])) yield { id: r.id, label: r.label || r.id, sourceBoundary: r.source_boundary || 'not_assessed', sourceRef: r.source_ref || '' };
   for (const s of (component.integration_surfaces || [])) yield { id: s.label || s.kind, label: s.label || s.kind, sourceBoundary: s.source_boundary || 'not_assessed', sourceRef: s.evidence_ref || s.source_ref || '' };
   for (const rel of (component.semantic_relations || [])) yield { id: rel.target_id, label: rel.type + ' ' + rel.target_id, sourceBoundary: rel.source_boundary || 'not_assessed', sourceRef: rel.source_ref || '' };
+  for (const ac of (component.agent_claims || [])) yield { id: ac.id, label: ac.label || ac.id, sourceBoundary: ac.source_boundary || 'not_assessed', sourceRef: ac.source_ref || '' };
 }
 
 // ---------------------------------------------------------------------------
