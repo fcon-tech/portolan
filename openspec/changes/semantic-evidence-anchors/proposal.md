@@ -24,4 +24,9 @@ explicitly marked `not_assessed` — never presented as verified without backing
 
 - Composes with `semantic-investigation-producer` (18): generated pages must
   attach anchors to the claims they emit.
+- Extends (does not replace) the living requirement "Source boundary labels
+  every semantic assertion" in `openspec/specs/semantic-investigation/`, which
+  already requires source-boundary labels and resolvable source cards for
+  curated claims. This change ADDS a command-receipt anchor type and the
+  never-render-unanchored-as-verified enforcement.
 - Out of scope: the anchor storage format (design TBD).
