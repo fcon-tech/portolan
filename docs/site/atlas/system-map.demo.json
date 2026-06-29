@@ -77,7 +77,9 @@
         "relationship_ids": [
           "rel:manifest-dep:bigtop-groovy--to--apache-bigtop-repo"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:duplicate-risk-packaging"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -127,7 +129,9 @@
         "relationship_ids": [
           "rel:manifest-dep:bigtop-jsvc--to--apache-bigtop-repo"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:duplicate-risk-packaging"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -177,7 +181,9 @@
         "relationship_ids": [
           "rel:manifest-dep:bigtop-select--to--apache-bigtop-repo"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:duplicate-risk-packaging"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -227,7 +233,9 @@
         "relationship_ids": [
           "rel:manifest-dep:bigtop-utils--to--apache-bigtop-repo"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:duplicate-risk-packaging"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -277,7 +285,9 @@
           "wiki-apache-airflow"
         ],
         "relationship_ids": [],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:legacy-stale-oozie"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -372,9 +382,14 @@
           "wiki-apache-flink"
         ],
         "relationship_ids": [
-          "rel:manifest-dep:apache-flink--to--apache-hadoop"
+          "rel:manifest-dep:apache-flink--to--apache-hadoop",
+          "rel:ref:spark--to--flink"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:overlap-spark-flink",
+          "finding:overlap-spark-flink-alternative",
+          "finding:duplication-concept-placeholder"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -434,9 +449,15 @@
           "rel:manifest-dep:apache-tez--to--apache-hadoop",
           "rel:manifest-dep:apache-zeppelin--to--apache-hadoop",
           "rel:manifest-dep:apache-oozie--to--apache-hadoop",
-          "rel:manifest-dep:apache-sqoop--to--apache-hadoop"
+          "rel:manifest-dep:apache-sqoop--to--apache-hadoop",
+          "rel:ref:hbase--to--hadoop",
+          "rel:ref:hive--to--hadoop",
+          "rel:ref:solr--to--hadoop",
+          "rel:ref:oozie--to--hadoop"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:version-skew-hadoop"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -482,9 +503,13 @@
         "relationship_ids": [
           "rel:manifest-dep:apache-hbase--to--apache-hadoop",
           "rel:manifest-dep:apache-hbase--to--apache-zookeeper",
-          "rel:manifest-dep:apache-phoenix--to--apache-hbase"
+          "rel:manifest-dep:apache-phoenix--to--apache-hbase",
+          "rel:ref:hbase--to--hadoop"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:overlap-hbase-solr",
+          "finding:version-skew-hadoop"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -537,7 +562,8 @@
           "rel:manifest-dep:apache-hive--to--apache-hadoop",
           "rel:manifest-dep:apache-hive--to--apache-tez",
           "rel:manifest-dep:apache-zeppelin--to--apache-hive",
-          "rel:manifest-dep:apache-sqoop--to--apache-hive"
+          "rel:manifest-dep:apache-sqoop--to--apache-hive",
+          "rel:ref:hive--to--hadoop"
         ],
         "finding_ids": [],
         "unknown_ids": [
@@ -589,7 +615,8 @@
           "wiki-apache-kafka"
         ],
         "relationship_ids": [
-          "rel:manifest-dep:apache-kafka--to--apache-zookeeper"
+          "rel:manifest-dep:apache-kafka--to--apache-zookeeper",
+          "rel:ref:kafka--to--zookeeper"
         ],
         "finding_ids": [],
         "unknown_ids": [
@@ -790,8 +817,12 @@
           "tracker-apache-solr",
           "wiki-apache-solr"
         ],
-        "relationship_ids": [],
-        "finding_ids": [],
+        "relationship_ids": [
+          "rel:ref:solr--to--hadoop"
+        ],
+        "finding_ids": [
+          "finding:overlap-hbase-solr"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -836,9 +867,14 @@
         "relationship_ids": [
           "rel:manifest-dep:apache-livy--to--apache-spark",
           "rel:manifest-dep:apache-spark--to--apache-hadoop",
-          "rel:manifest-dep:apache-zeppelin--to--apache-spark"
+          "rel:manifest-dep:apache-zeppelin--to--apache-spark",
+          "rel:ref:spark--to--flink"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:overlap-spark-flink",
+          "finding:overlap-spark-flink-alternative",
+          "finding:duplication-concept-placeholder"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -891,7 +927,9 @@
           "rel:manifest-dep:apache-hive--to--apache-tez",
           "rel:manifest-dep:apache-tez--to--apache-hadoop"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:duplication-concept-placeholder"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -996,7 +1034,8 @@
         "relationship_ids": [
           "rel:manifest-dep:apache-hbase--to--apache-zookeeper",
           "rel:manifest-dep:apache-kafka--to--apache-zookeeper",
-          "rel:manifest-dep:apache-phoenix--to--apache-zookeeper"
+          "rel:manifest-dep:apache-phoenix--to--apache-zookeeper",
+          "rel:ref:kafka--to--zookeeper"
         ],
         "finding_ids": [],
         "unknown_ids": [
@@ -1041,9 +1080,12 @@
           "wiki-apache-oozie"
         ],
         "relationship_ids": [
-          "rel:manifest-dep:apache-oozie--to--apache-hadoop"
+          "rel:manifest-dep:apache-oozie--to--apache-hadoop",
+          "rel:ref:oozie--to--hadoop"
         ],
-        "finding_ids": [],
+        "finding_ids": [
+          "finding:legacy-stale-oozie"
+        ],
         "unknown_ids": [
           "unknown:atlas-facts-runtime-topology"
         ],
@@ -2796,9 +2838,263 @@
         "why_present": "Apache Sqoop declares a dependency on apache-hive.",
         "summary": "Apache Sqoop depends on apache-hive (manifest metadata).",
         "route": "#/detail/relationship/rel:manifest-dep:apache-sqoop--to--apache-hive"
+      },
+      {
+        "id": "rel:ref:spark--to--flink",
+        "relationship_type": "references",
+        "from_id": "component:apache-spark",
+        "to_id": "component:apache-flink",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-spark.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "Spark and Flink share API-level concepts (DataStream, batch APIs) and cross-reference each other in integration code.",
+        "summary": "Apache Spark references Apache Flink (streaming framework cross-reference).",
+        "route": "#/detail/relationship/rel:ref:spark--to--flink"
+      },
+      {
+        "id": "rel:ref:hbase--to--hadoop",
+        "relationship_type": "references",
+        "from_id": "component:apache-hbase",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-hbase.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "HBase directly uses HDFS client APIs for storage backend integration.",
+        "summary": "Apache HBase references Apache Hadoop (HDFS storage integration).",
+        "route": "#/detail/relationship/rel:ref:hbase--to--hadoop"
+      },
+      {
+        "id": "rel:ref:hive--to--hadoop",
+        "relationship_type": "references",
+        "from_id": "component:apache-hive",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-hive.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "Hive uses HDFS for storage and MapReduce/Tez for query execution.",
+        "summary": "Apache Hive references Apache Hadoop (HDFS + compute integration).",
+        "route": "#/detail/relationship/rel:ref:hive--to--hadoop"
+      },
+      {
+        "id": "rel:ref:solr--to--hadoop",
+        "relationship_type": "references",
+        "from_id": "component:apache-solr",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-solr.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "Solr integrates with HDFS for index storage in large-scale deployments.",
+        "summary": "Apache Solr references Apache Hadoop (HDFS index storage).",
+        "route": "#/detail/relationship/rel:ref:solr--to--hadoop"
+      },
+      {
+        "id": "rel:ref:kafka--to--zookeeper",
+        "relationship_type": "references",
+        "from_id": "component:apache-kafka",
+        "to_id": "component:apache-zookeeper",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-kafka.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "Kafka uses Zookeeper for cluster coordination and metadata management.",
+        "summary": "Apache Kafka references Apache Zookeeper (cluster coordination).",
+        "route": "#/detail/relationship/rel:ref:kafka--to--zookeeper"
+      },
+      {
+        "id": "rel:ref:oozie--to--hadoop",
+        "relationship_type": "references",
+        "from_id": "component:apache-oozie",
+        "to_id": "component:apache-hadoop",
+        "direction": "directed",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "corpus-manifest#component:apache-oozie.references",
+          "producer": "symbol-index"
+        },
+        "created_by_producer_family": "symbol-index",
+        "why_present": "Oozie submits workflow jobs to Hadoop YARN/MapReduce.",
+        "summary": "Apache Oozie references Apache Hadoop (workflow execution).",
+        "route": "#/detail/relationship/rel:ref:oozie--to--hadoop"
       }
     ],
-    "findings": [],
+    "findings": [
+      {
+        "id": "finding:overlap-spark-flink",
+        "finding_type": "overlapping-capabilities",
+        "severity": "major",
+        "affected_ids": [
+          "component:apache-spark",
+          "component:apache-flink"
+        ],
+        "summary": "Apache Spark and Apache Flink both provide distributed stream processing with overlapping capabilities in batch + streaming + ML pipelines.",
+        "created_by_producer_family": "portolan-map-overlap-detection",
+        "why_present": "Producer \"portolan-map-overlap-detection\" flagged this overlapping-capabilities.",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "portolan-map#finding:overlap-spark-flink",
+          "producer": "portolan-map-overlap-detection"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:overlap-spark-flink"
+        },
+        "route": "#/detail/finding/finding:overlap-spark-flink"
+      },
+      {
+        "id": "finding:overlap-hbase-solr",
+        "finding_type": "overlapping-capabilities",
+        "severity": "minor",
+        "affected_ids": [
+          "component:apache-hbase",
+          "component:apache-solr"
+        ],
+        "summary": "Apache HBase and Apache Solr both provide large-scale data indexing and retrieval, creating overlapping capabilities in search + storage.",
+        "created_by_producer_family": "portolan-map-overlap-detection",
+        "why_present": "Producer \"portolan-map-overlap-detection\" flagged this overlapping-capabilities.",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "portolan-map#finding:overlap-hbase-solr",
+          "producer": "portolan-map-overlap-detection"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:overlap-hbase-solr"
+        },
+        "route": "#/detail/finding/finding:overlap-hbase-solr"
+      },
+      {
+        "id": "finding:overlap-spark-flink-alternative",
+        "finding_type": "alternative-capability",
+        "severity": "minor",
+        "affected_ids": [
+          "component:apache-spark",
+          "component:apache-flink"
+        ],
+        "summary": "Spark (micro-batch) and Flink (true streaming) are alternative implementations of stream processing with different latency/throughput trade-offs.",
+        "created_by_producer_family": "portolan-map-overlap-detection",
+        "why_present": "Producer \"portolan-map-overlap-detection\" flagged this alternative-capability.",
+        "evidence": {
+          "state": "not_assessed",
+          "source": "portolan-map#finding:overlap-spark-flink-alternative",
+          "producer": "portolan-map-overlap-detection"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:overlap-spark-flink-alternative"
+        },
+        "route": "#/detail/finding/finding:overlap-spark-flink-alternative"
+      },
+      {
+        "id": "finding:legacy-stale-oozie",
+        "finding_type": "legacy-stale-semantic-overlap",
+        "severity": "minor",
+        "affected_ids": [
+          "component:apache-oozie",
+          "component:apache-airflow"
+        ],
+        "summary": "Apache Oozie is a legacy workflow scheduler still referenced by active components but superseded by modern alternatives (Airflow, Livy).",
+        "created_by_producer_family": "portolan-map-overlap-detection",
+        "why_present": "Producer \"portolan-map-overlap-detection\" flagged this legacy-stale-semantic-overlap.",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "portolan-map#finding:legacy-stale-oozie",
+          "producer": "portolan-map-overlap-detection"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:legacy-stale-oozie"
+        },
+        "route": "#/detail/finding/finding:legacy-stale-oozie"
+      },
+      {
+        "id": "finding:duplication-concept-placeholder",
+        "finding_type": "duplicated-concept",
+        "severity": "info",
+        "affected_ids": [
+          "component:apache-spark",
+          "component:apache-flink",
+          "component:apache-tez"
+        ],
+        "summary": "Duplicated-concept detection requires symbol-level naming overlap analysis; not yet assessed for this landscape.",
+        "created_by_producer_family": "portolan-map-overlap-detection",
+        "why_present": "Producer \"portolan-map-overlap-detection\" flagged this duplicated-concept.",
+        "evidence": {
+          "state": "not_assessed",
+          "source": "portolan-map#finding:duplication-concept-placeholder",
+          "producer": "portolan-map-overlap-detection"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:duplication-concept-placeholder"
+        },
+        "route": "#/detail/finding/finding:duplication-concept-placeholder"
+      },
+      {
+        "id": "finding:version-skew-hadoop",
+        "finding_type": "version_skew",
+        "severity": "major",
+        "affected_ids": [
+          "component:apache-hadoop",
+          "component:apache-hbase"
+        ],
+        "summary": "Apache Hadoop components in this landscape may carry version-boundary risks across HDFS/YARN/HBase integration points.",
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Producer \"corpus-manifest\" flagged this version_skew.",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "portolan-map#finding:version-skew-hadoop",
+          "producer": "corpus-manifest"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:version-skew-hadoop"
+        },
+        "route": "#/detail/finding/finding:version-skew-hadoop"
+      },
+      {
+        "id": "finding:duplicate-risk-packaging",
+        "finding_type": "duplicate_risk",
+        "severity": "minor",
+        "affected_ids": [
+          "component:bigtop-groovy",
+          "component:bigtop-jsvc",
+          "component:bigtop-select",
+          "component:bigtop-utils"
+        ],
+        "summary": "Multiple Bigtop packaging components (Groovy, JSVC, Select, Utils) share similar build patterns with potential duplication.",
+        "created_by_producer_family": "corpus-manifest",
+        "why_present": "Producer \"corpus-manifest\" flagged this duplicate_risk.",
+        "evidence": {
+          "state": "metadata-visible",
+          "source": "portolan-map#finding:duplicate-risk-packaging",
+          "producer": "corpus-manifest"
+        },
+        "next_action": {
+          "label": "Inspect finding detail",
+          "target": "#/detail/finding/finding:duplicate-risk-packaging"
+        },
+        "route": "#/detail/finding/finding:duplicate-risk-packaging"
+      }
+    ],
     "unknowns": [
       {
         "id": "unknown:atlas-facts-runtime-topology",
@@ -2811,6 +3107,34 @@
           "reason": "Gap status: not_assessed."
         },
         "route": "#/detail/unknown/unknown:atlas-facts-runtime-topology"
+      }
+    ],
+    "hypotheses": [
+      {
+        "id": "hypothesis:spark-batch-only",
+        "finding_type": "triangulation-conflict",
+        "subject_id": "component:apache-spark",
+        "claim": "Agent hypothesis: Spark is used primarily for batch ETL, not real-time streaming.",
+        "source_boundary": "agent-hypothesis",
+        "evidence": {
+          "state": "claim-only",
+          "source": "agent-hypothesis#spark-batch-only",
+          "producer": "agent"
+        },
+        "route": "#/detail/hypothesis/hypothesis:spark-batch-only"
+      },
+      {
+        "id": "hypothesis:oozie-deprecated",
+        "finding_type": "triangulation-conflict",
+        "subject_id": "component:apache-oozie",
+        "claim": "Agent hypothesis: Oozie is deprecated and scheduled for removal from the Bigtop stack.",
+        "source_boundary": "agent-hypothesis",
+        "evidence": {
+          "state": "claim-only",
+          "source": "agent-hypothesis#oozie-deprecated",
+          "producer": "agent"
+        },
+        "route": "#/detail/hypothesis/hypothesis:oozie-deprecated"
       }
     ]
   },
