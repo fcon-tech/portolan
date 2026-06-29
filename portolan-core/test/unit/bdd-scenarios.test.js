@@ -560,3 +560,52 @@ test('BDD [atlas-drilldown-semantics]: Run Log separates artifact validation fro
   assert.ok(r.artifactValidation !== r.evidenceUsability, 'axes are distinct concepts');
 });
 
+// ---- Feature: Symbol reference edges (ontology) ----
+
+test('BDD [symbol-reference-edges]: A reference relationship renders as a typed edge', () => {
+  const atlas = {
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', c4_family: 'data-systems', lifecycle: 'active', route: '#/dossier/component/a', evidence: { state: 'metadata-visible' } },
+        { id: 'c:b', display_name: 'B', c4_family: 'data-systems', lifecycle: 'active', route: '#/dossier/component/b', evidence: { state: 'metadata-visible' } },
+      ],
+      relationships: [
+        { id: 'r:ref1', from_id: 'c:a', to_id: 'c:b', relationship_type: 'references', direction: 'directed', evidence: { state: 'metadata-visible' }, route: '#/detail/relationship/r:ref1' },
+      ],
+    },
+  };
+  const model = openBehaviourMap(atlas);
+  assert.strictEqual(model.edges.length, 1, 'reference edge renders');
+  assert.strictEqual(model.edges[0].relationshipType, 'references', 'edge typed references');
+});
+
+test('BDD [symbol-reference-edges]: A reference edge is explained honestly, not as a complete call graph', () => {
+  const { openRelationship } = require('../../src/use-cases/open-relationship');
+  const atlas = {
+    objects: {
+      components: [
+        { id: 'c:a', display_name: 'A', route: '#/dossier/component/a' },
+        { id: 'c:b', display_name: 'B', route: '#/dossier/component/b' },
+      ],
+      relationships: [
+        {
+          id: 'r:ref1',
+          from_id: 'c:a',
+          to_id: 'c:b',
+          relationship_type: 'references',
+          direction: 'directed',
+          evidence: { state: 'metadata-visible', producer: 'symbol-index' },
+          created_by_producer_family: 'symbol-index',
+          why_present: 'Reference resolved from a symbol-index export; not a complete call graph.',
+          summary: 'A references B (symbol-index export; not a complete call graph).',
+        },
+      ],
+    },
+  };
+  const detail = openRelationship(atlas, null, 'r:ref1');
+  assert.ok(detail, 'relationship detail resolves');
+  assert.strictEqual(detail.relationshipType, 'references');
+  assert.strictEqual(detail.evidenceState, 'metadata-visible', 'metadata-visible, not source-visible');
+  assert.ok(/not a complete call graph/i.test(detail.whyPresent), 'honest not-a-complete-call-graph caveat present');
+});
+

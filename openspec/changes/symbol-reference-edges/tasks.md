@@ -31,13 +31,15 @@ Spec + implementation change. Depends on `agent-atlas-foundation`.
 
 ## BDD binding (lands with the implementation, per engineering-standards TDD)
 
-- [ ] `portolan-core/test/features/feature-p1b-symbol-reference-edges.feature`
-      (4 scenarios: in-perimeter resolve; out-of-perimeter → external;
-      unresolved → unknown; completeness not_assessed).
-- [ ] `portolan-core/test/bdd-runner.js`: add
-      `FEATURE_TO_OPENSPEC['symbol-reference-edges'] = 'specs/ontology'` and 4
-      bindings → a portolan-core unit test that consumes a reference-edge
-      fixture and asserts rendering/honest-coverage.
+- [x] `portolan-core/test/features/feature-p1b-symbol-reference-edges.feature`
+      (2 reading-layer scenarios: reference relationship renders as a typed
+      edge; reference edge explained honestly, not as a complete call graph).
+- [x] `portolan-core/test/bdd-runner.js`: added
+      `FEATURE_TO_OPENSPEC['symbol-reference-edges'] = 'specs/ontology'` and 2
+      bindings → `bdd-scenarios.test.js` (openBehaviourMap renders the typed
+      `references` edge; openRelationship reports `relationshipType=references`,
+      `evidenceState=metadata-visible`, and the not-a-complete-call-graph
+      caveat). 456 unit + 4 BDD self-tests green.
 
 ## Validation
 
