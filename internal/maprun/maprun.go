@@ -1008,6 +1008,32 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		for _, issue := range relationshipResult.Issues {
 			warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
 		}
+		// spec 2: JVM source-level references (import resolution).
+		jvmRefResult := relationships.DetectJVMReferences(target.Path)
+		if prefixRelationships {
+			prefixRelationshipGraph(target.ID, &jvmRefResult)
+		}
+		// Bridge JVM ref edges from jvm-refs: module node to target.ID.
+		jvmDepNodeIDs := make(map[string]bool)
+		for _, edge := range jvmRefResult.Edges {
+			if isManifestSourceNode(edge.From) {
+				jvmDepNodeIDs[edge.To] = true
+			}
+		}
+		for i := range jvmRefResult.Edges {
+			if isManifestSourceNode(jvmRefResult.Edges[i].From) {
+				jvmRefResult.Edges[i].From = target.ID
+			}
+		}
+		jvmFilteredNodes := make([]graph.Node, 0, len(jvmRefResult.Nodes))
+		for _, node := range jvmRefResult.Nodes {
+			if jvmDepNodeIDs[node.ID] || !isManifestSourceNode(node.ID) {
+				jvmFilteredNodes = append(jvmFilteredNodes, node)
+			}
+		}
+		jvmRefResult.Nodes = jvmFilteredNodes
+		g.Nodes = append(g.Nodes, jvmRefResult.Nodes...)
+		g.Edges = append(g.Edges, jvmRefResult.Edges...)
 		configurationResult := configuration.Detect(target.Path)
 		prefixConfiguration := shouldPrefixRelationshipGraph(sel, target)
 		g.Nodes = append(g.Nodes, configurationNodes(target.ID, prefixConfiguration, configurationResult)...)
@@ -3210,5 +3236,6 @@ func isManifestSourceNode(id string) bool {
 	return strings.HasPrefix(id, "maven:") ||
 		strings.HasPrefix(id, "gradle:") ||
 		strings.HasPrefix(id, "npm:") ||
-		strings.HasPrefix(id, "package:")
+		strings.HasPrefix(id, "package:") ||
+		strings.HasPrefix(id, "jvm-refs:")
 }
