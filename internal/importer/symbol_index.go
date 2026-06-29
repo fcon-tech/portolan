@@ -41,11 +41,21 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 	if err := validateOutputPath(opts.OutputPath, opts.Force); err != nil {
 		return graph.Graph{}, err
 	}
+	return ParseSymbolIndex(opts.InputPath)
+}
 
-	data, err := os.ReadFile(opts.InputPath)
+// ParseSymbolIndex reads and resolves a symbol-index JSON export into a graph
+// without requiring an output path. It is the reusable core of RunSymbolIndex,
+// used by the map collector to import operator-supplied exports in-process.
+func ParseSymbolIndex(inputPath string) (graph.Graph, error) {
+	if inputPath == "" {
+		return graph.Graph{}, fmt.Errorf("input path is required")
+	}
+
+	data, err := os.ReadFile(inputPath)
 	if err != nil {
 		g := graph.New()
-		g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.CannotVerify, fmt.Sprintf("read symbol-index JSON: %v", err)))
+		g.Nodes = append(g.Nodes, symbolIndexSourceNode(inputPath, graph.CannotVerify, fmt.Sprintf("read symbol-index JSON: %v", err)))
 		return g, nil
 	}
 
@@ -53,17 +63,17 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 	decoder := json.NewDecoder(bytes.NewReader(data))
 	if err := decoder.Decode(&raw); err != nil {
 		g := graph.New()
-		g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.CannotVerify, "malformed symbol-index JSON: "+err.Error()))
+		g.Nodes = append(g.Nodes, symbolIndexSourceNode(inputPath, graph.CannotVerify, "malformed symbol-index JSON: "+err.Error()))
 		return g, nil
 	}
 	if decoder.Decode(&struct{}{}) != io.EOF {
 		g := graph.New()
-		g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.CannotVerify, "malformed symbol-index JSON: trailing JSON content"))
+		g.Nodes = append(g.Nodes, symbolIndexSourceNode(inputPath, graph.CannotVerify, "malformed symbol-index JSON: trailing JSON content"))
 		return g, nil
 	}
 	if len(raw.Documents) == 0 {
 		g := graph.New()
-		g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.CannotVerify, "symbol-index JSON contains no documents"))
+		g.Nodes = append(g.Nodes, symbolIndexSourceNode(inputPath, graph.CannotVerify, "symbol-index JSON contains no documents"))
 		return g, nil
 	}
 
@@ -72,7 +82,7 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 		producer = "symbol-index"
 	}
 	g := graph.New()
-	g.Nodes = append(g.Nodes, symbolIndexSourceNode(opts.InputPath, graph.MetadataVisible, "local symbol-index export imported from "+producer))
+	g.Nodes = append(g.Nodes, symbolIndexSourceNode(inputPath, graph.MetadataVisible, "local symbol-index export imported from "+producer))
 
 	// Pre-pass: collect definition symbol identities so that reference-role
 	// symbols can be resolved against them. References that resolve to a
@@ -108,7 +118,7 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 				Label: docIDValue,
 				Evidence: graph.Evidence{
 					State:  graph.MetadataVisible,
-					Source: opts.InputPath,
+					Source: inputPath,
 					Reason: symbolIndexReason(document.Language, "document listed by local symbol-index export"),
 				},
 			})
@@ -118,7 +128,7 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 				Kind: "owns",
 				Evidence: graph.Evidence{
 					State:  graph.MetadataVisible,
-					Source: opts.InputPath,
+					Source: inputPath,
 					Reason: "document listed by local symbol-index export",
 				},
 			})
@@ -141,7 +151,7 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 					Label: symbolIndexSymbolLabel(symbol),
 					Evidence: graph.Evidence{
 						State:  graph.MetadataVisible,
-						Source: symbolIndexSource(opts.InputPath, docIDValue, symbol.Range),
+						Source: symbolIndexSource(inputPath, docIDValue, symbol.Range),
 						Reason: symbolIndexReason(symbol.Kind, "symbol identity/range listed by local export; semantic correctness and call relationships not assessed"),
 					},
 				})
@@ -163,7 +173,7 @@ func RunSymbolIndex(opts Options) (graph.Graph, error) {
 			Kind: kind,
 			Evidence: graph.Evidence{
 				State:  graph.MetadataVisible,
-				Source: symbolIndexSource(opts.InputPath, docIDValue, symbol.Range),
+				Source: symbolIndexSource(inputPath, docIDValue, symbol.Range),
 				Reason: symbolIndexReason(symbol.Role, reasonMsg),
 			},
 		})
