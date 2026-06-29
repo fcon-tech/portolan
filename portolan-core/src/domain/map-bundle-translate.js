@@ -85,6 +85,7 @@ function translateMapBundle({ graph, summary, findings, coverage }) {
       role: 'external-boundary',
       evidence_state: mapEvidenceState(n.evidence && n.evidence.state),
       path: '',
+      depends_on: [],
     });
   }
 

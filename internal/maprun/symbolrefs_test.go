@@ -83,7 +83,7 @@ func TestImportSymbolReferencesCrossRepo(t *testing.T) {
 	}
 }
 
-func TestImportSymbolReferencesOut_ofPerimeter(t *testing.T) {
+func TestImportSymbolReferencesOutOfPerimeter(t *testing.T) {
 	root, repos := setupSymbolRefLandscape(t)
 	writeSymbolIndexExport(t, exportPath(root), map[string]interface{}{
 		"producer": "test-scip",
