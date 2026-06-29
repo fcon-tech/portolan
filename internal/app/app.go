@@ -458,9 +458,14 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 		if result.StaleReason != "" {
 			fmt.Fprintf(stdout, "  %s\n", result.StaleReason)
 		}
+		fmt.Fprintln(stdout, "STALENESS: skipped")
 		return 0
 	}
 	fmt.Fprintf(stdout, "wrote map bundle %s\n", result.OutputPath)
+	if result.StaleReason != "" {
+		fmt.Fprintf(stderr, "rebuild reason: %s\n", result.StaleReason)
+	}
+	fmt.Fprintln(stdout, "STALENESS: rebuilt")
 	return 0
 }
 

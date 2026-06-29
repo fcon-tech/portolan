@@ -62,7 +62,7 @@ function findPortolanBinary(target) {
     } catch (e) { /* try next */ }
   }
   try {
-    execFileSync('sh', ['-c', 'command -v portolan'], { stdio: 'ignore' });
+    execFileSync('portolan', ['--version'], { stdio: 'ignore' });
     return 'portolan';
   } catch (e) { /* not on PATH */ }
   // Last resort: bootstrap from the source checkout (needs Go + module cache).
@@ -105,7 +105,10 @@ function ensureSnapshot(target) {
       stdio: ['inherit', 'pipe', 'inherit'],
       encoding: 'utf8',
     });
-    rebuilt = !stdout.includes('up to date');
+    // Machine-readable token: the Go binary prints STALENESS: skipped or
+    // STALENESS: rebuilt as its last stdout line. Fall back to human-readable
+    // detection for older binaries that lack the token.
+    rebuilt = !stdout.includes('STALENESS: skipped');
   } catch (e) {
     console.error('error: snapshot collection failed:', e.message);
     if (e.stderr) console.error(e.stderr.toString().trim());
