@@ -44,11 +44,43 @@ Spec + implementation change. Depends on `agent-atlas-foundation`.
       `evidenceState=metadata-visible`, and the not-a-complete-call-graph
       caveat). 456 unit + 4 BDD self-tests green.
 
+## End-to-end wiring — NOT YET DONE (the feature is NOT live)
+
+The importer emits `references` edges into a standalone `graph.json`, but that
+output is a dead end in the current pipeline. `build-portolan-bundle.sh` never
+invokes `portolan import`; `relationships.jsonl` is built only by
+`scripts/scan-cross-repo.sh`, which emits `shared-dependency` and
+`cross-repo-duplication` only. So reference edges never reach the bundle, the
+system-map, or the atlas. The reading-layer BDD test is hand-fed (it proves the
+reading layer CAN render a `references` relationship, not that the pipeline
+DELIVERS one).
+
+Open tasks before this change is genuinely done:
+
+- [ ] Bridge importer graph edges into the bundle's relationships stream (or have
+      the Go scan ingest symbol-index and emit relationships directly). This is
+      the missing slice that makes the feature live end-to-end.
+- [ ] Reconcile granularity: importer edges are symbol/document-level
+      (`symbol-index:symbol:...`, `symbol-index:document:...`); `relationships.jsonl`
+      is repo-level (`from_repo`/`to_repo`). Decide and document how a
+      symbol-reference edge is carried as a relationship (e.g. lift to the owning
+      repo/document, keep a symbol-level relationship kind, or both).
+- [ ] End-to-end test: run the importer on a fixture, build the bundle, compose
+      the system-map, assert a `references` relationship is present and rendered.
+- [ ] Implement the out-of-perimeter → external-node scenario (currently only
+      resolved → `references` and unresolved → `unknown` are handled).
+
 ## Validation
 
-- [ ] `openspec validate --specs` passes.
-- [ ] `go test ./internal/importer` green.
-- [ ] BDD runner self-tests green (feature file + spec + unit test exist).
+- [x] `openspec validate --specs` passes (15/15).
+- [x] `go test ./internal/app` green — importer unit behaviour: resolved →
+      `references`, unresolved → `unknown`, cross-repo resolve on the Bigtop
+      fixture.
+- [x] BDD runner self-tests green; 2 reading-layer scenarios bound to
+      `specs/ontology`.
+- [ ] **END-TO-END NOT VERIFIED** — see "End-to-end wiring" above. The importer
+      unit tests and the reading-layer BDD tests do NOT together prove a
+      `references` edge reaches an atlas. That remains open.
 
 ## Out of scope (follow-on)
 
