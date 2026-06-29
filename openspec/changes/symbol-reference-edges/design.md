@@ -75,8 +75,10 @@ generics, dynamic dispatch) — but the spec explicitly does NOT claim correctne
 or completeness (`not_assessed`, `metadata-visible`), so over-claiming is the
 guarded-against failure mode. The main risk is name-collision in resolution
 producing a wrong-definition link; mitigated by matching on the symbol-index
-`id` (SCIP schemes are globally scoped) rather than bare name, and by recording
-ambiguous matches as `unknown` rather than guessing.
+`id` (SCIP schemes are globally scoped) or name presence in the definitions
+set. Ambiguity detection (multiple definitions for one reference) is a
+follow-on refinement; the current implementation resolves on first presence
+and records unresolved references as `unknown`.
 
 ## Out of scope
 

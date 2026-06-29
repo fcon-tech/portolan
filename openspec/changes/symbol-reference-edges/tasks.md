@@ -13,9 +13,9 @@ Spec + implementation change. Depends on `agent-atlas-foundation`.
 
 - [x] `internal/importer/symbol_index.go`: emit `references` edges from
       `role: reference` symbols toward their `role: definition` counterparts.
-      Match on symbol `id` (SCIP-scoped) first, fall back to name within scope;
-      ambiguous matches → `unknown`, never guessed. (Resolved → `references`;
-      unresolved → `unknown`; definitions/other → `owns`. All `metadata-visible`.)
+      Match on symbol `id` (SCIP-scoped) or name presence in the definitions
+      set. (Resolved → `references`; unresolved → `unknown`;
+      definitions/other → `owns`. All `metadata-visible`.)
 - [x] Test: extended `internal/app/app_test.go` `TestRunImportSymbolIndexWritesMetadataOnlyGraph`
       on the existing fixture (`internal/testfixtures/importer-normalization/symbol-index.json`):
       (a) `main` definition + `App` reference → `references` edge,
@@ -85,10 +85,10 @@ the existing `translateMapBundle` → `composeSystemMap` path.
 
 ### Tests
 
-- [x] `internal/maprun/symbolrefs_test.go`: 7 tests — cross-repo, out-of-perimeter,
-      unresolved, intra-repo skip, no-exports no-op, dedup, and E2E through
-      `Run()` proving `references` edges reach `graph.json` and the resolved-
-      references finding reaches `findings.jsonl`.
+- [x] `internal/maprun/symbolrefs_test.go`: 10 tests — cross-repo,
+      out-of-perimeter, unresolved, intra-repo skip, no-exports no-op, dedup,
+      malformed export, unmapped source doc, E2E through `Run()` (cross-repo),
+      and E2E out-of-perimeter through `Run()`.
 - [x] `portolan-core/test/unit/map-bundle-translate.test.js`: added test proving
       `references` edges become typed relationships without populating `depends_on`.
 - [x] Out-of-perimeter → external-node scenario implemented (external node flagged
