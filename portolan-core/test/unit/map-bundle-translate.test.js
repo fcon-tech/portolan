@@ -150,3 +150,34 @@ test('translateMapBundle: references edges (symbol-index) become typed relations
   const targetA = artifacts.atlasSurfaces.targets.find((t) => t.id === 'repo-a');
   assert.deepEqual(targetA.depends_on, [], 'references should not populate depends_on');
 });
+
+test('translateMapBundle: external nodes (out-of-perimeter refs) become surface-only targets', () => {
+  const artifacts = translateMapBundle({
+    graph: {
+      nodes: [
+        repoNode('repo-a', 'Repo A'),
+        {
+          id: 'external:symbol-ref:abc123',
+          kind: 'external',
+          label: 'external-pkg/src/index.js',
+          evidence: { state: 'metadata-visible', source: '.portolan/symbol-index/export.json' },
+        },
+      ],
+      edges: [
+        {
+          from: 'repo-a',
+          to: 'external:symbol-ref:abc123',
+          kind: 'references',
+          evidence: { state: 'metadata-visible', source: '.portolan/symbol-index/export.json' },
+        },
+      ],
+    },
+  });
+  assert.equal(artifacts.relationships.length, 1, 'repo->external edge should produce a relationship');
+  assert.equal(artifacts.relationships[0].type, 'references');
+  assert.equal(artifacts.relationships[0].from_repo, 'repo-a');
+  assert.equal(artifacts.relationships[0].to_repo, 'external:symbol-ref:abc123');
+  const extTarget = artifacts.atlasSurfaces.targets.find((t) => t.kind === 'external');
+  assert.ok(extTarget, 'an external target should exist');
+  assert.equal(extTarget.lifecycle, 'external');
+});

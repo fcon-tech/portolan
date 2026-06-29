@@ -71,7 +71,7 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["repository", "service", "package", "runtime", "team", "claim", "unknown"]
+          "enum": ["repository", "service", "package", "runtime", "team", "claim", "unknown", "external"]
         },
         "label": {
           "type": "string",
@@ -97,7 +97,7 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["owns", "depends-on", "exposes", "imports", "observes", "claims", "unknown"]
+          "enum": ["owns", "depends-on", "exposes", "imports", "observes", "claims", "unknown", "references"]
         },
         "evidence": {
           "$ref": "#/$defs/evidence"
