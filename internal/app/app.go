@@ -428,7 +428,7 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 	selectionPath := flags.String("selection", "", "local landscape selection JSON path")
 	outputPath := flags.String("out", "", "output artifact bundle directory")
 	force := flags.Bool("force", false, "replace an existing output directory")
-	ifStale := flags.Bool("if-stale", false, "skip the rebuild when the recorded tree signature still matches the root")
+	ifStale := flags.Bool("if-stale", false, "skip the rebuild when the recorded tree signature still matches the root (root path only; implies --force on rebuild; in-place same-size edits are not detected — use --force for a guaranteed rebuild)")
 	if err := flags.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			writeMapUsage(stdout)

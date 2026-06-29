@@ -83,10 +83,10 @@ func TestComputeDetectsSizeChange(t *testing.T) {
 func TestComputeSkipsExcludedDirs(t *testing.T) {
 	dir := t.TempDir()
 	writeFiles(t, dir, map[string]string{
-		"src/a.go":        "package src",
-		".git/config":     "[core]",
+		"src/a.go":           "package src",
+		".git/config":        "[core]",
 		".portolan/run.json": "{}",
-		"node_modules/x":  "dep",
+		"node_modules/x":     "dep",
 	})
 	sig, err := Compute(dir)
 	if err != nil {
@@ -133,8 +133,8 @@ func TestComputeErrorsOnNonDirRoot(t *testing.T) {
 func TestComputeCustomExcludes(t *testing.T) {
 	dir := t.TempDir()
 	writeFiles(t, dir, map[string]string{
-		"a.txt":   "a",
-		"skip/b":  "b",
+		"a.txt":  "a",
+		"skip/b": "b",
 	})
 	sig, err := Compute(dir, Options{Excludes: map[string]bool{"skip": true}})
 	if err != nil {

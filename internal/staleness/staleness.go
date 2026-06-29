@@ -50,10 +50,10 @@ var defaultExcludes = map[string]bool{
 // Signature is a persisted tree signature plus enough provenance to interpret
 // it across runs.
 type Signature struct {
-	Algorithm  string    `json:"algorithm"`
-	Hash       string    `json:"hash"`
-	FileCount  int       `json:"file_count"`
-	Root       string    `json:"root"`
+	Algorithm   string    `json:"algorithm"`
+	Hash        string    `json:"hash"`
+	FileCount   int       `json:"file_count"`
+	Root        string    `json:"root"`
 	GeneratedAt time.Time `json:"generated_at"`
 }
 
@@ -93,9 +93,13 @@ func Compute(root string, opts ...Options) (Signature, error) {
 	var entries []entry
 	walkErr := filepath.WalkDir(resolved, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			// Surface read errors as part of the signature rather than aborting
-			// the walk: an unreadable subtree is itself a staleness signal, and
-			// aborting would make /portolan:map fail on a single permission gap.
+			// Root-level walk failures (e.g. permission flip, race removal) are
+			// fatal — an empty signature from a broken root is not a meaningful
+			// staleness signal. Non-root read errors (unreadable subtree) are
+			// tolerated: the shorter entry list is itself a structural change.
+			if path == resolved {
+				return err
+			}
 			return nil
 		}
 		if path == resolved {
@@ -193,15 +197,17 @@ func Write(path string, sig Signature) error {
 		return fmt.Errorf("create temp signature: %w", err)
 	}
 	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
 	if _, err := tmp.Write(data); err != nil {
 		tmp.Close()
+		os.Remove(tmpName)
 		return fmt.Errorf("write signature: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
+		os.Remove(tmpName)
 		return fmt.Errorf("close signature: %w", err)
 	}
 	if err := os.Rename(tmpName, path); err != nil {
+		os.Remove(tmpName)
 		return fmt.Errorf("rename signature: %w", err)
 	}
 	return nil
