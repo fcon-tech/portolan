@@ -124,8 +124,9 @@ market theater.
 - Keep changes small and testable.
 - Preserve the harness-first path unless an OpenSpec scenario proves it is
   insufficient.
-- Keep the legacy Go CLI thin; new product behavior should usually live in
-  harness scripts, schema/contracts, importers, or generated bundle artifacts.
+- Assign language by consumer fit, not preference: collector/index/query
+  behavior lives in the Go core (`internal/`, `cmd/portolan`); the human-atlas
+  reading layer is JS (`portolan-core`); shell scripts are thin drivers only.
 - Add dependencies only after documenting fit, maintenance, license, privacy,
   and integration cost.
 - Do not hide failed or not-assessed checks.
@@ -157,6 +158,8 @@ When implementing an OpenSpec change:
 - Verify with the smallest command set that proves the scenario.
 - If a scenario cannot be proven, record the blocker and whether the answer is
   kill, pack, or build.
+- Commit after each coherent unit of work without waiting to be asked; do not
+  batch a session's worth of changes into a single commit.
 
 ## Review Rules
 
