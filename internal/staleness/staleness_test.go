@@ -322,3 +322,28 @@ func TestRootFingerprintDoesNotLeakPath(t *testing.T) {
 		t.Fatal("RootFingerprint should not contain the raw path")
 	}
 }
+
+func TestComputeToleratesUnreadableSubtree(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("permission test is meaningless when running as root")
+	}
+	dir := t.TempDir()
+	writeFiles(t, dir, map[string]string{"readable.go": "package main"})
+	unreadable := filepath.Join(dir, "secret")
+	if err := os.MkdirAll(unreadable, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	writeFiles(t, dir, map[string]string{"secret/private.go": "package secret"})
+	if err := os.Chmod(unreadable, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chmod(unreadable, 0o755) // restore so cleanup works
+	sig, err := Compute(dir)
+	if err != nil {
+		t.Fatalf("Compute should tolerate an unreadable subtree, got: %v", err)
+	}
+	// The unreadable subtree is skipped (tolerated), so only readable.go is counted.
+	if sig.FileCount != 1 {
+		t.Fatalf("file_count = %d, want 1 (unreadable subtree skipped)", sig.FileCount)
+	}
+}
