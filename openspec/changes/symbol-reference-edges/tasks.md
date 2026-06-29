@@ -22,9 +22,12 @@ Spec + implementation change. Depends on `agent-atlas-foundation`.
       `metadata-visible`; (b) `fmt.Println` reference (no definition in export) →
       `unknown` edge, not `owns`; (c) `App` definition node present. Added
       `"references"` to the `validEdgeKinds` allowlist in `assertSchemaShape`.
-- [ ] Add a JVM-shaped SCIP fixture (small Java sample with an interface + impl
-      + cross-package call) to prove the multi-language path headlessly and to
-      feed the deep Bigtop demo.
+- [x] Cross-repo reference fixture: `internal/testfixtures/importer-bigtop-references/symbol-index.json`
+      models the real Bigtop landscape gap (`apache-bigtop-repo/src/package-plan.js`
+      references `hdfsEndpoint` defined in `apache-hadoop/src/hdfs.js`).
+      `TestRunImportSymbolIndexResolvesCrossRepoReferences` proves the importer
+      emits the cross-repo `references` edge that no shared-dependency producer
+      can. (A JVM-shaped fixture remains a follow-on to feed the deep demo.)
 - [x] Evidence: reference edges `metadata-visible`; completeness recorded as
       `not_assessed` in the bundle's producer coverage, not hidden. (Edge reason
       strings carry the not-a-complete-call-graph caveat.)

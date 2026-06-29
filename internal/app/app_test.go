@@ -887,6 +887,40 @@ func TestRunImportSymbolIndexWritesMetadataOnlyGraph(t *testing.T) {
 	assertEvidenceState(t, findEdge(t, result, "symbol-index:document:cmd/app/main.go", "symbol-index:symbol:serena://internal/app/App", "references"), "metadata-visible")
 }
 
+func TestRunImportSymbolIndexResolvesCrossRepoReferences(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "graph.json")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := Run([]string{"import", "symbol-index", "--in", "../../internal/testfixtures/importer-bigtop-references/symbol-index.json", "--out", out}, &stdout, &stderr)
+
+	if code != 0 {
+		t.Fatalf("Run returned %d, want 0; stderr = %q", code, stderr.String())
+	}
+	result := readGraph(t, out)
+	assertSchemaShape(t, result)
+
+	// The hdfsEndpoint definition in apache-hadoop is owned by its document.
+	assertEvidenceState(t, findEdge(t, result,
+		"symbol-index:document:apache-hadoop/src/hdfs.js",
+		"symbol-index:symbol:scip-js apache-hadoop src/hdfs.js hdfsEndpoint().",
+		"owns"), "metadata-visible")
+
+	// The cross-repo reference from apache-bigtop-repo's package-plan.js to
+	// hdfsEndpoint (defined in apache-hadoop) resolves to a `references` edge.
+	// This is the structural code edge no shared-dependency producer can emit.
+	assertEvidenceState(t, findEdge(t, result,
+		"symbol-index:document:apache-bigtop-repo/src/package-plan.js",
+		"symbol-index:symbol:scip-js apache-hadoop src/hdfs.js hdfsEndpoint().",
+		"references"), "metadata-visible")
+
+	// The referencing document owns its own definition (packagingPlan).
+	assertEvidenceState(t, findEdge(t, result,
+		"symbol-index:document:apache-bigtop-repo/src/package-plan.js",
+		"symbol-index:symbol:scip-js apache-bigtop-repo src/package-plan.js packagingPlan().",
+		"owns"), "metadata-visible")
+}
+
 func TestRunImportCycloneDXWritesEvidenceGraph(t *testing.T) {
 	out := filepath.Join(t.TempDir(), "graph.json")
 	var stdout bytes.Buffer
