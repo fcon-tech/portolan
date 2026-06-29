@@ -43,7 +43,7 @@ const { openEvidence } = require('./use-cases/open-evidence');
 const { openC4 } = require('./use-cases/open-c4');
 const { openComponentDossier } = require('./use-cases/open-component-dossier');
 // bigtop-deep-landscape-demo: landscape honesty contract (dependency-only vs
-// structural edges). The shell depends on the use-case, not the domain.
+// structural edges).
 const { openLandscapeStructure } = require('./use-cases/open-landscape-structure');
 // captain-atlas 17 semantic component investigation (bounded investigation
 // pages + ecosystem placement map; the semantic layer over the atlas).
@@ -607,6 +607,23 @@ function createPortolanShell(opts) {
       panel.appendChild(back);
     }
 
+    // bigtop-deep-landscape-demo: landscape honesty contract. Classify the
+    // snapshot's edges into code-level structural edges (references/calls/...)
+    // vs dependency/declared edges (shared-dependency/depends-on/...). When only
+    // dependency edges exist, the atlas states the limitation in plain language
+    // and does not dress dependency sharing up as code-level architecture.
+    // (openspec/specs/reading-experience — "Landscape view shows connected
+    // structure, not a flat inventory".) The limitation notice leads the view
+    // (it is the headline caveat); the structural edge legend sits with the
+    // family legend below.
+    const structure = openLandscapeStructure(atlas);
+    if (structure.limitationNotice) {
+      const notice = el('div', { class: 'landscape-honesty-notice', 'data-portolan-kind': 'landscape-honesty', 'data-portolan-structure': 'dependency-only' });
+      notice.appendChild(el('p', { class: 'landscape-honesty-notice__title' }, text('Dependency-only landscape')));
+      notice.appendChild(el('p', { class: 'muted' }, text(structure.limitationNotice)));
+      panel.appendChild(notice);
+    }
+
     // legend
     const legend = el('div', { class: 'graph-legend' });
     for (const fam of FAMILY_ORDER) {
@@ -616,27 +633,15 @@ function createPortolanShell(opts) {
         el('span', { class: 'legend-label' }, text(FAMILY_LABELS[fam] || fam))));
     }
     panel.appendChild(legend);
-
-    // bigtop-deep-landscape-demo: landscape honesty contract. Classify the
-    // snapshot's edges into code-level structural edges (references/calls/...)
-    // vs dependency/declared edges (shared-dependency/depends-on/...). When only
-    // dependency edges exist, the atlas states the limitation in plain language
-    // and does not dress dependency sharing up as code-level architecture.
-    // (openspec/specs/reading-experience — "Landscape view shows connected
-    // structure, not a flat inventory".)
-    const structure = openLandscapeStructure(atlas);
-    if (structure.limitationNotice) {
-      const notice = el('div', { class: 'landscape-honesty-notice', 'data-portolan-kind': 'landscape-honesty', 'data-portolan-structure': 'dependency-only' });
-      notice.appendChild(el('p', { class: 'landscape-honesty-notice__title' }, text('Dependency-only landscape')));
-      notice.appendChild(el('p', { class: 'muted' }, text(structure.limitationNotice)));
-      panel.appendChild(notice);
-    } else if (structure.hasStructuralEdges) {
-      const note = el('div', { class: 'graph-edge-legend', 'data-portolan-kind': 'edge-legend', 'data-portolan-structure': 'structural' });
-      note.appendChild(el('span', { class: 'legend-swatch graph-edge-swatch graph-edge-swatch--structural', style: 'background:var(--accent,#7c5a2a)' }));
-      note.appendChild(el('span', { class: 'legend-label' }, text(`Structural edges (${structure.structuralEdgeCount}) — code-level references/calls`)));
-      note.appendChild(el('span', { class: 'legend-swatch graph-edge-swatch graph-edge-swatch--dependency', style: 'background:rgba(124,90,42,.4)' }));
-      note.appendChild(el('span', { class: 'legend-label' }, text(`Dependency edges (${structure.dependencyEdgeCount}) — shared/declared`)));
-      panel.appendChild(note);
+    // When structural edges exist, an edge-style legend distinguishes them from
+    // dependency edges so the connected structure is legible.
+    if (structure.hasStructuralEdges) {
+      const edgeLegend = el('div', { class: 'graph-edge-legend', 'data-portolan-kind': 'edge-legend', 'data-portolan-structure': 'structural' });
+      edgeLegend.appendChild(el('span', { class: 'graph-edge-swatch graph-edge-swatch--structural' }));
+      edgeLegend.appendChild(el('span', { class: 'legend-label' }, text(`Structural edges (${structure.structuralEdgeCount}) — code-level references/calls`)));
+      edgeLegend.appendChild(el('span', { class: 'graph-edge-swatch graph-edge-swatch--dependency' }));
+      edgeLegend.appendChild(el('span', { class: 'legend-label' }, text(`Dependency edges (${structure.dependencyEdgeCount}) — shared/declared`)));
+      panel.appendChild(edgeLegend);
     }
 
     // graph model via clean use-case
