@@ -20,6 +20,7 @@ import (
 	"github.com/fcon-tech/portolan/internal/packet"
 	"github.com/fcon-tech/portolan/internal/relationships"
 	"github.com/fcon-tech/portolan/internal/selection"
+	"github.com/fcon-tech/portolan/internal/staleness"
 )
 
 type Options struct {
@@ -27,12 +28,15 @@ type Options struct {
 	SelectionPath string
 	OutputPath    string
 	Force         bool
+	IfStale       bool
 	Version       string
 }
 
 type Result struct {
-	OutputPath string
-	Artifacts  Artifacts
+	OutputPath  string
+	Artifacts   Artifacts
+	Skipped     bool
+	StaleReason string
 }
 
 type Artifacts struct {
@@ -71,6 +75,9 @@ type Finding struct {
 }
 
 const SchemaVersion = "0.1.0"
+
+// treeSignatureFile is the staleness signature persisted inside the bundle.
+const treeSignatureFile = "tree-signature.json"
 
 const summaryRecordLimit = 100
 const graphIndexSampleLimit = 20
@@ -253,6 +260,32 @@ func Run(opts Options) (Result, error) {
 	if opts.SelectionPath != "" {
 		return runSelection(opts)
 	}
+
+	// Staleness short-circuit (root path only): skip the rebuild when the tree
+	// signature recorded in the existing bundle still matches the target. This
+	// is the agent-atlas "build if stale" contract for /portolan:map.
+	if opts.IfStale {
+		outAbs, err := filepath.Abs(opts.OutputPath)
+		if err != nil {
+			return Result{}, fmt.Errorf("resolve output: %w", err)
+		}
+		sigPath := filepath.Join(outAbs, treeSignatureFile)
+		stale, reason, err := staleness.IsStale(opts.RootPath, sigPath)
+		if err != nil {
+			return Result{}, err
+		}
+		if !stale {
+			return Result{
+				OutputPath:  filepath.Clean(outAbs),
+				Artifacts:   artifactsFor(filepath.Clean(outAbs)),
+				Skipped:     true,
+				StaleReason: reason,
+			}, nil
+		}
+		// Refreshing in place: the rebuild must overwrite the existing bundle.
+		opts.Force = true
+	}
+
 	root, out, err := validateStartup(opts)
 	if err != nil {
 		return Result{}, err
@@ -339,7 +372,31 @@ func Run(opts Options) (Result, error) {
 	if err := replaceOutput(temp, out, opts.Force); err != nil {
 		return Result{}, fmt.Errorf("replace output bundle: %w", err)
 	}
+	if opts.IfStale {
+		sig, err := staleness.Compute(root)
+		if err != nil {
+			return Result{}, fmt.Errorf("compute tree signature: %w", err)
+		}
+		if err := staleness.Write(filepath.Join(out, treeSignatureFile), sig); err != nil {
+			return Result{}, fmt.Errorf("write tree signature: %w", err)
+		}
+	}
 	return Result{OutputPath: out, Artifacts: artifacts}, nil
+}
+
+// artifactsFor builds the canonical Artifacts layout for a given output dir. It
+// is used both after a rebuild and for the staleness skip result so consumers
+// always see the same artifact paths.
+func artifactsFor(out string) Artifacts {
+	return Artifacts{
+		Run:        filepath.Join(out, "run.json"),
+		Coverage:   filepath.Join(out, "coverage.json"),
+		Graph:      filepath.Join(out, "graph.json"),
+		GraphIndex: filepath.Join(out, "graph-index.json"),
+		Findings:   filepath.Join(out, "findings.jsonl"),
+		Summary:    filepath.Join(out, "summary.json"),
+		Packet:     filepath.Join(out, "map.md"),
+	}
 }
 
 func runSelection(opts Options) (Result, error) {

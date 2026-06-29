@@ -428,6 +428,7 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 	selectionPath := flags.String("selection", "", "local landscape selection JSON path")
 	outputPath := flags.String("out", "", "output artifact bundle directory")
 	force := flags.Bool("force", false, "replace an existing output directory")
+	ifStale := flags.Bool("if-stale", false, "skip the rebuild when the recorded tree signature still matches the root")
 	if err := flags.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			writeMapUsage(stdout)
@@ -445,11 +446,19 @@ func runMap(args []string, stdout io.Writer, stderr io.Writer) int {
 		SelectionPath: *selectionPath,
 		OutputPath:    *outputPath,
 		Force:         *force,
+		IfStale:       *ifStale,
 		Version:       Version,
 	})
 	if err != nil {
 		fmt.Fprintf(stderr, "map: %v\n", err)
 		return 2
+	}
+	if result.Skipped {
+		fmt.Fprintf(stdout, "map up to date (skipped rebuild): %s\n", result.OutputPath)
+		if result.StaleReason != "" {
+			fmt.Fprintf(stdout, "  %s\n", result.StaleReason)
+		}
+		return 0
 	}
 	fmt.Fprintf(stdout, "wrote map bundle %s\n", result.OutputPath)
 	return 0
@@ -882,8 +891,8 @@ Usage:
 
 Legacy compatibility:
   portolan context prepare --root . --out .portolan/context --profile agent
+  portolan map --root . --out .portolan/run [--if-stale]
   portolan map --selection selection.json --out .portolan/run
-  portolan map --root . --out .portolan/run
 
 Portolan is local-first and read-only by default. For source checkouts without
 an installed binary, build .portolan/bin/portolan with scripts/bootstrap-portolan.
@@ -1058,7 +1067,7 @@ paths; it does not run external scanners.
 func writeMapUsage(w io.Writer) {
 	fmt.Fprint(w, `Usage:
   portolan map --selection selection.json --out .portolan/run [--force]
-  portolan map --root . --out .portolan/run [--force]
+  portolan map --root . --out .portolan/run [--force] [--if-stale]
 
 Build a local, read-only artifact bundle for agent landscape mapping.
 
@@ -1067,14 +1076,17 @@ Flags:
   --root path        local root path
   --out path         output bundle directory
   --force            replace an existing output directory
+  --if-stale         skip the rebuild when the recorded tree signature still
+                     matches the root (root path only; implies --force on rebuild)
 
 The bundle contains run.json, coverage.json, graph.json, graph-index.json,
-findings.jsonl, summary.json, and map.md. Use context prepare before broad
-agent answers. Agents should read summary.json and graph-index.json before
-loading full graph.json. Use --selection for curated local inventories and
---root for bounded local discovery of the root, direct child Git repositories,
-and repos/* Git repositories. The command makes no network calls, does not
-mutate selected repositories, and writes only to the selected output directory.
+findings.jsonl, summary.json, map.md, and (with --if-stale) tree-signature.json.
+Use context prepare before broad agent answers. Agents should read summary.json
+and graph-index.json before loading full graph.json. Use --selection for curated
+local inventories and --root for bounded local discovery of the root, direct
+child Git repositories, and repos/* Git repositories. The command makes no
+network calls, does not mutate selected repositories, and writes only to the
+selected output directory.
 `)
 }
 
