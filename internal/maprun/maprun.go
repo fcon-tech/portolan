@@ -3237,5 +3237,7 @@ func isManifestSourceNode(id string) bool {
 		strings.HasPrefix(id, "gradle:") ||
 		strings.HasPrefix(id, "npm:") ||
 		strings.HasPrefix(id, "package:") ||
-		strings.HasPrefix(id, "jvm-refs:")
+		strings.HasPrefix(id, "jvm-refs:") ||
+		strings.HasPrefix(id, "swift:") ||
+		strings.HasPrefix(id, "dart:")
 }
