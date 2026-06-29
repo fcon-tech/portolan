@@ -43,9 +43,9 @@ code landscape.
 
 - `reading-experience`: adds the connected-structure requirement and the
   dependency-only honesty rule; names Bigtop as the deep-landscape acceptance
-  showcase. Refines the existing "Fleet map is supporting, not primary" and
+  showcase. Complements the existing "Fleet map is supporting, not primary" and
   "First screen is a system walkthrough" requirements toward a landscape that is
-  structural, not merely inventory.
+  structural, not merely inventory (it does not modify them).
 
 ## Impact
 
