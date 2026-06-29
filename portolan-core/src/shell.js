@@ -50,6 +50,8 @@ const { openLandscapeStructure } = require('./use-cases/open-landscape-structure
 // All semantic accessors (incl. resolveSourceRef) come through the use-case so
 // the shell depends only on use-cases, not the domain (Clean Architecture rule).
 const { openSemanticInvestigation, overlapRelationsFor, ecosystemPlacementMap, buildSemanticViewModel, resolveSourceRef } = require('./use-cases/open-semantic-investigation');
+// spec 20: multiscale drill-down model.
+const { buildMultiscaleModel, SCALE_LEVELS, SCALE_LABELS } = require('./domain/multiscale-drilldown');
 
 const FAMILY_ORDER = ['data-systems', 'compute-processing', 'platform-governance', 'packaging-runtime', 'coordination-community', 'integration-services', 'unknown'];
 const FAMILY_LABELS = {
@@ -92,6 +94,9 @@ function createPortolanShell(opts) {
   // the semantic surfaces are simply not rendered.
   const semanticVm = semanticInvestigation ? buildSemanticViewModel(semanticInvestigation) : null;
   const selectedComponentIds = semanticVm ? new Set(semanticInvestigation.sample.components) : new Set();
+
+  // spec 20: build the multiscale drill-down model from atlas + SI.
+  const multiscaleModel = buildMultiscaleModel(atlas, semanticInvestigation);
 
   // captain-atlas 17: selected-detection must be tolerant of BOTH id forms.
   // The system-map routes/components use `component:<id>` (e.g.
@@ -167,6 +172,7 @@ function createPortolanShell(opts) {
     if (head === 'map') return 'fleet';
     if (head === 'structure') return 'fleet'; // "Structure Map" tab -> Fleet map view
     if (head === 'ecosystem' && semanticVm) return 'ecosystem';
+    if (head === 'scales') return 'scales';
     return head;
   }
 
@@ -218,6 +224,7 @@ function createPortolanShell(opts) {
       else if (view === 'receipt') renderReceiptView(main);
       else if (view === 'c4') renderC4View(main);
       else if (view === 'ecosystem') renderEcosystemMap(main);
+      else if (view === 'scales') renderMultiscaleView(main);
       else if (navVm) renderWalkthrough(main); // fallback to walkthrough when nav exists
       else renderOverview(main); // fallback
     }
@@ -242,6 +249,7 @@ function createPortolanShell(opts) {
         { id: 'routes', label: 'System Routes', view: 'routes' },
         { id: 'structure', label: 'Structure Map', view: 'fleet', secondary: true },
         { id: 'ecosystem', label: 'Semantic Map', view: 'ecosystem' },
+        { id: 'scales', label: 'Scales', view: 'scales' },
         { id: 'coverage', label: 'Mapped Areas', view: 'coverage' },
         { id: 'findings', label: 'Hazards', view: 'findings' },
         { id: 'unknowns', label: 'Next Checks', view: 'unknowns' },
@@ -252,6 +260,7 @@ function createPortolanShell(opts) {
       tabs = [
         { id: 'overview', label: 'Overview', view: 'overview' },
         { id: 'map', label: 'Map', view: 'map' },
+        { id: 'scales', label: 'Scales', view: 'scales' },
         { id: 'components', label: 'Components', view: 'components' },
       ];
       // The Semantic Map tab also appears without a nav-atlas when a semantic
@@ -1955,6 +1964,81 @@ function createPortolanShell(opts) {
     }
     if (!map.overlapPairs.length) overlapWrap.appendChild(el('p', { class: 'muted' }, text('No bidirectional overlap/alternative relations.')));
     panel.appendChild(overlapWrap);
+
+    main.appendChild(panel);
+  }
+
+  // ---- spec 20: multiscale drill-down view ----
+  function renderMultiscaleView(main) {
+    const panel = el('section', { class: 'panel multiscale-panel' });
+    panel.setAttribute('data-portolan-view', 'scales');
+    panel.setAttribute('data-portolan-kind', 'multiscale-drilldown');
+    panel.appendChild(el('h2', { class: 'panel-title' }, text('System Scales')));
+    panel.appendChild(el('p', { class: 'muted panel-read' },
+      text('Drill across ecosystem → capability → component → module / package / concept. Each scale is evidence-backed; unevidenced scales are honestly empty.')));
+
+    if (!multiscaleModel || !multiscaleModel.scales || multiscaleModel.scales.length === 0) {
+      panel.appendChild(el('p', { class: 'muted' }, text('No multiscale data available.')));
+      main.appendChild(panel);
+      return;
+    }
+
+    // Render a tree by scale level.
+    for (const level of SCALE_LEVELS) {
+      const entries = multiscaleModel.scales.filter(s => s.level === level);
+      if (entries.length === 0) continue;
+
+      const section = el('div', { class: 'multiscale-section' });
+      section.setAttribute('data-portolan-scale-level', level);
+      section.appendChild(el('h3', { class: 'section-kicker' }, text(SCALE_LABELS[level] || level)));
+
+      for (const entry of entries) {
+        const card = el('div', { class: 'card multiscale-card' });
+        card.setAttribute('data-portolan-scale-entry', entry.id);
+        card.setAttribute('data-portolan-scale-empty', entry.isEmpty ? 'true' : 'false');
+
+        const title = el('div', { class: 'card-title' });
+        if (entry.isEmpty) {
+          title.appendChild(el('span', { class: 'badge badge-quiet' }, text('not assessed')));
+        }
+        title.appendChild(text(entry.label));
+        card.appendChild(title);
+
+        if (entry.evidence && entry.evidence.source) {
+          const ev = el('div', { class: 'card-meta' });
+          ev.appendChild(el('span', { class: 'chip' }, text(entry.evidence.source)));
+          if (entry.evidence.description) {
+            ev.appendChild(el('span', { class: 'muted' }, text(entry.evidence.description)));
+          }
+          card.appendChild(ev);
+        }
+
+        if (entry.isEmpty && entry.emptyReason) {
+          card.appendChild(el('p', { class: 'muted' }, text(entry.emptyReason)));
+        }
+
+        // Show parent link for navigation context.
+        if (entry.parent) {
+          const parentEntry = multiscaleModel.scales.find(s => s.id === entry.parent);
+          if (parentEntry) {
+            const pl = el('div', { class: 'card-meta' });
+            pl.appendChild(el('span', { class: 'muted' }, text('← ' + (SCALE_LABELS[parentEntry.level] || parentEntry.level) + ': ' + parentEntry.label)));
+            card.appendChild(pl);
+          }
+        }
+
+        // Show children count.
+        if (entry.children && entry.children.length > 0) {
+          const cc = el('div', { class: 'card-meta' });
+          cc.appendChild(el('span', { class: 'chip' }, text(entry.children.length + ' below')));
+          card.appendChild(cc);
+        }
+
+        section.appendChild(card);
+      }
+
+      panel.appendChild(section);
+    }
 
     main.appendChild(panel);
   }
