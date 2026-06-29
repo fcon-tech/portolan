@@ -135,7 +135,7 @@ func validateEvidence(label string, evidence graph.Evidence) error {
 		return fmt.Errorf("%s evidence source is required", label)
 	}
 	switch evidence.State {
-	case graph.SourceVisible, graph.MetadataVisible, graph.RuntimeVisible, graph.ClaimOnly, graph.Unknown, graph.CannotVerify:
+	case graph.SourceVisible, graph.MetadataVisible, graph.RuntimeVisible, graph.ClaimOnly, graph.Unknown, graph.CannotVerify, graph.EvidenceState("not_assessed"):
 		return nil
 	default:
 		return fmt.Errorf("%s evidence state %q is not supported", label, evidence.State)

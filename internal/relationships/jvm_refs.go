@@ -34,6 +34,14 @@ var (
 	classDecl = regexp.MustCompile(`^\s*(?:(?:public|private|protected|abstract|final|static|sealed|open|data|value|inline|non-sealed)\s+)*(?:(?:enum|data|value|sealed)\s+)?(?:class|interface|enum|object|trait|record)\s+(\w+)`)
 )
 
+// CountJVMSourceFiles counts .java/.kt/.scala files in a root directory
+// without opening them. Used to bound JVM reference detection on large
+// codebases.
+func CountJVMSourceFiles(root string) int {
+	files := findJVMSourceFiles(root)
+	return len(files)
+}
+
 // DetectJVMReferences scans JVM source files (.java, .kt, .scala) for import
 // statements and resolves them against a fully-qualified-name (FQN) index
 // built from package + class declarations.

@@ -1009,7 +1009,13 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 			warnings = append(warnings, "relationship detection: "+issue.Path+": "+issue.Reason)
 		}
 		// spec 2: JVM source-level references (import resolution).
-		jvmRefResult := relationships.DetectJVMReferences(target.Path)
+		// NOTE: Bounded to avoid graph explosion on large JVM codebases.
+		// The full JVM ref detection produces 500K+ edges for Spark alone.
+		// For now, only emit JVM refs when the target has < 500 JVM files.
+		// A bounded sampling approach will replace this in a follow-up.
+		jvmFiles := relationships.CountJVMSourceFiles(target.Path)
+		if jvmFiles < 500 {
+			jvmRefResult := relationships.DetectJVMReferences(target.Path)
 		if prefixRelationships {
 			prefixRelationshipGraph(target.ID, &jvmRefResult)
 		}
@@ -1034,6 +1040,7 @@ func graphAndFindingsForSelection(sel selection.Selection) (graph.Graph, []Findi
 		jvmRefResult.Nodes = jvmFilteredNodes
 		g.Nodes = append(g.Nodes, jvmRefResult.Nodes...)
 		g.Edges = append(g.Edges, jvmRefResult.Edges...)
+		}
 		configurationResult := configuration.Detect(target.Path)
 		prefixConfiguration := shouldPrefixRelationshipGraph(sel, target)
 		g.Nodes = append(g.Nodes, configurationNodes(target.ID, prefixConfiguration, configurationResult)...)
