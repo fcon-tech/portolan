@@ -341,6 +341,10 @@ func Run(opts Options) (Result, error) {
 	}
 	rootSelection, discoveryRecords, discoveryWarnings := selectionForRootDiscovery(root)
 	g, findings, walkWarnings := graphAndFindingsForSelection(rootSelection)
+	symbolRefs := importSymbolReferences(root, rootSelection.Targets)
+	g.Nodes = append(g.Nodes, symbolRefs.Nodes...)
+	g.Edges = append(g.Edges, symbolRefs.Edges...)
+	findings = append(findings, symbolRefs.Findings...)
 	skippedSurfaces := []string{
 		"relationship-non-go-source",
 		"relationship-runtime-inference",
@@ -371,6 +375,7 @@ func Run(opts Options) (Result, error) {
 		return Result{}, err
 	}
 	ledger.Records = append(ledger.Records, discoveryRecords...)
+	ledger.Records = append(ledger.Records, symbolRefs.Records...)
 	ledger.Records = append(ledger.Records, externalCompletenessRecord())
 	sortCoverageRecords(ledger.Records)
 	ledger.Summary = summarizeCoverageRecords(ledger.Records)
