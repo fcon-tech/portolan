@@ -32,6 +32,7 @@ const FEATURE_TO_OPENSPEC = {
   'atlas-reading-experience': 'specs/reading-experience',
   'atlas-drilldown-semantics': 'specs/drilldown-semantics',
   'symbol-reference-edges': 'specs/ontology',
+  'deep-landscape-demo': 'specs/reading-experience',
 };
 
 const bindings = [
@@ -85,6 +86,10 @@ const bindings = [
   // Feature: Symbol reference edges (ontology)
   { feature: 'symbol-reference-edges', scenario: 'A reference relationship renders as a typed edge', binding: { unit: EXECUTABLE, test: 'BDD [symbol-reference-edges]: A reference relationship renders as a typed edge' } },
   { feature: 'symbol-reference-edges', scenario: 'A reference edge is explained honestly, not as a complete call graph', binding: { unit: EXECUTABLE, test: 'BDD [symbol-reference-edges]: A reference edge is explained honestly, not as a complete call graph' } },
+
+  // Feature: Deep landscape demo (reading-experience)
+  { feature: 'deep-landscape-demo', scenario: 'Landscape shows connected groupings and cross-component edges', binding: { unit: EXECUTABLE, test: 'BDD [deep-landscape-demo]: Landscape shows connected groupings and cross-component edges' } },
+  { feature: 'deep-landscape-demo', scenario: 'Dependency-only landscape is admitted, not disguised', binding: { unit: EXECUTABLE, test: 'BDD [deep-landscape-demo]: Dependency-only landscape is admitted, not disguised' } },
 ];
 
 // --- self-verification tests (run by node --test) ---
