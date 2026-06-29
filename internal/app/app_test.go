@@ -1484,6 +1484,52 @@ func TestRunMapWritesAgentScaleSummary(t *testing.T) {
 	}
 }
 
+func TestRunMapIfStaleBuildsThenSkips(t *testing.T) {
+	root := t.TempDir()
+	mustMkdir(t, filepath.Join(root, ".git"))
+	mustWrite(t, filepath.Join(root, "go.mod"), "module example.com/stale\n")
+	mustWrite(t, filepath.Join(root, "main.go"), "package main\n")
+
+	out := filepath.Join(root, ".portolan", "run")
+
+	// First run: no stored signature, must build.
+	var stdout1 bytes.Buffer
+	var stderr1 bytes.Buffer
+	code := Run([]string{"map", "--root", root, "--out", out, "--if-stale"}, &stdout1, &stderr1)
+	if code != 0 {
+		t.Fatalf("first run returned %d, want 0; stderr = %q", code, stderr1.String())
+	}
+	if !strings.Contains(stdout1.String(), "wrote map bundle") {
+		t.Fatalf("first run stdout = %q, want bundle write", stdout1.String())
+	}
+	if _, err := os.Stat(filepath.Join(out, "tree-signature.json")); err != nil {
+		t.Fatalf("tree-signature.json missing after build: %v", err)
+	}
+
+	// Second run: signature unchanged, must skip.
+	var stdout2 bytes.Buffer
+	var stderr2 bytes.Buffer
+	code = Run([]string{"map", "--root", root, "--out", out, "--if-stale"}, &stdout2, &stderr2)
+	if code != 0 {
+		t.Fatalf("second run returned %d, want 0; stderr = %q", code, stderr2.String())
+	}
+	if !strings.Contains(stdout2.String(), "up to date") {
+		t.Fatalf("second run stdout = %q, want skip message", stdout2.String())
+	}
+
+	// Third run after a change: must rebuild.
+	mustWrite(t, filepath.Join(root, "util.go"), "package main\n")
+	var stdout3 bytes.Buffer
+	var stderr3 bytes.Buffer
+	code = Run([]string{"map", "--root", root, "--out", out, "--if-stale"}, &stdout3, &stderr3)
+	if code != 0 {
+		t.Fatalf("third run returned %d, want 0; stderr = %q", code, stderr3.String())
+	}
+	if !strings.Contains(stdout3.String(), "wrote map bundle") {
+		t.Fatalf("third run stdout = %q, want bundle write after change", stdout3.String())
+	}
+}
+
 func TestRunMapWritesBoundedGraphIndex(t *testing.T) {
 	root := t.TempDir()
 	mustMkdir(t, filepath.Join(root, ".git"))
