@@ -29,6 +29,8 @@ function stableId(prefix, ...parts) {
 }
 
 function mapEvidenceState(state) {
+  // Go graph.EvidenceState values use underscores (cannot_verify, unknown);
+  // some legacy scan-bundle artifacts use hyphens (cannot-verify). Map both.
   const goStates = {
     'source-visible': 'source-visible',
     'metadata-visible': 'metadata-visible',
@@ -36,6 +38,8 @@ function mapEvidenceState(state) {
     'claim-only': 'claim-only',
     unknown: 'unknown',
     'cannot-verify': 'cannot_verify',
+    cannot_verify: 'cannot_verify',
+    not_assessed: 'not_assessed',
   };
   return goStates[state] || 'unknown';
 }

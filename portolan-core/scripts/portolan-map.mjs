@@ -106,9 +106,9 @@ function ensureSnapshot(target) {
       encoding: 'utf8',
     });
     // Machine-readable token: the Go binary prints STALENESS: skipped or
-    // STALENESS: rebuilt as its last stdout line. Fall back to human-readable
-    // detection for older binaries that lack the token.
-    rebuilt = !stdout.includes('STALENESS: skipped');
+    // STALENESS: rebuilt as its last stdout line.
+    const lastLine = stdout.trim().split('\n').pop() || '';
+    rebuilt = !lastLine.startsWith('STALENESS: skipped');
   } catch (e) {
     console.error('error: snapshot collection failed:', e.message);
     if (e.stderr) console.error(e.stderr.toString().trim());
