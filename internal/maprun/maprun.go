@@ -383,6 +383,7 @@ func Run(opts Options) (Result, error) {
 	ledger.Records = append(ledger.Records, externalCompletenessRecord())
 	sortCoverageRecords(ledger.Records)
 	ledger.Summary = summarizeCoverageRecords(ledger.Records)
+	findings = append(findings, detectOverlapFindings(g)...)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
 	findings = dedupeFindings(findings)
 	sortFindings(findings)
@@ -477,6 +478,7 @@ func runSelection(opts Options) (Result, error) {
 		Packet:     filepath.Join(out, "map.md"),
 	}
 	g, findings, warnings := graphAndFindingsForSelection(sel)
+	findings = append(findings, detectOverlapFindings(g)...)
 	findings = append(findings, deriveTechnicalDebtFindings(findings, ledger)...)
 	findings = dedupeFindings(findings)
 	sortFindings(findings)
@@ -2383,12 +2385,14 @@ func validateFinding(finding Finding) error {
 		return fmt.Errorf("finding %q is incomplete", finding.ID)
 	}
 	switch finding.Kind {
-	case "inventory", "relationships", "duplication", "configuration", "technical-debt":
+	case "inventory", "relationships", "duplication", "configuration", "technical-debt",
+		"overlapping-capabilities", "duplicated-concept", "alternative-capability",
+		"legacy-stale-semantic-overlap":
 	default:
 		return fmt.Errorf("finding %q kind %q is not supported", finding.ID, finding.Kind)
 	}
 	switch finding.Severity {
-	case "info", "low", "medium", "high":
+	case "info", "low", "medium", "high", "minor", "major", "critical":
 	default:
 		return fmt.Errorf("finding %q severity %q is not supported", finding.ID, finding.Severity)
 	}

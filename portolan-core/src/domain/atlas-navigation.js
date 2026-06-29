@@ -85,6 +85,9 @@ const FINDING_TYPES = [
   'duplicate_risk', 'version_skew', 'legacy_current_overlap', 'coverage_gap',
   'runtime_unknown', 'boundary_risk', 'high_responsibility_script',
   'false_join_risk', 'blocked_probe', 'not_assessed_surface',
+  // Spec 21: overlap/alternative/legacy-stale finding kinds.
+  'overlapping-capabilities', 'duplicated-concept', 'alternative-capability',
+  'legacy-stale-semantic-overlap',
 ];
 
 /** finding severity vocabulary. */
