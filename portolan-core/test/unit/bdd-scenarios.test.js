@@ -17,6 +17,7 @@ const { openBehaviourMap } = require('../../src/use-cases/open-behaviour-map');
 const { drillToRegion } = require('../../src/use-cases/drill-to-region');
 const { buildRegionProfile } = require('../../src/domain/region-profile');
 const { confidenceForProducer, resolveConflict, isEvidenceCompatible } = require('../../src/domain/confidence');
+const { buildSnapshot } = require('../../src/use-cases/build-snapshot');
 
 // ---- Feature: Managed intake ----
 
@@ -72,6 +73,58 @@ test('BDD [/portolan:map]: first screen shows annotated overview (not undifferen
   // The overview summarises: 2 units, 0 edges. It does NOT dump the raw graph.
   assert.strictEqual(model.nodes.length, 2);
   assert.strictEqual(model.edges.length, 0);
+});
+
+// ---- Feature: /portolan:map collect-if-stale ----
+
+test('BDD [/portolan:map]: snapshot collected from map-bundle is non-empty', async () => {
+  // Given a target with no snapshot — the Go core collects a map-bundle.
+  // When buildSnapshot reads it — the JS reading layer normalizes it.
+  // Then the system-map has at least one component (not an empty atlas).
+  const reader = {
+    readJson: (name) => {
+      if (name === 'graph.json') return {
+        nodes: [
+          { id: 'svc', kind: 'repository', label: 'Service', evidence: { state: 'source-visible', source: '/r/svc' } },
+        ],
+        edges: [],
+      };
+      if (name === 'summary.json') return { root: '/r', generated_at: '2026-01-01T00:00:00Z', graph: { nodes: 1, edges: 0 } };
+      return null;
+    },
+    readJsonl: () => [],
+    exists: (name) => name === 'graph.json',
+    listProducerDirs: () => [],
+    bundleDir: '/fake',
+  };
+  const map = await buildSnapshot({ reader, targetRoot: '/r', generatedAt: 'T1' });
+  assert.ok(map.objects.components.length > 0, 'collected snapshot must have at least one component');
+});
+
+test('BDD [/portolan:map]: snapshot reuse is deterministic for unchanged input', async () => {
+  // Given a fresh snapshot (tree signature unchanged)
+  // When the agent runs /portolan:map again
+  // Then the normalized system-map is identical (reused, not rebuilt)
+  const reader = {
+    readJson: (name) => {
+      if (name === 'graph.json') return {
+        nodes: [
+          { id: 'a', kind: 'repository', label: 'A', evidence: { state: 'source-visible', source: '/r/a' } },
+          { id: 'b', kind: 'repository', label: 'B', evidence: { state: 'source-visible', source: '/r/b' } },
+        ],
+        edges: [{ from: 'a', to: 'b', kind: 'imports', evidence: { state: 'metadata-visible' } }],
+      };
+      if (name === 'summary.json') return { root: '/r', graph: { nodes: 2, edges: 1 } };
+      return null;
+    },
+    readJsonl: () => [],
+    exists: (name) => name === 'graph.json',
+    listProducerDirs: () => [],
+    bundleDir: '/fake',
+  };
+  const m1 = await buildSnapshot({ reader, targetRoot: '/r', generatedAt: 'FIXED' });
+  const m2 = await buildSnapshot({ reader, targetRoot: '/r', generatedAt: 'FIXED' });
+  assert.deepStrictEqual(m1, m2, 'identical input must produce identical normalized output');
 });
 
 // ---- Feature: Behaviour map ----

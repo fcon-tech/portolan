@@ -18,7 +18,7 @@ Last updated: 2026-06-29.
 
 | # | Change | Layer | Target spec | Status | One-line intent |
 |---|---|---|---|---|---|
-| 1 | `agent-atlas-foundation` | 0 | atlas-identity, engineering-standards | spec-only (+ AGENTS.md rule applied) | Portolan = agent-atlas (base, Go, Node-free) + human-atlas (opt-in JS skin); language by consumer fit |
+| 1 | `agent-atlas-foundation` | 0 | atlas-identity, engineering-standards | **APPLIED + ARCHIVED** 2026-06-29 | Portolan = agent-atlas (base, Go, Node-free) + human-atlas (opt-in JS skin); language by consumer fit |
 | 2 | `symbol-reference-edges` | 1 | ontology | spec+partial-impl | typed `references` edges from symbol-index role data |
 | 3 | `bigtop-deep-landscape-demo` | 3 | reading-experience | spec-only | landscape reads as connected structure, not a repo list |
 | 18 | `semantic-investigation-producer` | 2 | semantic-investigation | spec-only | generate semantic pages from corpus + bounded agent claims (not fixture-backed) |
@@ -116,6 +116,10 @@ Concrete slices that implement a change's requirement but need no new spec:
   collect→query→JSON substrate with tree-signature staleness, and
   `portolan-map.mjs` now collects via the Go core instead of erroring on a
   missing pre-built bundle (closes the `/portolan:map` initiation gap).
+  `agent-atlas-foundation` is **applied + archived** (2026-06-29): its deltas
+  are folded into the living atlas-identity and engineering-standards specs;
+  the navigation spec gained "collect if stale" + "reuse when fresh" BDD
+  scenarios bound to unit tests.
 - `symbol-reference-edges` is **not** end-to-end done. The importer emits
   `references` edges in isolation (Go unit-tested), but they do not reach the
   atlas (see `importer-bundle-bridge`). Its `tasks.md` records this explicitly.

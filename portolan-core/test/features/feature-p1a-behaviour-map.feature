@@ -10,6 +10,19 @@ Feature: /portolan:map opens the atlas
     And it does not show an undifferentiated node-link graph as the first screen
     And a clear affordance opens the full behaviour map
 
+  Scenario: Snapshot is collected when stale or absent
+    Given a target with no snapshot or a stale snapshot
+    When the agent runs /portolan:map
+    Then the snapshot is collected via the deterministic Go core
+    And the atlas opens with the fresh snapshot
+    And the collected snapshot is non-empty (at least one component)
+
+  Scenario: Snapshot is reused when fresh
+    Given a target with a fresh snapshot (tree signature unchanged)
+    When the agent runs /portolan:map
+    Then the snapshot is reused without rebuilding
+    And the atlas opens from the existing snapshot
+
   Scenario: The behaviour map shows units and typed edges
     Given the overview is visible
     When the admiral opens the behaviour map
