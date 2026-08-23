@@ -30,11 +30,11 @@
 
 ## 4. Manifests
 
-- [ ] 4.1 Implement the five manifest readers (go.mod, pom.xml, package.json,
+- [x] 4.1 Implement the five manifest readers (go.mod, pom.xml, package.json,
       Cargo.toml, pubspec.yaml) returning name/version/dependency facts
       anchored by file path + manifest key and labeled `charted`, and verify
       fixture-based tests per format assert the anchors and the label
-- [ ] 4.2 Implement unsupported-format and malformed-file paths and verify
+- [x] 4.2 Implement unsupported-format and malformed-file paths and verify
       tests: an unknown manifest kind reports unsupported with zero facts; a
       truncated manifest returns an error naming the file with zero partial
       facts

@@ -1,0 +1,17 @@
+name: harbor_flutter
+description: >-
+  A flutter front-end for the harbor service.
+version: 3.0.1+42
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.1.0
+  harbor_core:
+    hosted:
+      name: harbor_core
+    version: ^2.0.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
