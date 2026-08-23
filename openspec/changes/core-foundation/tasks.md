@@ -42,7 +42,7 @@
 
 ## 5. Wiring
 
-- [ ] 5.1 Export the public surface from `core/src/index.ts` (types,
+- [x] 5.1 Export the public surface from `core/src/index.ts` (types,
       validate, chart-store, staleness, notices) and verify a smoke test
       imports and runs write → edit file → refresh → notice end-to-end on a
       temp target
