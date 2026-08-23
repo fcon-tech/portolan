@@ -7,14 +7,14 @@ Feature: Deep landscape demo — connected structure, not a flat inventory
 
   Scenario: Landscape shows connected groupings and cross-component edges
     Given a snapshot contains structural reference edges and shared-dependency clusters across multiple components
-    When the admiral opens the landscape view
+    When the captain opens the landscape view
     Then components are connected by typed edges into groupings and hubs
     And the system shape is legible at a glance
     And the view is not a flat list of repositories
 
   Scenario: Dependency-only landscape is admitted, not disguised
     Given a snapshot contains only shared-dependency edges and no structural edges
-    When the admiral opens the landscape view
+    When the captain opens the landscape view
     Then the atlas states in plain language that only dependency-level structure is available
     And it does not present shared dependencies as code-level architecture
 

@@ -15,13 +15,13 @@ C4 contract and the separation of evidence usability from artifact validation.
 ### Requirement: Reader-facing navigation labels
 Top navigation SHALL use reader-facing labels that are understandable without
 knowledge of internals. Each section MUST begin with a one-sentence explanation
-of what the section is, why the admiral would open it, what can be clicked, and
+of what the section is, why the captain would open it, what can be clicked, and
 what clicking should reveal. Unexplained internal labels such as bare `Fleet`,
 `Probes`, or `Receipt` MUST NOT be primary navigation labels.
 
 #### Scenario: A cold reader understands the labels
 - GIVEN a navigation atlas bundle is present
-- WHEN the admiral opens /portolan:map
+- WHEN the captain opens /portolan:map
 - THEN the top navigation uses reader-facing labels
 - AND each section carries a one-sentence explanation
 - AND unexplained internal labels are not the primary labels
@@ -36,7 +36,7 @@ generic repository or component page.
 
 #### Scenario: No silent fallback to a generic page
 - GIVEN a primary clickable object is visible
-- WHEN the admiral activates it
+- WHEN the captain activates it
 - THEN it opens a dossier or detail, hands off to external evidence with explanation, or is disabled with a reason
 - AND it does not land on a generic repository or component page without explaining the clicked object
 
@@ -64,7 +64,7 @@ detail — never to a generic component dossier.
 
 #### Scenario: A weak relationship is not dressed up
 - GIVEN current data cannot support a relationship detail
-- WHEN the admiral encounters the relationship
+- WHEN the captain encounters the relationship
 - THEN the click is disabled or opens a not_assessed detail
 - AND it does not fall through to a generic component dossier
 
@@ -78,7 +78,7 @@ individual stages.
 
 #### Scenario: A route dossier focuses a single stage
 - GIVEN a route diagram is visible
-- WHEN the admiral clicks a stage
+- WHEN the captain clicks a stage
 - THEN the dossier focuses that stage's detail without leaving the route context
 
 ### Requirement: Route stage detail states what it proves and does not
@@ -104,7 +104,7 @@ as a flat field dump.
 
 #### Scenario: A finding opens as a risk explanation
 - GIVEN a hazard or finding is visible
-- WHEN the admiral opens it
+- WHEN the captain opens it
 - THEN a risk detail explains the hazard, why it matters, its confidence, evidence, and a next check
 
 ### Requirement: Unknown probe detail retains route context
@@ -117,7 +117,7 @@ route stages when the probe row itself lacks direct references.
 
 #### Scenario: A probe keeps the context that made it matter
 - GIVEN a next check appears without direct references
-- WHEN the admiral opens its probe detail
+- WHEN the captain opens its probe detail
 - THEN the detail shows the linked route, stage, or finding context derived in reverse
 - AND it names the required permission class and expected output
 
@@ -132,7 +132,7 @@ verification.
 
 #### Scenario: An evidence anchor reports its quality and limits
 - GIVEN an evidence chip or anchor is visible
-- WHEN the admiral opens it
+- WHEN the captain opens it
 - THEN the detail shows path, anchor quality, a bounded excerpt or missing explanation, and what the evidence does not prove
 
 ### Requirement: C4 is an honest-empty map, not a renamed graph
@@ -146,7 +146,7 @@ to dossiers or be disabled with an explanation.
 
 #### Scenario: Container is honest-empty without runtime evidence
 - GIVEN no runtime or deploy evidence is present
-- WHEN the admiral opens the C4 map
+- WHEN the captain opens the C4 map
 - THEN Context is present
 - AND Container is shown as honest-empty with an explanation, not hidden or fabricated
 
@@ -160,6 +160,6 @@ displayed as if the atlas is evidence-rich.
 
 #### Scenario: A validated artifact with weak anchors is not dressed up
 - GIVEN the bundle validates structurally but key route anchors are missing or ambiguous
-- WHEN the admiral opens the run log
+- WHEN the captain opens the run log
 - THEN artifact validation is shown separately from evidence usability
 - AND the atlas does not imply that validated artifacts mean evidence-rich routes

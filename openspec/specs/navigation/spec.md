@@ -48,26 +48,26 @@ view (findings grouped by unit, when present).
 
 #### Scenario: Behaviour map renders units and typed edges
 - GIVEN the overview is visible
-- WHEN the admiral opens the behaviour map
+- WHEN the captain opens the behaviour map
 - THEN units and their typed edges render as an interactive graph
 - AND each unit carries its evidence.state
 - AND clicking a unit opens its dossier
 
 #### Scenario: Behaviour map zoom controls detail
 - GIVEN the behaviour map is visible
-- WHEN the admiral zooms out
+- WHEN the captain zooms out
 - THEN low-importance units are elided into groups and hubs remain
-- AND when the admiral zooms in all units, edges, and labels are shown
+- AND when the captain zooms in all units, edges, and labels are shown
 
 ### Requirement: Navigation gestures
 Switching between maps SHALL be a discrete gesture (tab/nav). Zoom within a map
 SHALL adjust detail/clutter and be bounded per map. Drilling into a unit SHALL
-open its dossier. Zooming past the deepest view SHALL hand the admiral to the
+open its dossier. Zooming past the deepest view SHALL hand the captain to the
 unit's backing evidence (typically the source repository).
 
 #### Scenario: Zoom-past opens backing evidence
-- GIVEN the admiral is at the deepest view of a unit with a backing repository
-- WHEN the admiral zooms past it
+- GIVEN the captain is at the deepest view of a unit with a backing repository
+- WHEN the captain zooms past it
 - THEN the backing repository is opened as the ground truth
 
 ### Requirement: C4 map is honest-empty without runtime evidence
@@ -80,7 +80,7 @@ by observed deployment topology, not the legacy role taxonomy.
 
 #### Scenario: Container level honest-empty without evidence
 - GIVEN the perimeter has no runtime/deploy evidence
-- WHEN the admiral opens the C4 map
+- WHEN the captain opens the C4 map
 - THEN the Container level renders honestly empty with an explanation
 - AND it is greyed-out, not hidden
 
@@ -90,7 +90,7 @@ Part-1b data exists. It MUST NOT be a separate audit product and MUST NOT be
 the entry point.
 
 #### Scenario: Conflict glows on a map node
-- GIVEN a triangulation conflict exists and the admiral enables the overlay
+- GIVEN a triangulation conflict exists and the captain enables the overlay
 - WHEN a map renders
 - THEN the conflicting node is highlighted on the map
 
@@ -103,7 +103,7 @@ section SHALL be omitted.
 
 #### Scenario: Dossier opens from the map
 - GIVEN a unit is visible on a map
-- WHEN the admiral drills into it
+- WHEN the captain drills into it
 - THEN its dossier opens with the required sections
 - AND next actions are generated or the section is omitted
 
@@ -115,7 +115,7 @@ presentation only.
 
 #### Scenario: Style toggle preserves data
 - GIVEN the atlas is rendered in cartographic style
-- WHEN the admiral toggles to plain
+- WHEN the captain toggles to plain
 - THEN the same data renders with minimal chrome
 
 ### Requirement: Multiscale drill-down across ecosystem to concept

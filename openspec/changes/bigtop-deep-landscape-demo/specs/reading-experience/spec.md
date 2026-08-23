@@ -14,14 +14,14 @@ dependency sharing as if it were code-level architecture.
 #### Scenario: Landscape shows connected groupings and cross-component edges
 - GIVEN a snapshot contains structural reference edges and shared-dependency
   clusters across multiple components
-- WHEN the admiral opens the landscape view
+- WHEN the captain opens the landscape view
 - THEN components are connected by typed edges into groupings and hubs
 - AND the system shape (clusters, cross-cutting flows) is legible at a glance
 - AND the view is not a flat list of repositories
 
 #### Scenario: Dependency-only landscape is admitted, not disguised
 - GIVEN a snapshot contains only shared-dependency edges and no structural edges
-- WHEN the admiral opens the landscape view
+- WHEN the captain opens the landscape view
 - THEN the atlas states in plain language that only dependency-level structure is
   available
 - AND it does not present shared dependencies as code-level architecture

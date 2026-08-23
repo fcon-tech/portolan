@@ -30,7 +30,7 @@ their backing repository-unit(s). A repository source MUST NOT be modelled as a
 surface.
 
 #### Scenario: Self-backing repository unit
-- GIVEN the admiral names a repository root
+- GIVEN the captain names a repository root
 - WHEN the core promotes it
 - THEN it is a unit whose evidence is its own source tree
 

@@ -208,7 +208,7 @@ test('an investigation page shows the source-boundary badges (not a single confi
   assert.ok(boundaries.size >= 2, `expected >= 2 distinct source boundaries, got ${[...boundaries]}`);
 });
 
-// captain-atlas 17 hard rule (admiral correction #2): the renderer must PREVENT
+// captain-atlas 17 hard rule (captain correction #2): the renderer must PREVENT
 // object-as-text rather than masking it as "[object Object]". The shell's text()
 // helper throws a TypeError on any non-primitive so the bug surfaces (and the
 // browser harness fails) instead of being hidden. Pin this contract so a future

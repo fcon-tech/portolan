@@ -4,7 +4,7 @@ Feature: Region drill-down shows a statistical profile
 
   Scenario: Drilling into a family cluster shows its statistical profile
     Given the behaviour map is visible
-    When the admiral clicks a family cluster
+    When the captain clicks a family cluster
     Then a region profile renders
     And it shows unit count, edge density, and surface count
     And it shows lifecycle and evidence distributions
@@ -12,6 +12,6 @@ Feature: Region drill-down shows a statistical profile
 
   Scenario: A single-unit region is valid
     Given the behaviour map is visible
-    When the admiral clicks a cluster containing one isolated unit
+    When the captain clicks a cluster containing one isolated unit
     Then a region profile renders with edge_density 0
     And it is a valid complete result

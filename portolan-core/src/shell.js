@@ -80,7 +80,7 @@ function createPortolanShell(opts) {
   const semanticInvestigation = opts.semanticInvestigation || null;
   const theme = createThemeProvider();
   const navigator = createHashNavigator();
-  const triangulationEnabled = false; // overlay off by default; admiral toggles
+  const triangulationEnabled = false; // overlay off by default; captain toggles
 
   if (!doc) throw new Error('createPortolanShell requires a document (inject for tests)');
   if (!atlas) throw new Error('createPortolanShell requires a pre-loaded atlas');
@@ -1178,7 +1178,7 @@ function createPortolanShell(opts) {
     panel.appendChild(dossierSection('Next probe', p.next_probe));
     if (p.requires_permission && p.requires_permission.length) panel.appendChild(dossierSection('Required permissions', p.requires_permission.join(', ')));
     // captain-atlas 16: if the probe row lacked direct route refs but context
-    // was reverse-derived, say so explicitly so the admiral knows the linkage
+    // was reverse-derived, say so explicitly so the captain knows the linkage
     // is inferred from where the probe is referenced, not declared.
     if (data.contextDerived) {
       panel.appendChild(el('p', { class: 'muted probe-context-derived' },
@@ -1211,7 +1211,7 @@ function createPortolanShell(opts) {
       euWrap.appendChild(euAxisCard('EVIDENCE USABILITY', eu.evidenceUsability, eu.copy.evidenceUsability, 'axis-evidence'));
       euWrap.appendChild(euAxisCard('RUNTIME ASSESSMENT', eu.runtimeAssessment, eu.copy.runtimeAssessment, 'axis-runtime'));
       panel.appendChild(euWrap);
-      // Stage-count context so the admiral sees what the usability verdict is over.
+      // Stage-count context so the captain sees what the usability verdict is over.
       panel.appendChild(el('p', { class: 'muted evidence-stage-counts' },
         text(`${eu.stageCounts.total} stage(s): ${eu.stageCounts.visibleEvidence} with visible evidence, ${eu.stageCounts.preciseAnchors} with precise source anchors.`)));
       // Hard rule: make it impossible to misread artifact_validated as evidence-rich.
@@ -1626,7 +1626,7 @@ function createPortolanShell(opts) {
   // =========================================================================
 
   // The source-boundary badge for a claim. The four boundaries are an
-  // orthogonal axis to evidence.state (doc 17). Visible so the admiral can read
+  // orthogonal axis to evidence.state (doc 17). Visible so the captain can read
   // the main story first, then inspect the boundary.
   function sourceBoundaryBadge(boundary) {
     const cls = boundary === 'local-corpus' ? 'badge badge-quality-high'

@@ -11,8 +11,8 @@ Principles (migrated).
 ## Requirements
 
 ### Requirement: Zero copied commands
-The admiral SHALL drop a Portolan link to an agent and lean back. The agent
-MUST install Portolan autonomously. The admiral MUST type no command beyond the
+The captain SHALL drop a Portolan link to an agent and lean back. The agent
+MUST install Portolan autonomously. The captain MUST type no command beyond the
 initial prompt. Approval prompts for target mutation (writes under `.portolan/`,
 network access) are allowed and expected.
 
@@ -20,10 +20,10 @@ network access) are allowed and expected.
 - GIVEN a fresh agent is given only the Portolan link
 - WHEN it runs the first-run flow
 - THEN it reaches /portolan:map
-- AND no command was copied from docs by the admiral beyond the initial prompt
+- AND no command was copied from docs by the captain beyond the initial prompt
 
 ### Requirement: Conversational intake
-The agent SHALL ask the admiral what they have; it MUST NOT demand a filled-in
+The agent SHALL ask the captain what they have; it MUST NOT demand a filled-in
 YAML manifest. Managed intake is a dialogue that produces a typed intake result
 the deterministic core consumes without re-asking.
 
@@ -31,19 +31,19 @@ the deterministic core consumes without re-asking.
 - GIVEN the agent runs intake
 - WHEN the dialogue completes
 - THEN a typed intake result is persisted under .portolan/
-- AND the deterministic core consumes it without re-asking the admiral
+- AND the deterministic core consumes it without re-asking the captain
 
 ### Requirement: One entry point
 `/portolan:map` SHALL be the single agent-side command that opens the atlas. It
 builds the snapshot if stale and opens the behaviour map. The system MUST NOT
-require the admiral to configure a server, open localhost manually, or navigate
+require the captain to configure a server, open localhost manually, or navigate
 to start.
 
 #### Scenario: No manual server configuration
-- GIVEN the admiral has run intake
+- GIVEN the captain has run intake
 - WHEN the atlas is opened
 - THEN /portolan:map builds and opens it
-- AND the admiral did not configure a server or open localhost manually
+- AND the captain did not configure a server or open localhost manually
 
 ### Requirement: Agentic instructions are self-contained
 Every YAML, script, command, and toolchain SHALL be embedded in the agent
@@ -62,5 +62,5 @@ Navigation spec) is the presentation layer; both styles render the same data.
 
 #### Scenario: Atlas renders with colour hierarchy
 - GIVEN the atlas renders
-- WHEN the admiral views any map
+- WHEN the captain views any map
 - THEN units and edges use a colour hierarchy and interactive SVG

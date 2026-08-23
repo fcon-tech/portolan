@@ -22,8 +22,8 @@ const { buildSnapshot } = require('../../src/use-cases/build-snapshot');
 
 // ---- Feature: Managed intake ----
 
-test('BDD [managed-intake]: Admiral names repositories only', () => {
-  // Given the admiral drops a Portolan link to an agent
+test('BDD [managed-intake]: Captain names repositories only', () => {
+  // Given the captain drops a Portolan link to an agent
   // When the agent runs managed intake
   // Then a typed intake result is persisted (validated), reusable on rebuild
   const r1 = runIntake({
@@ -39,7 +39,7 @@ test('BDD [managed-intake]: Admiral names repositories only', () => {
   assert.strictEqual(r1.anchors[0].id, r2.anchors[0].id);
 });
 
-test('BDD [managed-intake]: Admiral names repos, docs, and a ticket source', () => {
+test('BDD [managed-intake]: Captain names repos, docs, and a ticket source', () => {
   const r = runIntake({
     target_root: '/repo',
     anchors: [

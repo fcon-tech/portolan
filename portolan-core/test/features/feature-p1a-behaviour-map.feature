@@ -25,13 +25,13 @@ Feature: /portolan:map opens the atlas
 
   Scenario: The behaviour map shows units and typed edges
     Given the overview is visible
-    When the admiral opens the behaviour map
+    When the captain opens the behaviour map
     Then units and their typed edges render as an interactive graph
     And each unit carries its evidence.state
     And clicking a unit opens its dossier
 
   Scenario: Zoom controls detail without losing structure
     Given the behaviour map is visible
-    When the admiral zooms out
+    When the captain zooms out
     Then low-importance units are elided into groups and hubs remain
-    And when the admiral zooms in all units, edges, and labels are shown
+    And when the captain zooms in all units, edges, and labels are shown

@@ -35,7 +35,7 @@
 // strings are product copy, not JSONL field restatements. They are referenced by
 // buildJourneys() which attaches the REAL derived facts (subjects, findings,
 // probes, evidence states, coverage) so the rendered card answers the six
-// questions without the admiral reading raw artifacts.
+// questions without the captain reading raw artifacts.
 //
 // `journeyId` is stable for harness/DOM markers; `readingPriority` orders the
 // first screen. Only journeys whose route_id actually exists in the parsed
@@ -565,7 +565,7 @@ function coverageRegions(cm) {
 /**
  * Pick the top N probes for the first screen. Priority: blocked before
  * not_assessed (blocked is the stronger "we tried and could not"), then by
- * probe_risk (medium/high first — these are the ones an admiral cares about),
+ * probe_risk (medium/high first — these are the ones an captain cares about),
  * preserving stable order otherwise.
  */
 function topProbes(probes, n) {

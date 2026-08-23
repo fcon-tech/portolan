@@ -5,7 +5,7 @@
  * Single responsibility: validate and normalize the intake result shape. The
  * intake result is persisted under `.portolan/` and consumed by the
  * deterministic core to build the snapshot; a deterministic rebuild reuses it
- * without re-asking the admiral.
+ * without re-asking the captain.
  *
  * Shape (charter 08):
  *   {

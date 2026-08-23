@@ -5,13 +5,13 @@ Feature: Symbol reference edges surface honestly in the atlas
 
   Scenario: A reference relationship renders as a typed edge
     Given a snapshot contains a `references` relationship between two components
-    When the admiral opens the behaviour map
+    When the captain opens the behaviour map
     Then the reference renders as a typed edge
     And its evidence is metadata-visible
 
   Scenario: A reference edge is explained honestly, not as a complete call graph
     Given a snapshot contains a `references` relationship
-    When the admiral opens the relationship detail
+    When the captain opens the relationship detail
     Then the type is `references`
     And the evidence is metadata-visible, not source-visible
     And the explanation states it is not a complete call graph

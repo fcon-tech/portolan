@@ -1,5 +1,5 @@
 /**
- * Use-case: run managed intake — build a typed intake result from raw admiral
+ * Use-case: run managed intake — build a typed intake result from raw captain
  * answers (charter 08 "Managed intake").
  *
  * The root Portolan skill conducts a conversational intake, then calls this
@@ -28,7 +28,7 @@ function anchorId(kind, location) {
 }
 
 /**
- * Build a typed intake result from raw admiral answers.
+ * Build a typed intake result from raw captain answers.
  *
  * @param {object} input - { target_root, anchors: [{kind,location,access_method}], perimeter?, architectural_principles? }
  * @returns {object} validated, normalized intake result

@@ -21,7 +21,7 @@ MUST NOT be the default hero or primary body.
 
 #### Scenario: Walkthrough replaces the repo graph as the first screen
 - GIVEN a target landscape and a navigation atlas bundle are present
-- WHEN the admiral opens /portolan:map
+- WHEN the captain opens /portolan:map
 - THEN the first screen shows named system journeys and a system summary
 - AND it shows top risks or unknowns and a next-expedition section
 - AND the Fleet map is available only as a secondary affordance
@@ -35,7 +35,7 @@ identifier, family label, and stage count MUST NOT be accepted.
 
 #### Scenario: A journey card conveys meaning, not metadata
 - GIVEN a named system journey exists
-- WHEN the admiral reads its card on the first screen
+- WHEN the captain reads its card on the first screen
 - THEN the card explains what the journey is and why it matters
 - AND it states what is known and what is not assessed
 - AND it names a concrete next action
@@ -48,7 +48,7 @@ badges, and attached unknown-probe badges. The diagram MUST depict a system
 path, not a repository graph.
 
 #### Scenario: A route opens to an ordered diagram
-- GIVEN the admiral opens a system route
+- GIVEN the captain opens a system route
 - WHEN the route screen renders
 - THEN an ordered stage diagram appears before any tabular detail
 - AND stages show evidence state and runtime/build/test assessment
@@ -65,7 +65,7 @@ language rather than hiding it in a badge.
 
 #### Scenario: The dossier reads as prose with stage cards
 - GIVEN a route dossier is opened
-- WHEN the admiral reads it
+- WHEN the captain reads it
 - THEN it presents thesis, diagram, stage cards, evidence, risks, unknowns, and next expedition in order
 - AND each stage card shows role, source anchor, evidence state, and why it matters
 - AND ambiguous or missing anchors are explained in plain language
@@ -94,13 +94,13 @@ behavior — only of source visibility.
 ### Requirement: Findings explain system risk where they matter
 Findings SHALL appear on first-screen journey cards, on route diagrams, in route
 dossiers, and in a separate findings index. Each finding card SHALL answer what
-the risk is, where it attaches, why the admiral should care, what evidence
+the risk is, where it attaches, why the captain should care, what evidence
 supports it, and what next check would reduce uncertainty. Findings MUST NOT be
 rendered as a flat list of raw fields.
 
 #### Scenario: A finding reads as a risk explanation
 - GIVEN a route carries a finding
-- WHEN the admiral reads the finding card
+- WHEN the captain reads the finding card
 - THEN it explains the risk, where it attaches, why it matters, supporting evidence, and a next check
 
 ### Requirement: Unknown probes become expedition steps
@@ -112,7 +112,7 @@ screen MUST show the top next probes.
 
 #### Scenario: A probe card reads as an actionable step
 - GIVEN an unknown probe exists
-- WHEN the admiral reads the probe card
+- WHEN the captain reads the probe card
 - THEN it states what is unknown and why it cannot be claimed
 - AND it names the required permission class and exact next probe text
 - AND it links to the related route, stage, or finding
@@ -125,7 +125,7 @@ region. Coverage MUST NOT be only a flat subject table.
 
 #### Scenario: Coverage distinguishes scale and gaps
 - GIVEN the target corpus has multiple subjects
-- WHEN the admiral opens coverage
+- WHEN the captain opens coverage
 - THEN covered, partial, missing, and route-less regions are visible
 - AND representative regions link to routes, findings, or unknown probes
 
@@ -137,7 +137,7 @@ present weak or empty graph nodes as system understanding.
 
 #### Scenario: The graph is secondary to the walkthrough
 - GIVEN a navigation atlas exists
-- WHEN the admiral opens /portolan:map
+- WHEN the captain opens /portolan:map
 - THEN the Fleet map is reachable as a secondary map
 - AND it is not the default first screen
 
@@ -148,5 +148,5 @@ routes, probes, findings, receipt validation, and coverage gaps.
 
 #### Scenario: Handoff queries are copyable
 - GIVEN the atlas is generated
-- WHEN the admiral opens the next-expedition area
+- WHEN the captain opens the next-expedition area
 - THEN copyable commands or queries for journeys, routes, probes, findings, receipt validation, and coverage gaps are visible

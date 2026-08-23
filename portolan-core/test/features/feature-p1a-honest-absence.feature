@@ -11,6 +11,6 @@ Feature: Honest absence degrades gracefully
 
   Scenario: Container level honest-empty without runtime evidence
     Given the perimeter has no runtime/deploy evidence
-    When the admiral opens the C4 map
+    When the captain opens the C4 map
     Then the Container level renders honestly empty with an explanation
     And it is greyed-out, not hidden

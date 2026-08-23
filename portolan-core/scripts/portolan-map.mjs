@@ -11,7 +11,7 @@
  *   3. Exports the clean-stack shell + inlined atlas to a portable HTML and
  *      opens it (or prints the path for the agent to open).
  *
- * This is the "one entry point" — the admiral drops a link, the agent runs
+ * This is the "one entry point" — the captain drops a link, the agent runs
  * intake then `/portolan:map`, and the atlas opens. Zero copied commands beyond
  * the initial prompt.
  *

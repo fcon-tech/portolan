@@ -15,7 +15,7 @@
  *   - findings explain system risk; probes are expedition steps;
  *   - coverage shows regions; Fleet is secondary; handoff is visible.
  *
- * This is the "admiral can open it" check against the same render path
+ * This is the "captain can open it" check against the same render path
  * atlas.html uses — without a browser binary.
  */
 'use strict';

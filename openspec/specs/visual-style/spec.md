@@ -21,7 +21,7 @@ data, or DOM structure. The default style MUST be Cartographic.
 
 #### Scenario: Toggle preserves data and structure
 - GIVEN the atlas is rendered in Cartographic style
-- WHEN the admiral toggles to Plain
+- WHEN the captain toggles to Plain
 - THEN the same units, edges, dossiers, and routes render
 - AND only palette, fonts, family resolution, edge curvature, node halo mode, and chrome change
 - AND layout, routes, data, and DOM structure are unchanged
@@ -52,7 +52,7 @@ when the style is toggled.
 
 #### Scenario: Family hue does not change with style
 - GIVEN a unit belongs to a given family
-- WHEN the admiral toggles between Cartographic and Plain
+- WHEN the captain toggles between Cartographic and Plain
 - THEN the unit's family hue identity is preserved
 - AND only lightness or saturation shifts
 
@@ -76,18 +76,18 @@ chrome.
 - AND chrome opacity stays within its documented ceiling
 
 ### Requirement: Style toggle persists and respects reduced motion
-The style toggle SHALL persist the admiral's choice across sessions and default
+The style toggle SHALL persist the captain's choice across sessions and default
 to Cartographic on first load. Transitioning between styles SHALL animate tokens,
 colors, and backgrounds over approximately 200ms; under a reduced-motion
 preference all transitions MUST be 0ms.
 
 #### Scenario: Choice persists across sessions
-- GIVEN the admiral selects Plain style
+- GIVEN the captain selects Plain style
 - WHEN the atlas is reopened in a new session
 - THEN Plain style is active without further input
 
 #### Scenario: Reduced motion disables the transition
-- GIVEN the admiral's environment signals prefers-reduced-motion
+- GIVEN the captain's environment signals prefers-reduced-motion
 - WHEN the style is toggled
 - THEN the style change applies with 0ms transitions
 

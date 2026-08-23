@@ -1,6 +1,6 @@
 /**
  * Unit tests for run-intake use-case — builds a typed intake result from raw
- * admiral answers.
+ * captain answers.
  */
 'use strict';
 

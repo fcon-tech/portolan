@@ -3,7 +3,7 @@
  * (captain-atlas 16 §Drill-Down Contract).
  *
  * Single responsibility: turn the parsed atlas + nav-atlas into the bounded
- * detail objects the shell renders when the admiral clicks a relationship edge,
+ * detail objects the shell renders when the captain clicks a relationship edge,
  * a route stage, an evidence chip, or a component node. Each detail answers a
  * DECISION QUESTION: what this thing is, why it matters, what evidence supports
  * it, what is unknown, and the next useful action.
@@ -24,7 +24,7 @@ const {
 // ---------------------------------------------------------------------------
 // Reverse references — doc 16: "derive reverse refs from navigation-index rows
 // where probe/finding/evidence rows lack direct refs". A probe row may carry no
-// route_refs; this still tells the admiral which journey made it matter.
+// route_refs; this still tells the captain which journey made it matter.
 // ---------------------------------------------------------------------------
 
 /**

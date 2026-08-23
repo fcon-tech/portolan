@@ -3,7 +3,7 @@
  *
  * Single responsibility: turn a parsed `semanticInvestigation` object (the
  * portable investigation contract) into the view-models the shell renders when
- * the admiral opens a selected component, and the ecosystem placement map. Also
+ * the captain opens a selected component, and the ecosystem placement map. Also
  * contains the pure validator the build step and unit tests use to enforce the
  * doc-17 contract.
  *
@@ -266,7 +266,7 @@ function investigationForComponent(si, componentId) {
   if (!component) return null;
   // Only SELECTED sample components get an investigation. A component present
   // in the sidecar but not in sample.components is not "selected" — return null
-  // so the shell renders a typed not-investigated panel (doc 17 + admiral
+  // so the shell renders a typed not-investigated panel (doc 17 + captain
   // correction: null is a hard failure for selected ids, a typed gap for
   // non-selected ones). This closes the contract gap where a non-selected
   // component rendered a full 8-section investigation.

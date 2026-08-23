@@ -27,7 +27,7 @@ Intentions (tickets, roadmaps, planning artefacts), and Representations
 (documentation, architecture notes).
 
 #### Scenario: Intentions and representations enter via intake as sources
-- GIVEN the admiral names a ticket source and a docs location
+- GIVEN the captain names a ticket source and a docs location
 - WHEN intake completes
 - THEN intentions and representations are recorded as sources
 - AND deterministic producers parse ticket metadata and index doc text
@@ -44,7 +44,7 @@ conflicting or stale intention/representation via resolvable evidence pointers.
 - THEN a finding links the doc to the behaviour with the commit cited
 
 ### Requirement: Graceful degradation when truths are absent
-If the admiral names only repositories (no tickets, no docs), the atlas SHALL be
+If the captain names only repositories (no tickets, no docs), the atlas SHALL be
 behaviour-only and this MUST NOT be a failure. The triangulation overlay MUST be
 absent or show "no intentions/representations ingested; behaviour-only atlas."
 The acceptance bar's triangulation step SHALL be conditional on the relevant
@@ -52,7 +52,7 @@ truths being present in intake.
 
 #### Scenario: Behaviour-only overlay state
 - GIVEN a behaviour-only atlas
-- WHEN the admiral views the overlay control
+- WHEN the captain views the overlay control
 - THEN it shows "no intentions/representations ingested; behaviour-only atlas"
 - AND no failure is indicated
 

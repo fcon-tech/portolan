@@ -5,7 +5,7 @@ Feature: Atlas reading experience turns Bigtop from repo map into system atlas
   Scenario: The first screen is a system walkthrough
     Given the target is the Bigtop landscape
     And a navigation atlas bundle is present
-    When the admiral opens /portolan:map
+    When the captain opens /portolan:map
     Then the first screen shows named system journeys
     And the first screen explains what Bigtop appears to do as a system
     And the first screen shows top risks or unknowns
@@ -14,7 +14,7 @@ Feature: Atlas reading experience turns Bigtop from repo map into system atlas
 
   Scenario: Package journey reads as a system route
     Given the Bigtop package-distribution route exists
-    When the admiral opens the package journey
+    When the captain opens the package journey
     Then the route appears as an ordered diagram
     And the diagram shows BOM, recipe, provisioning, test or smoke, and runtime or unknown stages
     And each stage shows evidence state and runtime/build/test assessment
@@ -22,7 +22,7 @@ Feature: Atlas reading experience turns Bigtop from repo map into system atlas
 
   Scenario: Route dossier explains evidence and uncertainty
     Given a route stage has source evidence
-    When the admiral opens the route dossier
+    When the captain opens the route dossier
     Then the dossier shows the route thesis
     And stage cards show source paths, anchors, and snippets when available
     And ambiguous or missing anchors are explained in plain language
@@ -30,7 +30,7 @@ Feature: Atlas reading experience turns Bigtop from repo map into system atlas
 
   Scenario: Findings and probes guide the next expedition
     Given the package route has findings and unknown probes
-    When the admiral reads the route dossier
+    When the captain reads the route dossier
     Then findings explain the system risk and evidence
     And unknown probes explain what is not assessed
     And each unknown probe names the required permission class
@@ -38,7 +38,7 @@ Feature: Atlas reading experience turns Bigtop from repo map into system atlas
 
   Scenario: Coverage shows system scale
     Given the Bigtop corpus has multiple subjects
-    When the admiral opens coverage
+    When the captain opens coverage
     Then covered, partial, missing, and route-less regions are visible
     And representative regions link to routes, findings, or unknown probes
     And coverage is not only a flat subject table

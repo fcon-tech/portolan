@@ -16,7 +16,7 @@ operate read-only against the target by default and MUST NOT require network
 access, a daemon, or credentials unless explicitly approved.
 
 #### Scenario: Read-only default
-- GIVEN an admiral points Portolan at a target perimeter
+- GIVEN an captain points Portolan at a target perimeter
 - WHEN participants build the snapshot
 - THEN the target is read-only throughout the expedition
 - AND no network access is required for the default flow
@@ -38,14 +38,14 @@ the same deterministic core (units, edges, surfaces, manifest dependencies).
 - THEN the producer replays its cached raw model output from the snapshot
 - AND it does NOT re-query the model
 
-### Requirement: Admiral role
-The human SHALL be addressed as the admiral. UI copy, agent instructions, and
-documentation MUST use admiral role language (not generic "user" or job titles).
+### Requirement: Captain role
+The human SHALL be addressed as the captain. UI copy, agent instructions, and
+documentation MUST use captain role language (not generic "user" or job titles).
 
 #### Scenario: Role language in surfaces
 - GIVEN any user-facing surface (UI, agent prompt, docs)
 - WHEN the human is addressed
-- THEN the surface uses "admiral" consistently
+- THEN the surface uses "captain" consistently
 
 ### Requirement: Two participant kinds in one snapshot
 A Part-1 expedition SHALL have two participant kinds working in a single
@@ -76,7 +76,7 @@ Portolan SHALL be two products on a shared deterministic core. The agent-atlas
 SHALL be the foundation: a local, read-only data and query substrate that the
 coding agent consumes to navigate and edit the landscape. The human-atlas SHALL
 be an optional presentation layer that renders the same snapshot for the
-admiral; it MUST NOT be required for the agent-atlas to function and MUST be
+captain; it MUST NOT be required for the agent-atlas to function and MUST be
 selectable as an install-time option.
 
 #### Scenario: Agent path works without the human skin
@@ -87,7 +87,7 @@ selectable as an install-time option.
 
 #### Scenario: Human skin is an install-time option over the same snapshot
 - GIVEN the agent-atlas has produced a snapshot
-- WHEN the admiral opts into the human-atlas at install time
+- WHEN the captain opts into the human-atlas at install time
 - THEN the JS reading layer renders the same snapshot
 - AND the rendered atlas shows identical data to the agent's query results
 
