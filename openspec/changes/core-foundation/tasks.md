@@ -14,7 +14,7 @@
 - [x] 2.2 Write `core/schema/chart.schema.json` covering every entry kind
       with required `anchors` (min 1) and `trust` enum of exactly the five
       labels, and verify ajv validates good/bad fixtures in tests
-- [ ] 2.3 Write `core/src/validate.ts` wrapping ajv with entry-locating
+- [x] 2.3 Write `core/src/validate.ts` wrapping ajv with entry-locating
       errors (kind + id in every message) and verify tests show the
       offending entry name for anchor-less and label-less writes
 

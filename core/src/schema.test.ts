@@ -8,7 +8,7 @@ const validate = ajv.compile(schema);
 const file = (path: string, line?: number) =>
   line === undefined ? { type: "file", path } : { type: "file", path, line };
 
-const goodFixtures: Record<string, unknown> = {
+const goodFixtures: Record<string, Record<string, unknown>> = {
   vessel: {
     kind: "vessel",
     id: "web",
