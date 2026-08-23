@@ -145,13 +145,13 @@ export async function withServer(
 }
 
 /** The structured content of a successful call, as the tool produced it. */
-export function structuredOf(result: { structuredContent?: unknown }): Record<string, unknown> {
+export function structuredOf(result: Record<string, unknown>): Record<string, unknown> {
   expect(result.structuredContent).toBeObject();
   return result.structuredContent as Record<string, unknown>;
 }
 
 /** Assert a call came back as a tool error and return its verbatim message. */
-export function errorTextOf(result: { isError?: boolean; content?: unknown }): string {
+export function errorTextOf(result: Record<string, unknown>): string {
   expect(result.isError).toBe(true);
   const content = result.content as Array<{ type: string; text?: string }>;
   expect(content.length).toBeGreaterThan(0);
