@@ -1,10 +1,10 @@
 ## 1. Tool scaffold
 
-- [ ] 1.1 Create the tools module skeleton under `core/` exporting one entry
+- [x] 1.1 Create the tools module skeleton under `core/` exporting one entry
       point per tool (sweep, symbols, manifests, log.append, log.read) taking
       an explicit target root, and verify `bun test` runs green with a
       placeholder test
-- [ ] 1.2 Add binary discovery (PATH lookup for rg and ctags returning the
+- [x] 1.2 Add binary discovery (PATH lookup for rg and ctags returning the
       spec's named-binary error) and verify a unit test with a doctored PATH
       produces the error naming the binary
 

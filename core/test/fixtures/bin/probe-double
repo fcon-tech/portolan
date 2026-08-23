@@ -1,0 +1,4 @@
+#!/bin/sh
+# Executable fixture for binary-discovery tests: prints its own name and
+# exits 0. Not a real tool; only proves PATH discovery finds executables.
+echo "probe-double ran"
