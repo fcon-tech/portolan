@@ -41,12 +41,12 @@
 
 ## 5. Ship's log
 
-- [ ] 5.1 Implement `log.append` writing one receipt per line to
+- [x] 5.1 Implement `log.append` writing one receipt per line to
       `<target>/.portolan/log.jsonl` with monotonic receipt ids, and verify a
       test appending commands then reading by id returns identity and outcome
-- [ ] 5.2 Implement `log.read` by id and by filter and verify a test resolves
+- [x] 5.2 Implement `log.read` by id and by filter and verify a test resolves
       a receipt id of the exact form a chart Anchor cites
-- [ ] 5.3 Implement append-only enforcement and verify a test attempting to
+- [x] 5.3 Implement append-only enforcement and verify a test attempting to
       alter or remove an existing receipt is refused with the file unchanged
 
 ## 6. Perimeter and labels
