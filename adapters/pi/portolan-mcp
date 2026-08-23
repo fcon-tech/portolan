@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#
+# pi launch shim for the Portolan MCP server (design.md, decision 6).
+#
+# A shim adds no behavior: it execs the same server a direct launch gives
+# you, with the arguments you pass through. Point any MCP client extension
+# (pi/omp MCP tooling) at this script:
+#
+#   adapters/pi/portolan-mcp --target /path/to/province
+#
+# Adapters must not import tool logic (checked by
+# core/src/server/adapter-boundary.ts) and must not parse tool traffic.
+set -euo pipefail
+
+# Bun lives at ~/.bun/bin by default; find it without copying commands.
+command -v bun >/dev/null 2>&1 || export PATH="$HOME/.bun/bin:$PATH"
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+exec bun "$ROOT/core/src/server/main.ts" "$@"
