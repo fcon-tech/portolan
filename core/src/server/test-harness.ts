@@ -117,15 +117,16 @@ export async function withServer(
   options: {
     targetRoot: string;
     /** Exact launch vector; defaults to `bun main.ts --target <root>`. */
-    command?: { command: string; args: string[]; env?: Record<string, string> };
+    command?: { command: string; args: string[] };
+    /** Child environment; defaults to the parent env. PATH-sensitive tests override. */
+    env?: Record<string, string>;
     name?: string;
   },
   fn: (client: Client) => Promise<void>,
 ): Promise<void> {
   const targetRoot = options.targetRoot;
   const launch =
-    options.command ??
-    { command: process.execPath, args: [SERVER_ENTRY, "--target", targetRoot], env: childEnv() };
+    options.command ?? { command: process.execPath, args: [SERVER_ENTRY, "--target", targetRoot] };
   const client = new Client(
     { name: options.name ?? "portolan-tests", version: "0.0.0" },
     { capabilities: {} },
@@ -133,7 +134,7 @@ export async function withServer(
   const transport = new StdioClientTransport({
     command: launch.command,
     args: launch.args,
-    env: launch.env ?? childEnv(),
+    env: options.env ?? childEnv(),
     stderr: "pipe",
   });
   try {
@@ -145,9 +146,9 @@ export async function withServer(
 }
 
 /** The structured content of a successful call, as the tool produced it. */
-export function structuredOf(result: Record<string, unknown>): Record<string, unknown> {
+export function structuredOf(result: Record<string, unknown>): unknown {
   expect(result.structuredContent).toBeObject();
-  return result.structuredContent as Record<string, unknown>;
+  return result.structuredContent;
 }
 
 /** Assert a call came back as a tool error and return its verbatim message. */
