@@ -1,45 +1,52 @@
 # Agent Instructions
 
-Portolan is a local-first cartographic atlas of a code landscape. The admiral
+Portolan is a local-first cartographic atlas of a code landscape. The captain
 (the human) drops a Portolan link to an agent, leans back, and participants in
 the expedition (deterministic static analyzers + agent producers) build a
-snapshot. `/portolan:map` opens the behaviour map. The admiral reads units,
+snapshot. `/portolan:map` opens the behaviour map. The captain reads units,
 typed edges, surfaces, and confidence; drills into dossiers; and enables
 triangulation to see where the three truths (behaviour, intentions,
 representations) disagree.
 
 The current product target is simple:
 
-> The admiral drops a Portolan link to an agent and leans back. The agent
+> The captain drops a Portolan link to an agent and leans back. The agent
 > installs Portolan autonomously (zero copied commands), runs managed
 > conversational intake, builds the snapshot, and opens `/portolan:map`. The
-> admiral understands the landscape: units, typed edges, surfaces, confidence,
+> captain understands the landscape: units, typed edges, surfaces, confidence,
 > and drill-down paths.
+
+Terminology: the human role is the **captain** — one word, everywhere (code,
+specs, docs, UI copy). Code and fixtures must not introduce "admiral".
 
 ## Active Product Contract
 
 The active product specification surface is **OpenSpec**: `openspec/specs/` is
-the living source of truth, `openspec/changes/` holds proposed work. Spec work
-flows through the OpenSpec workflow (`/opsx:propose` → `/opsx:apply` →
-`/opsx:archive`); validate with `openspec validate --specs`.
+the living source of truth, `openspec/changes/` holds proposed work (its
+README is the reconciled index — statuses there are verified against code, do
+not trust memory over it). Spec work flows through the OpenSpec workflow
+(`/opsx:propose` → `/opsx:apply` → `/opsx:archive`); validate with
+`openspec validate --specs`.
 
-The living specs (each: Purpose + Requirements + Scenarios, RFC 2119):
+The living specs (each: Purpose + Requirements + Scenarios, RFC 2119), with
+their enforcement status:
 
-- `openspec/specs/atlas-identity/` — what Portolan IS; roles; Part 1/2 boundary.
-- `openspec/specs/intake/` — managed conversational intake; typed intake result.
-- `openspec/specs/ontology/` — units, surfaces, findings, edges, groupings.
-- `openspec/specs/confidence/` — the trust contract (ironclad → speculation).
-- `openspec/specs/navigation/` — `/portolan:map`, the enumerated maps, dossier.
-- `openspec/specs/three-truths/` — behaviour/intentions/representations + triangulation.
-- `openspec/specs/ux-principles/` — zero-copied-commands, one entry point.
-- `openspec/specs/visual-style/` — cartographic/plain display-style contract.
-- `openspec/specs/reading-experience/` — the atlas as a readable system atlas.
-- `openspec/specs/drilldown-semantics/` — reader-facing drill-down labels/targets.
-- `openspec/specs/semantic-investigation/` — component investigation contract.
+- `openspec/specs/intake/` — managed conversational intake; typed intake result. *(BDD-bound)*
+- `openspec/specs/navigation/` — `/portolan:map`, the enumerated maps, dossier. *(BDD-bound)*
+- `openspec/specs/three-truths/` — behaviour/intentions/representations + triangulation. *(BDD-bound)*
+- `openspec/specs/ontology/` — units, surfaces, findings, edges, groupings. *(BDD-bound)*
+- `openspec/specs/reading-experience/` — the atlas as a readable system atlas. *(BDD-bound)*
+- `openspec/specs/drilldown-semantics/` — reader-facing drill-down labels/targets. *(BDD-bound)*
+- `openspec/specs/semantic-investigation/` — component investigation contract. *(BDD-bound)*
+- `openspec/specs/engineering-standards/` — Clean Architecture, dependency rule, TDD. *(partially enforced: dependency-rule checker in CI + BDD chain)*
+- `openspec/specs/atlas-identity/` — what Portolan IS; roles; snapshot contract. *(prose contract — no BDD binding yet)*
+- `openspec/specs/confidence/` — the trust contract (ironclad → speculation). *(prose contract — no validator implements the matrix; see its enforcement-status note)*
+- `openspec/specs/ux-principles/` — zero-copied-commands, one entry point. *(prose contract — no BDD binding yet)*
+- `openspec/specs/visual-style/` — cartographic/plain display-style contract. *(prose contract — theme tokens unit-tested, scenarios unbound)*
 
-`openspec/legacy/` holds retired surfaces (history only — NOT authority). The
-pre-OpenSpec captain-atlas spec surface was migrated into the living specs above
-and then removed; see `openspec/legacy/README.md`.
+When redefining behavior, either bind new scenarios to real tests through the
+BDD chain or mark the spec honestly as a prose contract. Do not claim
+enforcement that does not exist.
 
 ## The One Entry Point: /portolan:map
 
@@ -55,33 +62,35 @@ This is `/portolan:map`. It: (1) loads the intake result from
 (2) builds the snapshot by delegating to the deterministic core
 (`scripts/build-system-map.sh`) if stale, (3) exports the clean-stack shell +
 inlined atlas to `<target>/.portolan/atlas.html`, and (4) optionally opens it.
-The admiral types no command beyond the initial prompt.
+The captain types no command beyond the initial prompt.
 
-## Architecture: Deterministic Core + Reading Layer
+## Architecture: Scan Pipeline + Reading Layer
 
-Authority: `openspec/specs/atlas-identity/` (migrated from the charter). The
-product is moving to the charter-08 world (the 0.2.0 big-bang migration) — a
-proper reading layer and a proper collector — not a gradual cutover.
+Authority: `openspec/specs/atlas-identity/`. Portolan has two layers, not two
+competing products:
 
-Portolan has two distinct layers, not two competing products:
+1. **Scan pipeline (producer).** `scripts/portolan-scan.sh` →
+   `scripts/build-portolan-bundle.sh` (bash + jq) driving local OSS tools
+   (ripgrep, ctags, jscpd, syft, semgrep), with `portolan-core/scripts/*.mjs`
+   assembling artifacts. This is the only thing that actually scans a target.
+   It emits the evidence bundle (`*.jsonl`) + `system-map.json`. Not
+   replaceable by the reading layer.
+2. **Reading layer (consumer) — `portolan-core/` (JS).** The single reading
+   layer: domain → use-cases → adapters, dependency rule enforced by
+   `portolan-core/scripts/check-dependency-rule.js` in CI. Owns the
+   `/portolan:map` entry point and the `atlas.html` export. The former
+   `viewer/` app (0.1.0) was removed 2026-06-28; do not resurrect it. The
+   public demo (`docs/site/`) is generated from a real Bigtop pipeline scan.
 
-1. **Deterministic core (the collector / producer) — `internal/` (Go) +
-   `scripts/*.sh` (bash).** The only thing that actually scans a target: runs
-   ripgrep/ctags/jscpd/syft/semgrep, parses output, and emits the evidence
-   bundle (`*.jsonl`) + `system-map.json`. Not replaceable by the reading layer.
-2. **Reading layer (consumer) — reads the core's output and presents the
-   atlas.** Two implementations exist in-tree:
-   - **`portolan-core/` — the charter-08 reading layer.** Clean Architecture
-     (domain → use-cases → ports → adapters, dependency rule enforced), 429
-     unit tests, the `/portolan:map` entry point, and the `atlas.html` export.
-     This is the direction.
-   - **`viewer/` — the 0.1.0 contract surface.** The historical meaning-first
-     UI and the frozen `system-map` schema authority. It is **superseded**, not
-     maintained: do not add features; treat as reference-only. It is removed by
-     the 0.2.0 big-bang migration.
-
-Both reading layers render the same Bigtop demo (22 units, 24 relationships, 7
-families) — feature-parity proven headlessly.
+**Go core (`internal/` + `cmd/portolan`) status: frozen.** See
+`docs/harness/GO-FREEZE-POLICY.md`. The production scan pipeline does not
+invoke Go; the only live entry is the opt-in map bridge
+(`portolan-scan.sh --with-map-bridge` → `go run ./cmd/portolan map`), which
+carries cross-repo relationship detection (`internal/maprun`,
+`internal/relationships` — JVM source references, multi-language manifests,
+mobile frameworks). Do not add legacy-CLI surface (`context prepare`, `query`,
+`diff`, `graphslice`, `adapter`, `reportquality`): a code-reset decision on
+the Go core's fate is pending from the 2026-08-23 review.
 
 ## Mandatory Decision Gate
 
@@ -124,9 +133,11 @@ market theater.
 - Keep changes small and testable.
 - Preserve the harness-first path unless an OpenSpec scenario proves it is
   insufficient.
-- Assign language by consumer fit, not preference: collector/index/query
-  behavior lives in the Go core (`internal/`, `cmd/portolan`); the human-atlas
-  reading layer is JS (`portolan-core`); shell scripts are thin drivers only.
+- Assign language by consumer fit, not preference: the human-atlas reading
+  layer is JS (`portolan-core`); the scan pipeline is bash + jq + the mjs
+  assembly scripts today; Go hosts the map-bridge relationship detection until
+  the pending code-reset decides otherwise. Shell scripts are thin drivers
+  only.
 - Add dependencies only after documenting fit, maintenance, license, privacy,
   and integration cost.
 - Do not hide failed or not-assessed checks.
@@ -134,18 +145,20 @@ market theater.
 ### Engineering standards (portolan-core) — locked in
 
 Authority: `openspec/specs/engineering-standards/`. The portolan-core reading
-layer follows Clean Architecture, the dependency rule, SOLID, and TDD. These are
-enforced, not aspirational:
+layer follows Clean Architecture, the dependency rule, and TDD. What is
+actually enforced:
 
-- **Clean Architecture + dependency rule.** Layers `domain → use-cases → ports →
-  adapters`; dependencies point strictly inward. Enforced by
+- **Dependency rule.** Dependencies point strictly inward
+  (domain ← use-cases ← adapters). Enforced by
   `portolan-core/scripts/check-dependency-rule.js` (runs in CI; 0 violations).
-- **SOLID / dependency inversion.** Outward concerns (fs, rendering, navigation)
-  cross the boundary through ports; adapters implement ports; use-cases depend on
-  ports, never on concrete adapters.
 - **TDD.** Every executable OpenSpec scenario is bound to a real, passing unit
-  test; the BDD runner (`portolan-core/test/bdd-runner.js`) verifies the chain
-  `openspec/specs → test/features → unit`. New behavior lands with its binding.
+  test; the BDD bindings (`portolan-core/test/bdd-runner.js`) map
+  `test/features` → `openspec/specs` → unit-test files. New behavior lands
+  with its binding; keep the map true when renaming specs or tests.
+- **Ports are nominal.** The `src/ports` layer currently has single
+  implementations and no production consumers — flagged by the 2026-08-23
+  review for removal in the code-reset. Do not add new ports; depend on
+  adapters directly until that decision lands.
 
 ## Delivery Rules
 
