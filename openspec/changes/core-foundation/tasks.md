@@ -1,6 +1,6 @@
 ## 1. Scaffold
 
-- [ ] 1.1 Create `core/package.json` (name `@portolan/core`, type module,
+- [x] 1.1 Create `core/package.json` (name `@portolan/core`, type module,
       bun test script), `tsconfig.json` (strict), and verify `bun test` runs
       green with a placeholder test
 - [ ] 1.2 Add `ajv` dependency and verify `bun install` succeeds and
