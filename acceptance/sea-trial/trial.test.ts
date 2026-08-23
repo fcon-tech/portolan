@@ -199,10 +199,40 @@ describe("the gate tree (task 5.1)", () => {
     );
   });
 
-  test("a negative Governor's verdict fails the trial", async () => {
+  test("a staleness flip that flips more than one vessel is a failed machine check", async () => {
+    // Two vessels charting the same paths: the single edit flips both, and
+    // the exactly-one-vessel expectation fails the trial.
+    const { root, bom } = makeTarget();
+    writeChart(root, [
+      { kind: "vessel", id: "aa-shared-one", name: "one", paths: ["repos/alpha"], anchors: [{ type: "file", path: "repos/alpha/Main.java" }], trust: "measured" },
+      { kind: "vessel", id: "ab-shared-two", name: "two", paths: ["repos/alpha"], anchors: [{ type: "file", path: "repos/alpha/Main.java" }], trust: "measured" },
+      { kind: "vessel", id: "hadoop", name: "hadoop", paths: ["repos/apache-hadoop"], anchors: [{ type: "file", path: "repos/apache-hadoop/pom.xml" }], trust: "charted" },
+      { kind: "vessel", id: "spark", name: "spark", paths: ["repos/apache-spark"], anchors: [{ type: "file", path: "repos/apache-spark/pom.xml" }], trust: "charted" },
+      { kind: "vessel", id: "solr", name: "solr", paths: ["repos/apache-solr"], anchors: [{ type: "file", path: "repos/apache-solr/pom.xml" }], trust: "charted" },
+    ]);
+    const answersPath = writeAnswers(root, honestAnswers(bom));
+    const result = await executeTrial({
+      targetRoot: root,
+      bom,
+      bomPathRelative: "repos/apache-bigtop-repo/bigtop.bom",
+      corpusAttestation: UNVERIFIED,
+      chartEntries: readChart(root),
+      answers: loadAnswers(answersPath),
+      derivation: derivationFor(root, bom),
+      governor: () => "yes",
+    });
+    expect(result.verdict).toBe("FAIL");
+    expect(result.reasons.join("\n")).toMatch(/staleness flip fail: editing repos\/alpha\/Main\.java did not flip exactly vessel aa-shared-one/);
+    expect(result.staleness.changedVessels.sort()).toEqual(["aa-shared-one", "ab-shared-two"]);
+  });
+
+  test("a negative Governor's verdict fails the trial and still leaves a reviewable report", async () => {
     const result = await runFixture({}, "no — this is a mirage");
     expect(result.verdict).toBe("FAIL");
     expect(result.reasons.join("\n")).toMatch(/negative Governor's verdict: "no — this is a mirage"/);
+    const report = readFileSync(result.reportPath, "utf8");
+    expect(report).toContain("## Verdict: FAIL");
+    expect(report).toContain('Verdict (recorded verbatim): "no — this is a mirage"');
   });
 
   test("a missing Governor's verdict cannot pass", async () => {
@@ -272,6 +302,9 @@ describe("the trial report (task 5.3)", () => {
     // Metric values are present, and the staleness flip named its vessel.
     expect(report).toMatch(/Charted fairways: \d+\/23/);
     expect(report).toMatch(/- Status: pass — editing repos\/alpha\/Main\.java flipped exactly vessel alpha/);
+    // Expert-judged answers are recorded for the Governor with anchors and trust.
+    expect(report).toContain("### Expert-judged answers recorded for the Governor");
+    expect(report).toMatch(/\*\*Q4\*\* \(trust: reported\) — anchors: repos\/alpha\/Main\.java/);
   });
 });
 
