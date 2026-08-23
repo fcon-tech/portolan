@@ -187,11 +187,11 @@ class Cursor {
     while (this.peek()?.t === "nl") this.i += 1;
   }
   /** True when the next token is the given punctuation. */
-  atPunct(v: Token & { t: "punct" }["v"]): boolean {
+  atPunct(v: Punct): boolean {
     const tok = this.peek();
     return tok !== undefined && tok.t === "punct" && tok.v === v;
   }
-  expectPunct(v: Token & { t: "punct" }["v"], context: string): void {
+  expectPunct(v: Punct, context: string): void {
     const tok = this.next();
     if (tok === undefined || tok.t !== "punct" || tok.v !== v) {
       throw new BomError(`expected ${JSON.stringify(v)} ${context}, got ${describe(tok)}`);
