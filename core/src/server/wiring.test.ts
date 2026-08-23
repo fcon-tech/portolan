@@ -12,6 +12,7 @@ import {
   childEnv,
   envWithCtagsDouble,
   envWithoutCtags,
+  errorTextOf,
   fixturesBin,
   makeProvince,
   structuredOf,
@@ -335,5 +336,48 @@ test.skipIf(!rgPresent)("sound.edge through the server: manifest and reference c
     expect(unconfirmedResult.verdict).toBe("unconfirmed");
     expect(unconfirmedResult.report).toContain("unconfirmed is not refutation");
     expect(unconfirmedResult.means.every((m) => !m.found)).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tasks.md 2.4: the province binding. A call carrying a foreign target root
+// is refused with an error naming the launched target; echoing the launched
+// root passes. Enforced once at the handler boundary, for every tool.
+// ---------------------------------------------------------------------------
+
+test("a tool call cannot redirect the target: foreign roots are refused naming the launched province", async () => {
+  const target = makeProvince();
+  const elsewhere = makeProvince();
+  await withServer({ targetRoot: target }, async (client) => {
+    // manifests, a call that normally needs no root at all:
+    const refused = await client.callTool({
+      name: "manifests",
+      arguments: { path: "package.json", targetRoot: elsewhere },
+    });
+    expect(refused.isError).toBe(true);
+    const message = errorTextOf(refused);
+    expect(message).toContain(target);
+    expect(message).toContain(elsewhere);
+    expect(message).toContain("launching a new server");
+
+    // The same refusal for a second tool proves the guard is boundary-level,
+    // not wired per tool.
+    const alsoRefused = await client.callTool({
+      name: "sweep",
+      arguments: { pattern: "CartService", targetRoot: elsewhere },
+    });
+    expect(alsoRefused.isError).toBe(true);
+    expect(errorTextOf(alsoRefused)).toContain(target);
+
+    // Echoing the launched root is not a redirect and passes.
+    const echo = await client.callTool({
+      name: "manifests",
+      arguments: { path: "package.json", targetRoot: target },
+    });
+    expect(echo.isError).toBeUndefined();
+    expect(structuredOf(echo)).toEqual(readManifest(target, "package.json"));
+
+    // The refused calls did not touch the other province: its chart is absent.
+    expect(existsSync(join(elsewhere, ".portolan"))).toBe(false);
   });
 });

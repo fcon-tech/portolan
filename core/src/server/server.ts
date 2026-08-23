@@ -20,6 +20,7 @@ import {
   ListToolsRequestSchema,
   type CallToolResult,
 } from "@modelcontextprotocol/sdk/types.js";
+import { resolve } from "node:path";
 import pkg from "../../package.json";
 import { TOOL_TABLE, type ToolContext } from "./registry";
 
@@ -28,6 +29,40 @@ export const SERVER_INFO = { name: "portolan", version: pkg.version } as const;
 export interface PortolanServerOptions {
   /** The one province this server serves; every tool is scoped to it. */
   targetRoot: string;
+}
+
+/**
+ * Raised when a tool call tries to carry its own target root. The spec's
+ * words: the server is bound to one province, and changing provinces means
+ * launching a new server.
+ */
+export class TargetRedirectError extends Error {
+  constructor(launchedRoot: string, requested: string) {
+    super(
+      `this server is bound to the province at ${launchedRoot} and cannot be redirected ` +
+        `to ${requested}; changing provinces means launching a new server`,
+    );
+    this.name = "TargetRedirectError";
+  }
+}
+
+/**
+ * The province binding, enforced once at the handler boundary: a call that
+ * echoes the launched root passes; a call naming any other root is refused
+ * with an error naming the launched target.
+ */
+export function guardTarget(
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): void {
+  if (args.targetRoot === undefined) return;
+  if (typeof args.targetRoot !== "string") {
+    throw new TargetRedirectError(ctx.targetRoot, JSON.stringify(args.targetRoot));
+  }
+  const requested = resolve(args.targetRoot);
+  if (requested !== ctx.targetRoot) {
+    throw new TargetRedirectError(ctx.targetRoot, requested);
+  }
 }
 
 /** A successful tool call: the tool's result, enveloped for MCP. */
@@ -77,6 +112,7 @@ export function createPortolanServer(options: PortolanServerOptions): Server {
       throw new Error(`unknown tool ${JSON.stringify(name)}; call tools/list for the v1 toolset`);
     }
     try {
+      guardTarget(args ?? {}, ctx);
       return toolSuccess(await spec.handler(args ?? {}, ctx));
     } catch (err) {
       return toolError(err);

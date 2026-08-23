@@ -415,3 +415,23 @@ export const TOOL_TABLE: ToolSpec[] = [
 
 /** The nine v1 Portolan tool names, in table order. */
 export const V1_TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
+
+/**
+ * Every tool accepts an optional `targetRoot` — an echo of the province root
+ * the server was launched with, never a redirect. The server refuses any
+ * value that is not the launched root (see server.ts); the property is
+ * declared so clients see the binding instead of discovering it by
+ * rejection. (Named `targetRoot`, not `target`: sound.edge's `target` is a
+ * vessel, not a province.)
+ */
+const BOUND_TARGET_PROPERTY: JsonSchema = {
+  type: "string",
+  description:
+    "The province root this server was launched with (--target). The server is bound to it: " +
+    "a different value is refused — changing provinces means launching a new server.",
+};
+
+for (const spec of TOOL_TABLE) {
+  const schema = spec.inputSchema as { properties?: Record<string, unknown> };
+  schema.properties = { ...(schema.properties ?? {}), targetRoot: BOUND_TARGET_PROPERTY };
+}
