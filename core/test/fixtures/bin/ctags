@@ -1,0 +1,12 @@
+#!/bin/sh
+# Test double for universal-ctags JSON output. The machine running the test
+# suite has no ctags installed, so the wrapper's mapping is verified against
+# this double placed on PATH; the real missing-binary path is tested against
+# the actual PATH. Emits universal-ctags-style tag records (plus one ptag
+# line the parser must skip) for the standard symbols-test fixture layout.
+# Uses shell builtins only: it must also run under a PATH that contains
+# nothing but this directory.
+echo '{"_type":"ptag","name":"!_JSON_OUTPUT_VERSION","path":"","pattern":""}'
+echo '{"_type":"tag","name":"CartService","path":"./src/cart.ts","pattern":"/^export class CartService {/","line":4,"kind":"class"}'
+echo '{"_type":"tag","name":"addItem","path":"./src/cart.ts","pattern":"/^  addItem/","line":8,"kind":"member"}'
+echo '{"_type":"tag","name":"run","path":"./src/main.ts","pattern":"/^export function run/","line":2,"kind":"function"}'

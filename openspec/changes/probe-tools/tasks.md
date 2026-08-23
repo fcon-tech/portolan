@@ -20,10 +20,10 @@
 
 ## 3. Symbols
 
-- [ ] 3.1 Implement `symbols` definitions on ctags JSON output (name, kind,
+- [x] 3.1 Implement `symbols` definitions on ctags JSON output (name, kind,
       path, line, `measured`) and verify a test on a temp fixture resolves a
       planted symbol with its anchor
-- [ ] 3.2 Implement honest-absent behavior and verify tests: unknown symbol
+- [x] 3.2 Implement honest-absent behavior and verify tests: unknown symbol
       returns an empty result without error; a symbol whose references
       cannot be resolved reports them as not resolvable with no guessed
       locations
