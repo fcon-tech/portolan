@@ -20,14 +20,14 @@
 
 ## 3. Chart store
 
-- [ ] 3.1 Implement `core/src/chart-store.ts` `writeChart` (creates
+- [x] 3.1 Implement `core/src/chart-store.ts` `writeChart` (creates
       `.portolan/chart/`, renders one markdown sheet per vessel from
       entries, writes `index.jsonl`, temp+rename atomicity) and verify a
       test reading back a written chart round-trips entries
-- [ ] 3.2 Implement rejection paths (no anchors / no label / bad label /
+- [x] 3.2 Implement rejection paths (no anchors / no label / bad label /
       unknown kind) and verify each rejection leaves the directory
       byte-identical (snapshot-compare test)
-- [ ] 3.3 Implement interrupted-write atomicity (inject a late validation
+- [x] 3.3 Implement interrupted-write atomicity (inject a late validation
       failure mid-batch) and verify the old chart is untouched
 
 ## 4. Staleness + notices
