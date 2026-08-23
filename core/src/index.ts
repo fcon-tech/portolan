@@ -12,3 +12,4 @@ export * from "./tools/sweep";
 export * from "./tools/symbols";
 export * from "./tools/manifests";
 export * from "./tools/log";
+export * from "./tools/sound";
