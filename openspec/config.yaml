@@ -1,0 +1,14 @@
+schema: spec-driven
+
+context: |
+  Portolan v3: a frontier agent (Cartographer) builds and maintains a living
+  tech-design Chart of a brownfield codebase, stored inside the target at
+  .portolan/chart/. Nautical glossary is LOCKED (Governor, Cartographer,
+  Expedition, Chart/Padron, vessel, fairway, port of entry, beacon, light,
+  danger, unsurveyed, pending correction, Notices to Mariners, Sailing
+  Directions, sea trial). Trust vocabulary: measured/charted/reported/
+  doubtful/unsurveyed.
+  Stack: TypeScript on Bun. External binaries: ripgrep, ctags. Semgrep/jscpd
+  later (v1.1). No hand-written per-language source parsers (manifest files
+  are the exception: cheap facts only). Product contract: docs/MANIFEST.md.
+  Conventional commits. Tests: bun test, only where logic is deterministic.
