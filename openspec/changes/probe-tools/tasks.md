@@ -51,9 +51,9 @@
 
 ## 6. Perimeter and labels
 
-- [ ] 6.1 Add the read-only guarantee test: run a battery of sweeps, symbol
+- [x] 6.1 Add the read-only guarantee test: run a battery of sweeps, symbol
       lookups, and manifest reads over a temp target and snapshot-compare the
       tree, verifying only `<target>/.portolan/` changed (log appends only)
-- [ ] 6.2 Add a cross-tool label test asserting every sweep/symbols result
+- [x] 6.2 Add a cross-tool label test asserting every sweep/symbols result
       carries `measured` and every manifests fact carries `charted`, and
       verify it fails when a label is stripped
