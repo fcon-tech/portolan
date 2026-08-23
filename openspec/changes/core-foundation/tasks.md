@@ -8,7 +8,7 @@
 
 ## 2. Ontology + schema
 
-- [ ] 2.1 Write `core/src/types.ts` (Vessel, Fairway, PortOfEntry, Beacon,
+- [x] 2.1 Write `core/src/types.ts` (Vessel, Fairway, PortOfEntry, Beacon,
       Light, Danger, Anchor, TrustLabel, ChartEntry, Notice) and verify a
       type-check passes (`bunx tsc --noEmit`)
 - [ ] 2.2 Write `core/schema/chart.schema.json` covering every entry kind
