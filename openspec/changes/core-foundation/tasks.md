@@ -3,7 +3,7 @@
 - [x] 1.1 Create `core/package.json` (name `@portolan/core`, type module,
       bun test script), `tsconfig.json` (strict), and verify `bun test` runs
       green with a placeholder test
-- [ ] 1.2 Add `ajv` dependency and verify `bun install` succeeds and
+- [x] 1.2 Add `ajv` dependency and verify `bun install` succeeds and
       `ajv` compiles a trivial schema in a test
 
 ## 2. Ontology + schema
