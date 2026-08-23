@@ -10,11 +10,11 @@
 
 ## 2. Sweep
 
-- [ ] 2.1 Implement `sweep` on top of `rg --json`, mapping match events to
+- [x] 2.1 Implement `sweep` on top of `rg --json`, mapping match events to
       anchored chunks (path, line, matched text, context) labeled `measured`,
       and verify a test against a temp fixture returns anchored chunks for
       every planted match
-- [ ] 2.2 Implement the no-match and invalid-pattern paths and verify tests:
+- [x] 2.2 Implement the no-match and invalid-pattern paths and verify tests:
       empty pattern result is `[]` with no error; a malformed pattern returns
       an error naming the pattern and zero results
 
