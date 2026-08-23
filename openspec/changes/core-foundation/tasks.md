@@ -32,11 +32,11 @@
 
 ## 4. Staleness + notices
 
-- [ ] 4.1 Implement vessel source signatures (tree hash over the vessel's
+- [x] 4.1 Implement vessel source signatures (tree hash over the vessel's
       paths) stored in the index, and `refreshStaleness` marking only
       changed vessels `pending correction`; verify the flip-one-vessel and
       no-change scenarios as tests on a temp fixture tree
-- [ ] 4.2 Implement Notices to Mariners generation (added / corrected /
+- [x] 4.2 Implement Notices to Mariners generation (added / corrected /
       marked stale / retired, each with anchors) as plain text and verify
       test output names entries and anchors for a repair scenario
 

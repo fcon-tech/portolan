@@ -125,8 +125,17 @@ test("readChart round-trips the written entries", () => {
   for (const entry of fullChart) {
     const stored = read.find((e) => e.kind === entry.kind && e.id === entry.id);
     expect(stored).toBeDefined();
-    expect({ ...stored, stale: undefined }).toStrictEqual({ ...entry, stale: undefined });
+    expect({ ...stored, stale: undefined, signature: undefined }).toStrictEqual({
+      ...entry,
+      stale: undefined,
+      signature: undefined,
+    });
     expect(stored?.stale).toBe(false);
+    if (entry.kind === "vessel") {
+      expect(typeof stored?.signature?.hash).toBe("string");
+    } else {
+      expect(stored?.signature).toBeUndefined();
+    }
   }
 });
 

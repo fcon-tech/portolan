@@ -3,98 +3,35 @@
  * sheet per vessel plus the machine index `index.jsonl` (authoritative for
  * machines; sheets are rendered outputs). Writes are atomic by
  * stage-to-temp + rename (design.md, decision 4): a write either persists
- * completely or leaves the previous chart byte-identical.
+ * completely or leaves the previous chart byte-identical. Each vessel entry
+ * is stamped with a source tree signature for staleness detection.
  */
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  unlinkSync,
-  writeFileSync,
-} from "node:fs";
+import { mkdirSync, readdirSync, rmSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
-import { randomBytes } from "node:crypto";
-import type { ChartEntry, IndexedEntry } from "./types";
+import type { ChartEntry, IndexedEntry, Notice } from "./types";
 import { validateEntries } from "./validate";
 import { renderSheets } from "./sheets";
+import { treeSignature } from "./staleness";
+import { diffNotices, renderNotices } from "./notices";
+import {
+  INDEX_FILE,
+  NOTICES_FILE,
+  chartDir,
+  entryKey,
+  indexJsonl,
+  readChartOrNull,
+  sortEntries,
+  writeFilesAtomically,
+} from "./chart-io";
 
-export const INDEX_FILE = "index.jsonl";
+export { INDEX_FILE, NOTICES_FILE, chartDir, readChart } from "./chart-io";
 
-/** Where the Chart lives for a given target root. */
-export function chartDir(targetRoot: string): string {
-  return join(targetRoot, ".portolan", "chart");
-}
-
-function entryKey(entry: { kind: string; id: string }): string {
-  return `${entry.kind}/${entry.id}`;
-}
-
-function sortEntries<T extends { kind: string; id: string }>(entries: T[]): T[] {
-  return [...entries].sort((a, b) => {
-    const ka = entryKey(a);
-    const kb = entryKey(b);
-    return ka < kb ? -1 : ka > kb ? 1 : 0;
-  });
-}
-
-/** Read the machine index. Throws with a remediation hint when absent. */
-export function readChart(targetRoot: string): IndexedEntry[] {
-  const indexPath = join(chartDir(targetRoot), INDEX_FILE);
-  if (!existsSync(indexPath)) {
-    throw new Error(`no chart index at ${indexPath} — write a chart first`);
-  }
-  const lines = readFileSync(indexPath, "utf8")
-    .split("\n")
-    .filter((line) => line.trim().length > 0);
-  return lines.map((line, i) => {
-    const entry = JSON.parse(line) as IndexedEntry;
-    if (typeof entry?.kind !== "string" || typeof entry?.id !== "string") {
-      throw new Error(`corrupt chart index ${indexPath} line ${i + 1}`);
-    }
-    return entry;
-  });
-}
-
-function readChartOrNull(targetRoot: string): IndexedEntry[] | null {
-  try {
-    return readChart(targetRoot);
-  } catch {
-    return null;
-  }
-}
-
-function indexJsonl(entries: IndexedEntry[]): string {
-  return `${sortEntries(entries).map((e) => JSON.stringify(e)).join("\n")}\n`;
-}
-
-/**
- * Stage every file to a temp name first, then rename them all into place.
- * A failure before the renames (validation, full disk, ...) leaves the
- * previous chart untouched; temp files are removed on failure.
- */
-function writeFilesAtomically(dir: string, files: Map<string, string>): void {
-  const staged: Array<{ tmp: string; final: string }> = [];
-  try {
-    for (const [name, text] of files) {
-      const final = join(dir, name);
-      const tmp = `${final}.tmp-${randomBytes(6).toString("hex")}`;
-      writeFileSync(tmp, text);
-      staged.push({ tmp, final });
-    }
-    for (const { tmp, final } of staged) renameSync(tmp, final);
-  } catch (err) {
-    for (const { tmp } of staged) rmSync(tmp, { force: true });
-    throw err;
-  }
-}
-
-/** Result of a chart write: where the chart lives and what the index now holds. */
+/** Result of a chart write: where the chart lives, the index, and the notices it produced. */
 export interface WriteResult {
   dir: string;
   index: IndexedEntry[];
+  notices: Notice[];
+  noticesText: string;
 }
 
 /**
@@ -120,14 +57,24 @@ export function writeChart(targetRoot: string, entries: ChartEntry[]): WriteResu
   }
 
   const dir = chartDir(targetRoot);
+  const previous = readChartOrNull(targetRoot);
   const indexed = sortEntries(
-    entries.map((entry) => ({ ...entry, stale: false } as IndexedEntry))
+    entries.map((entry) => {
+      const base = { ...entry, stale: false } as IndexedEntry;
+      if (entry.kind === "vessel") {
+        base.signature = treeSignature(targetRoot, entry.paths);
+      }
+      return base;
+    })
   );
+  const notices = diffNotices(previous ?? [], indexed);
+  const noticesText = renderNotices(notices);
   const sheets = renderSheets(indexed);
 
   mkdirSync(dir, { recursive: true });
   const files = new Map<string, string>(sheets);
   files.set(INDEX_FILE, indexJsonl(indexed));
+  if (notices.length > 0) files.set(NOTICES_FILE, noticesText);
   writeFilesAtomically(dir, files);
 
   // Remove sheets the new chart no longer owns (retired vessels).
@@ -136,5 +83,7 @@ export function writeChart(targetRoot: string, entries: ChartEntry[]): WriteResu
       unlinkSync(join(dir, name));
     }
   }
-  return { dir, index: indexed };
+  // An empty report is removed: the notices file reflects the latest write.
+  if (notices.length === 0) rmSync(join(dir, NOTICES_FILE), { force: true });
+  return { dir, index: indexed, notices, noticesText };
 }
