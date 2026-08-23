@@ -80,12 +80,16 @@ Confidence (trustworthiness of an assertion) SHALL be orthogonal to
 - WHEN it is validated
 - THEN its evidence.state is source-visible, metadata-visible, or runtime-visible
 
-### Requirement: Compatibility matrix enforced at 0.2.0
-The 0.2.0 schema validator SHALL enforce the confidence/evidence-state
-compatibility matrix. Until the 0.2.0 migration ships, the confidence contract
-is aspirational and the frozen 0.1.0 contract stands.
+### Requirement: Confidence/evidence-state compatibility
+An assertion carrying `evidence.state` `claim-only` MUST NOT carry `ironclad`
+confidence; `ironclad` is reserved for source-visible, metadata-visible, or
+runtime-visible evidence.
+
+> Enforcement status: no schema validator implements this matrix today. The
+> scenarios of this spec have no BDD binding; treat this file as the target
+> trust contract, not as a mechanically enforced invariant.
 
 #### Scenario: claim-only disallows ironclad
 - GIVEN an assertion has evidence.state claim-only
-- WHEN it is validated at 0.2.0
+- WHEN the compatibility matrix is checked
 - THEN its confidence is not ironclad

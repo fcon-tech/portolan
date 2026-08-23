@@ -56,14 +56,14 @@ truths being present in intake.
 - THEN it shows "no intentions/representations ingested; behaviour-only atlas"
 - AND no failure is indicated
 
-### Requirement: 0.2.0 schema addition for triangulation
-Triangulation data contract SHALL require a 0.2.0 schema addition for
-intention/representation objects and a finding shape referencing both sides.
-Until that migration ships, triangulation SHALL be target-state and the
-behaviour-only atlas SHALL be the shippable Part-1 minimum.
+### Requirement: Triangulation data contract
+Triangulation SHALL consume intention/representation objects from the intake
+result and emit findings referencing both sides of a disagreement. When intake
+carries no intentions/representations, triangulation SHALL stay gated and the
+behaviour-only atlas SHALL be the shipped minimum.
 
-#### Scenario: Behaviour-only ships before 0.2.0
-- GIVEN the 0.2.0 migration has not shipped
+#### Scenario: Behaviour-only minimum
+- GIVEN intake carries no intentions or representations
 - WHEN Part-1 acceptance is evaluated
 - THEN the behaviour-only atlas satisfies the Part-1a bar
 - AND triangulation is gated as Part-1b
