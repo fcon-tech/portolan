@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/core/chart.schema.json",
+  "title": "Portolan Chart entry",
+  "description": "One entry of the Chart (the Padrón): vessel, fairway, port of entry, beacon, light, or danger. Every entry carries at least one anchor and exactly one trust label from the closed vocabulary. This schema is the published contract for Cartographer agents; core/src/types.ts mirrors it.",
+  "$ref": "#/$defs/chartEntry",
+  "$defs": {
+    "trustLabel": {
+      "description": "Closed trust vocabulary (chart notation): measured, charted, reported, doubtful, unsurveyed.",
+      "enum": ["measured", "charted", "reported", "doubtful", "unsurveyed"]
+    },
+    "entryId": { "type": "string", "minLength": 1 },
+    "anchor": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "path"],
+          "properties": {
+            "type": { "const": "file" },
+            "path": { "type": "string", "minLength": 1 },
+            "line": { "type": "integer", "minimum": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "path", "key"],
+          "properties": {
+            "type": { "const": "manifest" },
+            "path": { "type": "string", "minLength": 1 },
+            "key": { "type": "string", "minLength": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "id"],
+          "properties": {
+            "type": { "const": "receipt" },
+            "id": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "anchors": {
+      "description": "An entry without at least one anchor does not ship.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/anchor" }
+    },
+    "vessel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "name", "paths", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "vessel" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "name": { "type": "string", "minLength": 1 },
+        "behavior": { "type": "string" },
+        "paths": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "note": { "type": "string" },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "fairway": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "from", "to", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "fairway" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "from": { "$ref": "#/$defs/entryId" },
+        "to": { "$ref": "#/$defs/entryId" },
+        "note": { "type": "string" },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "portOfEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "vessel", "protocol", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "portOfEntry" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "vessel": { "$ref": "#/$defs/entryId" },
+        "protocol": { "type": "string", "minLength": 1 },
+        "note": { "type": "string" },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "beacon": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "vessel", "surface", "key", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "beacon" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "vessel": { "$ref": "#/$defs/entryId" },
+        "surface": { "enum": ["env", "flag", "port"] },
+        "key": { "type": "string", "minLength": 1 },
+        "note": { "type": "string" },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "light": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "vessel", "name", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "light" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "vessel": { "$ref": "#/$defs/entryId" },
+        "name": { "type": "string", "minLength": 1 },
+        "note": { "type": "string" },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "danger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "vessel", "category", "note", "anchors", "trust"],
+      "properties": {
+        "kind": { "const": "danger" },
+        "id": { "$ref": "#/$defs/entryId" },
+        "vessel": { "$ref": "#/$defs/entryId" },
+        "category": { "enum": ["rock", "shallow", "wreck"] },
+        "note": { "type": "string", "minLength": 1 },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" }
+      }
+    },
+    "chartEntry": {
+      "oneOf": [
+        { "$ref": "#/$defs/vessel" },
+        { "$ref": "#/$defs/fairway" },
+        { "$ref": "#/$defs/portOfEntry" },
+        { "$ref": "#/$defs/beacon" },
+        { "$ref": "#/$defs/light" },
+        { "$ref": "#/$defs/danger" }
+      ]
+    }
+  }
+}

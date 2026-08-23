@@ -11,7 +11,7 @@
 - [x] 2.1 Write `core/src/types.ts` (Vessel, Fairway, PortOfEntry, Beacon,
       Light, Danger, Anchor, TrustLabel, ChartEntry, Notice) and verify a
       type-check passes (`bunx tsc --noEmit`)
-- [ ] 2.2 Write `core/schema/chart.schema.json` covering every entry kind
+- [x] 2.2 Write `core/schema/chart.schema.json` covering every entry kind
       with required `anchors` (min 1) and `trust` enum of exactly the five
       labels, and verify ajv validates good/bad fixtures in tests
 - [ ] 2.3 Write `core/src/validate.ts` wrapping ajv with entry-locating
