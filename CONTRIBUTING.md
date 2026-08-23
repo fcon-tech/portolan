@@ -9,14 +9,14 @@ local-first, read-only by default, and honest about unknowns.
   behavior, and evidence state.
 - Documentation fixes that make install, agent use, product boundaries, or
   evidence labels clearer.
-- Focused CLI, schema, or artifact improvements backed by captain-atlas BDD
-  scenarios and tests.
+- Focused CLI, schema, or artifact improvements backed by OpenSpec scenarios
+  and their BDD bindings.
 - Focused importer or producer proposals that normalize local tool output and
   include an OSS kill / pack / build decision.
 - Review artifacts that narrow, reject, block, or verify public claims.
 
 Avoid broad rewrites, speculative architecture, daemon behavior, network access,
-credentials, or target repository mutation unless the captain-atlas contract
+credentials, or target repository mutation unless the OpenSpec product contract
 explicitly requires and approves them.
 
 ## Evidence Labels
@@ -53,8 +53,9 @@ vulnerabilities.
 
 ## Before Opening A Pull Request
 
-For repository changes, start from the relevant work package under
-`docs/captain-atlas/` or open a proposal issue when no package exists yet.
+For repository changes, start from the relevant change under
+`openspec/changes/` (or the living spec under `openspec/specs/`), or open a
+proposal issue when none exists yet.
 
 Follow the [Code Of Conduct](CODE_OF_CONDUCT.md). By contributing, you confirm
 that you have the right to submit the work under this repository's license. No

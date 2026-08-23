@@ -29,7 +29,7 @@ Use [`harness/SKILL.md`](../../harness/SKILL.md):
 
 1. Run OSS recipes from `harness/recipes/`.
 2. Build a Portolan bundle with `scripts/build-portolan-bundle.sh`.
-3. Open the local viewer from `viewer/`.
+3. Open the atlas via `/portolan:map`: `node portolan-core/scripts/portolan-map.mjs --bundle <bundle-dir>`.
 
 Optional legacy bridge:
 

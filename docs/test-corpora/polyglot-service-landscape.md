@@ -1,6 +1,6 @@
 # Polyglot Service Landscape Test Corpus
 
-This is the repeatable non-JVM smoke for the captain-atlas portability bar. It
+This is the repeatable non-JVM smoke for the cross-language portability bar. It
 uses the same local atlas route as the Bigtop-shaped fixture, but the target is a
 small exported Node API plus Go worker landscape.
 

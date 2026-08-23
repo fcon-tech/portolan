@@ -47,8 +47,8 @@ OSS output is generated, preserved, normalized, and recorded.
 
 ## First-Wave Adapter Profiles
 
-The active OSS decision surface is
-`docs/captain-atlas/06-oss-kill-gates.md`. Current adapter profiles:
+The active OSS decision surface is the Mandatory Decision Gate in AGENTS.md
+(kill / pack / build). Current adapter profiles:
 
 - `docs/adapter-contracts/graphify-profile.md`: Graphify is accepted through
   native OSS output plus a local adapter-contract validation profile, raw
@@ -65,7 +65,7 @@ The active OSS decision surface is
   content is navigation context, not architecture truth, and requires redaction
   before sharing.
 
-Future OSS decisions should be recorded as captain-atlas scorecards, with a
+Future OSS decisions should be recorded as kill/pack/build scorecards, with a
 clear kill, pack, or build recommendation.
 
 ## Integration Rules

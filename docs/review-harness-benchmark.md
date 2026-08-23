@@ -5,8 +5,7 @@ Date: 2026-06-11 (P9.1 OpenCode primary)
 ## Decision (current)
 
 Use **OpenCode via `codex-subagent`** as the default Portolan review harness for
-durable review evidence. Follow [`.agents/skills/review/SKILL.md`](../../.agents/skills/review/SKILL.md)
-at the workspace root (not `pi`).
+durable review evidence. Follow the workspace-root review lane setup (not `pi`).
 
 Required independent lanes (non-GPT):
 
@@ -165,8 +164,8 @@ Suggested timeouts:
   despite a no-tools prompt, record it as `not_assessed` or `failed` and launch
   an explicit enabled non-GPT replacement lane. Do not count the requested lane
   as assessed just because a fallback was attempted.
-- For Portolan delivery, use the active captain-atlas work packages under
-  `docs/captain-atlas/`. Keep this benchmark document focused on roster and
+- For Portolan delivery, use the active changes under `openspec/changes/`.
+  Keep this benchmark document focused on roster and
   prompt-quality evidence so delivery rules do not drift.
 - Do not launch multiple `pi` lanes at the same time in this environment. If
   `database is locked` appears, rerun the lane sequentially and record the first

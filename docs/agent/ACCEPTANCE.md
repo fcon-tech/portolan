@@ -1,6 +1,6 @@
 # Agent Acceptance
 
-This page validates the active captain-atlas workflow:
+This page validates the active agent-atlas workflow:
 
 ```text
 Captain gives an agent Portolan plus a target ecosystem.
@@ -9,7 +9,8 @@ Agent builds a local atlas bundle and atlas app.
 Agent answers from the generated atlas.
 ```
 
-The detailed BDD contracts live in `docs/captain-atlas/`.
+The detailed BDD contracts live in `openspec/specs/` (bound to unit tests via
+`portolan-core/test/bdd-runner.js`).
 
 ## State Rules
 
@@ -25,13 +26,13 @@ Do not convert `blocked`, `unknown`, or `not_assessed` into success.
 
 | Lane | Purpose | Source Spec |
 | --- | --- | --- |
-| Cursor Composer first run | Prove the primary captain scenario. | `docs/captain-atlas/01-cursor-composer-first-run.md` |
-| Atlas app inspection | Prove the generated app is useful to a captain. | `docs/captain-atlas/02-atlas-app-shell.md` |
-| Landscape producer check | Prove the bundle has enough facts to explain the estate. | `docs/captain-atlas/03-landscape-intelligence-producers.md` |
-| Agent Q&A and drill-down | Prove follow-up questions and selected-code lookup work. | `docs/captain-atlas/04-agent-qna-drilldown.md` |
-| Packaging/QoL/safety | Prove install, status, progress, receipt, and local-first behavior. | `docs/captain-atlas/05-packaging-qol-security.md` |
+| Cursor Composer first run | Prove the primary captain scenario. | `openspec/specs/ux-principles/` (zero-copied-commands first run) |
+| Atlas app inspection | Prove the generated app is useful to a captain. | `openspec/specs/navigation/` + `openspec/specs/reading-experience/` |
+| Landscape producer check | Prove the bundle has enough facts to explain the estate. | `openspec/specs/ontology/` |
+| Agent Q&A and drill-down | Prove follow-up questions and selected-code lookup work. | `openspec/specs/drilldown-semantics/` |
+| Packaging/QoL/safety | Prove install, status, progress, receipt, and local-first behavior. | `openspec/specs/atlas-identity/` (local-first, read-only) |
 | Harness portability install lanes | Prove generated Cursor, OpenCode/Codex, and Claude instruction files point to target-local wrappers without escaping back to the Portolan runtime checkout. | `scripts/harness-agent-install-smoke.sh` |
-| OSS kill gates | Prove we should build, wrap, or kill each capability. | `docs/captain-atlas/06-oss-kill-gates.md` |
+| OSS kill gates | Prove we should build, wrap, or kill each capability. | Mandatory Decision Gate in [AGENTS.md](../../AGENTS.md) |
 
 ## First-Run Prompt Shape
 
@@ -45,7 +46,7 @@ TARGET_ROOT=<absolute local path to the target ecosystem>
 Then ask:
 
 ```text
-Use Portolan to build my atlas for TARGET_ROOT. Follow the Portolan captain-atlas
+Use Portolan to build my atlas for TARGET_ROOT. Follow the Portolan agent
 instructions. Ask at most two necessary clarifying questions, install or prepare
 Portolan safely, build the atlas bundle and local app, then tell me what to open
 and what the first useful landscape findings are. Do not mutate target source
@@ -76,7 +77,7 @@ scripts/portolan-product-acceptance.sh
 
 This script is not a substitute for the Cursor Composer first-run BDD. It checks
 repository health, static install lanes for Cursor/OpenCode/Codex/Claude,
-schemas, viewer syntax/build, harness smoke, and whitespace. Live runtime
+schemas, atlas export, harness smoke, and whitespace. Live runtime
 acceptance defaults to Cursor/OpenCode. Codex and Claude have concrete runtime
 lanes that can be required explicitly when their CLIs are available in the
 operator environment.
@@ -94,9 +95,9 @@ scripts/harness-agent-runtime-acceptance.sh --prompt-mode captain --fixture poly
 
 - `captain` generates the public first-run prompt with
   `scripts/portolan-captain-prompt.sh` and gives that prompt to the live agent.
-  This is the product-facing proof for the captain-atlas story: `PORTOLAN` plus
+  This is the product-facing proof for the captain first-run story: `PORTOLAN` plus
   `TARGET_ROOT`, target-local install, bounded queries, selected-code
-  drill-down, and viewer handoff.
+  drill-down, and atlas handoff.
 - `guided` gives the headless agent `PORTOLAN`, `TARGET_ROOT`, and a short
   embedded first-run guide. The automated lane does not require reading
   `docs/agent/INSTALL-PROMPT.md`, because some harnesses block external
@@ -146,7 +147,7 @@ scripts/build-captain-handoff.sh <bundle-dir>
 
 The artifacts are `<bundle-dir>/captain-handoff.md` for the human summary and
 `<bundle-dir>/captain-handoff.json` for machine-readable run status. They must
-cite receipt, scorecard, Q&A eval, viewer handoff, and bounded query commands.
+cite receipt, scorecard, Q&A eval, atlas handoff, and bounded query commands.
 
 `captain-handoff.json.verdict` is intentionally stricter than "the file was
 generated":

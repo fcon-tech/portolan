@@ -82,13 +82,14 @@ scripts/portolan-install.sh "$TARGET_ROOT" --harness all --bundle-dir "$BUNDLE_D
   --yes --skip-install --no-viewer --with-map-bridge
 ```
 
-Viewer on self bundle:
+Atlas export on self bundle:
 
 ```bash
-"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh" --bundle "$BUNDLE_DIR" --port 4173
+"$TARGET_ROOT/.portolan/bin/portolan-viewer.sh" --bundle "$BUNDLE_DIR"
 ```
 
-Open http://127.0.0.1:4173/
+The wrapper execs `/*portolan:map` and exports the inlined `atlas.html`
+(there is no HTTP server and no `--port` flag).
 
 **Optional named stress corpus (Bigtop quick sample):**
 

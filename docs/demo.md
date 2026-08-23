@@ -87,7 +87,7 @@ is missing or bounded.
 
 The maintained product check is `scripts/portolan-product-acceptance.sh`. When
 given a prepared Bigtop corpus bundle, it validates the installable wrapper route,
-live Cursor/OpenCode runtime lanes, the viewer, bundle queries, schema checks,
+live Cursor/OpenCode runtime lanes, the atlas export, bundle queries, schema checks,
 and strict Bigtop acceptance:
 
 ```bash

@@ -10,7 +10,7 @@ without requiring Go. Phase 5 smoke validates harness-only path on fixtures.
 | Criterion | Result (2026-06-10 smoke) |
 | --- | --- |
 | Harness + scripts build Portolan bundle | Pass (`build-portolan-bundle.sh`) |
-| Viewer loads bundle without Go | Pass (`harness-portolan-smoke.sh`) |
+| Atlas renders bundle without Go | Pass (`harness-portolan-smoke.sh`) |
 | Importer edge cases in production | Not re-tested; legacy `internal/importer` retained |
 | Large JSONL / path safety | Legacy Go still has tests; harness uses jq/bash |
 
@@ -32,7 +32,7 @@ Not allowed without new ADR:
 ## Consequences
 
 - Primary docs and INSTALL-PROMPT point to `harness/SKILL.md`.
-- Contributors add recipes and viewer features first.
+- Contributors add recipes and reading-layer features first.
 - Revisit this ADR after real-target harness runs (non-fixture) or importer parity spec.
 
 ## Alternatives considered

@@ -56,10 +56,8 @@ layer has produced concrete product decisions.
 
 ### Phase 0 - Agent Bootstrap And Blind Acceptance
 
-- Use the Cursor Composer first-run contract in
-  `docs/captain-atlas/01-cursor-composer-first-run.md`.
-- Use the shared product contract in
-  `docs/captain-atlas/00-product-contract.md`.
+- Use the Cursor Composer first-run contract (now `openspec/specs/ux-principles/`).
+- Use the shared product contract in `openspec/specs/atlas-identity/`.
 - Run Cursor + Composer 2.5 with only the generic Portolan path, target path,
   output path, and mapping request.
 - Use a real local Apache Bigtop checkout for the real operator lane.
@@ -68,8 +66,7 @@ layer has produced concrete product decisions.
 - Record what the agent could not do without target-specific prompting.
 - Record missing Portolan capabilities as product gaps, not as free-form agent
   advice.
-- Keep the handoff aligned with the packaging and local-first contract in
-  `docs/captain-atlas/05-packaging-qol-security.md`.
+- Keep the handoff aligned with the packaging and local-first contract (local-first, read-only requirements in `openspec/specs/atlas-identity/`).
 - If the external Cursor + Composer 2.5 operator lane or local Bigtop checkout
   is unavailable, run the local fallback smoke against
   `internal/testfixtures/apache-bigtop-smoke/selection.json` only as preflight and mark the

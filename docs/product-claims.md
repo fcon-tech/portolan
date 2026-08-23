@@ -1,7 +1,7 @@
 # Product Claims
 
 This page is the current public claim boundary for Portolan. It follows the
-captain-atlas contract in `docs/captain-atlas/`.
+living product specs in `openspec/specs/`.
 
 ## Current Safe Wording
 
@@ -18,8 +18,8 @@ every harness, target shape, or customer estate already works.
 
 | Claim | Status | Safe wording |
 | --- | --- | --- |
-| Portolan targets the captain-atlas scenario. | `accepted` | Safe: the active product specs define this as the product contract. |
-| Portolan generates local atlas data and a local viewer from visible files and supplied local artifacts. | `narrowed` | Safe for the implemented install/scan/viewer path; usefulness still depends on target shape and available producers. |
+| Portolan targets the agent-built-atlas scenario (captain drops a link, agent builds and opens the atlas). | `accepted` | Safe: the active product specs define this as the product contract. |
+| Portolan generates local atlas data and a self-contained `atlas.html` from visible files and supplied local artifacts. | `narrowed` | Safe for the implemented install/scan/`/portolan:map` path; usefulness still depends on target shape and available producers. |
 | Portolan should help Cursor Composer build an atlas from a Portolan link and target path. | `target` | This is the first acceptance client, not yet a broad product guarantee. |
 | Portolan replaces Cursor, Sourcegraph, Backstage, Understand Anything, or code intelligence products. | `rejected` | Safe wording: Portolan complements agents and may wrap OSS/product outputs when they win. |
 | Portolan proves complete enterprise architecture or runtime topology from source alone. | `rejected` | Safe wording: Portolan shows visible local scope and marks gaps. |
@@ -46,4 +46,5 @@ every harness, target shape, or customer estate already works.
   already proven.
 - `rejected`, `failed`, `blocked`, and `not_assessed` states are limits, not
   positive claims.
-- When in doubt, route the decision through `docs/captain-atlas/06-oss-kill-gates.md`.
+- When in doubt, route the decision through the Mandatory Decision Gate in
+  [AGENTS.md](AGENTS.md) (kill / pack / build).

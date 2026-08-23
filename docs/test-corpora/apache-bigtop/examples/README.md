@@ -2,7 +2,7 @@
 
 These are archival excerpts from the legacy `context prepare` / `portolan map`
 demo route. They are kept as historical evidence only. Current product demos
-must use the captain-atlas contract in `docs/captain-atlas/` and strict Bigtop
+must use the OpenSpec product contract in `openspec/specs/` and strict Bigtop
 corpus acceptance via `scripts/harness-bigtop-acceptance.sh`.
 
 Freshness: generated from a local Apache Bigtop landscape on 2026-05-30 using
