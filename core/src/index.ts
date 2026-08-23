@@ -1,8 +1,7 @@
 /**
  * @portolan/core — public surface: the chart ontology, validation, the
- * chart store, staleness, Notices to Mariners, and the probe tools
- * (sweep, symbols, manifests, the ship's log). Everything a Cartographer
- * harness needs; nothing else.
+ * chart store, staleness, and Notices to Mariners. Everything a
+ * Cartographer harness needs; nothing else.
  */
 export * from "./types";
 export * from "./validate";
