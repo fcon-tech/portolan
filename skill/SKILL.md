@@ -175,10 +175,14 @@ anchors and trust labels.
 
 ## 8. Later expeditions: correct, not redraw
 
-- Begin from the existing Chart: `chart.read` before any probe.
-- Refresh staleness first; repair every entry marked `pending correction` by
-  re-surveying only what changed. Extend what stands; never redraw the whole
-  Chart.
+- Begin from the existing Chart: `chart.read` before any probe. Reading
+  refreshes staleness: vessels whose sources changed since the last write
+  come back marked `pending correction`.
+- Repair every entry marked `pending correction` by re-surveying only what
+  changed. Extend what stands; never redraw the whole Chart.
+- Round-trip rule: entries read back carry `stale` and `signature` metadata;
+  `chart.write` ignores and re-stamps both, so a repaired entry can be
+  written back exactly as read (minus your correction) and lands fresh.
 - The Chart's diff emits Notices to Mariners (added, corrected, marked
   stale, retired). Repeat the principal notices in the Sailing Directions.
 - When the Governor returns in a later session and asks about the surveyed
@@ -205,12 +209,12 @@ One MCP server over stdio, bound to the target root at launch. Nine tools:
 
 | Tool | Use |
 | --- | --- |
-| `chart.read` | read the Chart (entries by kind or id) |
-| `chart.write` | write entries; the store rejects any entry without anchors or without exactly one trust label |
+| `chart.read` | no input; refreshes staleness and returns all entries (with `pending correction` marks) |
+| `chart.write` | full-replace write; the store rejects any entry without anchors or without exactly one trust label; `stale`/`signature` metadata from a read is ignored |
 | `sweep` | ripgrep-backed search; anchored chunks, trust `measured` |
 | `symbols` | ctags-backed definitions and references, trust `measured` |
-| `manifests` | deterministic facts from manifests, trust `charted` |
-| `sound.edge` | verify an asserted fairway: `confirmed` / `unconfirmed` with evidence |
+| `manifests` | deterministic facts from one manifest file, trust `charted` |
+| `sound.edge` | verify an asserted fairway between two charted vessels: `confirmed` / `unconfirmed` with evidence |
 | `sound.anchor` | verify an anchor resolves: `confirmed` / `refuted` |
 | `log.append` | receipt an executed command; returns the receipt id |
 | `log.read` | read receipts by id or filter |
@@ -220,8 +224,8 @@ Call shapes (fields abbreviated to the ones that matter):
 ```json
 { "tool": "manifests", "input": { "path": "apps/api/package.json" } }
 { "tool": "sweep", "input": { "pattern": "process.env", "glob": "*.ts" } }
-{ "tool": "symbols", "input": { "symbol": "parse", "references": true } }
-{ "tool": "sound.edge", "input": { "from": "cli", "to": "lib" } }
+{ "tool": "symbols", "input": { "name": "parse", "references": true } }
+{ "tool": "sound.edge", "input": { "fairway": { "kind": "fairway", "id": "api-lib", "from": "api", "to": "lib", "anchors": [ { "type": "manifest", "path": "apps/api/package.json", "key": "dependencies.lib" } ], "trust": "charted" }, "source": { "kind": "vessel", "id": "api", "name": "api", "paths": ["apps/api"], "anchors": [ { "type": "manifest", "path": "apps/api/package.json", "key": "name" } ], "trust": "charted" }, "target": { "kind": "vessel", "id": "lib", "name": "lib", "paths": ["packages/lib"], "anchors": [ { "type": "manifest", "path": "packages/lib/package.json", "key": "name" } ], "trust": "charted" } } }
 { "tool": "sound.anchor", "input": { "anchor": { "type": "file", "path": "packages/lib/src/parse.ts", "line": 1 } } }
 { "tool": "log.append", "input": { "command": "bun test", "scope": "target", "outcome": "pass" } }
 { "tool": "chart.write", "input": { "entries": [ { "kind": "vessel", "id": "api", "name": "api", "paths": ["apps/api"], "anchors": [ { "type": "manifest", "path": "apps/api/package.json", "key": "name" } ], "trust": "charted" } ] } }

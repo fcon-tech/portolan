@@ -40,7 +40,17 @@ export interface WriteResult {
  * duplicate-id failure persists nothing. Vessel sheets are re-rendered from
  * the entries; sheets of retired vessels are removed.
  */
-export function writeChart(targetRoot: string, entries: ChartEntry[]): WriteResult {
+export function writeChart(targetRoot: string, rawEntries: ChartEntry[]): WriteResult {
+  // Round-trip rule: entries read back from the chart carry `stale` and
+  // `signature` metadata the store owns and re-stamps on every write, so a
+  // read → modify → write repair cycle must not be rejected for them.
+  const entries = rawEntries.map((entry) => {
+    const { stale: _stale, signature: _signature, ...clean } = entry as ChartEntry & {
+      stale?: unknown;
+      signature?: unknown;
+    };
+    return clean as ChartEntry;
+  });
   if (entries.length === 0) {
     throw new Error("writeChart: refusing to write an empty chart");
   }

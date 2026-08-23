@@ -59,7 +59,9 @@ Location: `<target>/.portolan/chart/`.
   anchors, trust labels, staleness. Written atomically with the sheets.
 - **C4 views** — Cartographer-authored, inside sheets; every node/edge must
   carry anchors that `sound.*` can verify. Diagrams (Mermaid/PlantUML) are
-  exports, never the storage.
+  exports, never the storage. *Deferred: v1 ships no C4 entry kind or sheet
+  section — a follow-up change adds it; do not claim C4 coverage until it
+  lands.*
 - **Living corrections** — per-unit tree signatures mark entries
   `pending correction` after source changes; each expedition repairs the
   Padrón. Changes are reported as **Notices to Mariners**.

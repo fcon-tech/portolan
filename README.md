@@ -14,8 +14,11 @@ survey <target> with Portolan    ← the whole first-run UX
   chart format, trust vocabulary, tools, permissions, non-goals, glossary.
 - Acceptance: [acceptance/bigtop-sea-trial.md](acceptance/bigtop-sea-trial.md)
   — the Bigtop sea-trial gate.
-- Status: manifest stage. Core (`core/`), skill (`skill/`), adapters
-  (`adapters/`) land next.
+- Status: v1 built and tested — `core/` (chart store + the nine MCP tools +
+  stdio server), `skill/` (the Cartographer's method), `adapters/`
+  (opencode first, pi/omp shims), `acceptance/` (Bigtop sea-trial runner).
+  Next milestone: the first real expedition against the Bigtop corpus and
+  its sea trial.
 
 The v2 repository (`../portolan`) is frozen as a reference: mine ideas, not
 code. Lessons learned there are recorded in the manifest.

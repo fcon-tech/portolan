@@ -454,6 +454,22 @@ export function soundEdge(targetRoot: string, sounding: EdgeSounding): EdgeSound
 }
 
 /**
+ * A declared dependency names the target vessel when it matches exactly, or
+ * when it names a module of that vessel's family (`hadoop` covers
+ * `hadoop-common`, `hadoop-client`, …) — the same family rule the sea-trial
+ * oracle applies, so a manifest-true fairway is never sounded unconfirmed
+ * merely for declaring a submodule.
+ */
+function namesVessel(depName: string, target: VesselEntry): boolean {
+  return (
+    depName === target.name ||
+    depName === target.id ||
+    (target.name.length > 0 && depName.startsWith(`${target.name}-`)) ||
+    (target.id.length > 0 && depName.startsWith(`${target.id}-`))
+  );
+}
+
+/**
  * Vessel-local manifest discovery: the vessel's own declaration files under
  * its charted paths. Hidden directories and node_modules are skipped —
  * installed and vendored trees are not the vessel's own declarations.
@@ -511,7 +527,7 @@ function manifestDeclarationMeans(
         continue;
       }
       for (const dep of outcome.dependencies) {
-        if (dep.name === target.name || dep.name === target.id) {
+        if (namesVessel(dep.name, target)) {
           declaredIn.push(
             `${path}#${dep.fact.key}${dep.version !== undefined ? ` (${dep.version})` : ""}`,
           );

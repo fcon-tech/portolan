@@ -11,6 +11,7 @@
  */
 import type { Anchor, ChartEntry, FairwayEntry, VesselEntry } from "../types";
 import { readChart, writeChart } from "../chart-store";
+import { refreshStaleness } from "../staleness";
 import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
@@ -226,9 +227,13 @@ export const TOOL_TABLE: ToolSpec[] = [
   {
     name: "chart.read",
     description:
-      "Read the Chart (Padrón) of the province: the machine index entries as stored under <target>/.portolan/chart/index.jsonl.",
+      "Read the Chart (Padrón) of the province: the machine index entries as stored under <target>/.portolan/chart/index.jsonl. " +
+      "Refreshes staleness first — vessels whose sources changed since the last write come back marked pending correction.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
-    handler: (_args, ctx) => ({ entries: readChart(ctx.targetRoot) }),
+    handler: (_args, ctx) => {
+      refreshStaleness(ctx.targetRoot);
+      return { entries: readChart(ctx.targetRoot) };
+    },
   },
   {
     name: "chart.write",
