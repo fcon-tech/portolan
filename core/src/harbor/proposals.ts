@@ -1,0 +1,250 @@
+/**
+ * The proposal engine: the deterministic Harbor Master. The queue is
+ * computed from exactly three inputs — never imagined (the trust spine
+ * forbids model-invented proposals):
+ *
+ * 1. repair   — vessels marked `pending correction` (one grouped proposal;
+ *               staleness refresh runs first, exactly like `chart.read`);
+ * 2. gap      — per charted vessel with no recorded behavior and/or no
+ *               charted light (both signals read from the index, never from
+ *               parsed sheets — design.md, decision 1);
+ * 3. new-land — landscape entries absent from the last-survey snapshot,
+ *               compared only while the chart index hash is unchanged.
+ *
+ * Ranking: repair > new-land > gap, then evidence size, then evidence key
+ * (design.md, decision 6). Every proposal carries its kind, evidence keys,
+ * anchors, a scope estimate, and a stable fingerprint; fingerprints whose
+ * LAST recorded decision is declined are filtered — refusals hold while
+ * the evidence is unchanged and reopen when it grows.
+ *
+ * Anchor honesty on repair: the per-vessel tree signature hashes the file
+ * list, sizes, and mtimes, so individual changed files are not recoverable
+ * without storing per-file state; repair anchors therefore cite the changed
+ * vessels' source paths — the trees under which the drift was measured.
+ */
+import type { Anchor, IndexedEntry, VesselEntry } from "../types";
+import { readChart } from "../chart-store";
+import { refreshStaleness } from "../staleness";
+import { HarborError } from "./errors";
+import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./fingerprint";
+import {
+  DECISIONS,
+  appendDecision,
+  lastDecisionPerFingerprint,
+  readDecisions,
+  type DecisionRecord,
+  type GovernorDecision,
+} from "./history";
+import {
+  chartIndexHash,
+  landscapeAnchor,
+  readSnapshot,
+  scanLandscape,
+  writeSnapshot,
+  type LandscapeEntry,
+} from "./snapshot";
+
+/** The scope estimate every proposal carries: who and what an expedition touches. */
+export interface ProposalScope {
+  /** Charted vessel ids affected; empty for new land (nothing charted there yet). */
+  vessels: string[];
+  /** Estimated chart entries the expedition would touch. */
+  entries: number;
+  /** Estimated soundings (one per entry the verify loop re-sounds). */
+  soundings: number;
+}
+
+/** One expedition proposal, evidence-complete and fingerprinted. */
+export interface Proposal {
+  kind: ProposalKind;
+  fingerprint: string;
+  /** One deterministic sentence: what justifies the proposal. */
+  summary: string;
+  /** The fingerprint's evidence keys (`vessel/api`, `repo:vendor/lib`, ...). */
+  evidence: string[];
+  /** Anchors justifying the proposal, citable and soundable. */
+  anchors: Anchor[];
+  scope: ProposalScope;
+}
+
+/** What `expeditions.propose` returns: the ranked, refusal-filtered queue. */
+export interface ProposeResult {
+  proposals: Proposal[];
+}
+
+const KIND_RANK: Record<ProposalKind, number> = { repair: 0, "new-land": 1, gap: 2 };
+
+/** A vessel as read from the index: store metadata included. */
+type IndexedVessel = VesselEntry & { stale: boolean };
+
+function sortById<T extends { id: string }>(entries: T[]): T[] {
+  return [...entries].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+function uniqueAnchors(anchors: Anchor[]): Anchor[] {
+  const seen = new Set<string>();
+  const out: Anchor[] = [];
+  for (const anchor of anchors) {
+    const key = JSON.stringify(anchor);
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(anchor);
+    }
+  }
+  return out;
+}
+
+/** The repair proposal: every pending-correction vessel, grouped, with the drift's location. */
+function repairProposal(entries: IndexedEntry[]): Proposal | null {
+  const drifted = sortById(
+    entries.filter((e): e is IndexedVessel => e.kind === "vessel" && e.stale === true),
+  );
+  if (drifted.length === 0) return null;
+  const ids = drifted.map((v) => v.id);
+  const evidence = ids.map((id) => `vessel/${id}`);
+  const staleEntryCount = entries.filter((e) => e.stale === true).length;
+  return {
+    kind: "repair",
+    fingerprint: proposalFingerprint("repair", evidence),
+    summary:
+      `${drifted.length === 1 ? "vessel" : "vessels"} ${ids.join(", ")} marked pending correction ` +
+      `(sources changed under ${drifted.map((v) => v.paths.join(", ")).join("; ")})`,
+    evidence,
+    anchors: uniqueAnchors(
+      drifted.flatMap((v) => v.paths.map((path): Anchor => ({ type: "file", path }))),
+    ),
+    scope: { vessels: ids, entries: staleEntryCount, soundings: staleEntryCount },
+  };
+}
+
+/** Gap proposals: one per charted vessel missing its behavior and/or its lights. */
+function gapProposals(entries: IndexedEntry[]): Proposal[] {
+  const lightsPerVessel = new Map<string, number>();
+  for (const entry of entries) {
+    if (entry.kind === "light") {
+      lightsPerVessel.set(entry.vessel, (lightsPerVessel.get(entry.vessel) ?? 0) + 1);
+    }
+  }
+  const proposals: Proposal[] = [];
+  for (const vessel of sortById(entries.filter((e): e is IndexedVessel => e.kind === "vessel"))) {
+    const missing: string[] = [];
+    if (vessel.behavior === undefined || vessel.behavior.trim().length === 0) missing.push("behavior");
+    if ((lightsPerVessel.get(vessel.id) ?? 0) === 0) missing.push("lights");
+    if (missing.length === 0) continue;
+    const phrases = missing.map((pass) =>
+      pass === "behavior" ? "no recorded behavior" : "no charted light",
+    );
+    proposals.push({
+      kind: "gap",
+      fingerprint: proposalFingerprint("gap", missing.map((pass) => `vessel/${vessel.id}#${pass}`)),
+      summary: `vessel ${vessel.id} (${vessel.paths.join(", ")}) has ${phrases.join(" and ")}`,
+      evidence: missing.map((pass) => `vessel/${vessel.id}#${pass}`),
+      anchors: vessel.anchors,
+      scope: { vessels: [vessel.id], entries: missing.length, soundings: missing.length },
+    });
+  }
+  return proposals;
+}
+
+/** New-land proposals: landscape present now but absent from the last-survey snapshot. */
+function newLandProposals(targetRoot: string, absent: LandscapeEntry[]): Proposal[] {
+  return absent.map((entry) => {
+    const evidence = [`${entry.kind}:${entry.path}`];
+    return {
+      kind: "new-land" as const,
+      fingerprint: proposalFingerprint("new-land", evidence),
+      summary:
+        `${entry.kind === "repo" ? "repository" : "manifest"} ${entry.path} is present in the province ` +
+        "but absent from the last-survey snapshot",
+      evidence,
+      anchors: [landscapeAnchor(targetRoot, entry)],
+      scope: { vessels: [], entries: 0, soundings: 0 },
+    };
+  });
+}
+
+/**
+ * `expeditions.propose`: compute the ranked queue. Refreshes staleness
+ * first (chart.read semantics), lazily establishes or refreshes the
+ * landscape snapshot, and filters fingerprints whose last decision is
+ * declined. Purely deterministic: no timestamps participate, so two runs
+ * over an unchanged province return the same queue.
+ */
+export function computeProposals(
+  targetRoot: string,
+  options: { includeDeclined?: boolean } = {},
+): ProposeResult {
+  refreshStaleness(targetRoot);
+  const entries = readChart(targetRoot);
+
+  // Landscape vs snapshot. Snapshot first established on a chart with none:
+  // the baseline, and no new-land — there is no earlier survey to differ
+  // from. Index hash changed since the snapshot: a survey stood, refresh to
+  // the current landscape. Hash unchanged: compare, and propose the absent.
+  const stored = readSnapshot(targetRoot);
+  const currentHash = chartIndexHash(targetRoot);
+  let newLand: LandscapeEntry[] = [];
+  if (stored === null) {
+    writeSnapshot(targetRoot, { indexHash: currentHash, landscape: scanLandscape(targetRoot) });
+  } else if (stored.indexHash === currentHash) {
+    const known = new Set(stored.landscape.map((e) => `${e.kind}:${e.path}`));
+    newLand = scanLandscape(targetRoot).filter((e) => !known.has(`${e.kind}:${e.path}`));
+  } else {
+    writeSnapshot(targetRoot, { indexHash: currentHash, landscape: scanLandscape(targetRoot) });
+  }
+
+  const repair = repairProposal(entries);
+  const proposals: Proposal[] = [
+    ...(repair !== null ? [repair] : []),
+    ...newLandProposals(targetRoot, newLand),
+    ...gapProposals(entries),
+  ];
+  proposals.sort(
+    (a, b) =>
+      KIND_RANK[a.kind] - KIND_RANK[b.kind] ||
+      b.evidence.length - a.evidence.length ||
+      (a.evidence[0] < b.evidence[0] ? -1 : a.evidence[0] > b.evidence[0] ? 1 : 0),
+  );
+
+  if (options.includeDeclined === true) return { proposals };
+  const declined = new Set(
+    [...lastDecisionPerFingerprint(readDecisions(targetRoot)).values()]
+      .filter((record) => record.decision === "declined")
+      .map((record) => record.fingerprint),
+  );
+  return { proposals: proposals.filter((p) => !declined.has(p.fingerprint)) };
+}
+
+/**
+ * `expeditions.decide`: record the Governor's decision on a proposal the
+ * queue currently computes (declined proposals stay computable — the
+ * Governor may overturn a refusal while the evidence is unchanged). An
+ * unknown fingerprint is rejected: deciding on a proposal that does not
+ * exist would write an unverifiable row into the history.
+ */
+export function decide(
+  targetRoot: string,
+  fingerprint: string,
+  decision: GovernorDecision,
+): DecisionRecord {
+  if ((DECISIONS as readonly string[]).includes(decision) === false) {
+    throw new HarborError(
+      `unknown decision ${JSON.stringify(decision)}; the vocabulary is ${DECISIONS.join(", ")}`,
+    );
+  }
+  if (fingerprint.length === 0) {
+    throw new HarborError(
+      "a decision needs the proposal's fingerprint, exactly as expeditions.propose returned it",
+    );
+  }
+  const computable = computeProposals(targetRoot, { includeDeclined: true });
+  if (!computable.proposals.some((p) => p.fingerprint === fingerprint)) {
+    throw new HarborError(
+      `unknown proposal fingerprint ${fingerprint}; decide on a proposal the queue currently computes ` +
+        "(call expeditions.propose first)",
+    );
+  }
+  return appendDecision(targetRoot, fingerprint, decision);
+}
+
+export { PROPOSAL_KINDS };

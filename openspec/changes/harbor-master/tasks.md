@@ -1,36 +1,36 @@
 ## 1. Harbor core: fingerprint, snapshot, history
 
-- [ ] 1.1 Implement the proposal fingerprint (sha256 of kind + sorted
+- [x] 1.1 Implement the proposal fingerprint (sha256 of kind + sorted
       evidence keys, no timestamps) and verify stability/effect tests:
       same evidence → same fingerprint; drift growth → new fingerprint
-- [ ] 1.2 Implement the landscape snapshot (repos + manifests listing
+- [x] 1.2 Implement the landscape snapshot (repos + manifests listing
       stored with the chart index hash; refresh when the hash changes)
       and verify tests: new repo with unchanged chart → detected; chart
       write → snapshot refresh clears stale new-land
-- [ ] 1.3 Implement append-only decision history under
+- [x] 1.3 Implement append-only decision history under
       `.portolan/harbor/` (fingerprint, decision, timestamp) with
       last-decision-per-fingerprint lookup and verify the append-only
       contract in a test
 
 ## 2. Proposal engine
 
-- [ ] 2.1 Implement `computeProposals(targetRoot)` reading the chart
+- [x] 2.1 Implement `computeProposals(targetRoot)` reading the chart
       (with staleness refresh), the snapshot, and the history: repair
       (drifted vessels + changed-file anchors), gap (no behavior / no
       light per vessel), new-land (unsnapped repos), ranked repair >
       new-land > gap then evidence size; declined fingerprints filtered
       — and verify scenario tests: drift→repair, gap→survey, still
       province→empty queue, refusal holds, evidence change reopens
-- [ ] 2.2 Implement `decide(targetRoot, fingerprint, decision)` writing
+- [x] 2.2 Implement `decide(targetRoot, fingerprint, decision)` writing
       history and verify accept/declide round-trips plus rejection of
       unknown fingerprints
 
 ## 3. Settings + headless CLI
 
-- [ ] 3.1 Implement `.portolan/settings.json` reading (`harbor.schedule`,
+- [x] 3.1 Implement `.portolan/settings.json` reading (`harbor.schedule`,
       absent by default, unknown keys tolerated with a warning) and
       verify defaults and warning behavior in tests
-- [ ] 3.2 Implement the headless CLI `core/src/harbor/cli.ts propose`
+- [x] 3.2 Implement the headless CLI `core/src/harbor/cli.ts propose`
       with `--format chat` (deterministic chat-formatted queue, golden
       test) and verify two runs over an unchanged province emit identical
       output
