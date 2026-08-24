@@ -20,10 +20,14 @@ import {
   snapshotFile,
 } from "./snapshot";
 import {
+  NIGHT_WATCH,
   appendDecision,
+  appendLaunchFailure,
   historyFile,
   lastDecisionPerFingerprint,
+  lastRecordPerFingerprint,
   readDecisions,
+  readHistory,
 } from "./history";
 import { readSettings, settingsFile } from "./settings";
 import { computeProposals, decide } from "./proposals";
@@ -277,6 +281,53 @@ test("1.3 history: the last decision per fingerprint wins", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Night-watch history records — attribution and launch failures.
+// ---------------------------------------------------------------------------
+
+test("night-watch history: a decision may be attributed with `by`, stored verbatim", () => {
+  const target = makeProvince();
+  const record = appendDecision(target, "f1", "accepted", { by: NIGHT_WATCH });
+  expect(record.by).toBe(NIGHT_WATCH);
+  const stored = readDecisions(target);
+  expect(stored).toHaveLength(1);
+  expect(stored[0]).toEqual({ fingerprint: "f1", decision: "accepted", decidedAt: record.decidedAt, by: "night-watch" });
+  // A session decision carries no `by` at all.
+  appendDecision(target, "f2", "declined");
+  expect(readDecisions(target)[1]).toEqual({
+    fingerprint: "f2",
+    decision: "declined",
+    decidedAt: readDecisions(target)[1]!.decidedAt,
+  });
+});
+
+test("night-watch history: launch failures append after the acceptance, attributed to the night watch", () => {
+  const target = makeProvince();
+  appendDecision(target, "f1", "accepted", { by: NIGHT_WATCH });
+  const outcome = appendLaunchFailure(target, "f1", "launcher exited with status 3");
+  expect(outcome).toMatchObject({ fingerprint: "f1", outcome: "launch-failed", by: "night-watch", reason: "launcher exited with status 3" });
+
+  const history = readHistory(target);
+  expect(history).toHaveLength(2);
+  expect(history[0]).toHaveProperty("decision", "accepted");
+  expect(history[1]).toHaveProperty("outcome", "launch-failed");
+  // The latest word on the fingerprint is the failure, not the acceptance.
+  const last = lastRecordPerFingerprint(history).get("f1");
+  expect(last).toHaveProperty("outcome", "launch-failed");
+  // Decision-only readers see only the decision rows.
+  expect(readDecisions(target)).toHaveLength(1);
+});
+
+test("night-watch history: a corrupt launch-outcome line fails loudly", () => {
+  const target = makeProvince();
+  mkdirSync(join(target, ".portolan", "harbor"), { recursive: true });
+  writeFileSync(
+    historyFile(target),
+    `${JSON.stringify({ fingerprint: "f1", outcome: "launch-failed", recordedAt: "x", by: "night-watch" })}\n`,
+  );
+  expect(() => readHistory(target)).toThrow(/corrupt decision history/);
+});
+
+// ---------------------------------------------------------------------------
 // Task 2.1 — computeProposals: the five scenario tests.
 // ---------------------------------------------------------------------------
 
@@ -455,6 +506,55 @@ test("3.1 settings: a malformed file fails loudly", () => {
   expect(() => readSettings(target)).toThrow(/cannot parse/);
   writeFileSync(settingsFile(target), "[1, 2]\n");
   expect(() => readSettings(target)).toThrow(/not a JSON object/);
+});
+
+// ---------------------------------------------------------------------------
+// Night-watch task 1.1 — the auto-repair bound setting: absent = 0, parsed
+// when present, malformed values fail loudly (never a silent bound).
+// ---------------------------------------------------------------------------
+
+test("night-watch 1.1 settings: auto_repair_max_vessels is absent by default", () => {
+  const target = makeProvince();
+  const { harbor, warnings } = readSettings(target);
+  expect(harbor.autoRepairMaxVessels).toBeUndefined();
+  expect(warnings).toEqual([]);
+});
+
+test("night-watch 1.1 settings: auto_repair_max_vessels is read when configured, zero included", () => {
+  const target = makeProvince();
+  mkdirSync(join(target, ".portolan"), { recursive: true });
+  writeFileSync(
+    settingsFile(target),
+    `${JSON.stringify({ harbor: { auto_repair_max_vessels: 3 } }, null, 2)}\n`,
+  );
+  expect(readSettings(target)).toEqual({ harbor: { autoRepairMaxVessels: 3 }, warnings: [] });
+
+  writeFileSync(
+    settingsFile(target),
+    `${JSON.stringify({ harbor: { auto_repair_max_vessels: 0 } }, null, 2)}\n`,
+  );
+  expect(readSettings(target)).toEqual({ harbor: { autoRepairMaxVessels: 0 }, warnings: [] });
+
+  // It lives beside the schedule; both are read, neither warns.
+  writeFileSync(
+    settingsFile(target),
+    `${JSON.stringify({ harbor: { schedule: "nightly 02:00", auto_repair_max_vessels: 5 } }, null, 2)}\n`,
+  );
+  const { harbor, warnings } = readSettings(target);
+  expect(harbor).toEqual({ schedule: "nightly 02:00", autoRepairMaxVessels: 5 });
+  expect(warnings).toEqual([]);
+});
+
+test("night-watch 1.1 settings: a malformed auto-repair bound fails loudly", () => {
+  const target = makeProvince();
+  mkdirSync(join(target, ".portolan"), { recursive: true });
+  for (const malformed of ["three", -1, 2.5, true, null]) {
+    writeFileSync(
+      settingsFile(target),
+      `${JSON.stringify({ harbor: { auto_repair_max_vessels: malformed } }, null, 2)}\n`,
+    );
+    expect(() => readSettings(target)).toThrow(/auto_repair_max_vessels must be a non-negative integer/);
+  }
 });
 
 // ---------------------------------------------------------------------------

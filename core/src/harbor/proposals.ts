@@ -30,8 +30,8 @@ import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./finger
 import {
   DECISIONS,
   appendDecision,
-  lastDecisionPerFingerprint,
-  readDecisions,
+  lastRecordPerFingerprint,
+  readHistory,
   type DecisionRecord,
   type GovernorDecision,
 } from "./history";
@@ -207,9 +207,17 @@ export function computeProposals(
   );
 
   if (options.includeDeclined === true) return { proposals };
+  // Refusal filtering keys on `declined` only (the standing rule): an
+  // acceptance — Governor's or night-watch's — never filters, and neither
+  // does a night-watch `launch-failed` outcome, so a failed launch leaves
+  // the proposal queued for retry or the Governor's decision. The LAST
+  // record of any kind is the latest word on the fingerprint.
   const declined = new Set(
-    [...lastDecisionPerFingerprint(readDecisions(targetRoot)).values()]
-      .filter((record) => record.decision === "declined")
+    [...lastRecordPerFingerprint(readHistory(targetRoot)).values()]
+      .filter(
+        (record): record is DecisionRecord =>
+          "decision" in record && record.decision === "declined",
+      )
       .map((record) => record.fingerprint),
   );
   return { proposals: proposals.filter((p) => !declined.has(p.fingerprint)) };
