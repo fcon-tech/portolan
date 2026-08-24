@@ -40,6 +40,9 @@ writes (shape verified against opencode's own `opencode mcp add`):
 After installing, `opencode mcp list` shows `portolan connected`, and every
 session can call all eleven served tools.
 
+The opencode adapter also ships the night watch's expedition launcher
+(`adapters/opencode/expedition-launcher`) — see "The night watch" below.
+
 ## pi / omp (thin launch shims)
 
 pi and omp take their MCP client wiring from extension packages; these
@@ -94,3 +97,119 @@ about the queue's contents. Settings warnings print to stderr so stdout
 stays postable. The Governor's reply — accepted or declined — is recorded
 in session by the Cartographer through the `expeditions.decide` tool; the
 CLI only proposes.
+
+## The night watch (auto-repair on a scheduler)
+
+The night watch turns the standing queue into action overnight, under an
+explicit, bounded, off-by-default policy — still no daemon: it runs only
+when an external scheduler (cron, CI) or a human invokes it. It computes
+the queue, auto-launches only `repair` proposals whose affected vessels
+are within the bound, records every auto-accept in the harbor history as
+`by: night-watch`, and prints one chat-formatted watch report (what ran
+with outcomes, what stayed pending with evidence, any launcher failures).
+
+### The bound (the whole policy)
+
+```json
+{ "harbor": { "schedule": "nightly 02:00", "auto_repair_max_vessels": 3 } }
+```
+
+`harbor.auto_repair_max_vessels` is a non-negative integer in
+`<target>/.portolan/settings.json`. Absent or zero means report-only:
+nothing is ever auto-launched. `new-land` and `gap` proposals are never
+auto-executed regardless of the bound — the night watch repairs known
+coast, it does not explore. A malformed value fails loudly; it is never
+silently treated as unbounded.
+
+`harbor.schedule` remains the descriptor of the intended cadence for
+whoever wires the scheduler (Portolan interprets nothing from it).
+
+### The launcher (external and swappable)
+
+The watch never names a harness: it spawns whatever command `--launcher`
+points at, sends the brief — `{ "target": <province>, "proposal": {...} }`
+— as JSON on stdin, and caps the run with `--launcher-timeout` (default
+`30m`; `45s`, `30m`, `1h` style). Exit 0 means the expedition completed;
+non-zero or timeout leaves the proposal queued, appends a `launch-failed`
+record to the harbor history attributed to the night watch, and names the
+failure in the report. Without `--launcher` the watch is report-only even
+with a bound set.
+
+The opencode adapter ships one launcher:
+
+```
+adapters/opencode/expedition-launcher
+```
+
+It reads the brief, renders the repair prompt for the Cartographer
+(proposal evidence, scope, skill path, the `.portolan/` perimeter), and
+runs `opencode run --pure -m "$PORTOLAN_MODEL"` (default
+`zai-coding-plan/glm-5.3`) with the province as cwd, propagating
+opencode's exit status. Any other harness gets the same treatment by
+writing an equivalent thin script — the contract is just JSON on stdin
+and an exit status.
+
+### Cron wiring
+
+A nightly run that launches repairs through the opencode launcher and
+mails the report (cron posts stdout automatically when there is output):
+
+```
+15 2 * * *  cd /path/to/portolan && bun core/src/harbor/cli.ts watch \
+            --target /path/to/province \
+            --launcher adapters/opencode/expedition-launcher \
+            --launcher-timeout 45m
+```
+
+Report-only (watch without acting) is the same line minus `--launcher`;
+the Governor reads the pending list in the morning and decides in session
+through `expeditions.decide`.
+
+### CI wiring
+
+In a scheduled pipeline the report is the artifact; a launch failure is
+receipted (history + report), not fatal — the command still exits 0 so
+the report is always produced:
+
+```
+bun core/src/harbor/cli.ts watch \
+  --target "$PROVINCE" \
+  --launcher adapters/opencode/expedition-launcher \
+  --launcher-timeout 45m \
+  --format chat | post-to-chat -
+```
+
+`--format json` gives the machine report (`ran` with outcomes, `pending`,
+`bound`, `reportOnly`) for gate tooling; `--format chat` (the watch's
+default) is the postable one. Two runs over an unchanged province emit
+identical output, so a pipeline may diff runs safely.
+
+### The flags, verbatim
+
+Documented here exactly as `bun core/src/harbor/cli.ts --help` prints them:
+
+```
+Portolan harbor CLI — the scheduler's entry (no daemon).
+
+usage:
+  bun core/src/harbor/cli.ts propose [--target <province root>] [--format chat|json]
+  bun core/src/harbor/cli.ts watch [--target <province root>] [--format chat|json] \
+                                    [--launcher "<command>"] [--launcher-timeout <duration>]
+
+commands:
+  propose  compute the deterministic expedition queue and print it
+  watch    apply the night policy (harbor.auto_repair_max_vessels), launch
+           what qualifies through the external launcher, record the history,
+           and print the chat-formatted watch report
+
+flags:
+  --target <province root>    the province to operate on (default: working directory)
+  --format <chat|json>        output format; propose defaults to json, watch to chat
+  --launcher "<command>"      watch only: the external launcher to spawn; the
+                              proposal brief arrives as JSON on stdin; absent means
+                              report-only (nothing is launched)
+  --launcher-timeout <duration>
+                              watch only: how long one launch may run
+                              (default: 30m); e.g. 45s, 30m, 1h
+  --help                     print this help
+```
