@@ -152,11 +152,16 @@ function sampleQ3Imports(
   const vessels = chartEntries.filter(
     (e): e is IndexedVessel => e.kind === "vessel",
   );
+  // Vessel ids are the canonical identifiers (BOM labels); names are display
+  // text ("Apache Hadoop"), so lookup falls back from id to name.
+  const byId = new Map(vessels.map((v) => [v.id.toLowerCase(), v]));
   const byName = new Map(vessels.map((v) => [v.name.toLowerCase(), v]));
-  const hadoop = byName.get("hadoop");
+  const vesselFor = (label: string): IndexedVessel | undefined =>
+    byId.get(label.toLowerCase()) ?? byName.get(label.toLowerCase());
+  const hadoop = vesselFor("hadoop");
   const lines: string[] = [];
   if (hadoop === undefined) {
-    lines.push("sound.edge sampling skipped: no charted vessel named hadoop");
+    lines.push("sound.edge sampling skipped: no charted vessel for hadoop (by id or name)");
     return lines;
   }
   const claimed = Object.entries(q3.claims)
@@ -165,9 +170,9 @@ function sampleQ3Imports(
     .sort()
     .slice(0, limit);
   for (const label of claimed) {
-    const source = byName.get(label.toLowerCase());
+    const source = vesselFor(label);
     if (source === undefined) {
-      lines.push(`sound.edge sample ${label} → hadoop: no charted vessel named ${label}`);
+      lines.push(`sound.edge sample ${label} → hadoop: no charted vessel for ${label} (by id or name)`);
       continue;
     }
     try {
