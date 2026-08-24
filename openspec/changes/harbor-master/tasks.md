@@ -47,11 +47,11 @@
 
 ## 5. Skill + docs
 
-- [ ] 5.1 Update `skill/SKILL.md`: session-start queue surfacing in chat
+- [x] 5.1 Update `skill/SKILL.md`: session-start queue surfacing in chat
       (top proposals with evidence summary and scope, one-phrase
       acceptance, decision recorded, silence on empty queue) and extend
       the tool desk with the two new tools — verify via the skill checks
       harness (banned synonyms still absent, all tool names present)
-- [ ] 5.2 Document the settings file and external scheduler wiring
+- [x] 5.2 Document the settings file and external scheduler wiring
       (cron/CI calling the headless CLI) in the adapters README and
       verify the docs match the CLI flags actually implemented

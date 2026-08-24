@@ -16,6 +16,29 @@ pending correction, Notices to Mariners, Sailing Directions. Trust labels:
 `measured`, `charted`, `reported`, `doubtful`, `unsurveyed`. Use these words
 for these things and no others.
 
+## 0. The harbor watch: proposals at session start
+
+When a session enters a province with a standing Chart —
+`<target>/.portolan/chart/index.jsonl` exists — the harbor watch runs
+before other work:
+
+1. Call `expeditions.propose` (no input). The queue is computed, never imagined:
+   vessels marked `pending correction`, charted vessels with no recorded
+   behavior or no charted light, and landscape present since the last
+   survey snapshot. Propose nothing the queue does not contain.
+2. Empty queue: say nothing about proposals and proceed with the
+   Governor's ask.
+3. Otherwise, present the top proposals in one chat message before other
+   work — each with its kind (repair, gap, new-land), its evidence
+   summary, and its scope. Ask for a one-phrase decision.
+4. Record the decision with `expeditions.decide`: the proposal's
+   fingerprint plus accepted or declined. A refusal holds while the evidence is unchanged; do not
+   re-ask the same proposal.
+5. An accepted proposal is the next Expedition's starting scope: begin
+   from its evidence — the drifted vessels, the gapped vessel, or the new
+   land — and survey per section 4. A province with no standing Chart has
+   no queue; that is a first survey, so start at section 1.
+
 ## 1. Lift-off
 
 When the Governor asks, in one phrase, to survey a target with Portolan:
@@ -56,8 +79,9 @@ Then hold these rules for the whole session:
 ## 3. The perimeter
 
 - Write only under `<target>/.portolan/`: the Chart under
-  `<target>/.portolan/chart/`, the ship's log, and the archived Sailing
-  Directions at `<target>/.portolan/sailing-directions.md`. Nothing else.
+  `<target>/.portolan/chart/`, the ship's log, the Harbor Master's
+  snapshot and decision history, and the archived Sailing Directions at
+  `<target>/.portolan/sailing-directions.md`. Nothing else.
 - Never mutate the target's source: no edits, no formatting, no generated
   code, no dependency upgrades. Portolan is a reader, not a surgeon.
 - Never request, perform, or propose a source change. If the target needs
@@ -205,7 +229,7 @@ labeled `unsurveyed` — never presented as an established fact.
 
 ## 10. Tool desk
 
-One MCP server over stdio, bound to the target root at launch. Nine tools:
+One MCP server over stdio, bound to the target root at launch. Eleven tools:
 
 | Tool | Use |
 | --- | --- |
@@ -218,6 +242,8 @@ One MCP server over stdio, bound to the target root at launch. Nine tools:
 | `sound.anchor` | verify an anchor resolves: `confirmed` / `refuted` |
 | `log.append` | receipt an executed command; returns the receipt id |
 | `log.read` | read receipts by id or filter |
+| `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint |
+| `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
 
 Call shapes (fields abbreviated to the ones that matter):
 
@@ -229,4 +255,6 @@ Call shapes (fields abbreviated to the ones that matter):
 { "tool": "sound.anchor", "input": { "anchor": { "type": "file", "path": "packages/lib/src/parse.ts", "line": 1 } } }
 { "tool": "log.append", "input": { "command": "bun test", "scope": "target", "outcome": "pass" } }
 { "tool": "chart.write", "input": { "entries": [ { "kind": "vessel", "id": "api", "name": "api", "paths": ["apps/api"], "anchors": [ { "type": "manifest", "path": "apps/api/package.json", "key": "name" } ], "trust": "charted" } ] } }
+{ "tool": "expeditions.propose", "input": {} }
+{ "tool": "expeditions.decide", "input": { "fingerprint": "64-hex from expeditions.propose", "decision": "accepted" } }
 ```

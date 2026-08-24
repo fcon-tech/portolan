@@ -1,7 +1,8 @@
 /**
  * Verifications for the expedition-skill change (archived at
- * openspec/changes/archive/2026-08-23-expedition-skill/tasks.md). Each check
- * is labeled with the task it proves.
+ * openspec/changes/archive/2026-08-23-expedition-skill/tasks.md), plus the
+ * harbor-master change's skill task (openspec/changes/harbor-master). Each
+ * check is labeled with the task it proves.
  *
  * Run from the repo root:   bun run skill/verify/checks.ts
  * Regenerate the checked-in example brief:   bun run skill/verify/checks.ts --write-example
@@ -122,9 +123,40 @@ check("1.1", "locked glossary and trust vocabulary present in SKILL.md", () => {
   for (const tool of [
     "chart.read", "chart.write", "sweep", "symbols", "manifests",
     "sound.edge", "sound.anchor", "log.append", "log.read",
+    "expeditions.propose", "expeditions.decide",
   ]) {
     assert(text.includes(tool), `SKILL.md never teaches the tool ${tool}`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// harbor-master task 5.1 — the harbor watch: queue surfacing at session
+// start (openspec/changes/harbor-master/specs/harbor: "The queue surfaces
+// in chat at session start").
+// ---------------------------------------------------------------------------
+
+check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const watchAt = text.indexOf("## 0. The harbor watch");
+  const liftOffAt = text.indexOf("## 1. Lift-off");
+  assert(watchAt >= 0, "the harbor-watch section is missing");
+  assert(liftOffAt > watchAt, "the harbor watch must be taught before lift-off");
+  for (const phrase of [
+    "expeditions.propose",
+    "expeditions.decide",
+    "computed, never imagined",
+    "one chat message",
+    "one-phrase decision",
+    "say nothing about proposals",
+    "refusal holds while the evidence is unchanged",
+  ]) {
+    assert(text.includes(phrase), `the harbor teaching omits "${phrase}"`);
+  }
+  assert(/Eleven tools:/.test(text), "the tool desk does not count eleven tools");
+  // The desk's call shapes teach the expedition tools' exact argument names.
+  assert(text.includes('"tool": "expeditions.propose", "input": {}'), "no call shape for expeditions.propose");
+  assert(text.includes('"fingerprint"'), "no call shape citing a fingerprint");
+  assert(text.includes('"decision"'), "no call shape citing a decision");
 });
 
 check("1.1", "no command text addressed to the Governor", () => {
