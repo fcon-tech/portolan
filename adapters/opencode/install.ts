@@ -239,6 +239,35 @@ if (existsSync(configPath)) {
 mkdirSync(dirname(configPath), { recursive: true });
 writeFileSync(configPath, finalText);
 
+// The province's AGENTS.md carries the harbor protocol so every harness
+// that reads agent instructions (opencode first) knows to propose
+// expeditions at session start — no prompt injection needed.
+const agentsPath = join(province, "AGENTS.md");
+const BLOCK_BEGIN = "<!-- portolan:harbor:begin -->";
+const BLOCK_END = "<!-- portolan:harbor:end -->";
+const block =
+  `${BLOCK_BEGIN}\n` +
+  `## Portolan province\n\n` +
+  `This target is a charted Portolan province (Chart at \`.portolan/chart/\`, ship's log at \`.portolan/log.jsonl\`).\n\n` +
+  `At session start, before other work: call the \`expeditions.propose\` tool from the \`portolan\` MCP server; ` +
+  `if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) ` +
+  `and ask for a one-phrase decision; record it with \`expeditions.decide\`. ` +
+  `Answer landscape questions from the Chart, citing anchors and trust labels. ` +
+  `The full Cartographer's method: ${join(REPO_ROOT, "skill", "SKILL.md")}. ` +
+  `Never modify anything outside \`.portolan/\`.\n` +
+  BLOCK_END;
+let agentsText = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";
+const beginIdx = agentsText.indexOf(BLOCK_BEGIN);
+const endIdx = agentsText.indexOf(BLOCK_END);
+if (beginIdx !== -1 && endIdx !== -1 && endIdx > beginIdx) {
+  agentsText = agentsText.slice(0, beginIdx) + block + agentsText.slice(endIdx + BLOCK_END.length);
+} else if (beginIdx === -1) {
+  agentsText = agentsText.length > 0 ? `${agentsText.replace(/\s*$/, "\n")}\n${block}\n` : `${block}\n`;
+}
+mkdirSync(province, { recursive: true });
+writeFileSync(agentsPath, agentsText);
+
 console.log(`portolan MCP server registered in ${configPath}`);
 console.log(`  province: ${province}`);
 console.log(`  launch:   ${launchCommand.join(" ")}`);
+console.log(`  harbor protocol: ${agentsPath}`);

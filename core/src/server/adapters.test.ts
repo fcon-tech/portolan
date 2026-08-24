@@ -13,7 +13,7 @@
  */
 import { test, expect } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { childEnv, makeProvince, structuredOf, withServer } from "./test-harness";
@@ -162,6 +162,8 @@ test.skipIf(opencodeBinary === undefined)(
 
 test("the opencode installer preserves comments and sibling keys in a JSONC config", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "portolan-opencode-jsonc-"));
+  const province = join(sandbox, "province");
+  mkdirSync(province, { recursive: true });
   const configPath = join(sandbox, "opencode.jsonc");
   const original = [
     "{",
@@ -180,7 +182,7 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
 
   const run = spawnSync(
     process.execPath,
-    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    [OPENCODE_INSTALL, "--target", province, "--config", configPath],
     { encoding: "utf8", env: childEnv() },
   );
   expect(run.status).toBe(0);
@@ -209,7 +211,7 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
   // Idempotent: a second install does not duplicate the block.
   const rerun = spawnSync(
     process.execPath,
-    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    [OPENCODE_INSTALL, "--target", province, "--config", configPath],
     { encoding: "utf8", env: childEnv() },
   );
   expect(rerun.status).toBe(0);
@@ -221,6 +223,8 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
 
 test("the opencode installer replaces an existing portolan block, keeping mcp siblings", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "portolan-opencode-replace-"));
+  const province = join(sandbox, "province");
+  mkdirSync(province, { recursive: true });
   const configPath = join(sandbox, "opencode.jsonc");
   writeFileSync(
     configPath,
@@ -238,7 +242,7 @@ test("the opencode installer replaces an existing portolan block, keeping mcp si
 
   const run = spawnSync(
     process.execPath,
-    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    [OPENCODE_INSTALL, "--target", province, "--config", configPath],
     { encoding: "utf8", env: childEnv() },
   );
   expect(run.status).toBe(0);
@@ -253,5 +257,32 @@ test("the opencode installer replaces an existing portolan block, keeping mcp si
   expect(parsed.mcp.portolan?.command?.[0]).not.toBe("old");
   expect(parsed.mcp.portolan?.enabled).toBe(true);
 
+  rmSync(sandbox, { recursive: true, force: true });
+});
+
+test("the installer writes an idempotent harbor block into the province AGENTS.md", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "portolan-agents-"));
+  writeFileSync(join(sandbox, "AGENTS.md"), "# My province notes\n\nExisting guidance.\n");
+  const run = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", sandbox, "--config", join(sandbox, "oc.json")],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(run.status).toBe(0);
+  const agents = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
+  expect(agents).toContain("# My province notes");
+  expect(agents).toContain("<!-- portolan:harbor:begin -->");
+  expect(agents).toContain("expeditions.propose");
+  expect(agents).toContain("Never modify anything outside `.portolan/`");
+  // Idempotent: a second install replaces the block in place, no duplicate.
+  const rerun = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", sandbox, "--config", join(sandbox, "oc.json")],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(rerun.status).toBe(0);
+  const after = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
+  expect((after.match(/portolan:harbor:begin/g) ?? []).length).toBe(1);
+  expect(after).toContain("# My province notes");
   rmSync(sandbox, { recursive: true, force: true });
 });

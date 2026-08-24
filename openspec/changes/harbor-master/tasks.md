@@ -55,3 +55,13 @@
 - [x] 5.2 Document the settings file and external scheduler wiring
       (cron/CI calling the headless CLI) in the adapters README and
       verify the docs match the CLI flags actually implemented
+
+## 6. Delivery: province AGENTS.md block
+
+- [x] 6.1 Extend the opencode adapter installer to write an idempotent
+      managed Portolan block into the province's AGENTS.md (harbor
+      protocol: propose at session start, present queue, one-phrase
+      decision, chart-first answers, skill path, perimeter) and verify
+      idempotent merge tests plus preservation of existing content
+- [x] 6.2 Live-verify without prompt injection: a plain opencode session
+      in the province presents the harbor queue before other work
