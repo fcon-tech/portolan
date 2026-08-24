@@ -18,21 +18,23 @@ import {
   structuredOf,
   withServer,
 } from "./test-harness";
-import { V1_TOOL_NAMES } from "./registry";
-import { readChart } from "../chart-store";
+import { TOOL_NAMES } from "./registry";
+import { readChart, writeChart } from "../chart-store";
 import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { soundAnchor, soundEdge } from "../tools/sound";
 import { findBinary } from "../tools/shared";
+import { lastDecisionPerFingerprint, readDecisions } from "../harbor/history";
 
 const rgPresent = findBinary("rg") !== undefined;
 
-test("tools/list through the server returns all nine v1 tools under Portolan names", async () => {
+test("tools/list through the server returns all eleven served tools under Portolan names", async () => {
   const target = makeProvince();
   await withServer({ targetRoot: target }, async (client) => {
     const listed = await client.listTools();
-    expect(listed.tools.map((tool) => tool.name)).toEqual(V1_TOOL_NAMES);
+    expect(listed.tools.map((tool) => tool.name)).toEqual(TOOL_NAMES);
+    expect(listed.tools.length).toBe(11);
     for (const tool of listed.tools) {
       expect((tool.description ?? "").length).toBeGreaterThan(0);
       expect((tool.inputSchema as { type?: string }).type).toBe("object");
@@ -132,6 +134,82 @@ test("log.append through the server leaves a receipt; log.read resolves it by id
     // A dead id is an honest empty read, not an error.
     const dead = await client.callTool({ name: "log.read", arguments: { id: "r404" } });
     expect((structuredOf(dead) as { receipts: unknown[] }).receipts).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// harbor-master tasks 4.1 / 4.2: the expedition tools through the live
+// server — propose with no arguments returns the deterministic queue, decide
+// records the Governor's decision, and rejections surface as tool errors
+// with the server still serving.
+// ---------------------------------------------------------------------------
+
+test("expeditions.propose and expeditions.decide through the server: queue, decision, refusal, honest rejections", async () => {
+  const target = makeProvince();
+  // A one-vessel chart with no behavior and no light: exactly one gap.
+  writeChart(target, [
+    {
+      kind: "vessel",
+      id: "v-cart",
+      name: "cart",
+      paths: ["src"],
+      anchors: [{ type: "file", path: "src/cart.ts", line: 4 }],
+      trust: "measured",
+    },
+  ]);
+
+  await withServer({ targetRoot: target }, async (client) => {
+    // No arguments at all: the queue is computed from the chart's state.
+    const proposed = await client.callTool({ name: "expeditions.propose", arguments: {} });
+    expect(proposed.isError).toBeUndefined();
+    const queue = structuredOf(proposed) as {
+      proposals: Array<{ kind: string; fingerprint: string; evidence: string[]; anchors: unknown[] }>;
+    };
+    expect(queue.proposals.length).toBe(1);
+    expect(queue.proposals[0].kind).toBe("gap");
+    expect(queue.proposals[0].evidence).toEqual(["vessel/v-cart#behavior", "vessel/v-cart#lights"]);
+    expect(queue.proposals[0].anchors.length).toBeGreaterThan(0);
+    const { fingerprint } = queue.proposals[0];
+
+    // The Governor declines; the decision is recorded in the append-only history.
+    const declined = await client.callTool({
+      name: "expeditions.decide",
+      arguments: { fingerprint, decision: "declined" },
+    });
+    expect(declined.isError).toBeUndefined();
+    const record = structuredOf(declined) as { fingerprint: string; decision: string; decidedAt: string };
+    expect(record.fingerprint).toBe(fingerprint);
+    expect(record.decision).toBe("declined");
+    const last = lastDecisionPerFingerprint(readDecisions(target)).get(fingerprint);
+    expect(last?.decision).toBe("declined");
+
+    // The refusal holds: the queue no longer contains the proposal.
+    const after = await client.callTool({ name: "expeditions.propose", arguments: {} });
+    expect((structuredOf(after) as { proposals: unknown[] }).proposals).toEqual([]);
+
+    // An unknown fingerprint is a tool error naming it — never a crash.
+    const ghost = await client.callTool({
+      name: "expeditions.decide",
+      arguments: { fingerprint: "ab".repeat(32), decision: "accepted" },
+    });
+    expect(ghost.isError).toBe(true);
+    expect(errorTextOf(ghost)).toContain("unknown proposal fingerprint");
+
+    // So is a decision outside the vocabulary.
+    const badDecision = await client.callTool({
+      name: "expeditions.decide",
+      arguments: { fingerprint, decision: "maybe" },
+    });
+    expect(badDecision.isError).toBe(true);
+    expect(errorTextOf(badDecision)).toContain('"decision" must be "accepted" or "declined"');
+
+    // The rejected calls did not stop the server: the next call answers.
+    const alive = await client.callTool({
+      name: "log.append",
+      arguments: { command: "expeditions decide", outcome: "ok: server alive" },
+    });
+    expect(alive.isError).toBeUndefined();
+    expect((structuredOf(alive) as { id: string }).id).toBe("r1");
   });
 });
 

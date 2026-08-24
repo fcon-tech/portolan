@@ -4,7 +4,7 @@
  *
  * - The opencode adapter is launch configuration only: the test installs it
  *   into a sandbox config, then executes the exact launch line that config
- *   declares — and the server that comes up lists all nine tools.
+ *   declares — and the server that comes up lists the full served toolset.
  * - The pi and omp shims exec the same server: tool lists and one result
  *   per launch are compared, deep-equal, against a direct launch.
  * - When the real opencode binary is present, the sandbox install is
@@ -17,7 +17,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { childEnv, makeProvince, structuredOf, withServer } from "./test-harness";
-import { V1_TOOL_NAMES } from "./registry";
+import { TOOL_NAMES } from "./registry";
 import { readManifest } from "../tools/manifests";
 import { soundAnchor } from "../tools/sound";
 import { findBinary } from "../tools/shared";
@@ -86,7 +86,7 @@ async function observe(
   return observation!;
 }
 
-test("the opencode adapter's installed launch line lists all nine tools", async () => {
+test("the opencode adapter's installed launch line lists the full served toolset", async () => {
   const province = makeProvince();
   const { config } = installOpencode(province);
   const launch = openCodeLaunch(config);
@@ -96,7 +96,7 @@ test("the opencode adapter's installed launch line lists all nine tools", async 
     manifests: readManifest(province, "package.json"),
     anchorSounding: soundAnchor(province, { anchor: { type: "file", path: "src/cart.ts", line: 4 } }),
   });
-  expect(observation.tools).toEqual(V1_TOOL_NAMES);
+  expect(observation.tools).toEqual(TOOL_NAMES);
 });
 
 test("pi and omp shims reach the same server a direct launch gives you", async () => {
@@ -118,7 +118,7 @@ test("pi and omp shims reach the same server a direct launch gives you", async (
   // An adapter adds no behavior: tool list and results are indistinguishable.
   expect(observations.pi).toEqual(observations.direct);
   expect(observations.omp).toEqual(observations.direct);
-  expect(observations.pi.tools).toEqual(V1_TOOL_NAMES);
+  expect(observations.pi.tools).toEqual(TOOL_NAMES);
 });
 
 const opencodeBinary = findBinary("opencode");

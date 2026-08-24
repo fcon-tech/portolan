@@ -17,6 +17,7 @@ import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
 import { soundAnchor, soundEdge } from "../tools/sound";
+import { computeProposals, decide } from "../harbor/proposals";
 
 /** Everything a handler knows about its world: one province, bound at launch. */
 export interface ToolContext {
@@ -108,6 +109,14 @@ function reqArray(tool: string, args: Record<string, unknown>, key: string): unk
   const value = args[key];
   if (!Array.isArray(value)) {
     throw new ToolInputError(tool, `argument "${key}" must be an array`);
+  }
+  return value;
+}
+
+function reqDecision(tool: string, args: Record<string, unknown>, key: string): "accepted" | "declined" {
+  const value = args[key];
+  if (value !== "accepted" && value !== "declined") {
+    throw new ToolInputError(tool, `argument "${key}" must be "accepted" or "declined"`);
   }
   return value;
 }
@@ -219,10 +228,10 @@ const receiptFilterSchema = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// The table: the complete v1 toolset under its Portolan names.
+// The table: the complete served toolset under its Portolan names.
 // ---------------------------------------------------------------------------
 
-/** The complete v1 toolset, in the order the harness capability lists them. */
+/** The served toolset, in the order the harness capability lists it. */
 export const TOOL_TABLE: ToolSpec[] = [
   {
     name: "chart.read",
@@ -416,10 +425,52 @@ export const TOOL_TABLE: ToolSpec[] = [
       };
     },
   },
+  {
+    name: "expeditions.propose",
+    description:
+      "The Harbor Master: compute the expedition-proposal queue from deterministic chart state — vessels marked " +
+      "pending correction (repair), charted vessels with no recorded behavior or no charted light (gap), and " +
+      "landscape present since the last survey snapshot (new-land). Every proposal carries its kind, evidence " +
+      "anchors, a scope estimate, and a stable fingerprint; fingerprints declined by the Governor are not " +
+      "re-proposed while their evidence is unchanged. No input; refreshes staleness first; a still province " +
+      "yields an empty queue. Proposals are computed, never imagined.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    handler: (_args, ctx) => computeProposals(ctx.targetRoot),
+  },
+  {
+    name: "expeditions.decide",
+    description:
+      "Record the Governor's decision on a proposal from expeditions.propose — accepted or declined. Appends to " +
+      "the append-only decision history under <target>/.portolan/harbor/; the last decision per fingerprint " +
+      "wins, so a refusal can be overturned while the evidence is unchanged and reopens when it changes. An " +
+      "unknown fingerprint is rejected.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        fingerprint: {
+          type: "string",
+          description: "The proposal's fingerprint, exactly as expeditions.propose returned it.",
+        },
+        decision: {
+          type: "string",
+          enum: ["accepted", "declined"],
+          description: "The Governor's decision.",
+        },
+      },
+      required: ["fingerprint", "decision"],
+      additionalProperties: false,
+    },
+    handler: (args, ctx) =>
+      decide(
+        ctx.targetRoot,
+        reqString("expeditions.decide", args, "fingerprint"),
+        reqDecision("expeditions.decide", args, "decision"),
+      ),
+  },
 ];
 
-/** The nine v1 Portolan tool names, in table order. */
-export const V1_TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
+/** The served Portolan tool names, in table order (the harness capability's eleven). */
+export const TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
 
 /**
  * Every tool accepts an optional `targetRoot` — an echo of the province root

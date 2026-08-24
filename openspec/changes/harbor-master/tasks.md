@@ -37,11 +37,11 @@
 
 ## 4. MCP surface
 
-- [ ] 4.1 Register `expeditions.propose` and `expeditions.decide` in the
+- [x] 4.1 Register `expeditions.propose` and `expeditions.decide` in the
       tool registry (input schemas; rejections as tool errors) and verify
       the served tool list is exactly the eleven names through the live
       stdio server
-- [ ] 4.2 Update every test asserting the nine-tool surface (count
+- [x] 4.2 Update every test asserting the nine-tool surface (count
       constants, adapter launch-line checks, crash-resistance sequence)
       and verify the full suite is green
 

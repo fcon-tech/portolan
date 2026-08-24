@@ -124,7 +124,7 @@ test.skipIf(!rgPresent || envWithoutCtags() === undefined)(
       expect((structuredOf(valid) as { id: string }).id).toBe("r1");
 
       const listed = await client.listTools();
-      expect(listed.tools.length).toBe(9);
+      expect(listed.tools.length).toBe(11);
     });
   },
 );

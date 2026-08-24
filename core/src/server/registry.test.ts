@@ -1,13 +1,14 @@
 /**
- * Unit checks on the tool registry table itself (tasks.md 2.1): the table
- * is the wiring point, so its shape is pinned — the nine v1 Portolan names,
- * a schema and a handler per entry — and argument readers stay strict.
+ * Unit checks on the tool registry table itself (mcp-delivery tasks 2.1 +
+ * harbor-master task 4.1): the table is the wiring point, so its shape is
+ * pinned — the eleven served Portolan names, a schema and a handler per
+ * entry — and argument readers stay strict.
  */
 import { test, expect } from "bun:test";
-import { TOOL_TABLE, V1_TOOL_NAMES, ToolInputError } from "./registry";
+import { TOOL_TABLE, TOOL_NAMES, ToolInputError } from "./registry";
 
-test("the registry table holds exactly the nine v1 tools under Portolan names", () => {
-  expect(V1_TOOL_NAMES).toEqual([
+test("the registry table holds exactly the eleven served tools under Portolan names", () => {
+  expect(TOOL_NAMES).toEqual([
     "chart.read",
     "chart.write",
     "sweep",
@@ -17,8 +18,10 @@ test("the registry table holds exactly the nine v1 tools under Portolan names", 
     "sound.anchor",
     "log.append",
     "log.read",
+    "expeditions.propose",
+    "expeditions.decide",
   ]);
-  expect(new Set(V1_TOOL_NAMES).size).toBe(9);
+  expect(new Set(TOOL_NAMES).size).toBe(11);
 });
 
 test("every registry entry is complete: description, object schema, handler", () => {
