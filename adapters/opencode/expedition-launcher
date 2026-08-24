@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+#
+# The opencode expedition launcher for the Portolan night watch
+# (openspec/changes/night-watch, design.md decision 4).
+#
+# A launcher adds no behavior beyond launching — the same rule as the MCP
+# shims. It reads the expedition brief ({ target, proposal } as JSON) on
+# stdin, renders the repair prompt for the Cartographer, and runs opencode
+# headlessly against the province. The watch owns policy, history, and the
+# report; this script owns only the harness call. Adapters must not import
+# tool logic (checked by core/src/server/adapter-boundary.ts).
+#
+#   echo '{"target":"/path/to/province","proposal":{...}}' \
+#     | adapters/opencode/expedition-launcher
+#
+# Environment:
+#   PORTOLAN_MODEL  the model opencode runs with (default:
+#                   zai-coding-plan/glm-5.3)
+#
+# Exit status: opencode's own — zero only when the expedition completed.
+set -euo pipefail
+
+# Bun lives at ~/.bun/bin by default; find it without copying commands.
+command -v bun >/dev/null 2>&1 || export PATH="$HOME/.bun/bin:$PATH"
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SKILL="$ROOT/skill/SKILL.md"
+MODEL="${PORTOLAN_MODEL:-zai-coding-plan/glm-5.3}"
+
+BRIEF="$(cat)"
+
+# The province the expedition runs against (from the brief, never guessed).
+TARGET="$(BRIEF="$BRIEF" bun -e 'process.stdout.write(String(JSON.parse(process.env.BRIEF).target))')"
+
+# Render the repair prompt from the brief — pure string work over the JSON
+# the watch sent; bun is the runtime all of Portolan already requires.
+# (No apostrophes below: the program rides in single quotes.)
+PROMPT="$(BRIEF="$BRIEF" SKILL="$SKILL" bun -e '
+  const brief = JSON.parse(process.env.BRIEF);
+  const p = brief.proposal;
+  const evidence = p.evidence.map((e) => "  - " + e).join("\n");
+  const scope = "vessels " + p.scope.vessels.join(", ") +
+    " \u00b7 " + p.scope.entries + " entries \u00b7 " + p.scope.soundings + " soundings";
+  console.log([
+    "Portolan night watch \u2014 repair expedition for the Cartographer.",
+    "",
+    "Province: " + brief.target,
+    "Proposal kind: " + p.kind,
+    "Evidence (deterministic, from the harbor queue):",
+    evidence,
+    "Scope: " + scope,
+    "Summary: " + p.summary,
+    "",
+    "Method: " + process.env.SKILL + " \u2014 the Cartographer method; follow it in order.",
+    "Perimeter: never modify anything outside .portolan/ in the province.",
+    "Scope: repair only what the proposal names \u2014 nothing else.",
+  ].join("\n"));
+')"
+
+cd "$TARGET"
+exec opencode run --pure -m "$MODEL" "$PROMPT"
