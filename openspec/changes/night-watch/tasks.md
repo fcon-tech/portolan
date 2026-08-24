@@ -35,7 +35,7 @@
 
 ## 4. Live proof
 
-- [ ] 4.1 Live night-watch run on a real drifted province with the real
+- [x] 4.1 Live night-watch run on a real drifted province with the real
       opencode launcher: bound set, one vessel drifted, watch launched the
       repair, chart healed (`pending correction` cleared), history
       attributes the night watch — record the watch report as evidence

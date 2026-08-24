@@ -44,8 +44,9 @@ harbor history, and name it in the report.
 
 #### Scenario: A failing launcher fails loudly and harmlessly
 - **WHEN** the launcher exits non-zero
-- **THEN** no decision is recorded as accepted, the failure is appended to
-  the history and named in the report, and the proposal remains queued
+- **THEN** the history records the attempt and its launch-failure (the
+  failure is the latest word — the proposal is effectively not accepted),
+  the failure is named in the report, and the proposal remains queued
 
 #### Scenario: The opencode adapter ships a working launcher
 - **WHEN** the adapter's launcher is invoked for a repair proposal

@@ -19,3 +19,11 @@ Key rules:
 - The old repo at `../portolan` is frozen reference: read for ideas, copy no
   code.
 - Commit after each coherent unit of work.
+
+<!-- portolan:harbor:begin -->
+## Portolan province
+
+This target is a charted Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`).
+
+At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. The full Cartographer's method: /home/governor/projects/faust/portolan-v3/skill/SKILL.md. Never modify anything outside `.portolan/`.
+<!-- portolan:harbor:end -->
