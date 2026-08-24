@@ -3,7 +3,7 @@
  * implementations and the registry table, this file proves the MCP layer:
  * every call goes through the real stdio server entry point, and the result
  * that comes back is the tool's own structured result, unchanged.
- * (openspec/changes/mcp-delivery, specs/harness/spec.md)
+ * specs/harness/spec.md
  */
 import { test, expect } from "bun:test";
 import { existsSync } from "node:fs";

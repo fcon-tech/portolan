@@ -1,6 +1,6 @@
 /**
  * Soundings tests — one section per tasks.md item, each test named for the
- * openspec/changes/soundings spec scenario it proves.
+ * living openspec/specs/tools scenario it proves.
  */
 import { test, expect, afterEach } from "bun:test";
 import { createHash } from "node:crypto";

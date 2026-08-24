@@ -12,7 +12,7 @@
  *    failures may terminate the server. A global catch-and-log is
  *    deliberately absent: rejections must stay loud.
  *
- * (openspec/changes/mcp-delivery, specs/harness/spec.md)
+ * specs/harness/spec.md
  */
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {

@@ -3,7 +3,7 @@
  * honest missing-binary error. Tools wrap external binaries (ripgrep for
  * sweep, ctags for symbols); when one is absent the tool names it and
  * refuses to improvise a substitute search
- * (openspec/changes/probe-tools, specs/tools/spec.md).
+ * specs/tools/spec.md.
  */
 import { accessSync, constants, statSync } from "node:fs";
 import { delimiter, join } from "node:path";

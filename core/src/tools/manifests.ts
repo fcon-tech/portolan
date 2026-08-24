@@ -5,7 +5,7 @@
  * performs. Every fact carries the manifest file path, its manifest key,
  * and the trust label `charted`. Unsupported kinds are reported, not
  * guessed; unparseable files fail loudly with zero partial facts.
- * (openspec/changes/probe-tools, specs/tools/spec.md)
+ * specs/tools/spec.md
  *
  * Reader note: design.md decision 3 sketched small third-party
  * XML/TOML/YAML parsers; this execution ships minimal in-tree readers

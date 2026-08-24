@@ -1,6 +1,6 @@
 /**
  * Soundings: deterministic verification of what the Chart asserts
- * (openspec/changes/soundings, specs/tools/spec.md).
+ * specs/tools/spec.md.
  *
  * A sounding never judges — it checks. `sound.anchor` verifies that an
  * anchor cited by a chart entry resolves: a file anchor's file exists, its

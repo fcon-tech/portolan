@@ -4,7 +4,7 @@
  * labeled `measured`. No match is an honest empty list; a malformed pattern
  * is an error naming the pattern with zero results; a missing ripgrep is an
  * error naming the binary — never a substitute search.
- * (openspec/changes/probe-tools, specs/tools/spec.md)
+ * specs/tools/spec.md
  */
 import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";

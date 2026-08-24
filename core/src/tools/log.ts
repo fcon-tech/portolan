@@ -4,7 +4,7 @@
  * are monotonic (`r1`, `r2`, ...) and citable as chart anchors. Existing
  * receipts are never altered or removed — the only write any probe tool
  * performs lands here, inside the `.portolan` perimeter.
- * (openspec/changes/probe-tools, specs/tools/spec.md)
+ * specs/tools/spec.md
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";

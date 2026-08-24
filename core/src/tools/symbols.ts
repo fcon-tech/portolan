@@ -4,7 +4,7 @@
  * corroborating sweep of the symbol name at definition-free sites — never
  * invented. An absent symbol is an honest empty result; a missing ctags is
  * an error naming the binary.
- * (openspec/changes/probe-tools, specs/tools/spec.md)
+ * specs/tools/spec.md
  */
 import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";

@@ -1,6 +1,7 @@
 /**
- * Verifications for the expedition-skill change (openspec/changes/
- * expedition-skill/tasks.md). Each check is labeled with the task it proves.
+ * Verifications for the expedition-skill change (archived at
+ * openspec/changes/archive/2026-08-23-expedition-skill/tasks.md). Each check
+ * is labeled with the task it proves.
  *
  * Run from the repo root:   bun run skill/verify/checks.ts
  * Regenerate the checked-in example brief:   bun run skill/verify/checks.ts --write-example

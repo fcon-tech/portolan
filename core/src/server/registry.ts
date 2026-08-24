@@ -7,7 +7,7 @@
  * real tool implementations, and return their results verbatim; the server
  * envelopes but never reinterprets them. A thrown rejection (the tool's own
  * error) becomes an MCP tool error at the handler boundary in server.ts.
- * (openspec/changes/mcp-delivery, specs/harness/spec.md)
+ * specs/harness/spec.md
  */
 import type { Anchor, ChartEntry, FairwayEntry, VesselEntry } from "../types";
 import { readChart, writeChart } from "../chart-store";

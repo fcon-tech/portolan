@@ -13,7 +13,7 @@
  */
 import { test, expect } from "bun:test";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { childEnv, makeProvince, structuredOf, withServer } from "./test-harness";
@@ -153,3 +153,105 @@ test.skipIf(opencodeBinary === undefined)(
   },
   90000,
 );
+
+// ---------------------------------------------------------------------------
+// The installer merges into comment-bearing JSONC without destroying the
+// user's file (the first expedition flagged the old strict-JSON refusal as
+// danger/adapters-jsonc-refusal).
+// ---------------------------------------------------------------------------
+
+test("the opencode installer preserves comments and sibling keys in a JSONC config", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "portolan-opencode-jsonc-"));
+  const configPath = join(sandbox, "opencode.jsonc");
+  const original = [
+    "{",
+    "  // my carefully written config",
+    '  "$schema": "https://opencode.ai/config.json",',
+    '  "mcp": {',
+    "    /* keep my server",
+    "       multiline comment */",
+    '    "web-reader": { "type": "remote", "url": "https://x//y.example/mcp", },',
+    "  },",
+    '  "theme": "dark", // trailing comma above',
+    "}",
+    "",
+  ].join("\n");
+  writeFileSync(configPath, original);
+
+  const run = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(run.status).toBe(0);
+
+  const merged = readFileSync(configPath, "utf8");
+  // Every comment survives verbatim; the URL's // is a string, not a comment.
+  expect(merged).toContain("// my carefully written config");
+  expect(merged).toContain("/* keep my server");
+  expect(merged).toContain("multiline comment */");
+  expect(merged).toContain("https://x//y.example/mcp");
+  expect(merged).toContain('"theme": "dark"');
+  // The portolan block landed inside mcp; the block itself is plain JSON.
+  expect(merged).toContain('"portolan"');
+  const blockMatch = merged.match(/"portolan": (\{[^\n]*\})/);
+  expect(blockMatch).not.toBeNull();
+  const portolan = JSON.parse(blockMatch![1]!) as { type: string; command: string[]; enabled: boolean };
+  expect(portolan.type).toBe("local");
+  expect(portolan.command.length).toBe(4);
+  expect(portolan.enabled).toBe(true);
+  // Sibling keys survive: extract web-reader's line the same way (the
+  // fixture's trailing commas are legal JSONC, not legal JSON).
+  const webReaderText = merged.match(/"web-reader": (\{[^\n]*\})/)![1]!.replace(/,(\s*})/g, "$1");
+  const webReader = JSON.parse(webReaderText) as { type: string };
+  expect(webReader.type).toBe("remote");
+
+  // Idempotent: a second install does not duplicate the block.
+  const rerun = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(rerun.status).toBe(0);
+  const after = readFileSync(configPath, "utf8");
+  expect((after.match(/"portolan"/g) ?? []).length).toBe(1);
+
+  rmSync(sandbox, { recursive: true, force: true });
+});
+
+test("the opencode installer replaces an existing portolan block, keeping mcp siblings", () => {
+  const sandbox = mkdtempSync(join(tmpdir(), "portolan-opencode-replace-"));
+  const configPath = join(sandbox, "opencode.jsonc");
+  writeFileSync(
+    configPath,
+    [
+      "{",
+      '  "mcp": {',
+      '    "portolan": { "type": "local", "command": ["old"], "enabled": false },',
+      "    // comment inside mcp",
+      '    "other": {}',
+      "  }",
+      "}",
+      "",
+    ].join("\n"),
+  );
+
+  const run = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", REPO_ROOT, "--config", configPath],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(run.status).toBe(0);
+
+  const merged = readFileSync(configPath, "utf8");
+  expect(merged).toContain('// comment inside mcp');
+  expect(merged).toContain('"other"');
+  expect(merged).not.toContain('"old"');
+  const parsed = JSON.parse(merged.replace(/\/\/[^\n]*/g, "").replace(/,(\s*[}\]])/g, "$1")) as {
+    mcp: Record<string, { command?: string[]; enabled?: boolean }>;
+  };
+  expect(parsed.mcp.portolan?.command?.[0]).not.toBe("old");
+  expect(parsed.mcp.portolan?.enabled).toBe(true);
+
+  rmSync(sandbox, { recursive: true, force: true });
+});

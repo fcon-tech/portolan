@@ -94,9 +94,8 @@ export function childEnv(...pathPrefixes: string[]): Record<string, string> {
 
 /**
  * An environment whose PATH contains ripgrep but provably no ctags: a temp
- * bin directory holding only an rg symlink. The machine running the suite
- * has no ctags, but this makes the missing-binary path deterministic
- * regardless of where the suite runs.
+ * bin directory holding only an rg symlink, REPLACING the inherited PATH —
+ * prepending would still reach a system ctags where one is installed.
  */
 export function envWithoutCtags(): Record<string, string> | undefined {
   const rg = findBinary("rg");
@@ -104,7 +103,9 @@ export function envWithoutCtags(): Record<string, string> | undefined {
   const bin = mkdtempSync(join(tmpdir(), "portolan-mcp-bin-"));
   targets.push(bin);
   symlinkSync(rg, join(bin, "rg"));
-  return childEnv(bin);
+  const env = childEnv();
+  env.PATH = bin;
+  return env;
 }
 
 /** An environment with the ctags test double on PATH (rg inherited). */

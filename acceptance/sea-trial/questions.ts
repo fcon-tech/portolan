@@ -5,7 +5,7 @@
  * the checkout's own BOM and manifests) and which are expert-judged
  * (recorded with anchors and trust label for the Governor's read, never
  * machine-graded).
- * (openspec/changes/sea-trial, specs/sea-trial/spec.md)
+ * openspec/specs/sea-trial/spec.md
  */
 
 export const QUESTION_IDS = [

@@ -8,7 +8,7 @@
  * every tool call is scoped to that root, and no call can redirect it —
  * changing provinces means launching a new server (design.md, decision 2).
  * The server speaks MCP over stdio and nothing else: no network, no daemon.
- * (openspec/changes/mcp-delivery, specs/harness/spec.md)
+ * specs/harness/spec.md
  */
 import { parseArgs } from "node:util";
 import { resolve } from "node:path";
