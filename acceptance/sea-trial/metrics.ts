@@ -61,13 +61,17 @@ export function fairwayCompleteness(bom: Bom, chartEntries: IndexedEntry[]): Fai
     return (name ?? id).toLowerCase();
   };
   const chartedPairs = new Set<string>();
+  const chartedIdPairs = new Set<string>();
   for (const entry of chartEntries) {
     if (entry.kind !== "fairway") continue;
     // Ids are the canonical identifiers (BOM labels); names are display
     // text ("Apache Alluxio"), so each fairway matches under its id key
-    // and its name key.
-    chartedPairs.add(`${entry.from.toLowerCase()}→${entry.to.toLowerCase()}`);
+    // and its name key. Extras are reported by id key only — name keys
+    // are aliases, not separate fairways.
+    const idKey = `${entry.from.toLowerCase()}→${entry.to.toLowerCase()}`;
+    chartedPairs.add(idKey);
     chartedPairs.add(`${lookup(entry.from)}→${lookup(entry.to)}`);
+    chartedIdPairs.add(idKey);
   }
   const pairs = bomDependencyPairs(bom);
   const missing: string[] = [];
@@ -77,7 +81,7 @@ export function fairwayCompleteness(bom: Bom, chartEntries: IndexedEntry[]): Fai
     if (chartedPairs.has(key)) charted += 1;
     else missing.push(`${dependent} → ${dependency}`);
   }
-  const extraFairways = [...chartedPairs]
+  const extraFairways = [...chartedIdPairs]
     .filter(
       (key) =>
         !pairs.some(
