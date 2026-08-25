@@ -62,12 +62,15 @@ are part of the screen, not hidden chrome.
   section, file count.
 - Click = **blast radius**: transitive dependents highlighted, rest dimmed;
   unsurveyed edges marked as unknown reach.
-- **Nautical ↔ engineering toggle**: one button swaps the lexicon
-  (vessel→component, fairway→dependency, danger→risk, port of entry→entry
+- **Nautical ↔ engineering toggle**: one button swaps the representation AND the
+  lexicon (vessel→component, fairway→dependency, danger→risk, port of entry→entry
   point, beacon→config, light→API contract, unsurveyed→unknown, pending
-  correction→stale) AND the treatment (parchment/chrome → flat dark tokens).
-  Geometry is frozen across modes — same layout, same clicks, same data.
-  Default nautical; choice persists (localStorage); UI language is English.
+  correction→stale). Nautical mode renders the archipelago map (parchment,
+  bathymetry, Chart No. 1 chrome); engineering mode renders a **layered
+  dependency graph** (dependents above, foundations below, barycenter-ordered,
+  flat dark tokens) — same data, same clicks (dossier, impact set), two
+  representations. Default nautical; choice persists (localStorage); UI
+  language is English. Pan/zoom is clipped to the neatline in both modes.
 
 ## Craft bar (the previous atlas died on these)
 

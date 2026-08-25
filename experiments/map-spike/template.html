@@ -76,6 +76,21 @@
   /* map svg */
   .nautical-only{transition:opacity .2s}
   body.eng .nautical-only{opacity:0;pointer-events:none}
+  body.eng #world{display:none}
+  body.eng .maponly{display:none}
+  body:not(.eng) #graphview{display:none}
+  body:not(.eng) .engonly{display:none}
+  /* graph view */
+  .gnode{cursor:pointer}
+  .gnode .box{fill:var(--island);stroke:var(--island-edge);stroke-width:1.6}
+  .gnode:hover .box{stroke-width:2.8}
+  .gnode .gname{fill:var(--island-ink);font-size:13px;font-family:var(--font-map)}
+  .gnode .gbadge{fill:var(--ink-soft);font-size:10px;font-family:var(--font-map)}
+  .gedge{fill:none;stroke-linecap:round}
+  .gedge:hover{stroke-width:4}
+  .gnode{transition:opacity .15s}
+  #map.blasting .gnode:not(.lit):not(.lit2){opacity:.22}
+  #map.blasting .gedge:not(.lit):not(.lit2){opacity:.1}
   text.lbl{font-family:var(--font-map);fill:var(--ink);paint-order:stroke;
        stroke:var(--halotext);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
   text.lbl.big{font-style:italic;font-size:23px;font-weight:600}
@@ -87,9 +102,9 @@
   .island.edgeless .coast{stroke-dasharray:1 5;stroke-linecap:round}
   .lane{fill:none;stroke-linecap:round;transition:opacity .15s}
   .lane:hover{stroke-width:4}
-  #map.blasting .island:not(.lit){opacity:.22}
-  #map.blasting .island:not(.lit) text{opacity:.4}
-  #map.blasting .lane:not(.lit){opacity:.1}
+  #map.blasting .island:not(.lit):not(.lit2){opacity:.22}
+  #map.blasting .island:not(.lit):not(.lit2) text{opacity:.4}
+  #map.blasting .lane:not(.lit):not(.lit2){opacity:.1}
   .island{transition:opacity .15s}
   text.marginal{font-family:var(--font-map);fill:var(--ink-soft)}
   text.cartouche-main{font-family:var(--font-map);fill:var(--ink);letter-spacing:.22em;
@@ -124,15 +139,24 @@
         <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto-start-reverse">
           <path d="M0,1 L9,5 L0,9 z" fill="context-stroke"/>
         </marker>
+        <clipPath id="frameClip">
+          <rect x="42" y="42" width="1796" height="1256"/>
+        </clipPath>
       </defs>
       <rect id="sea" x="0" y="0" width="1880" height="1340" fill="var(--water)"/>
-      <g id="world">
-        <g id="rhumbs" class="nautical-only"></g>
-        <g id="halos"></g>
-        <g id="lanes"></g>
-        <g id="islands"></g>
-        <g id="marks"></g>
-        <g id="labels"></g>
+      <g clip-path="url(#frameClip)">
+        <rect id="seaTex" x="0" y="0" width="1880" height="1340" filter="url(#paperTex)" opacity="0.5" class="nautical-only"/>
+        <g id="viewport">
+          <g id="world">
+            <g id="rhumbs" class="nautical-only"></g>
+            <g id="halos"></g>
+            <g id="lanes"></g>
+            <g id="islands"></g>
+            <g id="marks"></g>
+            <g id="labels"></g>
+          </g>
+          <g id="graphview"></g>
+        </g>
       </g>
       <g id="margin"></g>
     </svg>
@@ -275,10 +299,12 @@ const SVGNS="http://www.w3.org/2000/svg";
 function el(tag,attrs,parent){const n=document.createElementNS(SVGNS,tag);
   for(const k in attrs)n.setAttribute(k,attrs[k]);if(parent)parent.appendChild(n);return n}
 
-/* sea texture (nautical) */
-(function(){const t=el("rect",{x:0,y:0,width:W,height:H,filter:"url(#paperTex)",
-  opacity:"0.5",class:"nautical-only"});t.id="seaTex";
-  document.getElementById("world").parentNode.insertBefore(t,document.getElementById("world"))})();
+/* shared lane styling by trust (map lanes + graph edges) */
+const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
+               charted:{stroke:"var(--lane-charted)","stroke-width":2.2},
+               reported:{stroke:"var(--lane-reported)","stroke-width":2,"stroke-dasharray":"7 5"},
+               doubtful:{stroke:"var(--lane-doubtful)","stroke-width":1.6,"stroke-dasharray":"3 6"},
+               unsurveyed:{stroke:"var(--lane-doubtful)","stroke-width":1.4,"stroke-dasharray":"1 7"}};
 
 /* rhumb lines from the rose center */
 (function(){const g=document.getElementById("rhumbs");
@@ -301,11 +327,6 @@ function el(tag,attrs,parent){const n=document.createElementNS(SVGNS,tag);
 
 /* lanes */
 (function(){const g=document.getElementById("lanes");
-  const style={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
-               charted:{stroke:"var(--lane-charted)","stroke-width":2.2},
-               reported:{stroke:"var(--lane-reported)","stroke-width":2,"stroke-dasharray":"7 5"},
-               doubtful:{stroke:"var(--lane-doubtful)","stroke-width":1.6,"stroke-dasharray":"3 6"},
-               unsurveyed:{stroke:"var(--lane-doubtful)","stroke-width":1.4,"stroke-dasharray":"1 7"}};
   const lrnd=mulberry32(SEED^0x5f3759df);
   fairways.forEach(f=>{const a=byId.get(f.from),b=byId.get(f.to);if(!a||!b)return;
     const mx=(a._x+b._x)/2,my=(a._y+b._y)/2;
@@ -315,7 +336,7 @@ function el(tag,attrs,parent){const n=document.createElementNS(SVGNS,tag);
     const sx=a._x+dx/d*(a._r+6),sy=a._y+dy/d*(a._r+6);
     const ex=b._x-dx/d*(b._r+10),ey=b._y-dy/d*(b._r+10);
     const p=el("path",Object.assign({d:`M${sx.toFixed(1)},${sy.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`,
-      class:"lane","data-fw":f.id,"marker-end":"url(#arrow)"},style[f.trust]||style.charted),g);
+      class:"lane","data-fw":f.id,"marker-end":"url(#arrow)"},LANE_STYLE[f.trust]||LANE_STYLE.charted),g);
     p.dataset.from=f.from;p.dataset.to=f.to;
   });
 })();
@@ -381,21 +402,120 @@ function el(tag,attrs,parent){const n=document.createElementNS(SVGNS,tag);
   });
 })();
 
+/* graph view (engineering mode): layered dependency diagram */
+(function buildGraph(){
+  const g=document.getElementById("graphview");
+  const NH=40; // node height
+  const disp=v=>(v.name||v.id).replace(/^Apache /,"");
+  // rank = longest dependency chain into the node (dependents above, foundations below)
+  const rank=new Map();vessels.forEach(v=>rank.set(v.id,0));
+  for(let k=0;k<60;k++){let ch=false;
+    fairways.forEach(f=>{if(rank.has(f.from)&&rank.has(f.to)){
+      const nr=rank.get(f.from)+1;
+      if(nr>rank.get(f.to)){rank.set(f.to,nr);ch=true}}});
+    if(!ch)break}
+  const byRank=new Map();
+  vessels.forEach(v=>{const r=rank.get(v.id);
+    if(!byRank.has(r))byRank.set(r,[]);byRank.get(r).push(v)});
+  const ranks=[...byRank.keys()].sort((a,b)=>a-b);
+  ranks.forEach(r=>byRank.get(r).sort((a,b)=>
+    fanIn.get(b.id)-fanIn.get(a.id)||a.id.localeCompare(b.id)));
+  // barycenter sweeps to reduce crossings (deterministic)
+  const ord=new Map(); // id -> current index in its rank
+  const neigh=(v,down)=>fairways.filter(f=>down?f.from===v.id:f.to===v.id)
+    .map(f=>down?f.to:f.from).filter(id=>ord.has(id));
+  for(let sweep=0;sweep<14;sweep++){
+    const down=sweep%2===0;
+    const seq=down?ranks:ranks.slice().reverse();
+    seq.forEach(r=>{
+      const row=byRank.get(r);
+      const keyed=row.map((v,i)=>{
+        const nb=neigh(v,down);
+        const bc=nb.length?nb.reduce((s,id)=>s+ord.get(id),0)/nb.length:i;
+        return [v,bc+i*1e-4]});
+      keyed.sort((a,b)=>a[1]-b[1]);
+      byRank.set(r,keyed.map(x=>x[0]));
+      byRank.get(r).forEach((v,i)=>ord.set(v.id,i));
+    });
+  }
+  // place
+  const rowH=Math.min(148,(H-360)/Math.max(1,ranks.length-1));
+  const top=170,left=140,right=W-140,gap=40;
+  const nodeW=v=>Math.max(96,disp(v).length*8.6+64);
+  const gp=new Map();
+  ranks.forEach(r=>{
+    const row=byRank.get(r);
+    const avail=right-left;
+    const rawW=row.map(v=>nodeW(v));
+    let rowW=rawW.reduce((s,w)=>s+w+gap,0)-gap;
+    const k=rowW>avail?Math.max(0.45,avail/rowW):1; // squeeze wide rows
+    const ws=rawW.map(w=>Math.max(64,w*k));
+    rowW=ws.reduce((s,w)=>s+w+gap,0)-gap;
+    const rgap=rowW>avail?Math.max(8,gap-(rowW-avail)/Math.max(1,row.length-1)):gap;
+    if(rowW>avail)rowW=ws.reduce((s,w)=>s+w+rgap,0)-rgap;
+    let x=left+Math.max(10,(avail-rowW)/2);
+    row.forEach((v,i)=>{const w=ws[i];
+      gp.set(v.id,{x:x+w/2,y:top+r*rowH,w,sq:k<1});x+=w+rgap})});
+  // edges first
+  const ge=el("g",{},g);
+  fairways.forEach(f=>{const a=gp.get(f.from),b=gp.get(f.to);if(!a||!b)return;
+    const sy=a.y+NH/2,ty=b.y-NH/2,dy=ty-sy;
+    const p=el("path",Object.assign({d:`M${a.x},${sy} C${a.x},${sy+dy*0.55} ${b.x},${ty-dy*0.55} ${b.x},${ty-6}`,
+      class:"gedge","data-fw":f.id,"marker-end":"url(#arrow)"},LANE_STYLE[f.trust]||LANE_STYLE.charted),ge);
+    p.dataset.from=f.from;p.dataset.to=f.to});
+  // nodes
+  const TRUST_DOT={measured:"var(--lane-measured)",charted:"var(--lane-charted)",
+    reported:"var(--lane-reported)",doubtful:"var(--lane-doubtful)",unsurveyed:"#8a8a8a"};
+  const gn=el("g",{},g);
+  vessels.forEach(v=>{const p=gp.get(v.id);
+    const grp=el("g",{class:"gnode","data-v":v.id,tabindex:0,role:"button",
+      "aria-label":v.name||v.id},gn);
+    el("rect",{x:p.x-p.w/2,y:p.y-NH/2,width:p.w,height:NH,rx:7,class:"box"},grp);
+    el("circle",{cx:p.x-p.w/2+14,cy:p.y,r:5,fill:TRUST_DOT[v.trust]||"#8a8a8a"},grp);
+    const name=el("text",{x:p.x+6,y:p.y+4.5,"text-anchor":"middle",class:"gname"},grp);
+    if(p.sq){name.setAttribute("textLength",Math.max(40,p.w-40));
+      name.setAttribute("lengthAdjust","spacingAndGlyphs")}
+    name.textContent=disp(v);
+    const badges=[];
+    if(poeVessels.has(v.id))badges.push("entry");
+    const nd=dangers.filter(d=>d.vessel===v.id).length;if(nd)badges.push("⚠"+nd);
+    if(fanIn.get(v.id)>=GOD_HUB)badges.push("×"+fanIn.get(v.id));
+    if(badges.length){const bt=el("text",{x:p.x,y:p.y-NH/2-6,"text-anchor":"middle",
+      class:"gbadge"},grp);bt.textContent=badges.join("  ")}
+    grp.addEventListener("click",ev=>{ev.stopPropagation();select(v.id)});
+    grp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();select(v.id)}});
+  });
+  // rank axis note
+  const ax=el("text",{x:70,y:H-90,class:"marginal","font-size":11,
+    transform:`rotate(-90 70 ${H-90})`},g);
+  ax.textContent="dependents above → foundations below";
+})();
+
 /* marginalia: frame, cartouche, rose, legend, scale ladder, dragon */
 (function(){const g=document.getElementById("margin");
   el("rect",{x:26,y:26,width:W-52,height:H-52,fill:"none",stroke:"var(--frame)","stroke-width":2.6},g);
   el("rect",{x:36,y:36,width:W-72,height:H-72,fill:"none",stroke:"var(--frame)","stroke-width":0.8},g);
+  const maponly={class:"maponly"};
   // cartouche
   const cx=64,cy=64;
-  el("rect",{x:cx,y:cy,width:388,height:96,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.6},g);
-  el("rect",{x:cx+5,y:cy+5,width:378,height:86,fill:"none",stroke:"var(--frame)","stroke-width":0.7},g);
-  let t=el("text",{x:cx+20,y:cy+32,class:"cartouche-main","font-size":21},g);
+  const cart=el("g",maponly,g);
+  el("rect",{x:cx,y:cy,width:388,height:96,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.6},cart);
+  el("rect",{x:cx+5,y:cy+5,width:378,height:86,fill:"none",stroke:"var(--frame)","stroke-width":0.7},cart);
+  let t=el("text",{x:cx+20,y:cy+32,class:"cartouche-main","font-size":21},cart);
   t.dataset.lex="chartroom";
-  t=el("text",{x:cx+20,y:cy+54,class:"marginal","font-size":14.5,fill:"var(--ink)"},g);
+  t=el("text",{x:cx+20,y:cy+54,class:"marginal","font-size":14.5,fill:"var(--ink)"},cart);
   t.textContent=META.province;
-  t=el("text",{x:cx+20,y:cy+74,class:"marginal","font-size":12},g);
+  t=el("text",{x:cx+20,y:cy+74,class:"marginal","font-size":12},cart);
   t.textContent=`Expedition ${META.expedition} · ${vessels.length} ${lex("vessel").toLowerCase()}s · ${fairways.length} ${lex("fairway").toLowerCase()}s · ${dangers.length} ${lex("danger").toLowerCase()}`;
   t.dataset.redynamic="counts";
+  // graph header (engineering)
+  const gh=el("g",{class:"engonly"},g);
+  let gt=el("text",{x:64,y:96,class:"cartouche-main","font-size":21},gh);
+  gt.dataset.lex="chartroom";
+  gt=el("text",{x:64,y:118,class:"marginal","font-size":14.5,fill:"var(--ink)"},gh);
+  gt.textContent=META.province;
+  gt=el("text",{x:64,y:136,class:"marginal","font-size":12},gh);
+  gt.textContent=`Expedition ${META.expedition} · layered by dependency depth`;
   // compass rose
   const rx=W-210,ry=170;
   const rose=el("g",{class:"nautical-only"},g);
@@ -410,37 +530,58 @@ function el(tag,attrs,parent){const n=document.createElementNS(SVGNS,tag);
         fill:"var(--ink-soft)",opacity:.8},rose)}}
   const nt=el("text",{x:rx,y:ry-64,"text-anchor":"middle","font-size":12,class:"marginal"},rose);
   nt.textContent="N";
-  // legend
+  // map legend (nautical)
+  const mleg=el("g",maponly,g);
   const lx=56,ly=H-268;
-  el("rect",{x:lx,y:ly,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4,opacity:.96},g);
-  let lt=el("text",{x:lx+16,y:ly+26,class:"cartouche-main","font-size":13},g);lt.textContent="LEGEND";
+  el("rect",{x:lx,y:ly,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4,opacity:.96},mleg);
+  let lt=el("text",{x:lx+16,y:ly+26,class:"cartouche-main","font-size":13},mleg);lt.textContent="LEGEND";
   // trust of record (water depth)
   const bands=["#b8d3cc","#c6dbd3","#d5e2da","#e2e8dd","#eae8da"];
   TRUSTS.forEach((tr,i)=>{const y=ly+46+i*20;
-    el("rect",{x:lx+16,y:y-9,width:34,height:12,fill:bands[i],stroke:"var(--frame)","stroke-width":.6},g);
-    const t2=el("text",{x:lx+60,y:y+1,"font-size":11.5,class:"marginal",fill:"var(--ink)"},g);
+    el("rect",{x:lx+16,y:y-9,width:34,height:12,fill:bands[i],stroke:"var(--frame)","stroke-width":.6},mleg);
+    const t2=el("text",{x:lx+60,y:y+1,"font-size":11.5,class:"marginal",fill:"var(--ink)"},mleg);
     t2.textContent=tr});
   // lane styles
   const lstyles={measured:["var(--lane-measured)","none"],charted:["var(--lane-charted)","none"],
     reported:["var(--lane-reported)","7 5"],doubtful:["var(--lane-doubtful)","3 6"]};
   let yy=ly+158;
-  const lt2=el("text",{x:lx+16,y:yy,"font-size":11,class:"marginal"},g);
+  const lt2=el("text",{x:lx+16,y:yy,"font-size":11,class:"marginal"},mleg);
   lt2.textContent="Fairway trust →";
   Object.keys(lstyles).forEach((tr,i)=>{const y=yy+16+i*15;
     el("line",{x1:lx+16,y1:y-3,x2:lx+50,y2:y-3,stroke:lstyles[tr][0],"stroke-width":2.2,
-      "stroke-dasharray":lstyles[tr][1],fill:"none"},g);
-    const t3=el("text",{x:lx+60,y:y,"font-size":11,class:"marginal",fill:"var(--ink)"},g);
+      "stroke-dasharray":lstyles[tr][1],fill:"none"},mleg);
+    const t3=el("text",{x:lx+60,y:y,"font-size":11,class:"marginal",fill:"var(--ink)"},mleg);
     t3.textContent=tr});
+  // graph legend (engineering)
+  const gleg=el("g",{class:"engonly"},g);
+  const gx=56,gy=H-268;
+  el("rect",{x:gx,y:gy,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4,opacity:.96},gleg);
+  let gl=el("text",{x:gx+16,y:gy+26,class:"cartouche-main","font-size":13},gleg);gl.textContent="LEGEND";
+  let gy2=gy+48;
+  gl=el("text",{x:gx+16,y:gy2,"font-size":11,class:"marginal",fill:"var(--ink)"},gleg);
+  gl.textContent="Edge trust →";
+  Object.keys(lstyles).forEach((tr,i)=>{const y=gy2+16+i*15;
+    el("line",{x1:gx+16,y1:y-3,x2:gx+50,y2:y-3,stroke:lstyles[tr][0],"stroke-width":2.2,
+      "stroke-dasharray":lstyles[tr][1],fill:"none"},gleg);
+    const t3=el("text",{x:gx+60,y:y,"font-size":11,class:"marginal",fill:"var(--ink)"},gleg);
+    t3.textContent=tr});
+  const notes=["● node dot = component record trust",
+    "entry = port of entry · ⚠n = risks · ×n = dependents",
+    "click a node: impact set (transitive dependents)"];
+  notes.forEach((s,i)=>{const t4=el("text",{x:gx+16,y:gy2+16+4*15+14+i*15,
+    "font-size":10.5,class:"marginal",fill:"var(--ink)"},gleg);t4.textContent=s});
   // size ladder
+  const ladder=el("g",maponly,g);
   const sx=W-320,sy=H-96;
   [[34,"~25k files"],[22,"~1k"],[12,"~10"]].forEach(([r,lab],i)=>{
-    el("circle",{cx:sx+i*86,cy:sy,r,fill:"var(--island)",stroke:"var(--island-edge)","stroke-width":1.6},g);
-    const t4=el("text",{x:sx+i*86,y:sy+r+14,"text-anchor":"middle","font-size":10.5,class:"marginal"},g);
+    el("circle",{cx:sx+i*86,cy:sy,r,fill:"var(--island)",stroke:"var(--island-edge)","stroke-width":1.6},ladder);
+    const t4=el("text",{x:sx+i*86,y:sy+r+14,"text-anchor":"middle","font-size":10.5,class:"marginal"},ladder);
     t4.textContent=lab});
   // one dragon
+  const drag=el("g",maponly,g);
   const dx=W-150,dy=H-190;
   el("path",{d:`M${dx-60},${dy} q10,-14 20,0 q10,-14 20,0 q10,14 22,2 q6,-5 10,2`,
-    stroke:"var(--ink-soft)",fill:"none","stroke-width":1.4,opacity:.7},g);
+    stroke:"var(--ink-soft)",fill:"none","stroke-width":1.4,opacity:.7},drag);
   const dt=el("text",{x:dx+8,y:dy+26,"text-anchor":"middle",class:"dragon","font-size":12},g);
   dt.textContent="hic svnt dracones";
 })();
@@ -516,10 +657,10 @@ function select(id){
   selected=id;const map=document.getElementById("map");
   map.classList.add("blasting");
   const blast=dependents(id);blast.add(id);
-  document.querySelectorAll(".island").forEach(g=>{
+  document.querySelectorAll(".island,.gnode").forEach(g=>{
     g.classList.toggle("lit",g.dataset.v===id);
     g.classList.toggle("lit2",blast.has(g.dataset.v)&&g.dataset.v!==id)});
-  document.querySelectorAll(".lane").forEach(p=>{
+  document.querySelectorAll(".lane,.gedge").forEach(p=>{
     const f=p.dataset.from,t=p.dataset.to;
     p.classList.toggle("lit",t===id&&blast.has(f)||(f===id));
     p.classList.toggle("lit2",blast.has(f)&&blast.has(t));
@@ -530,7 +671,7 @@ function clearSelect(){
   selected=null;const map=document.getElementById("map");
   map.classList.remove("blasting");
   document.querySelectorAll(".lit,.lit2").forEach(g=>g.classList.remove("lit","lit2"));
-  document.querySelectorAll(".lane").forEach(p=>p.style.opacity="");
+  document.querySelectorAll(".lane,.gedge").forEach(p=>p.style.opacity="");
   renderBriefing();
 }
 document.getElementById("map").addEventListener("click",ev=>{
@@ -540,12 +681,15 @@ document.getElementById("map").addEventListener("click",ev=>{
 const st=document.createElement("style");
 st.textContent=`.island.lit .coast{stroke:var(--accent);stroke-width:4.4}
 .island.lit2 .coast{stroke-width:3.4}
-.lane.lit{stroke-width:4!important}.lane.lit2{stroke-width:3!important;opacity:1!important}`;
+.gnode.lit .box{stroke:var(--accent);stroke-width:3}
+.gnode.lit2 .box{stroke-width:2.4}
+.lane.lit{stroke-width:4!important}.lane.lit2{stroke-width:3!important;opacity:1!important}
+.gedge.lit{stroke-width:4!important}.gedge.lit2{stroke-width:3!important;opacity:1!important}`;
 document.head.appendChild(st);
 
 /* ---------- pan & zoom ---------- */
 (function(){
-  const world=document.getElementById("world"),wrap=document.getElementById("mapwrap");
+  const world=document.getElementById("viewport"),wrap=document.getElementById("mapwrap");
   const VB={x:0,y:0,w:1880,h:1340};let scale=1,vx=VB.x,vy=VB.y,vw=VB.w,vh=VB.h;
   function apply(){world.setAttribute("transform",
     `translate(${vx},${vy}) scale(${vw/VB.w})`);
