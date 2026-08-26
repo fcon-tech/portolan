@@ -151,6 +151,10 @@ and an exit status.
 
 ### Cron wiring
 
+A checked-in, drop-in crontab lives at
+[`adapters/scheduling/night-watch.cron`](scheduling/night-watch.cron) —
+set `PROVINCE`/`PORTOLAN` and paste. The manual form:
+
 A nightly run that launches repairs through the opencode launcher and
 mails the report (cron posts stdout automatically when there is output):
 

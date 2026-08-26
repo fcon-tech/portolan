@@ -1,0 +1,23 @@
+# Portolan night watch — drop-in crontab lines.
+#
+# Portolan ships no daemon: these lines are the external scheduler. Adjust
+# PROVINCE and PORTOLAN to this machine, then install with:
+#
+#   crontab -e   # paste the lines below
+#
+# Both runs are deterministic over an unchanged province — a quiet run
+# prints nothing extra to post. See adapters/README.md ("The night watch")
+# for the policy bound (harbor.auto_repair_max_vessels) and launcher
+# contract.
+
+PROVINCE=/home/governor/projects/faust/portolan-v3
+PORTOLAN=/home/governor/projects/faust/portolan-v3
+
+# Report-only nightly watch: the morning list, nothing auto-launched.
+15 2 * * *  cd $PORTOLAN && bun core/src/harbor/cli.ts watch --target $PROVINCE --format chat
+
+# Acting variant (auto-repair within the configured bound through the
+# opencode launcher) — replace the line above with:
+#15 2 * * *  cd $PORTOLAN && bun core/src/harbor/cli.ts watch --target $PROVINCE \
+#            --launcher adapters/opencode/expedition-launcher \
+#            --launcher-timeout 45m --format chat
