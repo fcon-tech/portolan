@@ -29,12 +29,12 @@ import { lastDecisionPerFingerprint, readDecisions } from "../harbor/history";
 
 const rgPresent = findBinary("rg") !== undefined;
 
-test("tools/list through the server returns all eleven served tools under Portolan names", async () => {
+test("tools/list through the server returns all twelve served tools under Portolan names", async () => {
   const target = makeProvince();
   await withServer({ targetRoot: target }, async (client) => {
     const listed = await client.listTools();
     expect(listed.tools.map((tool) => tool.name)).toEqual(TOOL_NAMES);
-    expect(listed.tools.length).toBe(11);
+    expect(listed.tools.length).toBe(12);
     for (const tool of listed.tools) {
       expect((tool.description ?? "").length).toBeGreaterThan(0);
       expect((tool.inputSchema as { type?: string }).type).toBe("object");

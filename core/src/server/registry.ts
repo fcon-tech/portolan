@@ -18,6 +18,7 @@ import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
 import { soundAnchor, soundEdge } from "../tools/sound";
 import { computeProposals, decide } from "../harbor/proposals";
+import { renderChartRoom } from "../chartroom/render";
 
 /** Everything a handler knows about its world: one province, bound at launch. */
 export interface ToolContext {
@@ -466,6 +467,16 @@ export const TOOL_TABLE: ToolSpec[] = [
         reqString("expeditions.decide", args, "fingerprint"),
         reqDecision("expeditions.decide", args, "decision"),
       ),
+  },
+  {
+    name: "chart.render",
+    description:
+      "Render the Chart Room — the one-file byproduct export of the Chart at <target>/.portolan/chart-room.html: " +
+      "nautical archipelago map + engineering dependency graph, dossier and impact set per vessel, trust legend " +
+      "always visible. Reads the Chart and the Sailing Directions, writes exactly that one file, changes no " +
+      "storage. Deterministic: the same chart renders the same bytes.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    handler: (_args, ctx) => renderChartRoom(ctx.targetRoot),
   },
 ];
 
