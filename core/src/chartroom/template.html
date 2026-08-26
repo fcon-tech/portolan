@@ -73,6 +73,10 @@
   .fwrow{display:flex;gap:8px;font-size:12.5px;align-items:baseline}
   .fwrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .fwrow .tr{font-size:10.5px;color:var(--ink-soft)}
+  .notice{margin:7px 0;border-left:2px solid var(--frame);padding-left:9px}
+  .notice .nact{font-size:10.5px;font-weight:700;letter-spacing:.05em;margin-right:6px}
+  .notice .nnote{font-size:12px;color:var(--ink-soft);margin-top:2px}
+  .notice code{font-size:11px}
   /* map svg */
   .nautical-only{transition:opacity .2s}
   body.eng .nautical-only{opacity:0;pointer-events:none}
@@ -171,6 +175,7 @@
 const DATA = __CHART_DATA__;
 const BRIEF = __BRIEF_HTML__;
 const META = __META__;
+const NOTICES = DATA.notices || [];
 
 /* ---------- deterministic randomness ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
@@ -604,10 +609,27 @@ function renderBriefing(){
      ${poes.length} ${mode==="eng"?"entry points":"ports of entry"} · ${dangers.length} ${mode==="eng"?"risks":"dangers"} ·
      ${beacons.length} ${mode==="eng"?"config surfaces":"beacons"} · ${lights.length} ${mode==="eng"?"API contracts":"lights"}</p>
    <h3>Trust of chart</h3>${trustBar()}
+   ${noticesPanel()}
    ${godHubs.length?`<h3>Hubs</h3><ul>${godHubs.map(v=>
       `<li><b>${v.name||v.id}</b> — ${fanIn.get(v.id)} ${lex("hub")}</li>`).join("")}</ul>`:""}
    <h3>Sailing Directions</h3>${BRIEF}
    <p class="statline" style="margin-top:14px">Click an island for the dossier and ${lex("blastr").toLowerCase()}.</p>`;
+}
+/* Notices to Mariners panel (chart-room: notices-panel) */
+function noticesPanel(){
+  const title=mode==="eng"?"Change log":"Notices to Mariners";
+  if(!NOTICES.length)
+    return `<h3>${title}</h3><p class="statline">${mode==="eng"
+      ?"No changes recorded — the chart is current."
+      :"No outstanding notices — the chart is current."}</p>`;
+  const colors={added:"#2c7a4f",corrected:"#2c5a68",markedStale:"#9a6a1e",retired:"#8a3226"};
+  const names={added:"ADDED",corrected:"CORRECTED",markedStale:"MARKED STALE",retired:"RETIRED"};
+  const rows=NOTICES.map(n=>`
+    <div class="notice"><span class="nact" style="color:${colors[n.action]||'var(--ink-soft)'}">${names[n.action]}</span>
+    <code>${n.key}</code>${n.note?`<div class="nnote">${n.note}</div>`:""}
+    ${n.anchors.length?`<ul class="anchors">${n.anchors.map(a=>`<li>${a}</li>`).join("")}</ul>`:""}
+    </div>`).join("");
+  return `<h3>${title} (${NOTICES.length})</h3>${rows}`;
 }
 
 /* ---------- dossier ---------- */

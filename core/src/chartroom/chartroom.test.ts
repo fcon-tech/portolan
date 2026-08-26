@@ -8,8 +8,10 @@ import { test, expect, beforeAll } from "bun:test";
 import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { renderChartRoom, chartRoomPath, inlineMd, safeInlineJson } from "./render";
+import { renderChartRoom, chartRoomPath, inlineMd, safeInlineJson, parseNotices } from "./render";
 import { TOOL_TABLE } from "../server/registry";
+import { renderNotices } from "../notices";
+import type { IndexedEntry } from "../types";
 
 let province: string;
 
@@ -114,6 +116,61 @@ test("inlineMd: headings, lists, bold, code, and HTML escaping", () => {
 test("safeInlineJson closes script breakout and line separators", () => {
   expect(safeInlineJson({ a: "</script>" })).not.toContain("</script>");
   expect(safeInlineJson({ a: "\u2028" })).toContain("\\u2028");
+});
+
+test("parseNotices round-trips renderNotices output exactly", () => {
+  const anchors = [
+    { type: "file" as const, path: "repos/x/pom.xml", line: 12 },
+    { type: "manifest" as const, path: "repos/y/pom.xml", key: "project.version" },
+    { type: "receipt" as const, id: "r7" },
+  ];
+  const notices: Parameters<typeof renderNotices>[0] = [
+    { action: "added", kind: "vessel", id: "web", anchors: [anchors[0]!] },
+    { action: "corrected", kind: "beacon", id: "PORT", note: "changed: note; repaired (was pending correction)", anchors },
+    { action: "markedStale", kind: "fairway", id: "fw-a-on-b", note: "sources changed since the last survey", anchors: [anchors[0]!] },
+    { action: "retired", kind: "danger", id: "danger-1", anchors: [] },
+  ];
+  const parsed = parseNotices(renderNotices(notices));
+  expect(parsed).toEqual([
+    { action: "added", key: "vessel/web", anchors: ["repos/x/pom.xml:12"] },
+    {
+      action: "corrected",
+      key: "beacon/PORT",
+      note: "changed: note; repaired (was pending correction)",
+      anchors: [
+        "repos/x/pom.xml:12",
+        "repos/y/pom.xml#project.version",
+        "receipt:r7",
+      ],
+    },
+    { action: "markedStale", key: "fairway/fw-a-on-b", note: "sources changed since the last survey", anchors: ["repos/x/pom.xml:12"] },
+    { action: "retired", key: "danger/danger-1", anchors: [] },
+  ]);
+});
+
+test("parseNotices skips the header and tolerates an empty file", () => {
+  expect(parseNotices("NOTICES TO MARINERS\n")).toEqual([]);
+  expect(parseNotices("")).toEqual([]);
+});
+
+test("the artifact embeds notices; absent file renders an explicit empty state", () => {
+  // fixture province has no notices.txt → the empty-state branch must exist
+  let html = readFileSync(chartRoomPath(province), "utf8");
+  expect(html).toContain("No outstanding notices");
+  // write real notices and re-render: the data must reach the page
+  writeFileSync(
+    join(province, ".portolan/chart/notices.txt"),
+    renderNotices([
+      { action: "retired", kind: "vessel", id: "ghost", anchors: [{ type: "file", path: "repos/ghost", line: 1 }] },
+    ]),
+  );
+  renderChartRoom(province);
+  html = readFileSync(chartRoomPath(province), "utf8");
+  expect(html).toContain('"action":"retired"');
+  expect(html).toContain('"key":"vessel/ghost"');
+  expect(html).toContain("repos/ghost:1");
+  // both branches' literals ship in the page script
+  expect(html).toContain("RETIRED");
 });
 
 test("the chart.render MCP tool serves the same core function surface", () => {

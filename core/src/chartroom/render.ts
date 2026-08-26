@@ -12,12 +12,56 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readChart } from "../chart-store";
-import type { IndexedEntry } from "../types";
+import { readChart, chartDir } from "../chart-store";
+import type { IndexedEntry, NoticeAction } from "../types";
 
 /** Where the artifact lands — inside the write perimeter, never the chart dir. */
 export function chartRoomPath(targetRoot: string): string {
   return resolve(targetRoot, ".portolan/chart-room.html");
+}
+
+/** One parsed notice line group from notices.txt. */
+export interface ParsedNotice {
+  action: NoticeAction;
+  key: string;
+  note?: string;
+  anchors: string[];
+}
+
+/**
+ * Parse the plain-text grammar produced by `renderNotices` (notices.ts):
+ * header + per-notice entry lines (label padded to 14 columns) followed by
+ * indented `anchor:` continuation lines. Absent or empty file → [].
+ */
+export function parseNotices(text: string): ParsedNotice[] {
+  const labels = new Set(["ADDED", "CORRECTED", "MARKED STALE", "RETIRED"]);
+  const actionOf = (word: string): NoticeAction | undefined => {
+    if (word === "ADDED") return "added";
+    if (word === "CORRECTED") return "corrected";
+    if (word === "MARKED STALE") return "markedStale";
+    if (word === "RETIRED") return "retired";
+    return undefined;
+  };
+  const notices: ParsedNotice[] = [];
+  for (const raw of text.split("\n")) {
+    if (!raw.trim()) continue;
+    const entryMatch = raw.match(/^(ADDED|CORRECTED|MARKED STALE|RETIRED)\s+(.*)$/);
+    if (entryMatch && labels.has(entryMatch[1]!)) {
+      const rest = entryMatch[2]!;
+      const dash = rest.indexOf(" — ");
+      const key = dash === -1 ? rest : rest.slice(0, dash);
+      const notice: ParsedNotice = { action: actionOf(entryMatch[1]!)!, key, anchors: [] };
+      if (dash !== -1) notice.note = rest.slice(dash + 3);
+      notices.push(notice);
+      continue;
+    }
+    const anchorMatch = raw.match(/^\s+anchor:\s*(.+)$/);
+    if (anchorMatch && notices.length > 0) {
+      notices[notices.length - 1]!.anchors.push(anchorMatch[1]!);
+    }
+    // anything else (e.g. the header line) is skipped
+  }
+  return notices;
 }
 
 /** Render the Sailing Directions (markdown) into the briefing panel HTML. */
@@ -79,6 +123,11 @@ export function renderChartRoom(targetRoot: string): ChartRoomResult {
   const sd = existsSync(sdPath) ? readFileSync(sdPath, "utf8") : "";
   const expedition = (sd.match(/Expedition (\S+)/) || [])[1] ?? "—";
 
+  const noticesPath = join(chartDir(targetRoot), "notices.txt");
+  const notices = existsSync(noticesPath)
+    ? parseNotices(readFileSync(noticesPath, "utf8"))
+    : [];
+
   const briefMd = sd.replace(/^# .*\n/, "");
   const briefHtml = briefMd
     ? inlineMd(briefMd)
@@ -91,7 +140,7 @@ export function renderChartRoom(targetRoot: string): ChartRoomResult {
   };
 
   const html = loadTemplate()
-    .replace("__CHART_DATA__", () => safeInlineJson({ entries }))
+    .replace("__CHART_DATA__", () => safeInlineJson({ entries, notices }))
     .replace("__BRIEF_HTML__", () => JSON.stringify(briefHtml))
     .replace("__META__", () => safeInlineJson(meta));
 
