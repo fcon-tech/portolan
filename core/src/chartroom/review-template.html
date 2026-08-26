@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fleet Review</title>
+<style>
+  :root{
+    --paper:#efe6d0; --panel:#e9dec4; --ink:#33291c; --ink-soft:#6b5a3e;
+    --frame:#6b5a3e; --accent:#7a2f22; --water:#cfe0da;
+    --lane-measured:#2c5a68; --lane-charted:#5d8895;
+    --font:Georgia,'Iowan Old Style',serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);
+       padding:34px 40px 60px;font-size:15px}
+  h1{font-variant:small-caps;letter-spacing:.16em;margin:0 0 4px;font-size:26px}
+  .sub{color:var(--ink-soft);margin:0 0 26px}
+  table{border-collapse:collapse;width:100%;max-width:1100px}
+  th{font-variant:small-caps;letter-spacing:.08em;text-align:left;font-weight:700;
+     border-bottom:2px solid var(--frame);padding:8px 12px 6px;font-size:14px}
+  td{padding:9px 12px;border-bottom:1px solid rgba(107,90,62,.35);vertical-align:top}
+  tr:hover td{background:rgba(107,90,62,.06)}
+  .pname{font-size:17px;font-style:italic}
+  a{color:#274a63;text-decoration-thickness:1px;text-underline-offset:3px}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .trustbar{display:inline-flex;width:92px;height:11px;border:1px solid var(--frame);
+     border-radius:2px;overflow:hidden;vertical-align:-1px;margin-right:8px}
+  .trustbar div{height:100%}
+  .tkey{font-size:12px;color:var(--ink-soft)}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;
+       background:rgba(127,127,127,.13);padding:1px 4px;border-radius:2px}
+  .muted{color:var(--ink-soft)}
+  footer{margin-top:26px;color:var(--ink-soft);font-size:13px}
+</style>
+</head>
+<body>
+<h1>Fleet Review</h1>
+<p class="sub">The assembled provinces of the Governor's fleet — each row is arithmetic over that province's Chart index. Open a province's Chart Room from its link.</p>
+<table id="fleet" aria-label="Charted provinces">
+  <thead><tr>
+    <th>Province</th><th class="num">Vessels</th><th class="num">Fairways</th>
+    <th class="num">Dangers</th><th class="num">Stale</th><th>Trust</th><th>Top hub</th><th>Chart Room</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+<footer>Rendered by Portolan — deterministic over the named targets. Nothing here was discovered by scanning; every province was named.</footer>
+<script>
+"use strict";
+const ROWS = __FLEET_DATA__;
+const TRUSTS=["measured","charted","reported","doubtful","unsurveyed"];
+const COLORS={measured:"#2c5a68",charted:"#5d8895",reported:"#6b8f8f",doubtful:"#a4b6b1",unsurveyed:"#d9d2b6"};
+const tb=document.querySelector("#fleet tbody");
+for(const r of ROWS){
+  const total=Object.values(r.trust).reduce((s,n)=>s+n,0)||1;
+  let bar='<span class="trustbar">';
+  for(const t of TRUSTS){const n=r.trust[t]||0;
+    if(n)bar+=`<div style="width:${n/total*100}%;background:${COLORS[t]}" title="${t}: ${n}"></div>`}
+  bar+='</span>';
+  bar+=`<span class="tkey">${TRUSTS.filter(t=>r.trust[t]).map(t=>`${r.trust[t]} ${t}`).join(" · ")}</span>`;
+  const tr=document.createElement("tr");
+  tr.innerHTML=`
+   <td><div class="pname"><a href="${r.url}">${r.name}</a></div><code>${r.path}</code></td>
+   <td class="num">${r.counts.vessel||0}</td>
+   <td class="num">${r.counts.fairway||0}</td>
+   <td class="num">${r.dangers||0}</td>
+   <td class="num">${r.stale||0}</td>
+   <td>${bar}</td>
+   <td>${r.topHub?`<code>${r.topHub.id}</code> <span class="muted">×${r.topHub.fanIn}</span>`:'<span class="muted">—</span>'}</td>
+   <td>${r.roomRendered
+      ?`<a href="${r.roomUrl}">open Chart Room</a>`
+      :'<span class="muted">not rendered yet</span>'}</td>`;
+  tb.appendChild(tr);
+}
+</script>
+</body>
+</html>

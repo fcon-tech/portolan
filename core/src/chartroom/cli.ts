@@ -1,36 +1,56 @@
 #!/usr/bin/env bun
 /**
- * The Chart Room CLI — the human/scheduler entry (the MCP tool `chart.render`
- * is the other one; both call the same core function).
+ * The Chart Room CLI — human/scheduler entries (the MCP tool `chart.render`
+ * is the single-province one; both call the same core functions).
  *
  *   bun core/src/chartroom/cli.ts render [--target <province root>]
+ *       One-file Chart Room export for one province.
  *
- * Prints the written artifact path and the rendered entry counts. Any
- * failure (no chart, unreadable index) exits 1 with the error on stderr.
- * Deterministic: two runs over an unchanged province write identical bytes.
+ *   bun core/src/chartroom/cli.ts review --target <t1> [--target <t2> ...]
+ *       Fleet review: a multi-province index page, written into the FIRST
+ *       named target's .portolan/fleet-review.html ("the reviewing
+ *       harbor"). Targets are read-only; nothing is discovered by scanning.
+ *
+ * Both commands are deterministic over unchanged inputs. Any failure (no
+ * chart, bad arguments) exits 1 with the error on stderr.
  */
 import { parseArgs } from "node:util";
 import { resolve } from "node:path";
 import { renderChartRoom } from "./render";
+import { buildFleetReview } from "./review";
 
-const usage = `usage: bun core/src/chartroom/cli.ts render [--target <province root>]`;
+const usage = `usage:
+  bun core/src/chartroom/cli.ts render [--target <province root>]
+  bun core/src/chartroom/cli.ts review --target <t1> [--target <t2> ...]`;
 
 const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: {
-    target: { type: "string", default: process.cwd() },
+    target: { type: "string", multiple: true, default: [] },
   },
 });
 
-if (positionals[0] !== "render" || positionals.length > 1) {
+const command = positionals[0];
+if (
+  !command ||
+  (command !== "render" && command !== "review") ||
+  positionals.length > 1 ||
+  values.target.length === 0
+) {
   console.error(usage);
   process.exit(1);
 }
 
 try {
-  const result = renderChartRoom(resolve(values.target as string));
-  console.log(`chart-room.html written: ${result.path}`);
-  console.log(`entries: ${result.entries} — ${JSON.stringify(result.counts)}`);
+  if (command === "render") {
+    const result = renderChartRoom(resolve(values.target[0]!));
+    console.log(`chart-room.html written: ${result.path}`);
+    console.log(`entries: ${result.entries} — ${JSON.stringify(result.counts)}`);
+  } else {
+    const result = buildFleetReview(values.target.map((t) => resolve(t)));
+    console.log(`fleet-review.html written: ${result.path}`);
+    console.log(`provinces: ${result.provinces}`);
+  }
 } catch (err) {
   console.error(String(err instanceof Error ? err.message : err));
   process.exit(1);
