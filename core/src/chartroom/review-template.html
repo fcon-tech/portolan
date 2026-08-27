@@ -36,7 +36,11 @@
 </head>
 <body>
 <h1>Fleet Review</h1>
-<p class="sub">The assembled provinces of the Governor's fleet — each row is arithmetic over that province's Chart index. Open a province's Chart Room from its link.</p>
+<p class="sub">The assembled provinces of the Governor's fleet — every island group is drawn from that province's own Chart index; click a group to open its Chart Room. The table below carries the same facts as numbers.</p>
+<svg id="fleetMap" viewBox="0 0 1880 560" role="img" aria-label="Archipelago of charted provinces" style="width:100%;height:auto;display:block;margin:6px 0 30px">
+  <rect x="0" y="0" width="1880" height="900" fill="#b9cfc6"/>
+  <g id="groups"></g>
+</svg>
 <table id="fleet" aria-label="Charted provinces">
   <thead><tr>
     <th>Province</th><th class="num">Vessels</th><th class="num">Fairways</th>
@@ -48,6 +52,153 @@
 <script>
 "use strict";
 const ROWS = __FLEET_DATA__;
+
+/* ---------- the fleet archipelago (fleet-review-map) ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);
+  h=Math.imul(h,16777619)}return h>>>0}
+function blobPath(cx,cy,r,jit,rot){
+  const n=jit.length,pts=[];
+  for(let i=0;i<n;i++){const a=rot+i/n*2*Math.PI;pts.push([cx+Math.cos(a)*r*jit[i],cy+Math.sin(a)*r*jit[i]])}
+  let d="";
+  for(let i=0;i<n;i++){
+    const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    const c1=[p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6];
+    const c2=[p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6];
+    if(i===0)d+="M"+p1[0].toFixed(1)+","+p1[1].toFixed(1);
+    d+="C"+c1[0].toFixed(1)+","+c1[1].toFixed(1)+" "+c2[0].toFixed(1)+","+c2[1].toFixed(1)+" "+p2[0].toFixed(1)+","+p2[1].toFixed(1);
+  }
+  return d+"Z";
+}
+(function drawFleetMap(){
+  const NS="http://www.w3.org/2000/svg";
+  const g=document.getElementById("groups");
+  const GROUP_W=880,GROUP_H=380,PAD=60;
+  const TRUST_HALO={measured:"#7ba18e",charted:"#9ab39c",reported:"#b8c8ac",doubtful:"#cfd4b8",unsurveyed:"#eee4c5"};
+  ROWS.forEach((row,gi)=>{
+    const col=gi%2,rowI=Math.floor(gi/2);
+    const gx=PAD+col*(GROUP_W+PAD), gy=30+rowI*(GROUP_H+90);
+    const loc=document.createElementNS(NS,"g");
+    // sea plate + caption
+    const cap=document.createElementNS(NS,"text");
+    cap.setAttribute("x",gx);cap.setAttribute("y",gy+24);
+    cap.setAttribute("class","pname");cap.setAttribute("font-size","21");
+    cap.setAttribute("font-style","italic");cap.setAttribute("fill","#33291c");
+    cap.textContent=row.name;
+    loc.appendChild(cap);
+    const sub=document.createElementNS(NS,"text");
+    sub.setAttribute("x",gx);sub.setAttribute("y",gy+44);
+    sub.setAttribute("font-size","12.5");sub.setAttribute("fill","#6b5a3e");
+    sub.textContent=`${row.counts.vessel||0} vessels · ${row.counts.fairway||0} fairways · ${row.dangers||0} dangers — click to open its Chart Room`;
+    loc.appendChild(sub);
+    const vs=row.entries.filter(e=>e.kind==="vessel");
+    const labels=[];
+    const fws=row.entries.filter(e=>e.kind==="fairway");
+    const dgs=row.entries.filter(e=>e.kind==="danger");
+    const rnd=mulberry32(hashStr(row.path));
+    const ox=gx, oy=gy+70, W2=GROUP_W-140, H2=GROUP_H-100;
+    const rr=v=>6+7*Math.log10(Math.max(2,(v.signature&&v.signature.files)||2));
+    // seeded ellipse init + short relaxation
+    vs.forEach((v,i)=>{
+      const t=i/Math.max(1,vs.length)*2*Math.PI;
+      v._x=ox+W2/2+Math.cos(t)*(W2*0.34+(rnd()-0.5)*70);
+      v._y=oy+H2/2+Math.sin(t)*(H2*0.34+(rnd()-0.5)*50);
+      v._r=rr(v); v._jit=[]; const n=12,vh=hashStr(row.name+v.id);
+      for(let k=0;k<n;k++)v._jit.push(0.82+0.36*((vh>>>(k%28)&255)/255));
+      v._rot=rnd()*6.28;
+      v._trust=(v.trust in TRUST_HALO)?v.trust:"unsurveyed";
+    });
+    const byId=new Map(vs.map(v=>[v.id,v]));
+    const fan=new Map();
+    fws.forEach(f=>{if(byId.has(f.to)){fan.set(f.to,(fan.get(f.to)||0)+1)}});
+    for(let it=0;it<260;it++){
+      for(let i=0;i<vs.length;i++)for(let j=i+1;j<vs.length;j++){
+        const a=vs[i],b=vs[j];let dx=b._x-a._x,dy=b._y-a._y;
+        const d=Math.hypot(dx,dy)||0.01,min=a._r+b._r+26;
+        if(d<min){const push=(min-d)/d*0.16;dx*=push;dy*=push;
+          a._x-=dx;a._y-=dy;b._x+=dx;b._y+=dy}}
+      fws.forEach(f=>{const a=byId.get(f.from),b=byId.get(f.to);if(!a||!b)return;
+        let dx=b._x-a._x,dy=b._y-a._y;const d=Math.hypot(dx,dy)||0.01;
+        const target=a._r+b._r+96,s=(d-target)/d*0.06;
+        a._x+=dx*s;a._y+=dy*s;b._x-=dx*s;b._y-=dy*s});
+      vs.forEach(v=>{
+        v._x=Math.min(Math.max(v._x,ox+v._r+8),ox+W2-v._r-8);
+        v._y=Math.min(Math.max(v._y,oy+v._r+8),oy+H2-v._r-8)});
+    }
+    // lanes first
+    const seen=new Map();
+    fws.forEach(f=>{const a=byId.get(f.from),b=byId.get(f.to);if(!a||!b)return;
+      seen.set(f.to,(seen.get(f.to)||0)+1);
+      const h=hashStr(f.id);
+      const mx=(a._x+b._x)/2,my=(a._y+b._y)/2;
+      let dx=b._x-a._x,dy=b._y-a._y;const d=Math.hypot(dx,dy)||0.01;
+      const bend=(0.22+((h>>>4)%100)/100*0.26)*(((h>>>9)&1)?-1:1);
+      const cx=mx-dy/d*d*bend,cy=my+dx/d*d*bend;
+      const p=document.createElementNS(NS,"path");
+      p.setAttribute("d",`M${a._x+dx/d*a._r},${a._y+dy/d*a._r} Q${cx},${cy} ${b._x-dx/d*b._r},${b._y-dy/d*b._r}`);
+      p.setAttribute("fill","none");p.setAttribute("stroke",(f.trust==="measured")?"#25505e":"#4f7f8d");
+      p.setAttribute("stroke-width","1.4");p.setAttribute("opacity",".75");
+      loc.appendChild(p)});
+    // island blobs: trust halo band then sand blob, label under
+    vs.forEach(v=>{
+      const halo=document.createElementNS(NS,"path");
+      halo.setAttribute("d",blobPath(v._x,v._y,v._r+6,v._jit,v._rot));
+      halo.setAttribute("fill",TRUST_HALO[v._trust]);loc.appendChild(halo);
+      const sand=document.createElementNS(NS,"path");
+      sand.setAttribute("d",blobPath(v._x,v._y,v._r,v._jit,v._rot));
+      sand.setAttribute("fill","#ecddb0");sand.setAttribute("stroke","#8a744e");
+      sand.setAttribute("stroke-width","1.4");loc.appendChild(sand);
+      const t=document.createElementNS(NS,"text");
+      t.setAttribute("x",v._x);t.setAttribute("y",v._y+v._r+12);
+      t.setAttribute("text-anchor","middle");t.setAttribute("font-size","10.5");
+      t.setAttribute("fill","#33291c");
+      t.textContent=(v.name||v.id).replace(/^Apache /,"").toUpperCase();
+      loc.appendChild(t);
+      labels.push({t,x:v._x,y:v._y+v._r+12,w:(v.name||v.id).length*6.4+8,h:11});
+    });
+    // two passes of label de-collision, biggest first
+    labels.sort((a,b)=>b.w-a.w);
+    for(let pass=0;pass<2;pass++){
+      for(let i=0;i<labels.length;i++)for(let j=0;j<labels.length;j++){
+        if(i===j)continue;
+        const A=labels[i],B=labels[j];
+        if(Math.abs(A.x-B.x)<(A.w+B.w)/2&&Math.abs(A.y-B.y)<A.h){
+          A.y+=B.y<=A.y?7:-7;
+          A.t.setAttribute("y",A.y)}
+      }
+    }
+    // danger marks on owner coasts
+    dgs.forEach(dg=>{
+      const v=byId.get(dg.vessel);if(!v)return;
+      const h=hashStr(dg.id);const a=-2.3+((h%10)/10)*1.2;
+      const x=v._x+Math.cos(a)*(v._r+13),y=v._y+Math.sin(a)*(v._r+13);
+      const m=document.createElementNS(NS,"text");
+      m.setAttribute("x",x);m.setAttribute("y",y+4);m.setAttribute("text-anchor","middle");
+      m.setAttribute("font-size","13");m.setAttribute("font-weight","700");
+      m.setAttribute("fill","#8a3226");
+      m.textContent=dg.category==="rock"?"+":dg.category==="wreck"?"†":"*";
+      loc.appendChild(m)});
+    // hull = the link (only when the room exists)
+    const hit=document.createElementNS(NS,"rect");
+    hit.setAttribute("x",gx-14);hit.setAttribute("y",gy-6);
+    hit.setAttribute("width",GROUP_W);hit.setAttribute("height",GROUP_H+60);
+    hit.setAttribute("fill","transparent");
+    if(row.roomRendered){
+      const a=document.createElementNS(NS,"a");
+      a.setAttribute("href",row.roomUrl);a.appendChild(hit);loc.appendChild(a);
+    } else {
+      const t=document.createElementNS(NS,"text");
+      t.setAttribute("x",gx+GROUP_W-120);t.setAttribute("y",gy+64);
+      t.setAttribute("font-size","11");t.setAttribute("fill","#6b5a3e");
+      t.textContent="chart room not rendered yet";
+      loc.appendChild(t);
+    }
+    g.appendChild(loc);
+  });
+})();
+
+/* ---------- the table (data anchor) ---------- */
 const TRUSTS=["measured","charted","reported","doubtful","unsurveyed"];
 const COLORS={measured:"#2c5a68",charted:"#5d8895",reported:"#6b8f8f",doubtful:"#a4b6b1",unsurveyed:"#d9d2b6"};
 const tb=document.querySelector("#fleet tbody");

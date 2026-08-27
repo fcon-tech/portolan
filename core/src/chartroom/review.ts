@@ -29,6 +29,8 @@ export interface FleetRow {
   topHub: { id: string; fanIn: number } | null;
   roomUrl: string;
   roomRendered: boolean;
+  /** Vessels + fairways + dangers of this province — the fleet sheet's data. */
+  entries: IndexedEntry[];
 }
 
 function rowFor(targetRoot: string): FleetRow {
@@ -73,6 +75,8 @@ function rowFor(targetRoot: string): FleetRow {
     topHub,
     roomUrl: pathToFileURL(roomPath).href,
     roomRendered: existsSync(roomPath),
+    entries: entries.filter((e) =>
+      e.kind === "vessel" || e.kind === "fairway" || e.kind === "danger"),
   };
 }
 

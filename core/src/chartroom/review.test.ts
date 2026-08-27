@@ -74,6 +74,23 @@ test("no template placeholder survives; room link honesty is embedded", () => {
   expect(html).toContain('"roomRendered":false'); // chart-room.html not rendered in fixtures
 });
 
+test("each row embeds its province's vessels/fairways/dangers for the sheet", () => {
+  const html = readFileSync(fleetReviewPath(alpha), "utf8");
+  // alpha fixture: 1 vessel, 3 fairways — embedded verbatim next to aggregates
+  expect(html).toContain('"kind":"vessel"');
+  expect(html).toContain('"kind":"fairway"');
+  // row JSON is valid and countable per province
+  const dataMatch = html.match(/const ROWS = (\[\{.*\}\]);/s);
+  expect(dataMatch).not.toBeNull();
+  const rows = JSON.parse(dataMatch![1]!) as Array<{ name: string; counts: Record<string, number>; entries: Array<{ kind: string }> }>;
+  expect(rows.map((r) => r.name)).toEqual(["alpha", "beta"]);
+  const alphaRow = rows[0]!;
+  expect(alphaRow.entries.filter((e) => e.kind === "vessel")).toHaveLength(1);
+  expect(alphaRow.entries.filter((e) => e.kind === "fairway")).toHaveLength(3);
+  const betaRow = rows[1]!;
+  expect(betaRow.entries.filter((e) => e.kind === "fairway")).toHaveLength(1);
+});
+
 test("a non-charted target fails loudly naming the path; nothing is written", () => {
   const empty = mkdtempSync(join(tmpdir(), "fleet-empty-"));
   expect(() => buildFleetReview([alpha, empty])).toThrow(join(empty, ".portolan/chart"));
