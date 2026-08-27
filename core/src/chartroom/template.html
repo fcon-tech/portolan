@@ -38,6 +38,17 @@
   #title{font-variant:small-caps;letter-spacing:.14em;font-weight:700;font-size:19px}
   #province{font-weight:400;letter-spacing:.02em;color:var(--ink-soft);font-size:15px}
   #topbar .spacer{flex:1}
+  #filters{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  #findBox{font:inherit;font-size:13px;padding:4px 10px;border:1.5px solid var(--frame);
+       border-radius:3px;background:var(--chipbg);color:var(--ink);width:170px}
+  #findBox:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .chip{font:inherit;font-size:11.5px;padding:3px 9px;border:1.5px solid var(--frame);
+       border-radius:11px;background:transparent;color:var(--ink);cursor:pointer}
+  .chip[aria-pressed="true"],.chip.on{background:var(--lane-measured);border-color:var(--lane-measured);
+       color:#fff}
+  .chip:hover{background:var(--panel)}
+  #map .dimmed{opacity:.16}
+  #map .dimmed text.lbl{opacity:.35}
   #modeBtn{font:inherit;font-size:13px;padding:5px 14px;border:1.5px solid var(--frame);
        border-radius:3px;background:transparent;color:var(--ink);cursor:pointer}
   #modeBtn:hover{background:var(--panel)}
@@ -121,6 +132,12 @@
   <div id="title">Chart Room</div>
   <div id="province"></div>
   <div class="spacer"></div>
+  <div id="filters" role="group" aria-label="Filters">
+    <input id="findBox" type="search" placeholder="find vessel…" autocomplete="off">
+    <span id="trustChips"></span>
+    <button class="chip" id="dangerChip" type="button" aria-pressed="false">dangers only</button>
+    <button class="chip" id="resetChip" type="button">reset</button>
+  </div>
   <button id="modeBtn" type="button">Engineering mode</button>
 </header>
 <div id="stage">
@@ -701,6 +718,50 @@ function renderDossier(v){
    <h3>${lex("unsurveyed")}</h3>
    <p>${v.behavior?"":"Runtime behavior "+lex("unsurveyed").toLowerCase()+" — vessel <code>behavior</code> is unset (nothing observed running)."}</p>`;
   d.querySelector(".closebtn").addEventListener("click",()=>clearSelect());
+}
+
+/* ---------- find & focus filters (chart-room: chart-room-search) ---------- */
+/* Filters dim attention, never remove data: dimmed vessels keep labels and stay clickable. */
+const filterState={trust:new Set(),dangerOnly:false};
+const dangerVessels=new Set(dangers.map(d=>d.vessel));
+(function buildFilterUI(){
+  const chips=document.getElementById("trustChips");
+  TRUSTS.forEach(tr=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="chip";b.textContent=tr;b.setAttribute("aria-pressed","false");
+    b.addEventListener("click",()=>{
+      filterState.trust.has(tr)?filterState.trust.delete(tr):filterState.trust.add(tr);
+      b.setAttribute("aria-pressed",filterState.trust.has(tr)?"true":"false");
+      applyFilters()});
+    chips.appendChild(b)});
+  const dc=document.getElementById("dangerChip");
+  dc.addEventListener("click",()=>{filterState.dangerOnly=!filterState.dangerOnly;
+    dc.setAttribute("aria-pressed",String(filterState.dangerOnly));applyFilters()});
+  document.getElementById("resetChip").addEventListener("click",()=>{
+    filterState.trust.clear();filterState.dangerOnly=false;
+    document.querySelectorAll("#filters .chip[aria-pressed]").forEach(c=>c.setAttribute("aria-pressed","false"));
+    applyFilters()});
+  document.getElementById("findBox").addEventListener("change",ev=>{
+    const q=ev.target.value.trim().toLowerCase();if(!q)return;
+    const best=vessels.find(v=>v.id.toLowerCase()===q)
+      ||vessels.find(v=>(v.name||"").toLowerCase().startsWith(q)||v.id.toLowerCase().startsWith(q))
+      ||vessels.find(v=>(v.name||"").toLowerCase().includes(q)||v.id.toLowerCase().includes(q));
+    if(best)select(best.id);ev.target.value=""});
+})();
+function vesselBright(id){
+  const v=byId.get(id);if(!v)return true;
+  if(filterState.trust.size&&!filterState.trust.has(v.trust))return false;
+  if(filterState.dangerOnly&&!dangerVessels.has(id))return false;
+  return true}
+function applyFilters(){
+  if(!filterState.trust.size&&!filterState.dangerOnly){
+    document.querySelectorAll("#map .dimmed").forEach(n=>n.classList.remove("dimmed"));
+    return}
+  const anyActive=selected!==null; // interplay handled by blasting rules on top
+  document.querySelectorAll(".island").forEach(g=>
+    g.classList.toggle("dimmed",anyActive?false:!vesselBright(g.dataset.v)));
+  document.querySelectorAll(".gnode").forEach(g=>
+    g.classList.toggle("dimmed",!vesselBright(g.dataset.v)));
 }
 
 /* ---------- selection & blast radius ---------- */
