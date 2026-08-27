@@ -176,6 +176,7 @@ const DATA = __CHART_DATA__;
 const BRIEF = __BRIEF_HTML__;
 const META = __META__;
 const NOTICES = DATA.notices || [];
+const TANGLES = DATA.tangles || [];
 
 /* ---------- deterministic randomness ---------- */
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
@@ -393,6 +394,19 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
     el("circle",{cx:x,cy:y,r:11,fill:"var(--chipbg)",stroke:"var(--frame)","stroke-width":1.4},g);
     const t=el("text",{x,y:y+4.5,"text-anchor":"middle","font-size":12,"font-weight":700,
       fill:"var(--ink)",class:"marginal"},g);t.textContent=fanIn.get(v.id)});
+  // whirlpools: one spiral glyph per tangle at its members' centroid
+  TANGLES.forEach((group,ti)=>{
+    const cx=group.reduce((s,id)=>s+byId.get(id)._x,0)/group.length;
+    const cy=group.reduce((s,id)=>s+byId.get(id)._y,0)/group.length;
+    const wp=el("g",{class:"whirl","data-t":ti},g);
+    for(let arm=0;arm<3;arm++){
+      let d="",a=arm*2*Math.PI/3;
+      for(let s=0;s<=14;s++){
+        const r=4+s*1.15,th=a+s*0.42;
+        d+=(s?"L":"M")+(cx+Math.cos(th)*r).toFixed(1)+","+(cy+Math.sin(th)*r).toFixed(1)}
+      el("path",{d,fill:"none",stroke:"var(--danger)","stroke-width":1.6,
+        "stroke-linecap":"round",opacity:.85},wp)}
+  });
   const t=document.createElementNS(SVGNS,"title");
 })();
 
@@ -609,11 +623,24 @@ function renderBriefing(){
      ${poes.length} ${mode==="eng"?"entry points":"ports of entry"} · ${dangers.length} ${mode==="eng"?"risks":"dangers"} ·
      ${beacons.length} ${mode==="eng"?"config surfaces":"beacons"} · ${lights.length} ${mode==="eng"?"API contracts":"lights"}</p>
    <h3>Trust of chart</h3>${trustBar()}
+   ${tanglesPanel()}
    ${noticesPanel()}
    ${godHubs.length?`<h3>Hubs</h3><ul>${godHubs.map(v=>
       `<li><b>${v.name||v.id}</b> — ${fanIn.get(v.id)} ${lex("hub")}</li>`).join("")}</ul>`:""}
    <h3>Sailing Directions</h3>${BRIEF}
    <p class="statline" style="margin-top:14px">Click an island for the dossier and ${lex("blastr").toLowerCase()}.</p>`;
+}
+/* Dependency tangles panel (chart-room: chart-room-tangles) */
+function tanglesPanel(){
+  if(!TANGLES.length)
+    return `<h3>${mode==="eng"?"Dependency cycles":"Tangles"}</h3>
+      <p class="statline">${mode==="eng"
+        ?"No dependency cycles — the graph is acyclic (verified)."
+        :"No tangles — these waters run clear, no whirlpools charted."}</p>`;
+  const rows=TANGLES.map((group,i)=>`
+    <div class="notice"><span class="nact" style="color:var(--danger)">${mode==="eng"?"CYCLE":"WHIRLPOOL"} ${i+1}</span>
+    ${group.map(id=>`<code>${id}</code>`).join(" ")}</div>`).join("");
+  return `<h3>${mode==="eng"?`Dependency cycles (${TANGLES.length})`:`Whirlpools (${TANGLES.length})`}</h3>${rows}`;
 }
 /* Notices to Mariners panel (chart-room: notices-panel) */
 function noticesPanel(){
@@ -668,6 +695,9 @@ function renderDossier(v){
       <span class="t"><b>${f.to}</b> <code>${f.id}</code></span><span class="tr">${f.trust}</span></div>`))}
    ${sec(lex("beacon")+"s",vb.map(x=>`<p><code>${x.key}</code> (${x.surface}) — ${x.note||""}</p>`))}
    ${sec(lex("light")+"s",vl.map(x=>`<p><b>${x.name}</b> — ${x.note||""}</p>`))}
+   ${TANGLES.some(t=>t.includes(v.id))?(()=>{const g=TANGLES.find(t=>t.includes(v.id))||[];
+      return sec("In a tangle with",[
+        `<p>${g.filter(id=>id!==v.id).map(id=>`<code>${id}</code>`).join(" ")}</p>`])})():""}
    <h3>${lex("unsurveyed")}</h3>
    <p>${v.behavior?"":"Runtime behavior "+lex("unsurveyed").toLowerCase()+" — vessel <code>behavior</code> is unset (nothing observed running)."}</p>`;
   d.querySelector(".closebtn").addEventListener("click",()=>clearSelect());

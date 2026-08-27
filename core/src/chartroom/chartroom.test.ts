@@ -8,7 +8,7 @@ import { test, expect, beforeAll } from "bun:test";
 import { mkdtempSync, writeFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { renderChartRoom, chartRoomPath, inlineMd, safeInlineJson, parseNotices } from "./render";
+import { renderChartRoom, chartRoomPath, inlineMd, safeInlineJson, parseNotices, findTangles } from "./render";
 import { TOOL_TABLE } from "../server/registry";
 import { renderNotices } from "../notices";
 import type { IndexedEntry } from "../types";
@@ -171,6 +171,31 @@ test("the artifact embeds notices; absent file renders an explicit empty state",
   expect(html).toContain("repos/ghost:1");
   // both branches' literals ship in the page script
   expect(html).toContain("RETIRED");
+});
+
+test("findTangles: a two-vessel cycle is one sorted tangle", () => {
+  const t = findTangles([
+    fixtureEntries[0]!, fixtureEntries[1]!,
+    { kind: "fairway", id: "f1", from: "alpha", to: "beta", trust: "charted", stale: false, anchors: [] },
+    { kind: "fairway", id: "f2", from: "beta", to: "alpha", trust: "charted", stale: false, anchors: [] },
+  ] as never);
+  expect(t).toEqual([["alpha", "beta"]]);
+});
+
+test("findTangles: 3-cycle, multiple groups ordered; self-loop and DAG are clean", () => {
+  const v = (id: string) => ({ ...fixtureEntries[0], id });
+  const fw = (from: string, to: string) => ({ kind: "fairway", id: `fw-${from}-${to}`, from, to, trust: "charted", stale: false, anchors: [] });
+  // graph: x→y→z→x plus w→x (w not in the cycle); separate dag chain u→v2
+  const entries = [
+    v("x"), v("y"), v("z"), v("w"), v("u"), v("v2"),
+    fw("x", "y"), fw("y", "z"), fw("z", "x"), fw("w", "x"),
+    fw("u", "v2"),
+  ] as never;
+  expect(findTangles(entries)).toEqual([["x", "y", "z"]]);
+  // self-loop only
+  expect(findTangles([v("solo"), { kind: "fairway", id: "fl", from: "solo", to: "solo", trust: "charted", stale: false, anchors: [] }] as never)).toEqual([]);
+  // acyclic
+  expect(findTangles(fixtureEntries as never)).toEqual([]);
 });
 
 test("the chart.render MCP tool serves the same core function surface", () => {

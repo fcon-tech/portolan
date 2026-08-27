@@ -29,6 +29,62 @@ export interface ParsedNotice {
 }
 
 /**
+ * Dependency tangles: strongly connected components (size ≥ 2) of the
+ * fairway graph over vessel ids. Self-loops and singletons are not
+ * tangles. Deterministic — members sorted by id, groups by first member.
+ */
+export function findTangles(entries: IndexedEntry[]): string[][] {
+  const vesselIds = new Set(
+    entries.filter((e) => e.kind === "vessel").map((e) => e.id),
+  );
+  const adj = new Map<string, string[]>();
+  for (const e of entries) {
+    if (e.kind !== "fairway") continue;
+    const f = e as IndexedEntry & { from: string; to: string };
+    if (!vesselIds.has(f.from) || !vesselIds.has(f.to)) continue;
+    if (!adj.has(f.from)) adj.set(f.from, []);
+    adj.get(f.from)!.push(f.to);
+  }
+  // Tarjan SCC
+  let index = 0;
+  const idx = new Map<string, number>();
+  const low = new Map<string, number>();
+  const stack: string[] = [];
+  const onStack = new Set<string>();
+  const sccs: string[][] = [];
+  const strong = (v: string): void => {
+    idx.set(v, index);
+    low.set(v, index);
+    index += 1;
+    stack.push(v);
+    onStack.add(v);
+    for (const w of adj.get(v) ?? []) {
+      if (!idx.has(w)) {
+        strong(w);
+        low.set(v, Math.min(low.get(v)!, low.get(w)!));
+      } else if (onStack.has(w)) {
+        low.set(v, Math.min(low.get(v)!, idx.get(w)!));
+      }
+    }
+    if (low.get(v) === idx.get(v)) {
+      const component: string[] = [];
+      let w: string;
+      do {
+        w = stack.pop()!;
+        onStack.delete(w);
+        component.push(w);
+      } while (w !== v);
+      sccs.push(component);
+    }
+  };
+  for (const v of vesselIds) if (!idx.has(v)) strong(v);
+  return sccs
+    .filter((c) => c.length > 1)
+    .map((c) => c.sort())
+    .sort((a, b) => (a[0]! < b[0]! ? -1 : 1));
+}
+
+/**
  * Parse the plain-text grammar produced by `renderNotices` (notices.ts):
  * header + per-notice entry lines (label padded to 14 columns) followed by
  * indented `anchor:` continuation lines. Absent or empty file → [].
@@ -140,7 +196,8 @@ export function renderChartRoom(targetRoot: string): ChartRoomResult {
   };
 
   const html = loadTemplate()
-    .replace("__CHART_DATA__", () => safeInlineJson({ entries, notices }))
+    .replace("__CHART_DATA__", () =>
+      safeInlineJson({ entries, notices, tangles: findTangles(entries) }))
     .replace("__BRIEF_HTML__", () => JSON.stringify(briefHtml))
     .replace("__META__", () => safeInlineJson(meta));
 
