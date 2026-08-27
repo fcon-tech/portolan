@@ -6,14 +6,14 @@
 <title>Chart Room</title>
 <style>
   :root{
-    --paper:#efe6d0; --panel:#e9dec4; --ink:#33291c; --ink-soft:#6b5a3e;
-    --water:#cfe0da; --halo1:#e6e0bd; --halo2:#dde8dd;
-    --island:#e9dab2; --island-edge:#8a744e; --island-ink:#4a3b26;
+    --paper:#e7dfc8; --panel:#eadfc4; --ink:#33291c; --ink-soft:#6b5a3e;
+    --water:#b9cfc6; --halo1:#cfdcd2; --halo2:#dfe3d3;
+    --island:#ecddb0; --island-edge:#8a744e; --island-ink:#4a3b26;
     --danger:#8a3226; --poe:#274a63;
-    --lane-measured:#2c5a68; --lane-charted:#5d8895;
-    --lane-reported:#6b8f8f; --lane-doubtful:#a4b6b1;
+    --lane-measured:#25505e; --lane-charted:#4f7f8d;
+    --lane-reported:#5f8886; --lane-doubtful:#98aaa4;
     --frame:#6b5a3e; --accent:#7a2f22;
-    --chipbg:#efe6d0; --halotext:#efe6d0;
+    --chipbg:#efe6d0; --halotext:#e7dfc8; --sea-tex:#9dbfb4;
     --font-map:Georgia,'Iowan Old Style','Times New Roman',serif;
     --font-ui:Georgia,serif;
   }
@@ -25,7 +25,7 @@
     --lane-measured:#4fd0c8; --lane-charted:#35788a;
     --lane-reported:#4f7d8c; --lane-doubtful:#39505c;
     --frame:#3d586d; --accent:#e08573;
-    --chipbg:#0f151b; --halotext:#0f151b;
+    --chipbg:#0f151b; --halotext:#0f151b; --sea-tex:#1b2733;
     --font-map:'Segoe UI',system-ui,sans-serif;
     --font-ui:'Segoe UI',system-ui,sans-serif;
   }
@@ -109,14 +109,16 @@
   text.lbl{font-family:var(--font-map);fill:var(--ink);paint-order:stroke;
        stroke:var(--halotext);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
   text.lbl.big{font-style:italic;font-size:23px;font-weight:600}
-  text.lbl.mid{font-style:italic;font-size:17px}
-  text.lbl.small{font-size:12.5px;letter-spacing:.04em}
+  text.lbl.mid{font-style:italic;font-size:17.5px;font-weight:500}
+  text.lbl.small{font-size:11.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
   .island{cursor:pointer}
   .island .coast{fill:var(--island);stroke:var(--island-edge);stroke-width:2.2}
   .island:hover .coast{stroke-width:3.6}
   .island.edgeless .coast{stroke-dasharray:1 5;stroke-linecap:round}
   .lane{fill:none;stroke-linecap:round;transition:opacity .15s}
   .lane:hover{stroke-width:4}
+  .casing{pointer-events:none}
+  #map.blasting .casing{opacity:.25}
   #map.blasting .island:not(.lit):not(.lit2){opacity:.22}
   #map.blasting .island:not(.lit):not(.lit2) text{opacity:.4}
   #map.blasting .lane:not(.lit):not(.lit2){opacity:.1}
@@ -283,6 +285,12 @@ function vBlob(v,scale){const cx=v._x,cy=v._y;
     v._x=cx+Math.cos(t)*((inner.x1-inner.x0)/2*depth)*(0.85+0.3*rnd());
     v._y=cy+Math.sin(t)*((inner.y1-inner.y0)/2*depth)*(0.85+0.3*rnd());
   });
+  // the busiest harbors belong mid-province: most lanes are inbound to them
+  {
+    const hx=(inner.x0+inner.x1)/2, hy=(inner.y0+inner.y1)/2;
+    main.filter(v=>fanIn.get(v.id)>=GOD_HUB).forEach(v=>{
+      v._x=hx+(rnd()-0.5)*160; v._y=hy+(rnd()-0.5)*140});
+  }
   const links=fairways.filter(f=>byId.has(f.from)&&byId.has(f.to));
   const K=150;
   for(let it=0;it<500;it++){
@@ -315,6 +323,29 @@ function vBlob(v,scale){const cx=v._x,cy=v._y;
       if(nx!==v._x||ny!==v._y)any=true;v._x=nx;v._y=ny});
     if(!any)break;
   }
+  // hub anchor: the busiest harbors settle mid-province, where their
+  // inbound lanes are shortest; overlap-freeing continues around them
+  {
+    const hx=(inner.x0+inner.x1)/2, hy=(inner.y0+inner.y1)/2;
+    const hubs=main.filter(v=>fanIn.get(v.id)>=GOD_HUB);
+    hubs.forEach((v,i)=>{const a=i/hubs.length*2*Math.PI;
+      v._x=hx+Math.cos(a)*120-80; v._y=hy+Math.sin(a)*110-40});
+    for(let s2=0;s2<50;s2++){
+      let moved=false;
+      for(let i=0;i<main.length;i++)for(let j=i+1;j<main.length;j++){
+        const a=main[i],b=main[j];let dx=b._x-a._x,dy=b._y-a._y;
+        const d=Math.hypot(dx,dy)||0.01;const min=a._R+b._R+GAP;
+        if(d<min){const push=(min-d)/2+0.5;
+          if(!hubs.includes(a)){a._x-=dx/d*push;a._y-=dy/d*push}
+          if(!hubs.includes(b)){b._x+=dx/d*push;b._y+=dy/d*push}
+          moved=true}}
+      main.forEach(v=>{
+        const nx=Math.min(Math.max(v._x,inner.x0+v._R),inner.x1-v._R);
+        const ny=Math.min(Math.max(v._y,inner.y0+v._R),inner.y1-v._R);
+        if(nx!==v._x||ny!==v._y)moved=true;v._x=nx;v._y=ny});
+      if(!moved)break;
+    }
+  }
 })();
 
 /* ---------- svg helpers ---------- */
@@ -331,36 +362,90 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
 
 /* rhumb lines from the rose center */
 (function(){const g=document.getElementById("rhumbs");
-  const rx=W-210,ry=170;g.dataset.cx=rx;g.dataset.cy=ry;
+  const rx=W-190,ry=205;g.dataset.cx=rx;g.dataset.cy=ry;
   for(let i=0;i<16;i++){const a=i/16*2*Math.PI;
-    el("line",{x1:rx,y1:ry,x2:rx+Math.cos(a)*2200,y2:ry+Math.sin(a)*2200,
-      stroke:"var(--ink-soft)","stroke-width":i%4===0?1.1:0.6,opacity:0.12},g)}
+    el("line",{x1:rx,y1:ry,x2:rx+Math.cos(a)*2400,y2:ry+Math.sin(a)*2400,
+      stroke:"var(--ink-soft)","stroke-width":i%4===0?1.0:0.55,opacity:0.16},g)}
 })();
 
 /* halos: stepped bathymetric bands around each island, band depth = trust of record */
 (function(){const g=document.getElementById("halos");
+  const OUTER=["#8fb3a2","#a9c2b0","#c1d1bd","#d6dcc6","#e6ddc4"]; // measured=deepest, unsurveyed=paper
+  const INNER=["#7ba18e","#9ab39c","#b8c8ac","#cfd4b8","#eee4c5"];
   vessels.forEach(v=>{
     const depth=TRUST_RANK[v.trust]??4;
-    const c=[ "#b8d3cc","#c6dbd3","#d5e2da","#e2e8dd","#eae8da" ][depth]; // measured=deeper teal
-    el("path",{d:vBlob(v,1.62),fill:c,stroke:"none",opacity:0.9},g);
-    el("path",{d:vBlob(v,1.27),fill:[ "#cbdfd6","#d8e5da","#e4e9da","#ecead9","#efe9c9" ][depth],
-      stroke:"none",opacity:0.95},g);
+    el("path",{d:vBlob(v,1.66),fill:OUTER[depth],stroke:"none",opacity:.94},g);
+    el("path",{d:vBlob(v,1.28),fill:INNER[depth],stroke:"none",opacity:.97},g);
   });
 })();
 
-/* lanes */
+/* lanes: paper casing + tapered three-segment stroke + hub fan spread */
 (function(){const g=document.getElementById("lanes");
-  const lrnd=mulberry32(SEED^0x5f3759df);
+  // fan index per (to,id): arrows into one hub land side by side, not stacked
+  const fan=new Map();
+  fairways.forEach(f=>{if(!byId.has(f.to))return;
+    if(!fan.has(f.to))fan.set(f.to,[]);
+    fan.get(f.to).push(f.id)});
+  fan.forEach(list=>list.sort());
+  const fanIdx=new Map();
+  fan.forEach((list,to)=>list.forEach((id,i)=>fanIdx.set(id,{i,n:list.length})));
+
+  const style={measured:{stroke:"var(--lane-measured)",dash:null,w:[3.4,2.5,1.6]},
+               charted:{stroke:"var(--lane-charted)",dash:null,w:[3.0,2.2,1.4]},
+               reported:{stroke:"var(--lane-reported)",dash:"7 5",w:[2.7,2.0,1.3]},
+               doubtful:{stroke:"var(--lane-doubtful)",dash:"3 6",w:[2.2,1.7,1.2]},
+               unsurveyed:{stroke:"var(--lane-doubtful)",dash:"1 7",w:[2.0,1.6,1.1]}};
+  const pt=(a,c,b,t)=>{const u=1-t;
+    return [u*u*a[0]+2*u*t*c[0]+t*t*b[0], u*u*a[1]+2*u*t*c[1]+t*t*b[1]]};
+
   fairways.forEach(f=>{const a=byId.get(f.from),b=byId.get(f.to);if(!a||!b)return;
+    const h=hashStr(f.id);
     const mx=(a._x+b._x)/2,my=(a._y+b._y)/2;
     let dx=b._x-a._x,dy=b._y-a._y;const d=Math.hypot(dx,dy)||0.01;
-    const bend=(0.14+0.1*lrnd())*(lrnd()<0.5?-1:1);
+    const bend=(0.22+((h>>>4)%100)/100*0.3)*(((h>>>9)&1)?-1:1);
     const cx=mx-dy/d*d*bend*0.9, cy=my+dx/d*d*bend*0.9;
-    const sx=a._x+dx/d*(a._r+6),sy=a._y+dy/d*(a._r+6);
-    const ex=b._x-dx/d*(b._r+10),ey=b._y-dy/d*(b._r+10);
-    const p=el("path",Object.assign({d:`M${sx.toFixed(1)},${sy.toFixed(1)} Q${cx.toFixed(1)},${cy.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)}`,
-      class:"lane","data-fw":f.id,"marker-end":"url(#arrow)"},LANE_STYLE[f.trust]||LANE_STYLE.charted),g);
-    p.dataset.from=f.from;p.dataset.to=f.to;
+    // start / end on the coasts
+    let sx=a._x+dx/d*(a._r+5),sy=a._y+dy/d*(a._r+5);
+    let ex=b._x-dx/d*(b._r+8),ey=b._y-dy/d*(b._r+8);
+    // fan spread at the destination, perpendicular to approach
+    const fi=fanIdx.get(f.id)||{i:0,n:1};
+    if(fi.n>1){const off=(fi.i-(fi.n-1)/2)*9;
+      ex+=-dy/d*off; ey+=dx/d*off}
+    const A=[sx,sy];const B=[ex,ey];
+    // deterministic obstacle avoidance: if the curve grazes a foreign
+    // island, flip/strengthen the bend (up to three attempts)
+    const clear=(ctl)=>{
+      const probes=[[0.3],[0.55],[0.8]];
+      return !probes.some(([t])=>{
+        const p=pt(A,ctl,B,t);
+        return vessels.some(v=>v!==a&&v!==b&&
+          Math.hypot(p[0]-v._x,p[1]-v._y)<v._r*1.14)})};
+    let ctl=[cx,cy];
+    if(!clear(ctl)){
+      for(const cand of [-bend,-bend*1.9,bend*1.9]){
+        const cx2=mx-dy/d*d*cand*0.9, cy2=my+dx/d*d*cand*0.9;
+        if(clear([cx2,cy2])){ctl=[cx2,cy2];break}}}
+    const st=style[f.trust]||style.charted;
+    const endTangent=[B[0]-ctl[0],B[1]-ctl[1]];const tl=Math.hypot(...endTangent)||1;
+    // arrowhead drawn as a filled wedge aligned with the landing tangent
+    const ax=B[0],ay=B[1],ux=endTangent[0]/tl,uy=endTangent[1]/tl;
+    const head=el("path",{d:`M${ax},${ay} L${ax-ux*9-uy*3.6},${ay-uy*9+ux*3.6} L${ax-ux*9+uy*3.6},${ay-uy*9-ux*3.6} Z`,
+      fill:st.stroke,"stroke":"none",class:"lane","data-fw":f.id},g);
+    head.dataset.from=f.from;head.dataset.to=f.to;
+    // paper casing then three tapering dash-respecting segments
+    el("path",{d:`M${A[0]},${A[1]} Q${ctl[0]},${ctl[1]} ${B[0]},${B[1]}`,
+      fill:"none",stroke:"var(--halotext)","stroke-width":st.w[0]+2.6,
+      "stroke-linecap":"round",opacity:.65,class:"casing"},g);
+    [[0,.42,st.w[0]],[.38,.74,st.w[1]],[.70,1,st.w[2]]].forEach(([t0,t1,w])=>{
+      const p0=pt(A,ctl,B,t0),p1=pt(A,ctl,B,(t0+t1)/2),p2=pt(A,ctl,B,Math.min(t1, .999));
+      const sp=el("path",{d:`M${p0[0].toFixed(1)},${p0[1].toFixed(1)} Q${p1[0].toFixed(1)},${p1[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`,
+        fill:"none",class:"lane","data-fw":f.id},
+        g);
+      sp.setAttribute("stroke",st.stroke);
+      sp.setAttribute("stroke-width",w);
+      if(st.dash)sp.setAttribute("stroke-dasharray",st.dash);
+      sp.dataset.from=f.from;sp.dataset.to=f.to;
+    });
   });
 })();
 
@@ -397,14 +482,17 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
     list.forEach((d,i)=>{const a=-2.35+i*0.55+(drnd()-0.5)*0.2;
       const x=v._x+Math.cos(a)*(v._r+22),y=v._y+Math.sin(a)*(v._r+22);
       (SYM[d.category]||rock)(x,y);d._x=x;d._y=y})});
-  // ports of entry: anchor + protocol
+  // ports of entry: anchor on the coast away from the label (labels sit
+  // below), protocol as a small letterspaced chip just outside the glyph
   function anchor(x,y){
     el("path",{d:`M${x},${y-9} v15 M${x-6},${y-2} h12 M${x},${y+6} a6,6 0 1,0 -6,-6 M${x},${y-9} a3.4,3.4 0 0,1 6,0`,
-      stroke:"var(--poe)","stroke-width":2,fill:"none","stroke-linecap":"round"},g)}
+      stroke:"var(--poe)","stroke-width":2.2,fill:"none","stroke-linecap":"round"},g)}
   poes.forEach(p=>{const v=byId.get(p.vessel);if(!v)return;
-    const a=2.2;const x=v._x+Math.cos(a)*(v._r+24),y=v._y+Math.sin(a)*(v._r+24);
+    const a=-Math.PI/2+((hashStr(p.id)%40)-20)/70; // near top, deterministic spread
+    const x=v._x+Math.cos(a)*(v._r+20),y=v._y+Math.sin(a)*(v._r+20);
     anchor(x,y);
-    const t=el("text",{x:x+14,y:y+4,class:"marginal","font-size":11},g);
+    const t=el("text",{x,y:y-(v._r>26?26:20),"text-anchor":"middle",class:"marginal",
+      "font-size":9,"font-weight":700,"letter-spacing":".14em",fill:"var(--poe)"},g);
     t.textContent=(p.protocol||"").toUpperCase()||"ENTRY"});
   // god-hub chips
   godHubs.forEach(v=>{const x=v._x+v._r*0.75,y=v._y-v._r*0.85;
@@ -553,7 +641,7 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
   gt=el("text",{x:64,y:136,class:"marginal","font-size":12},gh);
   gt.textContent=`Expedition ${META.expedition} · layered by dependency depth`;
   // compass rose
-  const rx=W-210,ry=170;
+  const rx=W-190,ry=205;
   const rose=el("g",{class:"nautical-only"},g);
   el("circle",{cx:rx,cy:ry,r:44,fill:"none",stroke:"var(--ink-soft)","stroke-width":1},rose);
   el("circle",{cx:rx,cy:ry,r:34,fill:"none",stroke:"var(--ink-soft)","stroke-width":0.5},rose);
@@ -569,12 +657,12 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
   // map legend (nautical)
   const mleg=el("g",maponly,g);
   const lx=56,ly=H-268;
-  el("rect",{x:lx,y:ly,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4,opacity:.96},mleg);
+  el("rect",{x:lx,y:ly,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4},mleg);
   let lt=el("text",{x:lx+16,y:ly+26,class:"cartouche-main","font-size":13},mleg);lt.textContent="LEGEND";
   // trust of record (water depth)
-  const bands=["#b8d3cc","#c6dbd3","#d5e2da","#e2e8dd","#eae8da"];
+  const bands=["#7ba18e","#9ab39c","#b8c8ac","#cfd4b8","#eee4c5"];
   TRUSTS.forEach((tr,i)=>{const y=ly+46+i*20;
-    el("rect",{x:lx+16,y:y-9,width:34,height:12,fill:bands[i],stroke:"var(--frame)","stroke-width":.6},mleg);
+    el("rect",{x:lx+16,y:y-10,width:30,height:13,fill:bands[i],stroke:"var(--island-edge)","stroke-width":.8},mleg);
     const t2=el("text",{x:lx+60,y:y+1,"font-size":11.5,class:"marginal",fill:"var(--ink)"},mleg);
     t2.textContent=tr});
   // lane styles
@@ -591,7 +679,7 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
   // graph legend (engineering)
   const gleg=el("g",{class:"engonly"},g);
   const gx=56,gy=H-268;
-  el("rect",{x:gx,y:gy,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4,opacity:.96},gleg);
+  el("rect",{x:gx,y:gy,width:360,height:226,fill:"var(--paper)",stroke:"var(--frame)","stroke-width":1.4},gleg);
   let gl=el("text",{x:gx+16,y:gy+26,class:"cartouche-main","font-size":13},gleg);gl.textContent="LEGEND";
   let gy2=gy+48;
   gl=el("text",{x:gx+16,y:gy2,"font-size":11,class:"marginal",fill:"var(--ink)"},gleg);
