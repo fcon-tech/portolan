@@ -389,6 +389,17 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
   fan.forEach(list=>list.sort());
   const fanIdx=new Map();
   fan.forEach((list,to)=>list.forEach((id,i)=>fanIdx.set(id,{i,n:list.length})));
+  // braid groups: same destination AND same approach sector (8 buckets)
+  const sectorOf=(f)=>{
+    const a=byId.get(f.from),b=byId.get(f.to);if(!a||!b)return "x";
+    const ang=Math.atan2(b._y-a._y,b._x-a._x);
+    return f.to+":"+(((Math.round(ang/(Math.PI/4))%8)+8)%8)};
+  const braid=new Map();
+  fairways.forEach(f=>{const k=sectorOf(f);
+    if(!braid.has(k))braid.set(k,[]);braid.get(k).push(f.id)});
+  braid.forEach(list=>list.sort());
+  const braidIdx=new Map();
+  braid.forEach(list=>list.forEach((id,i)=>{if(list.length>1)braidIdx.set(id,i)}));
 
   const style={measured:{stroke:"var(--lane-measured)",dash:null,w:[3.4,2.5,1.6]},
                charted:{stroke:"var(--lane-charted)",dash:null,w:[3.0,2.2,1.4]},
@@ -402,7 +413,11 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
     const h=hashStr(f.id);
     const mx=(a._x+b._x)/2,my=(a._y+b._y)/2;
     let dx=b._x-a._x,dy=b._y-a._y;const d=Math.hypot(dx,dy)||0.01;
-    const bend=(0.22+((h>>>4)%100)/100*0.3)*(((h>>>9)&1)?-1:1);
+    let bend=(0.22+((h>>>4)%100)/100*0.3)*(((h>>>9)&1)?-1:1);
+    if(braidIdx.has(f.id)){
+      const k=braidIdx.get(f.id);
+      bend=Math.abs(bend)*(1+Math.floor(k/2)*0.45)*((k&1)?-1:1);
+    }
     const cx=mx-dy/d*d*bend*0.9, cy=my+dx/d*d*bend*0.9;
     // start / end on the coasts
     let sx=a._x+dx/d*(a._r+5),sy=a._y+dy/d*(a._r+5);
@@ -524,6 +539,22 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
       class:"lbl "+cls,"data-v":v.id},g);
     t.textContent=(v.name||v.id).replace(/^Apache /,"");
   });
+})();
+
+/* label plane: two deterministic passes push overlapping labels apart */
+(function(){const g=document.getElementById("labels");
+  const boxes=[...g.querySelectorAll("text.lbl")].map(t=>{
+    const b=t.getBBox();return {t,x:b.x,y:b.y,w:b.width,h:b.height}});
+  boxes.sort((a,b)=>b.w-a.w);
+  for(let pass=0;pass<2;pass++){
+    for(let i=0;i<boxes.length;i++)for(let j=0;j<boxes.length;j++){
+      if(i===j)continue;
+      const A=boxes[i],B=boxes[j];
+      if(Math.abs(A.x-B.x)<(A.w+B.w)/2&&Math.abs(A.y-B.y)<(A.h+B.h)/2){
+        A.y+=B.y<=A.y?8:-8;
+        A.t.setAttribute("y",A.y+A.h-3)}
+    }
+  }
 })();
 
 /* graph view (engineering mode): layered dependency diagram */
