@@ -123,7 +123,7 @@ check("1.1", "locked glossary and trust vocabulary present in SKILL.md", () => {
   for (const tool of [
     "chart.read", "chart.write", "sweep", "symbols", "manifests",
     "sound.edge", "sound.anchor", "log.append", "log.read",
-    "expeditions.propose", "expeditions.decide",
+    "expeditions.propose", "expeditions.decide", "chart.render",
   ]) {
     assert(text.includes(tool), `SKILL.md never teaches the tool ${tool}`);
   }
@@ -152,7 +152,7 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   ]) {
     assert(text.includes(phrase), `the harbor teaching omits "${phrase}"`);
   }
-  assert(/Eleven tools:/.test(text), "the tool desk does not count eleven tools");
+  assert(/Twelve tools:/.test(text), "the tool desk does not count twelve tools");
   // The desk's call shapes teach the expedition tools' exact argument names.
   assert(text.includes('"tool": "expeditions.propose", "input": {}'), "no call shape for expeditions.propose");
   assert(text.includes('"fingerprint"'), "no call shape citing a fingerprint");
