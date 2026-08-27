@@ -2,7 +2,7 @@
 
 ## 1. Core
 
-- [ ] 1.1 Implement `runProposal` in `core/src/harbor/run.ts` (queue lookup,
+- [x] 1.1 Implement `runProposal` in `core/src/harbor/run.ts` (queue lookup,
       any-kind launch via `launchExpedition`, accept `by: governor` then
       append-failure semantics; `GOVERNOR` constant; `appendLaunchFailure`
       attribution option) and verify with fake launchers: a gap proposal
@@ -13,15 +13,15 @@
 
 ## 2. Rendering + CLI
 
-- [ ] 2.1 Add `renderRunChat` (proposal lines + outcome; deterministic
+- [x] 2.1 Add `renderRunChat` (proposal lines + outcome; deterministic
       bytes) with a golden test
-- [ ] 2.2 Add the `run` CLI subcommand (required `--fingerprint` +
+- [x] 2.2 Add the `run` CLI subcommand (required `--fingerprint` +
       `--launcher`; `--launcher-timeout`; `--format` defaults to chat) and
       verify flag discipline: missing flags → usage error exit 1, launcher
       flags rejected on propose
 
 ## 3. Live proof + archive
 
-- [ ] 3.1 Live-run one standing gap proposal on the dogfood province
+- [x] 3.1 Live-run one standing gap proposal on the dogfood province
       through the opencode launcher; verify the history attribution and the
       healed gap; full suite green; archive
