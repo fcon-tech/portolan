@@ -480,7 +480,7 @@ export const TOOL_TABLE: ToolSpec[] = [
   },
 ];
 
-/** The served Portolan tool names, in table order (the harness capability's eleven). */
+/** The served Portolan tool names, in table order (the harness capability's twelve). */
 export const TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
 
 /**
