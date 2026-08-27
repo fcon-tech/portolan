@@ -249,3 +249,48 @@ test("a rewritten chart retires absent vessels' sheets", () => {
   expect(readdirSync(dir)).not.toContain(sheetFileName("db"));
   expect(readChart(target)).toHaveLength(3);
 });
+
+
+// ---------------------------------------------------------------------------
+// chart-write-shrink-guard: a full-replace cannot silently mass-shrink.
+// ---------------------------------------------------------------------------
+
+function fixtureEntries10(): ChartEntry[] {
+  const list: ChartEntry[] = [];
+  for (let i = 0; i < 5; i++) {
+    list.push({
+      kind: "vessel", id: `v${i}`, name: `V${i}`, paths: [`apps/v${i}`],
+      anchors: [{ type: "file", path: `apps/v${i}/main.ts`, line: 1 }], trust: "charted",
+    });
+    list.push({
+      kind: "light", id: `l${i}`, vessel: `v${i}`, name: `light ${i}`,
+      anchors: [{ type: "file", path: `apps/v${i}/main.ts`, line: 2 }], trust: "measured",
+    });
+  }
+  return list;
+}
+
+test("shrink guard: a partial rewrite that drops >25% is refused with counts", () => {
+  const target = makeTarget();
+  const big = fixtureEntries10();
+  writeChart(target, big);
+  expect(() => writeChart(target, big.slice(0, 3))).toThrow(
+    /3 entries would shrink the chart from 10 [\s\S]*allowShrink/,
+  );
+  expect(readChart(target).length).toBe(10);
+});
+
+test("shrink guard: allowShrink honors a deliberate retire-heavy correction", () => {
+  const target = makeTarget();
+  writeChart(target, fixtureEntries10());
+  const result = writeChart(target, fixtureEntries10().slice(0, 3), { allowShrink: true });
+  expect(result.index.length).toBe(3);
+});
+
+test("shrink guard: first write and growth pass without flags", () => {
+  const target = makeTarget();
+  writeChart(target, fixtureEntries10().slice(0, 2));
+  expect(readChart(target).length).toBe(2);
+  writeChart(target, fixtureEntries10());
+  expect(readChart(target).length).toBe(10);
+});

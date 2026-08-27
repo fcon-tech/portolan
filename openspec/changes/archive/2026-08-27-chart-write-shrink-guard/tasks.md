@@ -2,7 +2,7 @@
 
 ## 1. Store guard
 
-- [ ] 1.1 Add the options parameter + 75 % shrink guard (rejection naming
+- [x] 1.1 Add the options parameter + 75 % shrink guard (rejection naming
       both counts and `allowShrink`) to `writeChart`; plumb
       `allowShrink` through the `chart.write` MCP schema; verify tests:
       shrink below 75 % rejected with counts in message, `allowShrink:
@@ -11,4 +11,4 @@
 
 ## 2. Archive
 
-- [ ] 2.1 Full suite green; archive
+- [x] 2.1 Full suite green; archive

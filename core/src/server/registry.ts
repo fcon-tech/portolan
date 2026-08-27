@@ -249,17 +249,29 @@ export const TOOL_TABLE: ToolSpec[] = [
     name: "chart.write",
     description:
       "Write the Chart (full-replace semantics): validates every entry — anchors and a trust label are mandatory, " +
-      "else the store rejects — then persists sheets + index atomically and returns the write result with Notices to Mariners.",
+      "else the store rejects — then persists sheets + index atomically and returns the write result with Notices to Mariners. " +
+      "A write that would drop more than a quarter of the existing entries is refused unless allowShrink is true.",
     inputSchema: {
       type: "object",
       properties: {
         entries: { type: "array", minItems: 1, items: chartEntrySchema },
+        allowShrink: {
+          type: "boolean",
+          description: "Explicitly allow a retire-heavy write that drops more than a quarter of the existing entries.",
+        },
       },
       required: ["entries"],
       additionalProperties: false,
     },
-    handler: (args, ctx) =>
-      writeChart(ctx.targetRoot, reqArray("chart.write", args, "entries") as ChartEntry[]),
+    handler: (args, ctx) => {
+      const options =
+        args.allowShrink === undefined ? {} : { allowShrink: optBool("chart.write", args, "allowShrink") as boolean };
+      return writeChart(
+        ctx.targetRoot,
+        reqArray("chart.write", args, "entries") as ChartEntry[],
+        options,
+      );
+    },
   },
   {
     name: "sweep",

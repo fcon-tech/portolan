@@ -34,13 +34,27 @@ export interface WriteResult {
   noticesText: string;
 }
 
+export interface WriteOptions {
+  /**
+   * Accept a full-replace that drops more than a quarter of the existing
+   * entries (chart-write-shrink-guard). Default false: silent mass shrink
+   * is how a partial rewrite clobbers a whole chart (live incident,
+   * receipt r43).
+   */
+  allowShrink?: boolean;
+}
+
 /**
  * Write the whole chart (full-replace semantics: entries absent from the
  * batch are retired). Validates the batch first — a rejection or a late
  * duplicate-id failure persists nothing. Vessel sheets are re-rendered from
  * the entries; sheets of retired vessels are removed.
  */
-export function writeChart(targetRoot: string, rawEntries: ChartEntry[]): WriteResult {
+export function writeChart(
+  targetRoot: string,
+  rawEntries: ChartEntry[],
+  options: WriteOptions = {},
+): WriteResult {
   // Round-trip rule: entries read back from the chart carry `stale` and
   // `signature` metadata the store owns and re-stamps on every write, so a
   // read → modify → write repair cycle must not be rejected for them.
@@ -53,6 +67,19 @@ export function writeChart(targetRoot: string, rawEntries: ChartEntry[]): WriteR
   });
   if (entries.length === 0) {
     throw new Error("writeChart: refusing to write an empty chart");
+  }
+  // Shrink guard (chart-write-shrink-guard): a full-replace that drops more
+  // than a quarter of the existing entries is refused unless explicitly
+  // allowed — a partial rewrite must not clobber a whole chart silently.
+  const previous = readChartOrNull(targetRoot);
+  if (previous && !options.allowShrink) {
+    const floor = Math.floor(previous.length * 0.75);
+    if (entries.length < floor) {
+      throw new Error(
+        `writeChart refused: ${entries.length} entries would shrink the chart from ${previous.length} ` +
+          `(allowShrink to override a deliberate retire-heavy correction)`,
+      );
+    }
   }
   validateEntries(entries);
   // Late batch check, after per-entry validation: duplicate ids would
@@ -67,7 +94,6 @@ export function writeChart(targetRoot: string, rawEntries: ChartEntry[]): WriteR
   }
 
   const dir = chartDir(targetRoot);
-  const previous = readChartOrNull(targetRoot);
   const indexed = sortEntries(
     entries.map((entry) => {
       const base = { ...entry, stale: false } as IndexedEntry;
