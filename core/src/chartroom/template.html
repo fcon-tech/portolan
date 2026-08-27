@@ -177,6 +177,7 @@
             <g id="islands"></g>
             <g id="marks"></g>
             <g id="labels"></g>
+            <g id="plate" style="pointer-events:none"></g>
           </g>
           <g id="graphview"></g>
         </g>
@@ -472,8 +473,10 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
     if(fanIn.get(v.id)===0&&!poeVessels.has(v.id))grp.classList.add("edgeless");
     el("path",{d:vBlob(v,1),class:"coast",filter:"url(#coastWobble)"},grp);
     if(v.stale)el("path",{d:vBlob(v,1),fill:"url(#staleHatch)",stroke:"none"},grp);
-    grp.addEventListener("click",ev=>{ev.stopPropagation();select(v.id)});
-    grp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();select(v.id)}});
+    grp.addEventListener("click",ev=>{ev.stopPropagation();hidePlate();select(v.id)});
+    grp.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();hidePlate();select(v.id)}});
+    grp.addEventListener("pointerenter",()=>{if(selected!==v.id)showPlate(v)});
+    grp.addEventListener("pointerleave",()=>{if(plateFor===v.id)hidePlate()});
   });
 })();
 
@@ -556,6 +559,91 @@ const LANE_STYLE={measured:{stroke:"var(--lane-measured)","stroke-width":2.6},
     }
   }
 })();
+
+/* ---------- island atlas plates (chart-room: island-atlas-plates) ---------- */
+const PLATE_W=264;
+function roleOf(v){
+  const fi=fanIn.get(v.id)||0,fo=fanOut.get(v.id)||0;
+  if(!poeVessels.has(v.id)&&fi===0)return mode==="eng"?"ISOLATED":"DERELICT";
+  if(fi>=GOD_HUB)return mode==="eng"?"HUB":"HARBOR HUB";
+  if(fi>=3&&fo>=3)return mode==="eng"?"GATEWAY":"GATEWAY";
+  if(fo===0)return mode==="eng"?"LEAF":"ANCHORAGE";
+  return null}
+function buildPlate(v){
+  const g=document.getElementById("plate");
+  while(g.firstChild)g.removeChild(g.firstChild);
+  const el=(t,at,txt)=>{const n=document.createElementNS(SVGNS,t);
+    for(const k in at)n.setAttribute(k,at[k]);
+    if(txt!==undefined)n.textContent=txt;g.appendChild(n);return n};
+  const din=fairways.filter(f=>f.to===v.id).length;
+  const dout=fairways.filter(f=>f.from===v.id).length;
+  const np=poes.filter(p=>p.vessel===v.id).length;
+  const nb=beacons.filter(b=>b.vessel===v.id).length;
+  const nl=lights.filter(l=>l.vessel===v.id).length;
+  const nd=dangers.filter(d=>d.vessel===v.id);
+  const notice=NOTICES.find(n=>n.key==="vessel/"+v.id);
+  const role=roleOf(v);
+  let rows=5+(notice?1:0)+(role?1:0)+(v.stale?1:0)+(nd.length?1:0);
+  const h=74+rows*15+8;
+  // anchor: right of the island, flip if overflowing the neatline
+  let px=v._x+v._R+18, py=Math.max(v._y-h/2,46);
+  if(px+PLATE_W>W-52)px=Math.max(52,v._x-v._R-18-PLATE_W);
+  py=Math.min(py,H-70-h);
+  el("rect",{x:px,y:py,width:PLATE_W,height:h,fill:"var(--paper)",
+    stroke:"var(--frame)","stroke-width":1.6});
+  el("rect",{x:px+4,y:py+4,width:PLATE_W-8,height:h-8,fill:"none",
+    stroke:"var(--frame)","stroke-width":.6});
+  const trustColor={measured:"var(--lane-measured)",charted:"var(--lane-charted)",
+    reported:"var(--lane-reported)",doubtful:"var(--lane-doubtful)",
+    unsurveyed:"#b9ab84"}[v.trust]||"var(--lane-charted)";
+  el("rect",{x:px,y:py,width:7,height:h,fill:trustColor});
+  let y=py+24;
+  const title=el("text",{x:px+16,y:y,fill:"var(--ink)"});
+  title.setAttribute("style","font-family:var(--font-map);font-size:14px;font-weight:700;font-style:italic");
+  title.textContent=(v.name||v.id);
+  y+=13;
+  el("text",{x:px+16,y,fill:"var(--ink-soft)","font-size":9.5},v.id+
+    (filesOf(v)?"  ·  "+filesOf(v).toLocaleString()+" files":""));
+  y+=11;
+  el("text",{x:px+16,y,fill:"var(--ink-soft)","font-size":9.5},
+    ((v.paths&&v.paths.length)||0)+" source path"+(((v.paths&&v.paths.length)===1)?"":"s"));
+  y+=17;
+  // counters row
+  const counts=[
+    [mode==="eng"?"in":"in", din],[mode==="eng"?"out":"out", dout],
+    [lexShort("poe"),np],[lexShort("beacon"),nb],[lexShort("light"),nl],
+    [lexShort("danger"),nd.length]];
+  let cx0=px+16;
+  counts.forEach(([lab,val])=>{
+    el("text",{x:cx0,y,"font-size":10.5,"font-weight":700,fill:"var(--ink)"},String(val));
+    el("text",{x:cx0+((val>=10)?13:8),y,"font-size":8.6,fill:"var(--ink-soft)"},lab);
+    cx0+=((val>=10)?14:9)+lab.length*4.6+10});
+  y+=17;
+  // behavior line
+  const behav=v.behavior
+    ? (mode==="eng"?"behavior charted":"behavior measured")
+    : (mode==="eng"?"runtime unknown":"runtime unsurveyed");
+  el("text",{x:px+16,y,"font-size":10,fill:v.behavior?"var(--lane-measured)":"var(--accent)"},
+    behav);
+  y+=15;
+  if(v.stale){el("text",{x:px+16,y,"font-size":10,"font-weight":700,
+    fill:"var(--accent)"},"PENDING CORRECTION");y+=15}
+  if(notice){el("text",{x:px+16,y,"font-size":10,fill:"var(--ink-soft)"},
+    (mode==="eng"?"last change: ":"latest notice: ")+notice.action+" · "+notice.key.split("/")[1]);y+=15}
+  if(role){el("text",{x:px+16,y,"font-size":10,"font-weight":700,
+    "letter-spacing":".12em",fill:"var(--accent)"},role);y+=15}
+  y+=2;
+  el("text",{x:px+16,y,"font-size":8.8,fill:"var(--ink-soft)"},
+    (mode==="eng"?"click for details + impact set":"click for dossier & blast radius"));
+  function lexShort(k){return LEX[mode][k]}
+}
+let plateFor=null;
+function showPlate(v){
+  if(selected===v.id){hidePlate();return}
+  plateFor=v.id;buildPlate(v)}
+function hidePlate(){plateFor=null;
+  const g=document.getElementById("plate");
+  while(g.firstChild)g.removeChild(g.firstChild)}
 
 /* graph view (engineering mode): layered dependency diagram */
 (function buildGraph(){
@@ -886,7 +974,7 @@ function applyFilters(){
 /* ---------- selection & blast radius ---------- */
 let selected=null;
 function select(id){
-  selected=id;const map=document.getElementById("map");
+  hidePlate();selected=id;const map=document.getElementById("map");
   map.classList.add("blasting");
   const blast=dependents(id);blast.add(id);
   document.querySelectorAll(".island,.gnode").forEach(g=>{
