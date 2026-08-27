@@ -57,7 +57,7 @@
   #mapwrap{flex:1;min-width:0;position:relative;cursor:grab}
   #mapwrap.panning{cursor:grabbing}
   svg#map{width:100%;height:100%;display:block}
-  aside#panel{width:400px;flex:none;overflow-y:auto;padding:14px 16px 24px;
+  aside#panel{width:520px;flex:none;overflow-y:auto;padding:14px 16px 24px;
        border-left:2px solid var(--frame);background:var(--panel)}
   aside#panel h2{margin:2px 0 8px;font-variant:small-caps;letter-spacing:.1em;font-size:16px}
   aside#panel h3{margin:14px 0 6px;font-size:14px;font-variant:small-caps;letter-spacing:.08em;
@@ -84,6 +84,16 @@
   .fwrow{display:flex;gap:8px;font-size:12.5px;align-items:baseline}
   .fwrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .fwrow .tr{font-size:10.5px;color:var(--ink-soft)}
+  .ledger{display:flex;gap:8px;margin:8px 0 2px}
+  .lamp{flex:1;border:1.5px solid var(--frame);border-radius:4px;padding:6px 8px;text-align:center}
+  .lamp .n{font-size:17px;font-weight:700;display:block;line-height:1.1}
+  .lamp .t{font-size:9px;letter-spacing:.1em;display:block;margin-top:2px}
+  .lamp.observed{border-color:var(--lane-measured)} .lamp.observed .t{color:var(--lane-measured)}
+  .lamp.verified{border-color:#1d6b46} .lamp.verified .t{color:#1d6b46}
+  .lamp.declared{border-color:var(--poe)} .lamp.declared .t{color:var(--poe)}
+  .lamp.claimed{border-color:var(--accent)} .lamp.claimed .t{color:var(--accent)}
+  .ledger-note{font-size:10px;color:var(--ink-soft);margin:3px 0 0}
+  .fwrow .snd{font-size:9.5px;color:#1d6b46;font-weight:600}
   .notice{margin:7px 0;border-left:2px solid var(--frame);padding-left:9px}
   .notice .nact{font-size:10.5px;font-weight:700;letter-spacing:.05em;margin-right:6px}
   .notice .nnote{font-size:12px;color:var(--ink-soft);margin-top:2px}
@@ -899,6 +909,15 @@ function renderDossier(v){
   const vl=lights.filter(x=>x.vessel===v.id);
   const blast=dependents(v.id);
   const sec=(title,rows)=>rows.length?`<h3>${title}</h3>${rows.join("")}`:"";
+  const own=[v,...din,...fin,...fout,...vp,...vb,...vl];
+  const hasReceipt=own.some(e=>(e.anchors||[]).some(a=>a.type==="receipt"))||!!v.behavior;
+  const obs=hasReceipt?1:0;
+  const scope=[...own];
+  const byTrust=t=>scope.filter(e=>e.trust===t).length;
+  const ver=byTrust("measured");
+  const dec=byTrust("charted");
+  const cla=scope.filter(e=>e.trust==="reported"||e.trust==="doubtful")
+    .map(e=>`${e.kind}/${e.id}`);
   d.innerHTML=`
    <div class="dossier-head"><h2>${v.name||v.id}</h2>${trustBadge(v.trust)}
      <button class="closebtn" type="button">✕ Close</button></div>
@@ -906,6 +925,14 @@ function renderDossier(v){
      ${fanIn.get(v.id)?` · ${fanIn.get(v.id)} ${lex("hub")}`:" · no known dependents (edge of the charted waters)"}
      ${v.stale?' · <b style="color:var(--accent)">pending correction</b>':""}</p>
    ${v.note?`<p>${v.note}</p>`:""}
+   <h3>${mode==="eng"?"How we know":"How this is known"}</h3>
+   <div class="ledger">
+     <span class="lamp observed"><span class="n">${obs}</span><span class="t">OBSERVED</span></span>
+     <span class="lamp verified"><span class="n">${ver}</span><span class="t">VERIFIED</span></span>
+     <span class="lamp declared"><span class="n">${dec}</span><span class="t">DECLARED</span></span>
+     <span class="lamp claimed"><span class="n">${cla.length}</span><span class="t">CLAIMED</span></span>
+   </div>
+   <p class="ledger-note">observed = execution receipts · verified = source-read (measured) · declared = manifests & packaging (charted) · claimed = report or doubtful${cla.length?" — rides on "+cla.map(c=>`<code>${c}</code>`).join(", "):""}</p>
    <h3>${lex("blastr")}</h3>
    <p>${blast.size} ${lex("vessel").toLowerCase()}s depend on this transitively
       ${blast.size?[...blast].map(id=>`<code>${id}</code>`).join(" "):""}.</p>
@@ -914,9 +941,9 @@ function renderDossier(v){
    ${sec(lex("danger")+"s",din.map(x=>`<p><b>${x.category}</b> — ${x.note||""}
       <ul class="anchors">${(x.anchors||[]).map(a=>`<li>${fmtAnchor(a)}</li>`).join("")}</ul></p>`))}
    ${sec(lex("fairway")+"s in ("+fin.length+")",fin.map(f=>`<div class="fwrow">
-      <span class="t"><b>${f.from}</b> <code>${f.id}</code></span><span class="tr">${f.trust}</span></div>`))}
+      <span class="t"><b>${f.from}</b> <code>${f.id}</code></span><span class="tr">${f.trust}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
    ${sec(lex("fairway")+"s out ("+fout.length+")",fout.map(f=>`<div class="fwrow">
-      <span class="t"><b>${f.to}</b> <code>${f.id}</code></span><span class="tr">${f.trust}</span></div>`))}
+      <span class="t"><b>${f.to}</b> <code>${f.id}</code></span><span class="tr">${f.trust}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
    ${sec(lex("beacon")+"s",vb.map(x=>`<p><code>${x.key}</code> (${x.surface}) — ${x.note||""}</p>`))}
    ${sec(lex("light")+"s",vl.map(x=>`<p><b>${x.name}</b> — ${x.note||""}</p>`))}
    ${TANGLES.some(t=>t.includes(v.id))?(()=>{const g=TANGLES.find(t=>t.includes(v.id))||[];
