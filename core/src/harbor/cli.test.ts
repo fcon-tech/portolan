@@ -316,7 +316,33 @@ test("night-watch 2.2 watch failures are honest: no chart, bad duration, wrong-c
     { encoding: "utf8" },
   );
   expect(wrongCommand.status).toBe(1);
-  expect(wrongCommand.stderr).toContain("watch command");
+  expect(wrongCommand.stderr).toContain("watch and run commands");
+});
+
+test("harbor-run flags: missing fingerprint or launcher is a loud usage error", () => {
+  const target = richProvince();
+  const ok = fakeLauncher("ok.sh", "exit 0");
+
+  const noFp = spawnSync(
+    process.execPath, [CLI, "run", "--target", target, "--launcher", ok.command],
+    { encoding: "utf8" },
+  );
+  expect(noFp.status).toBe(1);
+  expect(noFp.stderr).toContain("--fingerprint is required");
+
+  const noLauncher = spawnSync(
+    process.execPath, [CLI, "run", "--target", target, "--fingerprint", "a".repeat(64)],
+    { encoding: "utf8" },
+  );
+  expect(noLauncher.status).toBe(1);
+  expect(noLauncher.stderr).toContain("--launcher is required");
+
+  const unknown = spawnSync(
+    process.execPath, [CLI, "run", "--target", target, "--fingerprint", "b".repeat(64), "--launcher", ok.command],
+    { encoding: "utf8" },
+  );
+  expect(unknown.status).toBe(1);
+  expect(unknown.stderr).toContain("names no proposal");
 });
 
 test("night-watch 3.2 --help documents the actual flags of both commands", () => {

@@ -13,6 +13,7 @@
 import { formatAnchor } from "../types";
 import type { Proposal, ProposeResult } from "./proposals";
 import type { WatchAction, WatchReport } from "./watch";
+import type { RunReport } from "./run";
 
 function scopeLine(proposal: Proposal): string {
   if (proposal.kind === "new-land") {
@@ -76,10 +77,36 @@ function ranLine(action: WatchAction): string {
 }
 
 /**
- * Render the night-watch report as one postable chat message: what ran
- * (with outcomes), what was left pending (with evidence summaries), and
- * any launcher failures. Always renders — even a watch that did nothing
- * says so. Deterministic: no timestamps, no ambient state.
+ * Render the manual run report as one postable chat message: the proposal
+ * (kind, summary, evidence, scope), the launcher, and the outcome. Always
+ * renders; deterministic — no timestamps, no ambient state. A failure says
+ * it stays queued, like the watch report does.
+ * openspec/changes/harbor-run (harbor capability: the run report is
+ * chat-formatted and deterministic)
+ */
+export function renderRunChat(report: RunReport): string {
+  const lines: string[] = [];
+  lines.push(
+    "Portolan harbor run — one expedition by the Governor's hand.",
+    "",
+    ...proposalLines(report.proposal),
+    `launcher: ${(report.launcherCommand ?? "").trim().split(/\s+/)[0]}`,
+  );
+  if (report.outcome === "completed") {
+    lines.push("outcome: completed");
+  } else {
+    lines.push(
+      `outcome: launch-failed (${report.reason})`,
+      "note: recorded in history; the proposal stays queued for the Governor",
+    );
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+/** The night-watch report in chat form: what ran (with outcomes), what was
+ * left pending (with evidence summaries), and any launcher failures. Always
+ * renders — even a watch that did nothing says so. Deterministic: no
+ * timestamps, no ambient state.
  */
 export function renderWatchChat(report: WatchReport): string {
   const completed = report.ran.filter((a) => a.outcome === "completed");

@@ -28,6 +28,12 @@ export type GovernorDecision = (typeof DECISIONS)[number];
 /** Attribution the night watch writes; session decisions carry no `by`. */
 export const NIGHT_WATCH = "night-watch";
 
+/** Attribution the manual `run` command writes: the Governor's own launch. */
+export const GOVERNOR = "governor";
+
+/** Who may append a launch outcome (the closed attribution vocabulary). */
+const LAUNCH_ATTRIBUTIONS = new Set([NIGHT_WATCH, GOVERNOR]);
+
 /** One recorded decision; `decidedAt` is ISO, like a receipt's `recordedAt`. */
 export interface DecisionRecord {
   fingerprint: string;
@@ -46,7 +52,7 @@ export interface LaunchOutcomeRecord {
   fingerprint: string;
   outcome: "launch-failed";
   recordedAt: string;
-  /** Always the night watch: only the watch appends launch outcomes. */
+  /** Who launched: the night watch or the Governor's manual run. */
   by: string;
   /** Deterministic reason: exit status, timeout, or spawn failure. */
   reason: string;
@@ -142,20 +148,27 @@ export function appendDecision(
 }
 
 /**
- * Append a night-watch launch failure. Always attributed to the night watch;
- * the deterministic `reason` names the failure for the history reader and
- * the watch report alike.
+ * Append a launch failure, attributed to the night watch by default or to
+ * the Governor's manual `run` when `{ by: "governor" }`; the deterministic
+ * `reason` names the failure for the history reader and the report alike.
  */
 export function appendLaunchFailure(
   targetRoot: string,
   fingerprint: string,
   reason: string,
+  options: { by?: string } = {},
 ): LaunchOutcomeRecord {
+  const by = options.by ?? NIGHT_WATCH;
+  if (!LAUNCH_ATTRIBUTIONS.has(by)) {
+    throw new HarborError(
+      `history: launch outcome attribution must be ${NIGHT_WATCH} or ${GOVERNOR}, got ${JSON.stringify(by)}`,
+    );
+  }
   const record: LaunchOutcomeRecord = {
     fingerprint,
     outcome: "launch-failed",
     recordedAt: new Date().toISOString(),
-    by: NIGHT_WATCH,
+    by,
     reason,
   };
   mkdirSync(harborDir(targetRoot), { recursive: true });
