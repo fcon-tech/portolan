@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portolan — the living atlas of a codebase</title>
+<style>
+  :root{
+    --paper:#e7dfc8; --panel:#eadfc4; --ink:#33291c; --ink-soft:#6b5a3e;
+    --frame:#6b5a3e; --accent:#7a2f22; --water:#b9cfc6;
+    --lane-measured:#25505e; --lane-charted:#4f7f8d; --poe:#274a63;
+    --font:Georgia,'Iowan Old Style','Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font);line-height:1.55}
+  header.hero{padding:72px 40px 46px;text-align:center;border-bottom:2px solid var(--frame)}
+  h1{font-variant:small-caps;letter-spacing:.2em;font-size:44px;margin:0 0 8px}
+  .tag{font-size:19px;font-style:italic;color:var(--ink-soft);margin:0 auto 26px;max-width:820px}
+  .ribbon{display:inline-block;padding:4px 18px;border-top:1px solid var(--frame);
+    border-bottom:1px solid var(--frame);letter-spacing:.14em;font-variant:small-caps;font-size:15px}
+  nav.toc{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+  nav.toc a,.btn{font-size:13.5px;color:#274a63;text-decoration:none;
+    border:1.5px solid var(--frame);border-radius:16px;padding:5px 16px}
+  nav.toc a:hover,.btn:hover{background:var(--panel)}
+  main{max-width:1180px;margin:0 auto;padding:38px 30px 70px}
+  section{margin-bottom:56px}
+  h2{font-variant:small-caps;letter-spacing:.12em;font-size:27px;margin:0 0 6px}
+  h2 + p.lede{margin:0 0 20px;color:var(--ink-soft)}
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+  figure{margin:0;border:1.5px solid var(--frame);background:#fff3}
+  figure img{width:100%;display:block}
+  figcaption{padding:9px 12px;font-size:13.5px;border-top:1px solid var(--frame)}
+  figcaption b{display:block;font-size:14.5px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+  .card{border:1.5px solid var(--frame);padding:16px 18px;background:rgba(255,255,255,.28)}
+  .card h3{margin:0 0 6px;font-size:17px;font-variant:small-caps;letter-spacing:.06em}
+  .card p{margin:0;font-size:14.5px}
+  pre{background:#2c251a;color:#efe6d0;padding:14px 18px;border-radius:4px;
+      overflow-x:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.8px;line-height:1.7}
+  pre b{color:#ffd9a0;font-weight:400}
+  table{border-collapse:collapse;width:100%}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid rgba(107,90,62,.35);font-size:14px}
+  th{font-variant:small-caps;letter-spacing:.06em}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em;
+       background:rgba(107,90,62,.14);padding:1px 5px;border-radius:3px}
+  footer{border-top:2px solid var(--frame);padding:26px 40px 60px;text-align:center;
+         color:var(--ink-soft);font-size:13.5px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>Portolan</h1>
+  <p class="tag">A frontier agent — the <b>Cartographer</b> — surveys a brownfield
+     codebase into a living nautical Chart, and you read it as an atlas.
+     Every fact carries an anchor and a trust label, or it does not ship.</p>
+  <div class="ribbon">chart · sound · trust · sail</div>
+  <nav class="toc">
+    <a href="#gallery">The atlas</a><a href="#trust">Trust ladder</a>
+    <a href="#features">What ships</a><a href="#demo">Demo province</a>
+    <a href="#quickstart">Quickstart</a>
+  </nav>
+</header>
+
+<main>
+<section id="gallery">
+  <h2>The atlas</h2>
+  <p class="lede">One self-contained HTML file per province — opens from a file://
+     share, no server, no install. Below: the real Apache Bigtop landscape (18 repos).</p>
+  <div class="gallery">
+    <figure><img src="screenshots/chart-room-map.png" alt="Nautical archipelago map of the Bigtop province">
+      <figcaption><b>Chart Room — the chart view.</b> Vessels as islands sized by code volume,
+        dependency lanes styled by trust, Chart-No.-1 danger marks, ports of entry,
+        hover any island for its atlas plate.</figcaption></figure>
+    <figure><img src="screenshots/system-graph.png" alt="Layered dependency graph of the same province">
+      <figcaption><b>The engineering view.</b> One toggle away: the same data as a layered
+        dependency graph — dependents above, foundations below.</figcaption></figure>
+    <figure><img src="screenshots/fleet-review.png" alt="Fleet review sheet with two provinces as archipelagos">
+      <figcaption><b>Fleet review.</b> Several provinces on one sheet, each drawn from its own
+        Chart index; every group links to its Chart Room.</figcaption></figure>
+    <figure><img src="screenshots/dossier-ledger.png" alt="Vessel dossier with the epistemic ledger">
+      <figcaption><b>Dossier with the honesty ledger.</b> Observed / Verified / Declared / Claimed —
+        how each fact is known, counted from receipts and trust labels.</figcaption></figure>
+  </div>
+</section>
+
+<section id="trust">
+  <h2>The trust ladder</h2>
+  <p class="lede">Portolan never pretends a guess is knowledge. Every entry carries exactly one label:</p>
+  <table>
+    <tr><th>Label</th><th>Means</th><th>In the atlas</th></tr>
+    <tr><td><code>measured</code></td><td>taken from the source, line-anchored; soundings confirmed</td><td>deepest water, solid lanes</td></tr>
+    <tr><td><code>charted</code></td><td>declared by manifests, BOMs, packaging</td><td>mid band</td></tr>
+    <tr><td><code>reported</code></td><td>a claim from docs or reports</td><td>pale band</td></tr>
+    <tr><td><code>doubtful</code></td><td>asserted, then refuted or unverifiable</td><td>faint dashed lane</td></tr>
+    <tr><td><code>unsurveyed</code></td><td>not determined — left blank on purpose</td><td>blank water, no ink</td></tr>
+  </table>
+  <p style="margin-top:14px">Staleness is rendered too: sources changed since the last survey ⇒
+     the island wears a <i>pending correction</i> hatch until an expedition heals it.
+     Hovering an island raises its atlas plate — counters, behavior truth, newest notice,
+     derived role — everything from embedded bytes only.</p>
+</section>
+
+<section id="features">
+  <h2>What ships</h2>
+  <div class="cards">
+    <div class="card"><h3>MCP survey tools</h3><p>Twelve stdio tools your agent calls —
+      sweeps, symbols, manifests, soundings (<code>sound.edge</code>/<code>sound.anchor</code>),
+      the Chart store, the Harbor queue. Deterministic where it must be.</p></div>
+    <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue — repairs,
+      gaps, new land — plus a bounded night watch that launches repairs through any external
+      launcher. No daemon, ever.</p></div>
+    <div class="card"><h3>Byproduct exports</h3><p>The Chart Room and Fleet Review are generated
+      on demand, byte-deterministic, zero dependencies. Exports, never the storage.</p></div>
+    <div class="card"><h3>Skill = method</h3><p>The Cartographer's whole expedition method is a
+      loadable skill: five passes, assert→sound→write, honest unsurveyed waters, Sailing Directions
+      to close.</p></div>
+    <div class="card"><h3>Local-first, read-only</h3><p>Writes stay under the target's
+      <code>.portolan/</code>; the target's source is never touched. No network after install.</p></div>
+    <div class="card"><h3>Sea-tried</h3><p>An acceptance gate runs the whole loop against the real
+      Apache Bigtop corpus and refuses stand-ins — including the Governor's own verdict read.</p></div>
+  </div>
+</section>
+
+<section id="demo">
+  <h2>Demo province: apache-bigtop</h2>
+  <p class="lede">An 18-repo Apache stack assembled by gradle+BOM — surveyed by one headless
+     expedition fleet, now wearing its hover plates and honesty ledgers.</p>
+  <table>
+    <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components + 2 retired hulls ·
+        <b>108 charted entries</b> · hubs: bigtop-utils ×15, hadoop ×11 · 8 dangers: version skew,
+        undeclared solr↔zookeeper, retired hulls, copy-paste recipes</td></tr>
+    <tr><th>Expedition fleet</th><td>30+ headless expeditions (opencode + glm-5.3) turned
+        0 → <b>26/26 vessels with observed behavior</b> and 3 → <b>26 charted API lights</b>;
+        measured-trust facts grew 19 → <b>52</b>. Every write receipted in the ship's log.</td></tr>
+    <tr><th>Honest zeros</th><td>What no expedition observed is still labeled
+        <code>unsurveyed</code> — the lamps say so, in red, on every island.</td></tr>
+    <tr><th>Self-healing proof</th><td>Night watch launched real repair expeditions (history:
+        <code>by: night-watch</code>); a live clobber incident (2-entry partial write) exposed a
+        store gap — fixed as a shrink guard; the chart was restored from byproduct snapshots.</td></tr>
+  </table>
+</section>
+
+<section id="quickstart">
+  <h2>Quickstart</h2>
+  <pre><b># survey a target with your agent (one phrase, it installs Portolan itself):</b>
+survey &lt;target&gt; with Portolan
+
+<b># render one province's atlas — map + graph, find & filters, hover plates:</b>
+bun core/src/chartroom/cli.ts render --target /path/to/province
+
+<b># assemble several provinces into one fleet sheet:</b>
+bun core/src/chartroom/cli.ts review --target /prov/a --target /prov/b
+
+<b># the harbor, headless:</b>
+bun core/src/harbor/cli.ts propose --target &lt;t&gt; --format chat   # the queue
+bun core/src/harbor/cli.ts run    --target &lt;t&gt; --fingerprint &lt;fp&gt; \
+    --launcher adapters/opencode/expedition-launcher            # launch one by hand
+bun core/src/harbor/cli.ts watch  --target &lt;t&gt; [same flags]     # the bounded night policy
+
+<b># serve the twelve MCP tools to your harness:</b>
+bun core/src/server/main.ts --target /path/to/province</pre>
+  <p style="font-size:14px">Requirements: <a href="https://bun.sh">Bun</a>, ripgrep, universal-ctags.
+     Full contract: <a href="../docs/MANIFEST.md">docs/MANIFEST.md</a> ·
+     specs live in <code>openspec/specs/</code> (validated), history in
+     <code>openspec/changes/archive/</code>.</p>
+</section>
+</main>
+
+<footer>Frozen predecessor repo <code>../portolan</code> is reference-only — mine ideas, not code.<br>
+Hic svnt dracones: everything past this neatline is your codebase's uncharted water. Survey it.</footer>
+</body>
+</html>
