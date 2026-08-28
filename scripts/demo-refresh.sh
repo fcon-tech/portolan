@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
+cd "$(dirname "$0")/.." || exit 1
 # Refresh the hosted demo artifacts from the live provinces, apply hosting
 # transforms (neutral paths, relative room links, favicon), and regenerate
 # docs/index.html from docs/landing.html. Run from repo root:
-#   bash docs/demo/refresh.sh
+#   bash scripts/demo-refresh.sh
 set -eu
-BIGTOP="$HOME/work/datasets/bigtop-landscape"
-DOGFOOD="$HOME/projects/faust/portolan-v3"
+BIGTOP="${BIGTOP:?set BIGTOP=/path/to/province}"
+DOGFOOD="${DOGFOOD:-$PWD}"
 NEUTRAL_BIGTOP=/demo/bigtop-landscape
 NEUTRAL_DOGFOOD=/demo/portolan-v3
 
@@ -40,5 +41,5 @@ def hostify(path, room_rel):
 hostify("docs/demo/chart-room.html", "chart-room.html")
 hostify("docs/demo/fleet-review.html", "fleet-review.html")
 PY
-if grep -rn "governor\|/home/" docs/ --exclude=refresh.sh >/dev/null; then echo "LEAK FOUND"; exit 1; fi
+if grep -rn "governor\|/home/" docs/ --exclude=demo-refresh.sh >/dev/null; then echo "LEAK FOUND"; exit 1; fi
 echo "demo refreshed, no home paths in docs/"

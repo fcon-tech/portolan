@@ -2,7 +2,7 @@
 
 Date locked: 2026-08-23. This document is the product contract for Portolan
 v3. It supersedes everything in the frozen v2 repository
-(`~/projects/faust/portolan`, reference only — mine ideas, not code).
+(`../portolan` (v2, frozen), reference only — mine ideas, not code).
 
 ## The product, one phrase
 
