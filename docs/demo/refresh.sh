@@ -5,6 +5,7 @@
 set -eu
 BIGTOP=/home/governor/work/datasets/bigtop-landscape
 DOGFOOD=/home/governor/projects/faust/portolan-v3
+cp docs/landing.html docs/index.html
 cp "$BIGTOP/.portolan/chart-room.html" docs/demo/chart-room.html
 cp "$BIGTOP/.portolan/fleet-review.html" docs/demo/fleet-review.html
 python3 - docs/demo/chart-room.html docs/demo/fleet-review.html <<'PY'

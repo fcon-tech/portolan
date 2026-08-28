@@ -1,4 +1,6 @@
 <!doctype html>
+<!-- EDIT docs/landing.html ONLY. docs/index.html is a build copy:
+     after editing run `bash docs/demo/refresh.sh` (or cp landing.html index.html). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -54,6 +56,10 @@
      codebase into a living nautical Chart, and you read it as an atlas.
      Every fact carries an anchor and a trust label, or it does not ship.</p>
   <div class="ribbon">chart · sound · trust · sail</div>
+  <nav class="toc" style="margin-top:18px">
+    <a class="btn" style="border-color:var(--accent);color:var(--accent)" href="demo/chart-room.html">Open the live Chart Room ▸</a>
+    <a class="btn" href="demo/fleet-review.html">Fleet review sheet ▸</a>
+  </nav>
   <nav class="toc">
     <a href="#gallery">The atlas</a><a href="#trust">Trust ladder</a>
     <a href="#features">What ships</a><a href="#demo">Demo province</a>
@@ -125,6 +131,8 @@
   <h2>Demo province: apache-bigtop</h2>
   <p class="lede">An 18-repo Apache stack assembled by gradle+BOM — surveyed by one headless
      expedition fleet, now wearing its hover plates and honesty ledgers.</p>
+  <p><a class="btn" style="border-color:var(--accent);color:var(--accent)" href="demo/chart-room.html">Open this province's Chart Room ▸</a>
+     <a class="btn" href="demo/fleet-review.html">…and the two-province fleet sheet ▸</a></p>
   <table>
     <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components + 2 retired hulls ·
         <b>108 charted entries</b> · hubs: bigtop-utils ×15, hadoop ×11 · 8 dangers: version skew,
