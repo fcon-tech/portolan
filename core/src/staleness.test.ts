@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { treeSignature, refreshStaleness } from "./staleness";
-import { chartDir, readChart, writeChart, INDEX_FILE } from "./chart-store";
+import { chartDir, readChart, writeChart, INDEX_FILE, NOTICES_FILE } from "./chart-store";
 import { sheetFileName } from "./sheets";
 import type { ChartEntry } from "./types";
 
@@ -155,4 +155,26 @@ test("a second refresh before repair is idempotent", () => {
   expect(second.changedVessels).toEqual(["bravo"]);
   expect(staleIds(target)).toEqual(expectedStale);
   expect(readFileSync(join(chartDir(target), INDEX_FILE), "utf8")).toBe(indexAfterFirst);
+});
+
+test("a second refresh over unchanged sources keeps the outstanding notices", () => {
+  const target = makeTree();
+  writeChart(target, chart);
+  writeFileSync(join(target, "pkg-a/main.js"), "console.log('a drifted');\n");
+
+  const first = refreshStaleness(target);
+  expect(first.notices.map((n) => n.action)).toContain("markedStale");
+  const noticesPath = join(chartDir(target), NOTICES_FILE);
+  const afterFirst = readFileSync(noticesPath, "utf8");
+  expect(afterFirst).toContain("MARKED STALE");
+
+  // Re-detection finds the same drift again (the stored signature is only
+  // re-stamped by a chart write), so there is nothing new to announce — the
+  // outstanding report must survive untouched. Deleting it here made two
+  // consecutive reads over an unchanged province render differently.
+  const second = refreshStaleness(target);
+  expect(second.notices).toEqual([]);
+  expect(second.changedVessels).toEqual(["alpha"]);
+  expect(readFileSync(noticesPath, "utf8")).toBe(afterFirst);
+  expect(staleIds(target)).toEqual(["danger/d-alpha", "fairway/f-a-b", "vessel/alpha"]);
 });

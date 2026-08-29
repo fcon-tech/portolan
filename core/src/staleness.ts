@@ -7,7 +7,7 @@
  * hashing is deliberately avoided — the repair expedition re-reads content
  * anyway.
  */
-import { readdirSync, rmSync, statSync } from "node:fs";
+import { readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import type { IndexedEntry, Notice, VesselSignature } from "./types";
@@ -58,7 +58,10 @@ function collect(root: string, rel: string, out: FileFact[]): void {
 
 /**
  * Cheap tree hash over the given paths (relative to the target root):
- * sorted `path\tsize\tmtime` lines, SHA-256. Symlinks are not followed.
+ * sorted `path\tsize\tmtime` lines, SHA-256. A top-level path is stat'ed as
+ * given, so a symlinked vessel root resolves; symlinked entries found
+ * during the walk are not followed (only dirents reporting file or dir are
+ * descended/collected).
  */
 export function treeSignature(targetRoot: string, paths: string[]): VesselSignature {
   const facts: FileFact[] = [];
@@ -83,6 +86,12 @@ export interface StalenessResult {
  * Re-verify every vessel's source signature against the index. Entries of
  * changed vessels (and only those) are marked `pending correction` in the
  * index and on their sheets. With no changes, nothing is written at all.
+ *
+ * The refresh never deletes `notices.txt`: when a re-detection finds no NEW
+ * stale transitions, the outstanding report from the earlier refresh still
+ * describes the still-pending vessels and stays on the chart — removing it
+ * here would make consecutive reads over an unchanged province render
+ * differently. Only a chart write replaces the report (its own contract).
  */
 export function refreshStaleness(targetRoot: string): StalenessResult {
   const entries = readChart(targetRoot);
@@ -124,7 +133,6 @@ export function refreshStaleness(targetRoot: string): StalenessResult {
     if (sheet) files.set(name, sheet);
   }
   writeFilesAtomically(dir, files);
-  if (notices.length === 0) rmSync(join(dir, NOTICES_FILE), { force: true });
 
   return {
     changedVessels: [...changed].sort(),
