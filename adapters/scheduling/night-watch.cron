@@ -10,8 +10,8 @@
 # for the policy bound (harbor.auto_repair_max_vessels) and launcher
 # contract.
 
-PROVINCE=/home/governor/projects/faust/portolan-v3
-PORTOLAN=/home/governor/projects/faust/portolan-v3
+PROVINCE=/path/to/province
+PORTOLAN=/path/to/portolan-checkout
 
 # Report-only nightly watch: the morning list, nothing auto-launched.
 15 2 * * *  cd $PORTOLAN && bun core/src/harbor/cli.ts watch --target $PROVINCE --format chat

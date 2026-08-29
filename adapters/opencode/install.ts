@@ -27,7 +27,7 @@
  *   bun adapters/opencode/install.ts --target . --config ~/proj/opencode.jsonc
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
@@ -245,6 +245,13 @@ writeFileSync(configPath, finalText);
 const agentsPath = join(province, "AGENTS.md");
 const BLOCK_BEGIN = "<!-- portolan:harbor:begin -->";
 const BLOCK_END = "<!-- portolan:harbor:end -->";
+// The skill pointer is relative for a province inside the checkout (the
+// repo charting itself) so a published AGENTS.md carries no machine paths;
+// for an outside target the pointer must survive being read from anywhere,
+// so the absolute checkout path is used.
+const skillFile = join(REPO_ROOT, "skill", "SKILL.md");
+const insideRepo = !relative(REPO_ROOT, province).startsWith("..");
+const skillPath = insideRepo ? relative(province, skillFile) : skillFile;
 const block =
   `${BLOCK_BEGIN}\n` +
   `## Portolan province\n\n` +
@@ -253,7 +260,7 @@ const block =
   `if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) ` +
   `and ask for a one-phrase decision; record it with \`expeditions.decide\`. ` +
   `Answer landscape questions from the Chart, citing anchors and trust labels. ` +
-  `The full Cartographer's method: ${join(REPO_ROOT, "skill", "SKILL.md")}. ` +
+  `The full Cartographer's method: ${skillPath}. ` +
   `Never modify anything outside \`.portolan/\`.\n` +
   BLOCK_END;
 let agentsText = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";

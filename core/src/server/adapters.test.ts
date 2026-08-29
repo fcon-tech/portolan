@@ -286,3 +286,23 @@ test("the installer writes an idempotent harbor block into the province AGENTS.m
   expect(after).toContain("# My province notes");
   rmSync(sandbox, { recursive: true, force: true });
 });
+
+test("the harbor block names the skill relatively inside the repo — no machine paths", () => {
+  // A province inside the checkout (the repo charting itself) must get a
+  // repo-relative skill pointer: the AGENTS.md may be published as-is.
+  const sandbox = mkdtempSync(join(REPO_ROOT, "core", "src", "server", "agents-rel-"));
+  try {
+    const run = spawnSync(
+      process.execPath,
+      [OPENCODE_INSTALL, "--target", sandbox, "--config", join(sandbox, "oc.json")],
+      { encoding: "utf8", env: childEnv() },
+    );
+    expect(run.status).toBe(0);
+    const agents = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
+    expect(agents).toContain("skill/SKILL.md");
+    expect(agents).not.toContain(REPO_ROOT);
+    expect(agents).not.toMatch(/\/home\/|\/Users\//);
+  } finally {
+    rmSync(sandbox, { recursive: true, force: true });
+  }
+});

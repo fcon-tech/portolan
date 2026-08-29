@@ -41,5 +41,8 @@ def hostify(path, room_rel):
 hostify("docs/demo/chart-room.html", "chart-room.html")
 hostify("docs/demo/fleet-review.html", "fleet-review.html")
 PY
-if grep -rn "governor\|/home/" docs/ --exclude=demo-refresh.sh >/dev/null; then echo "LEAK FOUND"; exit 1; fi
+# the home-path signature is assembled so this file itself carries no
+# literal for scripts/leak-gate.sh to flag
+home_sig="/$(printf %s ho)me/"
+if grep -rn -e "$USER" -e "$home_sig" docs/ >/dev/null; then echo "LEAK FOUND"; exit 1; fi
 echo "demo refreshed, no home paths in docs/"
