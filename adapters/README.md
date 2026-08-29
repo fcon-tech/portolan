@@ -4,7 +4,7 @@ How the one Portolan MCP server reaches a harness. Adapters are launch
 configuration only: they configure how the server is launched and add no
 behavior of their own — no tool filtering, no traffic parsing, no
 per-harness code paths. Two harnesses connecting through different adapters
-see the same eleven tools, the same results, and the same errors as a
+see the same twelve tools, the same results, and the same errors as a
 direct launch (`specs/harness`: "The served tools are harness-agnostic").
 
 The server itself lives at `core/src/server/main.ts`:
@@ -38,7 +38,7 @@ writes (shape verified against opencode's own `opencode mcp add`):
 ```
 
 After installing, `opencode mcp list` shows `portolan connected`, and every
-session can call all eleven served tools.
+session can call all twelve served tools.
 
 The opencode adapter also ships the night watch's expedition launcher
 (`adapters/opencode/expedition-launcher`) — see "The night watch" below.
