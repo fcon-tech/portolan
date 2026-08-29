@@ -3,7 +3,7 @@
  * paths, index (de)serialization, and the atomic stage-temp-then-rename
  * writer. All writes stay under `<target>/.portolan/chart/`.
  */
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import type { IndexedEntry } from "./types";
@@ -61,7 +61,10 @@ export function indexJsonl(entries: IndexedEntry[]): string {
 /**
  * Stage every file to a temp name first, then rename them all into place.
  * A failure before the renames (validation, full disk, ...) leaves the
- * previous chart untouched; staged temps are removed on failure.
+ * previous chart untouched; staged temps are removed on failure. A failure
+ * during the renames rolls back: every replaced file's previous content is
+ * held aside as a backup until all renames are through, so the previous
+ * chart stays byte-identical — not just the machine index.
  */
 export function writeFilesAtomically(dir: string, files: Map<string, string>): void {
   const staged: Array<{ tmp: string; final: string }> = [];
@@ -72,9 +75,38 @@ export function writeFilesAtomically(dir: string, files: Map<string, string>): v
       writeFileSync(tmp, text);
       staged.push({ tmp, final });
     }
-    for (const { tmp, final } of staged) renameSync(tmp, final);
   } catch (err) {
     for (const { tmp } of staged) rmSync(tmp, { force: true });
     throw err;
   }
+  // Preflight: every occupied target must be a regular file a backup can
+  // restore. Anything else (a directory squatting on a sheet name) fails
+  // before a single original is touched.
+  for (const { final } of staged) {
+    if (existsSync(final) && !statSync(final).isFile()) {
+      for (const { tmp } of staged) rmSync(tmp, { force: true });
+      throw new Error(`writeFilesAtomically: ${final} exists and is not a regular file`);
+    }
+  }
+  const backups: Array<{ bak: string; final: string }> = [];
+  const placed = new Set<string>();
+  try {
+    for (const { tmp, final } of staged) {
+      if (existsSync(final)) {
+        const bak = `${final}.bak-${randomBytes(6).toString("hex")}`;
+        renameSync(final, bak);
+        backups.push({ bak, final });
+      }
+      renameSync(tmp, final);
+      placed.add(final);
+    }
+  } catch (err) {
+    for (const final of placed) rmSync(final, { force: true });
+    for (const { bak, final } of backups) renameSync(bak, final);
+    for (const { tmp, final } of staged) {
+      if (!placed.has(final)) rmSync(tmp, { force: true });
+    }
+    throw err;
+  }
+  for (const { bak } of backups) rmSync(bak, { force: true });
 }
