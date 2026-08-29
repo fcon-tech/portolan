@@ -120,7 +120,13 @@ export function renderWatchChat(report: WatchReport): string {
   );
 
   lines.push("ran:");
-  if (completed.length === 0) lines.push("none");
+  if (completed.length === 0) {
+    lines.push(
+      failed.length > 0
+        ? "none — every attempted launch failed (see launch failures)"
+        : "none"
+    );
+  }
   for (const [index, action] of completed.entries()) {
     lines.push(`${index + 1}. ${action.proposal.kind} — ${action.proposal.summary}`);
     lines.push(ranLine(action));

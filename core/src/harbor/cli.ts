@@ -142,18 +142,26 @@ function parseTimeout(): number {
 }
 
 if (command === "propose") {
-  const result = computeProposals(targetRoot);
-  process.stdout.write(
-    format === "chat" ? renderQueueChat(result) : `${JSON.stringify(result, null, 2)}\n`,
-  );
+  try {
+    const result = computeProposals(targetRoot);
+    process.stdout.write(
+      format === "chat" ? renderQueueChat(result) : `${JSON.stringify(result, null, 2)}\n`,
+    );
+  } catch (err) {
+    fail(String((err as Error).message));
+  }
 } else if (command === "watch") {
-  const report = await runWatch(targetRoot, {
-    launcher: values.launcher,
-    launcherTimeoutMs: parseTimeout(),
-  });
-  process.stdout.write(
-    format === "chat" ? renderWatchChat(report) : `${JSON.stringify(report, null, 2)}\n`,
-  );
+  try {
+    const report = await runWatch(targetRoot, {
+      launcher: values.launcher,
+      launcherTimeoutMs: parseTimeout(),
+    });
+    process.stdout.write(
+      format === "chat" ? renderWatchChat(report) : `${JSON.stringify(report, null, 2)}\n`,
+    );
+  } catch (err) {
+    fail(String((err as Error).message));
+  }
 } else {
   try {
     const report = await runProposal(targetRoot, {

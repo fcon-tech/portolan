@@ -294,3 +294,14 @@ test("shrink guard: first write and growth pass without flags", () => {
   writeChart(target, fixtureEntries10());
   expect(readChart(target).length).toBe(10);
 });
+
+test("sheet file name collision is refused, nothing persisted", () => {
+  const target = makeTarget();
+  const slash: ChartEntry = { ...web, id: "web/alt", name: "Web alt A" };
+  const colonized: ChartEntry = { ...web, id: "web:alt", name: "Web alt B" };
+  // `web/alt` and `web:alt` sanitize to the same sheet file name; the write
+  // must refuse rather than let one vessel's sheet silently document
+  // another.
+  expect(() => writeChart(target, [web, slash, colonized])).toThrow(/sheet file name collision/);
+  expect(() => readChart(target)).toThrow(/no chart index/);
+});

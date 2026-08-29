@@ -235,7 +235,11 @@ test("night-watch 2.1 a hanging launcher: killed at the cap, failure appended, n
   });
   const history = readHistory(target);
   expect(history.map((r) => ("decision" in r ? r.decision : r.outcome))).toEqual(["accepted", "launch-failed"]);
-  expect(renderWatchChat(report)).toContain("timed out after 250ms");
+  const chat = renderWatchChat(report);
+  expect(chat).toContain("timed out after 250ms");
+  // Launches were attempted even though none completed; "ran: none" alone
+  // would read as if the watch never tried.
+  expect(chat).toContain("ran:\nnone — every attempted launch failed (see launch failures)");
 });
 
 // ---------------------------------------------------------------------------

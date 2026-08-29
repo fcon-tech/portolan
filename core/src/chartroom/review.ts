@@ -6,10 +6,11 @@
  * read-only inputs, one written artifact inside the first target's
  * perimeter. No MCP surface: a server is bound to one province by contract.
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join, resolve, basename } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
+import { join, resolve, basename, dirname } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { readChart } from "../chart-store";
+import { writeFilesAtomically } from "../chart-io";
 import type { IndexedEntry } from "../types";
 import { safeInlineJson } from "./render";
 
@@ -103,6 +104,6 @@ export function buildFleetReview(targets: string[]): FleetReviewResult {
   const rows = targets.map(rowFor); // loud per-target on missing charts
   const html = loadTemplate().replace(TEMPLATE_ROW, () => safeInlineJson(rows));
   const path = fleetReviewPath(targets[0]!);
-  writeFileSync(path, html);
+  writeFilesAtomically(dirname(path), new Map([[basename(path), html]]));
   return { path, provinces: rows.length, bytes: html.length };
 }

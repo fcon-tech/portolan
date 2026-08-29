@@ -124,7 +124,20 @@ export function renderSheets(
 ): Map<string, string> {
   const sheets = new Map<string, string>();
   const vessels = entries.filter((e): e is VesselIndexed => e.kind === "vessel");
+  const owner = new Map<string, string>();
   for (const vessel of vessels) {
+    const file = sheetFileName(vessel.id);
+    // The sanitization is many-to-one: ids like `foo/bar` and `foo:bar`
+    // collapse to the same file name. Refuse rather than let one vessel's
+    // sheet silently document another.
+    const prior = owner.get(file);
+    if (prior !== undefined) {
+      throw new Error(
+        `sheet file name collision: vessel ids ${JSON.stringify(prior)} and ${JSON.stringify(vessel.id)} ` +
+          `both render to ${file} — give the vessels distinct ids`
+      );
+    }
+    owner.set(file, vessel.id);
     const owned = entries.filter(
       (e) =>
         e.kind !== "vessel" &&
@@ -132,7 +145,7 @@ export function renderSheets(
           ? e.from === vessel.id || e.to === vessel.id
           : e.vessel === vessel.id)
     );
-    sheets.set(sheetFileName(vessel.id), renderVesselSheet(vessel, owned, staleVessels.has(vessel.id)));
+    sheets.set(file, renderVesselSheet(vessel, owned, staleVessels.has(vessel.id)));
   }
   return sheets;
 }

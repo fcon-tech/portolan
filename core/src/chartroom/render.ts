@@ -9,10 +9,11 @@
  * The layout lives in the page; core owns only reading, inlining, and
  * writing. Reads the Chart, writes exactly one file, never the storage.
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { join, resolve, basename } from "node:path";
+import { readFileSync, existsSync } from "node:fs";
+import { join, resolve, basename, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readChart, chartDir } from "../chart-store";
+import { writeFilesAtomically } from "../chart-io";
 import type { IndexedEntry, NoticeAction } from "../types";
 
 /** Where the artifact lands — inside the write perimeter, never the chart dir. */
@@ -205,6 +206,8 @@ export function renderChartRoom(targetRoot: string): ChartRoomResult {
   for (const e of entries) counts[e.kind] = (counts[e.kind] ?? 0) + 1;
 
   const path = chartRoomPath(targetRoot);
-  writeFileSync(path, html);
+  // Same stage-temp-then-rename discipline as the chart itself: a crash
+  // mid-write leaves the previous room intact, never a truncated file.
+  writeFilesAtomically(dirname(path), new Map([[basename(path), html]]));
   return { path, entries: entries.length, counts, bytes: html.length };
 }
