@@ -6,9 +6,18 @@ context: |
   .portolan/chart/. Nautical glossary is LOCKED (Governor, Cartographer,
   Expedition, Chart/Padron, vessel, fairway, port of entry, beacon, light,
   danger, unsurveyed, pending correction, Notices to Mariners, Sailing
-  Directions, sea trial). Trust vocabulary: measured/charted/reported/
-  doubtful/unsurveyed.
+  Directions, Chart room, Fleet review, sea trial). Trust vocabulary:
+  measured/charted/reported/doubtful/unsurveyed.
   Stack: TypeScript on Bun. External binaries: ripgrep, ctags. Semgrep/jscpd
-  later (v1.1). No hand-written per-language source parsers (manifest files
-  are the exception: cheap facts only). Product contract: docs/MANIFEST.md.
-  Conventional commits. Tests: bun test, only where logic is deterministic.
+  still out (v1.1). No hand-written per-language source parsers (manifest
+  files are the exception: cheap facts only). Product contract:
+  docs/MANIFEST.md — non-goals there are non-goals.
+  Subsystems: core/src (Chart store, twelve-tool MCP server, soundings,
+  ship's log), core/src/chartroom (Chart Room + fleet review renderers —
+  byproduct HTML exports, never a deliverable), core/src/harbor (proposal
+  queue, run/watch, external launcher, no daemon), adapters/ (launch
+  configuration only, no tool logic), skill/ (the Cartographer's method),
+  acceptance/ (Bigtop sea trial gate).
+  Charts render truth only: embedded bytes and arithmetic over them; every
+  claim carries an anchor and a trust label. Conventional commits. Tests:
+  bun test, only where logic is deterministic.
