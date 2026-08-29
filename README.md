@@ -1,5 +1,7 @@
 # Portolan
 
+[![CI](https://github.com/fcon-tech/portolan/actions/workflows/ci.yml/badge.svg)](https://github.com/fcon-tech/portolan/actions/workflows/ci.yml)
+
 A frontier agent — the **Cartographer** — surveys a brownfield codebase into a
 living nautical **Chart**: every component, dependency, entry point, config
 surface, API contract and risk, each fact anchored to source and stamped with a

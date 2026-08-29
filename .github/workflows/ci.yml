@@ -1,0 +1,44 @@
+# CI — the repo's own verification block (AGENTS.md, "Verification").
+# Public green is part of the product: an open-source atlas shows its
+# checks passing. The openspec CLI is pinned: newer majors changed
+# validation rules (1.10.0 is the version the specs are written against).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install survey binaries
+        run: sudo apt-get update && sudo apt-get install -y ripgrep universal-ctags
+
+      - name: Install dependencies
+        run: |
+          (cd core && bun install --frozen-lockfile)
+          (cd acceptance && bun install --frozen-lockfile)
+
+      - name: bun test
+        run: bun test
+
+      - name: Typecheck core
+        run: (cd core && bunx tsc --noEmit)
+
+      - name: Typecheck acceptance
+        run: (cd acceptance && bunx tsc --noEmit)
+
+      - name: Validate living specs
+        run: bunx @fission-ai/openspec@1.10.0 validate --specs --strict
+
+      - name: Expedition skill checks
+        run: bun run skill/verify/checks.ts
+
+      - name: Leak gate
+        run: ./scripts/leak-gate.sh
