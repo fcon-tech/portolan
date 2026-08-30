@@ -20,9 +20,9 @@ exists in the code.
 - **`trust.report` tool** (the thirteenth served tool): one call returns the
   province's verification summary — trust-label distribution, per-kind
   counts, staleness (vessels pending correction and their entry counts),
-  a live re-sounding of chart anchors through the `sound.anchor` machinery
-  (deterministic sample above a fixed cap) reporting confirmed/refuted with
-  the refuted list, and a ship's-log tail summary. Read-only toward the
+  a live re-sounding of every chart anchor through the `sound.anchor`
+  machinery reporting confirmed/refuted with the refuted list, and a
+  ship's-log tail summary. Read-only toward the
   source and the Chart; deterministic on an unchanged province.
 - **Skill mandate**: Sailing Directions gain a verification summary section
   produced by calling `trust.report`; the tool desk lists the tool.

@@ -154,6 +154,14 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   }
   assert(/Thirteen tools:/.test(text), "the tool desk does not count thirteen tools");
   assert(text.includes('"tool": "trust.report", "input": {}'), "no call shape for trust.report");
+  assert(
+    text.includes("call `trust.report` (no input) when composing"),
+    "Sailing Directions teaching does not mandate trust.report"
+  );
+  assert(
+    text.includes("A refuted anchor is reported as it stands"),
+    "the mandate does not demand refuted anchors verbatim"
+  );
   // The desk's call shapes teach the expedition tools' exact argument names.
   assert(text.includes('"tool": "expeditions.propose", "input": {}'), "no call shape for expeditions.propose");
   assert(text.includes('"fingerprint"'), "no call shape citing a fingerprint");
@@ -190,7 +198,7 @@ function sectionLines(text: string, heading: string): string[] {
 }
 
 function briefChecks(label: string, brief: string): number {
-  for (const heading of ["# Sailing Directions", "## The waters", "## Top findings", "## The Chart", "## Unsurveyed waters", "## Notices to Mariners"]) {
+  for (const heading of ["# Sailing Directions", "## The waters", "## Top findings", "## Verification summary", "## The Chart", "## Unsurveyed waters", "## Notices to Mariners"]) {
     assert(brief.includes(heading), `${label}: missing "${heading}"`);
   }
   const findings = sectionLines(brief, "## Top findings");

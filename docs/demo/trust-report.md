@@ -1,6 +1,6 @@
 # Trust report
 
-Reproduce: `bun scripts/trust-report.ts --target .`
+Taken: 2026-08-30 · Reproduce: `bun scripts/trust-report.ts --target .`
 
 ## Trust labels
 
@@ -29,9 +29,9 @@ Reproduce: `bun scripts/trust-report.ts --target .`
 | Vessel | Entries dragged |
 | --- | ---: |
 | acceptance | 1 |
-| adapters | 1 |
+| adapters | 10 |
 | core | 26 |
-| skill | 1 |
+| skill | 6 |
 
 ## Anchor re-sounding
 

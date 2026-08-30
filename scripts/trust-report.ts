@@ -2,8 +2,11 @@
  * The committed receipt channel (verification-spine task 4.1, design
  * decision 5): run the `trust.report` module against a province and render
  * the markdown receipt to a file. Deterministic — vocabulary order, no
- * timestamps, no model text — so re-running over an unchanged province is
- * byte-identical. The one rendering transform: the user's home directory
+ * wall-clock reads, no model text — so re-running over an unchanged province
+ * is byte-identical. The one date in the receipt ("Taken:") is derived from
+ * the ship's log's newest receipt, not the clock: the artifact must say when
+ * it was taken (design decision 5) while staying reproducible. The one
+ * rendering transform: the user's home directory
  * prefix is neutralized to `~`, so a receipt over a province whose ship's
  * log quotes absolute paths can still be committed to the public repo
  * (scripts/leak-gate.sh); the same convention as scripts/demo-refresh.sh.
@@ -41,8 +44,11 @@ const out = resolve(process.cwd(), option("--out") ?? join(repoRoot, "docs", "de
 const r = trustReport(target);
 
 const count = (label: string, n: number): string => `| ${label} | ${n} |\n`;
+const taken = r.log.lastReceipt === null
+  ? "unknown — the ship's log is empty"
+  : r.log.lastReceipt.recordedAt.slice(0, 10);
 let md = "# Trust report\n\n";
-md += `Reproduce: \`bun scripts/trust-report.ts --target ${scrub(relative(repoRoot, target) || ".")}\`\n\n`;
+md += `Taken: ${taken} · Reproduce: \`bun scripts/trust-report.ts --target ${scrub(relative(repoRoot, target) || ".")}\`\n\n`;
 
 md += "## Trust labels\n\n| Label | Entries |\n| --- | ---: |\n";
 for (const label of TRUST_LABELS) md += count(label, r.trust[label]);
