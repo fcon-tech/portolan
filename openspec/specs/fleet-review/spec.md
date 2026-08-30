@@ -1,7 +1,13 @@
 # fleet-review Specification
 
 ## Purpose
-TBD - created by archiving change fleet-review. Update Purpose after archive.
+The fleet review assembles several charted provinces onto one page: a
+standing table of facts computed arithmetically from each province's
+machine index, and an archipelago map where every province renders as its
+own island group linking to its Chart Room. It lets the Governor compare
+provinces — sizes, trust shares, hubs, drift — at a glance. It is CLI-only
+(a server is bound to one province by contract), read-only over every
+target but the first, and deterministic byte-for-byte.
 
 ## Requirements
 
@@ -52,17 +58,13 @@ code volume with the shared trust-halo language, intra-province fairways
 as thin curved lanes, dangers as the chart's danger marks, under a
 province-name caption. Layout SHALL be deterministic (seeded relaxation,
 fixed iterations) and re-derive everything from that province's embedded
-index entries — nothing new is computed or invented. The sheet SHALL share
+index entries — nothing new is computed or invented. The page SHALL share
 the fleet review's single self-contained file.
 
 #### Scenario: Two provinces render as two groups
 - **WHEN** the review covers two charted provinces
-- **THEN** the sheet shows two island groups in target order, each drawn
+- **THEN** the page shows two island groups in target order, each drawn
   from its province's own entries
-
-#### Scenario: The same fleet renders byte-identically
-- **WHEN** the review renders twice over unchanged charts
-- **THEN** the files are byte-identical
 
 ### Requirement: A province group links to its Chart Room honestly
 Clicking a province group SHALL open that province's Chart Room artifact;

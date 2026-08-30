@@ -98,7 +98,7 @@ be observable.
 
 ### Requirement: A full-replace cannot silently mass-shrink the chart
 `chart.write` SHALL reject an incoming full-replace whose entry count is
-below 75 % of the existing entry count, unless the call explicitly passes
+below 75% of the existing entry count, unless the call explicitly passes
 `allowShrink: true`; the rejection SHALL name both counts and the
 override. The guard lives in the store, covering every surface. A first
 write (no existing entries) and equal-or-growing writes SHALL pass

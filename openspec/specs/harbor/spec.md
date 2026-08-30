@@ -123,8 +123,8 @@ the watch runs only when an external scheduler or a human invokes it.
 
 ### Requirement: Auto-repair is bounded and never curious
 The night policy SHALL auto-execute only `repair` proposals, and only
-when the setting `auto_repair_max_vessels` is present and the proposal's
-affected vessel count is within it; absent or zero SHALL mean
+when the setting `harbor.auto_repair_max_vessels` is present and the
+proposal's affected vessel count is within it; absent or zero SHALL mean
 report-only. `new-land` and `gap` proposals SHALL never be auto-executed
 regardless of the bound.
 
@@ -149,8 +149,7 @@ harbor history, and name it in the report.
 
 #### Scenario: A failing launcher fails loudly and harmlessly
 - **WHEN** the launcher exits non-zero
-- **THEN** the history records the attempt and its launch-failure (the
-  failure is the latest word — the proposal is effectively not accepted),
+- **THEN** the history records the attempt and its launch-failure,
   the failure is named in the report, and the proposal remains queued
 
 #### Scenario: The opencode adapter ships a working launcher
@@ -207,16 +206,16 @@ fail loudly before anything is written.
 ### Requirement: A manual run is attributed and failure-safe
 The launched proposal SHALL be recorded in the harbor history as accepted
 `by: governor` before the launch; a launcher failure or timeout SHALL
-append a `launch-failed` outcome attributed the same way — as the latest
-word it leaves the proposal effectively not-accepted and queued. The
+append a `launch-failed` outcome attributed the same way, leaving the
+proposal queued — the same failure semantics the watch obeys. The
 chat-formatted run report SHALL name the proposal, its scope, and the
 outcome deterministically (no timestamps).
 
 #### Scenario: A failing launcher leaves the proposal standing
-- **WHEN** the launcher exits non-zero or times out
-- **THEN** the history records the attempt and its launch-failure, the
-  report names the failure, and the proposal remains queued for the
-  Governor
+- **WHEN** the launcher exits non-zero or times out during a manual run
+- **THEN** the outcome follows the watch's failure semantics: the attempt
+  and its launch-failure are recorded, the report names the failure, and
+  the proposal remains queued for the Governor
 
 #### Scenario: The report is deterministic
 - **WHEN** the same run outcome is rendered twice

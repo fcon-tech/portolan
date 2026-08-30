@@ -1,7 +1,13 @@
 # chart-room Specification
 
 ## Purpose
-TBD - created by archiving change chart-room. Update Purpose after archive.
+The Chart Room is Portolan's one-file visual export: a single self-contained
+HTML rendering of a province's Chart, offering the same data in two
+representations — the nautical archipelago and the layered engineering
+graph — with per-vessel dossiers, a visible trust legend, the Notices to
+Mariners, dependency tangles, and honest empty states. It is a byproduct:
+generated only on demand, deterministic byte-for-byte, reading the Chart and
+writing nothing but its own file.
 
 ## Requirements
 
@@ -193,10 +199,6 @@ Every trust distinction SHALL stay visible after the re-styling.
   glyph placement, rhumb/rose placement, legend separation)
 - **THEN** no listed gap remains in the rendering
 
-#### Scenario: Determinism survives the craft pass
-- **WHEN** the same chart is rendered twice after the re-styling
-- **THEN** the files are byte-identical
-
 ### Requirement: Busy arrivals braid, labels keep their plane
 Lanes arriving at one hub from the same rough direction SHALL stagger
 their curvature deterministically (index within the target-and-direction
@@ -216,10 +218,6 @@ trust encodings and the tapered/cased lane geometry are unchanged.
 - **WHEN** two island labels would overlap at overview zoom
 - **THEN** after the render they occupy distinct vertical bands without
   leaving their own island's vicinity
-
-#### Scenario: Determinism survives
-- **WHEN** the province renders twice
-- **THEN** the files are byte-identical
 
 ### Requirement: Pointing at an island raises its atlas plate
 Hovering an island SHALL raise an anchored atlas plate beside it — a
