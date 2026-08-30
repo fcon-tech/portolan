@@ -8,7 +8,7 @@ set -eu
 BIGTOP="${BIGTOP:?set BIGTOP=/path/to/province}"
 DOGFOOD="${DOGFOOD:-$PWD}"
 NEUTRAL_BIGTOP=/demo/bigtop-landscape
-NEUTRAL_DOGFOOD=/demo/portolan-v3
+NEUTRAL_DOGFOOD=/demo/portolan
 
 cp docs/landing.html docs/index.html
 cp "$BIGTOP/.portolan/chart-room.html" docs/demo/chart-room.html

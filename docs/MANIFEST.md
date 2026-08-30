@@ -145,8 +145,8 @@ Gate (all three):
 ## Stack, repo, harnesses
 
 - **TypeScript on Bun**, one language for core, tools, adapters.
-- Repo: this one (`portolan-v3`; product name stays **Portolan**). Old repo
-  frozen as reference.
+- Repo: this one (`portolan`; product name stays **Portolan**). Old repo
+  archived at `origin/v2-archive`, local copy deleted 2026-08-30.
 - Harness targets: opencode first (corporate candidate), pi/omp by
   portability. Zero harness-specific code in the core; harness adapters are
   thin shims (`adapters/`).
@@ -155,7 +155,7 @@ Gate (all three):
   golangci-lint (GPL-3.0 — external process only).
 
 ```
-portolan-v3/
+portolan/
   core/        # MCP server + deterministic utilities (TS/Bun)
     tools/     # chart.*, sweep, symbols, manifests, sound.*, log.*
     schema/    # chart ontology + trust vocabulary (JSON Schema)
