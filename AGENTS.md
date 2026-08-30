@@ -51,6 +51,10 @@ nothing stays unarchived.
    `openspec/specs/` are the source of truth and must match served reality;
    repair drift on sight.
 
+Every change ships through a merge request from a `change/<id>` branch —
+never straight to `main`. At merge time: bump `@portolan/core` version and
+add the change's entry to `CHANGELOG.md`.
+
 ## Verification
 
 Run before claiming anything is done:
