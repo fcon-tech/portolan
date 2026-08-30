@@ -16,13 +16,13 @@
 
 - [ ] 2.1 `core/src/tools/trust-report.ts`: aggregate over `readChart` —
       trust-label distribution, per-kind counts, staleness after
-      `refreshStaleness`, log summary; anchor re-sounding via the existing
-      `sound.anchor` path with cap 500, stored-order sample, sounded vs
-      total stated; refuted list sorted by entry id then anchor index.
+      `refreshStaleness`, log summary; re-sound every chart anchor via the
+      existing `sound.anchor` path, stating sounded and total; refuted list
+      sorted by entry id then anchor index.
 - [ ] 2.2 Tests (from the spec scenarios): one-call summary shape; fresh
       staleness after a source touch; nothing written when signatures are
       unchanged; refuted anchor named with the entry left unchanged;
-      deterministic sample and repeat-run agreement above the cap.
+      repeat-run agreement over an unchanged province.
 - [ ] 2.3 Verification: `bun test` green; `bunx tsc --noEmit` in `core/`.
 
 ## 3. Serve the tool
@@ -35,10 +35,10 @@
 
 ## 4. The committed receipt
 
-- [ ] 4.1 Deterministic renderer script (CLI under `core/src/`) that runs
-      the report against a target and writes markdown; run it on this repo;
-      commit `docs/demo/trust-report.md` with the reproduction command
-      printed inside.
+- [ ] 4.1 Thin deterministic script (`scripts/`, ~20 lines) that runs the
+      report module against a target and writes markdown; run it on this
+      repo; commit `docs/demo/trust-report.md` with the reproduction
+      command printed inside.
 - [ ] 4.2 Verification: re-running the command is byte-identical;
       leak-gate clean.
 
