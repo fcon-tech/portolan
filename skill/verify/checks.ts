@@ -152,7 +152,8 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   ]) {
     assert(text.includes(phrase), `the harbor teaching omits "${phrase}"`);
   }
-  assert(/Twelve tools:/.test(text), "the tool desk does not count twelve tools");
+  assert(/Thirteen tools:/.test(text), "the tool desk does not count thirteen tools");
+  assert(text.includes('"tool": "trust.report", "input": {}'), "no call shape for trust.report");
   // The desk's call shapes teach the expedition tools' exact argument names.
   assert(text.includes('"tool": "expeditions.propose", "input": {}'), "no call shape for expeditions.propose");
   assert(text.includes('"fingerprint"'), "no call shape citing a fingerprint");
