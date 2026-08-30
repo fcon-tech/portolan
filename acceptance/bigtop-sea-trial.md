@@ -1,6 +1,14 @@
 # Bigtop Sea Trial — draft calibration questions
 
-Status: DRAFT v0 (2026-08-23), to be finalized with the first expedition.
+Status: PASSED v1 (2026-08-30, first full run). The trial ran against the
+real Bigtop landscape checkout: fabrication gate 35/35 anchors confirmed,
+Q1/Q3/Q12 machine-pass, fairway completeness 23/23 BOM pairs, trust
+distribution measured 39 / charted 54 of 93 entries, staleness flip pass,
+and the Governor's read recorded as positive. The full report lives in the
+province at `.portolan/sea-trial/report.md`. Question wording below is
+frozen as asked; Q2's expected-answer line still names only Oozie — the
+chart's honest answer names Oozie and Sqoop (both retired from the stack,
+both present in the landscape).
 Corpus: an Apache Bigtop landscape checkout (~18-repo shape: hadoop, spark,
 flink, solr, zookeeper, hive, hbase, oozie, bigtop-packages, …; see
 `acceptance/sea-trial/corpus.ts` for the authoritative list).
