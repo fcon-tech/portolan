@@ -222,6 +222,12 @@ comments in the delivered brief). The brief states:
 
 - the top findings on structure, risks, and smells — each with its anchors,
   its trust label, and where it lives on the Chart;
+- the verification summary: call `trust.report` (no input) when composing
+  the brief and carry its numbers into the Directions — the trust-label
+  distribution, the vessels pending correction, and the refuted anchors
+  verbatim with their entry ids (or the statement that every anchor
+  re-sounded `confirmed`). A refuted anchor is reported as it stands, never
+  smoothed over;
 - where the Chart lives under the target;
 - the principal unsurveyed waters.
 
@@ -230,7 +236,7 @@ labeled `unsurveyed`, never presented as an established fact.
 
 ## 10. Tool desk
 
-One MCP server over stdio, bound to the target root at launch. Twelve tools:
+One MCP server over stdio, bound to the target root at launch. Thirteen tools:
 
 | Tool | Use |
 | --- | --- |
@@ -246,6 +252,7 @@ One MCP server over stdio, bound to the target root at launch. Twelve tools:
 | `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint |
 | `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
 | `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province" or similar, in any language), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
+| `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, ship's-log tail; feeds the Sailing Directions |
 
 Call shapes (fields abbreviated to the ones that matter):
 
@@ -259,4 +266,5 @@ Call shapes (fields abbreviated to the ones that matter):
 { "tool": "chart.write", "input": { "entries": [ { "kind": "vessel", "id": "api", "name": "api", "paths": ["apps/api"], "anchors": [ { "type": "manifest", "path": "apps/api/package.json", "key": "name" } ], "trust": "charted" } ] } }
 { "tool": "expeditions.propose", "input": {} }
 { "tool": "expeditions.decide", "input": { "fingerprint": "64-hex from expeditions.propose", "decision": "accepted" } }
+{ "tool": "trust.report", "input": {} }
 ```
