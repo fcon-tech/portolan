@@ -33,6 +33,16 @@ manual launch for any single proposal. No daemon, ever.
 water, never as decoration; sources that changed since the last survey wear a
 *pending correction* hatch; the trust legend is always visible.
 
+**Verification as the product spine**: one call — `trust.report` — lays the
+province's verification state on the table: the trust-label distribution,
+what drifted into *pending correction*, the ship's-log tail, and a fresh
+deterministic re-sounding of every anchor on the Chart, any refuted one named
+instead of smoothed over. Portolan charts itself: [its own
+receipt](docs/demo/trust-report.md) holds 45 entries, 43 of them `measured`,
+all 89 anchors re-sounded `confirmed`. No surveyed tool markets this
+combination of anchors, closed trust labels, receipts, and staleness
+([verification-property trials, 2026-08-31](docs/verification-trials.md)).
+
 ## The trust ladder
 
 | Label | Means | On the map |
@@ -61,7 +71,7 @@ bun core/src/harbor/cli.ts run    --target <t> --fingerprint <fp> \
     --launcher adapters/opencode/expedition-launcher             # launch one
 bun core/src/harbor/cli.ts watch  --target <t>  [same flags]     # night policy
 
-# serve the twelve MCP tools to your harness:
+# serve the thirteen MCP tools to your harness:
 bun core/src/server/main.ts --target /path/to/province
 ```
 
@@ -71,7 +81,7 @@ Requirements: [Bun](https://bun.sh), ripgrep, universal-ctags.
 
 | Path | What lives there |
 | --- | --- |
-| `core/` | the Chart store, the twelve MCP tools (stdio server), the Harbor, the Chart Room renderer |
+| `core/` | the Chart store, the thirteen MCP tools (stdio server), the Harbor, the Chart Room renderer |
 | `skill/` | the Cartographer's expedition method, as a harness-loadable skill |
 | `adapters/` | opencode installer + expedition launcher, pi/omp shims, drop-in night-watch crontab |
 | `acceptance/` | the sea-trial gate: the whole loop graded against a real corpus |

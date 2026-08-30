@@ -95,13 +95,14 @@ entries without them.
 
 ## The Cartographer and the tools
 
-The model is the cartographer; determinism serves it. The twelve served
+The model is the cartographer; determinism serves it. The thirteen served
 MCP tools (core):
 
 | Tool | Purpose |
 | --- | --- |
 | `chart.read` / `chart.write` | Chart CRUD; schema-validated; requires anchors + trust labels, else rejects |
 | `chart.render` | the Chart Room: the one-file visual export of the province |
+| `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, ship's-log tail |
 | `sweep` | ripgrep-backed search returning anchored chunks |
 | `symbols` | ctags-backed definitions and references |
 | `manifests` | cheap deterministic facts from go.mod / pom / package.json / Cargo / pubspec… |
@@ -203,3 +204,4 @@ portolan/
 | Acceptance run | Sea trial | Ходовые испытания |
 | One-file map/graph export of the Chart | Chart room | Штурманская |
 | Assembled view of several provinces | Fleet review | Смотр флота |
+| One-call verification summary | Trust report | Верификационная сводка |
