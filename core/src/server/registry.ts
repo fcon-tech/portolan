@@ -17,6 +17,7 @@ import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
 import { soundAnchor, soundEdge } from "../tools/sound";
+import { trustReport } from "../tools/trust-report";
 import { computeProposals, decide } from "../harbor/proposals";
 import { renderChartRoom } from "../chartroom/render";
 
@@ -490,9 +491,21 @@ export const TOOL_TABLE: ToolSpec[] = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     handler: (_args, ctx) => renderChartRoom(ctx.targetRoot),
   },
+  {
+    name: "trust.report",
+    description:
+      "One-call verification summary of the province: the trust-label distribution, the per-kind counts, the " +
+      "pending-correction vessels with the entries each drags (staleness refreshed first, same semantics as " +
+      "chart.read), every chart anchor re-sounded live through the deterministic sound.anchor machinery with every " +
+      "refuted anchor named — entry id, cited anchor, what was actually found — and the ship's-log summary. " +
+      "Read-only toward the sources and the Chart beyond that staleness refresh: a refuted verdict informs, it " +
+      "never rewrites an entry or its trust label.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    handler: (_args, ctx) => trustReport(ctx.targetRoot),
+  },
 ];
 
-/** The served Portolan tool names, in table order (the harness capability's twelve). */
+/** The served Portolan tool names, in table order (the harness capability's thirteen). */
 export const TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
 
 /**
