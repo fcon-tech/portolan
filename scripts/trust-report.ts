@@ -27,7 +27,13 @@ const option = (name: string): string | undefined => {
 };
 
 const home = homedir();
-const scrub = (s: string): string => s.replaceAll(`${home}/`, "~/").replaceAll(home, "~");
+// Boundary-safe neutralization: `home + "/"` → `~/`, plus a bare `home` only
+// at end-of-string → `~`. A sibling sharing home as a strict prefix
+// (a path `<home>2/x`) provably passes through untouched.
+const scrub = (s: string): string => {
+  const marked = s.replaceAll(`${home}/`, "~/");
+  return marked.endsWith(home) ? `${marked.slice(0, marked.length - home.length)}~` : marked;
+};
 const oneLine = (s: string): string => scrub(s.replace(/\s+/g, " ").trim());
 
 const target = resolve(process.cwd(), option("--target") ?? repoRoot);

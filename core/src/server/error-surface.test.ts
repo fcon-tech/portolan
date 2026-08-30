@@ -115,7 +115,7 @@ test.skipIf(!rgPresent || envWithoutCtags() === undefined)(
       expect(errorTextOf(invalidEntry)).toContain("measured, charted, reported, doubtful, unsurveyed");
 
       // The server never restarted: the next valid call answers on the
-      // same session, and the whole v1 toolset is still listed.
+      // same session, and the served toolset is still listed in full.
       const valid = await client.callTool({
         name: "log.append",
         arguments: { command: "probe battery", outcome: "ok: server alive" },
