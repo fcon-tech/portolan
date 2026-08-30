@@ -14,22 +14,22 @@ survey <target> with Portolan   ← the whole first-run UX
 
 ## What you get
 
-**The Chart Room** — one self-contained HTML file per surveyed codebase. The
+**The Chart Room**: one self-contained HTML file per surveyed codebase. The
 province as an archipelago: islands sized by code volume, dependency lanes
 styled by trust, risks drawn with real chart symbols, entry points marked.
 One toggle turns it into a layered dependency graph. Hover an island for its
-atlas plate; click for the full dossier and impact set. No server, no install
-— the file opens from anywhere.
+atlas plate; click for the full dossier and impact set. No server, no
+install: the file opens from anywhere.
 
-**The Fleet Review** — several surveyed codebases assembled on one sheet,
+**The Fleet Review**: several surveyed codebases assembled on one sheet,
 each drawn from its own Chart, every group linking to its atlas.
 
-**The Harbor** — a deterministic queue of what deserves an expedition next
+**The Harbor**: a deterministic queue of what deserves an expedition next
 (repairs, unexplored gaps, new land), a bounded night watch that launches
 repairs through any external launcher on a schedule you own, and a one-command
 manual launch for any single proposal. No daemon, ever.
 
-**Honesty built in** — facts the surveys could not establish render as blank
+**Honesty built in**: facts the surveys could not establish render as blank
 water, never as decoration; sources that changed since the last survey wear a
 *pending correction* hatch; the trust legend is always visible.
 
@@ -40,7 +40,7 @@ water, never as decoration; sources that changed since the last survey wear a
 | `measured` | read from source, anchored, sounded | deep water, solid lane |
 | `charted` | declared by manifests, BOMs, packaging | mid band |
 | `reported` | a claim from docs or reports | pale band |
-| `doubtful` | asserted, then refuted or unverifiable | faint dashed lane |
+| `doubtful` | evidence present, could not be validated | faint dashed lane |
 | `unsurveyed` | not determined | blank water — no ink |
 
 ## Quickstart
@@ -83,5 +83,5 @@ Requirements: [Bun](https://bun.sh), ripgrep, universal-ctags.
   postulates, non-goals.
 - Landing page — [fcon-tech.github.io/portolan](https://fcon-tech.github.io/portolan/):
   screenshots, the live demo atlas, the trust ladder.
-- Living specifications — `openspec/specs/` (validated); decision history —
-  `openspec/changes/archive/`.
+- Living specifications live in `openspec/specs/` (validated); decision
+  history in `openspec/changes/archive/`.

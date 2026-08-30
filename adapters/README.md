@@ -5,7 +5,8 @@ configuration only: they configure how the server is launched and add no
 behavior of their own — no tool filtering, no traffic parsing, no
 per-harness code paths. Two harnesses connecting through different adapters
 see the same twelve tools, the same results, and the same errors as a
-direct launch (`specs/harness`: "The served tools are harness-agnostic").
+direct launch (`openspec/specs/harness/spec.md`: "The served tools are
+harness-agnostic").
 
 The server itself lives at `core/src/server/main.ts`:
 
@@ -119,10 +120,8 @@ with outcomes, what stayed pending with evidence, any launcher failures).
 nothing is ever auto-launched. `new-land` and `gap` proposals are never
 auto-executed regardless of the bound — the night watch repairs known
 coast, it does not explore. A malformed value fails loudly; it is never
-silently treated as unbounded.
-
-`harbor.schedule` remains the descriptor of the intended cadence for
-whoever wires the scheduler (Portolan interprets nothing from it).
+silently treated as unbounded. `harbor.schedule` stays the pure descriptor
+described above.
 
 ### The launcher (external and swappable)
 
@@ -185,8 +184,8 @@ bun core/src/harbor/cli.ts watch \
 
 `--format json` gives the machine report (`ran` with outcomes, `pending`,
 `bound`, `reportOnly`) for gate tooling; `--format chat` (the watch's
-default) is the postable one. Two runs over an unchanged province emit
-identical output, so a pipeline may diff runs safely.
+default) is the postable one. As with propose, two runs over an unchanged
+province emit identical output.
 
 ### The flags, verbatim
 
@@ -199,21 +198,29 @@ usage:
   bun core/src/harbor/cli.ts propose [--target <province root>] [--format chat|json]
   bun core/src/harbor/cli.ts watch [--target <province root>] [--format chat|json] \
                                     [--launcher "<command>"] [--launcher-timeout <duration>]
+  bun core/src/harbor/cli.ts run --fingerprint <fp> --launcher "<command>" \
+                                 [--target <province root>] [--format chat|json] \
+                                 [--launcher-timeout <duration>]
 
 commands:
   propose  compute the deterministic expedition queue and print it
   watch    apply the night policy (harbor.auto_repair_max_vessels), launch
            what qualifies through the external launcher, record the history,
            and print the chat-formatted watch report
+  run      launch ONE named proposal by the Governor's explicit choice —
+           any kind (repair, gap, new-land); records the acceptance
+           (by: governor) and any launch failure in the history
 
 flags:
   --target <province root>    the province to operate on (default: working directory)
-  --format <chat|json>        output format; propose defaults to json, watch to chat
-  --launcher "<command>"      watch only: the external launcher to spawn; the
+  --format <chat|json>        output format; propose defaults to json, watch and run to chat
+  --fingerprint <fp>          run only: the proposal's fingerprint, exactly as propose returned
+  --launcher "<command>"      watch/run: the external launcher to spawn; the
                               proposal brief arrives as JSON on stdin; absent means
-                              report-only (nothing is launched)
+                              report-only for the watch (nothing is launched) and is a
+                              usage error for run
   --launcher-timeout <duration>
-                              watch only: how long one launch may run
+                              watch/run: how long one launch may run
                               (default: 30m); e.g. 45s, 30m, 1h
-  --help                     print this help
+  --help                      print this help
 ```

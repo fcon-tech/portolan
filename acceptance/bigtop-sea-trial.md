@@ -1,8 +1,9 @@
 # Bigtop Sea Trial — draft calibration questions
 
 Status: DRAFT v0 (2026-08-23), to be finalized with the first expedition.
-Corpus: an Apache Bigtop landscape checkout (18-repo shape: hadoop, spark,
-flink, solr, zookeeper, hive, hbase, oozie, bigtop-packages, bigtop.bom, …).
+Corpus: an Apache Bigtop landscape checkout (~18-repo shape: hadoop, spark,
+flink, solr, zookeeper, hive, hbase, oozie, bigtop-packages, …; see
+`acceptance/sea-trial/corpus.ts` for the authoritative list).
 
 Rules for every answer:
 
@@ -58,14 +59,14 @@ Rules for every answer:
 ## Unsurveyed (honesty)
 
 - **Q12.** What could the expedition NOT determine statically? *(expected at
-  minimum: real runtime topology, actual deployed versions. The trial FAILS
+  minimum: real runtime topology, actual deployed versions. The trial fails
   if the chart guesses instead of marking `unsurveyed`)*
 
 ## Metrics (gate-runner computed)
 
 - Fairway completeness vs the BOM-derived dependency list.
 - Trust distribution across the chart (% `measured` / `charted` /
-  `reported` / `unsurveyed`).
+  `reported` / `doubtful` / `unsurveyed`).
 - After editing one file: the affected sheet must flip to
   `pending correction` (and nothing else must).
 

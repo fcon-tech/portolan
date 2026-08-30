@@ -1,8 +1,8 @@
 # Portolan v3 — Manifest
 
 Date locked: 2026-08-23. This document is the product contract for Portolan
-v3. It supersedes everything in the frozen v2 repository
-(v2, frozen — preserved on the `v2-archive` branch of this repository; mine ideas, not code).
+v3. It supersedes everything in v2 (preserved on the `v2-archive` branch of
+this repository; take ideas, not code).
 
 ## The product, one phrase
 
@@ -95,19 +95,24 @@ entries without them.
 
 ## The Cartographer and the tools
 
-The model is the cartographer; determinism serves it. v1 MCP tools (core):
+The model is the cartographer; determinism serves it. The twelve served
+MCP tools (core):
 
 | Tool | Purpose |
 | --- | --- |
 | `chart.read` / `chart.write` | Chart CRUD; schema-validated; requires anchors + trust labels, else rejects |
+| `chart.render` | the Chart Room: the one-file visual export of the province |
 | `sweep` | ripgrep-backed search returning anchored chunks |
-| `symbols` | ctags/LSP-backed definitions and references |
+| `symbols` | ctags-backed definitions and references |
 | `manifests` | cheap deterministic facts from go.mod / pom / package.json / Cargo / pubspec… |
 | `sound.edge` / `sound.anchor` | deterministic verification that an asserted edge/anchor exists |
 | `log.append` / `log.read` | the ship's log: a receipt for every command run |
+| `expeditions.propose` / `expeditions.decide` | the harbor: the deterministic expedition queue, and the record of the Governor's decisions |
 
-v1.1 (after the first working chart): `run` (target builds/tests, with
-approval), `smells.scan` (jscpd/semgrep wrappers, SARIF in).
+Still ahead: `smells.scan` (jscpd/semgrep wrappers, SARIF in) and MCP
+`run` (target builds/tests, with approval). The `run` that exists today is
+a harbor CLI command — it launches one proposal through an external
+launcher; it is not an MCP tool.
 
 Intent sources (the "why"): git history, ADRs, READMEs, docs — included but
 always `reported`. Jira/Confluence optional adapters, never required.
@@ -156,13 +161,16 @@ Gate (all three):
 
 ```
 portolan/
-  core/        # MCP server + deterministic utilities (TS/Bun)
-    tools/     # chart.*, sweep, symbols, manifests, sound.*, log.*
-    schema/    # chart ontology + trust vocabulary (JSON Schema)
-  skill/       # the cartographer's method (skill for pi/omp/opencode)
-  acceptance/  # Bigtop sea trial: calibration questions + gate runner
-  adapters/    # opencode plugin first, pi/omp shims
-  docs/        # this manifest
+  core/            # MCP server + deterministic utilities (TS/Bun)
+    src/tools/     # chart.*, sweep, symbols, manifests, sound.*, log.*
+    src/server/    # the stdio server, the tool registry, the wiring
+    src/harbor/    # the expedition queue: propose, watch, run
+    src/chartroom/ # the Chart Room renderer (room + fleet review)
+    schema/        # chart ontology + trust vocabulary (JSON Schema)
+  skill/           # the cartographer's method (skill for pi/omp/opencode)
+  acceptance/      # Bigtop sea trial: calibration questions + gate runner
+  adapters/        # opencode plugin first, pi/omp shims
+  docs/            # this manifest, the landing page, demo artifacts
 ```
 
 ## Non-goals (explicit)

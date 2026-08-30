@@ -18,8 +18,8 @@ Key rules:
   through OpenSpec cycles — see below; do not confuse the two.)
 - Every claim in a chart/doc carries an anchor and a trust label or it does
   not ship.
-- The old repo at `../portolan` is frozen reference: read for ideas, copy no
-  code.
+- The old v2 repo is frozen reference, preserved on the `v2-archive` branch
+  of this repository: read for ideas, copy no code.
 - Code, artifacts, and commit messages in English; reply to the Governor in
   Russian.
 

@@ -76,7 +76,7 @@ flags:
   --launcher-timeout <duration>
                               watch/run: how long one launch may run
                               (default: ${formatDuration(DEFAULT_LAUNCHER_TIMEOUT_MS)}); e.g. 45s, 30m, 1h
-  --help                     print this help`;
+  --help                      print this help`;
 
 let parsed;
 try {
