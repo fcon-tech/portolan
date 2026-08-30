@@ -645,7 +645,7 @@ function buildPlate(v){
     "letter-spacing":".12em",fill:"var(--accent)"},role);y+=15}
   y+=2;
   el("text",{x:px+16,y,"font-size":8.8,fill:"var(--ink-soft)"},
-    (mode==="eng"?"click for details + impact set":"click for dossier & blast radius"));
+    (mode==="eng"?"Click for details + impact set":"Click for dossier & blast radius"));
   function lexShort(k){return LEX[mode][k]}
 }
 let plateFor=null;
@@ -760,7 +760,7 @@ function hidePlate(){plateFor=null;
   t=el("text",{x:cx+20,y:cy+54,class:"marginal","font-size":14.5,fill:"var(--ink)"},cart);
   t.textContent=META.province;
   t=el("text",{x:cx+20,y:cy+74,class:"marginal","font-size":12},cart);
-  t.textContent=`Expedition ${META.expedition} · ${vessels.length} ${lex("vessel").toLowerCase()}s · ${fairways.length} ${lex("fairway").toLowerCase()}s · ${dangers.length} ${lex("danger").toLowerCase()}`;
+  t.textContent=`Expedition ${META.expedition} · ${vessels.length} ${lex("vessel").toLowerCase()}s · ${fairways.length} ${lex("fairway").toLowerCase()}s · ${dangers.length} ${lex("danger").toLowerCase()}s`;
   t.dataset.redynamic="counts";
   // graph header (engineering)
   const gh=el("g",{class:"engonly"},g);

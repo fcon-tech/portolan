@@ -54,12 +54,12 @@
 <header class="hero">
   <h1>Portolan</h1>
   <p class="tag">A frontier agent, the <b>Cartographer</b>, surveys a brownfield
-     codebase onto a living nautical Chart, and you read it as an atlas.
+     codebase into a living nautical Chart, and you read it as an atlas.
      Every fact carries an anchor and a trust label, or it does not ship.</p>
   <div class="ribbon">chart · sound · trust · sail</div>
   <nav class="toc" style="margin-top:18px">
     <a class="btn" style="border-color:var(--accent);color:var(--accent)" href="demo/chart-room.html">Open the live Chart Room ▸</a>
-    <a class="btn" href="demo/fleet-review.html">Fleet review sheet ▸</a>
+    <a class="btn" href="demo/fleet-review.html">Fleet review page ▸</a>
   </nav>
   <nav class="toc">
     <a href="#gallery">The atlas</a><a href="#trust">Trust ladder</a>
@@ -83,7 +83,7 @@
       <figcaption><b>The engineering view.</b> One toggle away: the same data as a layered
         dependency graph. Dependents above, foundations below.</figcaption></figure>
     <figure><img src="screenshots/fleet-review.png" alt="Fleet review sheet with two provinces as archipelagos">
-      <figcaption><b>Fleet review.</b> Several provinces on one sheet, each drawn from its own
+      <figcaption><b>Fleet review.</b> Several provinces on one page, each drawn from its own
         Chart index; every group links to its Chart Room.</figcaption></figure>
     <figure><img src="screenshots/dossier-ledger.png" alt="Vessel dossier with the honesty ledger">
       <figcaption><b>Dossier with the honesty ledger.</b> Observed / Verified / Declared / Claimed:
@@ -126,7 +126,7 @@
       <code>.portolan/</code>; the target's source is never touched. Network access and
       installation sit behind one explicit per-session approval.</p></div>
     <div class="card"><h3>Sea-tried</h3><p>An acceptance gate runs the whole loop against the real
-      Apache Bigtop corpus and refuses stand-ins; the Governor's own verdict read stays the
+      Apache Bigtop corpus and refuses stand-ins; the Governor's own reading is the
       final word.</p></div>
   </div>
 </section>
@@ -136,9 +136,9 @@
   <p class="lede">An 18-repo Apache stack assembled by gradle+BOM, surveyed by one headless
      expedition fleet and now wearing its hover plates and honesty ledgers.</p>
   <p><a class="btn" style="border-color:var(--accent);color:var(--accent)" href="demo/chart-room.html">Open this province's Chart Room ▸</a>
-     <a class="btn" href="demo/fleet-review.html">…and the two-province fleet sheet ▸</a></p>
+     <a class="btn" href="demo/fleet-review.html">…and the two-province fleet page ▸</a></p>
   <table>
-    <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components + 2 retired vessels ·
+    <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components (2 retired) + Portolan's own 4 ·
         <b>108 chart entries</b> · hubs: bigtop-utils ×14, hadoop ×11 · 8 dangers: version skew,
         undeclared solr↔zookeeper, retired vessels, copy-paste recipes</td></tr>
     <tr><th>Expedition fleet</th><td>30+ headless expeditions (opencode + glm-5.3) took
@@ -161,7 +161,7 @@ survey &lt;target&gt; with Portolan
 <b># render one province's atlas — map + graph, find & filters, hover plates:</b>
 bun core/src/chartroom/cli.ts render --target /path/to/province
 
-<b># assemble several provinces into one fleet sheet:</b>
+<b># assemble several provinces into one fleet page:</b>
 bun core/src/chartroom/cli.ts review --target /prov/a --target /prov/b
 
 <b># the harbor, headless:</b>

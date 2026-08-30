@@ -87,7 +87,7 @@ Real nautical charts grade their data; we adopt it wholesale:
 | `measured` | taken from source directly | промер |
 | `charted` | from manifests/metadata | по описи |
 | `reported` | from docs/commits/tickets — claims, not facts | по донесению |
-| `doubtful` | evidence present, could not validate | сомнительно |
+| `doubtful` | evidence present, could not be validated | сомнительно |
 | `unsurveyed` | no usable evidence; never faked | непромерено |
 
 Every chart entry carries a trust label and anchors. `chart.write` rejects

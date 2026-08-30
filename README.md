@@ -21,7 +21,7 @@ One toggle turns it into a layered dependency graph. Hover an island for its
 atlas plate; click for the full dossier and impact set. No server, no
 install: the file opens from anywhere.
 
-**The Fleet Review**: several surveyed codebases assembled on one sheet,
+**The Fleet Review**: several surveyed codebases assembled on one page,
 each drawn from its own Chart, every group linking to its atlas.
 
 **The Harbor**: a deterministic queue of what deserves an expedition next
@@ -52,7 +52,7 @@ survey <target> with Portolan
 # the atlas for a surveyed province (map + graph + dossier + ledger):
 bun core/src/chartroom/cli.ts render --target /path/to/province
 
-# several provinces on one sheet:
+# several provinces on one page:
 bun core/src/chartroom/cli.ts review --target /prov/a --target /prov/b
 
 # the harbor, headless:
