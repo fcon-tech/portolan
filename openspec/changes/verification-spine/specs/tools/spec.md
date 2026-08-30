@@ -29,32 +29,23 @@ trust label, or file outside `<target>/.portolan/`.
   outside `<target>/.portolan/` was touched
 
 ### Requirement: trust.report re-sounds anchors live
-The report SHALL re-verify chart anchors through the deterministic
+The report SHALL re-verify every chart anchor through the deterministic
 `sound.anchor` machinery and state the outcome: how many anchors were
 sounded, how many resolved `confirmed`, and how many `refuted` — listing
-every refuted anchor with its entry id and the cited anchor. When the chart
-holds more anchors than a fixed cap, the report SHALL sound a
-deterministically selected sample (stable order) and state both numbers —
-sounded and total — instead of implying full coverage. A refuted anchor
-SHALL NOT silently change the entry or its trust label; the verdict informs,
-the Cartographer writes.
+every refuted anchor with its entry id and the cited anchor. A refuted
+anchor SHALL NOT silently change the entry or its trust label; the verdict
+informs, the Cartographer writes.
 
-#### Scenario: Every anchor under the cap is sounded
-- **WHEN** the chart holds fewer anchors than the cap and `trust.report`
-  runs
-- **THEN** every anchor is sounded and the report states the total as both
-  sounded and total
+#### Scenario: Every anchor is sounded
+- **WHEN** `trust.report` runs against a charted province
+- **THEN** every anchor on the chart was sounded and the report states the
+  sounded count and the total as equal
 
 #### Scenario: A broken anchor is named, not smoothed over
 - **WHEN** an entry's anchor no longer resolves (file moved, content drifted,
   receipt id gone)
 - **THEN** the report lists that entry id with the refuted anchor and what
   was actually found, and the entry on disk is unchanged
-
-#### Scenario: Above the cap, coverage is stated honestly
-- **WHEN** the chart holds more anchors than the cap
-- **THEN** the report sounds a deterministic sample, and the response states
-  both the sounded count and the total anchor count
 
 #### Scenario: Re-running over an unchanged province agrees
 - **WHEN** `trust.report` runs twice over an unchanged province

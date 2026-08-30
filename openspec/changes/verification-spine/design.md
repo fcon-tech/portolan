@@ -21,12 +21,15 @@ implementation choices. Evidence base: the Portolan backlog study
    the `sound.anchor` verification path over chart anchors and reports
    confirmed/refuted. It reuses the existing deterministic verifier; no new
    verification logic is invented.
-3. **Deterministic sample above a fixed cap.** Full re-sounding could be
-   slow on Bigtop-scale provinces. Cap constant: 500 anchors. Selection:
-   entries in stored order, anchors in stored order, first 500 — stable
-   under an unchanged chart, so repeat runs agree byte-for-byte in counts,
-   verdicts, and ordering. The response always states sounded vs total, so
-   partial coverage is never passed off as full.
+3. **Sound every anchor, no sampling.** A sounding is a cheap local check
+   (file presence, line range, content, manifest key, receipt id); the
+   premise that full re-sounding could be slow is unmeasured, and on the
+   one province the receipt renders from (this repo) the chart holds
+   ~45 entries. So the report sounds *all* chart anchors and states the
+   sounded and total counts — equal by construction, no coverage caveat.
+   Revisit trigger: the first Bigtop-scale run; if full re-sounding is
+   measurably slow there, a deterministic sample is added by its own
+   change, not tuned in advance here.
 4. **Refresh staleness first.** Same behavior as `chart.read`: the report's
    staleness section is computed after `refreshStaleness`, so the answer is
    never served from a stale signature. This is the only write the tool may
@@ -42,7 +45,12 @@ implementation choices. Evidence base: the Portolan backlog study
      README/landing links here and is worded as "no surveyed tool", never
      as an absolute.
    The internal research dossier stays outside the repo; only reproducible
-   receipts cross the public boundary.
+   receipts cross the public boundary. Two decay triggers are named up
+   front: the trials page is re-run before any release that repeats the
+   differentiation claim — otherwise the claim is dropped; and
+   `docs/demo/trust-report.md` is regenerated when Notices to Mariners mark
+   this repo's own chart `pending correction` — a stale receipt is allowed
+   to sit only while it visibly says when it was taken.
 6. **Skill mandate, not hope.** `skill/SKILL.md` gains the instruction to
    call `trust.report` when composing Sailing Directions and to report
    refuted anchors verbatim. Instructions are the channel agents obey;
@@ -53,11 +61,13 @@ implementation choices. Evidence base: the Portolan backlog study
    surface exists and is honest, not that it is used. Liability-carrier
    views → later change, after demand validation. Any HTML dashboard of the
    report → none: passive surfaces are contraindicated (the corpse field).
+   Anchor-count sampling → deferred until a real province measures full
+   re-sounding as slow (see decision 3).
 
 ## Risks / Trade-offs
 
-- Re-sounding adds latency proportional to the sample (bounded by the cap).
-  Acceptable for a summary tool called once per brief.
+- Re-sounding adds latency proportional to the anchor count — unbounded for
+  now, by decision: no cap until a real province measures it slow.
 - `refreshStaleness` on every report call repeats work `chart.read` also
   does. Accepted for consistency; both are cheap tree hashes.
 - The committed `docs/demo/trust-report.md` drifts when the repo's own Chart
