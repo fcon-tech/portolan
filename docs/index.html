@@ -1,11 +1,11 @@
 <!doctype html>
 <!-- EDIT docs/landing.html ONLY. docs/index.html is a build copy:
-     after editing run `bash docs/demo/refresh.sh` (or cp landing.html index.html). -->
+     after editing run `bash scripts/demo-refresh.sh` (or cp landing.html index.html). -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portolan — the living atlas of a codebase</title>
+<title>Portolan — the living Chart of a codebase</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
   :root{
@@ -53,8 +53,8 @@
 <body>
 <header class="hero">
   <h1>Portolan</h1>
-  <p class="tag">A frontier agent — the <b>Cartographer</b> — surveys a brownfield
-     codebase into a living nautical Chart, and you read it as an atlas.
+  <p class="tag">A frontier agent, the <b>Cartographer</b>, surveys a brownfield
+     codebase onto a living nautical Chart, and you read it as an atlas.
      Every fact carries an anchor and a trust label, or it does not ship.</p>
   <div class="ribbon">chart · sound · trust · sail</div>
   <nav class="toc" style="margin-top:18px">
@@ -72,21 +72,21 @@
 <main>
 <section id="gallery">
   <h2>The atlas</h2>
-  <p class="lede">One self-contained HTML file per province — opens from a file://
+  <p class="lede">One self-contained HTML file per province: opens from a file://
      share, no server, no install. Below: the real Apache Bigtop landscape (18 repos).</p>
   <div class="gallery">
     <figure><img src="screenshots/chart-room-map.png" alt="Nautical archipelago map of the Bigtop province">
-      <figcaption><b>Chart Room — the chart view.</b> Vessels as islands sized by code volume,
+      <figcaption><b>Chart Room: the chart view.</b> Vessels as islands sized by code volume,
         dependency lanes styled by trust, Chart-No.-1 danger marks, ports of entry,
         hover any island for its atlas plate.</figcaption></figure>
     <figure><img src="screenshots/system-graph.png" alt="Layered dependency graph of the same province">
       <figcaption><b>The engineering view.</b> One toggle away: the same data as a layered
-        dependency graph — dependents above, foundations below.</figcaption></figure>
+        dependency graph. Dependents above, foundations below.</figcaption></figure>
     <figure><img src="screenshots/fleet-review.png" alt="Fleet review sheet with two provinces as archipelagos">
       <figcaption><b>Fleet review.</b> Several provinces on one sheet, each drawn from its own
         Chart index; every group links to its Chart Room.</figcaption></figure>
-    <figure><img src="screenshots/dossier-ledger.png" alt="Vessel dossier with the epistemic ledger">
-      <figcaption><b>Dossier with the honesty ledger.</b> Observed / Verified / Declared / Claimed —
+    <figure><img src="screenshots/dossier-ledger.png" alt="Vessel dossier with the honesty ledger">
+      <figcaption><b>Dossier with the honesty ledger.</b> Observed / Verified / Declared / Claimed:
         how each fact is known, counted from receipts and trust labels.</figcaption></figure>
   </div>
 </section>
@@ -99,49 +99,52 @@
     <tr><td><code>measured</code></td><td>taken from the source, line-anchored; soundings confirmed</td><td>deepest water, solid lanes</td></tr>
     <tr><td><code>charted</code></td><td>declared by manifests, BOMs, packaging</td><td>mid band</td></tr>
     <tr><td><code>reported</code></td><td>a claim from docs or reports</td><td>pale band</td></tr>
-    <tr><td><code>doubtful</code></td><td>asserted, then refuted or unverifiable</td><td>faint dashed lane</td></tr>
-    <tr><td><code>unsurveyed</code></td><td>not determined — left blank on purpose</td><td>blank water, no ink</td></tr>
+    <tr><td><code>doubtful</code></td><td>evidence present, could not be validated</td><td>faint dashed lane</td></tr>
+    <tr><td><code>unsurveyed</code></td><td>not determined; left blank on purpose</td><td>blank water, no ink</td></tr>
   </table>
   <p style="margin-top:14px">Staleness is rendered too: sources changed since the last survey ⇒
      the island wears a <i>pending correction</i> hatch until an expedition heals it.
-     Hovering an island raises its atlas plate — counters, behavior truth, newest notice,
-     derived role — everything from embedded bytes only.</p>
+     Hovering an island raises its atlas plate: counters, behavior truth, newest notice,
+     derived role, everything from embedded bytes only.</p>
 </section>
 
 <section id="features">
   <h2>What ships</h2>
   <div class="cards">
-    <div class="card"><h3>MCP survey tools</h3><p>Twelve stdio tools your agent calls —
+    <div class="card"><h3>MCP survey tools</h3><p>Twelve stdio tools your agent calls:
       sweeps, symbols, manifests, soundings (<code>sound.edge</code>/<code>sound.anchor</code>),
       the Chart store, the Harbor queue. Deterministic where it must be.</p></div>
-    <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue — repairs,
-      gaps, new land — plus a bounded night watch that launches repairs through any external
-      launcher. No daemon, ever.</p></div>
+    <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue
+      (repairs, gaps, new land), plus a bounded night watch that launches repairs through any
+      external launcher. No daemon, ever.</p></div>
     <div class="card"><h3>Byproduct exports</h3><p>The Chart Room and Fleet Review are generated
       on demand, byte-deterministic, zero dependencies. Exports, never the storage.</p></div>
     <div class="card"><h3>Skill = method</h3><p>The Cartographer's whole expedition method is a
       loadable skill: five passes, assert→sound→write, honest unsurveyed waters, Sailing Directions
       to close.</p></div>
     <div class="card"><h3>Local-first, read-only</h3><p>Writes stay under the target's
-      <code>.portolan/</code>; the target's source is never touched. No network after install.</p></div>
+      <code>.portolan/</code>; the target's source is never touched. Network access and
+      installation sit behind one explicit per-session approval.</p></div>
     <div class="card"><h3>Sea-tried</h3><p>An acceptance gate runs the whole loop against the real
-      Apache Bigtop corpus and refuses stand-ins — including the Governor's own verdict read.</p></div>
+      Apache Bigtop corpus and refuses stand-ins; the Governor's own verdict read stays the
+      final word.</p></div>
   </div>
 </section>
 
 <section id="demo">
   <h2>Demo province: apache-bigtop</h2>
-  <p class="lede">An 18-repo Apache stack assembled by gradle+BOM — surveyed by one headless
-     expedition fleet, now wearing its hover plates and honesty ledgers.</p>
+  <p class="lede">An 18-repo Apache stack assembled by gradle+BOM, surveyed by one headless
+     expedition fleet and now wearing its hover plates and honesty ledgers.</p>
   <p><a class="btn" style="border-color:var(--accent);color:var(--accent)" href="demo/chart-room.html">Open this province's Chart Room ▸</a>
      <a class="btn" href="demo/fleet-review.html">…and the two-province fleet sheet ▸</a></p>
   <table>
-    <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components + 2 retired hulls ·
-        <b>108 charted entries</b> · hubs: bigtop-utils ×15, hadoop ×11 · 8 dangers: version skew,
-        undeclared solr↔zookeeper, retired hulls, copy-paste recipes</td></tr>
-    <tr><th>Expedition fleet</th><td>30+ headless expeditions (opencode + glm-5.3) turned
-        0 → <b>26/26 vessels with observed behavior</b> and 3 → <b>26 charted API lights</b>;
-        measured-trust facts grew 19 → <b>52</b>. Every write receipted in the ship's log.</td></tr>
+    <tr><th>Province facts</th><td>Bigtop master repo + 19 BOM components + 2 retired vessels ·
+        <b>108 chart entries</b> · hubs: bigtop-utils ×14, hadoop ×11 · 8 dangers: version skew,
+        undeclared solr↔zookeeper, retired vessels, copy-paste recipes</td></tr>
+    <tr><th>Expedition fleet</th><td>30+ headless expeditions (opencode + glm-5.3) took
+        the province from 0 to <b>26/26 vessels with observed behavior</b> and from 3 to
+        <b>26 charted API lights</b>; measured-trust facts grew from 19 to <b>52</b>.
+        Every write receipted in the ship's log.</td></tr>
     <tr><th>Honest zeros</th><td>What no expedition observed is still labeled
         <code>unsurveyed</code> — the lamps say so, in red, on every island.</td></tr>
     <tr><th>Self-healing proof</th><td>Night watch launched real repair expeditions (history:
