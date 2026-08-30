@@ -2,8 +2,8 @@
  * The tool registry: Portolan name → handler + input schema. This table is
  * the single wiring point for every served tool (design.md, decision 3) —
  * the server loop, the error boundary, and the adapters never change per
- * tool, and v1.1 additions (`run`, `smells.scan`) are new table entries, not
- * redesigns. Handlers receive the bound target root implicitly, call the
+ * tool, and future tools (`smells.scan`, an MCP `run`) are new table entries,
+ * not redesigns. Handlers receive the bound target root implicitly, call the
  * real tool implementations, and return their results verbatim; the server
  * envelopes but never reinterprets them. A thrown rejection (the tool's own
  * error) becomes an MCP tool error at the handler boundary in server.ts.

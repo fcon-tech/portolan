@@ -5,7 +5,7 @@
 #
 # A launcher adds no behavior beyond launching — the same rule as the MCP
 # shims. It reads the expedition brief ({ target, proposal } as JSON) on
-# stdin, renders the repair prompt for the Cartographer, and runs opencode
+# stdin, renders the expedition prompt for the Cartographer, and runs opencode
 # headlessly against the province. The watch owns policy, history, and the
 # report; this script owns only the harness call. Adapters must not import
 # tool logic (checked by core/src/server/adapter-boundary.ts).
@@ -41,8 +41,11 @@ PROMPT="$(BRIEF="$BRIEF" SKILL="$SKILL" bun -e '
   const evidence = p.evidence.map((e) => "  - " + e).join("\n");
   const scope = "vessels " + p.scope.vessels.join(", ") +
     " \u00b7 " + p.scope.entries + " entries \u00b7 " + p.scope.soundings + " soundings";
+  const headline = p.kind === "repair"
+    ? "Portolan night watch \u2014 repair expedition for the Cartographer."
+    : "Portolan expedition \u2014 " + p.kind + " expedition for the Cartographer.";
   console.log([
-    "Portolan night watch \u2014 repair expedition for the Cartographer.",
+    headline,
     "",
     "Province: " + brief.target,
     "Proposal kind: " + p.kind,
@@ -53,7 +56,7 @@ PROMPT="$(BRIEF="$BRIEF" SKILL="$SKILL" bun -e '
     "",
     "Method: " + process.env.SKILL + " \u2014 the Cartographer method; follow it in order.",
     "Perimeter: never modify anything outside .portolan/ in the province.",
-    "Scope: repair only what the proposal names \u2014 nothing else.",
+    "Scope: do only what the proposal names \u2014 nothing else.",
   ].join("\n"));
 ')"
 

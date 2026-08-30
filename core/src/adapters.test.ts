@@ -27,14 +27,14 @@ afterAll(() => {
 });
 
 /** The brief the night watch would send for one drifted vessel. */
-function brief(target: string): string {
+function brief(target: string, kind = "repair"): string {
   return JSON.stringify({
     target,
     proposal: {
-      kind: "repair",
+      kind,
       fingerprint: "f1",
       summary: "vessel api marked pending correction (sources changed under apps/api)",
-      evidence: ["vessel/api"],
+      evidence: kind === "repair" ? ["vessel/api"] : ["adapters/x.ts:1"],
       anchors: [{ type: "file", path: "apps/api" }],
       scope: { vessels: ["api"], entries: 3, soundings: 3 },
     },
@@ -122,7 +122,21 @@ test("night-watch 3.1 the launcher renders the repair prompt and runs opencode i
   expect(prompt).toContain("Summary: vessel api marked pending correction");
   expect(prompt).toContain(`Method: ${SKILL_PATH}`);
   expect(prompt).toContain("Perimeter: never modify anything outside .portolan/ in the province.");
-  expect(prompt).toContain("Scope: repair only what the proposal names — nothing else.");
+  expect(prompt).toContain("Scope: do only what the proposal names — nothing else.");
+});
+
+test("night-watch 3.1 a non-repair launch names its own kind, not repair", () => {
+  const province = mkdtempSync(join(tmpdir(), "portolan-launcher-gap-"));
+  dirs.push(province);
+  const { binDir, log } = fakeOpencode(0);
+
+  const run = runLauncher(brief(province, "gap"), envWithPaths(binDir));
+  expect(run.status).toBe(0);
+
+  const prompt = loggedArgs(log).arg5 ?? "";
+  expect(prompt).toContain("Portolan expedition — gap expedition for the Cartographer.");
+  expect(prompt).not.toContain("night watch");
+  expect(prompt).toContain("Proposal kind: gap");
 });
 
 test("night-watch 3.1 PORTOLAN_MODEL overrides the default model", () => {

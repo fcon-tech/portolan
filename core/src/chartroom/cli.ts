@@ -3,7 +3,7 @@
  * The Chart Room CLI — human/scheduler entries (the MCP tool `chart.render`
  * is the single-province one; both call the same core functions).
  *
- *   bun core/src/chartroom/cli.ts render [--target <province root>]
+ *   bun core/src/chartroom/cli.ts render --target <province root>
  *       One-file Chart Room export for one province.
  *
  *   bun core/src/chartroom/cli.ts review --target <t1> [--target <t2> ...]
@@ -20,7 +20,7 @@ import { renderChartRoom } from "./render";
 import { buildFleetReview } from "./review";
 
 const usage = `usage:
-  bun core/src/chartroom/cli.ts render [--target <province root>]
+  bun core/src/chartroom/cli.ts render --target <province root>
   bun core/src/chartroom/cli.ts review --target <t1> [--target <t2> ...]`;
 
 const { positionals, values } = parseArgs({

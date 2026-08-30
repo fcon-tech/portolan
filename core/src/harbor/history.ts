@@ -94,8 +94,9 @@ function parseLine(line: string, file: string, lineNo: number): HistoryRecord {
       throw new Error("not a launch outcome");
     }
     return record;
-  } catch {
-    throw new HarborError(`history: corrupt decision history ${file} line ${lineNo}: not a decision`);
+  } catch (err) {
+    const why = err instanceof Error ? err.message : "not a decision";
+    throw new HarborError(`history: corrupt decision history ${file} line ${lineNo}: ${why}`);
   }
 }
 
