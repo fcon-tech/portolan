@@ -20,6 +20,18 @@ fairways that connect them, what kind of waters these are.\>
 
 - **\<finding\>** — trust: \<measured|charted|reported|doubtful|unsurveyed\> — anchor: \<path:line | manifest key | receipt id\> — chart: \<kind/id\>
 
+## Verification summary
+
+<!-- From `trust.report` (no input): carry its numbers into the brief — the
+     trust-label distribution, the vessels pending correction, and the
+     refuted anchors verbatim with their entry ids, or the statement that
+     every anchor re-sounded `confirmed`. A refuted anchor is reported as it
+     stands, never smoothed over. -->
+
+- trust labels: \<measured N · charted N · reported N · doubtful N · unsurveyed N\>
+- pending correction: \<vessels with dragged entry counts, or none\>
+- anchor re-sounding: \<sounded\>/\<total\> anchors sounded, \<confirmed\> confirmed — \<refuted anchors with entry ids, or none refuted\>
+
 ## The Chart
 
 The Chart lives at `\<target\>/.portolan/chart/` — one sheet per vessel

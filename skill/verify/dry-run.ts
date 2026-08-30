@@ -24,6 +24,8 @@ import {
   type IndexedEntry,
   type Notice,
 } from "../../core/src/index";
+import { trustReport } from "../../core/src/tools/trust-report";
+import { TRUST_LABELS } from "../../core/src/types";
 
 const SKILL_PATH = join(import.meta.dir, "..", "SKILL.md");
 
@@ -590,7 +592,8 @@ export function runExpedition(
 
   // -- skill §9: deliver Sailing Directions, in conversation and archived. --
   const finalEntries = readChart(targetRoot);
-  const brief = composeBrief(provinceName, finalEntries, notices, opts.stamp, !repairing);
+  const summary = trustReport(targetRoot);
+  const brief = composeBrief(provinceName, finalEntries, notices, opts.stamp, !repairing, summary);
   writeFileSync(join(targetRoot, ".portolan", "sailing-directions.md"), brief);
   harness.say(brief);
   harness.journal.push({ type: "brief", archived: ".portolan/sailing-directions.md" });
@@ -603,7 +606,8 @@ function composeBrief(
   entries: IndexedEntry[],
   notices: Notice[],
   stamp: string,
-  first: boolean
+  first: boolean,
+  summary: ReturnType<typeof trustReport>
 ): string {
   const vessels = entries.filter((e) => e.kind === "vessel");
   const fairways = entries.filter((e) => e.kind === "fairway");
@@ -652,6 +656,22 @@ function composeBrief(
     );
   }
   lines.push("");
+
+  lines.push("## Verification summary", "");
+  lines.push(`- trust labels: ${TRUST_LABELS.map((l) => `${l} ${summary.trust[l]}`).join(" · ")}`);
+  const pending = summary.staleness.pendingVessels;
+  lines.push(
+    `- pending correction: ${pending.length === 0 ? "none" : pending.map((v) => `${v.id} (${v.entries})`).join(", ")}`
+  );
+  const refuted = summary.anchors.refutedList;
+  lines.push(
+    `- anchor re-sounding: ${summary.anchors.sounded}/${summary.anchors.total} anchors sounded, ` +
+      `${summary.anchors.confirmed} confirmed — ` +
+      (refuted.length === 0
+        ? "none refuted"
+        : `refuted: ${refuted.map((x) => `\`${x.entryId}\``).join(", ")}`),
+    ""
+  );
 
   lines.push("## The Chart", "");
   lines.push(
