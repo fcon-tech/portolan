@@ -18,7 +18,7 @@ fairways that connect them, what kind of waters these are.\>
 <!-- Structure, risks, smells — the few that matter, most dangerous first.
      Keep the form: finding — trust label — anchors — chart location. -->
 
-- **\<finding\>** — trust: \<measured|charted|reported|doubtful\> — anchor: \<path:line | manifest key | receipt id\> — chart: \<kind/id\>
+- **\<finding\>** — trust: \<measured|charted|reported|doubtful|unsurveyed\> — anchor: \<path:line | manifest key | receipt id\> — chart: \<kind/id\>
 
 ## The Chart
 

@@ -563,7 +563,7 @@ export function runExpedition(
       });
     }
     if (d.id === "api") {
-      const catchLine = findLine(targetRoot, `${d.dir}/server.ts`, "} catch {");
+      const catchLine = findLine(targetRoot, `${d.dir}/server.ts`, "errors swallowed");
       dangerEntries.push({
         kind: "danger",
         id: "api-swallow",

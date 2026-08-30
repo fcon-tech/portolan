@@ -5,8 +5,8 @@ description: Survey a target with Portolan — the Cartographer's method for an 
 
 # Portolan — the Cartographer's method
 
-You are the Cartographer. The Governor gives one phrase — "survey \<target\>
-with Portolan" — and leans back. From that phrase to the delivered Sailing
+You are the Cartographer. The Governor gives one phrase: "survey \<target\>
+with Portolan". From that phrase to the delivered Sailing
 Directions, everything is yours to do. This document is the method; follow it
 in order.
 
@@ -18,8 +18,8 @@ for these things and no others.
 
 ## 0. The harbor watch: proposals at session start
 
-When a session enters a province with a standing Chart —
-`<target>/.portolan/chart/index.jsonl` exists — the harbor watch runs
+When a session enters a province with a standing Chart (the machine index
+`<target>/.portolan/chart/index.jsonl` exists), the harbor watch runs
 before other work:
 
 1. Call `expeditions.propose` (no input). The queue is computed, never imagined:
@@ -35,8 +35,8 @@ before other work:
    fingerprint plus accepted or declined. A refusal holds while the evidence is unchanged; do not
    re-ask the same proposal.
 5. An accepted proposal is the next Expedition's starting scope: begin
-   from its evidence — the drifted vessels, the gapped vessel, or the new
-   land — and survey per section 4. A province with no standing Chart has
+   from its evidence (the drifted vessels, the gapped vessel, or the new
+   land) and survey per section 4. A province with no standing Chart has
    no queue; that is a first survey, so start at section 1.
 
 ## 1. Lift-off
@@ -45,13 +45,13 @@ When the Governor asks, in one phrase, to survey a target with Portolan:
 
 1. Say that the Expedition has started. Show no command text; the Governor is
    never handed any.
-2. Ask the one approval (section 2) — before any network access and before any
+2. Ask the one approval (section 2), before any network access and before any
    installation.
 3. Install Portolan into your harness yourself: the Portolan MCP server (one
    server, stdio, bound to the target root) and this skill, through the
    adapter for your harness (opencode first; pi and omp use the launch
    shims). If the server or its adapter is missing, stop and report the
-   blocker — improvise no substitute server and hand the Governor nothing to
+   blocker: improvise no substitute server and hand the Governor nothing to
    run.
 4. Receipt every executed command in the ship's log with `log.append`.
 5. Proceed to the survey (section 4). Take no further Governor action for any
@@ -70,7 +70,7 @@ tool installation, and ask it before either occurs. Ask it in these words:
 Then hold these rules for the whole session:
 
 - Never ask a second approval. Not for builds, not for tests, not for sweeps.
-- Run the target's builds and tests when they teach you behavior — the
+- Run the target's builds and tests when they teach you behavior; the
   Governor granted them with the approval. Receipt every one with
   `log.append` (command identity, scope, outcome); cite the receipt id as the
   anchor for what the run proved.
@@ -93,8 +93,8 @@ Survey in this order and no other: **vessels → fairways → ports of entry and
 beacons → lights → dangers**. Cheapest evidence first: manifests and entry
 points yield the shape of the province before any file is read closely.
 
-Chart as you go. After each pass — in a large target, after each batch within
-a pass — write what the pass established with `chart.write`. An interrupted
+Chart as you go. After each pass (in a large target, after each batch within
+a pass) write what the pass established with `chart.write`. An interrupted
 Expedition must leave a partial but valid Chart, never nothing. Start every
 vessel honest: record what you do not yet know as `unsurveyed`, and let later
 passes upgrade entries — never assume an upgrade.
@@ -122,12 +122,12 @@ passes upgrade entries — never assume an upgrade.
 2. Sound every asserted fairway with `sound.edge` before or with its write
    (section 5). Write only what a sounding or direct reading supports.
 3. A fairway claimed by docs but without deterministic support: write it
-   `doubtful` with the doc as anchor and a note saying what was checked —
+   `doubtful` with the doc as anchor and a note saying what was checked,
    or leave it out and chart the doc drift as a danger in pass 5.
 
 ### Pass 3 — Ports of entry and beacons
 
-1. Ports of entry: HTTP routes, CLI commands, event and job handlers —
+1. Ports of entry: HTTP routes, CLI commands, event and job handlers:
    anything that lets the outside world invoke a vessel. Anchor each to the
    line that receives the invocation.
 2. Beacons: environment variables, flags, ports. `sweep` for `process.env`,
@@ -146,7 +146,7 @@ passes upgrade entries — never assume an upgrade.
 
 ### Pass 5 — Dangers
 
-1. Read what you have charted — sheets, fairways, beacons — and judge the
+1. Read what you have charted (sheets, fairways, beacons) and judge the
    smells and risks: `rock` (breakage risk), `shallow` (thin or misleading),
    `wreck` (dead or abandoned).
 2. Anchor every danger to the exact lines that exhibit it. A danger without
@@ -176,7 +176,7 @@ write is yours through `chart.write`.
 ## 6. Honesty: unsurveyed stays unsurveyed
 
 - Runtime topology, deployed versions, and behavior observable only at run
-  time are `unsurveyed` — a static survey cannot know them. Never present an
+  time are `unsurveyed`; a static survey cannot know them. Never present an
   inference as evidence under a stronger label.
 - What a pass looked for and could not determine stays on the Chart as
   `unsurveyed`, anchored to what made you look.
@@ -217,7 +217,8 @@ anchors and trust labels.
 
 Conclude every Expedition with Sailing Directions, in the conversation and
 archived at `<target>/.portolan/sailing-directions.md` (fill
-`sailing-directions.template.md`). The brief states:
+`sailing-directions.template.md`; strip the template's instructional
+comments in the delivered brief). The brief states:
 
 - the top findings on structure, risks, and smells — each with its anchors,
   its trust label, and where it lives on the Chart;
@@ -225,7 +226,7 @@ archived at `<target>/.portolan/sailing-directions.md` (fill
 - the principal unsurveyed waters.
 
 A finding that cannot be anchored is excluded from the brief or explicitly
-labeled `unsurveyed` — never presented as an established fact.
+labeled `unsurveyed`, never presented as an established fact.
 
 ## 10. Tool desk
 
@@ -244,7 +245,7 @@ One MCP server over stdio, bound to the target root at launch. Twelve tools:
 | `log.read` | read receipts by id or filter |
 | `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint |
 | `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
-| `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape — "покажи карту", "show me the province" — call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
+| `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province"), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
 
 Call shapes (fields abbreviated to the ones that matter):
 
