@@ -201,5 +201,5 @@ portolan/
 | Change report | Notices to Mariners | Извещение мореплавателям |
 | Governor's brief | Sailing Directions | Лоция |
 | Acceptance run | Sea trial | Ходовые испытания |
-| One-file map/graph export of the Chart | Chart room | Картушка |
+| One-file map/graph export of the Chart | Chart room | Штурманская |
 | Assembled view of several provinces | Fleet review | Смотр флота |
