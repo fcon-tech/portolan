@@ -40,7 +40,7 @@ export interface TrustReport {
   trust: Record<TrustLabel, number>;
   /** Chart entries per kind; all six kinds stated, zero-filled. */
   kinds: Record<EntryKind, number>;
-  /** Pending-correction vessels, computed after the staleness refresh. */
+  /** Pending-correction vessels, read from the chart's stale flags after the refresh. */
   staleness: { pendingVessels: PendingVessel[] };
   /** Live re-sounding of every chart anchor. */
   anchors: {
@@ -55,28 +55,23 @@ export interface TrustReport {
     /** Every refuted anchor, sorted by entry id then anchor index. */
     refutedList: RefutedAnchor[];
   };
-  /**
-   * The ship's log: total receipts and the most recent one (null on an
-   * empty log). Typed to admit the log module's own lookup result, so the
-   * field compares directly against `readReceipt`.
-   */
-  log: { receipts: number; lastReceipt: Receipt | null | undefined };
+  /** The ship's log: total receipts and the most recent one (null on an empty log). */
+  log: { receipts: number; lastReceipt: Receipt | null };
 }
 
 /**
- * Charge one stale entry to the pending-correction vessel(s) it hangs from.
- * A fairway between two drifted vessels drags on both; entries never hang
- * from an unchanged vessel, because the refresh marks only changed vessels'
- * entries stale.
+ * Charge one stale entry to the pending-correction vessel(s) it hangs from,
+ * read from the index's own stale flags. Those flags persist until a chart
+ * write — the refresh only adds them and never clears them, and a reverted
+ * drift leaves them standing with nothing left to flip — so attribution
+ * must come from the chart, never from the refresh delta. A pending fairway
+ * drags on both vessels it runs between: once drift is reverted there is no
+ * telling which endpoint moved, and over-attribution is the honest direction.
  */
-function chargeStaleEntry(
-  entry: IndexedEntry,
-  changed: Set<string>,
-  pending: Map<string, number>,
-): void {
+function chargeStaleEntry(entry: IndexedEntry, pending: Map<string, number>): void {
   if (!entry.stale) return;
   const bump = (vesselId: string): void => {
-    if (changed.has(vesselId)) pending.set(vesselId, (pending.get(vesselId) ?? 0) + 1);
+    pending.set(vesselId, (pending.get(vesselId) ?? 0) + 1);
   };
   if (entry.kind === "vessel") bump(entry.id);
   else if (entry.kind === "fairway") {
@@ -93,7 +88,7 @@ function chargeStaleEntry(
 export function trustReport(targetRoot: string): TrustReport {
   // Staleness first, chart.read semantics: the staleness section is never
   // served from a stale signature. This is the report's only possible write.
-  const refresh = refreshStaleness(targetRoot);
+  refreshStaleness(targetRoot);
   const entries = readChart(targetRoot);
 
   const trust = Object.fromEntries(TRUST_LABELS.map((l) => [l, 0])) as Record<TrustLabel, number>;
@@ -103,9 +98,8 @@ export function trustReport(targetRoot: string): TrustReport {
     kinds[entry.kind] += 1;
   }
 
-  const changed = new Set(refresh.changedVessels);
   const pending = new Map<string, number>();
-  for (const stale of refresh.staleEntries) chargeStaleEntry(stale, changed, pending);
+  for (const entry of entries) chargeStaleEntry(entry, pending);
   const pendingVessels = [...pending.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([id, count]) => ({ id, entries: count }));
@@ -119,9 +113,15 @@ export function trustReport(targetRoot: string): TrustReport {
       const verdict = soundAnchor(targetRoot, { anchor });
       if (verdict.verdict === "confirmed") confirmed += 1;
       else {
-        // sound.anchor yields confirmed or refuted only; the evidence names
-        // what was actually found.
-        refuted.push({ entryId: entry.id, anchor, index, found: verdict.evidence[0]!.found });
+        // sound.anchor yields confirmed or refuted only; its evidence names
+        // what was actually found — the one-line summary is the fallback so
+        // the cross-module evidence invariant is not assumed blindly here.
+        refuted.push({
+          entryId: entry.id,
+          anchor,
+          index,
+          found: verdict.evidence[0]?.found ?? verdict.report,
+        });
       }
     }
   }

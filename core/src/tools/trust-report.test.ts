@@ -14,6 +14,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { createHash } from "node:crypto";
@@ -139,10 +140,21 @@ function writeFullChart(target: string): void {
   writeChart(target, fullChart);
 }
 
-/** A survey carrying broken anchors under docs/ (outside every vessel's paths). */
+/** A survey carrying broken anchors under docs/ (outside every vessel's
+ *  paths), plus a receipt anchor that resolves to nothing in the log. */
 const brokenChart: ChartEntry[] = [
   harbor,
   tug,
+  {
+    kind: "beacon",
+    id: "b-receipt-log",
+    vessel: "tug",
+    surface: "flag",
+    key: "VERBOSE",
+    note: "cites a receipt id that never landed in the ship's log",
+    anchors: [{ type: "receipt", id: "r99" }],
+    trust: "doubtful",
+  },
   {
     kind: "danger",
     id: "d-drifted",
@@ -180,6 +192,19 @@ function breakAnchors(target: string): void {
 function touchHarbor(target: string): void {
   const path = join(target, "harbor", "harbor.ts");
   writeFileSync(path, readFileSync(path, "utf8") + "  // drifted by an outside force\n");
+}
+
+/** Harbor's surveyed bytes and mtime, so a revert can restore the signature. */
+function harborSnapshot(target: string): { text: string; mtimeMs: number } {
+  const path = join(target, "harbor", "harbor.ts");
+  return { text: readFileSync(path, "utf8"), mtimeMs: statSync(path).mtimeMs };
+}
+
+/** Undo an outside-force edit byte-for-byte, mtime included. */
+function revertHarbor(target: string, snap: { text: string; mtimeMs: number }): void {
+  const path = join(target, "harbor", "harbor.ts");
+  writeFileSync(path, snap.text);
+  utimesSync(path, snap.mtimeMs / 1000, snap.mtimeMs / 1000);
 }
 
 const staleIds = (target: string): string[] =>
@@ -232,9 +257,11 @@ test("one call returns the trust-label distribution, per-kind counts, staleness,
   expect(report.anchors.refuted).toBe(0);
   expect(report.anchors.refutedList).toEqual([]);
 
-  // The ship's-log summary: total receipts and the most recent one.
+  // The ship's-log summary: total receipts and the most recent one. The
+  // report's field is null on an empty log; the lookup's undefined is
+  // normalized here so the comparison stays honest on both sides.
   expect(report.log.receipts).toBe(2);
-  expect(report.log.lastReceipt).toEqual(readReceipt(target, "r2"));
+  expect(report.log.lastReceipt).toEqual(readReceipt(target, "r2") ?? null);
 });
 
 // ---------------------------------------------------------------------------
@@ -248,9 +275,14 @@ test("staleness is refreshed first: a touched source is pending correction, mark
 
   const report = trustReport(target);
 
-  // Harbor drags its vessel, fairway, light, and danger into pending
-  // correction; tug is untouched.
-  expect(report.staleness.pendingVessels).toEqual([{ id: "harbor", entries: 4 }]);
+  // Harbor drags its vessel, its light, and its danger into pending
+  // correction; the fairway it runs charges BOTH endpoints — attribution
+  // must not depend on the refresh delta, so over-attribution to tug (the
+  // vessel the fairway departs from) is the honest reading.
+  expect(report.staleness.pendingVessels).toEqual([
+    { id: "harbor", entries: 4 },
+    { id: "tug", entries: 1 },
+  ]);
 
   // Identical to what a chart.read's refresh marks on the same drift.
   const twin = makeProvince();
@@ -258,6 +290,33 @@ test("staleness is refreshed first: a touched source is pending correction, mark
   touchHarbor(twin);
   refreshStaleness(twin);
   expect(staleIds(target)).toEqual(staleIds(twin));
+  expect(staleIds(target)).toEqual([
+    "danger/d-harbor-shallow",
+    "fairway/fw-tug-harbor",
+    "light/l-harbor-moor",
+    "vessel/harbor",
+  ]);
+});
+
+test("a reverted drift stays pending correction: the report reads the chart's stale flags, not the refresh delta", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  const original = harborSnapshot(target);
+
+  touchHarbor(target);
+  const drifted = trustReport(target);
+  expect(drifted.staleness.pendingVessels).toEqual([
+    { id: "harbor", entries: 4 },
+    { id: "tug", entries: 1 },
+  ]);
+
+  // The outside force undoes itself: harbor's signature matches the survey
+  // again, so the refresh has nothing to flip and writes nothing — yet the
+  // pending-correction flags persist on disk until a chart write, and the
+  // report must keep serving them, exactly as chart.read does.
+  revertHarbor(target, original);
+  const reverted = trustReport(target);
+  expect(reverted.staleness.pendingVessels).toEqual(drifted.staleness.pendingVessels);
   expect(staleIds(target)).toEqual([
     "danger/d-harbor-shallow",
     "fairway/fw-tug-harbor",
@@ -338,7 +397,7 @@ test("every anchor is sounded: the sounded count states the total", () => {
 
   const entries = readChart(target);
   const total = entries.reduce((n, e) => n + e.anchors.length, 0);
-  expect(total).toBe(5); // guards the fixture: two healthy, three broken
+  expect(total).toBe(6); // guards the fixture: two healthy, four broken
 
   const report = trustReport(target);
 
@@ -347,7 +406,7 @@ test("every anchor is sounded: the sounded count states the total", () => {
   // Anchor soundings are binary: the verdicts account for every anchor.
   expect(report.anchors.confirmed + report.anchors.refuted).toBe(total);
   expect(report.anchors.confirmed).toBe(2);
-  expect(report.anchors.refuted).toBe(3);
+  expect(report.anchors.refuted).toBe(4);
 });
 
 // ---------------------------------------------------------------------------
@@ -367,18 +426,20 @@ test("a broken anchor is named with its entry and what was found, and the entry 
   expect(
     report.anchors.refutedList.map((r) => [r.entryId, r.anchor]),
   ).toEqual([
+    ["b-receipt-log", { type: "receipt", id: "r99" }],
     ["d-drifted", { type: "file", path: "docs/trimmed.md", line: 5 }],
     ["d-drifted", { type: "file", path: "docs/never-charted.md", line: 1 }],
     ["d-erased", { type: "file", path: "docs/erased-notes.md", line: 1 }],
   ]);
-  // What was found: the drift names the file and its real length; the
-  // erasures name the missing path.
-  expect(report.anchors.refutedList[0]!.found).toContain("docs/trimmed.md");
-  expect(report.anchors.refutedList[0]!.found).toContain("2 line");
-  expect(report.anchors.refutedList[1]!.found).toContain("docs/never-charted.md");
-  expect(report.anchors.refutedList[1]!.found).toContain("does not exist");
-  expect(report.anchors.refutedList[2]!.found).toContain("docs/erased-notes.md");
+  // What was found: the dead receipt names its id; the drift names the file
+  // and its real length; the erasures name the missing path.
+  expect(report.anchors.refutedList[0]!.found).toContain("r99");
+  expect(report.anchors.refutedList[1]!.found).toContain("docs/trimmed.md");
+  expect(report.anchors.refutedList[1]!.found).toContain("2 line");
+  expect(report.anchors.refutedList[2]!.found).toContain("docs/never-charted.md");
   expect(report.anchors.refutedList[2]!.found).toContain("does not exist");
+  expect(report.anchors.refutedList[3]!.found).toContain("docs/erased-notes.md");
+  expect(report.anchors.refutedList[3]!.found).toContain("does not exist");
 
   // The verdict informs, it does not write: entries, trust labels, and bytes
   // on disk are exactly as before the report.
@@ -409,7 +470,7 @@ test("two runs over an unchanged province agree on counts, verdicts, and refuted
   expect(JSON.stringify(second)).toBe(JSON.stringify(first));
   // The agreement is not vacuous: refuted verdicts in a fixed order and a
   // log summary are part of it.
-  expect(first.anchors.refutedList.length).toBe(3);
+  expect(first.anchors.refutedList.length).toBe(4);
   expect(first.log.receipts).toBe(1);
 });
 
