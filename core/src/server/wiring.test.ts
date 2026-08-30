@@ -19,7 +19,10 @@ import {
   withServer,
 } from "./test-harness";
 import { TOOL_NAMES } from "./registry";
+import type { ChartEntry } from "../types";
 import { readChart, writeChart } from "../chart-store";
+import { appendReceipt } from "../tools/log";
+import { trustReport } from "../tools/trust-report";
 import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
@@ -29,12 +32,12 @@ import { lastDecisionPerFingerprint, readDecisions } from "../harbor/history";
 
 const rgPresent = findBinary("rg") !== undefined;
 
-test("tools/list through the server returns all twelve served tools under Portolan names", async () => {
+test("tools/list through the server returns all thirteen served tools under Portolan names", async () => {
   const target = makeProvince();
   await withServer({ targetRoot: target }, async (client) => {
     const listed = await client.listTools();
     expect(listed.tools.map((tool) => tool.name)).toEqual(TOOL_NAMES);
-    expect(listed.tools.length).toBe(12);
+    expect(listed.tools.length).toBe(13);
     for (const tool of listed.tools) {
       expect((tool.description ?? "").length).toBeGreaterThan(0);
       expect((tool.inputSchema as { type?: string }).type).toBe("object");
@@ -94,6 +97,79 @@ test("chart.write through the server persists; chart.read reads it back verbatim
     const { entries } = structuredOf(read) as { entries: unknown[] };
     expect(entries).toEqual(readChart(target));
     expect(entries.length).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// verification-spine task 3.1: the verification summary serves like any other
+// tool — called through the live server with no arguments, it returns the
+// module's own report unchanged, with a refuted anchor named through the wire.
+// ---------------------------------------------------------------------------
+
+test("trust.report through the server: the one-call verification summary arrives with refuted anchors named", async () => {
+  const target = makeProvince();
+  const drifted: ChartEntry = {
+    kind: "danger",
+    id: "d-drifted",
+    vessel: "v-cart",
+    category: "rock",
+    note: "cites a note file that does not exist",
+    anchors: [{ type: "file", path: "docs/never-charted.md", line: 1 }],
+    trust: "doubtful",
+  };
+  writeChart(target, [...(sampleEntries() as ChartEntry[]), drifted]);
+  appendReceipt(target, { command: "sweep pattern=CartService", scope: "src", outcome: "ok: 2 chunks" });
+
+  // The direct call on the same target is the parity baseline (the report is
+  // deterministic, and its staleness refresh is idempotent).
+  const direct = trustReport(target);
+
+  await withServer({ targetRoot: target }, async (client) => {
+    const result = await client.callTool({ name: "trust.report", arguments: {} });
+    expect(result.isError).toBeUndefined();
+    expect(structuredOf(result)).toEqual(direct);
+
+    const report = structuredOf(result) as {
+      trust: Record<string, number>;
+      kinds: Record<string, number>;
+      staleness: { pendingVessels: unknown[] };
+      anchors: {
+        total: number;
+        sounded: number;
+        confirmed: number;
+        refuted: number;
+        refutedList: Array<{ entryId: string; anchor: unknown; found: string }>;
+      };
+      log: { receipts: number; lastReceipt: { id: string; command: string } | null };
+    };
+    expect(report.trust).toEqual({ measured: 3, charted: 0, reported: 0, doubtful: 1, unsurveyed: 0 });
+    expect(report.kinds).toEqual({
+      vessel: 2,
+      fairway: 1,
+      portOfEntry: 0,
+      beacon: 0,
+      light: 0,
+      danger: 1,
+    });
+    // The chart was just written against unchanged sources: nothing pending.
+    expect(report.staleness.pendingVessels).toEqual([]);
+    // Every anchor sounded; the dead one named with its entry, unchanged.
+    expect(report.anchors.total).toBe(4);
+    expect(report.anchors.sounded).toBe(4);
+    expect(report.anchors.confirmed).toBe(3);
+    expect(report.anchors.refuted).toBe(1);
+    expect(report.anchors.refutedList.length).toBe(1);
+    expect(report.anchors.refutedList[0]!.entryId).toBe("d-drifted");
+    expect(report.anchors.refutedList[0]!.anchor).toEqual({
+      type: "file",
+      path: "docs/never-charted.md",
+      line: 1,
+    });
+    expect(report.anchors.refutedList[0]!.found).toContain("docs/never-charted.md");
+    // The ship's-log summary rides along in the same call.
+    expect(report.log.receipts).toBe(1);
+    expect(report.log.lastReceipt!.id).toBe("r1");
+    expect(report.log.lastReceipt!.command).toBe("sweep pattern=CartService");
   });
 });
 
