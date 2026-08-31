@@ -178,3 +178,23 @@ test("a second refresh over unchanged sources keeps the outstanding notices", ()
   expect(readFileSync(noticesPath, "utf8")).toBe(afterFirst);
   expect(staleIds(target)).toEqual(["danger/d-alpha", "fairway/f-a-b", "vessel/alpha"]);
 });
+
+test("a vessel charted with an escaping path counts as changed, never fresh", () => {
+  const target = makeTree();
+  const escaper: ChartEntry = {
+    kind: "vessel",
+    id: "escaper",
+    name: "Escaper",
+    paths: ["pkg-a/../../outside"],
+    anchors: [{ type: "file", path: "pkg-a/main.js", line: 1 }],
+    trust: "charted",
+  };
+  writeChart(target, [escaper]);
+
+  // The escaping path is never walked (nothing outside the perimeter is
+  // read), and the vessel can never prove freshness: it is changed, so the
+  // chart marks it pending correction instead of vouching for it.
+  const result = refreshStaleness(target);
+  expect(result.changedVessels).toContain("escaper");
+  expect(staleIds(target)).toContain("vessel/escaper");
+});

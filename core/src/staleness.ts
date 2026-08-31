@@ -8,7 +8,7 @@
  * anyway.
  */
 import { readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
 import type { IndexedEntry, Notice, VesselSignature } from "./types";
 import {
@@ -29,6 +29,7 @@ interface FileFact {
 }
 
 function collect(root: string, rel: string, out: FileFact[]): void {
+  if (escapesRoot(root, rel)) return; // never walk past the target perimeter
   let stats;
   try {
     stats = statSync(join(root, rel));
@@ -56,12 +57,19 @@ function collect(root: string, rel: string, out: FileFact[]): void {
   }
 }
 
+/** True when a charted path resolves outside the target root (`..` escapes;
+ * an absolute segment does not — join() treats it as relative). */
+function escapesRoot(root: string, rel: string): boolean {
+  const abs = resolve(root, rel);
+  return abs !== root && !abs.startsWith(root + sep);
+}
+
 /**
  * Cheap tree hash over the given paths (relative to the target root):
  * sorted `path\tsize\tmtime` lines, SHA-256. A top-level path is stat'ed as
  * given, so a symlinked vessel root resolves; symlinked entries found
  * during the walk are not followed (only dirents reporting file or dir are
- * descended/collected).
+ * descended/collected). Paths that escape the root contribute nothing.
  */
 export function treeSignature(targetRoot: string, paths: string[]): VesselSignature {
   const facts: FileFact[] = [];
@@ -97,8 +105,15 @@ export function refreshStaleness(targetRoot: string): StalenessResult {
   const entries = readChart(targetRoot);
 
   const changed = new Set<string>();
+  const root = resolve(targetRoot);
   for (const entry of entries) {
     if (entry.kind !== "vessel") continue;
+    // A vessel charted with an escaping path can never prove freshness: it
+    // counts as changed, so the chart never vouches for what it cannot see.
+    if (entry.paths.some((p) => escapesRoot(root, p))) {
+      changed.add(entry.id);
+      continue;
+    }
     const current = treeSignature(targetRoot, entry.paths);
     // A vessel without a recorded signature counts as changed: never claim
     // freshness we cannot prove.

@@ -20,8 +20,8 @@
  * write path. Acting on a verdict — including any trust change — is the
  * Cartographer's separate write.
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve, sep } from "node:path";
+import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
 import type { Anchor, FairwayEntry, VesselEntry } from "../types";
 import { escapeRegExp } from "./shared";
 import { sweep, type SweepChunk } from "./sweep";
@@ -159,6 +159,19 @@ function resolveInsideTarget(targetRoot: string, rel: string): string | undefine
   const root = resolve(targetRoot);
   const abs = resolve(root, rel);
   if (abs !== root && !abs.startsWith(root + sep)) return undefined;
+  // A symlink inside the target may point outside it — including the cited
+  // file itself: compare real paths, so an anchor can never read through an
+  // in-target link past the perimeter. When the cited file does not exist,
+  // its existing parents are still checked (the ENOENT is reported honestly
+  // by the caller).
+  const realRoot = realpathSync(root);
+  let realPath: string;
+  try {
+    realPath = realpathSync(abs);
+  } catch {
+    realPath = realpathSync(dirname(abs));
+  }
+  if (realPath !== realRoot && !realPath.startsWith(realRoot + sep)) return undefined;
   return abs;
 }
 
