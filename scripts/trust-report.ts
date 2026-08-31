@@ -38,6 +38,16 @@ const scrub = (s: string): string => {
   return marked.endsWith(home) ? `${marked.slice(0, marked.length - home.length)}~` : marked;
 };
 const oneLine = (s: string): string => scrub(s.replace(/\s+/g, " ").trim());
+// Chart- and log-controlled identifiers are embedded into committed
+// markdown: collapse whitespace and neutralize backticks/pipes, so a wrong
+// entry id, anchor path, or receipt id can never forge headings, code spans,
+// or table rows in the public receipt (security review, finding 1).
+const mdSafe = (s: string): string => oneLine(s).replace(/[`|]/g, "'");
+// A receipted command may carry inline secrets (`API_TOKEN=... bun ...`):
+// redact UPPER_NAME=value assignments before they reach the public artifact
+// (security review, finding 4). Lower-case assignments (URL query strings)
+// are left alone.
+const redactSecrets = (s: string): string => s.replace(/\b[A-Z_][A-Z0-9_]*=\S+/g, "<redacted>");
 
 const target = resolve(process.cwd(), option("--target") ?? repoRoot);
 const out = resolve(process.cwd(), option("--out") ?? join(repoRoot, "docs", "demo", "trust-report.md"));
@@ -62,20 +72,20 @@ md += "## Pending correction\n\n";
 md += r.staleness.pendingVessels.length === 0
   ? "None.\n\n"
   : "| Vessel | Entries dragged |\n| --- | ---: |\n" +
-    r.staleness.pendingVessels.map((v) => count(v.id, v.entries)).join("") + "\n";
+    r.staleness.pendingVessels.map((v) => count(mdSafe(v.id), v.entries)).join("") + "\n";
 
 md += "## Anchor re-sounding\n\n";
 md += `Sounded ${r.anchors.sounded} of ${r.anchors.total} anchors: ${r.anchors.confirmed} confirmed, ${r.anchors.refuted} refuted.\n\n`;
 md += r.anchors.refutedList.length === 0
   ? "None refuted.\n\n"
   : r.anchors.refutedList
-      .map((x) => `- \`${x.entryId}\` — anchor \`${formatAnchor(x.anchor)}\` — found: ${oneLine(x.found)}\n`)
+      .map((x) => `- \`${mdSafe(x.entryId)}\` — anchor \`${mdSafe(formatAnchor(x.anchor))}\` — found: ${oneLine(x.found)}\n`)
       .join("") + "\n";
 
 md += "## Ship's log\n\n";
 md += r.log.lastReceipt === null
   ? "The ship's log is empty.\n"
-  : `${r.log.receipts} receipts; most recent \`${r.log.lastReceipt.id}\`: \`${oneLine(r.log.lastReceipt.command)}\`\n`;
+  : `${r.log.receipts} receipts; most recent \`${mdSafe(r.log.lastReceipt.id)}\`: \`${redactSecrets(oneLine(r.log.lastReceipt.command))}\`\n`;
 
 mkdirSync(resolve(out, ".."), { recursive: true });
 writeFileSync(out, md);

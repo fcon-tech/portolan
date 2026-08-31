@@ -4,7 +4,7 @@
  */
 import { test, expect, afterEach } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import type { FairwayEntry, VesselEntry } from "../types";
@@ -630,4 +630,16 @@ test("the sounding surface exposes no chart-write or trust-mutation path", () =>
     expect("trust" in result).toBe(false);
     expect(JSON.stringify(result)).not.toContain('"trust"');
   }
+});
+
+test("an in-target symlink pointing outside the target is refuted as an escape", () => {
+  const target = makeProvince();
+  const secretDir = mkdtempSync(join(tmpdir(), "portolan-outside-"));
+  targets.push(secretDir);
+  writeFileSync(join(secretDir, "secret.txt"), "outside content\n");
+  symlinkSync(join(secretDir, "secret.txt"), join(target, "harbor", "link.txt"));
+
+  const result = soundAnchor(target, { anchor: { type: "file", path: "harbor/link.txt", line: 1 } });
+  expect(result.verdict).toBe("refuted");
+  expect(result.evidence[0]!.found).toContain("escapes the target root");
 });
