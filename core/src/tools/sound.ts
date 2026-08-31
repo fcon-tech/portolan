@@ -161,15 +161,25 @@ function resolveInsideTarget(targetRoot: string, rel: string): string | undefine
   if (abs !== root && !abs.startsWith(root + sep)) return undefined;
   // A symlink inside the target may point outside it — including the cited
   // file itself: compare real paths, so an anchor can never read through an
-  // in-target link past the perimeter. When the cited file does not exist,
-  // its existing parents are still checked (the ENOENT is reported honestly
-  // by the caller).
+  // in-target link past the perimeter. A wholly fabricated path (no parent
+  // on disk) is contained against the nearest existing ancestor; nothing on
+  // that path can be read, so the honest outcome stays `refuted`, not a
+  // crashed sounding.
   const realRoot = realpathSync(root);
+  let probe = abs;
   let realPath: string;
-  try {
-    realPath = realpathSync(abs);
-  } catch {
-    realPath = realpathSync(dirname(abs));
+  for (;;) {
+    try {
+      realPath = realpathSync(probe);
+      break;
+    } catch {
+      const parent = dirname(probe);
+      if (parent === probe) {
+        realPath = probe; // walked to the filesystem root unrealized: escape
+        break;
+      }
+      probe = parent;
+    }
   }
   if (realPath !== realRoot && !realPath.startsWith(realRoot + sep)) return undefined;
   return abs;
