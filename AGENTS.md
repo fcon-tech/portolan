@@ -52,8 +52,8 @@ nothing stays unarchived.
    repair drift on sight.
 
 Every change ships through a merge request from a `change/<id>` branch —
-never straight to `main`. At merge time: bump `@portolan/core` version and
-add the change's entry to `CHANGELOG.md`.
+never straight to `main`. Merge only on green CI. At merge time: bump
+`@portolan/core` version and add the change's entry to `CHANGELOG.md`.
 
 ## Verification
 
