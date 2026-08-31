@@ -67,7 +67,7 @@
       `bun run skill/verify/checks.ts`; `scripts/leak-gate.sh`.
 - [x] 7.2 Code review of the whole change; security pass (file reads only,
       no network, no source mutation).
-- [ ] 7.3 Scenario gate (Governor's read) — run on **Bigtop**, the
+- [x] 7.3 Scenario gate (Governor's read) — run on **Bigtop**, the
       acceptance corpus (docs/MANIFEST.md postulate 3): the verification
       summary over the standing Bigtop Chart is read by the Governor and
       confirmed true. The committed `docs/demo/trust-report.md` remains the
