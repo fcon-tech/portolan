@@ -11,16 +11,16 @@ harnesses with opencode as the first adapter.
 ### Requirement: One MCP server exposes the full toolset
 Portolan SHALL be delivered as a single MCP server over stdio that
 advertises every tool under its Portolan name — `chart.read`,
-`chart.write`, `sweep`, `symbols`, `manifests`, `sound.edge`,
-`sound.anchor`, `log.append`, `log.read`, `expeditions.propose`,
-`expeditions.decide`, `chart.render`. Each tool SHALL accept the inputs
-and return the structured, anchored, trust-labeled results its own
+`chart.write`, `chart.render`, `trust.report`, `sweep`, `symbols`,
+`manifests`, `sound.edge`, `sound.anchor`, `log.append`, `log.read`,
+`expeditions.propose`, `expeditions.decide`. Each tool SHALL accept the
+inputs and return the structured, anchored, trust-labeled results its own
 capability defines; the server SHALL NOT reinterpret, rename, or flatten
 them.
 
 #### Scenario: The tool list is complete
 - **WHEN** a harness client asks the server for its tool list
-- **THEN** all twelve tools are advertised under their Portolan names
+- **THEN** all thirteen tools are advertised under their Portolan names
 
 #### Scenario: Results pass through structured
 - **WHEN** a client calls `sweep` with a valid pattern
@@ -82,7 +82,8 @@ launch shims that add no behavior of their own.
 
 #### Scenario: opencode sees every tool
 - **WHEN** the opencode adapter is installed and a session starts
-- **THEN** the Cartographer can call all twelve served tools from opencode
+- **THEN** the Cartographer can call all thirteen served tools from
+  opencode
 
 #### Scenario: pi and omp reach the same server
 - **WHEN** a pi or omp shim launches the server
