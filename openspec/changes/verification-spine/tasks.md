@@ -65,9 +65,11 @@
 - [x] 7.1 Full gates: `bun test`; `bunx tsc --noEmit` in `core/` and
       `acceptance/`; `openspec validate --specs --strict`;
       `bun run skill/verify/checks.ts`; `scripts/leak-gate.sh`.
-- [ ] 7.2 Code review of the whole change; security pass (file reads only,
+- [x] 7.2 Code review of the whole change; security pass (file reads only,
       no network, no source mutation).
-- [ ] 7.3 Scenario gate (Governor's read): a fresh session over a charted
-      province calls `trust.report` and reports the summary; the Governor
-      confirms it reads true. Adoption analytics is explicitly out of scope
-      (separate invocation-contract change).
+- [ ] 7.3 Scenario gate (Governor's read) — run on **Bigtop**, the
+      acceptance corpus (docs/MANIFEST.md postulate 3): the verification
+      summary over the standing Bigtop Chart is read by the Governor and
+      confirmed true. The committed `docs/demo/trust-report.md` remains the
+      self-chart receipt (task 4 — the only chart that can live in the
+      public repo); the acceptance gate itself is Bigtop's.
