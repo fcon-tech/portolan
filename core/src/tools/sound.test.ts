@@ -643,3 +643,12 @@ test("an in-target symlink pointing outside the target is refuted as an escape",
   expect(result.verdict).toBe("refuted");
   expect(result.evidence[0]!.found).toContain("escapes the target root");
 });
+
+test("a wholly fabricated anchor — no file, no parent — is refuted honestly, not a crash", () => {
+  const target = makeProvince();
+  const result = soundAnchor(target, {
+    anchor: { type: "file", path: "harbor/no-such-dir/no-such-file.ts", line: 1 },
+  });
+  expect(result.verdict).toBe("refuted");
+  expect(result.evidence[0]!.found).toContain("does not exist in the target");
+});
