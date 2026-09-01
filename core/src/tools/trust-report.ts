@@ -5,6 +5,8 @@
  * live through the existing `sound.anchor` machinery, so the report states
  * what holds now, not what the index last claimed. Refuted anchors are
  * named, never smoothed over: the verdict informs, the Cartographer writes.
+ * Adoption counts the mandated query tools' invocations from the ship's log
+ * — invocation facts, never a measure of mandate compliance.
  *
  * Refreshes staleness first, exactly as `chart.read` does; that refresh is
  * the only write the report may cause (inside `.portolan/`, per the
@@ -16,6 +18,26 @@ import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { readReceipts, type Receipt } from "./log";
 import { soundAnchor } from "./sound";
+
+/**
+ * The mandated query tools whose invocations the report must account for
+ * (specs/invocation/spec.md: a query tool ships only with a per-tool
+ * adoption counter). A future mandated tool just appends here.
+ */
+export const ADOPTION_TOOLS = ["chart.neighborhood"] as const;
+
+/** The concrete tools in the adoption registry. */
+export type MandatedQueryTool = (typeof ADOPTION_TOOLS)[number];
+
+/** Invocation facts for one mandated query tool, read from the ship's log. */
+export interface ToolAdoption {
+  /** Receipts in the log whose command names the tool. */
+  invocations: number;
+  /** First invocation's receipt id; null when the log holds none. */
+  firstReceipt: string | null;
+  /** Most recent invocation's receipt id; null when the log holds none. */
+  lastReceipt: string | null;
+}
 
 /** One refuted anchor: the entry that cites it, the citation, what was found. */
 export interface RefutedAnchor {
@@ -57,6 +79,8 @@ export interface TrustReport {
   };
   /** The ship's log: total receipts and the most recent one (null on an empty log). */
   log: { receipts: number; lastReceipt: Receipt | null };
+  /** Per-tool invocation facts for every mandated query tool, zero-filled. */
+  adoption: { tools: Record<MandatedQueryTool, ToolAdoption> };
 }
 
 /**
@@ -78,6 +102,14 @@ function chargeStaleEntry(entry: IndexedEntry, pending: Map<string, number>): vo
     bump(entry.from);
     bump(entry.to);
   } else bump(entry.vessel);
+}
+
+/**
+ * A receipt's command names the tool when it is the bare tool name or the
+ * tool followed by its arguments ("chart.neighborhood vessel=tug").
+ */
+function namesTool(command: string, tool: MandatedQueryTool): boolean {
+  return command === tool || command.startsWith(`${tool} `);
 }
 
 /**
@@ -131,6 +163,18 @@ export function trustReport(targetRoot: string): TrustReport {
   const refutedList: RefutedAnchor[] = refuted.map(({ index: _index, ...r }) => r);
 
   const receipts = readReceipts(targetRoot);
+  // Append-only log: file order is invocation order, so first/last by it.
+  const adoption = Object.fromEntries(
+    ADOPTION_TOOLS.map((tool) => {
+      const mine = receipts.filter((receipt) => namesTool(receipt.command, tool));
+      const stat: ToolAdoption = {
+        invocations: mine.length,
+        firstReceipt: mine[0]?.id ?? null,
+        lastReceipt: mine.length > 0 ? mine[mine.length - 1]!.id : null,
+      };
+      return [tool, stat] as const;
+    }),
+  ) as Record<MandatedQueryTool, ToolAdoption>;
   return {
     trust,
     kinds,
@@ -146,5 +190,6 @@ export function trustReport(targetRoot: string): TrustReport {
       receipts: receipts.length,
       lastReceipt: receipts.length > 0 ? receipts[receipts.length - 1]! : null,
     },
+    adoption: { tools: adoption },
   };
 }

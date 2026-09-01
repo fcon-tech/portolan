@@ -16,6 +16,7 @@ import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
+import { neighborhood, type NeighborhoodParams } from "../tools/neighborhood";
 import { soundAnchor, soundEdge } from "../tools/sound";
 import { trustReport } from "../tools/trust-report";
 import { computeProposals, decide } from "../harbor/proposals";
@@ -503,9 +504,73 @@ export const TOOL_TABLE: ToolSpec[] = [
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     handler: (_args, ctx) => trustReport(ctx.targetRoot),
   },
+  {
+    name: "chart.neighborhood",
+    description:
+      "One vessel's fairway neighborhood in one deterministic call: the charted fairways touching it out to the " +
+      "requested depth (default 1, at most 3) in the requested direction (in, out, or both; default both), each edge " +
+      "with its id, endpoints, trust label, optional relation, staleness, and anchors with line numbers; the touched " +
+      "vessels (trust, staleness, direct fan-in) with their ports of entry, ordered by fan-in, highest first. " +
+      "Budgeted — maxEdges (default 40, cap 200) and maxBytes (default 32768, cap 131072) — and a budget cut is " +
+      "stated loudly, never a silent prefix. An unknown vessel is an honest unsurveyed error, never an empty " +
+      "neighborhood. With verify: true every returned edge's anchors are re-sounded and each edge is marked " +
+      "confirmed or refuted by name; the verdict informs, the Chart is never written. Read-only toward the Chart: " +
+      "each call appends exactly one ship's-log receipt.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        vessel: { type: "string", description: "The charted vessel whose neighborhood is asked for." },
+        direction: {
+          type: "string",
+          enum: ["in", "out", "both"],
+          default: "both",
+          description: "Which charted fairways count as touching the vessel.",
+        },
+        depth: { type: "integer", minimum: 1, maximum: 3, default: 1, description: "Hops to traverse." },
+        verify: {
+          type: "boolean",
+          default: false,
+          description:
+            "Re-sound every returned edge's anchors and mark each edge confirmed or refuted, naming the refuted " +
+            "anchors. Informs; never modifies the Chart.",
+        },
+        maxEdges: { type: "integer", minimum: 1, maximum: 200, default: 40, description: "Edge budget." },
+        maxBytes: {
+          type: "integer",
+          minimum: 1,
+          maximum: 131072,
+          default: 32768,
+          description: "Serialized-response budget in bytes.",
+        },
+      },
+      required: ["vessel"],
+      additionalProperties: false,
+    },
+    handler: (args, ctx) => {
+      // The engine validates every parameter itself and rejects naming the
+      // violated parameter and its allowed values; the rejection surfaces as
+      // a tool error at the server boundary, unmodified.
+      const response = neighborhood(ctx.targetRoot, args as unknown as NeighborhoodParams);
+      // The one write this call makes: exactly one ship's-log receipt, through
+      // the same append path log.append serves. A rejected call never reaches
+      // this line, so a rejection leaves no receipt.
+      appendReceipt(ctx.targetRoot, {
+        command: "chart.neighborhood",
+        scope: response.vessel,
+        outcome:
+          `ok: ${response.edges.length} edge${response.edges.length === 1 ? "" : "s"}, ` +
+          `${response.vessels.length} vessel${response.vessels.length === 1 ? "" : "s"}` +
+          (response.truncated
+            ? `, truncated: ${response.droppedEdges} edge${response.droppedEdges === 1 ? "" : "s"} and ` +
+              `${response.droppedVessels} vessel${response.droppedVessels === 1 ? "" : "s"} dropped`
+            : ""),
+      });
+      return response;
+    },
+  },
 ];
 
-/** The served Portolan tool names, in table order (the harness capability's thirteen). */
+/** The served Portolan tool names, in table order (the harness capability's fourteen). */
 export const TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
 
 /**

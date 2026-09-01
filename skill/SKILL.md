@@ -38,6 +38,9 @@ before other work:
    from its evidence (the drifted vessels, the gapped vessel, or the new
    land) and survey per section 4. A province with no standing Chart has
    no queue; that is a first survey, so start at section 1.
+6. Before any edit: a task touching more than one file or vessel requires
+   calling `chart.neighborhood` for each touched vessel first — sound the
+   neighborhood before the first edit.
 
 ## 1. Lift-off
 
@@ -118,7 +121,11 @@ passes upgrade entries — never assume an upgrade.
 
 1. Assert fairways from the cheapest evidence: dependencies declared in
    manifests, then references to the target's own packages found by `sweep`
-   and `symbols`.
+   and `symbols`. Record the fairway's `relation` when the evidence shows
+   it — `build` (build-time or manifest dependence), `runtime` (launch or
+   run-time wiring), `config` (config or data reading) — and omit it when
+   the evidence is silent (untyped is valid); the enum is closed:
+   `build | runtime | config`.
 2. Sound every asserted fairway with `sound.edge` before or with its write
    (section 5). Write only what a sounding or direct reading supports.
 3. A fairway claimed by docs but without deterministic support: write it
@@ -236,7 +243,7 @@ labeled `unsurveyed`, never presented as an established fact.
 
 ## 10. Tool desk
 
-One MCP server over stdio, bound to the target root at launch. Thirteen tools:
+One MCP server over stdio, bound to the target root at launch. Fourteen tools:
 
 | Tool | Use |
 | --- | --- |
@@ -253,6 +260,7 @@ One MCP server over stdio, bound to the target root at launch. Thirteen tools:
 | `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
 | `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province" or similar, in any language), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
 | `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, ship's-log tail; feeds the Sailing Directions |
+| `chart.neighborhood` | one vessel's neighborhood in one call: the charted fairways touching it (direction `in`/`out`/`both`, depth 1–3) with trust labels, anchors, and staleness, plus the touched vessels ranked by fan-in with their ports of entry; budgeted (`maxEdges`, `maxBytes`) and a budget cut is stated loudly; `verify: true` re-sounds every edge and names the refuted ones; read-only toward the Chart, and each call receipts itself in the ship's log |
 
 Call shapes (fields abbreviated to the ones that matter):
 
@@ -267,4 +275,5 @@ Call shapes (fields abbreviated to the ones that matter):
 { "tool": "expeditions.propose", "input": {} }
 { "tool": "expeditions.decide", "input": { "fingerprint": "64-hex from expeditions.propose", "decision": "accepted" } }
 { "tool": "trust.report", "input": {} }
+{ "tool": "chart.neighborhood", "input": { "vessel": "api", "direction": "both", "depth": 1 } }
 ```

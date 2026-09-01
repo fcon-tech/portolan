@@ -9,6 +9,10 @@
       "description": "Closed trust vocabulary (chart notation): measured, charted, reported, doubtful, unsurveyed.",
       "enum": ["measured", "charted", "reported", "doubtful", "unsurveyed"]
     },
+    "fairwayRelation": {
+      "description": "Optional closed relation vocabulary on a fairway: build, runtime, config. A fairway without a relation stays valid and reads as untyped.",
+      "enum": ["build", "runtime", "config"]
+    },
     "entryId": { "type": "string", "minLength": 1 },
     "anchor": {
       "oneOf": [
@@ -73,6 +77,7 @@
         "id": { "$ref": "#/$defs/entryId" },
         "from": { "$ref": "#/$defs/entryId" },
         "to": { "$ref": "#/$defs/entryId" },
+        "relation": { "$ref": "#/$defs/fairwayRelation" },
         "note": { "type": "string" },
         "anchors": { "$ref": "#/$defs/anchors" },
         "trust": { "$ref": "#/$defs/trustLabel" }

@@ -71,7 +71,7 @@ bun core/src/harbor/cli.ts run    --target <t> --fingerprint <fp> \
     --launcher adapters/opencode/expedition-launcher             # launch one
 bun core/src/harbor/cli.ts watch  --target <t>  [same flags]     # night policy
 
-# serve the thirteen MCP tools to your harness:
+# serve the fourteen MCP tools to your harness:
 bun core/src/server/main.ts --target /path/to/province
 ```
 
@@ -81,7 +81,7 @@ Requirements: [Bun](https://bun.sh), ripgrep, universal-ctags.
 
 | Path | What lives there |
 | --- | --- |
-| `core/` | the Chart store, the thirteen MCP tools (stdio server), the Harbor, the Chart Room renderer |
+| `core/` | the Chart store, the fourteen MCP tools (stdio server), the Harbor, the Chart Room renderer |
 | `skill/` | the Cartographer's expedition method, as a harness-loadable skill |
 | `adapters/` | opencode installer + expedition launcher, pi/omp shims, drop-in night-watch crontab |
 | `acceptance/` | the sea-trial gate: the whole loop graded against a real corpus |

@@ -121,7 +121,7 @@ check("1.1", "locked glossary and trust vocabulary present in SKILL.md", () => {
     assert(text.includes(term), `SKILL.md never uses the locked term "${term}"`);
   }
   for (const tool of [
-    "chart.read", "chart.write", "sweep", "symbols", "manifests",
+    "chart.read", "chart.write", "chart.neighborhood", "sweep", "symbols", "manifests",
     "sound.edge", "sound.anchor", "log.append", "log.read",
     "expeditions.propose", "expeditions.decide", "chart.render",
   ]) {
@@ -152,7 +152,7 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   ]) {
     assert(text.includes(phrase), `the harbor teaching omits "${phrase}"`);
   }
-  assert(/Thirteen tools:/.test(text), "the tool desk does not count thirteen tools");
+  assert(/Fourteen tools:/.test(text), "the tool desk does not count fourteen tools");
   assert(text.includes('"tool": "trust.report", "input": {}'), "no call shape for trust.report");
   assert(
     text.includes("call `trust.report` (no input) when composing"),
@@ -166,6 +166,38 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   assert(text.includes('"tool": "expeditions.propose", "input": {}'), "no call shape for expeditions.propose");
   assert(text.includes('"fingerprint"'), "no call shape citing a fingerprint");
   assert(text.includes('"decision"'), "no call shape citing a decision");
+});
+
+// ---------------------------------------------------------------------------
+// chart-neighborhood task 5.2 — the invocation contract in the skill
+// (openspec/changes/chart-neighborhood/specs/invocation: a mandated query
+// tool ships with a session-start mandate and a tool-desk row).
+// ---------------------------------------------------------------------------
+
+check("neighborhood 5.2", "SKILL.md mandates chart.neighborhood at session start, before any edit", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const startAt = text.indexOf("## 0. The harbor watch");
+  const liftOffAt = text.indexOf("## 1. Lift-off");
+  assert(startAt >= 0 && liftOffAt > startAt, "the harbor-watch section moved");
+  const sessionStart = text.slice(startAt, liftOffAt);
+  assert(
+    /a task touching more than one file or vessel[^.]*`chart\.neighborhood`[^.]*before the first edit/i.test(
+      sessionStart
+    ),
+    "the session-start region lacks the mandate (trigger: a task touching more than one file or vessel; ordering: before the first edit)"
+  );
+});
+
+check("neighborhood 5.2", "the tool desk lists chart.neighborhood with a purpose row and a call shape", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const deskAt = text.indexOf("## 10. Tool desk");
+  assert(deskAt >= 0, "the tool desk section is missing");
+  const desk = text.slice(deskAt, text.indexOf("Call shapes", deskAt));
+  assert(/^\| `chart\.neighborhood` \| .+\|$/m.test(desk), "no tool-desk row for chart.neighborhood");
+  assert(
+    text.includes('"tool": "chart.neighborhood", "input": { "vessel"'),
+    "no call shape for chart.neighborhood"
+  );
 });
 
 check("1.1", "no command text addressed to the Governor", () => {
