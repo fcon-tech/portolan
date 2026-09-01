@@ -4,9 +4,11 @@
  * distribution, per-kind counts, staleness — and re-sounds every anchor
  * live through the existing `sound.anchor` machinery, so the report states
  * what holds now, not what the index last claimed. Refuted anchors are
- * named, never smoothed over: the verdict informs, the Cartographer writes.
- * Adoption counts the mandated query tools' invocations from the ship's log
- * — invocation facts, never a measure of mandate compliance.
+ * named, never smoothed over — including a citation so malformed that
+ * `sound.anchor` refuses it (a hand-edited index): it counts as refuted
+ * with the refusal as its finding, so one planted anchor cannot sink the
+ * report. Adoption counts the mandated query tools' invocations from the
+ * ship's log — invocation facts, never a measure of mandate compliance.
  *
  * Refreshes staleness first, exactly as `chart.read` does; that refresh is
  * the only write the report may cause (inside `.portolan/`, per the
@@ -17,7 +19,7 @@ import { ENTRY_KINDS, TRUST_LABELS } from "../types";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { readReceipts, type Receipt } from "./log";
-import { soundAnchor } from "./sound";
+import { SoundingError, soundAnchor } from "./sound";
 
 /**
  * The mandated query tools whose invocations the report must account for
@@ -142,7 +144,18 @@ export function trustReport(targetRoot: string): TrustReport {
   for (const entry of entries) {
     for (const [index, anchor] of entry.anchors.entries()) {
       total += 1;
-      const verdict = soundAnchor(targetRoot, { anchor });
+      let verdict: ReturnType<typeof soundAnchor>;
+      try {
+        verdict = soundAnchor(targetRoot, { anchor });
+      } catch (err) {
+        if (!(err instanceof SoundingError)) throw err;
+        // A non-citable anchor (plantable by a hand-edited index) is
+        // refuted by name like any other unresolvable citation — one bad
+        // citation never sinks the whole report, and the report never
+        // sounds fewer anchors than the chart cites.
+        refuted.push({ entryId: entry.id, anchor, index, found: err.message });
+        continue;
+      }
       if (verdict.verdict === "confirmed") confirmed += 1;
       else {
         // sound.anchor yields confirmed or refuted only; its evidence names
