@@ -244,7 +244,10 @@ test("a rewritten chart retires absent vessels' sheets", () => {
   const dir = chartDir(target);
   expect(readdirSync(dir)).toContain(sheetFileName("db"));
 
-  writeChart(target, [web, lightUsers, dangerDup]);
+  // 5 → 3 entries is a deliberate retire-heavy correction (60% kept, below
+  // the 75% floor), so it names allowShrink — the guard's documented
+  // override — instead of silently passing the old floored threshold.
+  writeChart(target, [web, lightUsers, dangerDup], { allowShrink: true });
 
   expect(readdirSync(dir)).not.toContain(sheetFileName("db"));
   expect(readChart(target)).toHaveLength(3);

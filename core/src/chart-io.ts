@@ -38,7 +38,16 @@ export function readChart(targetRoot: string): IndexedEntry[] {
     .split("\n")
     .filter((line) => line.trim().length > 0);
   return lines.map((line, i) => {
-    const entry = JSON.parse(line) as IndexedEntry;
+    let entry: IndexedEntry;
+    try {
+      entry = JSON.parse(line) as IndexedEntry;
+    } catch (err) {
+      // Same remediation shape as the check below: the corruption message
+      // names the file and the line, so index repair knows where to look.
+      throw new Error(
+        `corrupt chart index ${indexPath} line ${i + 1}: not valid JSON (${(err as Error).message})`,
+      );
+    }
     if (typeof entry?.kind !== "string" || typeof entry?.id !== "string") {
       throw new Error(`corrupt chart index ${indexPath} line ${i + 1}`);
     }

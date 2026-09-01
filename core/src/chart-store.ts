@@ -32,6 +32,8 @@ export interface WriteResult {
   index: IndexedEntry[];
   notices: Notice[];
   noticesText: string;
+  /** Set when post-write cleanup failed: the write persisted, its cleanup did not. */
+  cleanupError?: string;
 }
 
 export interface WriteOptions {
@@ -71,10 +73,11 @@ export function writeChart(
   // Shrink guard (chart-write-shrink-guard): a full-replace that drops more
   // than a quarter of the existing entries is refused unless explicitly
   // allowed — a partial rewrite must not clobber a whole chart silently.
+  // The threshold is compared as a float: flooring it would admit a
+  // 74.9% shrink as "not below 75%".
   const previous = readChartOrNull(targetRoot);
   if (previous && !options.allowShrink) {
-    const floor = Math.floor(previous.length * 0.75);
-    if (entries.length < floor) {
+    if (entries.length < previous.length * 0.75) {
       throw new Error(
         `writeChart refused: ${entries.length} entries would shrink the chart from ${previous.length} ` +
           `(allowShrink to override a deliberate retire-heavy correction)`,
@@ -113,13 +116,22 @@ export function writeChart(
   if (notices.length > 0) files.set(NOTICES_FILE, noticesText);
   writeFilesAtomically(dir, files);
 
-  // Remove sheets the new chart no longer owns (retired vessels).
-  for (const name of readdirSync(dir)) {
-    if (name.endsWith(".md") && !sheets.has(name)) {
-      unlinkSync(join(dir, name));
+  // Cleanup runs after the atomic rename: the write has persisted, so a
+  // failing cleanup is reported in the result, never thrown — a throw here
+  // would surface a tool error for a write that in fact landed, and leave
+  // the caller assuming the previous chart.
+  let cleanupError: string | undefined;
+  try {
+    // Remove sheets the new chart no longer owns (retired vessels).
+    for (const name of readdirSync(dir)) {
+      if (name.endsWith(".md") && !sheets.has(name)) {
+        unlinkSync(join(dir, name));
+      }
     }
+    // An empty report is removed: the notices file reflects the latest write.
+    if (notices.length === 0) rmSync(join(dir, NOTICES_FILE), { force: true });
+  } catch (err) {
+    cleanupError = err instanceof Error ? err.message : String(err);
   }
-  // An empty report is removed: the notices file reflects the latest write.
-  if (notices.length === 0) rmSync(join(dir, NOTICES_FILE), { force: true });
-  return { dir, index: indexed, notices, noticesText };
+  return { dir, index: indexed, notices, noticesText, ...(cleanupError !== undefined ? { cleanupError } : {}) };
 }
