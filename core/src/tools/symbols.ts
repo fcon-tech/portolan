@@ -9,7 +9,7 @@
 import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";
 import type { Anchor } from "../types";
-import { escapeRegExp, findBinary, MissingBinaryError, type Env } from "./shared";
+import { escapeRegExp, findBinary, firstLine, MissingBinaryError, relativeToTarget, type Env } from "./shared";
 import { sweep } from "./sweep";
 
 export interface SymbolOptions {
@@ -69,22 +69,6 @@ interface TagRecord {
  * guessing (design.md, decision 2): their references stay honestly absent.
  */
 const MIN_REFERENCE_NAME_LENGTH = 4;
-
-function relativeToTarget(path: string, targetRoot: string): string {
-  if (path.startsWith("./")) return path.slice(2);
-  const root = targetRoot.endsWith("/") ? targetRoot : `${targetRoot}/`;
-  if (path.startsWith(root)) return path.slice(root.length);
-  return path;
-}
-
-function firstLine(text: string): string {
-  return (
-    text
-      .split("\n")
-      .map((l) => l.trim())
-      .find((l) => l.length > 0) ?? ""
-  );
-}
 
 /** Run ctags over the target and return every usable tag record. */
 function runCtags(targetRoot: string, env: Env): TagRecord[] {

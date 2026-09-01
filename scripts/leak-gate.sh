@@ -7,7 +7,15 @@
 # assembled so this file carries no literal for itself to flag.
 home_sig="/$(printf %s ho)me/"
 users_sig="/$(printf %s Use)rs/"
-leaked=$(git ls-files -z | xargs -0 grep -lI -e "$home_sig" -e "$users_sig" 2>/dev/null)
+# The username is a leak signature too (scripts/demo-refresh.sh already
+# treats it as one): a tracked file carrying $USER outside those prefixes
+# must fail the same gate. Patterns live in a temp file so the literal
+# never appears on this script's own command line.
+patterns=$(mktemp)
+trap 'rm -f "$patterns"' EXIT
+printf '%s\n%s\n' "$home_sig" "$users_sig" > "$patterns"
+if [ -n "${USER:-}" ]; then printf '%s\n' "$USER" >> "$patterns"; fi
+leaked=$(git ls-files -z | xargs -0 grep -lI -f "$patterns" 2>/dev/null)
 if [ -n "$leaked" ]; then
   printf 'machine home paths leaked into tracked files:\n%s\n' "$leaked" >&2
   exit 1

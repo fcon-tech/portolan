@@ -26,7 +26,7 @@
  *   bun adapters/opencode/install.ts --target /path/to/province
  *   bun adapters/opencode/install.ts --target . --config ~/proj/opencode.jsonc
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
@@ -237,7 +237,12 @@ if (existsSync(configPath)) {
 }
 
 mkdirSync(dirname(configPath), { recursive: true });
-writeFileSync(configPath, finalText);
+// Stage-and-rename: the file we promised to merge into verbatim is replaced
+// atomically, so a crash mid-write truncates the temp file, never the
+// operator's config.
+const configTmp = `${configPath}.tmp-${Date.now()}`;
+writeFileSync(configTmp, finalText);
+renameSync(configTmp, configPath);
 
 // The province's AGENTS.md carries the harbor protocol so every harness
 // that reads agent instructions (opencode first) knows to propose

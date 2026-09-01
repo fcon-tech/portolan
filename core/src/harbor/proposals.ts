@@ -154,7 +154,9 @@ function repairProposal(targetRoot: string, entries: IndexedEntry[]): Proposal |
       `(sources changed under ${drifted.map((v) => v.paths.join(", ")).join("; ")})`,
     evidence,
     anchors: uniqueAnchors(
-      drifted.flatMap((v) => v.paths.map((path) => soundableAnchorUnder(targetRoot, path))),
+      drifted
+        .flatMap((v) => v.paths.map((path) => soundableAnchorUnder(targetRoot, path)))
+        .filter((anchor): anchor is Anchor => anchor !== undefined),
     ),
     scope: { vessels: ids, entries: staleEntryCount, soundings: staleEntryCount },
   };

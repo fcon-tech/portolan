@@ -282,7 +282,7 @@ export function runExpedition(
     "harness",
     "installed"
   );
-  harness.journal.push({ type: "install", tools: 11 });
+  harness.journal.push({ type: "install", tools: 14 });
 
   const descs = descriptors(targetRoot);
   const byId = new Map(descs.map((d) => [d.id, d]));

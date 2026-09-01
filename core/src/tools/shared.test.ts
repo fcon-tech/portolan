@@ -2,8 +2,23 @@ import { test, expect } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { findBinary, MissingBinaryError, requireTrustLabel } from "./shared";
+import { findBinary, MissingBinaryError } from "./shared";
 import { findBinary as find } from "./shared";
+
+/** The guard under test, local to the tests: production carries no caller. */
+function requireTrustLabel(
+  labeled: { trust?: unknown },
+  expected: string,
+  what: string,
+): void {
+  if (labeled.trust !== expected) {
+    throw new Error(
+      `${what}: expected the trust label "${expected}", got ${
+        labeled.trust === undefined ? "no label at all" : `"${String(labeled.trust)}"`
+      }`,
+    );
+  }
+}
 
 const fixturesBin = join(import.meta.dir, "..", "..", "test", "fixtures", "bin");
 

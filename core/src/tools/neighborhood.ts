@@ -394,11 +394,17 @@ export function neighborhood(targetRoot: string, params: NeighborhoodParams): Ne
   // after it. The bytes measured here are the serialized edges — the
   // touched-vessel list is budgeted whole, below. The cut is stated, never
   // smoothed over.
+  //
+  // The budget is measured on the served serialization: the server envelopes
+  // tool results pretty-printed with 2-space indent (server.ts toolSuccess),
+  // so maxBytes bounds the bytes the client actually receives.
+  const budgetOf = (value: unknown): number =>
+    Buffer.byteLength(JSON.stringify(value, null, 2), "utf8");
   const kept: ChartedFairway[] = [];
   for (const candidate of candidates) {
     if (kept.length >= maxEdges) break;
     kept.push(candidate.fairway);
-    if (Buffer.byteLength(JSON.stringify(kept.map(toEdge)), "utf8") <= maxBytes) continue;
+    if (budgetOf(kept.map(toEdge)) <= maxBytes) continue;
     kept.pop();
     break;
   }
@@ -410,10 +416,7 @@ export function neighborhood(targetRoot: string, params: NeighborhoodParams): Ne
   // serves over budget rather than serve a hole.
   let droppedVessels = 0;
   const droppable = assemble(kept, 0).vessels.length - 1;
-  while (
-    droppedVessels < droppable &&
-    Buffer.byteLength(JSON.stringify(assemble(kept, droppedVessels)), "utf8") > maxBytes
-  ) {
+  while (droppedVessels < droppable && budgetOf(assemble(kept, droppedVessels)) > maxBytes) {
     droppedVessels++;
   }
   return assemble(kept, droppedVessels);

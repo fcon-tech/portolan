@@ -9,7 +9,7 @@
 import { spawnSync } from "node:child_process";
 import { statSync } from "node:fs";
 import type { Anchor } from "../types";
-import { findBinary, MissingBinaryError, type Env } from "./shared";
+import { findBinary, firstLine, MissingBinaryError, relativeToTarget, type Env } from "./shared";
 
 export interface SweepOptions {
   /** Surrounding context lines handed to ripgrep (`rg -C`). */
@@ -74,23 +74,6 @@ interface FileEvent {
   text: string;
   isMatch: boolean;
   matches: string[];
-}
-
-/** ripgrep reports paths relative to the cwd it ran in; normalize harder. */
-function relativeToTarget(path: string, targetRoot: string): string {
-  if (path.startsWith("./")) return path.slice(2);
-  const root = targetRoot.endsWith("/") ? targetRoot : `${targetRoot}/`;
-  if (path.startsWith(root)) return path.slice(root.length);
-  return path;
-}
-
-function firstLine(text: string): string {
-  return (
-    text
-      .split("\n")
-      .map((l) => l.trim())
-      .find((l) => l.length > 0) ?? ""
-  );
 }
 
 /**

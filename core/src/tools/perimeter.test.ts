@@ -11,11 +11,26 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
-import { findBinary, requireTrustLabel } from "./shared";
+import { findBinary } from "./shared";
 import { sweep } from "./sweep";
 import { symbols } from "./symbols";
 import { readManifest, type ManifestReadResult } from "./manifests";
 import { appendReceipt, readReceipt } from "./log";
+
+/** The guard under test, local to the tests: production carries no caller. */
+function requireTrustLabel(
+  labeled: { trust?: unknown },
+  expected: string,
+  what: string,
+): void {
+  if (labeled.trust !== expected) {
+    throw new Error(
+      `${what}: expected the trust label "${expected}", got ${
+        labeled.trust === undefined ? "no label at all" : `"${String(labeled.trust)}"`
+      }`,
+    );
+  }
+}
 
 const targets: string[] = [];
 afterEach(() => {
