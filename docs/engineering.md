@@ -12,20 +12,21 @@ never overrides them. Repair drift on sight.
 
 Practices here stay lightweight by contract (MANIFEST, "Dropped from v2"):
 no Clean-Architecture / TDD-ceremony / BDD ritual. What is not lightweight
-is the product's honesty contract — every claim carries an anchor and a
-trust label — and verification (AGENTS.md, "Verification"). A practice that
-makes honesty cheaper to keep stays; one that adds ceremony goes.
+is the product's honesty contract (every claim carries an anchor and a
+trust label) and the verification block (AGENTS.md, "Verification"). A
+practice that makes honesty cheaper to keep stays; one that adds ceremony
+goes.
 
 ## 1. Architecture: deep modules at named seams
 
 Vocabulary, used exactly and without synonyms: **module** (anything with an
 interface and an implementation), **interface** (everything a caller must
 know: signature, invariants, error modes), **depth** (behaviour per unit of
-interface a caller must learn), **seam** (where a module's interface lives —
+interface a caller must learn), **seam** (where a module's interface lives:
 behaviour can vary there without editing either side), **adapter** (a
 concrete occupant of a seam).
 
-The repo's seams, and the rule each carries:
+The repo's seams, and the rule each carries, are these:
 
 | Seam | Adapters | Rule |
 | --- | --- | --- |
@@ -39,7 +40,7 @@ Rules:
 
 - **Deep, not layered.** Much behaviour behind a small interface. A module
   whose interface is as complex as its implementation is a pass-through:
-  apply the deletion test — delete it, and if its complexity just reappears
+  apply the deletion test. Delete it, and if its complexity just reappears
   across the callers, it was never earning its keep.
 - **One adapter is a hypothetical seam; two are a real one.** Do not
   introduce an interface for variation that does not vary.
@@ -49,24 +50,27 @@ Rules:
 - **Return results; concentrate side effects.** Pure computation first;
   writes last, in one place (`writeChart` returns a `WriteResult`).
 - **The interface is the test surface.** Tests cross the same seam callers
-  do. A test that must reach past the interface is a design smell — fix
+  do. A test that must reach past the interface is a design smell: fix
   the module's shape, not the test.
 - **Internal seams are fine.** Small private parts inside a deep module are
   good; they are simply not part of the interface.
 
-Layering: `core/src/tools/` and the root modules compute; `core/src/server/`
-wires and enforces the boundary; `core/src/harbor/` and `core/src/chartroom/`
-are sibling consumers of the chart store; `adapters/` may depend on core,
-never the reverse; `skill/` and `acceptance/` depend on served behaviour,
-not on internals.
+Layering, one rule per line:
+
+- `core/src/tools/` and the root modules compute.
+- `core/src/server/` wires and enforces the boundary.
+- `core/src/harbor/` and `core/src/chartroom/` are sibling consumers of the
+  chart store.
+- `adapters/` may depend on core, never the reverse.
+- `skill/` and `acceptance/` depend on served behaviour, not on internals.
 
 ## 2. Code style (TypeScript on Bun)
 
 - **Module header.** Every source file opens with a block comment stating
   what the module is, the invariant it owns, and the spec or decision it
   serves (`specs/tools/spec.md`, `design.md, decision 4`). A comment states
-  a constraint the code cannot show — a why-guard, an incident receipt, a
-  spec pointer — never a narration of the next line.
+  a constraint the code cannot show: a why-guard, an incident receipt, a
+  spec pointer. It never narrates the next line.
 - **Closed vocabularies.** Domain enums are `as const` arrays with a derived
   union type (`TRUST_LABELS`, `ENTRY_KINDS`, `FAIRWAY_RELATIONS`); bare
   string literals never stand alone in logic; a `switch` over a closed
@@ -74,13 +78,13 @@ not on internals.
 - **One error type per layer, surfaced verbatim.** `ToolInputError`,
   `MissingBinaryError`, `LogError`, `SoundingError`, `HarborError`. The
   registry boundary turns a thrown rejection into a tool error without
-  reinterpretation. Error messages state what happened **and what was not
-  done** ("no substitute search was attempted").
+  reinterpretation. Error messages state what happened and what was not
+  done ("no substitute search was attempted").
 - **Refuse, don't improvise.** Missing binary, empty write, a full-replace
   that would shrink the chart: refuse loudly, name the reason, and where an
   override exists, name it (`allowShrink`).
 - **Strict argument readers.** Tool and CLI arguments are checked, never
-  coerced — the `reqString` / `optInt` readers of `registry.ts`.
+  coerced (the `reqString` / `optInt` readers of `registry.ts`).
 - **Naming.** Domain concepts use the locked glossary (MANIFEST): vessel,
   fairway, port of entry, beacon, light, danger, notice. No synonyms, ever.
   Everything else takes plain technical names; no abbreviation that needs a
@@ -90,7 +94,7 @@ not on internals.
   the real thing is cheap (fs and processes are cheap under Bun); assertions
   carry messages so a failure names the broken expectation. Test setup may
   duplicate; production knowledge may not.
-- **Dead code is deleted, not commented out.** Git remembers.
+- **Dead code is deleted, not commented out.**
 
 ## 3. The working ladder: YAGNI → KISS → DRY → clean code
 
@@ -125,13 +129,13 @@ key — walk the ladder and stop at the first rung that holds:
 Nothing is declared done until the block in AGENTS.md ("Verification") runs
 green: `bun test`, `tsc --noEmit` in core and in acceptance,
 `openspec validate --specs --strict`, the expedition-skill checks, the leak
-gate. Claims are reported with evidence labels — `verified` /
-`not_assessed` / `assumed` / `blocked` / `failed` — and never
+gate. Claims are reported with evidence labels (`verified` /
+`not_assessed` / `assumed` / `blocked` / `failed`) and never
 self-certified: the Governor delivers the verdict.
 
 The repo charts itself. Sources changed since the last survey put their
 vessels `pending correction`; the harbor watch proposes the repair at
 session start, and the self-chart under `.portolan/` is corrected from that
-proposal — extend what stands, never redraw. The committed trust-report
+proposal (extend what stands, never redraw). The committed trust-report
 receipt (`docs/demo/trust-report.md`) is refreshed whenever it would
 otherwise state numbers that no longer hold.

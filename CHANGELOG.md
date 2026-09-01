@@ -3,20 +3,21 @@
 ## 0.3.1 — 2026-09-01
 
 The hygiene sweep: two whole-tree code reviews and an adversarial security
-audit over the repo, every finding fixed or deferred openly. Also fixes how
-the codebase writes itself down — [docs/engineering.md](docs/engineering.md)
-locks the architecture, style, and YAGNI/KISS/DRY conventions the code
-already follows, and the permissions capability becomes a living spec.
+audit over the repo, every finding fixed or deferred with its reason. The
+change also fixes how the codebase writes itself down:
+[docs/engineering.md](docs/engineering.md) locks the architecture, style,
+and YAGNI/KISS/DRY conventions the code already follows, and the
+permissions capability becomes a living spec.
 
 - **The province perimeter holds for every read** (2 HIGH, reproduced
   end-to-end): `manifests` and the `sound.edge` walks read agent-cited
-  paths uncontained — `..` segments and in-target symlinks reached any
+  paths uncontained, so `..` segments and in-target symlinks reached any
   file on the machine. Containment lives once in `core/src/perimeter.ts`;
   an escaping path is reported, never read.
 - **Chart-controlled strings render as text, never markup** (1 HIGH,
   1 MEDIUM): the Chart Room and fleet-review view builders escaped
-  nothing, so a charted note with `<img onerror=…>` — publishable to the
-  site via demo-refresh — executed at view time. Every interpolation now
+  nothing, so a charted note with `<img onerror=…>`, publishable to the
+  site via demo-refresh, executed at view time. Every interpolation now
   routes through `esc`; the hosted demo artifacts are re-rendered.
 - **One planted anchor cannot sink `trust.report`**: a hand-edited index
   with a non-citable anchor crashed the whole report; it now counts as
@@ -27,16 +28,16 @@ already follows, and the permissions capability becomes a living spec.
   after the atomic rename reported tool errors for writes that had in fact
   landed; cleanup failures surface as `cleanupError`. The 75% shrink floor
   compares as a float, so a 74.9% shrink is refused as the spec says.
-- **Staleness recomputes, never accumulates**: a reverted drift clears its
-  pending-correction mark (chart spec: unchanged sources MUST NOT be
+- **Staleness recomputes instead of accumulating**: a reverted drift clears
+  its pending-correction mark (chart spec: unchanged sources MUST NOT be
   marked), and a symlinked vessel root is never provably fresh.
 - **Harbor hardening**: repair anchors cite a soundable regular file under
-  the drifted tree (directories are refuted by `sound.anchor` — the handed
-  brief no longer refutes true drift at first sounding); the landscape
-  snapshot writes stage-and-rename like the chart; ship's-log appends
-  serialize on a lock so two processes cannot mint duplicate receipt ids;
-  new-land proposals carry their display path instead of chat-format
-  re-parsing evidence keys.
+  the drifted tree (directories are refuted by `sound.anchor`, so the
+  handed brief no longer refutes true drift at first sounding); the
+  landscape snapshot writes stage-and-rename like the chart; ship's-log
+  appends serialize on a lock so two processes cannot mint duplicate
+  receipt ids; new-land proposals carry their display path instead of
+  chat-format re-parsing evidence keys.
 - **Review minors**: `sweep`/`symbols` share one path-normalization rule;
   the neighborhood schema quotes the engine's own constants; the maxBytes
   budget is measured on the served pretty-printed JSON; `requireTrustLabel`
@@ -44,10 +45,11 @@ already follows, and the permissions capability becomes a living spec.
   usage error; the opencode installer writes the operator config
   atomically; leak-gate flags a tracked `$USER`; the expedition launcher
   frames the proposal as a delimited data block, not prose instructions.
-- **Deferred openly**: the realpath-then-open window in soundings (needs a
-  local process racing the survey; revisit for multi-user or remote
-  provinces), and concurrent watch/run invocations over one province (the
-  append-only history keeps the audit honest; double-launch is visible).
+- **Deferred with reasons**: the realpath-then-open window in soundings
+  (needs a local process racing the survey; revisit for multi-user or
+  remote provinces), and concurrent watch/run invocations over one province
+  (the append-only history keeps the audit verifiable; a double launch is
+  visible in it).
 
 ## 0.3.0 — 2026-09-01
 

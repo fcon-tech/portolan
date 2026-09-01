@@ -27,7 +27,7 @@ approval.
   stops the expedition instead of improvising a substitute
 
 ### Requirement: Writes stay under the province
-Every file Portolan writes SHALL land under `<target>/.portolan/` — the
+Every file Portolan writes SHALL land under `<target>/.portolan/`: the
 Chart, the ship's log, the harbor snapshot and history, the Sailing
 Directions archive, and the Chart Room export. The target's own sources
 SHALL never be mutated: Portolan is a reader, not a surgeon. A needed
@@ -45,8 +45,8 @@ proposed as an edit.
   that exhibit the need, and performs no edit
 
 ### Requirement: Province reads never cross the perimeter
-Every file read — an anchor sounding, a manifest read, a staleness walk, a
-vessel-local discovery — SHALL resolve inside the target root, both
+Every file read (an anchor sounding, a manifest read, a staleness walk, a
+vessel-local discovery) SHALL resolve inside the target root, both
 lexically and through symlinks. A cited path that escapes (`..` segments,
 an in-target symlink pointing outside, an absolute path elsewhere) SHALL be
 reported or refuted as such and SHALL NOT be read. A charted vessel whose
