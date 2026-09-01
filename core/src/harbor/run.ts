@@ -13,7 +13,7 @@
  * input error that writes nothing.
  */
 import { computeProposals, type Proposal } from "./proposals";
-import { launchExpedition, DEFAULT_LAUNCHER_TIMEOUT_MS, type LaunchBrief } from "./launcher";
+import { briefFor, launchExpedition, DEFAULT_LAUNCHER_TIMEOUT_MS } from "./launcher";
 import { appendDecision, appendLaunchFailure, GOVERNOR } from "./history";
 import { HarborError } from "./errors";
 
@@ -34,10 +34,6 @@ export interface RunReport {
   reason?: string;
   /** The launcher command the run used. */
   launcherCommand: string;
-}
-
-function briefFor(targetRoot: string, proposal: Proposal): LaunchBrief {
-  return { target: targetRoot, proposal };
 }
 
 /**

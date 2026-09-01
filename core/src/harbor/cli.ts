@@ -113,10 +113,10 @@ if (command === "propose" && (values.launcher !== undefined || values["launcher-
   fail("--launcher and --launcher-timeout belong to the watch and run commands");
 }
 
-// A manual run launches — fingerprint and launcher are its whole identity.
+// A manual run launches — the fingerprint is its whole identity (a missing
+// launcher is run.ts's own loud input error, the one message for the rule).
 if (command === "run") {
   if (values.fingerprint === undefined) fail("run: --fingerprint is required — copy it from propose");
-  if (values.launcher === undefined) fail("run: --launcher is required — a manual run launches; use propose to list");
 }
 
 const format = values.format ?? (command === "propose" ? "json" : "chat");

@@ -19,10 +19,17 @@
  *
  * Anchor honesty on repair: the per-vessel tree signature hashes the file
  * list, sizes, and mtimes, so individual changed files are not recoverable
- * without storing per-file state; repair anchors therefore cite the changed
- * vessels' source paths — the trees under which the drift was measured.
+ * without storing per-file state. Repair anchors therefore cite a soundable
+ * regular file under each drifted vessel's charted paths — `sound.anchor`
+ * refutes any non-regular file, so citing the directory itself would refute
+ * true drift at the very first sounding of the brief the Cartographer was
+ * handed (the new-land precedent: landscapeAnchor cites the manifest or
+ * `.git` marker for the same reason).
  */
+import { readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import type { Anchor, IndexedEntry, VesselEntry } from "../types";
+import { resolveInsideTarget } from "../perimeter";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { HarborError } from "./errors";
@@ -62,6 +69,8 @@ export interface Proposal {
   summary: string;
   /** The fingerprint's evidence keys (`vessel/api`, `repo:vendor/lib`, ...). */
   evidence: string[];
+  /** The display path the proposal is about, when it has one (new-land). */
+  subject?: string;
   /** Anchors justifying the proposal, citable and soundable. */
   anchors: Anchor[];
   scope: ProposalScope;
@@ -94,8 +103,42 @@ function uniqueAnchors(anchors: Anchor[]): Anchor[] {
   return out;
 }
 
+/**
+ * A soundable regular file under the given charted path, for repair anchors:
+ * the first file in sorted, hidden/node_modules-skipping walk order, so the
+ * anchor is deterministic. Undefined when the path escapes the province or
+ * holds no regular file — an unsoundable citation is dropped, never faked.
+ */
+function soundableAnchorUnder(targetRoot: string, rel: string): Anchor | undefined {
+  const stack = [rel.replace(/\/+$/, "")];
+  while (stack.length > 0) {
+    const current = stack.shift()!;
+    if (current.length === 0) continue;
+    if (resolveInsideTarget(targetRoot, current) === undefined) continue;
+    let stats;
+    try {
+      stats = statSync(join(targetRoot, current));
+    } catch {
+      continue; // a path that no longer exists contributes nothing
+    }
+    if (stats.isFile()) return { type: "file", path: current };
+    if (!stats.isDirectory()) continue;
+    let names: string[];
+    try {
+      names = readdirSync(join(targetRoot, current), { withFileTypes: true })
+        .filter((de) => de.isFile() || (de.isDirectory() && !de.name.startsWith(".") && de.name !== "node_modules"))
+        .map((de) => de.name)
+        .sort();
+    } catch {
+      continue;
+    }
+    for (const name of names) stack.push(current === "." ? name : `${current}/${name}`);
+  }
+  return undefined;
+}
+
 /** The repair proposal: every pending-correction vessel, grouped, with the drift's location. */
-function repairProposal(entries: IndexedEntry[]): Proposal | null {
+function repairProposal(targetRoot: string, entries: IndexedEntry[]): Proposal | null {
   const drifted = sortById(
     entries.filter((e): e is IndexedVessel => e.kind === "vessel" && e.stale === true),
   );
@@ -111,7 +154,7 @@ function repairProposal(entries: IndexedEntry[]): Proposal | null {
       `(sources changed under ${drifted.map((v) => v.paths.join(", ")).join("; ")})`,
     evidence,
     anchors: uniqueAnchors(
-      drifted.flatMap((v) => v.paths.map((path): Anchor => ({ type: "file", path }))),
+      drifted.flatMap((v) => v.paths.map((path) => soundableAnchorUnder(targetRoot, path))),
     ),
     scope: { vessels: ids, entries: staleEntryCount, soundings: staleEntryCount },
   };
@@ -157,6 +200,7 @@ function newLandProposals(targetRoot: string, absent: LandscapeEntry[]): Proposa
         `${entry.kind === "repo" ? "repository" : "manifest"} ${entry.path} is present in the province ` +
         "but absent from the last-survey snapshot",
       evidence,
+      subject: entry.path,
       anchors: [landscapeAnchor(targetRoot, entry)],
       scope: { vessels: [], entries: 0, soundings: 0 },
     };
@@ -193,7 +237,7 @@ export function computeProposals(
     writeSnapshot(targetRoot, { indexHash: currentHash, landscape: scanLandscape(targetRoot) });
   }
 
-  const repair = repairProposal(entries);
+  const repair = repairProposal(targetRoot, entries);
   const proposals: Proposal[] = [
     ...(repair !== null ? [repair] : []),
     ...newLandProposals(targetRoot, newLand),

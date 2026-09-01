@@ -78,7 +78,6 @@ test("an unknown fingerprint is a loud input error that writes nothing", async (
   const target = makeProvince();
   writeChart(target, gapChart());
   const ok = fakeLauncher("ok2", "exit 0");
-  expect(() => readHistory(target)).toHaveLength(0);
   await expect(
     runProposal(target, { fingerprint: "deadbeef".repeat(8), launcher: ok }),
   ).rejects.toThrow(HarborError);

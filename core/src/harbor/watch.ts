@@ -24,7 +24,7 @@
 import { computeProposals, type Proposal } from "./proposals";
 import { readSettings } from "./settings";
 import { nightPolicy } from "./night-policy";
-import { launchExpedition, DEFAULT_LAUNCHER_TIMEOUT_MS, type LaunchBrief } from "./launcher";
+import { briefFor, launchExpedition, DEFAULT_LAUNCHER_TIMEOUT_MS } from "./launcher";
 import { appendDecision, appendLaunchFailure, NIGHT_WATCH } from "./history";
 
 /** What the watch was told at invocation. */
@@ -55,11 +55,6 @@ export interface WatchReport {
   ran: WatchAction[];
   /** Proposals left for the Governor, in queue order, with their evidence. */
   pending: Proposal[];
-}
-
-/** The brief one launch receives on stdin: exactly the province and the proposal. */
-function briefFor(targetRoot: string, proposal: Proposal): LaunchBrief {
-  return { target: targetRoot, proposal };
 }
 
 /**
