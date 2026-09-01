@@ -6,8 +6,8 @@ Taken: 2026-09-01 · Reproduce: `bun scripts/trust-report.ts --target .`
 
 | Label | Entries |
 | --- | ---: |
-| measured | 44 |
-| charted | 2 |
+| measured | 45 |
+| charted | 1 |
 | reported | 0 |
 | doubtful | 0 |
 | unsurveyed | 0 |
@@ -30,10 +30,10 @@ None.
 
 ## Anchor re-sounding
 
-Sounded 98 of 98 anchors: 98 confirmed, 0 refuted.
+Sounded 99 of 99 anchors: 99 confirmed, 0 refuted.
 
 None refuted.
 
 ## Ship's log
 
-33 receipts; most recent `r33`: `chart.render (MCP)`
+34 receipts; most recent `r34`: `commissioned correction: acceptance vessel entry supersedes its pre-trial unsurveyed note (sea trial PASSED 2026-08-30, 558c268); chart.write full-replace 46 entries, trust charted->measured, +1 anchor acceptance/bigtop-sea-trial.md:3`

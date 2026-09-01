@@ -38,8 +38,8 @@ province's verification state on the table: the trust-label distribution,
 what drifted into *pending correction*, the ship's-log tail, and a fresh
 deterministic re-sounding of every anchor on the Chart, any refuted one named
 instead of smoothed over. Portolan charts itself: [its own
-receipt](docs/demo/trust-report.md) holds 45 entries, 43 of them `measured`,
-all 89 anchors re-sounded `confirmed`. No surveyed tool markets this
+receipt](docs/demo/trust-report.md) holds 46 entries, 45 of them `measured`,
+all 99 anchors re-sounded `confirmed`. No surveyed tool markets this
 combination of anchors, closed trust labels, receipts, and staleness
 ([verification-property trials, 2026-08-31](docs/verification-trials.md)).
 
