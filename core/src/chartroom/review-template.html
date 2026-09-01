@@ -199,6 +199,10 @@ function blobPath(cx,cy,r,jit,rot){
 })();
 
 /* ---------- the table (data anchor) ---------- */
+/* Chart-controlled strings are data, never markup: a member's hub id comes
+   from its chart, so every row interpolation passes through esc
+   (stored-XSS guard — the fleet review is published, not just local). */
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TRUSTS=["measured","charted","reported","doubtful","unsurveyed"];
 const COLORS={measured:"#2c5a68",charted:"#5d8895",reported:"#6b8f8f",doubtful:"#a4b6b1",unsurveyed:"#d9d2b6"};
 const tb=document.querySelector("#fleet tbody");
@@ -211,15 +215,15 @@ for(const r of ROWS){
   bar+=`<span class="tkey">${TRUSTS.filter(t=>r.trust[t]).map(t=>`${r.trust[t]} ${t}`).join(" · ")}</span>`;
   const tr=document.createElement("tr");
   tr.innerHTML=`
-   <td><div class="pname"><a href="${r.url}">${r.name}</a></div><code>${r.path}</code></td>
+   <td><div class="pname"><a href="${esc(r.url)}">${esc(r.name)}</a></div><code>${esc(r.path)}</code></td>
    <td class="num">${r.counts.vessel||0}</td>
    <td class="num">${r.counts.fairway||0}</td>
    <td class="num">${r.dangers||0}</td>
    <td class="num">${r.stale||0}</td>
    <td>${bar}</td>
-   <td>${r.topHub?`<code>${r.topHub.id}</code> <span class="muted">×${r.topHub.fanIn}</span>`:'<span class="muted">—</span>'}</td>
+   <td>${r.topHub?`<code>${esc(r.topHub.id)}</code> <span class="muted">×${r.topHub.fanIn}</span>`:'<span class="muted">—</span>'}</td>
    <td>${r.roomRendered
-      ?`<a href="${r.roomUrl}">open Chart Room</a>`
+      ?`<a href="${esc(r.roomUrl)}">open Chart Room</a>`
       :'<span class="muted">not rendered yet</span>'}</td>`;
   tb.appendChild(tr);
 }

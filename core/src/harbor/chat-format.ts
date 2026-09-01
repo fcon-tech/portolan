@@ -17,8 +17,10 @@ import type { RunReport } from "./run";
 
 function scopeLine(proposal: Proposal): string {
   if (proposal.kind === "new-land") {
-    // evidence[0] is `<kind>:<path>`; the path may itself contain colons.
-    const path = proposal.evidence[0].slice(proposal.evidence[0].indexOf(":") + 1);
+    // Proposals carry their display path; the evidence-key parse stays only
+    // for records stored before `subject` existed (history is append-only).
+    const key = proposal.evidence[0] ?? "";
+    const path = proposal.subject ?? key.slice(key.indexOf(":") + 1);
     return `full survey of ${path}; no charted vessels there yet`;
   }
   return (

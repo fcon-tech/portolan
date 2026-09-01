@@ -342,8 +342,9 @@ test("2.1 drift becomes a repair proposal listing the vessels, anchored, with a 
   // Lists the drifted vessel...
   expect(repair!.scope.vessels).toEqual(["api"]);
   expect(repair!.evidence).toEqual(["vessel/api"]);
-  // ...with anchors to the changed files' tree (the vessel's source path)...
-  expect(repair!.anchors).toEqual([{ type: "file", path: "apps/api" }]);
+  // ...with a SOUNDABLE anchor — a regular file under the drifted tree
+  // (sound.anchor refutes directories), the first file in walk order...
+  expect(repair!.anchors).toEqual([{ type: "file", path: "apps/api/package.json" }]);
   // ...and estimates the entries and soundings it would touch: vessel api,
   // fairway api-lib, and light api-health are all pending correction.
   expect(repair!.scope.entries).toBe(3);

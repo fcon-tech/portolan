@@ -850,6 +850,11 @@ function trustBar(){
     `<span><b>${trustCount[tr]||0}</b> ${tr}</span>`).join("")+"</div>";
   return bar;
 }
+/* Chart-controlled strings are data, never markup: every interpolation of a
+   chart field into HTML passes through esc, so a charted note like
+   `<img src=x onerror=...>` renders as text (stored-XSS guard — the room is
+   published, not just viewed locally). */
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function renderBriefing(){
   const b=document.getElementById("briefing"),d=document.getElementById("dossier");
   d.hidden=true;b.hidden=false;
@@ -861,7 +866,7 @@ function renderBriefing(){
    ${tanglesPanel()}
    ${noticesPanel()}
    ${godHubs.length?`<h3>Hubs</h3><ul>${godHubs.map(v=>
-      `<li><b>${v.name||v.id}</b> — ${fanIn.get(v.id)} ${lex("hub")}</li>`).join("")}</ul>`:""}
+      `<li><b>${esc(v.name||v.id)}</b> — ${fanIn.get(v.id)} ${lex("hub")}</li>`).join("")}</ul>`:""}
    <h3>Sailing Directions</h3>${BRIEF}
    <p class="statline" style="margin-top:14px">Click an island for the dossier and ${lex("blastr").toLowerCase()}.</p>`;
 }
@@ -874,7 +879,7 @@ function tanglesPanel(){
         :"No tangles — these waters run clear, no whirlpools charted."}</p>`;
   const rows=TANGLES.map((group,i)=>`
     <div class="notice"><span class="nact" style="color:var(--danger)">${mode==="eng"?"CYCLE":"WHIRLPOOL"} ${i+1}</span>
-    ${group.map(id=>`<code>${id}</code>`).join(" ")}</div>`).join("");
+    ${group.map(id=>`<code>${esc(id)}</code>`).join(" ")}</div>`).join("");
   return `<h3>${mode==="eng"?`Dependency cycles (${TANGLES.length})`:`Whirlpools (${TANGLES.length})`}</h3>${rows}`;
 }
 /* Notices to Mariners panel (chart-room: notices-panel) */
@@ -888,8 +893,8 @@ function noticesPanel(){
   const names={added:"ADDED",corrected:"CORRECTED",markedStale:"MARKED STALE",retired:"RETIRED"};
   const rows=NOTICES.map(n=>`
     <div class="notice"><span class="nact" style="color:${colors[n.action]||'var(--ink-soft)'}">${names[n.action]}</span>
-    <code>${n.key}</code>${n.note?`<div class="nnote">${n.note}</div>`:""}
-    ${n.anchors.length?`<ul class="anchors">${n.anchors.map(a=>`<li>${a}</li>`).join("")}</ul>`:""}
+    <code>${esc(n.key)}</code>${n.note?`<div class="nnote">${esc(n.note)}</div>`:""}
+    ${n.anchors.length?`<ul class="anchors">${n.anchors.map(a=>`<li>${esc(a)}</li>`).join("")}</ul>`:""}
     </div>`).join("");
   return `<h3>${title} (${NOTICES.length})</h3>${rows}`;
 }
@@ -920,12 +925,12 @@ function renderDossier(v){
   const cla=scope.filter(e=>e.trust==="reported"||e.trust==="doubtful")
     .map(e=>`${e.kind}/${e.id}`);
   d.innerHTML=`
-   <div class="dossier-head"><h2>${v.name||v.id}</h2>${trustBadge(v.trust)}
+   <div class="dossier-head"><h2>${esc(v.name||v.id)}</h2>${trustBadge(v.trust)}
      <button class="closebtn" type="button">✕ Close</button></div>
-   <p class="statline"><code>${v.id}</code> · ${filesOf(v).toLocaleString()} files
+   <p class="statline"><code>${esc(v.id)}</code> · ${filesOf(v).toLocaleString()} files
      ${fanIn.get(v.id)?` · ${fanIn.get(v.id)} ${lex("hub")}`:" · no known dependents (edge of the charted waters)"}
      ${v.stale?' · <b style="color:var(--accent)">pending correction</b>':""}</p>
-   ${v.note?`<p>${v.note}</p>`:""}
+   ${v.note?`<p>${esc(v.note)}</p>`:""}
    <h3>${mode==="eng"?"How we know":"How this is known"}</h3>
    <div class="ledger">
      <span class="lamp observed"><span class="n">${obs}</span><span class="t">OBSERVED</span></span>
@@ -933,23 +938,23 @@ function renderDossier(v){
      <span class="lamp declared"><span class="n">${dec}</span><span class="t">DECLARED</span></span>
      <span class="lamp claimed"><span class="n">${cla.length}</span><span class="t">CLAIMED</span></span>
    </div>
-   <p class="ledger-note">observed = execution receipts · verified = source-read (measured) · declared = manifests & packaging (charted) · claimed = report or doubtful${cla.length?" — rides on "+cla.map(c=>`<code>${c}</code>`).join(", "):""}</p>
+   <p class="ledger-note">observed = execution receipts · verified = source-read (measured) · declared = manifests & packaging (charted) · claimed = report or doubtful${cla.length?" — rides on "+cla.map(c=>`<code>${esc(c)}</code>`).join(", "):""}</p>
    <h3>${lex("blastr")}</h3>
    <p>${blast.size} ${lex("vessel").toLowerCase()}s depend on this transitively
-      ${blast.size?[...blast].map(id=>`<code>${id}</code>`).join(" "):""}.</p>
-   ${sec(mode==="eng"?"Entry points":"Ports of entry",vp.map(p=>`<p><b>${p.protocol||""}</b> — ${p.note||""}
-      <ul class="anchors">${(p.anchors||[]).map(a=>`<li>${fmtAnchor(a)}</li>`).join("")}</ul></p>`))}
-   ${sec(lex("danger")+"s",din.map(x=>`<p><b>${x.category}</b> — ${x.note||""}
-      <ul class="anchors">${(x.anchors||[]).map(a=>`<li>${fmtAnchor(a)}</li>`).join("")}</ul></p>`))}
+      ${blast.size?[...blast].map(id=>`<code>${esc(id)}</code>`).join(" "):""}.</p>
+   ${sec(mode==="eng"?"Entry points":"Ports of entry",vp.map(p=>`<p><b>${esc(p.protocol||"")}</b> — ${esc(p.note||"")}
+      <ul class="anchors">${(p.anchors||[]).map(a=>`<li>${esc(fmtAnchor(a))}</li>`).join("")}</ul></p>`))}
+   ${sec(lex("danger")+"s",din.map(x=>`<p><b>${esc(x.category)}</b> — ${esc(x.note||"")}
+      <ul class="anchors">${(x.anchors||[]).map(a=>`<li>${esc(fmtAnchor(a))}</li>`).join("")}</ul></p>`))}
    ${sec(lex("fairway")+"s in ("+fin.length+")",fin.map(f=>`<div class="fwrow">
-      <span class="t"><b>${f.from}</b> <code>${f.id}</code></span><span class="tr">${f.trust}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
+      <span class="t"><b>${esc(f.from)}</b> <code>${esc(f.id)}</code></span><span class="tr">${esc(f.trust)}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
    ${sec(lex("fairway")+"s out ("+fout.length+")",fout.map(f=>`<div class="fwrow">
-      <span class="t"><b>${f.to}</b> <code>${f.id}</code></span><span class="tr">${f.trust}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
-   ${sec(lex("beacon")+"s",vb.map(x=>`<p><code>${x.key}</code> (${x.surface}) — ${x.note||""}</p>`))}
-   ${sec(lex("light")+"s",vl.map(x=>`<p><b>${x.name}</b> — ${x.note||""}</p>`))}
+      <span class="t"><b>${esc(f.to)}</b> <code>${esc(f.id)}</code></span><span class="tr">${esc(f.trust)}${/sounded:\s*confirmed/i.test(f.note||"")?' · <span class="snd">sounded ✓</span>':""}</span></div>`))}
+   ${sec(lex("beacon")+"s",vb.map(x=>`<p><code>${esc(x.key)}</code> (${esc(x.surface)}) — ${esc(x.note||"")}</p>`))}
+   ${sec(lex("light")+"s",vl.map(x=>`<p><b>${esc(x.name)}</b> — ${esc(x.note||"")}</p>`))}
    ${TANGLES.some(t=>t.includes(v.id))?(()=>{const g=TANGLES.find(t=>t.includes(v.id))||[];
       return sec("In a tangle with",[
-        `<p>${g.filter(id=>id!==v.id).map(id=>`<code>${id}</code>`).join(" ")}</p>`])})():""}
+        `<p>${g.filter(id=>id!==v.id).map(id=>`<code>${esc(id)}</code>`).join(" ")}</p>`])})():""}
    <h3>${lex("unsurveyed")}</h3>
    <p>${v.behavior?"":"Runtime behavior "+lex("unsurveyed").toLowerCase()+" — vessel <code>behavior</code> is unset (nothing observed running)."}</p>`;
   d.querySelector(".closebtn").addEventListener("click",()=>clearSelect());

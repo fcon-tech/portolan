@@ -1,7 +1,7 @@
 import { test, expect, afterEach } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { treeSignature, refreshStaleness } from "./staleness";
 import { chartDir, readChart, writeChart, INDEX_FILE, NOTICES_FILE } from "./chart-store";
 import { sheetFileName } from "./sheets";
@@ -102,6 +102,25 @@ test("treeSignature is stable for unchanged trees and flips on change", () => {
   const scoped = treeSignature(target, ["pkg-a"]);
   writeFileSync(join(target, "outside/irrelevant.txt"), "different noise\n");
   expect(treeSignature(target, ["pkg-a"]).hash).toBe(scoped.hash);
+});
+
+test("a relative targetRoot signs and refreshes exactly like the absolute one", () => {
+  const target = makeTree();
+  // Regression: a relative root once escaped collect()'s containment check
+  // (resolve(root, rel) is absolute, the raw root is not), signing the empty
+  // set — "always drifted" for the whole chart. The form of the path must
+  // not change the signature or the refresh verdict.
+  const relativeRoot = relative(process.cwd(), target);
+  expect(treeSignature(relativeRoot, ["pkg-a"])).toStrictEqual(treeSignature(target, ["pkg-a"]));
+
+  writeChart(target, [vesselA, vesselB, fairwayAB]);
+  writeFileSync(join(target, "pkg-a/main.js"), "console.log('a drifted');\n");
+  const absoluteRun = refreshStaleness(target);
+  const relativeRun = refreshStaleness(relativeRoot);
+  expect(relativeRun.changedVessels).toEqual(absoluteRun.changedVessels);
+  expect(relativeRun.staleEntries.map((e) => e.id)).toEqual(
+    absoluteRun.staleEntries.map((e) => e.id),
+  );
 });
 
 test("unchanged sources stay fresh: a refresh with no changes writes nothing", () => {

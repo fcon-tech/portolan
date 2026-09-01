@@ -298,7 +298,7 @@ test("staleness is refreshed first: a touched source is pending correction, mark
   ]);
 });
 
-test("a reverted drift stays pending correction: the report reads the chart's stale flags, not the refresh delta", () => {
+test("a reverted drift clears its pending-correction mark: the refresh recomputes, never accumulates", () => {
   const target = makeProvince();
   writeFullChart(target);
   const original = harborSnapshot(target);
@@ -311,18 +311,33 @@ test("a reverted drift stays pending correction: the report reads the chart's st
   ]);
 
   // The outside force undoes itself: harbor's signature matches the survey
-  // again, so the refresh has nothing to flip and writes nothing — yet the
-  // pending-correction flags persist on disk until a chart write, and the
-  // report must keep serving them, exactly as chart.read does.
+  // again, so the refresh recomputes the marks from the present province —
+  // entries whose sources are unchanged MUST NOT be marked (chart spec).
+  // Tug never drifted (only the shared fairway dragged it in), so with the
+  // drift reverted every mark clears.
   revertHarbor(target, original);
   const reverted = trustReport(target);
-  expect(reverted.staleness.pendingVessels).toEqual(drifted.staleness.pendingVessels);
-  expect(staleIds(target)).toEqual([
-    "danger/d-harbor-shallow",
-    "fairway/fw-tug-harbor",
-    "light/l-harbor-moor",
-    "vessel/harbor",
-  ]);
+  expect(reverted.staleness.pendingVessels).toEqual([]);
+  expect(staleIds(target)).toEqual([]);
+});
+
+test("an anchor sound.anchor refuses is refuted by name, not a crashed report", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  // Splice one non-citable anchor into the index directly (a hand-edited
+  // chart): validation rejects it at write time, but the report must still
+  // hold — the report SHALL re-verify every chart anchor, and a planted
+  // citation counts as refuted with the refusal as its finding.
+  const indexPath = join(target, ".portolan", "chart", "index.jsonl");
+  const lines = readFileSync(indexPath, "utf8").trimEnd().split("\n");
+  const first = JSON.parse(lines[0]!) as { anchors: unknown[] };
+  first.anchors.push({ type: "file" });
+  lines[0] = JSON.stringify(first);
+  writeFileSync(indexPath, lines.join("\n") + "\n");
+
+  const report = trustReport(target);
+  expect(report.anchors.sounded).toBe(report.anchors.total);
+  expect(report.anchors.refutedList.some((r) => r.found.includes("not a citable anchor"))).toBe(true);
 });
 
 // ---------------------------------------------------------------------------

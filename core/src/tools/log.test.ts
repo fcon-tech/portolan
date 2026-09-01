@@ -1,5 +1,5 @@
 import { test, expect, afterEach } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { formatAnchor } from "../types";
@@ -173,4 +173,27 @@ test("a corrupt log line fails loudly, naming the file", () => {
   expect(err).toBeInstanceOf(LogError);
   expect((err as LogError).message).toContain("corrupt ship's log");
   expect((err as LogError).message).toContain(join(target, ".portolan", "log.jsonl"));
+});
+
+test("a live lock is waited out and named; a crashed process's lock is stolen", () => {
+  const target = makeTarget();
+  mkdirSync(join(target, ".portolan"), { recursive: true });
+  const lockPath = join(target, ".portolan", "log.lock");
+
+  // A fresh lock belongs to a live append: the deadline is waited out, then
+  // the contention is named loudly — no receipt is written unserialized.
+  writeFileSync(lockPath, "");
+  expect(() => appendReceipt(target, { command: "x", outcome: "ok" })).toThrow(
+    /the ship's log is locked/,
+  );
+  expect(existsSync(logFile(target))).toBe(false);
+
+  // A lock older than the staleness bound belongs to a crashed process:
+  // it is stolen, and the append proceeds with the log's own id assignment.
+  const stale = new Date(Date.now() - 20_000);
+  writeFileSync(lockPath, "");
+  utimesSync(lockPath, stale, stale);
+  const receipt = appendReceipt(target, { command: "x", outcome: "ok" });
+  expect(receipt.id).toBe("r1");
+  expect(existsSync(lockPath)).toBe(false);
 });

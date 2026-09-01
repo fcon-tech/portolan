@@ -28,6 +28,11 @@ export interface LaunchBrief {
   proposal: Proposal;
 }
 
+/** The brief one launch receives on stdin: exactly the province and the proposal. */
+export function briefFor(targetRoot: string, proposal: Proposal): LaunchBrief {
+  return { target: targetRoot, proposal };
+}
+
 /** How one launch ended. `reason` is deterministic (status, timeout, spawn error). */
 export interface LaunchResult {
   ok: boolean;

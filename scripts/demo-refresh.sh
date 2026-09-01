@@ -43,9 +43,10 @@ hostify("docs/demo/fleet-review.html", "fleet-review.html")
 PY
 # the home-path signature is assembled so this file itself carries no
 # literal for scripts/leak-gate.sh to flag; -I skips binary screenshots;
-# USER is optional (set -u) and only searched when non-empty
+# USER is optional (set -u), searched only as a path segment (a bare
+# username matches prose), and -F keeps every pattern a literal
 home_sig="/$(printf %s ho)me/"
-leak_opts=(-e "$home_sig")
-if [ -n "${USER:-}" ]; then leak_opts+=(-e "$USER"); fi
+leak_opts=(-F -e "$home_sig")
+if [ -n "${USER:-}" ]; then leak_opts+=(-e "/$USER/"); fi
 if grep -rn -I "${leak_opts[@]}" docs/ >/dev/null; then echo "LEAK FOUND"; exit 1; fi
 echo "demo refreshed, no home paths in docs/"

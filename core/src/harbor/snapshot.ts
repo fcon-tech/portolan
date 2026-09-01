@@ -17,11 +17,11 @@
  * The walk skips `node_modules`, `.git`, and `.portolan` exactly like the
  * probe tools' walks, and never records the province root itself.
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { MANIFEST_KINDS } from "../tools/manifests";
-import { readChart, sortEntries } from "../chart-io";
+import { readChart, sortEntries, writeFilesAtomically } from "../chart-io";
 import { HarborError } from "./errors";
 
 export const HARBOR_DIRNAME = "harbor";
@@ -171,9 +171,17 @@ export function readSnapshot(targetRoot: string): LandscapeSnapshot | null {
 
 /** Persist the snapshot (plain pretty JSON, diff-friendly). */
 export function writeSnapshot(targetRoot: string, snapshot: LandscapeSnapshot): void {
+  // Same stage-temp-then-rename discipline as the chart itself: a torn
+  // write on the unattended cron path would brick every later propose and
+  // watch with a "corrupt landscape snapshot" until a human deletes the file.
   mkdirSync(harborDir(targetRoot), { recursive: true });
-  writeFileSync(
-    snapshotFile(targetRoot),
-    `${JSON.stringify({ indexHash: snapshot.indexHash, landscape: sortLandscape(snapshot.landscape) }, null, 2)}\n`,
+  writeFilesAtomically(
+    harborDir(targetRoot),
+    new Map([
+      [
+        SNAPSHOT_FILE,
+        `${JSON.stringify({ indexHash: snapshot.indexHash, landscape: sortLandscape(snapshot.landscape) }, null, 2)}\n`,
+      ],
+    ]),
   );
 }

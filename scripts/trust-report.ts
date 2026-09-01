@@ -43,11 +43,12 @@ const oneLine = (s: string): string => scrub(s.replace(/\s+/g, " ").trim());
 // entry id, anchor path, or receipt id can never forge headings, code spans,
 // or table rows in the public receipt (security review, finding 1).
 const mdSafe = (s: string): string => oneLine(s).replace(/[`|]/g, "'");
-// A receipted command may carry inline secrets (`API_TOKEN=... bun ...`):
-// redact UPPER_NAME=value assignments before they reach the public artifact
-// (security review, finding 4). Lower-case assignments (URL query strings)
-// are left alone.
-const redactSecrets = (s: string): string => s.replace(/\b[A-Z_][A-Z0-9_]*=\S+/g, "<redacted>");
+// A receipted command or a sounded `found` line may carry inline secrets
+// (`API_TOKEN=...`): redact UPPER_NAME=value assignments — quoted values
+// included — before they reach the public artifact (security review,
+// finding 4). Lower-case assignments (URL query strings) are left alone.
+const redactSecrets = (s: string): string =>
+  s.replace(/\b[A-Z_][A-Z0-9_]*=(?:"[^"]*"|'[^']*'|\S+)/g, "<redacted>");
 
 const target = resolve(process.cwd(), option("--target") ?? repoRoot);
 const out = resolve(process.cwd(), option("--out") ?? join(repoRoot, "docs", "demo", "trust-report.md"));
@@ -79,8 +80,15 @@ md += `Sounded ${r.anchors.sounded} of ${r.anchors.total} anchors: ${r.anchors.c
 md += r.anchors.refutedList.length === 0
   ? "None refuted.\n\n"
   : r.anchors.refutedList
-      .map((x) => `- \`${mdSafe(x.entryId)}\` — anchor \`${mdSafe(formatAnchor(x.anchor))}\` — found: ${oneLine(x.found)}\n`)
+      .map((x) => `- \`${mdSafe(x.entryId)}\` — anchor \`${mdSafe(formatAnchor(x.anchor))}\` — found: ${redactSecrets(mdSafe(x.found))}\n`)
       .join("") + "\n";
+
+md += "## Adoption of mandated query tools\n\n";
+md += "| Tool | Invocations | First receipt | Last receipt |\n| --- | ---: | --- | --- |\n";
+for (const [tool, stat] of Object.entries(r.adoption.tools)) {
+  md += `| ${mdSafe(tool)} | ${stat.invocations} | ${stat.firstReceipt === null ? "—" : `\`${mdSafe(stat.firstReceipt)}\``} | ${stat.lastReceipt === null ? "—" : `\`${mdSafe(stat.lastReceipt)}\``} |\n`;
+}
+md += "\n";
 
 md += "## Ship's log\n\n";
 md += r.log.lastReceipt === null

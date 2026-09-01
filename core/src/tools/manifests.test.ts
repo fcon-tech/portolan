@@ -1,7 +1,7 @@
 import { test, expect, afterEach } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { formatAnchor } from "../types";
 import {
   manifestKindOf,
@@ -260,4 +260,27 @@ test("a truncated pubspec.yaml entry fails loudly", () => {
   expect(err).toBeInstanceOf(ManifestParseError);
   expect((err as ManifestParseError).message).toContain("pubspec.yaml");
   expect((err as ManifestParseError).message).toContain("expected \"<package>:\"");
+});
+
+test("a manifest path that escapes the province is reported, never read", () => {
+  const target = makeTarget(["package.json"]);
+  // An out-of-province manifest that would parse if the perimeter leaked.
+  const outside = mkdtempSync(join(tmpdir(), "portolan-outside-"));
+  targets.push(outside);
+  writeFileSync(join(outside, "package.json"), JSON.stringify({ name: "secret-outside-pkg" }));
+
+  const escape = readManifest(target, relative(target, join(outside, "package.json")));
+  if (!("supported" in escape)) throw new Error("expected an unsupported report");
+  expect(escape.supported).toBe(false);
+  expect(escape.reason).toContain("escapes the target root");
+  expect(JSON.stringify(escape)).not.toContain("secret-outside-pkg");
+
+  // The same through an in-target symlink pointing outside the province.
+  mkdirSync(join(target, "link"), { recursive: true });
+  symlinkSync(join(outside, "package.json"), join(target, "link", "package.json"));
+  const throughLink = readManifest(target, join("link", "package.json"));
+  if (!("supported" in throughLink)) throw new Error("expected an unsupported report");
+  expect(throughLink.supported).toBe(false);
+  expect(throughLink.reason).toContain("escapes the target root");
+  expect(JSON.stringify(throughLink)).not.toContain("secret-outside-pkg");
 });

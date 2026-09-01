@@ -226,6 +226,42 @@ test.skipIf(!rgPresent)("repeated sound.edge runs agree on verdict and evidence"
   expect(unconfirmed.verdict).toBe("unconfirmed");
 });
 
+test.skipIf(!rgPresent)("an escaping source path contributes nothing: nothing outside the province is read", () => {
+  const target = makeProvince();
+  // An out-of-province manifest that declares the target: the sounding would
+  // confirm if the perimeter leaked.
+  const outside = mkdtempSync(join(tmpdir(), "portolan-outside-"));
+  targets.push(outside);
+  writeFileSync(
+    join(outside, "package.json"),
+    JSON.stringify({ name: "ghost", dependencies: { "harbor-service": "^1.0.0" } }),
+  );
+
+  // `..` escape: the source vessel cites a path outside the target root.
+  const viaDotDot = assertSameSoundingTwice(() =>
+    soundEdge(target, {
+      fairway: ghostFairway,
+      source: { ...ghost, paths: [relative(target, outside)] },
+      target: harbor,
+    }),
+  );
+  expect(viaDotDot.verdict).toBe("unconfirmed");
+  expect(JSON.stringify(viaDotDot)).not.toContain("harbor-service");
+
+  // Symlink escape: an in-target path that is itself a link pointing outside.
+  mkdirSync(join(target, "ghost", "linked"));
+  symlinkSync(outside, join(target, "ghost", "linked", "out"));
+  const viaSymlink = assertSameSoundingTwice(() =>
+    soundEdge(target, {
+      fairway: ghostFairway,
+      source: { ...ghost, paths: ["ghost/linked/out"] },
+      target: harbor,
+    }),
+  );
+  expect(viaSymlink.verdict).toBe("unconfirmed");
+  expect(JSON.stringify(viaSymlink)).not.toContain("harbor-service");
+});
+
 // ---------------------------------------------------------------------------
 // 2. sound.anchor — file anchors
 // ---------------------------------------------------------------------------

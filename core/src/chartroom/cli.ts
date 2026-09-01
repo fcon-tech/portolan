@@ -40,6 +40,12 @@ if (
   console.error(usage);
   process.exit(1);
 }
+// render takes exactly one province; silently ignoring the rest would
+// pretend the extra targets were served.
+if (command === "render" && values.target.length > 1) {
+  console.error("render takes one --target; to assemble several provinces use review");
+  process.exit(1);
+}
 
 try {
   if (command === "render") {

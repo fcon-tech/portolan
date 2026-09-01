@@ -16,7 +16,7 @@ import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
-import { neighborhood, type NeighborhoodParams } from "../tools/neighborhood";
+import { neighborhood, NEIGHBORHOOD_CAPS, NEIGHBORHOOD_DEFAULTS, type NeighborhoodParams } from "../tools/neighborhood";
 import { soundAnchor, soundEdge } from "../tools/sound";
 import { trustReport } from "../tools/trust-report";
 import { computeProposals, decide } from "../harbor/proposals";
@@ -526,7 +526,16 @@ export const TOOL_TABLE: ToolSpec[] = [
           default: "both",
           description: "Which charted fairways count as touching the vessel.",
         },
-        depth: { type: "integer", minimum: 1, maximum: 3, default: 1, description: "Hops to traverse." },
+        depth: {
+          // The advertised limits quote the engine's own constants — one
+          // owner per cap, so the schema cannot silently desync from
+          // enforcement.
+          type: "integer",
+          minimum: 1,
+          maximum: NEIGHBORHOOD_CAPS.depth,
+          default: NEIGHBORHOOD_DEFAULTS.depth,
+          description: "Hops to traverse.",
+        },
         verify: {
           type: "boolean",
           default: false,
@@ -534,12 +543,18 @@ export const TOOL_TABLE: ToolSpec[] = [
             "Re-sound every returned edge's anchors and mark each edge confirmed or refuted, naming the refuted " +
             "anchors. Informs; never modifies the Chart.",
         },
-        maxEdges: { type: "integer", minimum: 1, maximum: 200, default: 40, description: "Edge budget." },
+        maxEdges: {
+          type: "integer",
+          minimum: 1,
+          maximum: NEIGHBORHOOD_CAPS.maxEdges,
+          default: NEIGHBORHOOD_DEFAULTS.maxEdges,
+          description: "Edge budget.",
+        },
         maxBytes: {
           type: "integer",
           minimum: 1,
-          maximum: 131072,
-          default: 32768,
+          maximum: NEIGHBORHOOD_CAPS.maxBytes,
+          default: NEIGHBORHOOD_DEFAULTS.maxBytes,
           description: "Serialized-response budget in bytes.",
         },
       },

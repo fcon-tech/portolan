@@ -7,7 +7,6 @@
  */
 import { accessSync, constants, statSync } from "node:fs";
 import { delimiter, join } from "node:path";
-import type { TrustLabel } from "../types";
 
 export type Env = Record<string, string | undefined>;
 
@@ -49,26 +48,25 @@ export function findBinary(
   return undefined;
 }
 
-/**
- * Guard: a probe result must carry its trust label. Used by tests to prove
- * labels are load-bearing (stripping one fails loudly) and available to
- * consumers that want to assert before charting.
- */
-export function requireTrustLabel(
-  labeled: { trust?: TrustLabel },
-  expected: TrustLabel,
-  what: string,
-): void {
-  if (labeled.trust !== expected) {
-    throw new Error(
-      `${what}: expected the trust label "${expected}", got ${
-        labeled.trust === undefined ? "no label at all" : `"${String(labeled.trust)}"`
-      }`,
-    );
-  }
-}
-
 /** Escape a literal so it can be embedded in a ripgrep regex. */
 export function escapeRegExp(literal: string): string {
   return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** ripgrep reports paths relative to the cwd it ran in; normalize harder. */
+export function relativeToTarget(path: string, targetRoot: string): string {
+  if (path.startsWith("./")) return path.slice(2);
+  const root = targetRoot.endsWith("/") ? targetRoot : `${targetRoot}/`;
+  if (path.startsWith(root)) return path.slice(root.length);
+  return path;
+}
+
+/** The first non-blank line of a probe's text output, trimmed. */
+export function firstLine(text: string): string {
+  return (
+    text
+      .split("\n")
+      .map((l) => l.trim())
+      .find((l) => l.length > 0) ?? ""
+  );
 }

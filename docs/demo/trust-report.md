@@ -26,13 +26,24 @@ Taken: 2026-09-01 · Reproduce: `bun scripts/trust-report.ts --target .`
 
 ## Pending correction
 
-None.
+| Vessel | Entries dragged |
+| --- | ---: |
+| acceptance | 1 |
+| adapters | 10 |
+| core | 27 |
+| skill | 6 |
 
 ## Anchor re-sounding
 
 Sounded 99 of 99 anchors: 99 confirmed, 0 refuted.
 
 None refuted.
+
+## Adoption of mandated query tools
+
+| Tool | Invocations | First receipt | Last receipt |
+| --- | ---: | --- | --- |
+| chart.neighborhood | 0 | — | — |
 
 ## Ship's log
 

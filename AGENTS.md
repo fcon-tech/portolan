@@ -37,6 +37,9 @@ Key rules:
   waiting to be asked. Do not hide failed or not-assessed checks.
 - The repo is public: no machine home paths in tracked files —
   `scripts/leak-gate.sh` (Verification) must stay clean.
+- Engineering practices — architecture, code style, the YAGNI/KISS/DRY
+  ladder — are fixed in [docs/engineering.md](docs/engineering.md); they
+  serve the contract above and never override it.
 
 ## OpenSpec workflow
 
@@ -74,3 +77,9 @@ This target is a charted Portolan province (Chart at `.portolan/chart/`, ship's 
 
 At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. The full Cartographer's method: skill/SKILL.md. Never modify anything outside `.portolan/`.
 <!-- portolan:harbor:end -->
+
+In a harness without the portolan MCP wiring, the harbor watch runs the same
+deterministic queue read-only: `bun core/src/harbor/cli.ts propose --target .
+--format chat`. Presenting proposals and asking for the Governor's decision
+is unchanged; recording the decision (`expeditions.decide`) still requires
+the MCP server.
