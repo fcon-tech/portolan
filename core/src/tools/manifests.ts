@@ -1,9 +1,11 @@
 /**
  * `manifests`: cheap deterministic facts from the five supported manifest
  * kinds — go.mod, pom.xml, package.json, Cargo.toml, pubspec.yaml — and no
- * other file kind. Manifest files are the only structural parsing Portolan
- * performs. Every fact carries the manifest file path, its manifest key,
- * and the trust label `charted`. Unsupported kinds are reported, not
+ * other file kind, and no path outside the target: a cited path is contained
+ * by the province perimeter (core/src/perimeter.ts), and an escaping path is
+ * reported, never read. Manifest files are the only structural parsing
+ * Portolan performs. Every fact carries the manifest file path, its manifest
+ * key, and the trust label `charted`. Unsupported kinds are reported, not
  * guessed; unparseable files fail loudly with zero partial facts.
  * specs/tools/spec.md
  *
@@ -14,8 +16,9 @@
  * parsers"; source-code parsing remains forbidden.
  */
 import { readFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename } from "node:path";
 import type { Anchor } from "../types";
+import { resolveInsideTarget } from "../perimeter";
 
 export const MANIFEST_KINDS = [
   "go.mod",
@@ -124,7 +127,15 @@ export function readManifest(targetRoot: string, path: string): ManifestOutcome 
         MANIFEST_KINDS.join(", "),
     };
   }
-  const text = readFileSync(join(targetRoot, path), "utf8");
+  const abs = resolveInsideTarget(targetRoot, path);
+  if (abs === undefined) {
+    return {
+      path,
+      supported: false,
+      reason: "the path escapes the target root — nothing outside the province is read",
+    };
+  }
+  const text = readFileSync(abs, "utf8");
   const parsed = parseManifest(kind, text, path);
   return assembleFacts(kind, path, parsed);
 }

@@ -20,9 +20,10 @@
  * write path. Acting on a verdict — including any trust change — is the
  * Cartographer's separate write.
  */
-import { readdirSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import type { Anchor, FairwayEntry, VesselEntry } from "../types";
+import { resolveInsideTarget } from "../perimeter";
 import { escapeRegExp } from "./shared";
 import { sweep, type SweepChunk } from "./sweep";
 import {
@@ -152,37 +153,6 @@ export function soundAnchor(targetRoot: string, sounding: AnchorSounding): Ancho
     case "receipt":
       return soundReceiptAnchor(targetRoot, anchor);
   }
-}
-
-/** Resolve a cited path inside the target root; undefined when it escapes. */
-function resolveInsideTarget(targetRoot: string, rel: string): string | undefined {
-  const root = resolve(targetRoot);
-  const abs = resolve(root, rel);
-  if (abs !== root && !abs.startsWith(root + sep)) return undefined;
-  // A symlink inside the target may point outside it — including the cited
-  // file itself: compare real paths, so an anchor can never read through an
-  // in-target link past the perimeter. A wholly fabricated path (no parent
-  // on disk) is contained against the nearest existing ancestor; nothing on
-  // that path can be read, so the honest outcome stays `refuted`, not a
-  // crashed sounding.
-  const realRoot = realpathSync(root);
-  let probe = abs;
-  let realPath: string;
-  for (;;) {
-    try {
-      realPath = realpathSync(probe);
-      break;
-    } catch {
-      const parent = dirname(probe);
-      if (parent === probe) {
-        realPath = probe; // walked to the filesystem root unrealized: escape
-        break;
-      }
-      probe = parent;
-    }
-  }
-  if (realPath !== realRoot && !realPath.startsWith(realRoot + sep)) return undefined;
-  return abs;
 }
 
 function refutedAnchor(
@@ -495,7 +465,10 @@ function namesVessel(depName: string, target: VesselEntry): boolean {
 /**
  * Vessel-local manifest discovery: the vessel's own declaration files under
  * its charted paths. Hidden directories and node_modules are skipped —
- * installed and vendored trees are not the vessel's own declarations.
+ * installed and vendored trees are not the vessel's own declarations. A
+ * charted path that escapes the province (`..`, or an in-target symlink
+ * pointing outside) contributes nothing: nothing outside the perimeter is
+ * walked or read (specs/permissions/spec.md).
  */
 function findManifestsUnder(targetRoot: string, paths: string[]): string[] {
   const found = new Set<string>();
@@ -527,6 +500,7 @@ function findManifestsUnder(targetRoot: string, paths: string[]): string[] {
   for (const p of paths) {
     const rel = p.replace(/\/+$/, "");
     if (rel === "") continue;
+    if (resolveInsideTarget(targetRoot, rel) === undefined) continue;
     visit(rel);
   }
   return [...found].sort();
@@ -593,6 +567,7 @@ function scopeGlobs(targetRoot: string, paths: string[]): string[] {
   for (const p of paths) {
     const rel = p.replace(/\/+$/, "");
     if (rel === "") continue;
+    if (resolveInsideTarget(targetRoot, rel) === undefined) continue;
     let stats;
     try {
       stats = statSync(join(targetRoot, rel));
