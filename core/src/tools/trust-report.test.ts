@@ -491,3 +491,57 @@ test("an empty chart yields an honest zero report, not an error", () => {
   expect(report.anchors).toEqual({ total: 0, sounded: 0, confirmed: 0, refuted: 0, refutedList: [] });
   expect(report.log).toEqual({ receipts: 0, lastReceipt: null });
 });
+
+// ---------------------------------------------------------------------------
+// 8. Per-tool adoption (chart-neighborhood, specs/invocation/spec.md): the
+// adoption block counts invocations from the ship's log — invocation facts,
+// never a compliance claim. The end-to-end "a call surfaces in the next
+// report" scenario is proven against the served handler in
+// neighborhood.test.ts; here the log is the fixture.
+// ---------------------------------------------------------------------------
+
+test("logged chart.neighborhood calls surface in the adoption block with their count and first/last receipts", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  const first = appendReceipt(target, { command: "chart.neighborhood vessel=harbor", outcome: "ok: 1 hop" });
+  appendReceipt(target, { command: "sweep pattern=harbor", outcome: "ok: 2 chunks" });
+  const last = appendReceipt(target, { command: "chart.neighborhood vessel=tug", outcome: "ok: 2 hops" });
+
+  const report = trustReport(target);
+
+  expect(report.adoption.tools["chart.neighborhood"]).toEqual({
+    invocations: 2,
+    firstReceipt: first.id,
+    lastReceipt: last.id,
+  });
+  // Adoption bookkeeping adds nothing to and takes nothing from the log summary.
+  expect(report.log.receipts).toBe(3);
+  expect(report.log.lastReceipt).toEqual(last);
+});
+
+test("a log with receipts for other commands but no chart.neighborhood reports zero with no receipt ids", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  appendReceipt(target, { command: "sweep pattern=harbor", outcome: "ok: 1 chunk" });
+
+  const report = trustReport(target);
+
+  expect(report.adoption.tools["chart.neighborhood"]).toEqual({
+    invocations: 0,
+    firstReceipt: null,
+    lastReceipt: null,
+  });
+});
+
+test("an empty log reports zero invocations with no receipt ids", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+
+  const report = trustReport(target);
+
+  expect(report.adoption.tools["chart.neighborhood"]).toEqual({
+    invocations: 0,
+    firstReceipt: null,
+    lastReceipt: null,
+  });
+});

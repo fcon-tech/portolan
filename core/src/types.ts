@@ -75,11 +75,22 @@ export interface VesselEntry extends EntryBase {
   paths: string[];
 }
 
+/**
+ * The closed relation vocabulary on a fairway — the senses the anchors can
+ * actually support. Optional: a fairway without a relation stays valid and
+ * reads as untyped.
+ */
+export const FAIRWAY_RELATIONS = ["build", "runtime", "config"] as const;
+
+export type FairwayRelation = (typeof FAIRWAY_RELATIONS)[number];
+
 /** A typed dependency edge between two vessels. */
 export interface FairwayEntry extends EntryBase {
   kind: "fairway";
   from: string;
   to: string;
+  /** When known: what kind of dependence the edge is. */
+  relation?: FairwayRelation;
 }
 
 /** An entry point into a vessel (http endpoint, cli, event, job, ...). */

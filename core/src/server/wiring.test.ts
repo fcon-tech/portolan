@@ -21,7 +21,8 @@ import {
 import { TOOL_NAMES } from "./registry";
 import type { ChartEntry } from "../types";
 import { readChart, writeChart } from "../chart-store";
-import { appendReceipt } from "../tools/log";
+import { appendReceipt, readReceipts } from "../tools/log";
+import { neighborhood } from "../tools/neighborhood";
 import { trustReport } from "../tools/trust-report";
 import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
@@ -32,12 +33,12 @@ import { lastDecisionPerFingerprint, readDecisions } from "../harbor/history";
 
 const rgPresent = findBinary("rg") !== undefined;
 
-test("tools/list through the server returns all thirteen served tools under Portolan names", async () => {
+test("tools/list through the server returns all fourteen served tools under Portolan names", async () => {
   const target = makeProvince();
   await withServer({ targetRoot: target }, async (client) => {
     const listed = await client.listTools();
     expect(listed.tools.map((tool) => tool.name)).toEqual(TOOL_NAMES);
-    expect(listed.tools.length).toBe(13);
+    expect(listed.tools.length).toBe(14);
     for (const tool of listed.tools) {
       expect((tool.description ?? "").length).toBeGreaterThan(0);
       expect((tool.inputSchema as { type?: string }).type).toBe("object");
@@ -170,6 +171,89 @@ test("trust.report through the server: the one-call verification summary arrives
     expect(report.log.receipts).toBe(1);
     expect(report.log.lastReceipt!.id).toBe("r1");
     expect(report.log.lastReceipt!.command).toBe("sweep pattern=CartService");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// chart-neighborhood task 3.2: the neighborhood query serves like any other
+// tool — called through the live server it returns the engine's structured,
+// fan-in-ranked response unchanged, appends exactly one ship's-log receipt,
+// and an unsurveyed vessel surfaces as a tool error while the server keeps
+// serving. specs/harness/spec.md + specs/tools/spec.md
+// ---------------------------------------------------------------------------
+
+test("chart.neighborhood through the server: the ranked neighborhood passes through, one receipt is appended, and an unknown vessel is a tool error that leaves the server serving", async () => {
+  const target = makeProvince();
+  writeChart(target, sampleEntries() as ChartEntry[]);
+
+  // The direct call on the same target is the parity baseline (the engine is
+  // deterministic and its staleness refresh is idempotent on unchanged
+  // sources; the receipt is the serving handler's append, so the direct call
+  // writes none).
+  const direct = neighborhood(target, { vessel: "v-cart" });
+
+  await withServer({ targetRoot: target }, async (client) => {
+    const result = await client.callTool({
+      name: "chart.neighborhood",
+      arguments: { vessel: "v-cart" },
+    });
+    expect(result.isError).toBeUndefined();
+    expect(structuredOf(result)).toEqual(direct);
+
+    const hood = structuredOf(result) as {
+      vessel: string;
+      direction: string;
+      depth: number;
+      edges: Array<{
+        id: string;
+        from: string;
+        to: string;
+        trust: string;
+        stale: boolean;
+        anchors: unknown[];
+      }>;
+      vessels: Array<{ id: string; fanIn: number; stale: boolean }>;
+      truncated: boolean;
+      droppedEdges: number;
+    };
+    expect(hood.vessel).toBe("v-cart");
+    expect(hood.direction).toBe("both");
+    expect(hood.depth).toBe(1);
+    expect(hood.edges).toHaveLength(1);
+    expect(hood.edges[0]).toEqual({
+      id: "f-checkout-cart",
+      from: "v-checkout",
+      to: "v-cart",
+      trust: "measured",
+      stale: false,
+      anchors: [{ type: "file", path: "src/checkout.ts", line: 1 }],
+    });
+    expect(hood.vessels.map((v) => v.id)).toEqual(["v-cart", "v-checkout"]);
+    expect(hood.truncated).toBe(false);
+    expect(hood.droppedEdges).toBe(0);
+
+    // Exactly one ship's-log receipt for the one served call, through the
+    // same path log.append uses.
+    const receipts = readReceipts(target, { command: "chart.neighborhood" });
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0]!.scope).toBe("v-cart");
+    expect(receipts[0]!.outcome).toMatch(/^ok: 1 edge, 2 vessels$/);
+
+    // An unsurveyed vessel is an honest tool error naming it — never a crash,
+    // and no receipt for the rejected call.
+    const ghost = await client.callTool({
+      name: "chart.neighborhood",
+      arguments: { vessel: "v-ghost" },
+    });
+    expect(ghost.isError).toBe(true);
+    expect(errorTextOf(ghost)).toContain("v-ghost");
+    expect(errorTextOf(ghost)).toContain("unsurveyed");
+    expect(readReceipts(target, { command: "chart.neighborhood" })).toHaveLength(1);
+
+    // The rejected call did not stop the server: the next call answers.
+    const alive = await client.callTool({ name: "manifests", arguments: { path: "package.json" } });
+    expect(alive.isError).toBeUndefined();
+    expect(structuredOf(alive)).toBeObject();
   });
 });
 

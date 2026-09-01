@@ -15,6 +15,7 @@ export * from "./tools/symbols";
 export * from "./tools/manifests";
 export * from "./tools/log";
 export * from "./tools/sound";
+export * from "./tools/neighborhood";
 export * from "./harbor/errors";
 export * from "./harbor/fingerprint";
 export * from "./harbor/snapshot";
