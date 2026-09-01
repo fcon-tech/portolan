@@ -206,3 +206,31 @@ test("the chart.render MCP tool serves the same core function surface", () => {
   const empty = mkdtempSync(join(tmpdir(), "chartroom-mcp-"));
   expect(() => spec?.handler({}, { targetRoot: empty })).toThrow(/index\.jsonl/);
 });
+
+test("chart-controlled strings reach the room as text, never as markup", () => {
+  const payload = '<img src=x onerror=alert(1)>';
+  writeIndex([
+    ...fixtureEntries,
+    {
+      kind: "beacon", id: "b-xss", vessel: "alpha", surface: "env", key: "TOKEN",
+      trust: "measured", stale: false, note: payload,
+      anchors: [{ type: "file", path: "repos/alpha/pom.xml", line: 2 }],
+    },
+  ]);
+  renderChartRoom(province);
+  const html = readFileSync(chartRoomPath(province), "utf8");
+  // Server side: the payload ships only inside the script block, where
+  // safeInlineJson has already neutralized every `<`.
+  expect(html).not.toContain(payload);
+  // View side canary: the dossier and notices builders route chart fields
+  // through esc, so the payload renders as text at view time. If a sink
+  // loses its esc() this assertion is the one that fails.
+  const template = readFileSync(join(import.meta.dir, "template.html"), "utf8");
+  expect(template).toContain("const esc=");
+  expect(template).toContain("esc(v.note)");
+  expect(template).toContain("esc(n.key)");
+  expect(template).toContain("esc(fmtAnchor(a))");
+  const review = readFileSync(join(import.meta.dir, "review-template.html"), "utf8");
+  expect(review).toContain("const esc=");
+  expect(review).toContain("esc(r.topHub.id)");
+});
