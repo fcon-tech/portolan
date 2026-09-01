@@ -8,14 +8,16 @@
 home_sig="/$(printf %s ho)me/"
 users_sig="/$(printf %s Use)rs/"
 # The username is a leak signature too (scripts/demo-refresh.sh already
-# treats it as one): a tracked file carrying $USER outside those prefixes
-# must fail the same gate. Patterns live in a temp file so the literal
-# never appears on this script's own command line.
+# treats it as one): a tracked file carrying $USER as a PATH SEGMENT —
+# /mnt/data/<user>/... — must fail the same gate. The segment delimiters
+# keep a common word ("runner" in CI, "test" in fixtures) from matching
+# prose, and -F treats every pattern as a literal. Patterns live in a temp
+# file so the literals never appear on this script's own command line.
 patterns=$(mktemp)
 trap 'rm -f "$patterns"' EXIT
 printf '%s\n%s\n' "$home_sig" "$users_sig" > "$patterns"
-if [ -n "${USER:-}" ]; then printf '%s\n' "$USER" >> "$patterns"; fi
-leaked=$(git ls-files -z | xargs -0 grep -lI -f "$patterns" 2>/dev/null)
+if [ -n "${USER:-}" ]; then printf '/%s/\n' "$USER" >> "$patterns"; fi
+leaked=$(git ls-files -z | xargs -0 grep -lIF -f "$patterns" 2>/dev/null)
 if [ -n "$leaked" ]; then
   printf 'machine home paths leaked into tracked files:\n%s\n' "$leaked" >&2
   exit 1
