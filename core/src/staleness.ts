@@ -88,17 +88,22 @@ function unprovablePath(root: string, rel: string): boolean {
  * descended/collected). Paths that escape the root contribute nothing.
  */
 export function treeSignature(targetRoot: string, paths: string[]): VesselSignature {
+  // Resolve once: collect() compares paths against the root lexically, so a
+  // relative targetRoot would classify every path as escaping and sign the
+  // empty set — "always drifted" for the whole chart. Callers may pass
+  // either form; the signature must not depend on it.
+  const root = resolve(targetRoot);
   const facts: FileFact[] = [];
   for (const p of paths) {
     // A symlinked top-level path would be stat'ed through the link, signing
     // metadata the province never surveyed; it contributes nothing here (the
     // refresh already treats such a vessel as never provably fresh).
     try {
-      if (lstatSync(join(targetRoot, p)).isSymbolicLink()) continue;
+      if (lstatSync(join(root, p)).isSymbolicLink()) continue;
     } catch {
       // absent — collect() contributes nothing either
     }
-    collect(targetRoot, p, facts);
+    collect(root, p, facts);
   }
   facts.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   const text = facts.map((f) => `${f.path}\t${f.size}\t${f.mtime}`).join("\n");
