@@ -298,7 +298,7 @@ test("staleness is refreshed first: a touched source is pending correction, mark
   ]);
 });
 
-test("a reverted drift stays pending correction: the report reads the chart's stale flags, not the refresh delta", () => {
+test("a reverted drift clears its pending-correction mark: the refresh recomputes, never accumulates", () => {
   const target = makeProvince();
   writeFullChart(target);
   const original = harborSnapshot(target);
@@ -311,18 +311,14 @@ test("a reverted drift stays pending correction: the report reads the chart's st
   ]);
 
   // The outside force undoes itself: harbor's signature matches the survey
-  // again, so the refresh has nothing to flip and writes nothing — yet the
-  // pending-correction flags persist on disk until a chart write, and the
-  // report must keep serving them, exactly as chart.read does.
+  // again, so the refresh recomputes the marks from the present province —
+  // entries whose sources are unchanged MUST NOT be marked (chart spec).
+  // Tug never drifted (only the shared fairway dragged it in), so with the
+  // drift reverted every mark clears.
   revertHarbor(target, original);
   const reverted = trustReport(target);
-  expect(reverted.staleness.pendingVessels).toEqual(drifted.staleness.pendingVessels);
-  expect(staleIds(target)).toEqual([
-    "danger/d-harbor-shallow",
-    "fairway/fw-tug-harbor",
-    "light/l-harbor-moor",
-    "vessel/harbor",
-  ]);
+  expect(reverted.staleness.pendingVessels).toEqual([]);
+  expect(staleIds(target)).toEqual([]);
 });
 
 // ---------------------------------------------------------------------------

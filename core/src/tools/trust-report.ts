@@ -85,10 +85,10 @@ export interface TrustReport {
 
 /**
  * Charge one stale entry to the pending-correction vessel(s) it hangs from,
- * read from the index's own stale flags. Those flags persist until a chart
- * write — the refresh only adds them and never clears them, and a reverted
- * drift leaves them standing with nothing left to flip — so attribution
- * must come from the chart, never from the refresh delta. A pending fairway
+ * read from the index's own stale flags. The refresh recomputes those flags
+ * — a drifted vessel stays pending, a reverted one clears — so attribution
+ * must come from the chart as it stands now, never from a refresh delta.
+ * A pending fairway
  * drags on both vessels it runs between: once drift is reverted there is no
  * telling which endpoint moved, and over-attribution is the honest direction.
  */
