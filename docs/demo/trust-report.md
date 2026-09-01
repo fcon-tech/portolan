@@ -26,12 +26,7 @@ Taken: 2026-09-01 · Reproduce: `bun scripts/trust-report.ts --target .`
 
 ## Pending correction
 
-| Vessel | Entries dragged |
-| --- | ---: |
-| acceptance | 1 |
-| adapters | 10 |
-| core | 27 |
-| skill | 6 |
+None.
 
 ## Anchor re-sounding
 
@@ -47,4 +42,4 @@ None refuted.
 
 ## Ship's log
 
-34 receipts; most recent `r34`: `commissioned correction: acceptance vessel entry supersedes its pre-trial unsurveyed note (sea trial PASSED 2026-08-30, 558c268); chart.write full-replace 46 entries, trust charted->measured, +1 anchor acceptance/bigtop-sea-trial.md:3`
+37 receipts; most recent `r37`: `expedition repair fingerprint=0314121a76e5a097 (accepted, governor)`
