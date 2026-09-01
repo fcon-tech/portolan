@@ -9,7 +9,7 @@
  *   neighborhood(targetRoot, params: NeighborhoodParams): NeighborhoodResponse
  *   class NeighborhoodError                    — every rejection of this tool
  *   NeighborhoodParams  { vessel, direction?, depth?, maxEdges?, maxBytes?, verify? }
- *   NeighborhoodResponse { vessel, direction, depth, edges, vessels, truncated, droppedEdges }
+ *   NeighborhoodResponse { vessel, direction, depth, edges, vessels, truncated, droppedEdges, droppedVessels }
  *   NeighborhoodEdge     { id, from, to, trust, relation?, stale, anchors, verification? }
  *   NeighborhoodEdgeVerification { verdict: "confirmed" | "refuted", refutedAnchors: Anchor[] }
  *   NeighborhoodVessel   { id, trust, stale, fanIn, portsOfEntry }
@@ -24,8 +24,9 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, wr
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 import { createHash } from "node:crypto";
-import type { ChartEntry, FairwayEntry, PortOfEntryEntry, VesselEntry } from "../types";
-import { writeChart } from "../chart-store";
+import type { Anchor, ChartEntry, FairwayEntry, IndexedEntry, PortOfEntryEntry, VesselEntry } from "../types";
+import { readChart, writeChart } from "../chart-store";
+import { indexJsonl } from "../chart-io";
 import { readReceipts } from "./log";
 import { trustReport } from "./trust-report";
 import { TOOL_TABLE } from "../server/registry";
@@ -92,6 +93,18 @@ function portOf(id: string, vesselId: string, protocol: string): PortOfEntryEntr
 
 function writeEntries(target: string, entries: ChartEntry[]): void {
   writeChart(target, entries);
+}
+
+/**
+ * Rewrite the machine index directly, bypassing chart.write's schema: the
+ * scenarios below plant entries the schema rightly refuses (a non-citable
+ * anchor, an anchorless edge) but a direct index edit can still produce.
+ * Entries are read back from the chart first, so `stale`/`signature`
+ * metadata survives and the staleness refresh stays silent.
+ */
+function rewriteIndexDirectly(target: string, mutate: (entry: IndexedEntry) => IndexedEntry): void {
+  const mutated = readChart(target).map(mutate);
+  writeFileSync(join(target, ".portolan", "chart", "index.jsonl"), indexJsonl(mutated));
 }
 
 function edgeById(resp: NeighborhoodResponse, id: string): NeighborhoodEdge {
@@ -446,6 +459,48 @@ test("a maxBytes-capped response serializes within the cap and says it was trunc
 });
 
 // ---------------------------------------------------------------------------
+// 8b. The byte budget governs the whole response: the touched vessels too
+// ---------------------------------------------------------------------------
+
+test("a response whose vessels overflow maxBytes drops tail vessels, keeps the queried vessel, and stays within the cap", () => {
+  const target = makeTarget();
+  // The overflow rides the touched vessels' ports of entry — the mass an
+  // edges-only reading of the budget never sees. The queried vessel ranks
+  // at the tail (fan-in 0): the tail drops must skip it anyway.
+  const entries: ChartEntry[] = [
+    vessel("port"),
+    vessel("left"),
+    vessel("right"),
+    fairway("fw-port-left", "port", "left"),
+    fairway("fw-port-right", "port", "right"),
+  ];
+  for (let i = 0; i < 10; i++) {
+    entries.push(portOf(`poe-port-${String(i).padStart(2, "0")}`, "port", `proto-${i}`));
+    entries.push(portOf(`poe-left-${String(i).padStart(2, "0")}`, "left", `proto-${i}`));
+    entries.push(portOf(`poe-right-${String(i).padStart(2, "0")}`, "right", `proto-${i}`));
+  }
+  writeEntries(target, entries);
+
+  const full = neighborhood(target, { vessel: "port" });
+  expect(full.vessels).toHaveLength(3);
+  expect(full.truncated).toBe(false);
+
+  // A budget the queried vessel's own citations fit under, but any one
+  // neighbor added to them does not.
+  const maxBytes = 2400;
+  const tight = neighborhood(target, { vessel: "port", maxBytes });
+
+  // ASCII fixture: string length is the serialized byte count.
+  expect(JSON.stringify(tight).length).toBeLessThanOrEqual(maxBytes);
+  expect(edgeIds(tight)).toEqual(edgeIds(full)); // edges were never the problem
+  expect(tight.droppedEdges).toBe(0);
+  expect(tight.droppedVessels).toBe(2);
+  expect(tight.truncated).toBe(true);
+  // The queried vessel is never dropped, even ranking at the tail.
+  expect(tight.vessels.map((v) => v.id)).toEqual(["port"]);
+});
+
+// ---------------------------------------------------------------------------
 // 9–10. Verification is on demand; the default serves stored chart truth
 // ---------------------------------------------------------------------------
 
@@ -508,6 +563,46 @@ test("the default (verify=false) serves stored trust labels and anchors with no 
   expect(edgeById(resp, "fw-lie-port").trust).toBe("reported");
   expect(edgeById(resp, "fw-good-port").trust).toBe("measured");
   expect(edgeById(resp, "fw-good-port").anchors).toEqual([{ type: "file", path: "harbor/harbor.ts", line: 1 }]);
+});
+
+// ---------------------------------------------------------------------------
+// 10b. Anchors that cannot be sounded refute their edge — they never crash
+// the verify, and an anchorless edge is never a confirmation on zero soundings
+// ---------------------------------------------------------------------------
+
+test("verify=true refutes an edge whose anchor is not citable, names it, and leaves the other edges confirmed", () => {
+  const target = makeTarget();
+  writeVerifyFixture(target);
+  // Plant the non-citable anchor by direct index edit: chart.write's schema
+  // refuses an anchor citing nothing, and the scenario is exactly one that
+  // reached the Chart anyway.
+  rewriteIndexDirectly(target, (entry) =>
+    entry.kind === "fairway" && entry.id === "fw-lie-port"
+      ? ({ ...entry, anchors: [{ type: "file" }] } as IndexedEntry)
+      : entry,
+  );
+
+  const resp = neighborhood(target, { vessel: "port", verify: true });
+
+  const broken = edgeById(resp, "fw-lie-port");
+  expect(broken.verification?.verdict).toBe("refuted");
+  // The malformed anchor is named exactly as cited — no path invented.
+  expect(broken.verification?.refutedAnchors).toEqual([{ type: "file" } as unknown as Anchor]);
+  // The other edges are unaffected: the truthfully anchored one stands.
+  expect(edgeById(resp, "fw-good-port").verification).toEqual({ verdict: "confirmed", refutedAnchors: [] });
+});
+
+test("verify=true refutes an edge citing no anchor: nothing resolvable, never a confirmation on zero soundings", () => {
+  const target = makeTarget();
+  writeVerifyFixture(target);
+  rewriteIndexDirectly(target, (entry) =>
+    entry.kind === "fairway" && entry.id === "fw-lie-port" ? { ...entry, anchors: [] } : entry,
+  );
+
+  const resp = neighborhood(target, { vessel: "port", verify: true });
+
+  expect(edgeById(resp, "fw-lie-port").verification).toEqual({ verdict: "refuted", refutedAnchors: [] });
+  expect(edgeById(resp, "fw-good-port").verification?.verdict).toBe("confirmed");
 });
 
 // ---------------------------------------------------------------------------

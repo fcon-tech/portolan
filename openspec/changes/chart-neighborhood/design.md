@@ -130,3 +130,7 @@ trimmed ceremony without reversing settled decisions:
   2026-09-01) — Bigtop-scale localization effect stays `unsurveyed`.
   Corpus-scale proof is owned by the sea-trial gate, which should gain
   the neighborhood questions at its next revision.
+- **Deferred.** The ship's log grows unboundedly and `appendReceipt`
+  re-reads it on every append — with `chart.neighborhood` now the
+  highest-frequency appender; rotation/compaction is deferred to a future
+  change.

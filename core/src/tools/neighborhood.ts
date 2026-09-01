@@ -11,16 +11,24 @@
  * chart (the count of charted incoming fairways), highest first, and edges
  * are packed greedily in that rank order under the budget: at most
  * `maxEdges` edges (default 40, cap 200) and at most `maxBytes` of
- * serialized response (default 32768, cap 131072). A budget that cuts the
- * neighborhood is loud: `truncated` plus the `droppedEdges` count, never a
- * silent prefix. An edge's rank key is the fan-in of the neighbor it was
- * discovered through (ties broken by edge id), so packing is deterministic.
+ * serialized response (default 32768, cap 131072). The byte budget governs
+ * the whole serialized response: edges pack under it first, and if the
+ * assembled response still overflows — typically a touched vessel carrying
+ * many ports of entry — vessels are dropped from the tail of the rank order
+ * (never the queried vessel) until it fits. A budget that cuts the
+ * neighborhood is loud: `truncated` plus the `droppedEdges` and
+ * `droppedVessels` counts, never a silent prefix. An edge's rank key is the
+ * fan-in of the neighbor it was discovered through (ties broken by edge
+ * id), so packing is deterministic.
  *
  * By default the response serves chart truth as stored. With `verify: true`
  * every returned edge's anchors are re-sounded through the deterministic
  * `sound.anchor` machinery; each edge then carries its verdict and the
- * anchors that failed. A refuted sounding never modifies the Chart — the
- * verdict informs, the Cartographer writes.
+ * anchors that failed. Only an edge with at least one sounded anchor, all
+ * confirmed, stands confirmed — an anchorless edge resolves nothing and is
+ * refuted, and an anchor that cannot be sounded at all refutes its edge by
+ * name. A refuted sounding never modifies the Chart — the verdict informs,
+ * the Cartographer writes.
  *
  * Staleness follows chart.read semantics: staleness is refreshed before
  * answering, so pending correction is visible, never hidden. That refresh
@@ -38,7 +46,7 @@ import type {
 } from "../types";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
-import { soundAnchor } from "./sound";
+import { SoundingError, soundAnchor } from "./sound";
 
 // ---------------------------------------------------------------------------
 // The call contract: directions, defaults, caps
@@ -136,6 +144,8 @@ export interface NeighborhoodResponse {
   vessels: NeighborhoodVessel[];
   truncated: boolean;
   droppedEdges: number;
+  /** Vessels dropped from the tail of the rank order to fit `maxBytes`. */
+  droppedVessels: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -296,17 +306,28 @@ export function neighborhood(targetRoot: string, params: NeighborhoodParams): Ne
 
   // With verify: true, every returned edge's anchors are re-sounded once per
   // edge (memoized — the packing probe may ask twice); the Chart is never
-  // written: the verdict informs, the Cartographer writes.
+  // written: the verdict informs, the Cartographer writes. An anchor that
+  // cannot be sounded at all — a non-citable one, reachable only by direct
+  // index edits — does not resolve, so it refutes its edge by name instead
+  // of crashing the verify; an edge citing no anchor resolves nothing and is
+  // refuted too.
   const verifications = new Map<string, NeighborhoodEdgeVerification>();
   const verificationOf = (fairway: ChartedFairway): NeighborhoodEdgeVerification => {
     const cached = verifications.get(fairway.id);
     if (cached) return cached;
     const refutedAnchors: Anchor[] = [];
+    let sounded = 0;
     for (const anchor of fairway.anchors) {
-      if (soundAnchor(targetRoot, { anchor }).verdict === "refuted") refutedAnchors.push(anchor);
+      try {
+        if (soundAnchor(targetRoot, { anchor }).verdict === "refuted") refutedAnchors.push(anchor);
+        sounded++;
+      } catch (err) {
+        if (!(err instanceof SoundingError)) throw err;
+        refutedAnchors.push(anchor);
+      }
     }
     const result: NeighborhoodEdgeVerification = {
-      verdict: refutedAnchors.length > 0 ? "refuted" : "confirmed",
+      verdict: sounded > 0 && refutedAnchors.length === 0 ? "confirmed" : "refuted",
       refutedAnchors,
     };
     verifications.set(fairway.id, result);
@@ -343,34 +364,57 @@ export function neighborhood(targetRoot: string, params: NeighborhoodParams): Ne
     };
   };
 
-  const assemble = (kept: ChartedFairway[]): NeighborhoodResponse => {
+  const assemble = (kept: ChartedFairway[], droppedVessels: number): NeighborhoodResponse => {
     const touched = new Set<string>([vesselId]);
     for (const fairway of kept) {
       touched.add(fairway.from);
       touched.add(fairway.to);
     }
     const vesselRank = rankBy(fanIn);
+    const ranked = [...touched].sort(vesselRank);
+    // Tail drops never touch the queried vessel, even when it ranks low.
+    const dropped = new Set<string>();
+    for (let i = ranked.length - 1; i >= 0 && dropped.size < droppedVessels; i--) {
+      if (ranked[i] !== vesselId) dropped.add(ranked[i] as string);
+    }
     return {
       vessel: vesselId,
       direction,
       depth,
       edges: kept.map(toEdge),
-      vessels: [...touched].sort(vesselRank).map(toVessel),
-      truncated: candidates.length > kept.length,
+      vessels: ranked.filter((id) => !dropped.has(id)).map(toVessel),
+      truncated: candidates.length > kept.length || dropped.size > 0,
       droppedEdges: candidates.length - kept.length,
+      droppedVessels: dropped.size,
     };
   };
 
   // Greedy packing in rank order under both budgets: a prefix of the ranked
   // candidates, and the first edge that no longer fits drops it and all
-  // after it. The cut is stated, never smoothed over.
+  // after it. The bytes measured here are the serialized edges — the
+  // touched-vessel list is budgeted whole, below. The cut is stated, never
+  // smoothed over.
   const kept: ChartedFairway[] = [];
   for (const candidate of candidates) {
     if (kept.length >= maxEdges) break;
     kept.push(candidate.fairway);
-    if (Buffer.byteLength(JSON.stringify(assemble(kept)), "utf8") <= maxBytes) continue;
+    if (Buffer.byteLength(JSON.stringify(kept.map(toEdge)), "utf8") <= maxBytes) continue;
     kept.pop();
     break;
   }
-  return assemble(kept);
+  // The byte budget governs the whole serialized response: if the
+  // edge-packed response still overflows — typically a touched vessel
+  // carrying many ports of entry — vessels are dropped from the tail of the
+  // rank order until it fits. The queried vessel is never dropped, so a
+  // province whose every cut still leaves the queried vessel over budget
+  // serves over budget rather than serve a hole.
+  let droppedVessels = 0;
+  const droppable = assemble(kept, 0).vessels.length - 1;
+  while (
+    droppedVessels < droppable &&
+    Buffer.byteLength(JSON.stringify(assemble(kept, droppedVessels)), "utf8") > maxBytes
+  ) {
+    droppedVessels++;
+  }
+  return assemble(kept, droppedVessels);
 }

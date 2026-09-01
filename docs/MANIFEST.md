@@ -105,7 +105,7 @@ MCP tools (core):
 | `chart.read` / `chart.write` | Chart CRUD; schema-validated; requires anchors + trust labels, else rejects |
 | `chart.render` | the Chart Room: the one-file visual export of the province |
 | `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, ship's-log tail |
-| `chart.neighborhood` | the neighborhood query over the Chart's fairways: direction/depth traversal, fan-in-ranked, budgeted, on-demand verify re-sounding, read-only |
+| `chart.neighborhood` | the neighborhood query over the Chart's fairways: direction/depth traversal, fan-in-ranked, budgeted, on-demand verify re-sounding, read-only (one ship's-log receipt per call) |
 | `sweep` | ripgrep-backed search returning anchored chunks |
 | `symbols` | ctags-backed definitions and references |
 | `manifests` | cheap deterministic facts from go.mod / pom / package.json / Cargo / pubspec… |

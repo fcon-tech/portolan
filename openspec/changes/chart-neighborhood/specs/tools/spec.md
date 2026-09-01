@@ -45,8 +45,12 @@ The tool SHALL order returned vessels by their direct fan-in — the count
 of charted incoming fairways — highest first, and SHALL pack the response
 greedily in that order within the budget: at most `maxEdges` edges
 (default 40, capped) and at most `maxBytes` of serialized response
-(default 32768, capped). When the budget cuts the neighborhood, the
-response SHALL say so explicitly instead of serving a silent prefix.
+(default 32768, capped). The byte budget SHALL govern the whole serialized
+response — the edges and the touched-vessel list alike — and when the
+assembled response still overflows, the tool SHALL drop vessels from the
+tail of that rank order, never the queried vessel, which SHALL stay
+present. When the budget cuts the neighborhood, the response SHALL say so
+explicitly instead of serving a silent prefix, stating what was cut.
 
 #### Scenario: The hub outranks the leaf
 - **WHEN** a neighborhood contains a vessel with fan-in 11 and a vessel
@@ -56,7 +60,8 @@ response SHALL say so explicitly instead of serving a silent prefix.
 #### Scenario: A tight budget truncates loudly
 - **WHEN** the neighborhood holds more edges than the budget allows
 - **THEN** the response is marked truncated, keeps the fan-in-ranked
-  prefix within the budget, and states that edges were dropped
+  prefix within the budget, and states the dropped edges — and the dropped
+  vessels when the touched-vessel list is what overflowed the byte budget
 
 #### Scenario: The budget is measured in records and bytes
 - **WHEN** `maxBytes` is set
@@ -67,8 +72,10 @@ By default the tool SHALL serve the Chart's truth as stored — trust labels
 and anchors without re-sounding. With `verify: true` it SHALL re-sound
 every returned edge's anchors through the deterministic `sound.anchor`
 machinery, mark each edge confirmed or refuted, and name every refuted
-edge with its refuted anchors. A refuted sounding SHALL NOT modify the
-Chart; the verdict informs, the Cartographer writes.
+edge with its refuted anchors. An edge whose anchors cannot be sounded —
+including one citing no anchor — does not resolve and is refuted. A
+refuted sounding SHALL NOT modify the Chart; the verdict informs, the
+Cartographer writes.
 
 #### Scenario: verify=true catches a planted lie
 - **WHEN** `verify` is true and one returned edge's anchor no longer
@@ -82,8 +89,10 @@ Chart; the verdict informs, the Cartographer writes.
   sounding runs
 
 ### Requirement: The neighborhood is read-only and honest about staleness
-The tool SHALL NOT create, modify, or remove any chart entry, and SHALL
-NOT touch any file outside `<target>/.portolan/`. Each call SHALL append
+The tool SHALL NOT create or remove any chart entry and SHALL NOT alter
+any entry's content, trust label, or anchors; staleness metadata is
+refreshed before serving exactly as `chart.read` refreshes it. The tool
+SHALL NOT touch any file outside `<target>/.portolan/`. Each call SHALL append
 exactly one receipt to the ship's log — the one write the tools
 capability allows any tool — so the adoption record exists without
 relying on the Cartographer's diligence. Vessels pending correction SHALL

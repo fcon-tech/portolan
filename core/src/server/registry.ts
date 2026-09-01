@@ -560,7 +560,10 @@ export const TOOL_TABLE: ToolSpec[] = [
         outcome:
           `ok: ${response.edges.length} edge${response.edges.length === 1 ? "" : "s"}, ` +
           `${response.vessels.length} vessel${response.vessels.length === 1 ? "" : "s"}` +
-          (response.truncated ? `, truncated: ${response.droppedEdges} edges dropped` : ""),
+          (response.truncated
+            ? `, truncated: ${response.droppedEdges} edge${response.droppedEdges === 1 ? "" : "s"} and ` +
+              `${response.droppedVessels} vessel${response.droppedVessels === 1 ? "" : "s"} dropped`
+            : ""),
       });
       return response;
     },
