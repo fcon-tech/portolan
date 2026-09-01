@@ -7,8 +7,8 @@ in the requested direction (`in`, `out`, or `both`; default `both`), each
 edge carrying its id, endpoints, trust label, optional relation, staleness,
 and anchors with line numbers, together with the touched vessels (id,
 trust, staleness) and each touched vessel's ports of entry. Traversal
-SHALL follow charted fairways only and SHALL keep a visited set, so a
-dependency cycle cannot recurse. A vessel id that is not on the Chart
+SHALL follow charted fairways only and SHALL visit each vessel at most
+once, so a dependency cycle cannot recurse. A vessel id that is not on the Chart
 SHALL be an honest unsurveyed error, never an empty answer dressed as a
 neighborhood.
 
@@ -44,8 +44,8 @@ neighborhood.
 The tool SHALL order returned vessels by their direct fan-in — the count
 of charted incoming fairways — highest first, and SHALL pack the response
 greedily in that order within the budget: at most `maxEdges` edges
-(default 40, cap 200) and at most `maxBytes` of serialized response
-(default 32768, cap 131072). When the budget cuts the neighborhood, the
+(default 40, capped) and at most `maxBytes` of serialized response
+(default 32768, capped). When the budget cuts the neighborhood, the
 response SHALL say so explicitly instead of serving a silent prefix.
 
 #### Scenario: The hub outranks the leaf
@@ -60,8 +60,7 @@ response SHALL say so explicitly instead of serving a silent prefix.
 
 #### Scenario: The budget is measured in records and bytes
 - **WHEN** `maxBytes` is set
-- **THEN** the serialized response stays within the cap regardless of any
-  harness tokenizer
+- **THEN** the serialized response stays within `maxBytes`
 
 ### Requirement: Verification is on demand and names refuted edges
 By default the tool SHALL serve the Chart's truth as stored — trust labels
@@ -84,17 +83,21 @@ Chart; the verdict informs, the Cartographer writes.
 
 ### Requirement: The neighborhood is read-only and honest about staleness
 The tool SHALL NOT create, modify, or remove any chart entry, and SHALL
-NOT touch any file outside `<target>/.portolan/`. Vessels pending
-correction SHALL appear in the response with their staleness flag set —
-never hidden or filtered.
+NOT touch any file outside `<target>/.portolan/`. Each call SHALL append
+exactly one receipt to the ship's log — the one write the tools
+capability allows any tool — so the adoption record exists without
+relying on the Cartographer's diligence. Vessels pending correction SHALL
+appear in the response with their staleness flag set — never hidden or
+filtered.
 
 #### Scenario: A stale hub is flagged, not hidden
 - **WHEN** a vessel in the neighborhood is pending correction
 - **THEN** it appears with its stale flag set and its fairways remain
   listed
 
-#### Scenario: The neighborhood writes nothing
+#### Scenario: The neighborhood writes nothing but its receipt
 - **WHEN** `chart.neighborhood` runs against a province whose signatures
   are unchanged
-- **THEN** the Chart on disk is byte-identical afterwards and no file
-  outside `<target>/.portolan/` was touched
+- **THEN** the Chart on disk is byte-identical afterwards, no file
+  outside `<target>/.portolan/` was touched, and the only write under
+  `<target>/.portolan/` is the appended ship's-log receipt

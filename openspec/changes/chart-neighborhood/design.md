@@ -92,6 +92,41 @@ delta; unwinding a mandatory taxonomy is not.
 - **Symbol-level neighborhood**: doubles the ontology for unproven need;
   revisit only with a real workload that vessel-level cannot serve.
 
-## Deferrals
+## Deferrals and advisor dissent (socratic pass, 2026-09-01)
 
-(recorded from the socratic-advisor pass; see below)
+The socratic advisor's findings were applied where they closed holes or
+trimmed ceremony without reversing settled decisions:
+
+- **Applied — the receipt mechanism.** The advisor found the adoption leg
+  unimplementable as first drafted: receipts enter the ship's log only
+  via `log.append`, so a silent tool would have measured logging
+  diligence, not invocation. The tools delta now requires each
+  `chart.neighborhood` call to append its own receipt (the one write the
+  tools capability allows any tool).
+- **Applied — spec polish.** Cap values moved out of the spec text into
+  design/tasks (defaults stay in the call contract); the tokenizer clause
+  and the "visited set" implementation detail dropped in favor of
+  testable behavior.
+- **Declined, recorded — defer the relation enum.** The advisor argued
+  the enum is data with no reader in this change and should defer to the
+  first change that consumes it. Kept: the Governor accepted it in
+  grilling (2026-09-01) precisely for data accrual — untyped interim
+  fairways are the accepted cost, and docs/MANIFEST.md already promises
+  "typed inter-unit dependencies". Kill-trigger: if the next Bigtop
+  sea trial records near-zero relations, the enum is dead weight — cut
+  it then.
+- **Declined, recorded — pin the invocation requirements to the tool.**
+  The advisor argued a capability file quantifying over a class with one
+  instance is abstraction ahead of its second instance. Kept as a
+  capability: the Governor accepted it (2026-09-01) so the staleness
+  re-survey queue rides the same shape; the rule text is one sentence.
+  Re-derive if the second instance never materializes.
+- **Declined, recorded — shrink the Bigtop corpus leg.** The advisor
+  noted its fan-in/truncation assertions duplicate fixture scenarios and
+  the leg never runs in CI. Kept per the accepted acceptance (2026-09-01):
+  on real data the duplicates are cheap and the leg is the local proof
+  that the fixture results transfer to a non-toy chart.
+- **Standing deferrals.** No agent-level ablation (Governor decision,
+  2026-09-01) — Bigtop-scale localization effect stays `unsurveyed`.
+  Corpus-scale proof is owned by the sea-trial gate, which should gain
+  the neighborhood questions at its next revision.

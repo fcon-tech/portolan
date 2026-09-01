@@ -27,14 +27,16 @@
       honored; cycle terminates; invalid request rejected; hub before
       leaf; tight budget truncates loudly; byte cap respected; verify
       catches a planted lie; default serves stored labels; stale vessel
-      flagged; writes nothing on unchanged signatures.
+      flagged; on unchanged signatures the Chart is byte-identical and
+      the only write is the appended ship's-log receipt.
 - [ ] 2.4 Verification: `bun test` green; `bunx tsc --noEmit` in `core/`.
 
 ## 3. Serve the tool
 
 - [ ] 3.1 Register `chart.neighborhood` in `core/src/server/registry.ts`
       (fourteenth tool) with the input schema and the same error boundary
-      as the other tools.
+      as the other tools; the handler appends exactly one ship's-log
+      receipt per call.
 - [ ] 3.2 Wiring test through the server client; the registry lists
       fourteen tools.
 - [ ] 3.3 Verification: `bun test` green.
@@ -44,7 +46,9 @@
 - [ ] 4.1 `core/src/tools/trust-report.ts`: an `adoption` block derived
       from the ship's log — per mandated query tool:
       `invocations`, `firstReceipt`, `lastReceipt`; zero reported as
-      zero; no claim beyond invocation facts.
+      zero; no claim beyond invocation facts. Keep the module's
+      determinism claim true (receipt ids, not timestamps) or amend the
+      docstring honestly.
 - [ ] 4.2 Tests: a logged `chart.neighborhood` call surfaces with count
       and last receipt; a log without calls reports zeros; existing
       trust.report scenarios stay green.
@@ -71,13 +75,18 @@
 - [ ] 6.2 Verification: with the corpus present the leg runs green;
       without it, the test skips; `bun test` green both ways.
 
-## 7. Manifest and docs
+## 7. Count sweep and docs
 
-- [ ] 7.1 `docs/MANIFEST.md`: tool table to fourteen
-      (`chart.neighborhood`); the Chart section notes the optional
+- [ ] 7.1 The thirteen→fourteen sweep, everywhere the old count lives:
+      `docs/MANIFEST.md` (tool table, heading), `skill/SKILL.md`
+      (tool-desk count), `skill/verify/checks.ts` (the `Thirteen tools:`
+      regex), `README.md`, `adapters/README.md`, and the
+      `core/src/server/registry.ts` comment; the `harness` living spec
+      is repaired by the change's MODIFIED delta at archive time.
+- [ ] 7.2 `docs/MANIFEST.md`: the Chart section notes the optional
       relation enum; the glossary stays locked (no new synonyms).
-- [ ] 7.2 No machine-home paths in tracked files; corpus paths in tests
+- [ ] 7.3 No machine-home paths in tracked files; corpus paths in tests
       resolve from an environment variable with a skip, never a hardcoded
       home path.
-- [ ] 7.3 Verification: `./scripts/leak-gate.sh` clean;
+- [ ] 7.4 Verification: `./scripts/leak-gate.sh` clean;
       `openspec validate --specs --strict` green after merge-prep.

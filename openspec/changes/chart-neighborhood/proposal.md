@@ -43,7 +43,12 @@ the typing real, minimally.
   file or vessel requires `chart.neighborhood` for each touched vessel
   before edits — placed in the session-start region; the tool desk lists
   the tool; `trust.report` reports per-tool adoption (invocation count,
-  first and last receipt) from the ship's log.
+  first and last receipt) from the ship's log. Every `chart.neighborhood`
+  call appends its own ship's-log receipt, so adoption measures
+  invocations, not the Cartographer's logging diligence.
+- **Count sweep**: the thirteen→fourteen wording stays consistent across
+  the README, the adapters' README, the skill's tool-desk check, and the
+  `harness` capability (the toolset requirement grows the name list).
 - **Manifest alignment**: the tool table grows to fourteen; the Chart
   section notes the optional relation.
 
@@ -65,15 +70,19 @@ the typing real, minimally.
   staleness flagged, and an honest unsurveyed error for unknown vessels.
 - `chart`: adds optional typed relations on fairways (ADDED delta) —
   closed enum, rejection naming the enum, untyped stays valid.
+- `harness`: the served toolset grows to fourteen (MODIFIED delta) — the
+  name list in the toolset requirement and the counted scenarios.
 
 ## Impact
 
 - Code: `core/src/tools/neighborhood.ts` (new; reuses `readChart`,
   `refreshStaleness`, `soundAnchor`), `core/src/server/registry.ts`
-  (fourteenth tool), `core/src/types.ts` + `core/schema/chart.schema.json`
-  + validation (relation enum), `core/src/tools/trust-report.ts` (adoption
-  block), `skill/SKILL.md` (mandate, tool desk, pass-2 relation),
-  `skill/verify/checks.ts` (mandate presence checks).
+  (fourteenth tool; the handler appends the call's receipt),
+  `core/src/types.ts` + `core/schema/chart.schema.json` + validation
+  (relation enum), `core/src/tools/trust-report.ts` (adoption block),
+  `skill/SKILL.md` (mandate, tool desk, pass-2 relation),
+  `skill/verify/checks.ts` (mandate presence, fourteen-tool count),
+  README / adapters README count sweep.
 - Tests: fixture suites for every scenario; a corpus-guarded Bigtop
   integration test (non-empty hub neighborhood, fan-in order, loud budget
   truncation, `verify` refuting a planted anchor) that skips when the
