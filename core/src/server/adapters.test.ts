@@ -46,10 +46,26 @@ function openCodeLaunch(config: Record<string, unknown>): { command: string; arg
   const mcp = config.mcp as Record<string, { type: string; command: string[] }>;
   const entry = mcp.portolan;
   expect(entry.type).toBe("local");
-  expect(entry.command.length).toBe(4);
-  expect(entry.command[2]).toBe("--target");
+  // Task 5.2: the line resolves the published package — no repo path.
+  expect(entry.command.slice(0, 6)).toEqual([
+    "bunx",
+    "--package",
+    "@fcon-tech/portolan",
+    "portolan",
+    "serve",
+    "--target",
+  ]);
   return { command: entry.command[0]!, args: entry.command.slice(1) };
 }
+
+/**
+ * Whether the published package the installed line resolves is actually on
+ * the registry. The bunx launch is exercised for real when it is; until the
+ * first publish the shape assertions above still run everywhere.
+ */
+const published = await fetch("https://registry.npmjs.org/@fcon-tech%2fportolan/latest")
+  .then((r) => r.ok)
+  .catch(() => false);
 
 /** What one launch observes: the full tool list plus two read-only results. */
 interface Observation {
@@ -86,12 +102,14 @@ async function observe(
   return observation!;
 }
 
-test("the opencode adapter's installed launch line lists the full served toolset", async () => {
-  const province = makeProvince();
-  const { config } = installOpencode(province);
-  const launch = openCodeLaunch(config);
-  // The config's launch line is bound to the province it was installed for.
-  expect(launch.args[2]).toBe(province);
+test.skipIf(!published)(
+  "the opencode adapter's installed launch line lists the full served toolset",
+  async () => {
+    const province = makeProvince();
+    const { config } = installOpencode(province);
+    const launch = openCodeLaunch(config);
+    // The config's launch line is bound to the province it was installed for.
+    expect(launch.args[5]).toBe(province);
   const observation = await observe(launch, province, {
     manifests: readManifest(province, "package.json"),
     anchorSounding: soundAnchor(province, { anchor: { type: "file", path: "src/cart.ts", line: 4 } }),
@@ -200,7 +218,10 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
   expect(blockMatch).not.toBeNull();
   const portolan = JSON.parse(blockMatch![1]!) as { type: string; command: string[]; enabled: boolean };
   expect(portolan.type).toBe("local");
-  expect(portolan.command.length).toBe(4);
+  // bunx --package @fcon-tech/portolan portolan serve --target <province>
+  expect(portolan.command.length).toBe(7);
+  expect(portolan.command[0]).toBe("bunx");
+  expect(portolan.command.at(-2)).toBe("--target");
   expect(portolan.enabled).toBe(true);
   // Sibling keys survive: extract web-reader's line the same way (the
   // fixture's trailing commas are legal JSONC, not legal JSON).
@@ -216,7 +237,10 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
   );
   expect(rerun.status).toBe(0);
   const after = readFileSync(configPath, "utf8");
-  expect((after.match(/"portolan"/g) ?? []).length).toBe(1);
+  // Idempotent: a second install does not duplicate the block. Count the
+  // key, not bare "portolan": the bunx launch line itself contains the
+  // string "portolan" (the subcommand).
+  expect((after.match(/"portolan":/g) ?? []).length).toBe(1);
 
   rmSync(sandbox, { recursive: true, force: true });
 });

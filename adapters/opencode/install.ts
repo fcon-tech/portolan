@@ -10,10 +10,15 @@
  *     "mcp": {
  *       "portolan": {
  *         "type": "local",
- *         "command": ["<bun>", "<repo>/core/src/server/main.ts", "--target", "<province>"]
+ *         "command": ["bunx", "--package", "@fcon-tech/portolan", "portolan",
+ *                     "serve", "--target", "<province>"]
  *       }
  *     }
  *   }
+ *
+ * The launch line resolves the published npm package (`bunx`), so the
+ * installer works without a clone of this repository — no repo path is
+ * written into the config.
  *
  * (Shape verified against opencode 1.18.21's own `opencode mcp add`.)
  * opencode config files are JSONC (comments and trailing commas allowed), so
@@ -31,7 +36,6 @@ import { dirname, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
-const SERVER_ENTRY = join(REPO_ROOT, "core", "src", "server", "main.ts");
 
 const { values } = parseArgs({
   allowPositionals: false,
@@ -56,8 +60,17 @@ const configPath =
         "opencode.jsonc",
       );
 
-// The launch line, with absolute paths: opencode spawns it verbatim.
-const launchCommand = [process.execPath, SERVER_ENTRY, "--target", province];
+// The launch line resolves the published package via bunx: opencode spawns
+// it verbatim; the only path is the absolute province target.
+const launchCommand = [
+  "bunx",
+  "--package",
+  "@fcon-tech/portolan",
+  "portolan",
+  "serve",
+  "--target",
+  province,
+];
 const portolanBlock = `{ "type": "local", "command": ${JSON.stringify(launchCommand)}, "enabled": true }`;
 
 // ---------------------------------------------------------------------------
