@@ -4,10 +4,7 @@ The workspace hook trust review — the client gate that decides whether
 project-scope hooks from `.zcode/config.json` may run — renders its review
 screen but the items are not actionable; confirmed in a fresh session for
 a remote workspace (Governor, 2026-09-02). The hooks are therefore dead
-weight: a dead prompt every session, zero enforcement. The client build's
-own server code shows the review decision for remote sessions requires a
-`workspaceIdentity` the UI does not currently complete. The shipped
-client guides do not document the gate at all (stale). See proposal.md —
+weight: a dead prompt every session, zero enforcement. See proposal.md —
 Why.
 
 ## Goals / Non-Goals
@@ -51,11 +48,32 @@ Why.
 
 ## Deferrals
 
-- **Deferred: restoring the wiring.** Trigger: the client ships a working
-  workspace hook trust review (items actionable in a remote session).
-  Then: recreate `.zcode/config.json` from the `process-hooks` archive,
-  approve once, and flip the workflow section's parked note to observed
-  state. Recorded as this change's follow-up.
+- **Deferred: restoring the wiring.** Trigger, stated honestly: it cannot
+  self-fire — with the config deleted, the trust-review prompt never
+  reappears, so no session loop will surface the client fix. The trigger
+  fires on a deliberate retest (recreate the wiring on a scratch checkout;
+  if the review items are actionable in a fresh remote session, restore
+  and approve). No watcher mechanism is built for this — the parked
+  paragraph in `docs/workflow.md` (read at session start) is the only
+  persistent reminder; anything more would be ceremony.
+- **Suspended: the `process-hooks` D1 escalation triggers** (H1/H2
+  soft→deny) — their observation conditions cannot occur while hooks never
+  run. Revisit jointly with the restore deferral; restoring reinstates
+  both.
+
+## Verify-stage record (task 2.2)
+
+- **Whole-change review** (code-reviewer, 2026-09-02): Spec PASS, Quality
+  APPROVED; its one Minor (unticked 1.1) fixed.
+- **Socratic pass** (Mode B, 2026-09-02): verdict SIMPLIFY-FIRST, three
+  edits, all applied: the proposal's lineage claim corrected (the park
+  goes further than D3's manual-install fallback rather than executing
+  it); the restore path now names its real targets (the wiring spec in
+  the archive's task-2.1 report and the deleted file in git history —
+  the archive holds no wiring file); the design's unanchored
+  client-forensics sentences trimmed to the observed fact.
+- **Battery** (task 2.1): green on the final tree — see
+  `reports/task-2.1-report.md`.
 
 ## Open Questions
 

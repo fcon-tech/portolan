@@ -18,9 +18,9 @@ principle — a user-scope workaround was offered and rejected ("хуки
   replaced by the parked state — why (the client's trust review is broken
   for remote workspaces), and the restore path (recreate the wiring from
   the `process-hooks` archive when the client works, then approve once).
-- This is the D3 fallback of `process-hooks`, executed as recorded —
-  "scripts and docs still land; the wiring block is documented for manual
-  install".
+- In the spirit of `process-hooks` design D3's fallback, taken further:
+  the wiring is removed rather than manually installed — scripts and docs
+  stay, the park is the recorded disposition.
 
 ## Capabilities
 

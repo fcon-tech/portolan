@@ -66,10 +66,11 @@ page says. This is the soft phase — a hook warns, it never blocks (no exit
 2), and CI stays the final bar. The wiring is PARKED: the tracked
 `.zcode/config.json` is removed because the client's workspace hook trust
 review is broken for remote workspaces — its items render but are not
-actionable — so no hooks run. Restore path: recreate the wiring from the
-`process-hooks` change archive and approve it once the client ships a
-working review. Escalation happens only on a recorded trigger, never by
-default.
+actionable — so no hooks run. Restore path: the wiring spec lives in the
+`process-hooks` archive's task-2.1 report, and the exact file is the
+deleted `.zcode/config.json` in git history; recreate it and approve it
+once the client ships a working review. Escalation happens only on a
+recorded trigger, never by default.
 
 - `scripts/hooks/leak-stamp.sh` serves the leak-gate rule (Verification):
   after an Edit/Write it flags the touched file when it carries a machine
