@@ -44,19 +44,27 @@ Key rules:
 ## OpenSpec workflow
 
 Product behavior changes go through full cycles: nothing ships without one,
-nothing stays unarchived.
+nothing stays unarchived. The stages are openspec's own agent commands,
+installed under `.zcode/commands/opsx/` (with matching skills): **explore →
+propose → apply → verify → archive**. In a harness that serves them, use
+`/opsx:*`; otherwise run the same stages by hand:
 
-1. `openspec new change <id>` — proposal, spec deltas, design, tasks under
-   `openspec/changes/<id>/`.
-2. `openspec validate --strict` before implementation; keep it passing.
-3. Implement task by task; keep `bun test` green.
-4. Before archive: a socratic pass on the finished change (advisory). Its
-   deferrals and dissents are recorded in the change's `design.md`. A pass
-   skipped earlier is run before the cycle is declared closed — findings on
-   an already-archived change become follow-ups, never silent drops.
-5. `openspec archive <id> --yes` when done. Living specs under
-   `openspec/specs/` are the source of truth and must match served reality;
-   repair drift on sight.
+1. **explore** — think and recon before any artifact; never implement in
+   this stance.
+2. **propose** — `openspec new change <id>` with proposal, spec deltas,
+   design, tasks under `openspec/changes/<id>/`; `openspec validate
+   --strict` before implementation; keep it passing.
+3. **apply** — implement task by task from `tasks.md`; keep `bun test`
+   green.
+4. **verify** — before archive, prove the implementation matches the
+   artifacts (specs, tasks, design): the whole-change review plus a
+   socratic pass (advisory; deferrals and dissents recorded in the
+   change's `design.md`). A pass skipped earlier runs before the cycle is
+   declared closed; findings on an already-archived change become
+   follow-ups, never silent drops.
+5. **archive** — `openspec archive <id> --yes` when done. Living specs
+   under `openspec/specs/` are the source of truth and must match served
+   reality; repair drift on sight.
 
 Every change ships through a merge request from a `change/<id>` branch —
 never straight to `main`. Merge only on green CI. At merge time: bump
