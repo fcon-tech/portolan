@@ -25,9 +25,16 @@ by the process-fabric change.
 ## J4 — routing the work
 
 - Product behavior changes → an OpenSpec cycle: explore → propose → apply →
-  verify → archive (the `/opsx:*` stages under `.zcode/commands/opsx/`),
+  verify → archive (the `/opsx:*` stages under `.zcode/commands/opsx/`; in a
+  harness without them, the same stages run by hand under the same rules),
   shipped through a merge request from a `change/<id>` branch, merged only on
   green CI.
+- The cycle's procedure, owned here: `openspec validate --strict` passes
+  before implementation and keeps passing; `bun test` stays green through
+  apply; verify is the whole-change review plus the socratic pass — a pass
+  skipped earlier still runs before the cycle is declared closed, and
+  findings on an already-archived change become follow-ups, never silent
+  drops.
 - Chart and archive state corrections → an Expedition, by the Cartographer's
   method (skill/SKILL.md).
 - The hand-off, expedition → change (the worked example): an Expedition never
