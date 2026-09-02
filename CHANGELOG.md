@@ -28,7 +28,7 @@ longer requires cloning this repo.
   leads with `bun install -g @fcon-tech/portolan`.
 - Governor-blocked, honestly so: first manual release, npm trusted
   publisher config, registry listing (task 6.2) — `blocked`, not ready.
-  License field decision also pending the Governor (repo declares none).
+  License decided right after merge: MIT (`LICENSE` + `license` field).
 
 ## 0.4.4 — 2026-09-02
 
