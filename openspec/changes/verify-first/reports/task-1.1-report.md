@@ -67,7 +67,7 @@ Nothing else in either file. The harbor block was not touched.
 ### Recorded skip (per the rule this task installs)
 
 What was skipped: a failing executable test written before the edit. Why:
-the change carries no spec deltas (`skip_specs: true` in `.openspec.yaml`)
+the change carries no spec deltas (`skip_specs: true` in `openspec/changes/verify-first/.openspec.yaml`)
 and no doc-gate script exists — the executable served-doc checks are
 deferred by design.md (trigger: first broken pointer or locked-term
 violation in a served doc after merge). What covers it instead: the verify
