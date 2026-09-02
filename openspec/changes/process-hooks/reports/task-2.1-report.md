@@ -113,7 +113,8 @@ return null (task brief allows this in place of a live empty province).
 - `openspec validate --changes --strict` — 1 passed, 0 failed.
 - `bash -n` on the three shell scripts — syntax ok. `grep "exit 2"` across
   `scripts/hooks/` — no matches (soft phase holds; note `leak-gate.sh`
-  itself keeps its pre-existing exit 1/64 for the standalone gate, the
+  itself keeps its pre-existing exit 1 for the standalone gate (the usage
+  exit 64 is new with this diff, from the `--print-patterns` flag); the
   hooks never propagate it).
 
 ## Decisions and evidence labels

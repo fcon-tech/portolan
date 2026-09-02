@@ -58,12 +58,12 @@ The loop's scheduled variant — the night watch, which auto-repairs within the
 configured bound — is specified in adapters/README.md, section "The night
 watch (auto-repair on a scheduler)".
 
-## Hooks — guards at the moment of writing
+## Hooks — guards at the moment of the event
 
-Three soft hooks remind at the moment of writing; the rules they serve stay
+Three soft hooks remind at the moment of the event — H1 and H2 when a file is written, H3 at session start; the rules they serve stay
 owned where this page says. Wiring: the tracked `.zcode/config.json`;
 scripts: `scripts/hooks/`. This is the soft phase — a hook warns, it never
-blocks (no exit 2), and CI stays the done-bar. Escalation happens only on a
+blocks (no exit 2), and CI stays the final bar. Escalation happens only on a
 recorded trigger, never by default.
 
 - `scripts/hooks/leak-stamp.sh` serves the leak-gate rule (Verification):

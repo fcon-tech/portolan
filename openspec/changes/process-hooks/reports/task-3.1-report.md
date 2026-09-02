@@ -29,8 +29,7 @@ moment-of-writing guards and their owners. Locked terminology used
 ## Verification
 
 - Every path named in the section exists (checked with `test -e`:
-  `.zcode/config.json`, the three hook scripts, plus the referenced
-  `scripts/leak-gate.sh` and `adapters/opencode/install.ts` context).
+  `.zcode/config.json` and the three hook scripts).
 - `scripts/leak-gate.sh` — exit 0.
 - `openspec validate --changes --strict` — 1 passed, 0 failed.
 - `bun test` unaffected (docs-only change; the section adds no code).

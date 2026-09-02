@@ -16,10 +16,14 @@ hook_file_path() {
     [ "$_path" = 'null' ] && _path=''
   fi
   if [ -z "$_path" ]; then
+    # Same key set as the jq branch, oldest format first: "file_path" is a
+    # substring of nothing else we probe, and '"path"' cannot match inside
+    # '"file_path"' (the quote anchors differ). Only \" unescaping — a bare
+    # backslash strip would mangle doubled backslashes.
     _path=$(printf '%s' "$_payload" \
-      | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' \
+      | grep -o -e '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' -e '"path"[[:space:]]*:[[:space:]]*"[^"]*"' \
       | head -n 1 \
-      | sed 's/^"file_path"[[:space:]]*:[[:space:]]*"//; s/"$//; s/\\//g')
+      | sed 's/^\("[a-z_]*"\)[[:space:]]*:[[:space:]]*"//; s/"$//; s/\\"/"/g')
   fi
   [ -n "$_path" ] && printf '%s\n' "$_path"
   return 0
