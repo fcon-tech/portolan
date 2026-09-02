@@ -32,6 +32,16 @@ const fairway = (id: string, from: string, to: string): ChartEntry => ({
   trust: "reported",
 });
 
+/** A non-fairway entry; only the fairway kind feeds the rank. */
+const light = (id: string, vesselId: string): ChartEntry => ({
+  kind: "light",
+  id,
+  vessel: vesselId,
+  name: `GET /${vesselId}`,
+  anchors: [],
+  trust: "measured",
+});
+
 test("cross-vessel fairways count toward the target vessel, whatever vessel charts them", () => {
   const fanIn = vesselFanIn([
     vessel("hub"),
@@ -54,10 +64,12 @@ test("cross-vessel fairways count toward the target vessel, whatever vessel char
 test("an intra-vessel fairway contributes nothing — the rank is cross-vessel only", () => {
   const fanIn = vesselFanIn([
     vessel("zulu"),
+    light("lt-1", "zulu"),
     fairway("fw-self-1", "zulu", "zulu"),
     fairway("fw-self-2", "zulu", "zulu"),
   ]);
 
+  // The light on zulu and both self-fairways feed nothing: the map stays empty.
   expect(fanIn.size).toBe(0);
 });
 
@@ -91,6 +103,6 @@ test("two computations over the same chart order the vessels identically", () =>
   // hub holds fan-in 3, alpha 1; bravo and leaf tie at zero and break by id.
   const expected = ["hub", "alpha", "bravo", "leaf"];
   expect(rank(["hub", "alpha", "bravo", "leaf"])).toEqual(expected);
-  expect(rank(["leaf", "bravo", "alpha", "hub"])).toEqual(expected); // a different starting order
-  expect(vesselFanIn(entries)).toEqual(vesselFanIn([...entries].reverse())); // the counts agree too
+  expect(rank(["leaf", "bravo", "alpha", "hub"])).toEqual(expected);
+  expect(vesselFanIn(entries)).toEqual(vesselFanIn([...entries].reverse()));
 });

@@ -1,6 +1,6 @@
 /**
- * The resurvey queue's rank (openspec/changes/resurvey-queue, specs/harbor/
- * specs: "The repair queue is fan-in ranked"): direct cross-vessel charted
+ * The resurvey queue's rank (openspec/changes/resurvey-queue/specs/harbor/spec.md,
+ * "The repair queue is fan-in ranked"): direct cross-vessel charted
  * fan-in, ties broken by vessel id. The harbor queue orders its repair rows
  * by it and trust.report orders its pending-vessel list by the same rank —
  * one list, one order; this module is the single definition both quote.
