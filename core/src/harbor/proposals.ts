@@ -3,19 +3,23 @@
  * computed from exactly three inputs — never imagined (the trust spine
  * forbids model-invented proposals):
  *
- * 1. repair   — vessels marked `pending correction` (one grouped proposal;
- *               staleness refresh runs first, exactly like `chart.read`);
+ * 1. repair   — one proposal per vessel marked `pending correction`; the
+ *               row names that vessel alone (staleness refresh runs first,
+ *               exactly like `chart.read`);
  * 2. gap      — per charted vessel with no recorded behavior and/or no
  *               charted light (both signals read from the index, never from
  *               parsed sheets — design.md, decision 1);
  * 3. new-land — landscape entries absent from the last-survey snapshot,
  *               compared only while the chart index hash is unchanged.
  *
- * Ranking: repair > new-land > gap, then evidence size, then evidence key
- * (design.md, decision 6). Every proposal carries its kind, evidence keys,
- * anchors, a scope estimate, and a stable fingerprint; fingerprints whose
- * LAST recorded decision is declined are filtered — refusals hold while
- * the evidence is unchanged and reopen when it grows.
+ * Ranking: repair rows order among themselves by the shared rank — direct
+ * cross-vessel charted fan-in, ties by vessel id (../fan-in.ts) — before
+ * the kind rank resolves against new-land and gap: repair > new-land > gap,
+ * then evidence size, then evidence key (design.md, decision 6). Every
+ * proposal carries its kind, evidence keys, anchors, a scope estimate, and
+ * a stable fingerprint; fingerprints whose LAST recorded decision is
+ * declined are filtered — a refusal holds while that vessel's drift is
+ * unchanged and reopens when its stale-entry count changes.
  *
  * Anchor honesty on repair: the per-vessel tree signature hashes the file
  * list, sizes, and mtimes, so individual changed files are not recoverable
@@ -32,6 +36,7 @@ import type { Anchor, IndexedEntry, VesselEntry } from "../types";
 import { resolveInsideTarget } from "../perimeter";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
+import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { HarborError } from "./errors";
 import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./fingerprint";
 import {
@@ -137,29 +142,37 @@ function soundableAnchorUnder(targetRoot: string, rel: string): Anchor | undefin
   return undefined;
 }
 
-/** The repair proposal: every pending-correction vessel, grouped, with the drift's location. */
-function repairProposal(targetRoot: string, entries: IndexedEntry[]): Proposal | null {
-  const drifted = sortById(
+/**
+ * Repair proposals: one per pending-correction vessel, in vessel-id order
+ * (the queue sort below applies the shared fan-in rank). The evidence key
+ * carries the stale-entry count charged to that vessel (../fan-in.ts, the
+ * report's own attribution rule), so a refusal holds while the drift is
+ * unchanged and reopens when the count changes.
+ */
+function repairProposals(targetRoot: string, entries: IndexedEntry[]): Proposal[] {
+  const charged = chargeStaleEntries(entries);
+  return sortById(
     entries.filter((e): e is IndexedVessel => e.kind === "vessel" && e.stale === true),
-  );
-  if (drifted.length === 0) return null;
-  const ids = drifted.map((v) => v.id);
-  const evidence = ids.map((id) => `vessel/${id}`);
-  const staleEntryCount = entries.filter((e) => e.stale === true).length;
-  return {
-    kind: "repair",
-    fingerprint: proposalFingerprint("repair", evidence),
-    summary:
-      `${drifted.length === 1 ? "vessel" : "vessels"} ${ids.join(", ")} marked pending correction ` +
-      `(sources changed under ${drifted.map((v) => v.paths.join(", ")).join("; ")})`,
-    evidence,
-    anchors: uniqueAnchors(
-      drifted
-        .flatMap((v) => v.paths.map((path) => soundableAnchorUnder(targetRoot, path)))
-        .filter((anchor): anchor is Anchor => anchor !== undefined),
-    ),
-    scope: { vessels: ids, entries: staleEntryCount, soundings: staleEntryCount },
-  };
+  ).map((vessel) => {
+    const staleEntries = charged.get(vessel.id) ?? 0;
+    const evidence = [`vessel/${vessel.id}#${staleEntries}`];
+    return {
+      kind: "repair" as const,
+      fingerprint: proposalFingerprint("repair", evidence),
+      summary:
+        `vessel ${vessel.id} marked pending correction ` +
+        `(sources changed under ${vessel.paths.join(", ")})`,
+      evidence,
+      // A vessel whose charted paths hold no soundable regular file is
+      // proposed with its anchor omitted, never faked (the new-land precedent).
+      anchors: uniqueAnchors(
+        vessel.paths
+          .map((path) => soundableAnchorUnder(targetRoot, path))
+          .filter((anchor): anchor is Anchor => anchor !== undefined),
+      ),
+      scope: { vessels: [vessel.id], entries: staleEntries, soundings: staleEntries },
+    };
+  });
 }
 
 /** Gap proposals: one per charted vessel missing its behavior and/or its lights. */
@@ -239,18 +252,25 @@ export function computeProposals(
     writeSnapshot(targetRoot, { indexHash: currentHash, landscape: scanLandscape(targetRoot) });
   }
 
-  const repair = repairProposal(targetRoot, entries);
+  const fanIn = vesselFanIn(entries);
   const proposals: Proposal[] = [
-    ...(repair !== null ? [repair] : []),
+    ...repairProposals(targetRoot, entries),
     ...newLandProposals(targetRoot, newLand),
     ...gapProposals(entries),
   ];
-  proposals.sort(
-    (a, b) =>
+  proposals.sort((a, b) => {
+    // Repair rows order among themselves by the shared rank — fan-in
+    // descending, vessel id ascending, the row's single vessel compared —
+    // before the kind rank resolves against new-land and gap.
+    if (a.kind === "repair" && b.kind === "repair") {
+      return compareVesselRank(a.scope.vessels[0], b.scope.vessels[0], fanIn);
+    }
+    return (
       KIND_RANK[a.kind] - KIND_RANK[b.kind] ||
       b.evidence.length - a.evidence.length ||
-      (a.evidence[0] < b.evidence[0] ? -1 : a.evidence[0] > b.evidence[0] ? 1 : 0),
-  );
+      (a.evidence[0] < b.evidence[0] ? -1 : a.evidence[0] > b.evidence[0] ? 1 : 0)
+    );
+  });
 
   if (options.includeDeclined === true) return { proposals };
   // Refusal filtering keys on `declined` only (the standing rule): an

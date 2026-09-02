@@ -25,6 +25,7 @@ import { readChart, writeChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { appendReceipt, readReceipt } from "./log";
 import { trustReport } from "./trust-report";
+import { computeProposals } from "../harbor/proposals";
 
 const targets: string[] = [];
 afterEach(() => {
@@ -559,4 +560,104 @@ test("an empty log reports zero invocations with no receipt ids", () => {
     firstReceipt: null,
     lastReceipt: null,
   });
+});
+
+// ---------------------------------------------------------------------------
+// Resurvey-queue (specs/tools/spec.md): the pending-vessel list follows the
+// repair rank — direct charted fan-in highest first, vessel id breaking ties
+// — while its membership stays today's attribution: a stale fairway charges
+// both endpoints, so the report names vessels the repair queue does not.
+// ---------------------------------------------------------------------------
+
+/** The fan-in fixture: four drifted vessels (mike fan-in 3, zulu 3, alpha 1,
+ *  bravo 0) fed by three quiet source vessels. */
+const FAN_IN_DIRS: Record<string, string> = {
+  mike: "svcs/mike",
+  zulu: "svcs/zulu",
+  alpha: "svcs/alpha",
+  bravo: "svcs/bravo",
+  s1: "libs/s1",
+  s2: "libs/s2",
+  s3: "libs/s3",
+};
+
+function makeFanInProvince(): string {
+  const target = mkdtempSync(join(tmpdir(), "portolan-trust-fanin-"));
+  targets.push(target);
+  for (const dir of Object.values(FAN_IN_DIRS)) {
+    mkdirSync(join(target, dir), { recursive: true });
+    writeFileSync(join(target, dir, "main.ts"), `// ${dir}\n`);
+  }
+  return target;
+}
+
+function fanInChart(): ChartEntry[] {
+  const vessel = (id: string): ChartEntry => ({
+    kind: "vessel",
+    id,
+    name: FAN_IN_DIRS[id],
+    behavior: `serves ${FAN_IN_DIRS[id]}`,
+    paths: [FAN_IN_DIRS[id]],
+    anchors: [{ type: "file", path: `${FAN_IN_DIRS[id]}/main.ts`, line: 1 }],
+    trust: "charted",
+  });
+  const fairway = (n: number, from: string, to: string): ChartEntry => ({
+    kind: "fairway",
+    id: `fw-${from}-${to}-${n}`,
+    from,
+    to,
+    anchors: [{ type: "file", path: `${FAN_IN_DIRS[to]}/main.ts`, line: 1 }],
+    trust: "reported",
+  });
+  const light = (id: string): ChartEntry => ({
+    kind: "light",
+    id: `l-${id}`,
+    vessel: id,
+    name: `export const main (${id})`,
+    anchors: [{ type: "file", path: `${FAN_IN_DIRS[id]}/main.ts`, line: 2 }],
+    trust: "measured",
+  });
+  return [
+    ...Object.keys(FAN_IN_DIRS).map(vessel),
+    fairway(1, "s1", "zulu"),
+    fairway(2, "s2", "zulu"),
+    fairway(3, "s3", "zulu"),
+    fairway(1, "s1", "mike"),
+    fairway(2, "s2", "mike"),
+    fairway(3, "s3", "mike"),
+    fairway(1, "s1", "alpha"),
+    light("mike"),
+    light("zulu"),
+    light("alpha"),
+    light("bravo"),
+  ];
+}
+
+test("pendingVessels follow the repair rank — fan-in highest first, vessel id breaking ties; a stale fairway still charges both endpoints", () => {
+  const target = makeFanInProvince();
+  writeChart(target, fanInChart());
+  for (const id of ["mike", "zulu", "alpha", "bravo"]) {
+    const path = join(target, FAN_IN_DIRS[id], "main.ts");
+    writeFileSync(path, readFileSync(path, "utf8") + "// drifted by an outside force\n");
+  }
+
+  const report = trustReport(target);
+
+  // Order: mike and zulu hold fan-in 3 (mike first by id), alpha 1, then the
+  // fan-in-zero ties by id. Membership is unchanged: s1/s2/s3 never drifted,
+  // yet their fairways into drifted vessels charge them — the report names
+  // vessels the repair queue does not.
+  expect(report.staleness.pendingVessels).toEqual([
+    { id: "mike", entries: 5 },
+    { id: "zulu", entries: 5 },
+    { id: "alpha", entries: 3 },
+    { id: "bravo", entries: 2 },
+    { id: "s1", entries: 3 },
+    { id: "s2", entries: 2 },
+    { id: "s3", entries: 2 },
+  ]);
+
+  // And the queue's repair rows speak the same order over the drifted vessels.
+  const rows = computeProposals(target).proposals.filter((p) => p.kind === "repair");
+  expect(rows.map((r) => r.scope.vessels[0])).toEqual(["mike", "zulu", "alpha", "bravo"]);
 });

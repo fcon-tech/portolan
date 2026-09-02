@@ -135,18 +135,25 @@ function drift(target: string, dir: string): void {
 // ---------------------------------------------------------------------------
 
 test("1.1 fingerprint: same evidence yields the same fingerprint, in any order", () => {
-  const a = proposalFingerprint("repair", ["vessel/api", "vessel/lib"]);
-  const reordered = proposalFingerprint("repair", ["vessel/lib", "vessel/api"]);
-  const repeated = proposalFingerprint("repair", ["vessel/api", "vessel/lib", "vessel/api"]);
+  const a = proposalFingerprint("repair", ["vessel/api#3"]);
+  const reordered = proposalFingerprint("repair", ["vessel/api#3"]);
+  const repeated = proposalFingerprint("repair", ["vessel/api#3", "vessel/api#3"]);
   expect(a).toBe(reordered);
   expect(a).toBe(repeated);
   expect(a).toMatch(/^[0-9a-f]{64}$/);
+  // Multi-key order-independence still holds (gap evidence carries several
+  // keys, and the sort over them is load-bearing there).
+  const gap = proposalFingerprint("gap", ["vessel/api#behavior", "vessel/api#lights"]);
+  const gapReordered = proposalFingerprint("gap", ["vessel/api#lights", "vessel/api#behavior"]);
+  expect(gap).toBe(gapReordered);
 });
 
 test("1.1 fingerprint: drift growth yields a new fingerprint; the kind participates", () => {
-  const one = proposalFingerprint("repair", ["vessel/api"]);
-  const two = proposalFingerprint("repair", ["vessel/api", "vessel/lib"]);
-  expect(one).not.toBe(two);
+  // The repair evidence carries the vessel's stale-entry count, so the
+  // fingerprint — and with it the refusal — tracks the drift itself.
+  const three = proposalFingerprint("repair", ["vessel/api#3"]);
+  const four = proposalFingerprint("repair", ["vessel/api#4"]);
+  expect(three).not.toBe(four);
   // Same evidence under a different kind is a different proposal.
   expect(proposalFingerprint("gap", ["vessel/api#behavior"])).not.toBe(
     proposalFingerprint("repair", ["vessel/api#behavior"]),
@@ -331,25 +338,29 @@ test("night-watch history: a corrupt launch-outcome line fails loudly", () => {
 // Task 2.1 — computeProposals: the five scenario tests.
 // ---------------------------------------------------------------------------
 
-test("2.1 drift becomes a repair proposal listing the vessels, anchored, with a scope estimate", () => {
+test("2.1 drift becomes a repair proposal for the drifted vessel alone, anchored, with a scope estimate", () => {
   const target = makeProvince();
   writeChart(target, completeChart());
   drift(target, "apps/api");
 
   const { proposals } = computeProposals(target);
-  const repair = proposals.find((p) => p.kind === "repair");
-  expect(repair).toBeDefined();
-  // Lists the drifted vessel...
-  expect(repair!.scope.vessels).toEqual(["api"]);
-  expect(repair!.evidence).toEqual(["vessel/api"]);
+  const rows = proposals.filter((p) => p.kind === "repair");
+  // One row, naming the drifted vessel alone — lib is fresh (the stale
+  // fairway charges it in the report, but it holds no repair row).
+  expect(rows).toHaveLength(1);
+  const repair = rows[0]!;
+  expect(repair.scope.vessels).toEqual(["api"]);
+  // The evidence carries the vessel and its charged stale-entry count:
+  // vessel api, fairway api-lib, and light api-health.
+  expect(repair.evidence).toEqual(["vessel/api#3"]);
   // ...with a SOUNDABLE anchor — a regular file under the drifted tree
   // (sound.anchor refutes directories), the first file in walk order...
-  expect(repair!.anchors).toEqual([{ type: "file", path: "apps/api/package.json" }]);
-  // ...and estimates the entries and soundings it would touch: vessel api,
-  // fairway api-lib, and light api-health are all pending correction.
-  expect(repair!.scope.entries).toBe(3);
-  expect(repair!.scope.soundings).toBe(3);
-  expect(repair!.summary).toContain("api");
+  expect(repair.anchors).toEqual([{ type: "file", path: "apps/api/package.json" }]);
+  // ...and estimates the entries and soundings it would touch — the same
+  // charge the staleness report quotes for api.
+  expect(repair.scope.entries).toBe(3);
+  expect(repair.scope.soundings).toBe(3);
+  expect(repair.summary).toContain("api");
 });
 
 test("2.1 a gap becomes a survey proposal naming the vessel and the missing passes", () => {
@@ -399,7 +410,7 @@ test("2.1 a refusal holds while the evidence is unchanged", () => {
   expect(second).toEqual([]);
 });
 
-test("2.1 changed evidence reopens the proposal with the wider evidence", () => {
+test("2.1 changed evidence reopens the proposal: the newly drifted vessel is proposed, the declined one stays refused", () => {
   const target = makeProvince();
   writeChart(target, completeChart());
   drift(target, "apps/api");
@@ -407,12 +418,15 @@ test("2.1 changed evidence reopens the proposal with the wider evidence", () => 
   decide(target, repair.fingerprint, "declined");
   expect(computeProposals(target).proposals).toEqual([]);
 
-  drift(target, "packages/lib"); // the drift grows to more vessels
+  drift(target, "packages/lib"); // the drift spreads to another vessel
   const reopened = computeProposals(target).proposals;
   expect(reopened.length).toBe(1);
   expect(reopened[0].kind).toBe("repair");
   expect(reopened[0].fingerprint).not.toBe(repair.fingerprint);
-  expect(reopened[0].evidence).toEqual(["vessel/api", "vessel/lib"]);
+  // Refusals are per vessel: api's own drift is unchanged, so its refusal
+  // holds; the new row belongs to the newly drifted vessel, with its own
+  // charged count (vessel lib, light lib-parse, fairway api-lib).
+  expect(reopened[0].evidence).toEqual(["vessel/lib#3"]);
 });
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.4.0 — 2026-09-02
+
+The re-survey queue (openspec change `resurvey-queue`, backlog candidate
+C3's queue half — the "pending correction" property itself already
+shipped in 0.2.0/0.3.0): what to re-survey first is now a served,
+ranked answer instead of one grouped row.
+
+- **Repairs propose per vessel**: the single grouped repair proposal
+  became one proposal per pending-correction vessel — evidence
+  `vessel/<id>#<stale-entry-count>`, an anchor under that vessel's
+  charted paths, scope charged by the report's attribution rule.
+  Declining one vessel no longer hides the others, and a refusal holds
+  only while that vessel's drift is unchanged: the count in the evidence
+  reopens the proposal when the drift grows or shrinks.
+- **Repairs rank by charted fan-in**: repair rows order by direct
+  cross-vessel charted fan-in (the fairways landing on the vessel from
+  other vessels), highest first, vessel id breaking ties — arithmetic
+  over charted bytes, shared with `trust.report`, deliberately not the
+  neighborhood's per-entry count (internal traffic ranks nothing).
+- **The night bound spends cumulatively**: the watch auto-executes
+  repair rows in queue order until `harbor.auto_repair_max_vessels` is
+  spent — the highest-ranked coasts first — instead of the old
+  all-or-nothing on one grouped row. A launch attempt spends the bound
+  whether or not the launch succeeds.
+- **`trust.report` speaks with the queue's voice**: the pending-vessel
+  list carries the same rank's order; membership unchanged (a stale
+  fairway still drags on both its endpoints).
+- Security notes recorded in the change's design.md: the reopen signal
+  is chart-derived (gameable by index edits, class-equivalent to before),
+  the cumulative bound is fail-spend on never-healing drift, duplicated
+  index rows can pump rank and counts — each with a recorded kill-trigger.
+
 ## 0.3.1 — 2026-09-01
 
 The hygiene sweep: two whole-tree code reviews and an adversarial security
