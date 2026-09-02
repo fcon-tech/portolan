@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.3 — 2026-09-02
+
+Process hooks (openspec change `process-hooks`): the repo's disciplines
+gained deterministic guards at the moment of the event, not just at merge
+time. Soft phase — hooks warn, never block; CI stays the final bar. No
+product behavior changes; no core code touched.
+
+- **H1 leak-stamp** (`scripts/hooks/leak-stamp.sh`, after Edit/Write):
+  flags the touched file when it carries a leak-gate signature — the
+  failure class a task review caught in `process-fabric` only after the
+  fact. The signature list stays single-homed in `scripts/leak-gate.sh`
+  (`--print-patterns`, now stdout).
+- **H2 harbor-marker reminder** (`scripts/hooks/harbor-markers.sh`, before
+  Edit/Write on the root AGENTS.md): the block between the harbor markers
+  is installer-owned and hand edits are reverted on install.
+- **H3 quiet session brief** (`scripts/hooks/session-brief.ts`,
+  SessionStart): the harbor queue and the active changes, injected only
+  when something is to say.
+- **Wiring**: tracked `.zcode/config.json` (`hooks.enabled: true`). The
+  spike could not confirm workspace-config loading from inside one
+  session — wiring is inert if never loaded; live confirmation is the
+  spike's next-session checklist. Escalation to deny is recorded in the
+  change's design D1, trigger-gated.
+
 ## 0.4.2 — 2026-09-02
 
 Verify-first made explicit (openspec change `verify-first`): the
