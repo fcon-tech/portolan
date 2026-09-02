@@ -43,32 +43,20 @@ Key rules:
 
 ## OpenSpec workflow
 
-Product behavior changes go through full cycles: nothing ships without one,
-nothing stays unarchived. The stages are openspec's own agent commands,
-installed under `.zcode/commands/opsx/` (with matching skills): **explore →
-propose → apply → verify → archive**. In a harness that serves them, use
-`/opsx:*`; otherwise run the same stages by hand:
+Product behavior changes go through full OpenSpec cycles: explore → propose →
+apply → verify → archive — openspec's own agent commands under
+`.zcode/commands/opsx/`; use `/opsx:*` where the harness serves them,
+otherwise run the same stages by hand. Nothing ships without a cycle; nothing
+stays unarchived. The rules:
 
-1. **explore** — think and recon before any artifact; never implement in
-   this stance.
-2. **propose** — `openspec new change <id>` with proposal, spec deltas,
-   design, tasks under `openspec/changes/<id>/`; `openspec validate
-   --strict` before implementation; keep it passing.
-3. **apply** — implement task by task from `tasks.md`; keep `bun test`
-   green.
-4. **verify** — before archive, prove the implementation matches the
-   artifacts (specs, tasks, design): the whole-change review plus a
-   socratic pass (advisory; deferrals and dissents recorded in the
-   change's `design.md`). A pass skipped earlier runs before the cycle is
-   declared closed; findings on an already-archived change become
-   follow-ups, never silent drops.
-5. **archive** — `openspec archive <id> --yes` when done. Living specs
-   under `openspec/specs/` are the source of truth and must match served
-   reality; repair drift on sight.
+- Every change ships through a merge request from a `change/<id>` branch —
+  never straight to `main`; merge only on green CI.
+- At merge time: bump the `@portolan/core` version and add the change's entry
+  to `CHANGELOG.md`.
 
-Every change ships through a merge request from a `change/<id>` branch —
-never straight to `main`. Merge only on green CI. At merge time: bump
-`@portolan/core` version and add the change's entry to `CHANGELOG.md`.
+The assembled protocol — the unified session briefing, the routing between
+cycle and expeditions, the joints — is fixed in
+[docs/workflow.md](docs/workflow.md); it owns the procedure.
 
 ## Verification
 
@@ -89,9 +77,3 @@ This target is a charted Portolan province (Chart at `.portolan/chart/`, ship's 
 
 At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. The full Cartographer's method: skill/SKILL.md. Never modify anything outside `.portolan/`.
 <!-- portolan:harbor:end -->
-
-In a harness without the portolan MCP wiring, the harbor watch runs the same
-deterministic queue read-only: `bun core/src/harbor/cli.ts propose --target .
---format chat`. Presenting proposals and asking for the Governor's decision
-is unchanged; recording the decision (`expeditions.decide`) still requires
-the MCP server.
