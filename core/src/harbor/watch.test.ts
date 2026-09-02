@@ -242,6 +242,34 @@ test("night-watch 2.1 a hanging launcher: killed at the cap, failure appended, n
   expect(chat).toContain("ran:\nnone — every attempted launch failed (see launch failures)");
 });
 
+// Scenario (resurvey): a launch attempt spends the bound whether or not the
+// launch succeeds — a failed launch refunds nothing to the rows behind it.
+test("resurvey: a failed launch spends the bound — the next row stays pending, not promoted", async () => {
+  const target = makeProvince();
+  writeChart(target, completeChart());
+  computeProposals(target); // establishes the snapshot
+  appendFileSync(join(target, "apps/api/server.ts"), "\n// a later edit\n");
+  appendFileSync(join(target, "packages/lib/src/parse.ts"), "\n// a later edit\n");
+  setBound(target, 1);
+  const failing = fakeLauncher("fail.sh", "exit 3");
+
+  const report = await runWatch(target, { launcher: failing.command, launcherTimeoutMs: 10_000 });
+  // Exactly one attempt: the failure spent the whole bound, so the second
+  // row was never promoted into a second launch.
+  expect(invocations(failing.log)).toBe(1);
+  expect(report.ran).toHaveLength(1);
+  expect(report.ran[0]).toMatchObject({ outcome: "launch-failed" });
+  expect(report.pending.map((p) => p.fingerprint)).toHaveLength(1);
+  const pendingFingerprint = report.pending[0]!.fingerprint;
+  const history = readHistory(target);
+  expect(history.map((r) => ("decision" in r ? r.decision : r.outcome))).toEqual([
+    "accepted",
+    "launch-failed",
+  ]);
+  // The row past the bound carries no auto-accept: it stays the Governor's.
+  expect(history.every((r) => r.fingerprint !== pendingFingerprint)).toBe(true);
+});
+
 // ---------------------------------------------------------------------------
 // Report-only: no launcher (even with a bound) and bound 0 (even with a
 // launcher) launch nothing and write no history.

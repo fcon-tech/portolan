@@ -152,3 +152,42 @@ recorded where they lost:
 - **Standing.** Ranked-vs-unranked repair stays `unsurveyed` (above);
   the shared helper stays a leaf module with exactly two importers —
   `chart.neighborhood` keeps its own inclusive count.
+
+## Security review notes (adversarial pass, 2026-09-02)
+
+The security auditor's findings against the hand-edited-index threat
+model (the index is agent-writable; defense lives in soundings,
+receipts, and the Governor, not in the index's honesty):
+
+- **Recorded, deferred — the reopen signal is chart-derived.** The
+  stale-entry count in `vessel/<id>#<count>` can be pumped by index
+  edits alone (appended fairway rows, a symlinked vessel's perpetual
+  drift), voiding a Governor's refusal and letting the night watch
+  auto-launch the declined repair. Class-equivalent to the pre-change
+  grouped key (a fake drifted vessel joined that evidence set the same
+  way); the proposed source-derived key hashes `signature.hash`, which
+  lives in the same writable index and buys nothing against an attacker
+  who already edits it. The real cost is attention (a bounded, recorded,
+  re-survey-only launch), not integrity. Kill-trigger: a real refusal
+  observed voided without source drift — move the reopen signal to
+  something outside the index (receipted survey state), as its own
+  change.
+- **Recorded, deferred — fail-spend on wide drift.** The cumulative
+  bound spends its full allowance nightly when drift never heals (e.g.
+  symlinked vessels are perpetually stale), where the old grouped row
+  launched nothing past the bound. Governor-approved semantics (Q7);
+  the spend stays inside the operator's own knob, launcher, and timeout.
+  Kill-trigger: a real night run observed spending its bound on
+  never-healing drift twice in a row — gate auto-repair eligibility on
+  provable (signature-stamped) drift.
+- **Recorded, deferred — duplicated index rows pump rank and counts.**
+  `vesselFanIn` counts raw fairway rows, so appended duplicates move a
+  vessel's rank and quoted scope. Consistent with the neighborhood's
+  own inclusive count; deduping there would diverge the two definitions
+  further. Kill-trigger: the first observed duplicated-row artifact in
+  a real province — dedupe `(from, to)` in the shared leaf then.
+- **Named for the Governor — upgrade effect.** All pre-change grouped
+  repair fingerprints become uncomputable at deploy, so every
+  pre-upgrade refusal expires: expect previously declined repair rows to
+  reappear on the first post-merge queue computation. Documented as
+  intended (append-only history, no migration).
