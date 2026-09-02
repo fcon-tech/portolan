@@ -50,7 +50,11 @@ nothing stays unarchived.
    `openspec/changes/<id>/`.
 2. `openspec validate --strict` before implementation; keep it passing.
 3. Implement task by task; keep `bun test` green.
-4. `openspec archive <id> --yes` when done. Living specs under
+4. Before archive: a socratic pass on the finished change (advisory). Its
+   deferrals and dissents are recorded in the change's `design.md`. A pass
+   skipped earlier is run before the cycle is declared closed — findings on
+   an already-archived change become follow-ups, never silent drops.
+5. `openspec archive <id> --yes` when done. Living specs under
    `openspec/specs/` are the source of truth and must match served reality;
    repair drift on sight.
 
