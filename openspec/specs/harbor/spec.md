@@ -85,8 +85,10 @@ reappear when its evidence fingerprint changes.
 - **THEN** the queue does not contain that proposal again
 
 #### Scenario: Changed evidence reopens the proposal
-- **WHEN** a declined repair proposal's drift grows to more vessels
-- **THEN** the new fingerprint is proposed again with the wider evidence
+- **WHEN** a declined repair proposal's vessel drifts further, changing its
+  stale-entry count
+- **THEN** the new fingerprint — the same vessel with the new count — is
+  proposed again
 
 ### Requirement: The queue surfaces in chat at session start
 The expedition skill SHALL teach the Cartographer to compute the queue
