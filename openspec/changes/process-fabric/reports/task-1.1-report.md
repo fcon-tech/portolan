@@ -23,10 +23,11 @@ repo's two operating systems, rules and pointers only (design D8):
   hand-off): the Expedition never mutates sources, a product-code danger
   lands on the Chart with anchors, and the Governor's verdict opens
   `/opsx:explore`.
-- **The merge-to-repair loop** — one line (merge as the trigger) plus
-  cross-references: the loop is stated in docs/engineering.md §4.
+- **The merge-to-repair loop** — one line: the trigger (a merge is a survey
+  event) plus pointers — docs/engineering.md §4 owns the loop; the night
+  watch acts on it overnight.
 - **The night watch** — one reference line to adapters/README.md, section
-  "The night watch".
+  "The night watch (auto-repair on a scheduler)" (exact heading).
 - **Roles** — the one new fact (the Cartographer is the main agent's stance,
   method in skill/SKILL.md, not a subagent) plus a pointer of the
   stage→executor assignments to the global agent contract (`~/.zcode/AGENTS.md`).
@@ -40,8 +41,11 @@ repo's two operating systems, rules and pointers only (design D8):
 Docs-only task — the failing-first rule does not apply; no test can gate
 prose. The task's verify line was executed as the checklist, mechanically:
 
-- `scripts/leak-gate.sh` — clean (exit 0); `~/.zcode/AGENTS.md` carries no
-  leak-gate signature (no `/home/`, `/Users/`, or user path segment).
+- `scripts/leak-gate.sh` — the first pass reported this bullet as "clean
+  (exit 0)" while the report itself carried the gate's home and Users
+  signatures as literals: the gate in fact failed at the report commit, and
+  that claim was false as committed. Reworded here (no home or Users path
+  signature in any tracked file) and re-run: exit 0 on the final tree.
 - Every referenced path/command confirmed to exist verbatim: harbor markers
   in AGENTS.md; `openspec list --json` executed successfully; `propose` with
   `--target` / `--format chat` matches `core/src/harbor/cli.ts` usage and the

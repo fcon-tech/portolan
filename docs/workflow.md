@@ -37,15 +37,14 @@ by the process-fabric change.
 
 ## The merge-to-repair loop
 
-A merge is a survey event: merged sources put vessels `pending correction`
-and the harbor proposes the repair at the next session start. The loop is
-stated in docs/engineering.md §4; this page adds only the trigger.
+A merge is a survey event; docs/engineering.md §4 owns the loop, and the
+night watch acts on it overnight.
 
 ## The night watch
 
 The loop's scheduled variant — the night watch, which auto-repairs within the
 configured bound — is specified in adapters/README.md, section "The night
-watch"; this page adds nothing to it.
+watch (auto-repair on a scheduler)"; this page adds nothing to it.
 
 ## Roles
 
