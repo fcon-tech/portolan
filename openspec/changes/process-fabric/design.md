@@ -130,6 +130,16 @@ layer that names the joints and routes the work. See proposal.md — Why.
   knowledge; `adapters/README.md` remains the single doc for variants and
   wiring. Trigger to revisit: the same question asked twice in sessions.
 
+- **D9 — Drift repair on sight, folded into this change.** Task 3.1's
+  battery found `spec/invocation` failing `openspec validate --specs
+  --strict` on main (pre-existing: this branch did not touch living
+  specs): its `## Purpose` was still the placeholder the archive of
+  `chart-neighborhood` left. CI gates on the same strict validation, so
+  the repair rides this change: the Purpose is now written from the
+  spec's own requirements, nothing else in the spec touched, no
+  requirement changed (the `skip_specs` decision stands — a Purpose
+  repair is metadata drift, not a delta).
+
 ## Open Questions
 
 - None. The Governor resolved the level (process), the home (docs/), the

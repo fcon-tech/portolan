@@ -1,7 +1,13 @@
 # invocation Specification
 
 ## Purpose
-TBD - created by archiving change chart-neighborhood. Update Purpose after archive.
+Chart-query tools earn their place by being called where they matter, and
+this capability makes both halves checkable: a query tool whose value
+depends on being called is served only with a concrete, session-start
+mandate — the skill names the trigger and lists the tool in its desk — and
+`trust.report` accounts adoption from the ship's log, every mandated tool
+reporting its invocation count and first/latest receipts, zero as openly
+as many. Introduced with `chart.neighborhood` (change `chart-neighborhood`).
 
 ## Requirements
 
