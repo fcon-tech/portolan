@@ -87,3 +87,29 @@ export function validateManifest(textOrPath: string): string[] {
     (err) => `${err.instancePath || "/"} ${err.message ?? "is invalid"}`,
   );
 }
+
+/**
+ * CLI entry (task 3.2 CI gate): `bun core/src/release/manifest-check.ts`.
+ * Exit 0 = manifest schema-valid and version-synced with the root package;
+ * exit 1 with each failure named = otherwise. Reads only embedded bytes.
+ */
+if (import.meta.main) {
+  const pkgVersion = (
+    JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")) as {
+      version: string;
+    }
+  ).version;
+  const manifest = JSON.parse(readFileSync(SERVER_MANIFEST, "utf8")) as {
+    version: string;
+  };
+  const sync = compareVersions(pkgVersion, manifest.version);
+  const failures = [
+    ...validateManifest(SERVER_MANIFEST).map((e) => `server.json: ${e}`),
+    ...(sync.ok ? [] : [sync.message]),
+  ];
+  if (failures.length > 0) {
+    for (const f of failures) console.error(`FAIL ${f}`);
+    process.exit(1);
+  }
+  console.log(`ok: server.json valid, ${sync.message}`);
+}

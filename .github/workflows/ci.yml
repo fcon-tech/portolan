@@ -42,3 +42,16 @@ jobs:
 
       - name: Leak gate
         run: ./scripts/leak-gate.sh
+
+  # Task 3.2 (distribution-pass): the committed server.json is the
+  # reviewable anchor of the MCP Registry entry — CI rejects a state where
+  # it is schema-invalid or its version drifted from @fcon-tech/portolan.
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Registry manifest sync check
+        run: bun core/src/release/manifest-check.ts
