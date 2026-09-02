@@ -30,4 +30,4 @@
 
 ## 7. Verification battery
 
-- [ ] 7.1 Full battery green before merge: `bun test`; `bunx tsc --noEmit` in `core/` and `acceptance/`; `openspec validate --specs --strict`; `bun run skill/verify/checks.ts`; `scripts/leak-gate.sh`. Verify: all commands' outputs pasted in the task report, failures named.
+- [x] 7.1 Full battery green before merge: `bun test`; `bunx tsc --noEmit` in `core/` and `acceptance/`; `openspec validate --specs --strict`; `bun run skill/verify/checks.ts`; `scripts/leak-gate.sh`. Verify: all commands' outputs pasted in the task report, failures named. DONE 2026-09-02 post-review: bun test 390 pass / 6 skip (opt-in live + binary-gated) / 0 fail; tsc clean in core/ and acceptance/; openspec validate --specs --strict 10/10; skill checks pass; leak-gate clean; manifest sync gate ok at 0.4.5.
