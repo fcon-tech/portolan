@@ -8,6 +8,8 @@ install path with no repository clone, and a publish gate that publishes
 only version-grown green merges — account-bound steps stay the
 Governor's, reported blocked until done.
 
+## Requirements
+
 ### Requirement: The product installs as one npm package
 Portolan SHALL be published as a single npm package `@fcon-tech/portolan`
 (scope `fcon-tech`) carrying core, skill, and adapters together. Installing
