@@ -16,12 +16,11 @@ checked 2026-09-02 (design.md — Explore findings).
    bun install && npm pack && npm publish --access public
    ```
    The manual release uses your own `npm login` — no OIDC involved
-   (trusted publishing matters only for the later CI job). npm will
-   warn about the missing `license` field — decide BEFORE running: add a
-   LICENSE file + `license` field, or set `"license": "UNLICENSED"`
-   honestly. This is your call, not the agent's.
+   (trusted publishing matters only for the later CI job). RESOLVED
+   2026-09-02: the Governor chose MIT — LICENSE + `"license": "MIT"` are
+   in the tree; no npm license warning is expected.
 3. In the package's npm settings → "Trusted Publisher": link
-   github.com/fcon-tech/portolan, workflow `publish.yml`. (One trusted
+   github.com/fcon-tech/portolan, workflow `ci.yml` (the `publish` job). (One trusted
    publisher per package. The CI job's publish step runs Node 22 +
    npm ≥11.5.1 on a GitHub-hosted runner — nothing for you to install.)
 
@@ -57,6 +56,4 @@ report — that is task 6.2, the last `blocked` item.
 
 ## Deliberately not decided here
 
-- LICENSE choice (repo has none) — your decision; npm needs a `license`
-  field before the publish is clean.
 - Unpublish/rollback procedure — manual, decided if ever needed.
