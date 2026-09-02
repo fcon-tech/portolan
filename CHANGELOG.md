@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.4 — 2026-09-02
+
+Hook wiring parked (openspec change `hook-wiring-parked`): the client's
+workspace hook trust review renders its items but they are not actionable
+for remote workspaces, so the `process-hooks` wiring sat inert behind a
+dead prompt in every session. The tracked `.zcode/config.json` is removed
+— the guards stay at `scripts/hooks/` with their tests, and the restore
+path (the archived wiring spec, or the deleted file in git history) is
+recorded in `docs/workflow.md`. Hooks are repo-scoped by principle: a
+user-scope workaround was offered and declined. No product behavior
+changes; no core code touched.
+
 ## 0.4.3 — 2026-09-02
 
 Process hooks (openspec change `process-hooks`): the repo's disciplines

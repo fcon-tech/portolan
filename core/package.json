@@ -1,6 +1,6 @@
 {
   "name": "@portolan/core",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Portolan core: the MCP survey server, the Chart store, the Harbor, and the Chart Room renderer",
   "private": true,
   "type": "module",
