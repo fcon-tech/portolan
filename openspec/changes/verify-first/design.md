@@ -66,6 +66,24 @@ nothing about test-first.
   merge. This change does not pull that trigger; it makes the manual
   discipline explicit and first.
 
+## Verify-stage record (task 2.2)
+
+- **Whole-change review** (code-reviewer, 2026-09-02): Spec PASS, Quality
+  APPROVED. Two Minors, both fixed: the `2.1` commit's scope renamed to
+  `docs(verify-first)` (it touched only change artifacts), and the battery
+  report now names the 5 environmental test skips.
+- **Socratic pass** (Mode B, 2026-09-02): verdict SHIP. One delete
+  candidate — the `not a default` tail on the AGENTS.md rule — considered
+  and **kept** by the dispatcher: it is emphasis, not restatement, and it
+  carries the Governor's own framing that spawned the change. The
+  socratic's two "considered, kept" notes (the delta-case clause and
+  `red where the work is absent` are load-bearing) stand as-is.
+- **Deferrals adopted**: skip-record shape is enforced by verify-stage
+  review until the doc-gate batch (trigger: a recorded skip with empty or
+  circular "what covers it instead"); judgment checks have no standard red
+  mechanism (trigger: a task report claiming a runnable check it cannot
+  show red); the process-fabric doc-gate deferral is unchanged.
+
 ## Open Questions
 
 - None. The Governor named the hole and the fix shape on 2026-09-02

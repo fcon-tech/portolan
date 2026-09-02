@@ -8,7 +8,7 @@ are the coverage instead.
 
 | Check | Result |
 | --- | --- |
-| `bun test` | 372 tests, 47 files, 0 fail (12.8s) |
+| `bun test` | 372 tests, 47 files, 0 fail, 5 skipped — environmental: no ctags on PATH, fixture-guarded dry-run skips; pre-existing on main (12.8s) |
 | `bunx tsc --noEmit` (core) | OK |
 | `bunx tsc --noEmit` (acceptance) | OK |
 | `openspec validate --specs --strict` | 10 passed, 0 failed |
