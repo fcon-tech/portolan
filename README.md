@@ -55,27 +55,40 @@ combination of anchors, closed trust labels, receipts, and staleness
 
 ## Quickstart
 
+Install once from npm — no clone of this repository:
+
+```bash
+bun install -g @fcon-tech/portolan    # or: npm i -g @fcon-tech/portolan
+```
+
 ```bash
 # your agent installs Portolan itself from one phrase:
 survey <target> with Portolan
 
+# serve the fourteen MCP tools to your harness:
+portolan serve --target /path/to/province
+
 # the atlas for a surveyed province (map + graph + dossier + ledger):
-bun core/src/chartroom/cli.ts render --target /path/to/province
+portolan chartroom render --target /path/to/province
 
 # several provinces on one page:
-bun core/src/chartroom/cli.ts review --target /prov/a --target /prov/b
+portolan chartroom review --target /prov/a --target /prov/b
 
 # the harbor, headless:
-bun core/src/harbor/cli.ts propose --target <t> --format chat    # the queue
-bun core/src/harbor/cli.ts run    --target <t> --fingerprint <fp> \
-    --launcher adapters/opencode/expedition-launcher             # launch one
-bun core/src/harbor/cli.ts watch  --target <t>  [same flags]     # night policy
-
-# serve the fourteen MCP tools to your harness:
-bun core/src/server/main.ts --target /path/to/province
+portolan harbor propose --target <t> --format chat    # the queue
+portolan harbor run    --target <t> --fingerprint <fp> \
+    --launcher adapters/opencode/expedition-launcher  # launch one
+portolan harbor watch  --target <t>  [same flags]     # night policy
 ```
 
-Requirements: [Bun](https://bun.sh), ripgrep, universal-ctags.
+Requirements: [Bun](https://bun.sh), ripgrep, universal-ctags — external by
+design: Portolan wraps them and never bundles them.
+
+Contributors, from a checkout of this repository:
+
+```bash
+bun core/src/server/main.ts --target /path/to/province    # dev path
+```
 
 ## What's inside
 

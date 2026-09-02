@@ -311,10 +311,11 @@ test("the installer writes an idempotent harbor block into the province AGENTS.m
   rmSync(sandbox, { recursive: true, force: true });
 });
 
-test("the harbor block names the skill relatively inside the repo — no machine paths", () => {
-  // A province inside the checkout (the repo charting itself) must get a
-  // repo-relative skill pointer: the AGENTS.md may be published as-is.
-  const sandbox = mkdtempSync(join(REPO_ROOT, "core", "src", "server", "agents-rel-"));
+test("the harbor block is path-free — it names the skill, not a filesystem location", () => {
+  // The skill is delivered by copy into the harness's skills directory
+  // (task 5.1), so the AGENTS.md block names the skill instead of pathing to
+  // it — the block carries no repo-relative or machine path anywhere.
+  const sandbox = mkdtempSync(join(tmpdir(), "portolan-agents-rel-"));
   try {
     const run = spawnSync(
       process.execPath,
@@ -323,7 +324,8 @@ test("the harbor block names the skill relatively inside the repo — no machine
     );
     expect(run.status).toBe(0);
     const agents = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
-    expect(agents).toContain("skill/SKILL.md");
+    expect(agents).toContain("portolan-expedition");
+    expect(agents).not.toContain("skill/SKILL.md");
     expect(agents).not.toContain(REPO_ROOT);
     expect(agents).not.toMatch(/\/home\/|\/Users\//);
   } finally {

@@ -12,7 +12,7 @@
  * RED until task 5.2 switches install.ts off REPO_ROOT.
  */
 import { afterAll, test, expect } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -52,6 +52,33 @@ test("the installer writes a bunx portolan serve launch line with no repo path",
   }
   // No clone dependency: the repository root must not appear anywhere.
   expect(text).not.toContain(REPO_ROOT);
+});
+
+// Task 5.1: opencode loads skills only from fixed filesystem locations
+// (project .opencode/skills/ or ~/.config/opencode/skills/, dir name equal to
+// the SKILL.md frontmatter name), so the installer COPIES the packaged skill/
+// directory there — idempotently — and the harbor block in the province's
+// AGENTS.md stays path-free (no reference to the repository clone).
+test("the installer copies the skill into ~/.config/opencode/skills and keeps AGENTS.md path-free", () => {
+  const province = tempDir("portolan-installer-prov3-");
+  const home = tempDir("portolan-installer-home-");
+
+  for (let run = 0; run < 2; run++) {
+    const result = spawnSync(process.execPath, [INSTALLER, "--target", province], {
+      encoding: "utf8",
+      env: { ...process.env, HOME: home },
+    });
+    expect(result.status).toBe(0);
+  }
+
+  // Dir name matches the SKILL.md frontmatter name: portolan-expedition.
+  const dest = join(home, ".config", "opencode", "skills", "portolan-expedition");
+  expect(readFileSync(join(dest, "SKILL.md"), "utf8")).toContain("name: portolan-expedition");
+  expect(existsSync(join(dest, "sailing-directions.template.md"))).toBe(true);
+
+  const agents = readFileSync(join(province, "AGENTS.md"), "utf8");
+  expect(agents).not.toContain(REPO_ROOT);
+  expect(agents).toContain("portolan-expedition");
 });
 
 // Preserved behavior (design.md decision 5): JSONC surgery keeps comments.

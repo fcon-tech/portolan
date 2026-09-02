@@ -20,6 +20,15 @@
  * installer works without a clone of this repository — no repo path is
  * written into the config.
  *
+ * The skill ships inside the same package and is COPIED into the harness's
+ * fixed skills directory (`~/.config/opencode/skills/<frontmatter name>/`;
+ * opencode resolves skills only from fixed locations — project
+ * `.opencode/skills/` or that global dir — so a reference into the package
+ * would never load). The copy is idempotent: a re-install overwrites.
+ * (pi and omp likewise resolve only their own global dirs —
+ * `~/.pi/agent/skills/`, `~/.omp/agent/skills/`, plus `~/.agents/skills/` —
+ * their installers belong in their adapters, not here.)
+ *
  * (Shape verified against opencode 1.18.21's own `opencode mcp add`.)
  * opencode config files are JSONC (comments and trailing commas allowed), so
  * the merge is text surgery through a small JSONC scanner: the user's
@@ -31,11 +40,14 @@
  *   bun adapters/opencode/install.ts --target /path/to/province
  *   bun adapters/opencode/install.ts --target . --config ~/proj/opencode.jsonc
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 
-const REPO_ROOT = resolve(import.meta.dir, "..", "..");
+// The skill source is resolved relative to THIS file, so the same installer
+// works from a clone (repo skill/) and from the published package
+// (node_modules/@fcon-tech/portolan/skill/ — the files allowlist ships it).
+const SKILL_SOURCE = join(import.meta.dir, "..", "..", "skill");
 
 const { values } = parseArgs({
   allowPositionals: false,
@@ -257,19 +269,37 @@ const configTmp = `${configPath}.tmp-${Date.now()}`;
 writeFileSync(configTmp, finalText);
 renameSync(configTmp, configPath);
 
+// The skill's destination directory name must equal the SKILL.md frontmatter
+// name (opencode's rule), so it is read from the shipped file itself rather
+// than hardcoded.
+function skillName(): string {
+  const text = readFileSync(join(SKILL_SOURCE, "SKILL.md"), "utf8");
+  const match = /^name:\s*(\S+)\s*$/m.exec(text);
+  if (match === null) throw new Error(`no frontmatter name in ${join(SKILL_SOURCE, "SKILL.md")}`);
+  return match[1];
+}
+
+const skillDirName = skillName();
+const skillsRoot = join(
+  process.env.XDG_CONFIG_HOME ?? resolve(process.env.HOME ?? ".", ".config"),
+  "opencode",
+  "skills",
+  skillDirName,
+);
+// Idempotent overwrite: a re-install replaces the previous copy wholesale so
+// no stale file from an older package version survives.
+rmSync(skillsRoot, { recursive: true, force: true });
+cpSync(SKILL_SOURCE, skillsRoot, { recursive: true });
+
 // The province's AGENTS.md carries the harbor protocol so every harness
 // that reads agent instructions (opencode first) knows to propose
-// expeditions at session start — no prompt injection needed.
+// expeditions at session start — no prompt injection needed. The skill is
+// named, not pathed: the harness loads it from its own skills directory, so
+// the block carries no machine path and works identically from a clone or
+// the published package.
 const agentsPath = join(province, "AGENTS.md");
 const BLOCK_BEGIN = "<!-- portolan:harbor:begin -->";
 const BLOCK_END = "<!-- portolan:harbor:end -->";
-// The skill pointer is relative for a province inside the checkout (the
-// repo charting itself) so a published AGENTS.md carries no machine paths;
-// for an outside target the pointer must survive being read from anywhere,
-// so the absolute checkout path is used.
-const skillFile = join(REPO_ROOT, "skill", "SKILL.md");
-const insideRepo = !relative(REPO_ROOT, province).startsWith("..");
-const skillPath = insideRepo ? relative(province, skillFile) : skillFile;
 const block =
   `${BLOCK_BEGIN}\n` +
   `## Portolan province\n\n` +
@@ -278,7 +308,7 @@ const block =
   `if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) ` +
   `and ask for a one-phrase decision; record it with \`expeditions.decide\`. ` +
   `Answer landscape questions from the Chart, citing anchors and trust labels. ` +
-  `The full Cartographer's method: ${skillPath}. ` +
+  `The full Cartographer's method: the \`${skillDirName}\` skill (your harness loads it from its skills directory). ` +
   `Never modify anything outside \`.portolan/\`.\n` +
   BLOCK_END;
 let agentsText = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";
@@ -295,4 +325,5 @@ writeFileSync(agentsPath, agentsText);
 console.log(`portolan MCP server registered in ${configPath}`);
 console.log(`  province: ${province}`);
 console.log(`  launch:   ${launchCommand.join(" ")}`);
+console.log(`  skill copied to: ${skillsRoot}`);
 console.log(`  harbor protocol: ${agentsPath}`);
