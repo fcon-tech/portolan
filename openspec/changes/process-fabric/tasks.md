@@ -10,4 +10,4 @@
 
 - [x] 3.1 Run the verification battery and report results with evidence labels: `bun test`, `bunx tsc --noEmit` in `core/` and `acceptance/`, `openspec validate --specs --strict`, `openspec validate --changes --strict`, `bun run skill/verify/checks.ts`, `scripts/leak-gate.sh`. Verify: all green, or any failure named in the change reports — nothing silently skipped.
 
-- [ ] 3.2 Whole-change review: code-reviewer over the full diff against this proposal; socratic-advisor pass on the assembled protocol (advisory). Verify: findings addressed or dissented in `design.md`; no silent drops.
+- [x] 3.2 Whole-change review: code-reviewer over the full diff against this proposal; socratic-advisor pass on the assembled protocol (advisory). Verify: findings addressed or dissented in `design.md`; no silent drops.

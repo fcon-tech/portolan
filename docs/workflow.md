@@ -5,15 +5,13 @@ This target runs two operating systems side by side: the OpenSpec cycle
 expeditions). This page is the assembled protocol that routes between them —
 rules and pointers only, never a manual. Each home named here owns its layer:
 the installer-owned block in AGENTS.md owns the harbor mandate, AGENTS.md owns
-the rules, this page owns the joints between the two systems. Assembled 2026-09-02
-by the process-fabric change.
+the rules, this page owns the joints between the two systems.
 
 ## J1 — the unified session briefing
 
 - The harbor half is owned by the installer-generated block in AGENTS.md
   (between `<!-- portolan:harbor:begin -->` and `<!-- portolan:harbor:end -->`):
-  at session start, before other work — proposals first, in one chat message,
-  one one-phrase decision. That block stays the short authority.
+  run it as written at session start; the OpenSpec half follows.
 - The OpenSpec half, added here: the same briefing appends the active-change
   state, if any, from `openspec list --json` — harbor queue first, then
   change state. One decision round for the Governor, not two.
@@ -51,12 +49,10 @@ night watch acts on it overnight.
 
 The loop's scheduled variant — the night watch, which auto-repairs within the
 configured bound — is specified in adapters/README.md, section "The night
-watch (auto-repair on a scheduler)"; this page adds nothing to it.
+watch (auto-repair on a scheduler)".
 
 ## Roles
 
 The Cartographer is the main agent's stance while it surveys a province — the
 method is skill/SKILL.md — not a subagent role. The cycle's stage→executor
-assignments (test-writer, implementer, code-reviewer, socratic-advisor,
-security-auditor) live in the global agent contract (`~/.zcode/AGENTS.md`);
-this page defers to it and copies nothing.
+assignments live in the global agent contract (`~/.zcode/AGENTS.md`).

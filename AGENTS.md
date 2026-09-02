@@ -53,9 +53,6 @@ stays unarchived. The rules:
   never straight to `main`; merge only on green CI.
 - At merge time: bump the `@portolan/core` version and add the change's entry
   to `CHANGELOG.md`.
-- Without the portolan MCP wiring, the harbor queue runs read-only:
-  `bun core/src/harbor/cli.ts propose --target . --format chat`; recording a
-  decision still requires the MCP server.
 
 The assembled protocol — the unified session briefing, the routing between
 cycle and expeditions, the joints — is fixed in

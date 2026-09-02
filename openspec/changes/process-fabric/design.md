@@ -61,9 +61,10 @@ layer that names the joints and routes the work. See proposal.md — Why.
 - **D4 — The night watch is referenced, not rebuilt.** The launcher exists
   (`adapters/opencode/expedition-launcher`; contract and cron template
   already documented in `adapters/README.md`). The process doc names the
-  loop and how to check which variant is installed on this machine
-  (`crontab -l`); it does not pin paths — leak-gate forbids machine home
-  paths in tracked files.
+  loop as a reference line; how to check which variant is installed on a
+  given machine was deferred at the socratic pass (see Deferrals) and is
+  not stated here. The process doc does not pin paths — leak-gate forbids
+  machine home paths in tracked files.
 
 - **D5 — Briefing order: harbor first, then cycle status.** `AGENTS.md`
   already mandates the harbor watch "at session start, before other work";
@@ -129,6 +130,31 @@ layer that names the joints and routes the work. See proposal.md — Why.
   (e.g., "check the installed variant with `crontab -l`"). Stays operator
   knowledge; `adapters/README.md` remains the single doc for variants and
   wiring. Trigger to revisit: the same question asked twice in sessions.
+
+## Verify-stage record (task 3.2)
+
+- **Whole-change review** (code-reviewer, 2026-09-02): Spec PASS, Quality
+  APPROVED. Its two Minors: the stale D4 wording (fixed above) and the
+  dual-homed MR/green-CI rule plus harbor-fallback literal — addressed
+  below.
+- **Socratic pass** (Mode B, 2026-09-02): verdict SIMPLIFY-FIRST, six
+  candidates. Adopted four: the provenance line deleted (git history owns
+  provenance); the J1 paraphrase of the installer block slimmed to
+  deference; the self-protest clauses deleted; the global-roster name list
+  dropped (pointer kept). Adopted the reviewer's implication of the first
+  candidate: the harbor-fallback command literal now lives only in
+  docs/workflow.md J1 — the AGENTS.md bullet is gone.
+- **Dissent, recorded (not applied):** the stage enumeration
+  ("explore → propose → apply → verify → archive") and the MR/green-CI
+  rule remain stated in both AGENTS.md and docs/workflow.md J4. That is
+  D2's layering working as designed — AGENTS.md owns rules, workflow.md
+  owns procedure — not the restatement D8 forbids (D8's no-restatement
+  list is READMEs, engineering.md, and the global agent contract).
+- **Deferral (socratic, accepted):** automated prose checks for served
+  docs (pointer existence, locked terminology). Why safe now: each task
+  ran its verify checklist manually and the reports record it; leak-gate
+  covers the worst class. Trigger: the first broken pointer or
+  locked-term violation found in a served doc after merge.
 
 - **D9 — Drift repair on sight, folded into this change.** Task 3.1's
   battery found `spec/invocation` failing `openspec validate --specs
