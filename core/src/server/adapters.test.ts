@@ -59,13 +59,12 @@ function openCodeLaunch(config: Record<string, unknown>): { command: string; arg
 }
 
 /**
- * Whether the published package the installed line resolves is actually on
- * the registry. The bunx launch is exercised for real when it is; until the
- * first publish the shape assertions above still run everywhere.
+ * The live bunx launch exercises the actually-published package on the
+ * registry — remote code execution by definition, so it is strictly opt-in:
+ * set PORTOLAN_LIVE_BUNX=1 to run it. Everything else in this file (vector
+ * shape, shims, JSONC surgery, AGENTS.md block) runs offline on every run.
  */
-const published = await fetch("https://registry.npmjs.org/@fcon-tech%2fportolan/latest")
-  .then((r) => r.ok)
-  .catch(() => false);
+const liveBunx = process.env.PORTOLAN_LIVE_BUNX === "1";
 
 /** What one launch observes: the full tool list plus two read-only results. */
 interface Observation {
@@ -102,8 +101,8 @@ async function observe(
   return observation!;
 }
 
-test.skipIf(!published)(
-  "the opencode adapter's installed launch line lists the full served toolset",
+test.skipIf(!liveBunx)(
+  "the opencode adapter's installed bunx launch line lists the full served toolset (PORTOLAN_LIVE_BUNX=1: runs the published package)",
   async () => {
     const province = makeProvince();
     const { config } = installOpencode(province);
