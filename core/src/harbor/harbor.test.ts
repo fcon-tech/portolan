@@ -141,6 +141,11 @@ test("1.1 fingerprint: same evidence yields the same fingerprint, in any order",
   expect(a).toBe(reordered);
   expect(a).toBe(repeated);
   expect(a).toMatch(/^[0-9a-f]{64}$/);
+  // Multi-key order-independence still holds (gap evidence carries several
+  // keys, and the sort over them is load-bearing there).
+  const gap = proposalFingerprint("gap", ["vessel/api#behavior", "vessel/api#lights"]);
+  const gapReordered = proposalFingerprint("gap", ["vessel/api#lights", "vessel/api#behavior"]);
+  expect(gap).toBe(gapReordered);
 });
 
 test("1.1 fingerprint: drift growth yields a new fingerprint; the kind participates", () => {
