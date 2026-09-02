@@ -1,6 +1,8 @@
 ## Why
 
-Portolan is listed in no distribution channel: `@portolan/core` returns 404
+Portolan is listed in no distribution channel: no npm package exists under
+the project's name (probe 2026-09-02: `@portolan/core` 404; the org
+`portolan` and the unscoped `portolan` are held by strangers),
 on npm, no `server.json` exists anywhere in the repo, and the only install
 path is cloning this repository (`adapters/opencode/install.ts` writes an
 absolute launch line into the clone; direct inspection 2026-09-02,
@@ -11,16 +13,17 @@ for a stranger's agent while there is nothing to install from.
 
 ## What Changes
 
-- One npm package, `@portolan/core` under a new npm org `portolan`,
+- One npm package, `@fcon-tech/portolan` under the npm org `fcon-tech`
+  (the preferred org `portolan` proved taken — design.md, decision 1),
   carrying core + skill + adapters as a monopackage; the first published
   version is `0.4.4` (continuity with the internal counter).
 - A single bin `portolan` with subcommands `serve` (the MCP server),
   `chartroom`, `harbor` — one launch surface that works without a clone.
 - A committed `server.json` (the official MCP Registry manifest), updated
   in the same merge-prep commit that bumps the core version; CI validates
-  its schema and its version sync with `@portolan/core`.
+  its schema and its version sync with `@fcon-tech/portolan`.
 - The opencode installer writes an npm-based launch line
-  (`bunx portolan serve --target …`) instead of clone paths; README
+  (`bunx --package @fcon-tech/portolan portolan serve --target …`) instead of clone paths; README
   quickstart and the skill move to the npm path.
 - CI publishes to npm on merge to main when the version grew, via trusted
   publishing (OIDC, no secrets in the repo); registry-side registration
@@ -56,10 +59,10 @@ spec-level behavior)*
   out of node_modules (mechanics in design.md).
 - CI (`.github/workflows/`) — schema/sync validation and the publish job.
 - `README.md`, `skill/SKILL.md` — install path updates.
-- External dependencies on people, not packages: npm org `portolan`
-  creation, first manual publish, registry domain verification — all
+- External dependencies on people, not packages: npm org `fcon-tech`
+  ownership, first manual publish, registry registration under
+  `io.github.fcon-tech/portolan` — all
   Governor-owned (`blocked` until done, never claimed ready by the agent).
-- Registry fit details (manifest schema, verification procedure, trusted
-  publishing mechanics) are `unsurveyed` until the explore stage reads
-  the primaries; every assumption above is re-checked there before specs
-  are finalized.
+- Registry fit details were `unsurveyed` at propose; the explore stage has
+  since read the primaries — findings and the one triggered fallback
+  (package scope) are recorded in design.md.

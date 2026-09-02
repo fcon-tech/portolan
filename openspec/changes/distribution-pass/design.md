@@ -32,14 +32,44 @@ Non-Goals:
 - Bundling ripgrep/ctags (wrap, don't build — MANIFEST).
 - Any change to the fourteen tools, the Chart, or the harbor's behavior.
 
+## Explore findings (task 1.1/1.2 — primaries, 2026-09-02)
+
+- Official MCP Registry: `server.json` schema published at
+  `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`;
+  required fields `name`, `description`, `version`; name is reverse-DNS,
+  exactly one `/`. GitHub-based auth requires
+  `io.github.<username|orgname>/*` → our name:
+  `io.github.fcon-tech/portolan`; the Governor must be an Owner of the
+  fcon-tech GitHub org. Publication via the `mcp-publisher` CLI
+  (`init/login/publish`, `login github` device flow; DNS TXT or
+  `.well-known` as alternatives). The registry is in **preview**
+  (breaking changes possible — accepted risk, listing is
+  re-publishable). npm impersonation guard: `package.json` must carry
+  `mcpName: "io.github.fcon-tech/portolan"` matching server.json.
+  Versions are immutable per publication; align server.json version with
+  the package version (our sync gate enforces it).
+- npm: trusted publishing (OIDC) is GA (since 2025-07-31) but the publish
+  step needs Node ≥22.14.0 + npm ≥11.5.1 (GitHub-hosted runners have
+  both; Bun is fine for everything except that step). Trusted publisher
+  is configured once in the package's npm settings by the Governor
+  (chicken-and-egg: package must exist first — the first release is
+  manual by design). Duplicate name@version is refused by the registry.
+  Org `portolan` unavailable (see decision 1).
+
 ## Decisions
 
-1. **Monopackage `@portolan/core` under a new npm org `portolan`.**
-   Alternative: split packages (`core`/`skill`/`adapters`) — rejected,
-   YAGNI: one product, one version, one install. Alternative: unscoped
-   `portolan` — taken on npm (a UI-flow format, v0.1.0, `measured`).
-   Fallback if the org name is unavailable: `@fcon-tech/portolan`.
-   *Assumption:* org `portolan` is free to create — checked at explore.
+1. **Monopackage under npm, scope `@fcon-tech` — fallback triggered.** The
+   preferred org `portolan` was found taken (org profile live at
+   npmjs.com/org/portolan, 0 packages; registry probe
+   `/-/org/portolan/package` → 200 — `measured`, 2026-09-02), so the
+   Governor-approved fallback applies: package `@fcon-tech/portolan`,
+   carrying core + skill + adapters. Split packages rejected, YAGNI. The
+   unscoped npm name `portolan` is also taken (wighawag's UI-flow format,
+   AGPL) — therefore `bunx portolan` would install a stranger's package:
+   every launch line uses
+   `bunx --package @fcon-tech/portolan portolan serve …` (spec amended to
+   match). Creating the `fcon-tech` npm org (or confirming it exists) is
+   a Governor runbook step. *Verified at explore (tasks 1.1/1.2).*
 
 2. **Single bin `portolan` with subcommands.** Alternatives: separate
    bins per CLI — more surface, no consumer; no bins (document raw

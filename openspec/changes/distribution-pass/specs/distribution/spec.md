@@ -3,8 +3,8 @@
 ## ADDED Requirements
 
 ### Requirement: The product installs as one npm package
-Portolan SHALL be published as a single npm package `@portolan/core`
-(scope `portolan`) carrying core, skill, and adapters together. Installing
+Portolan SHALL be published as a single npm package `@fcon-tech/portolan`
+(scope `fcon-tech`) carrying core, skill, and adapters together. Installing
 the package into a clean environment — with Bun, ripgrep, and ctags as the
 only declared external requirements — SHALL yield a working product; the
 package MUST NOT bundle ripgrep or ctags and MUST NOT require a clone of
@@ -12,7 +12,7 @@ this repository.
 
 #### Scenario: A clean environment installs and runs
 - **WHEN** a machine with Bun, ripgrep, and ctags — and no Portolan
-  repository — installs `@portolan/core` from npm
+  repository — installs `@fcon-tech/portolan` from npm
 - **THEN** the package's entry point runs and the served tool list matches
   the fourteen Portolan tools
 
@@ -36,7 +36,7 @@ indistinguishable from a direct launch of the same server.
 
 ### Requirement: The registry manifest is committed and version-synced
 A `server.json` manifest for the official MCP Registry SHALL live in the
-repository, and its version SHALL equal the `@portolan/core` package
+repository, and its version SHALL equal the `@fcon-tech/portolan` package
 version. The manifest SHALL be updated by the same release-prep change
 that bumps the version, and CI SHALL reject a state where the manifest is
 schema-invalid or its version differs from the package version.
@@ -47,12 +47,12 @@ schema-invalid or its version differs from the package version.
 - **THEN** the manifest check passes
 
 #### Scenario: A drifted manifest is caught
-- **WHEN** `server.json`'s version differs from the `@portolan/core`
+- **WHEN** `server.json`'s version differs from the `@fcon-tech/portolan`
   version, or the manifest fails schema validation
 - **THEN** CI fails naming the mismatch
 
 ### Requirement: Publishing is version-gated and secret-free
-Merging to main with a grown `@portolan/core` version SHALL publish the
+Merging to main with a grown `@fcon-tech/portolan` version SHALL publish the
 package to npm, with no long-lived secrets in the repository. A merge
 without a version bump SHALL NOT publish.
 
@@ -68,7 +68,7 @@ without a version bump SHALL NOT publish.
 
 ### Requirement: The install path is registry-based
 The opencode installer SHALL write a launch line that resolves the
-published package (`bunx portolan serve --target …`) rather than paths
+published package (`bunx --package @fcon-tech/portolan portolan serve --target …`) rather than paths
 into a repository clone, and the Sailing Directions and quickstart
 documentation SHALL describe the registry-based install path.
 
