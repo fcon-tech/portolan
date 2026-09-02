@@ -7,8 +7,9 @@
  * the fingerprint, which is what reopens a declined proposal.
  *
  * Evidence keys are plain strings owned by the proposal engine
- * (`vessel/<id>` for drift, `vessel/<id>#<pass>` for gaps,
- * `<kind>:<path>` for landscape entries).
+ * (`vessel/<id>#<stale-entry-count>` for drift — the drift-sensitive count
+ * reopens a declined vessel when its drift changes, `vessel/<id>#<pass>`
+ * for gaps, `<kind>:<path>` for landscape entries).
  */
 import { createHash } from "node:crypto";
 

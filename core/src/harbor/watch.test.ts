@@ -271,19 +271,25 @@ test("night-watch 2.2 bound zero is report-only even with a launcher configured"
   expect(renderWatchChat(report)).toContain("report-only (harbor.auto_repair_max_vessels unset or zero)");
 });
 
-test("night-watch 2.2 beyond the bound: the repair is pending the Governor's decision", async () => {
-  // Bound 1; the drift grows to two vessels — beyond the bound.
+test("night-watch 2.2 beyond the bound: the lowest-ranked repair stays pending the Governor's decision", async () => {
+  // Bound 1; the drift grows to a second vessel — two one-vessel repair
+  // rows, so the bound spends on the higher-ranked row (api: the id
+  // tie-break at fan-in 0) and lib's row stays pending with its evidence.
   const { target } = driftedProvince(1);
   appendFileSync(join(target, "packages/lib/src/parse.ts"), "\n// another edit\n");
   const ok = fakeLauncher("ok.sh", "exit 0");
 
   const report = await runWatch(target, { launcher: ok.command, launcherTimeoutMs: 10_000 });
   expect(report.reportOnly).toBe(false); // a launcher and a bound are configured
-  expect(report.ran).toEqual([]); // ...but nothing qualified
+  expect(report.ran.map((a) => a.proposal.scope.vessels)).toEqual([["api"]]); // the bound's one vessel
   expect(report.pending.map((p) => p.kind)).toEqual(["repair"]);
-  expect(invocations(ok.log)).toBe(0);
-  expect(readHistory(target)).toEqual([]); // no auto-accept for a proposal that did not launch
-  expect(renderWatchChat(report)).toContain("pending:\n1. repair — vessels api, lib marked pending correction");
+  expect(report.pending.map((p) => p.scope.vessels)).toEqual([["lib"]]);
+  expect(invocations(ok.log)).toBe(1);
+  // The pending row drew no auto-accept: the history names only the launch.
+  expect(readHistory(target).map((r) => r.fingerprint)).toEqual([report.ran[0]!.proposal.fingerprint]);
+  expect(renderWatchChat(report)).toContain(
+    "pending:\n1. repair — vessel lib marked pending correction (sources changed under packages/lib)",
+  );
 });
 
 test("night-watch 2.2 two report-only runs over an unchanged province are byte-identical", async () => {
@@ -308,7 +314,7 @@ test("night-watch 2.3 golden: the watch report renders ran/pending/failed determ
           kind: "repair",
           fingerprint: "f1",
           summary: "vessel api marked pending correction (sources changed under apps/api)",
-          evidence: ["vessel/api"],
+          evidence: ["vessel/api#3"],
           anchors: [{ type: "file", path: "apps/api" }],
           scope: { vessels: ["api"], entries: 3, soundings: 3 },
         },
@@ -318,13 +324,10 @@ test("night-watch 2.3 golden: the watch report renders ran/pending/failed determ
         proposal: {
           kind: "repair",
           fingerprint: "f2",
-          summary: "vessels api, lib marked pending correction (sources changed under apps/api; packages/lib)",
-          evidence: ["vessel/api", "vessel/lib"],
-          anchors: [
-            { type: "file", path: "apps/api" },
-            { type: "file", path: "packages/lib" },
-          ],
-          scope: { vessels: ["api", "lib"], entries: 5, soundings: 5 },
+          summary: "vessel lib marked pending correction (sources changed under packages/lib)",
+          evidence: ["vessel/lib#5"],
+          anchors: [{ type: "file", path: "packages/lib" }],
+          scope: { vessels: ["lib"], entries: 5, soundings: 5 },
         },
         outcome: "launch-failed",
         reason: "launcher exited with status 3",
@@ -364,7 +367,7 @@ test("night-watch 2.3 golden: the watch report renders ran/pending/failed determ
     "   evidence: apps/api/package.json#name",
     "   scope: vessels api · 2 entries · 2 soundings",
     "launch failures:",
-    "1. repair — vessels api, lib marked pending correction (sources changed under apps/api; packages/lib)",
+    "1. repair — vessel lib marked pending correction (sources changed under packages/lib)",
     "   failure: launcher exited with status 3",
     "   note: recorded in history; the proposal stays queued for the Governor",
     "",
