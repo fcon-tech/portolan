@@ -41,12 +41,30 @@ docs/engineering.md pattern):
 
 ## Decisions made
 
-- Where each dropped line now lives (nothing silently lost):
-  - Stage-by-stage mechanics (what each stage does: `openspec new change`,
-    validate before implementation, per-task dispatch, archive command) —
-    owned by the opsx stage commands themselves (`.zcode/commands/opsx/*.md`
-    with matching skills), which AGENTS.md already named as the stages' home;
-    the cycle as protocol stays in docs/workflow.md J4.
+- Where each dropped line now lives (review-corrected: the first version of
+  this report mapped one clause falsely):
+  - Stage-by-stage mechanics (`openspec new change`, per-task dispatch,
+    archive command) — owned by the opsx stage commands themselves
+    (`.zcode/commands/opsx/*.md` with matching skills), which AGENTS.md
+    already named as the stages' home; the cycle as protocol stays in
+    docs/workflow.md J4.
+  - CORRECTION (review finding 1): the earlier version of this report also
+    claimed the opsx stage commands own "validate --strict before
+    implementation" — false. Grep over `.zcode/commands/opsx/` and the
+    openspec skills finds no such line, and docs/workflow.md had no
+    "validate" at all. The clause now has its standing home in
+    docs/workflow.md J4's cycle-procedure line: `openspec validate --strict`
+    passes before implementation and keeps passing.
+  - "Keep `bun test` green" and the verify-stage clauses (a pass skipped
+    earlier runs before the cycle is declared closed; findings on an
+    already-archived change become follow-ups, never silent drops) — home:
+    docs/workflow.md J4's cycle-procedure line (review finding 2). Judged
+    genuine procedure, not redundant: the AGENTS.md "Verification" block is
+    the final done-bar, not the apply-stage discipline.
+  - "Otherwise run the same stages by hand" — mirrored in docs/workflow.md
+    J4 (in a harness without the opsx stages, the same stages run by hand
+    under the same rules); AGENTS.md keeps the rule as committed (review
+    finding 3).
   - Whole-change review, socratic pass advisory, deferrals recorded in the
     change's design.md, implementer/test-writer non-parallelism — the global
     agent contract already states all of it.
