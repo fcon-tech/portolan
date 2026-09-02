@@ -45,7 +45,9 @@ export function nightPolicy(proposals: Proposal[], bound: number): NightPolicyRe
   const launch: Proposal[] = [];
   const pending: Proposal[] = [];
   // Shape-agnostic: a row's cost is its scope's vessel count — one per
-  // standing per-vessel repair row, the sum for any grouped shape.
+  // standing per-vessel repair row, the sum for any grouped shape. A misfit
+  // row does not stop the walk: a later smaller row may still fit, and the
+  // misfit stays pending for the Governor either way.
   let spent = 0;
   for (const proposal of proposals) {
     const cost = proposal.scope.vessels.length;

@@ -133,3 +133,20 @@ test("resurvey bound zero is report-only: every row stays pending, queue order p
   expect(launch).toEqual([]);
   expect(pending.map((p) => p.fingerprint)).toEqual(["f-hub", "f-leaf", "f-new-land", "f-gap"]);
 });
+
+test("resurvey cost model: a misfit row does not stop the walk, and non-repair rows spend nothing", () => {
+  // A misfit repair row leaves the walk running: the later 1-vessel row
+  // still fits in what remains of the bound. (Unreachable in the served
+  // per-vessel shape today — this pin exists for any future grouped row.)
+  const misfit = nightPolicy([repair(3), repairRow("hub", 1)], 2);
+  expect(misfit.launch.map((p) => p.fingerprint)).toEqual(["f-hub"]);
+  expect(misfit.pending.map((p) => p.fingerprint)).toEqual(["f-repair-3"]);
+  // A gap carrying scope vessels never spends the bound: all three repair
+  // rows after it still launch.
+  const spending = nightPolicy(
+    [gap, repairRow("hub", 1), repairRow("leaf", 1), repairRow("mid", 1)],
+    3,
+  );
+  expect(spending.launch.map((p) => p.fingerprint)).toEqual(["f-hub", "f-leaf", "f-mid"]);
+  expect(spending.pending.map((p) => p.fingerprint)).toEqual(["f-gap"]);
+});
