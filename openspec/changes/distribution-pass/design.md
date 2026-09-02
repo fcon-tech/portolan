@@ -101,7 +101,7 @@ Non-Goals:
    exploring how pi/omp/opencode resolve skill directories.
    *Assumption to verify at explore.*
 
-6. **First published version `0.4.4`** (Governor's call in the grill):
+6. **First published version `0.4.5`** (Governor's call in the grill):
    continuity with the internal counter; the archive of openspec changes
    and the CHANGELOG stay one version line.
 
@@ -147,7 +147,7 @@ Non-Goals:
 No data migration. Rollout: (1) explore — registry primaries, org
 availability, trusted publishing; (2) packaging + bin + manifest +
 CI checks land behind the normal change flow; (3) Governor performs the
-blocked list (org, first release 0.4.4, domain verification); (4)
+blocked list (org, first release 0.4.5, domain verification); (4)
 installer + docs switch to the npm path; (5) subsequent merges
 auto-publish per the version gate. Rollback: unpublish/deprecate on npm
 is manual and Governor-owned; the repo remains the source of truth

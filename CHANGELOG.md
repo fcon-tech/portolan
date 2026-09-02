@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.5 — 2026-09-02
+
+Distribution pass (openspec change `distribution-pass`, backlog candidate
+C9): Portolan becomes installable from a registry and visible in the MCP
+ecosystem — the first-run contract "survey \<target\> with Portolan" no
+longer requires cloning this repo.
+
+- **`@fcon-tech/portolan` on npm** — monopackage (core + skill +
+  adapters) with one bin: `portolan serve|chartroom|harbor`. The
+  preferred org `portolan` proved taken (registry probe, `measured`);
+  the Governor-approved fallback applies. Launch lines use
+  `bunx --package @fcon-tech/portolan portolan serve …` (the unscoped
+  `portolan` name is a stranger's AGPL package).
+- **`server.json` committed at repo root** — official MCP Registry
+  manifest under `io.github.fcon-tech/portolan`, version-synced with the
+  package version; CI (`manifest` job) validates it against the bundled
+  official schema and fails on drift.
+- **Version-gated publish** — `publish.yml` runs after green CI on
+  version-grown merges via OIDC trusted publishing (no long-lived
+  secrets); until the Governor's one-time setup (see
+  `openspec/changes/distribution-pass/governor-runbook.md`) the job
+  reports **blocked** and publishes nothing.
+- **Registry-based install path** — the opencode installer writes the
+  bunx launch line (no repo-root dependency) and copies the skill into
+  `~/.config/opencode/skills/portolan-expedition/`; README quickstart
+  leads with `bun install -g @fcon-tech/portolan`.
+- Governor-blocked, honestly so: first manual release, npm trusted
+  publisher config, registry listing (task 6.2) — `blocked`, not ready.
+  License field decision also pending the Governor (repo declares none).
+
 ## 0.4.4 — 2026-09-02
 
 Hook wiring parked (openspec change `hook-wiring-parked`): the client's

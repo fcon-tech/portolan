@@ -5,7 +5,7 @@
 
 ## 2. Packaging — the monopackage and its bin
 
-- [x] 2.1 Make `core/package.json` publishable under `@fcon-tech/portolan`: files allowlist (core, skill, adapters), `bin` entry `portolan` with the `serve`/`chartroom`/`harbor` dispatcher, repository/metadata fields, `mcpName: "io.github.fcon-tech/portolan"`; first published version `0.4.4`. Verify: `bun test` green; `npm pack` (dry run) shows exactly the intended file set. DONE: publishable manifest is a NEW root package.json `@fcon-tech/portolan` (files: core/src, core/schema, skill, adapters; bin→core/src/bin/portolan.ts; mcpName set); core/package.json stays private/internal. NOTE: license field pending Governor decision (no repo LICENSE).
+- [x] 2.1 Make `core/package.json` publishable under `@fcon-tech/portolan`: files allowlist (core, skill, adapters), `bin` entry `portolan` with the `serve`/`chartroom`/`harbor` dispatcher, repository/metadata fields, `mcpName: "io.github.fcon-tech/portolan"`; first published version `0.4.5`. Verify: `bun test` green; `npm pack` (dry run) shows exactly the intended file set. DONE: publishable manifest is a NEW root package.json `@fcon-tech/portolan` (files: core/src, core/schema, skill, adapters; bin→core/src/bin/portolan.ts; mcpName set); core/package.json stays private/internal. NOTE: license field pending Governor decision (no repo LICENSE).
 - [x] 2.2 Implement the `portolan` dispatcher (serve/chartroom/harbor) delegating to the existing entry points; `serve` behavior indistinguishable from `core/src/server/main.ts`. Verify: new deterministic tests for argument routing; `portolan serve --target <province>` answers a tools/list call with the fourteen tools. DONE: core/src/bin/portolan.ts (serve in-process, chartroom/harbor spawned, unknown→exit 1); 4/4 tests green.
 
 ## 3. Registry manifest and CI sync gate
@@ -25,7 +25,7 @@
 
 ## 6. Blocked-on-Governor (account-bound; instructions delivered, agent does not execute)
 
-- [x] 6.1 Write the Governor's runbook: own/confirm the npm org `fcon-tech` and GitHub org `fcon-tech` (Owner role for registry auth), first manual release `0.4.4`, configure trusted publishing in the package's npm settings, `mcp-publisher login github` + publish `server.json` under `io.github.fcon-tech/portolan`. Verify: runbook in this change's directory; every step maps to a spec requirement's blocked scenario. DONE: governor-runbook.md in this change directory (npm org+first release+trusted publisher; mcp-publisher under fcon-tech Owner; registry preview noted; license decision flagged).
+- [x] 6.1 Write the Governor's runbook: own/confirm the npm org `fcon-tech` and GitHub org `fcon-tech` (Owner role for registry auth), first manual release `0.4.5`, configure trusted publishing in the package's npm settings, `mcp-publisher login github` + publish `server.json` under `io.github.fcon-tech/portolan`. Verify: runbook in this change's directory; every step maps to a spec requirement's blocked scenario. DONE: governor-runbook.md in this change directory (npm org+first release+trusted publisher; mcp-publisher under fcon-tech Owner; registry preview noted; license decision flagged).
 - [ ] 6.2 After the Governor completes the runbook: record npm + registry listing evidence (package URL, registry entry URL) in the task report. Verify: `npm view @fcon-tech/portolan version` returns the published version; the registry entry resolves. Until this lands, the publish and listing scenarios stand `blocked`, not ready.
 
 ## 7. Verification battery

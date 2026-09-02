@@ -16,7 +16,7 @@ for a stranger's agent while there is nothing to install from.
 - One npm package, `@fcon-tech/portolan` under the npm org `fcon-tech`
   (the preferred org `portolan` proved taken — design.md, decision 1),
   carrying core + skill + adapters as a monopackage; the first published
-  version is `0.4.4` (continuity with the internal counter).
+  version is `0.4.5` (continuity with the internal counter).
 - A single bin `portolan` with subcommands `serve` (the MCP server),
   `chartroom`, `harbor` — one launch surface that works without a clone.
 - A committed `server.json` (the official MCP Registry manifest), updated

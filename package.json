@@ -1,6 +1,6 @@
 {
   "name": "@fcon-tech/portolan",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Portolan: an MCP server that charts codebases - Chart store, Harbor expeditions, Chart Room. Runs on Bun; requires ripgrep and ctags on PATH (wrapped, not bundled).",
   "type": "module",
   "mcpName": "io.github.fcon-tech/portolan",
