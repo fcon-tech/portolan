@@ -66,7 +66,9 @@ test("the installer copies the skill into ~/.config/opencode/skills and keeps AG
   for (let run = 0; run < 2; run++) {
     const result = spawnSync(process.execPath, [INSTALLER, "--target", province], {
       encoding: "utf8",
-      env: { ...process.env, HOME: home },
+      // Both roots pinned to the temp home: the test must not depend on the
+      // ambient XDG_CONFIG_HOME (runner images differ).
+      env: { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, ".config") },
     });
     expect(result.status).toBe(0);
   }
