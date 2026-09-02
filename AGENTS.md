@@ -53,6 +53,8 @@ stays unarchived. The rules:
   never straight to `main`; merge only on green CI.
 - At merge time: bump the `@portolan/core` version and add the change's entry
   to `CHANGELOG.md`.
+- Verification is written before the work, and a skipped test-first pass is
+  a recorded decision in the task report, not a default.
 
 The assembled protocol — the unified session briefing, the routing between
 cycle and expeditions, the joints — is fixed in

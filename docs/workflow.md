@@ -33,6 +33,13 @@ the rules, this page owns the joints between the two systems.
   skipped earlier still runs before the cycle is declared closed, and
   findings on an already-archived change become follow-ups, never silent
   drops.
+- The cycle's test-first discipline, owned as a rule in AGENTS.md: a task
+  with spec deltas gets its failing acceptance tests from those deltas
+  before implementation (test-writer, then implementer); a task without
+  spec deltas (docs, process) restates its verify line as checks run before
+  the work — red where the work is absent — and a skipped test-first pass
+  is recorded in the task report: what was skipped, why, what covers it
+  instead.
 - Chart and archive state corrections → an Expedition, by the Cartographer's
   method (skill/SKILL.md).
 - The hand-off, expedition → change (the worked example): an Expedition never
