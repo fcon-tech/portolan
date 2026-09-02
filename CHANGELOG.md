@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.1 — 2026-09-02
+
+The operating protocol assembled (openspec change `process-fabric`): the
+repo's two systems — the OpenSpec cycle and the Portolan province — now
+share one process document and one session briefing. No product behavior
+changes; no core code touched.
+
+- **`docs/workflow.md` owns the joints**: the unified session briefing
+  (harbor queue first, then the `openspec list` state, one decision
+  round; the installer-owned AGENTS.md block stays the harbor half's
+  short authority), the routing rule (product behavior → the OpenSpec
+  cycle, Chart and archive state → an Expedition, with the
+  expedition→change hand-off as its worked example), the merge-to-repair
+  loop named as a survey event, and the one role fact — the Cartographer
+  is the main agent's stance (`skill/SKILL.md`), not a subagent role.
+- **`AGENTS.md` slims to rules and pointers**: the OpenSpec workflow
+  section collapsed to the cycle rules, the merge-time version-bump
+  rule, and a pointer; the installer-owned harbor block byte-identical.
+- **Drift repaired on sight**: `spec/invocation` received the real
+  `## Purpose` its archive left as a placeholder — the strict spec
+  validation CI gates on is green again.
+
 ## 0.4.0 — 2026-09-02
 
 The re-survey queue (openspec change `resurvey-queue`, backlog candidate
