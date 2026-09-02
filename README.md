@@ -77,7 +77,7 @@ portolan chartroom review --target /prov/a --target /prov/b
 # the harbor, headless:
 portolan harbor propose --target <t> --format chat    # the queue
 portolan harbor run    --target <t> --fingerprint <fp> \
-    --launcher adapters/opencode/expedition-launcher  # launch one
+    --launcher <launcher-script>                      # launch one; e.g. the repo dev path adapters/opencode/expedition-launcher, or from npm: node_modules/@fcon-tech/portolan/adapters/opencode/expedition-launcher
 portolan harbor watch  --target <t>  [same flags]     # night policy
 ```
 

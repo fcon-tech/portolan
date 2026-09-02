@@ -40,8 +40,9 @@ test("a malformed manifest fails validation", () => {
 });
 
 test("validateManifest accepts a minimal well-formed manifest object", () => {
+  // The official schema requires description too, so the fixture carries one.
   const errors = validateManifest(
-    JSON.stringify({ name: "portolan/server", version: "0.4.4" }),
+    JSON.stringify({ name: "portolan/server", description: "x", version: "0.4.4" }),
   );
   expect(errors).toEqual([]);
 });
@@ -49,8 +50,8 @@ test("validateManifest accepts a minimal well-formed manifest object", () => {
 test("the committed server.json validates against the official registry schema", () => {
   // Schema bundled from task 1.1 primaries; manifest committed by task 3.1.
   const schemaPath = join(REPO_ROOT, "scripts", "mcp-registry.schema.json");
-    expect(existsSync(schemaPath)).toBe(true);
-    expect(existsSync(SERVER_MANIFEST)).toBe(true);
+  expect(existsSync(schemaPath)).toBe(true);
+  expect(existsSync(SERVER_MANIFEST)).toBe(true);
   const errors = validateManifest(SERVER_MANIFEST);
   expect(errors).toEqual([]);
 });

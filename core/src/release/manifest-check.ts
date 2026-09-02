@@ -12,12 +12,9 @@
  *   `scripts/mcp-registry.schema.json` (task 1.1 primaries; no network at
  *   check time).
  *
- * Schema relaxation, deliberate and narrow: the official schema requires
- * `name`, `description`, `version`. The test contract (written before this
- * module) requires a minimal `{name, version}` object to validate clean, so
- * `description` is dropped from `required` before compilation. Everything
- * else — patterns, `packages` structure — is the official schema verbatim.
- * The committed `server.json` itself carries a description.
+ * The official schema is compiled verbatim — it requires `name`,
+ * `description`, `version`, and this module relaxes nothing (the committed
+ * `server.json` carries all three; so does every test fixture).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -50,13 +47,7 @@ export function compareVersions(pkg: string, manifest: string): CheckResult {
 }
 
 function loadSchema(): Record<string, unknown> {
-  const schema = JSON.parse(readFileSync(SCHEMA_PATH, "utf8")) as {
-    definitions: Record<string, { required?: string[] }>;
-  };
-  // See doc comment: description stays optional to honor the module contract.
-  const detail = schema.definitions.ServerDetail;
-  detail.required = (detail.required ?? []).filter((f) => f !== "description");
-  return schema as unknown as Record<string, unknown>;
+  return JSON.parse(readFileSync(SCHEMA_PATH, "utf8")) as Record<string, unknown>;
 }
 
 const validate = new Ajv({ allErrors: true, strictSchema: false }).compile(
