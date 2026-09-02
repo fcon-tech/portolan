@@ -1,0 +1,46 @@
+{
+  "hooks": {
+    "enabled": true,
+    "events": {
+      "PostToolUse": [
+        {
+          "matcher": "Edit|Write",
+          "hooks": [
+            {
+              "type": "process",
+              "command": "bash",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/hooks/leak-stamp.sh"],
+              "timeoutMs": 5000
+            }
+          ]
+        }
+      ],
+      "PreToolUse": [
+        {
+          "matcher": "Edit|Write",
+          "hooks": [
+            {
+              "type": "process",
+              "command": "bash",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/hooks/harbor-markers.sh"],
+              "timeoutMs": 5000
+            }
+          ]
+        }
+      ],
+      "SessionStart": [
+        {
+          "matcher": "startup|resume",
+          "hooks": [
+            {
+              "type": "process",
+              "command": "bun",
+              "args": ["${ZCODE_PROJECT_DIR}/scripts/hooks/session-brief.ts"],
+              "timeoutMs": 15000
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -7,6 +7,22 @@
 # assembled so this file carries no literal for itself to flag.
 home_sig="/$(printf %s ho)me/"
 users_sig="/$(printf %s Use)rs/"
+# --print-patterns <file>: write the signatures to <file> (one per line) and
+# exit without scanning. This file is the single home of the signature list;
+# the H1 leak-stamp hook (scripts/hooks/leak-stamp.sh) reuses it for the one
+# touched file instead of copying the list anywhere.
+if [ "${1:-}" = "--print-patterns" ]; then
+  if [ -z "${2:-}" ]; then
+    printf 'usage: leak-gate.sh --print-patterns <file>\n' >&2
+    exit 64
+  fi
+  {
+    printf '%s\n' "$home_sig"
+    printf '%s\n' "$users_sig"
+    if [ -n "${USER:-}" ]; then printf '/%s/\n' "$USER"; fi
+  } > "$2"
+  exit 0
+fi
 # The username is a leak signature too (scripts/demo-refresh.sh already
 # treats it as one): a tracked file carrying $USER as a PATH SEGMENT —
 # /mnt/data/<user>/... — must fail the same gate. The segment delimiters
