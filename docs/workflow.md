@@ -58,6 +58,32 @@ The loop's scheduled variant — the night watch, which auto-repairs within the
 configured bound — is specified in adapters/README.md, section "The night
 watch (auto-repair on a scheduler)".
 
+## Hooks — guards at the moment of the event
+
+Three soft hooks remind at the moment of the event — H1 after an
+Edit/Write, H2 before one, H3 at session start; the rules they serve stay
+owned where this page says. Wiring: the tracked `.zcode/config.json`;
+scripts: `scripts/hooks/`. Honesty note: live hook loading is not yet
+observed — the wiring is inert if the harness never loads it, and the
+process-hooks change reports carry the spike checklist and the fallback.
+This is the soft phase — a hook warns, it never blocks (no exit 2), and CI
+stays the final bar. Escalation happens only on a recorded trigger, never
+by default.
+
+- `scripts/hooks/leak-stamp.sh` serves the leak-gate rule (Verification):
+  after an Edit/Write it flags the touched file when it carries a machine
+  home path signature. It goes deny only if a leaked literal reaches a
+  commit despite the warning.
+- `scripts/hooks/harbor-markers.sh` serves the installer-owned harbor block
+  in AGENTS.md (the harbor half of J1): before an Edit/Write targeting
+  AGENTS.md it reminds that the block between the harbor markers is
+  rewritten wholesale on install. It goes deny only if a hand edit inside
+  the markers survives to an install and is reverted.
+- `scripts/hooks/session-brief.ts` implements the J1 briefing mandate,
+  quietly (at session start): it speaks only when the harbor queue or the
+  change list is non-empty — an all-quiet province prints nothing. The
+  decision round stays the Governor's.
+
 ## Roles
 
 The Cartographer is the main agent's stance while it surveys a province — the
