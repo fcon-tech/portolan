@@ -18,9 +18,14 @@
     "core/src",
     "core/schema",
     "skill",
-    "adapters"
+    "adapters",
+    "!core/src/**/*.test.ts"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "ajv": "^8.20.0"
   }
 }
