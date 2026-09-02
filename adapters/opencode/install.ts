@@ -63,14 +63,28 @@ if (values.target === undefined) {
 }
 
 const province = resolve(values.target);
+
+/**
+ * The user-level config root. Neither variable set is an environment error:
+ * silently falling back to "." would scatter configs into the cwd.
+ */
+function configHome(): string {
+  const xdg = process.env.XDG_CONFIG_HOME;
+  if (xdg !== undefined && xdg !== "") return xdg;
+  const home = process.env.HOME;
+  if (home === undefined || home === "") {
+    console.error(
+      "error: neither XDG_CONFIG_HOME nor HOME is set — cannot locate the opencode config directory. Set one and retry.",
+    );
+    process.exit(1);
+  }
+  return join(home, ".config");
+}
+
 const configPath =
   values.config !== undefined
     ? resolve(values.config)
-    : join(
-        process.env.XDG_CONFIG_HOME ?? resolve(process.env.HOME ?? ".", ".config"),
-        "opencode",
-        "opencode.jsonc",
-      );
+    : join(configHome(), "opencode", "opencode.jsonc");
 
 // The launch line resolves the published package via bunx: opencode spawns
 // it verbatim; the only path is the absolute province target.
@@ -280,12 +294,17 @@ function skillName(): string {
 }
 
 const skillDirName = skillName();
-const skillsRoot = join(
-  process.env.XDG_CONFIG_HOME ?? resolve(process.env.HOME ?? ".", ".config"),
-  "opencode",
-  "skills",
-  skillDirName,
-);
+// The name becomes a directory under the skills root and the rmSync target:
+// a hostile or malformed frontmatter must never steer the wipe outside it.
+// (A lone ".." passes the character class, so it is rejected explicitly.)
+if (!/^[A-Za-z0-9._-]+$/.test(skillDirName) || skillDirName === "..") {
+  console.error(
+    `error: skill frontmatter name ${JSON.stringify(skillDirName)} is not a safe directory name ` +
+      `(expected [A-Za-z0-9._-], not "..") — refusing to install the skill.`,
+  );
+  process.exit(1);
+}
+const skillsRoot = join(configHome(), "opencode", "skills", skillDirName);
 // Idempotent overwrite: a re-install replaces the previous copy wholesale so
 // no stale file from an older package version survives.
 rmSync(skillsRoot, { recursive: true, force: true });
@@ -316,8 +335,17 @@ const beginIdx = agentsText.indexOf(BLOCK_BEGIN);
 const endIdx = agentsText.indexOf(BLOCK_END);
 if (beginIdx !== -1 && endIdx !== -1 && endIdx > beginIdx) {
   agentsText = agentsText.slice(0, beginIdx) + block + agentsText.slice(endIdx + BLOCK_END.length);
-} else if (beginIdx === -1) {
-  agentsText = agentsText.length > 0 ? `${agentsText.replace(/\s*$/, "\n")}\n${block}\n` : `${block}\n`;
+} else {
+  // No block, or orphan/misordered markers: strip any stray markers (and an
+  // orphaned body between a begin and a later-end pairing is already covered
+  // above; here only unmatched leftovers can remain) and append one fresh block.
+  const cleaned = agentsText
+    .replace(/<!-- portolan:harbor:begin -->[\s\S]*?<!-- portolan:harbor:end -->/g, "")
+    .split(BLOCK_BEGIN)
+    .join("")
+    .split(BLOCK_END)
+    .join("");
+  agentsText = cleaned.trim().length > 0 ? `${cleaned.replace(/\s*$/, "\n")}\n${block}\n` : `${block}\n`;
 }
 mkdirSync(province, { recursive: true });
 writeFileSync(agentsPath, agentsText);
