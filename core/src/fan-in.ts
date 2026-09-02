@@ -5,8 +5,8 @@
  * The rank (openspec/changes/resurvey-queue/specs/harbor/spec.md, "The
  * repair queue is fan-in ranked"): direct cross-vessel charted fan-in, ties
  * broken by vessel id. The harbor queue orders its repair rows by it and
- * trust.report orders its pending-vessel list by the same rank — one list,
- * one order.
+ * trust.report orders its pending-vessel list by the same rank — one rank,
+ * one order (the lists themselves differ by settled design).
  *
  * The charge (same delta, "charged by the same attribution the staleness
  * report uses"): per-vessel stale-entry counts, so the queue's evidence and
