@@ -1,0 +1,16 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.fcon-tech/portolan",
+  "description": "Portolan: an MCP server that charts codebases - Chart store, Harbor expeditions, Chart Room.",
+  "version": "0.4.5",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@fcon-tech/portolan",
+      "version": "0.4.5",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

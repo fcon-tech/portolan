@@ -12,6 +12,8 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          bun install --frozen-lockfile
           (cd core && bun install --frozen-lockfile)
           (cd acceptance && bun install --frozen-lockfile)
 
@@ -42,3 +45,70 @@ jobs:
 
       - name: Leak gate
         run: ./scripts/leak-gate.sh
+
+  # Task 3.2 (distribution-pass): the committed server.json is the
+  # reviewable anchor of the MCP Registry entry — CI rejects a state where
+  # it is schema-invalid or its version drifted from @fcon-tech/portolan.
+  manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: "Install dependencies (root: ajv for the offline schema check)"
+        run: bun install --frozen-lockfile
+
+      - name: Registry manifest sync check
+        run: bun scripts/manifest-check.ts
+
+  # Task 4.1 (distribution-pass): publishing is authorized only by a grown
+  # @fcon-tech/portolan version on main, after the full verification run
+  # (`needs` = green CI, per spec). Push-to-main is a trusted context —
+  # only maintainers can push there — so no workflow_run indirection.
+  # No long-lived secrets: npm trusted publishing (OIDC) only, no NPM_TOKEN.
+  # Before the Governor's one-time setup (first manual release + trusted
+  # publisher config, see the change's governor-runbook.md) the package
+  # does not exist on npm; the gate detects the 404, reports BLOCKED naming
+  # the missing step, and exits nonzero without attempting a publish.
+  publish:
+    needs: [verify, manifest]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # npm trusted publishing (OIDC)
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # fetch-depth 2 keeps first-parent history: on a merge commit HEAD^
+          # is the pre-merge main tip, so the version diff is exactly what
+          # the merge introduced.
+          fetch-depth: 2
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: "Install dependencies (root: ajv for the offline schema check)"
+        run: bun install --frozen-lockfile
+
+      - name: Gate (publish / skip / blocked)
+        run: bun scripts/publish-gate.ts
+        id: gate
+
+      # Reached only when the gate printed "publish <version>": the version
+      # grew and the package already exists on npm (trusted publisher
+      # configured). npm >= 11.5.1 on Node 22 is required for OIDC publish.
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.decision == 'publish'
+        with:
+          node-version: 22
+
+      - name: Install npm with trusted-publishing support
+        if: steps.gate.outputs.decision == 'publish'
+        run: npm install -g npm@11.5.1
+
+      - name: Publish to npm (OIDC, no secrets)
+        if: steps.gate.outputs.decision == 'publish'
+        run: npm publish

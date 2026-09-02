@@ -1,0 +1,78 @@
+/**
+ * Registry-manifest sync check — openspec/changes/distribution-pass
+ * ("The registry manifest is committed and version-synced"), tasks 3.1/3.2.
+ * These tests cover the check LOGIC only (CI wiring is task 3.2's workflow
+ * level, not a unit test):
+ *
+ * - "A synced manifest passes": equal versions → ok.
+ * - "A drifted manifest is caught": differing versions → not ok, naming
+ *   both versions; malformed manifest JSON → validation error.
+ *
+ * The check module (scripts/manifest-check.ts) does not exist yet
+ * — RED until task 3.1. The official MCP Registry schema arrives from task
+ * 1.1 research; until then the schema path is a named constant with an
+ * explicit NOT-WRITTEN-YET marker and schema validation against the real
+ * schema is marked skip ("awaiting task 1.1").
+ */
+import { test, expect } from "bun:test";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+// NOT-WRITTEN-YET: created by task 3.1 (scripts/manifest-check.ts).
+import {
+  compareVersions,
+  comparePackageEntryVersions,
+  validateManifest,
+  SERVER_MANIFEST,
+} from "./manifest-check";
+
+const REPO_ROOT = join(import.meta.dir, "..");
+
+// "A drifted manifest is caught" — internal packages[] drift (socratic finding 3)
+test("a drifted packages[] entry inside server.json is caught", () => {
+  const drifted = comparePackageEntryVersions({
+    version: "0.4.5",
+    packages: [{ version: "0.4.4" }],
+  });
+  expect(drifted.ok).toBe(false);
+  expect(drifted.message).toContain("0.4.5");
+  expect(drifted.message).toContain("0.4.4");
+  const synced = comparePackageEntryVersions({
+    version: "0.4.5",
+    packages: [{ version: "0.4.5" }],
+  });
+  expect(synced.ok).toBe(true);
+});
+
+test("a synced manifest passes: equal versions are ok", () => {
+  const result = compareVersions("0.4.4", "0.4.4");
+  expect(result.ok).toBe(true);
+});
+
+test("a drifted manifest is caught: the mismatch names both versions", () => {
+  const result = compareVersions("0.4.4", "0.4.3");
+  expect(result.ok).toBe(false);
+  expect(result.message).toContain("0.4.4");
+  expect(result.message).toContain("0.4.3");
+});
+
+test("a malformed manifest fails validation", () => {
+  const errors = validateManifest("this is { not json");
+  expect(errors.length).toBeGreaterThan(0);
+});
+
+test("validateManifest accepts a minimal well-formed manifest object", () => {
+  // The official schema requires description too, so the fixture carries one.
+  const errors = validateManifest(
+    JSON.stringify({ name: "portolan/server", description: "x", version: "0.4.4" }),
+  );
+  expect(errors).toEqual([]);
+});
+
+test("the committed server.json validates against the official registry schema", () => {
+  // Schema bundled from task 1.1 primaries; manifest committed by task 3.1.
+  const schemaPath = join(REPO_ROOT, "scripts", "mcp-registry.schema.json");
+  expect(existsSync(schemaPath)).toBe(true);
+  expect(existsSync(SERVER_MANIFEST)).toBe(true);
+  const errors = validateManifest(SERVER_MANIFEST);
+  expect(errors).toEqual([]);
+});

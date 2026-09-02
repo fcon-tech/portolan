@@ -46,10 +46,25 @@ function openCodeLaunch(config: Record<string, unknown>): { command: string; arg
   const mcp = config.mcp as Record<string, { type: string; command: string[] }>;
   const entry = mcp.portolan;
   expect(entry.type).toBe("local");
-  expect(entry.command.length).toBe(4);
-  expect(entry.command[2]).toBe("--target");
+  // Task 5.2: the line resolves the published package — no repo path.
+  expect(entry.command.slice(0, 6)).toEqual([
+    "bunx",
+    "--package",
+    "@fcon-tech/portolan",
+    "portolan",
+    "serve",
+    "--target",
+  ]);
   return { command: entry.command[0]!, args: entry.command.slice(1) };
 }
+
+/**
+ * The live bunx launch exercises the actually-published package on the
+ * registry — remote code execution by definition, so it is strictly opt-in:
+ * set PORTOLAN_LIVE_BUNX=1 to run it. Everything else in this file (vector
+ * shape, shims, JSONC surgery, AGENTS.md block) runs offline on every run.
+ */
+const liveBunx = process.env.PORTOLAN_LIVE_BUNX === "1";
 
 /** What one launch observes: the full tool list plus two read-only results. */
 interface Observation {
@@ -86,12 +101,14 @@ async function observe(
   return observation!;
 }
 
-test("the opencode adapter's installed launch line lists the full served toolset", async () => {
-  const province = makeProvince();
-  const { config } = installOpencode(province);
-  const launch = openCodeLaunch(config);
-  // The config's launch line is bound to the province it was installed for.
-  expect(launch.args[2]).toBe(province);
+test.skipIf(!liveBunx)(
+  "the opencode adapter's installed bunx launch line lists the full served toolset (PORTOLAN_LIVE_BUNX=1: runs the published package)",
+  async () => {
+    const province = makeProvince();
+    const { config } = installOpencode(province);
+    const launch = openCodeLaunch(config);
+    // The config's launch line is bound to the province it was installed for.
+    expect(launch.args[5]).toBe(province);
   const observation = await observe(launch, province, {
     manifests: readManifest(province, "package.json"),
     anchorSounding: soundAnchor(province, { anchor: { type: "file", path: "src/cart.ts", line: 4 } }),
@@ -200,7 +217,10 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
   expect(blockMatch).not.toBeNull();
   const portolan = JSON.parse(blockMatch![1]!) as { type: string; command: string[]; enabled: boolean };
   expect(portolan.type).toBe("local");
-  expect(portolan.command.length).toBe(4);
+  // bunx --package @fcon-tech/portolan portolan serve --target <province>
+  expect(portolan.command.length).toBe(7);
+  expect(portolan.command[0]).toBe("bunx");
+  expect(portolan.command.at(-2)).toBe("--target");
   expect(portolan.enabled).toBe(true);
   // Sibling keys survive: extract web-reader's line the same way (the
   // fixture's trailing commas are legal JSONC, not legal JSON).
@@ -216,7 +236,10 @@ test("the opencode installer preserves comments and sibling keys in a JSONC conf
   );
   expect(rerun.status).toBe(0);
   const after = readFileSync(configPath, "utf8");
-  expect((after.match(/"portolan"/g) ?? []).length).toBe(1);
+  // Idempotent: a second install does not duplicate the block. Count the
+  // key, not bare "portolan": the bunx launch line itself contains the
+  // string "portolan" (the subcommand).
+  expect((after.match(/"portolan":/g) ?? []).length).toBe(1);
 
   rmSync(sandbox, { recursive: true, force: true });
 });
@@ -287,10 +310,11 @@ test("the installer writes an idempotent harbor block into the province AGENTS.m
   rmSync(sandbox, { recursive: true, force: true });
 });
 
-test("the harbor block names the skill relatively inside the repo — no machine paths", () => {
-  // A province inside the checkout (the repo charting itself) must get a
-  // repo-relative skill pointer: the AGENTS.md may be published as-is.
-  const sandbox = mkdtempSync(join(REPO_ROOT, "core", "src", "server", "agents-rel-"));
+test("the harbor block is path-free — it names the skill, not a filesystem location", () => {
+  // The skill is delivered by copy into the harness's skills directory
+  // (task 5.1), so the AGENTS.md block names the skill instead of pathing to
+  // it — the block carries no repo-relative or machine path anywhere.
+  const sandbox = mkdtempSync(join(tmpdir(), "portolan-agents-rel-"));
   try {
     const run = spawnSync(
       process.execPath,
@@ -299,7 +323,8 @@ test("the harbor block names the skill relatively inside the repo — no machine
     );
     expect(run.status).toBe(0);
     const agents = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
-    expect(agents).toContain("skill/SKILL.md");
+    expect(agents).toContain("portolan-expedition");
+    expect(agents).not.toContain("skill/SKILL.md");
     expect(agents).not.toContain(REPO_ROOT);
     expect(agents).not.toMatch(/\/home\/|\/Users\//);
   } finally {
