@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.2 — 2026-09-02
+
+Verify-first made explicit (openspec change `verify-first`): the
+`process-fabric` cycle normalized a silent TDD skip — no spec deltas meant
+no test-writer and no red step, with the skip living only in task reports.
+The protocol now owns the discipline. No product behavior changes; no core
+code touched.
+
+- **The rule** (AGENTS.md, one line): verification is written before the
+  work, and a skipped test-first pass is a recorded decision in the task
+  report — what was skipped, why, what covers it instead — not a default.
+- **The procedure** (`docs/workflow.md` J4): tasks with spec deltas get
+  failing acceptance tests from those deltas before implementation
+  (test-writer, then implementer); tasks without deltas restate their
+  verify line as checks run before the work — red where the work is
+  absent. The change's own task reports are the first exemplars of the
+  recorded-skip shape.
+
 ## 0.4.1 — 2026-09-02
 
 The operating protocol assembled (openspec change `process-fabric`): the
