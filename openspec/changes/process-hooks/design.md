@@ -78,6 +78,30 @@ their evidence are in proposal.md — Why. The Governor's decisions
   batteries, skip-record shape checks) — the existing deferral ledger
   stands; a hook gets built when its failure happens, not before.
 
+## Verify-stage record (task 4.2)
+
+- **Whole-change review** (code-reviewer, 2026-09-02): Spec PASS, Quality
+  CHANGES_REQUESTED → fixed. Its Importants: the unticked 4.1 (bookkeeping
+  drift — ticked), and commit d1a80f3 typed `docs(hooks)` while changing
+  script behavior (message amended to `fix(hooks)`). Minors fixed: the
+  proposal's unmet conditional now states the supersession; lib.sh's
+  comment no longer oversells precedence; leak-gate.sh's signature
+  assembly deduplicated (one `print_sigs`, two consumers — the socratic's
+  stdout variant); workflow.md honesty note added and framing corrected;
+  report wording fixed.
+- **Socratic pass** (Mode B, 2026-09-02): verdict SIMPLIFY-FIRST — two
+  one-line edits (the workflow.md claim must match FALLBACK PENDING; tick
+  4.1), both applied, plus the `--print-patterns` stdout simplification.
+  Its "not candidates" audit (lib.sh, config shape, buildBrief split) kept
+  as-is.
+- **Accepted debts, recorded**: leak-stamp's JSON escaping covers
+  backslash and quote only — a control character in a path discards the
+  warning (soft by consequence); the lib.sh grep fallback cannot parse
+  escape sequences and returns payload-position precedence, not jq's —
+  soft miss at worst; H1 warns on untracked scratch files too.
+- **Deferral added**: H1 scratch-file noise — trigger: routine false
+  warnings on scratch files → add a tracked-ness check before the grep.
+
 ## Open Questions
 
 - None — the spike answers the mechanical unknowns (loading, cwd, payload)

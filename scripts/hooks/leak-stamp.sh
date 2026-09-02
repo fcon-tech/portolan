@@ -22,11 +22,9 @@ case $path in
 esac
 [ -f "$path" ] || exit 0
 
-patterns=$(mktemp) || exit 0
-trap 'rm -f "$patterns"' EXIT
-sh "$root/scripts/leak-gate.sh" --print-patterns "$patterns" || exit 0
-[ -s "$patterns" ] || exit 0
-hits=$(grep -nIF -f "$patterns" -- "$path") || exit 0
+patterns=$(sh "$root/scripts/leak-gate.sh" --print-patterns) || exit 0
+[ -n "$patterns" ] || exit 0
+hits=$(printf '%s\n' "$patterns" | grep -nIF -f - -- "$path") || exit 0
 [ -n "$hits" ] || exit 0
 lines=$(printf '%s\n' "$hits" | cut -d: -f1 | paste -sd, -)
 path_esc=$(printf '%s' "$path" | sed 's/\\/\\\\/g; s/"/\\"/g')

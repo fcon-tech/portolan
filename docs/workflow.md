@@ -60,11 +60,15 @@ watch (auto-repair on a scheduler)".
 
 ## Hooks — guards at the moment of the event
 
-Three soft hooks remind at the moment of the event — H1 and H2 when a file is written, H3 at session start; the rules they serve stay
+Three soft hooks remind at the moment of the event — H1 after an
+Edit/Write, H2 before one, H3 at session start; the rules they serve stay
 owned where this page says. Wiring: the tracked `.zcode/config.json`;
-scripts: `scripts/hooks/`. This is the soft phase — a hook warns, it never
-blocks (no exit 2), and CI stays the final bar. Escalation happens only on a
-recorded trigger, never by default.
+scripts: `scripts/hooks/`. Honesty note: live hook loading is not yet
+observed — the wiring is inert if the harness never loads it, and the
+process-hooks change reports carry the spike checklist and the fallback.
+This is the soft phase — a hook warns, it never blocks (no exit 2), and CI
+stays the final bar. Escalation happens only on a recorded trigger, never
+by default.
 
 - `scripts/hooks/leak-stamp.sh` serves the leak-gate rule (Verification):
   after an Edit/Write it flags the touched file when it carries a machine

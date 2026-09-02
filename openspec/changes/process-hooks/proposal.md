@@ -12,7 +12,9 @@ briefing, spike before wiring.
 ## What Changes
 
 - A tracked `.zcode/config.json` enabling workspace hooks (`hooks.enabled:
-  true`) — after the spike confirms loading, cwd, and payload shape.
+  true`) — the spike could not confirm loading from inside one session, so
+  this lands under design D3's pending posture: inert if the harness never
+  loads it, live confirmation is the spike's next-session checklist.
 - **H1 leak-stamp** (`PostToolUse`, matcher `Edit|Write`, soft): scans the
   touched file for leak-gate signatures, warns with the file and line —
   the same check that caught nothing until review in `process-fabric`.

@@ -16,9 +16,9 @@ hook_file_path() {
     [ "$_path" = 'null' ] && _path=''
   fi
   if [ -z "$_path" ]; then
-    # Same key set as the jq branch, oldest format first: "file_path" is a
-    # substring of nothing else we probe, and '"path"' cannot match inside
-    # '"file_path"' (the quote anchors differ). Only \" unescaping — a bare
+    # Same key set as the jq branch; the fallback returns whichever key
+    # appears first in payload position (jq's precedence is not
+    # reproduced — a soft miss at worst). Only \" unescaping: a bare
     # backslash strip would mangle doubled backslashes.
     _path=$(printf '%s' "$_payload" \
       | grep -o -e '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' -e '"path"[[:space:]]*:[[:space:]]*"[^"]*"' \

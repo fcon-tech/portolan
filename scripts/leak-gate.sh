@@ -7,20 +7,17 @@
 # assembled so this file carries no literal for itself to flag.
 home_sig="/$(printf %s ho)me/"
 users_sig="/$(printf %s Use)rs/"
-# --print-patterns <file>: write the signatures to <file> (one per line) and
-# exit without scanning. This file is the single home of the signature list;
-# the H1 leak-stamp hook (scripts/hooks/leak-stamp.sh) reuses it for the one
-# touched file instead of copying the list anywhere.
+# --print-patterns: write the signatures to stdout and exit without
+# scanning. This file is the single home of the signature list (one
+# assemble step, two consumers: this gate's scan and the H1 leak-stamp
+# hook, which greps the one touched file instead of copying the list).
+print_sigs() {
+  printf '%s\n' "$home_sig"
+  printf '%s\n' "$users_sig"
+  if [ -n "${USER:-}" ]; then printf '/%s/\n' "$USER"; fi
+}
 if [ "${1:-}" = "--print-patterns" ]; then
-  if [ -z "${2:-}" ]; then
-    printf 'usage: leak-gate.sh --print-patterns <file>\n' >&2
-    exit 64
-  fi
-  {
-    printf '%s\n' "$home_sig"
-    printf '%s\n' "$users_sig"
-    if [ -n "${USER:-}" ]; then printf '/%s/\n' "$USER"; fi
-  } > "$2"
+  print_sigs
   exit 0
 fi
 # The username is a leak signature too (scripts/demo-refresh.sh already
@@ -31,8 +28,7 @@ fi
 # file so the literals never appear on this script's own command line.
 patterns=$(mktemp)
 trap 'rm -f "$patterns"' EXIT
-printf '%s\n%s\n' "$home_sig" "$users_sig" > "$patterns"
-if [ -n "${USER:-}" ]; then printf '/%s/\n' "$USER" >> "$patterns"; fi
+print_sigs > "$patterns"
 leaked=$(git ls-files -z | xargs -0 grep -lIF -f "$patterns" 2>/dev/null)
 if [ -n "$leaked" ]; then
   printf 'machine home paths leaked into tracked files:\n%s\n' "$leaked" >&2
