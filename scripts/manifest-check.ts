@@ -22,7 +22,7 @@ import { fileURLToPath } from "node:url";
 import Ajv from "ajv";
 
 const MODULE_DIR = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = join(MODULE_DIR, "..", "..", "..");
+const REPO_ROOT = join(MODULE_DIR, "..");
 
 /** The committed registry manifest at the repo root. */
 export const SERVER_MANIFEST = join(REPO_ROOT, "server.json");
@@ -43,6 +43,27 @@ export function compareVersions(pkg: string, manifest: string): CheckResult {
   return {
     ok: false,
     message: `version drift: package is ${pkg}, server.json is ${manifest}`,
+  };
+}
+
+/**
+ * The manifest's own `packages[].version` entries must equal the
+ * top-level manifest version — a release-prep commit that bumps one and
+ * forgets the other would otherwise sail through the root-version gate.
+ */
+export function comparePackageEntryVersions(
+  manifest: { version: string; packages?: { version?: string }[] },
+): CheckResult {
+  const drifted = (manifest.packages ?? [])
+    .map((p, i) => ({ i, v: p.version }))
+    .filter((p) => p.v !== undefined && p.v !== manifest.version);
+  if (drifted.length === 0) {
+    return { ok: true, message: `package entries in sync: ${manifest.version}` };
+  }
+  const [first] = drifted;
+  return {
+    ok: false,
+    message: `version drift inside server.json: manifest is ${manifest.version}, packages[${first.i}] is ${first.v}`,
   };
 }
 
@@ -80,7 +101,7 @@ export function validateManifest(textOrPath: string): string[] {
 }
 
 /**
- * CLI entry (task 3.2 CI gate): `bun core/src/release/manifest-check.ts`.
+ * CLI entry (task 3.2 CI gate): `bun scripts/manifest-check.ts`.
  * Exit 0 = manifest schema-valid and version-synced with the root package;
  * exit 1 with each failure named = otherwise. Reads only embedded bytes.
  */
@@ -92,11 +113,14 @@ if (import.meta.main) {
   ).version;
   const manifest = JSON.parse(readFileSync(SERVER_MANIFEST, "utf8")) as {
     version: string;
+    packages?: { version?: string }[];
   };
   const sync = compareVersions(pkgVersion, manifest.version);
+  const internal = comparePackageEntryVersions(manifest);
   const failures = [
     ...validateManifest(SERVER_MANIFEST).map((e) => `server.json: ${e}`),
     ...(sync.ok ? [] : [sync.message]),
+    ...(internal.ok ? [] : [internal.message]),
   ];
   if (failures.length > 0) {
     for (const f of failures) console.error(`FAIL ${f}`);

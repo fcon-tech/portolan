@@ -54,4 +54,4 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Registry manifest sync check
-        run: bun core/src/release/manifest-check.ts
+        run: bun scripts/manifest-check.ts

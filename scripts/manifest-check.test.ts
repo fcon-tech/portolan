@@ -8,7 +8,7 @@
  * - "A drifted manifest is caught": differing versions → not ok, naming
  *   both versions; malformed manifest JSON → validation error.
  *
- * The check module (core/src/release/manifest-check.ts) does not exist yet
+ * The check module (scripts/manifest-check.ts) does not exist yet
  * — RED until task 3.1. The official MCP Registry schema arrives from task
  * 1.1 research; until then the schema path is a named constant with an
  * explicit NOT-WRITTEN-YET marker and schema validation against the real
@@ -17,10 +17,31 @@
 import { test, expect } from "bun:test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-// NOT-WRITTEN-YET: created by task 3.1 (core/src/release/manifest-check.ts).
-import { compareVersions, validateManifest, SERVER_MANIFEST } from "./manifest-check";
+// NOT-WRITTEN-YET: created by task 3.1 (scripts/manifest-check.ts).
+import {
+  compareVersions,
+  comparePackageEntryVersions,
+  validateManifest,
+  SERVER_MANIFEST,
+} from "./manifest-check";
 
-const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
+const REPO_ROOT = join(import.meta.dir, "..");
+
+// "A drifted manifest is caught" — internal packages[] drift (socratic finding 3)
+test("a drifted packages[] entry inside server.json is caught", () => {
+  const drifted = comparePackageEntryVersions({
+    version: "0.4.5",
+    packages: [{ version: "0.4.4" }],
+  });
+  expect(drifted.ok).toBe(false);
+  expect(drifted.message).toContain("0.4.5");
+  expect(drifted.message).toContain("0.4.4");
+  const synced = comparePackageEntryVersions({
+    version: "0.4.5",
+    packages: [{ version: "0.4.5" }],
+  });
+  expect(synced.ok).toBe(true);
+});
 
 test("a synced manifest passes: equal versions are ok", () => {
   const result = compareVersions("0.4.4", "0.4.4");

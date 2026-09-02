@@ -10,7 +10,7 @@
 
 ## 3. Registry manifest and CI sync gate
 
-- [x] 3.1 Commit `server.json` at repo root per the schema from task 1.1 (name per the registry convention, version = `@fcon-tech/portolan` version). Verify: manifest validates against the official schema with a local check script. DONE: server.json at root (io.github.fcon-tech/portolan), official schema bundled at scripts/mcp-registry.schema.json; validator = core/src/release/manifest-check.ts; documented relaxation: `description` dropped from required (test contract); 5/5 green.
+- [x] 3.1 Commit `server.json` at repo root per the schema from task 1.1 (name per the registry convention, version = `@fcon-tech/portolan` version). Verify: manifest validates against the official schema with a local check script. DONE: server.json at root (io.github.fcon-tech/portolan), official schema bundled at scripts/mcp-registry.schema.json; validator = scripts/manifest-check.ts (moved out of core/src — release tooling, not product; ajv is a devDependency only); official schema compiled verbatim — requires name/description/version, relaxes nothing; 6/6 green.
 - [x] 3.2 CI job: schema-validate `server.json` and fail on version drift from `core/package.json`. Verify: green run on a synced state; a forced drift in a scratch branch fails the job naming the mismatch. DONE: `manifest` CI job runs the check CLI; drift path verified locally (FAIL names both versions).
 
 ## 4. Publish gate

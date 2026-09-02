@@ -15,14 +15,15 @@ checked 2026-09-02 (design.md — Explore findings).
    ```
    bun install && npm pack && npm publish --access public
    ```
-   (npm ≥11.5.1 under Node ≥22.14.0 for the OIDC step; run from repo root
-   after merge of this change. `npm publish` warns about the missing
-   `license` field — the repo declares none; decide: add a LICENSE +
-   `license` field, or set `"license": "UNLICENSED"` honestly. This is
-   your call, not the agent's.)
+   The manual release uses your own `npm login` — no OIDC involved
+   (trusted publishing matters only for the later CI job). npm will
+   warn about the missing `license` field — decide BEFORE running: add a
+   LICENSE file + `license` field, or set `"license": "UNLICENSED"`
+   honestly. This is your call, not the agent's.
 3. In the package's npm settings → "Trusted Publisher": link
    github.com/fcon-tech/portolan, workflow `publish.yml`. (One trusted
-   publisher per package.)
+   publisher per package. The CI job's publish step runs Node 22 +
+   npm ≥11.5.1 on a GitHub-hosted runner — nothing for you to install.)
 
 Verify: `npm view @fcon-tech/portolan version` returns the published
 version.
@@ -31,9 +32,13 @@ version.
 
 1. Confirm you are an **Owner** of the GitHub org `fcon-tech` (required
    for `io.github.fcon-tech/*` names).
-2. `npx mcp-publisher@latest init` (fills from server.json), then
-   `npx mcp-publisher@latest login github` (device flow as the org
-   owner), then `npx mcp-publisher@latest publish`.
+2. Install `mcp-publisher` from the official registry repo only —
+   follow the installation section of
+   github.com/modelcontextprotocol/registry (README). Do NOT
+   `npx mcp-publisher`: the npm package of that name is maintained by a
+   third party (verified 2026-09-02, `measured`). Then, as the org
+   owner: `mcp-publisher login github` (device flow), then
+   `mcp-publisher publish`.
    - Domain-based alternatives (DNS TXT on the apex, or
      `/.well-known/mcp-registry-auth`) exist if you prefer not to use
      GitHub OAuth.

@@ -131,6 +131,15 @@ Non-Goals:
 
 ## Deferrals (nothing silent)
 
+- The registry-based install is not end-to-end proven: running the
+  published package via bunx is `not_assessed` until `@fcon-tech/portolan`
+  exists on npm (opt-in `PORTOLAN_LIVE_BUNX` test; task 6.2 evidence
+  closes it). Until then the install scenarios stand `blocked`, not ready.
+- The CI publish path is unit-tested only; the first real version-bump
+  merge after the Governor's setup is its live exercise.
+- `scripts/manifest-check.ts` is release tooling; the check runs only
+  from a checkout/CI (the published tree excludes it). Trigger to
+  revisit: any attempt to run it from an installed package.
 - Plugin marketplaces and pi/omp registry listings — next cycle with its
   own explore. Trigger: a harness maintainer asks, or the marketplace
   becomes the install bottleneck.
