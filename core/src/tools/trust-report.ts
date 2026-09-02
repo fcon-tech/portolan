@@ -14,9 +14,10 @@
  * the only write the report may cause (inside `.portolan/`, per the
  * refresh's own contract). No receipt is appended.
  */
-import type { Anchor, EntryKind, IndexedEntry, TrustLabel } from "../types";
+import type { Anchor, EntryKind, TrustLabel } from "../types";
 import { ENTRY_KINDS, TRUST_LABELS } from "../types";
 import { readChart } from "../chart-store";
+import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { refreshStaleness } from "../staleness";
 import { readReceipts, type Receipt } from "./log";
 import { SoundingError, soundAnchor } from "./sound";
@@ -64,7 +65,7 @@ export interface TrustReport {
   trust: Record<TrustLabel, number>;
   /** Chart entries per kind; all six kinds stated, zero-filled. */
   kinds: Record<EntryKind, number>;
-  /** Pending-correction vessels, read from the chart's stale flags after the refresh. */
+  /** Pending-correction vessels, in the repair rank's order (../fan-in.ts), read from the chart's stale flags after the refresh. */
   staleness: { pendingVessels: PendingVessel[] };
   /** Live re-sounding of every chart anchor. */
   anchors: {
@@ -83,27 +84,6 @@ export interface TrustReport {
   log: { receipts: number; lastReceipt: Receipt | null };
   /** Per-tool invocation facts for every mandated query tool, zero-filled. */
   adoption: { tools: Record<MandatedQueryTool, ToolAdoption> };
-}
-
-/**
- * Charge one stale entry to the pending-correction vessel(s) it hangs from,
- * read from the index's own stale flags. The refresh recomputes those flags
- * — a drifted vessel stays pending, a reverted one clears — so attribution
- * must come from the chart as it stands now, never from a refresh delta.
- * A pending fairway
- * drags on both vessels it runs between: once drift is reverted there is no
- * telling which endpoint moved, and over-attribution is the honest direction.
- */
-function chargeStaleEntry(entry: IndexedEntry, pending: Map<string, number>): void {
-  if (!entry.stale) return;
-  const bump = (vesselId: string): void => {
-    pending.set(vesselId, (pending.get(vesselId) ?? 0) + 1);
-  };
-  if (entry.kind === "vessel") bump(entry.id);
-  else if (entry.kind === "fairway") {
-    bump(entry.from);
-    bump(entry.to);
-  } else bump(entry.vessel);
 }
 
 /**
@@ -132,11 +112,16 @@ export function trustReport(targetRoot: string): TrustReport {
     kinds[entry.kind] += 1;
   }
 
-  const pending = new Map<string, number>();
-  for (const entry of entries) chargeStaleEntry(entry, pending);
-  const pendingVessels = [...pending.entries()]
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([id, count]) => ({ id, entries: count }));
+  // The queue's voice (openspec/changes/resurvey-queue/specs/tools/spec.md):
+  // pending vessels list in the repair rank's order — fan-in desc, vessel id
+  // — while membership stays this report's own attribution: a stale fairway
+  // charges both endpoints, so the list names vessels the repair queue does
+  // not.
+  const pending = chargeStaleEntries(entries);
+  const fanIn = vesselFanIn(entries);
+  const pendingVessels = [...pending.keys()]
+    .sort((a, b) => compareVesselRank(a, b, fanIn))
+    .map((id) => ({ id, entries: pending.get(id)! }));
 
   const refuted: (RefutedAnchor & { index: number })[] = [];
   let confirmed = 0;

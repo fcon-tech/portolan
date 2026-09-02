@@ -1,22 +1,29 @@
 /**
- * The resurvey queue's rank (openspec/changes/resurvey-queue/specs/harbor/spec.md,
- * "The repair queue is fan-in ranked"): direct cross-vessel charted
- * fan-in, ties broken by vessel id. The harbor queue orders its repair rows
- * by it and trust.report orders its pending-vessel list by the same rank —
- * one list, one order; this module is the single definition both quote.
+ * The two per-vessel facts the harbor queue and trust.report both quote, in
+ * one leaf so one definition serves both.
  *
- * Deliberately a second definition beside chart.neighborhood's, not a
- * unification of it: the neighborhood counts every charted incoming fairway
- * per entry, while this rank counts per vessel and excludes a vessel's
- * fairways to itself — internal traffic says nothing about how much of the
- * rest of the chart hangs from the vessel. The divergence is pinned by the
- * spec; the helper stays a leaf with exactly those two importers.
+ * The rank (openspec/changes/resurvey-queue/specs/harbor/spec.md, "The
+ * repair queue is fan-in ranked"): direct cross-vessel charted fan-in, ties
+ * broken by vessel id. The harbor queue orders its repair rows by it and
+ * trust.report orders its pending-vessel list by the same rank — one list,
+ * one order.
+ *
+ * The charge (same delta, "charged by the same attribution the staleness
+ * report uses"): per-vessel stale-entry counts, so the queue's evidence and
+ * scope name the same number the report's staleness section does.
+ *
+ * The rank is deliberately a second definition beside chart.neighborhood's,
+ * not a unification of it: the neighborhood counts every charted incoming
+ * fairway per entry, while this rank counts per vessel and excludes a
+ * vessel's fairways to itself — internal traffic says nothing about how much
+ * of the rest of the chart hangs from the vessel. The divergence is pinned
+ * by the spec; the leaf keeps exactly those two importers.
  *
  * Arithmetic over charted bytes only: no timestamps and no judgment
  * participate, so two computations over an unchanged chart return the same
  * counts and, sorted by the compare below, the same order.
  */
-import type { ChartEntry } from "./types";
+import type { ChartEntry, IndexedEntry } from "./types";
 
 /**
  * Per-vessel direct cross-vessel charted fan-in: the count of charted
@@ -47,4 +54,31 @@ export function compareVesselRank(a: string, b: string, fanIn: Map<string, numbe
   const fb = fanIn.get(b) ?? 0;
   if (fa !== fb) return fb - fa;
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * Charge every stale entry to the pending-correction vessel(s) it hangs
+ * from, read from the index's own stale flags: a vessel entry charges its
+ * vessel, a stale fairway charges BOTH the vessels it runs between, and
+ * every other entry charges its vessel. The refresh recomputes those flags
+ * — a drifted vessel stays pending, a reverted one clears — so attribution
+ * must come from the chart as it stands now, never from a refresh delta.
+ * A pending fairway drags on both its endpoints: once drift is reverted
+ * there is no telling which endpoint moved, and over-attribution is the
+ * honest direction, so an endpoint that is itself fresh is charged too.
+ */
+export function chargeStaleEntries(entries: ReadonlyArray<IndexedEntry>): Map<string, number> {
+  const charged = new Map<string, number>();
+  for (const entry of entries) {
+    if (!entry.stale) continue;
+    const bump = (vesselId: string): void => {
+      charged.set(vesselId, (charged.get(vesselId) ?? 0) + 1);
+    };
+    if (entry.kind === "vessel") bump(entry.id);
+    else if (entry.kind === "fairway") {
+      bump(entry.from);
+      bump(entry.to);
+    } else bump(entry.vessel);
+  }
+  return charged;
 }

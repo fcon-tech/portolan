@@ -36,7 +36,7 @@ import type { Anchor, IndexedEntry, VesselEntry } from "../types";
 import { resolveInsideTarget } from "../perimeter";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
-import { compareVesselRank, vesselFanIn } from "../fan-in";
+import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { HarborError } from "./errors";
 import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./fingerprint";
 import {
@@ -143,35 +143,11 @@ function soundableAnchorUnder(targetRoot: string, rel: string): Anchor | undefin
 }
 
 /**
- * The report's stale-entry attribution (`chargeStaleEntry` in
- * ../tools/trust-report.ts), quoted here so the queue and the report quote
- * one number for one vessel: a vessel entry charges its vessel, a stale
- * fairway charges BOTH endpoints — once drift is reverted there is no
- * telling which endpoint moved, and over-attribution is the honest
- * direction, so an endpoint that is itself fresh is charged too — and every
- * other entry charges its vessel.
- */
-function chargeStaleEntries(entries: IndexedEntry[]): Map<string, number> {
-  const charged = new Map<string, number>();
-  for (const entry of entries) {
-    if (!entry.stale) continue;
-    const bump = (vesselId: string): void => {
-      charged.set(vesselId, (charged.get(vesselId) ?? 0) + 1);
-    };
-    if (entry.kind === "vessel") bump(entry.id);
-    else if (entry.kind === "fairway") {
-      bump(entry.from);
-      bump(entry.to);
-    } else bump(entry.vessel);
-  }
-  return charged;
-}
-
-/**
  * Repair proposals: one per pending-correction vessel, in vessel-id order
  * (the queue sort below applies the shared fan-in rank). The evidence key
- * carries the stale-entry count charged to that vessel, so a refusal holds
- * while the drift is unchanged and reopens when the count changes.
+ * carries the stale-entry count charged to that vessel (../fan-in.ts, the
+ * report's own attribution rule), so a refusal holds while the drift is
+ * unchanged and reopens when the count changes.
  */
 function repairProposals(targetRoot: string, entries: IndexedEntry[]): Proposal[] {
   const charged = chargeStaleEntries(entries);
