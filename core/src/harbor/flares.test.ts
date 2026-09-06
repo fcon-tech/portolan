@@ -12,15 +12,22 @@
  * flare's receipt closes it, and it proposes nothing further; a decision
  * recorded before the flare's receipt closes nothing.
  *
- * Pinned queue contract (core/src/harbor/proposals.ts, the fourth input):
+ * Pinned queue contract (core/src/harbor/proposals.ts, the fourth input;
+ * amended 2026-09-06, code-review finding — see design.md D1's dated
+ * amendment):
  *
  *   Open flares are read from the ship's log (meta.kind "flare", via
  *   openFlares in ./charter) and contribute one repair row per named
  *   vessel, per-vessel keyed like every repair row:
- *     flare alone:               evidence = [<flare.reason>]
+ *     flare alone:               evidence = ["vessel/<id>", <reason>]
+ *                                (vessel-scoped, count-less — two vessels'
+ *                                identical reason texts never share a
+ *                                fingerprint, so declining one vessel's
+ *                                row cannot close another vessel's flare)
  *     drift + flare, one vessel: the SINGLE row folds both evidences
  *                                (["vessel/<id>#<count>", <reason>])
- *     several flares, one vessel: one row, every reason carried
+ *     several flares, one vessel: one row, the vessel key plus every
+ *                                reason carried
  *   The kind stays "repair" — flare rows rank, take decisions, and (night
  *   watch) auto-execute like any repair; no separate policy, no new tool.
  *   Closure is arithmetic over the harbor history: a decision postdating
@@ -172,7 +179,9 @@ test("charter flare: a filed flare becomes a repair proposal for its vessel, cit
   expect(rows).toHaveLength(1); // one repair row for the one named vessel
   expect(rows[0]!.kind).toBe("repair"); // flare rows are repair rows, like any repair
   expect(rows[0]!.scope.vessels).toEqual(["lib"]);
-  expect(rows[0]!.evidence).toEqual([reason]); // the stated reason is the evidence
+  // The evidence is vessel-scoped: the count-less vessel key plus the stated
+  // reason — never the reasons alone.
+  expect(rows[0]!.evidence).toEqual(["vessel/lib", reason]);
   expect(rows[0]!.summary).toContain(reason);
   // Deterministic: the same flare computes the same row twice.
   expect(repairRows(target)[0]!.fingerprint).toBe(rows[0]!.fingerprint);
@@ -213,7 +222,8 @@ test("charter flare: several flares on one vessel fold into the single row carry
   const rows = repairRows(target);
   expect(rows).toHaveLength(1); // folded, not one row per flare
   expect(rows[0]!.scope.vessels).toEqual(["api"]);
-  expect(rows[0]!.evidence).toHaveLength(2);
+  expect(rows[0]!.evidence).toHaveLength(3); // the vessel key plus every reason
+  expect(rows[0]!.evidence).toContain("vessel/api");
   expect(rows[0]!.evidence).toContain("the shared fairway has no measured anchor");
   expect(rows[0]!.evidence).toContain("api's behavior line is stale");
 });
@@ -277,11 +287,38 @@ test("charter flare: an accepted decision closes the flare too — acceptance is
   fileFlare(target, "r1", "lib", reason);
 
   const [row] = repairRows(target);
-  expect(row!.evidence).toEqual([reason]);
+  expect(row!.evidence).toEqual(["vessel/lib", reason]);
   decide(target, row!.fingerprint, "accepted");
   // An acceptance never filters a queue row — closure must remove the
   // flare's contribution, or the accepted row would recompute forever.
   expect(computeProposals(target).proposals).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// Code-review fix 2026-09-06 — flare-only evidence is vessel-scoped. Two
+// vessels' flare-only rows with identical reason text must never share a
+// fingerprint: declining one closed the other vessel's flare.
+// ---------------------------------------------------------------------------
+
+test("charter flare: declining one vessel's flare-only row never closes another vessel's flare", () => {
+  const dirs: Dirs = { api: "apps/api", lib: "packages/lib" };
+  const target = makeProvince(dirs);
+  writeChart(target, completeBase(dirs));
+  computeProposals(target); // still baseline
+  const reason = "the light cites a moved export"; // identical text on both vessels
+  fileFlare(target, "r1", "api", reason);
+  fileFlare(target, "r2", "lib", reason);
+
+  const rows = repairRows(target);
+  expect(rows).toHaveLength(2);
+  const apiRow = rows.find((r) => r.scope.vessels[0] === "api")!;
+  decide(target, apiRow.fingerprint, "declined");
+
+  // lib's row survives: the rows are vessel-scoped, so the decline closed
+  // only api's flare — never its twin on lib.
+  const after = repairRows(target);
+  expect(after.map((r) => r.scope.vessels)).toEqual([["lib"]]);
+  expect(after[0]!.evidence).toEqual(["vessel/lib", reason]);
 });
 
 // ---------------------------------------------------------------------------

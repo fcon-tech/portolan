@@ -164,12 +164,14 @@ const MAX_CANDIDATE_REASONS = 16;
  * The history records fingerprints, not vessels, so "for this vessel" is
  * decided by re-minting the fingerprints the proposal engine can actually
  * produce for the vessel: a repair row there carries the vessel's drift key
- * (`vessel/<id>#<stale-count>`, any count up to the current charge), plus
- * the reasons of whatever flares on the vessel were open when it was
- * decided — here, some subset of every reason ever filed on the vessel.
- * Any postdating decision whose fingerprint equals one of those candidates
- * closes the flare. A decision recorded before the flare's receipt closes
- * nothing, whatever it was about.
+ * (`vessel/<id>#<stale-count>`, any count up to the current charge), the
+ * count-less vessel key plus reasons (the vessel-scoped flare-only row),
+ * or — for rows minted before the 2026-09-06 vessel-scoping amendment —
+ * the reasons alone; plus the reasons of whatever flares on the vessel
+ * were open when it was decided — here, some subset of every reason ever
+ * filed on the vessel. Any postdating decision whose fingerprint equals
+ * one of those candidates closes the flare. A decision recorded before the
+ * flare's receipt closes nothing, whatever it was about.
  */
 export function flareClosed(
   flare: Flare,
@@ -184,7 +186,10 @@ export function flareClosed(
   const candidates = new Set<string>();
   for (let mask = 0; mask < (1 << reasons.length); mask++) {
     const keys = reasons.filter((_, i) => (mask & (1 << i)) !== 0);
-    if (keys.length > 0) candidates.add(proposalFingerprint("repair", keys));
+    if (keys.length > 0) {
+      candidates.add(proposalFingerprint("repair", keys));
+      candidates.add(proposalFingerprint("repair", [`vessel/${flare.vessel}`, ...keys]));
+    }
     for (let stale = 0; stale <= context.staleEntries; stale++) {
       candidates.add(proposalFingerprint("repair", [...keys, `vessel/${flare.vessel}#${stale}`]));
     }
@@ -233,18 +238,19 @@ export function repairRowRefused(
     }
   }
   // The row shapes a decline could have been recorded on: this row's own
-  // shape — its drift key at its own count, or its flare reasons alone —
-  // combined with every subset of the vessel's flare reasons. A keyed row
-  // never matches a keyless shape: a changed stale count is new evidence
-  // (the resurvey rule), and so is drift appearing at all.
+  // shape — its drift key at its own count, or the count-less vessel key
+  // plus its flare reasons (the flare-only row is vessel-scoped, so its
+  // fingerprint can never collide with another vessel's) — combined with
+  // every subset of the vessel's flare reasons. A keyed row never matches a
+  // keyless shape: a changed stale count is new evidence (the resurvey
+  // rule), and so is drift appearing at all.
   const shapeOf = new Map<string, string[]>();
   for (let mask = 0; mask < (1 << reasons.length); mask++) {
     const subset = reasons.filter((_, i) => (mask & (1 << i)) !== 0);
     const keys =
       row.staleEntries === undefined
-        ? subset
+        ? [`vessel/${row.vessel}`, ...subset]
         : [...subset, `vessel/${row.vessel}#${row.staleEntries}`];
-    if (keys.length === 0) continue;
     shapeOf.set(proposalFingerprint("repair", keys), subset);
   }
   for (const record of declined) {

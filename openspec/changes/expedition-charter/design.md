@@ -47,6 +47,13 @@ not a `flares.jsonl` state file: it would fork the truth the log already
 holds and need its own write path; closure-by-arithmetic keeps everything
 append-only.
 
+> **Amendment 2026-09-06 (code-review finding).** Flare-only rows carry a
+> count-less, vessel-scoped evidence key (`vessel/<id>`, distinct from the
+> drift key's `vessel/<id>#<count>` shape, which parsers must match
+> exactly): without it, two vessels' flare-only rows with identical reason
+> text shared one fingerprint, and declining one vessel's row closed the
+> other vessel's flare.
+
 **D2 — Charter is a receipt pair; overreach is one shared function.**
 Start receipt (`meta.kind: "charter"`, vessels and entries promised),
 outcome receipt at the end. Overreach = chart-write receipts whose touched

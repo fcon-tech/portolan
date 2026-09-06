@@ -14,7 +14,10 @@
  * 4. flares   — repair needs filed as ship's-log receipts by expeditions
  *               (openspec/changes/expedition-charter, design D1): every
  *               open flare contributes to the repair row of the vessel it
- *               names, its stated reason riding the evidence. Flare rows
+ *               names, its stated reason riding the evidence; a vessel
+ *               with open flares and no drift gets a flare-only row, its
+ *               evidence the count-less vessel key plus the stated reasons
+ *               (vessel-scoped, code-review fix 2026-09-06). Flare rows
  *               are repair rows for every purpose — same rank, same
  *               decisions, same night bound; no join layer, just a fold of
  *               the flare reasons onto the per-vessel row (filter plus
@@ -51,7 +54,7 @@ import { refreshStaleness } from "../staleness";
 import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { readReceipts } from "../tools/log";
 import { HarborError } from "./errors";
-import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./fingerprint";
+import { PROPOSAL_KINDS, driftEntryCount, proposalFingerprint, type ProposalKind } from "./fingerprint";
 import { flareClosed, openFlares, repairRowRefused, type Flare } from "./charter";
 import {
   DECISIONS,
@@ -215,13 +218,18 @@ function repairProposals(
     // A flare-only row: the vessel's charted paths still anchor it when they
     // sound (omitted, never faked, when they do not); the scope counts what
     // a re-survey would touch — the drift charge, zero on a still vessel.
+    // The evidence is vessel-scoped: the count-less vessel key plus the
+    // stated reasons, so two vessels' flare-only rows never share a
+    // fingerprint whatever their reason texts — declining one vessel's row
+    // must never close another vessel's flare (code-review fix 2026-09-06).
     const vessel = entries.find((e): e is IndexedVessel => e.kind === "vessel" && e.id === vesselId);
     const staleEntries = charged.get(vesselId) ?? 0;
+    const evidence = [`vessel/${vesselId}`, ...reasons];
     rows.set(vesselId, {
       kind: "repair" as const,
-      fingerprint: proposalFingerprint("repair", reasons),
+      fingerprint: proposalFingerprint("repair", evidence),
       summary: `open flare on vessel ${vesselId}: ${reasons.join("; ")}`,
-      evidence: reasons,
+      evidence,
       anchors:
         vessel === undefined
           ? []
@@ -388,13 +396,14 @@ export function computeProposals(
       if (declined.has(p.fingerprint)) return false;
       if (p.kind !== "repair") return true;
       const vessel = p.scope.vessels[0]!;
-      const driftKey = p.evidence.find((key) => key.startsWith(`vessel/${vessel}#`));
+      // The drift key is matched by its exact `vessel/<id>#<digits>` shape
+      // (./fingerprint, driftEntryCount): a free-text flare reason that
+      // merely begins with `vessel/<id>#` is not drift.
+      const driftKey = p.evidence.find((key) => driftEntryCount(key) !== undefined);
       return !repairRowRefused(
         {
           vessel,
-          ...(driftKey === undefined
-            ? {}
-            : { staleEntries: Number(driftKey.slice(driftKey.lastIndexOf("#") + 1)) }),
+          ...(driftKey === undefined ? {} : { staleEntries: driftEntryCount(driftKey) }),
           flareReasons: p.evidence.filter((key) => key !== driftKey),
           fingerprint: p.fingerprint,
         },
