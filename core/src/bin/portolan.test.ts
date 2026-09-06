@@ -4,7 +4,7 @@
  *
  * - "serve matches the in-repo server" / "A clean environment installs and
  *   runs": `portolan serve --target <province>` answers tools/list with the
- *   fourteen Portolan tool names (TOOL_NAMES from the registry — the same
+ *   fifteen Portolan tool names (TOOL_NAMES from the registry — the same
  *   list the repository-launched server serves).
  * - "The CLIs stay reachable": `portolan chartroom render --target …` and
  *   `portolan harbor propose --target … --format chat` route to the
@@ -58,7 +58,7 @@ function makeChartedProvince(): string {
 }
 
 // Scenario: serve matches the in-repo server / A clean environment installs and runs
-test("portolan serve answers tools/list with the fourteen Portolan tool names", async () => {
+test("portolan serve answers tools/list with the fifteen Portolan tool names", async () => {
   const target = makeChartedProvince();
   const transport = new StdioClientTransport({
     command: process.execPath,

@@ -243,7 +243,7 @@ labeled `unsurveyed`, never presented as an established fact.
 
 ## 10. Tool desk
 
-One MCP server over stdio, bound to the target root at launch. Fourteen tools:
+One MCP server over stdio, bound to the target root at launch. Fifteen tools:
 
 | Tool | Use |
 | --- | --- |
@@ -261,6 +261,7 @@ One MCP server over stdio, bound to the target root at launch. Fourteen tools:
 | `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province" or similar, in any language), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
 | `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, ship's-log tail; feeds the Sailing Directions |
 | `chart.neighborhood` | one vessel's neighborhood in one call: the charted fairways touching it (direction `in`/`out`/`both`, depth 1–3) with trust labels, anchors, and staleness, plus the touched vessels ranked by fan-in with their ports of entry; budgeted (`maxEdges`, `maxBytes`) and a budget cut is stated loudly; `verify: true` re-sounds every edge and names the refuted ones; read-only toward the Chart, and each call receipts itself in the ship's log |
+| `chart.export` | no input; the whole Chart as one self-describing adjacency document (format `portolan-adjacency`): every charted entry as a node or edge carrying its anchors, trust label, and staleness; byte-budgeted, and a cut is reported loudly naming the omitted vessels with their counts; read-only toward the Chart, and each call receipts itself in the ship's log |
 
 Call shapes (fields abbreviated to the ones that matter):
 
@@ -276,4 +277,5 @@ Call shapes (fields abbreviated to the ones that matter):
 { "tool": "expeditions.decide", "input": { "fingerprint": "64-hex from expeditions.propose", "decision": "accepted" } }
 { "tool": "trust.report", "input": {} }
 { "tool": "chart.neighborhood", "input": { "vessel": "api", "direction": "both", "depth": 1 } }
+{ "tool": "chart.export", "input": {} }
 ```
