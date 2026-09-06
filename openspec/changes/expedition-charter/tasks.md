@@ -16,6 +16,6 @@
 
 ## 4. Verification and wrap
 
-- [ ] 4.1 Full suite: `bun test`, `bunx tsc --noEmit` in `core/` and `acceptance/`, `openspec validate --specs --strict`, `bun run skill/verify/checks.ts`, `scripts/leak-gate.sh`. Verify: all green, failures named if any.
-- [ ] 4.2 End-to-end province trial on this repository: record a charter, fire a flare against a neighboring vessel, see the proposal in the queue, decide it, see the flare close — every step receipted. Verify: trial log pasted into the task report with receipt ids.
-- [ ] 4.3 Merge preparation: `@portolan/core` version bump and CHANGELOG entry drafted per standing rules. Verify: CHANGELOG names charter, flares, and the fourth queue input.
+- [x] 4.1 Full suite: `bun test`, `bunx tsc --noEmit` in `core/` and `acceptance/`, `openspec validate --specs --strict`, `bun run skill/verify/checks.ts`, `scripts/leak-gate.sh`. Verify: all green, failures named if any.
+- [x] 4.2 End-to-end province trial on this repository: record a charter, fire a flare against a neighboring vessel, see the proposal in the queue, decide it, see the flare close — every step receipted. Verify: trial log pasted into the task report with receipt ids.
+- [x] 4.3 Merge preparation: `@portolan/core` version bump and CHANGELOG entry drafted per standing rules. Verify: CHANGELOG names charter, flares, and the fourth queue input.
