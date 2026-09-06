@@ -17,6 +17,7 @@ import { symbols } from "../tools/symbols";
 import { readManifest } from "../tools/manifests";
 import { appendReceipt, readReceipt, readReceipts } from "../tools/log";
 import { neighborhood, NEIGHBORHOOD_CAPS, NEIGHBORHOOD_DEFAULTS, type NeighborhoodParams } from "../tools/neighborhood";
+import { chartExport, EXPORT_MAX_BYTES } from "../tools/export";
 import { soundAnchor, soundEdge } from "../tools/sound";
 import { trustReport } from "../tools/trust-report";
 import { computeProposals, decide } from "../harbor/proposals";
@@ -583,9 +584,40 @@ export const TOOL_TABLE: ToolSpec[] = [
       return response;
     },
   },
+  {
+    name: "chart.export",
+    description:
+      "Export the province's whole machine layer as one self-describing adjacency document (format " +
+      "portolan-adjacency, schema-versioned): every charted entry drawn as a node — the charted fields " +
+      "as-is plus staleness — or an edge (fairways: from/to, relation when charted), each carrying its " +
+      "anchors and trust label un-upgraded; no timestamps, no derived rollups, nothing a charted entry " +
+      `does not state. Byte-budgeted (${EXPORT_MAX_BYTES} bytes): an oversized chart truncates loudly, ` +
+      "naming every omitted vessel with its cut entry count. Read-only — the Chart is left byte-identical, " +
+      "staleness refreshed first (chart.read semantics), and each call appends exactly one ship's-log " +
+      "receipt. A province with no Chart is an honest error naming the absence, never a fabricated document.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    handler: (_args, ctx) => {
+      // The one write this call makes: exactly one ship's-log receipt, through
+      // the same append path log.append serves. A rejected call (no Chart) is
+      // thrown by the builder and never reaches this line, so a rejection
+      // leaves no receipt.
+      const doc = chartExport(ctx.targetRoot);
+      appendReceipt(ctx.targetRoot, {
+        command: "chart.export",
+        scope: "adjacency graph",
+        outcome:
+          `ok: ${doc.nodes.length} node${doc.nodes.length === 1 ? "" : "s"}, ` +
+          `${doc.edges.length} edge${doc.edges.length === 1 ? "" : "s"}` +
+          (doc.truncated
+            ? `, truncated: ${doc.omitted.length} vessel${doc.omitted.length === 1 ? "" : "s"} omitted`
+            : ""),
+      });
+      return doc;
+    },
+  },
 ];
 
-/** The served Portolan tool names, in table order (the harness capability's fourteen). */
+/** The served Portolan tool names, in table order (the harness capability's fifteen). */
 export const TOOL_NAMES = TOOL_TABLE.map((spec) => spec.name);
 
 /**

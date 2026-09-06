@@ -11,6 +11,7 @@ test("the public surface exports the probe-tool entry points", () => {
     "readReceipt",
     "readReceipts",
     "receiptAnchor",
+    "chartExport",
   ] as const) {
     expect(typeof (portolan as Record<string, unknown>)[name]).toBe("function");
   }
