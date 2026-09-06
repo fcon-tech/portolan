@@ -26,7 +26,7 @@ import receiptJson from "../schema/receipt.schema.json";
 import graphExportJson from "../schema/graph-export.schema.json";
 import { ENTRY_KINDS, FAIRWAY_RELATIONS, TRUST_LABELS, type FairwayRelation } from "./types";
 import { appendReceipt } from "./tools/log";
-import { generateTypesSource } from "../../scripts/gen-types";
+import { generateTypesSource, type SchemaNode } from "../../scripts/gen-types";
 
 interface FormatSchema {
   $schema: string;
@@ -214,10 +214,12 @@ test("the graph export schema's inline enums equal the chart schema's enum copie
   const chart = chartJson as unknown as EnumHost;
   const graphExport = graphExportJson as unknown as EnumHost;
 
-  // The graph-export schema carries these three vocabularies inline (it
-  // cannot $ref the chart file). Each copy must equal its chart-schema
-  // counterpart exactly, so an additive chart-enum change fails here
-  // instead of silently rejecting pass-through exports.
+  // The graph-export schema carries these three vocabularies inline so it
+  // validates standalone with only the trust vocabulary and the export
+  // schema registered (cross-format absolute-URI $refs are a possible 0.x
+  // follow-up). Each copy must equal its chart-schema counterpart exactly —
+  // this equality pin bounds the copy's drift, so an additive chart-enum
+  // change fails here instead of silently rejecting pass-through exports.
   const copies: Array<[string, unknown[], unknown[]]> = [
     [
       "beacon surface",
@@ -248,6 +250,45 @@ test("the committed generated types match what the schemas generate today (drift
     committed,
     "core/src/types.generated.ts drifted from core/schema — run `bun run scripts/gen-types.ts` and commit the regenerated file",
   ).toBe(generateTypesSource());
+});
+
+// Mutation probes for the generator's loud-failure contract: each plants
+// one unsupported keyword into a COPY of a real schema (the files under
+// core/schema/ are never touched) and expects the run to refuse.
+function probeSchemas(
+  chart: unknown = chartJson,
+  trust: unknown = trustVocabularyJson,
+  receipt: unknown = receiptJson,
+): { chart: SchemaNode; trust: SchemaNode; receipt: SchemaNode } {
+  return { chart, trust, receipt } as {
+    chart: SchemaNode;
+    trust: SchemaNode;
+    receipt: SchemaNode;
+  };
+}
+
+test("gen-types refuses an unknown keyword at a schema root (mutation probe)", () => {
+  const chart = structuredClone(chartJson) as unknown as Record<string, unknown>;
+  chart.examples = [];
+  expect(() => generateTypesSource(probeSchemas(chart))).toThrow(
+    'unsupported schema keyword "examples"',
+  );
+});
+
+test("gen-types refuses an unknown keyword in an unreferenced $defs member (mutation probe)", () => {
+  const chart = structuredClone(chartJson) as unknown as Record<string, unknown>;
+  (chart.$defs as Record<string, unknown>).orphan = { type: "string", format: "uuid" };
+  expect(() => generateTypesSource(probeSchemas(chart))).toThrow(
+    'unsupported schema keyword "format"',
+  );
+});
+
+test("gen-types refuses a schema-valued additionalProperties (mutation probe)", () => {
+  const receipt = structuredClone(receiptJson) as unknown as Record<string, unknown>;
+  receipt.additionalProperties = { type: "string" };
+  expect(() =>
+    generateTypesSource(probeSchemas(chartJson, trustVocabularyJson, receipt)),
+  ).toThrow('"additionalProperties" must be false or absent');
 });
 
 test("the graph export schema compiles with ajv and rejects timestamps and derived rollups", () => {

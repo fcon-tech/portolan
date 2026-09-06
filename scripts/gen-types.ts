@@ -1,7 +1,8 @@
 /**
  * Schema → TypeScript generator (formats-pass, design D7): renders the
- * entry, anchor, and receipt types whole from core/schema/*.schema.json
- * into core/src/types.generated.ts. The schemas win — hand-written code
+ * entry, anchor, and receipt types whole from the three schemas it
+ * consumes — chart, trust-vocabulary, receipt — under core/schema/ into
+ * core/src/types.generated.ts. The schemas win — hand-written code
  * never edits the generated file, and the drift guard in
  * core/src/formats.test.ts fails when the committed copy differs from what
  * the schemas produce today.
@@ -85,6 +86,11 @@ function checkSubset(node: SchemaNode, where: string): void {
       throw new Error(`gen-types: unsupported schema keyword "${key}" at ${where}`);
     }
   }
+  if (node.additionalProperties !== undefined && node.additionalProperties !== false) {
+    throw new Error(
+      `gen-types: "additionalProperties" must be false or absent (the renderer cannot honor a schema value) at ${where}`,
+    );
+  }
   const defs = node.$defs ?? {};
   for (const [name, def] of Object.entries(defs)) checkSubset(def, `${where}#$defs/${name}`);
   for (const [name, prop] of Object.entries(node.properties ?? {})) {
@@ -122,6 +128,21 @@ function jsdoc(description: unknown, pad: string): string {
   return typeof description === "string" && description.length > 0
     ? `${pad}/** ${description} */\n`
     : "";
+}
+
+/**
+ * A property's doc text: its own description, or — when the property is a
+ * bare $ref into $defs — the target def's, so referenced store metadata
+ * (signature, anchors, stale, relation) stays documented in the mirror.
+ */
+function descriptionOf(node: SchemaNode, defs: Record<string, SchemaNode>): unknown {
+  if (typeof node.description === "string" && node.description.length > 0) {
+    return node.description;
+  }
+  if (typeof node.$ref === "string" && node.$ref.startsWith("#/$defs/")) {
+    return defs[node.$ref.slice("#/$defs/".length)]?.description;
+  }
+  return undefined;
 }
 
 function propertyName(name: string): string {
@@ -184,7 +205,7 @@ function renderProperty(
   pad: string,
 ): string {
   checkSubset(node, where);
-  return `${jsdoc(node.description, pad)}${pad}${propertyName(name)}${required ? "" : "?"}: ${renderInline(node, defs, where)};\n`;
+  return `${jsdoc(descriptionOf(node, defs), pad)}${pad}${propertyName(name)}${required ? "" : "?"}: ${renderInline(node, defs, where)};\n`;
 }
 
 /** A whole definition as a named export: interface for objects, union type otherwise. */
@@ -209,17 +230,35 @@ function renderDef(name: string, node: SchemaNode, defs: Record<string, SchemaNo
   throw new Error(`gen-types: cannot render $defs/${name}`);
 }
 
-/** The full generated module text — a pure function of the schema files. */
-export function generateTypesSource(): string {
+/**
+ * The full generated module text — a pure function of the schema files.
+ * The optional argument is a test seam: the mutation probes in
+ * core/src/formats.test.ts feed schema copies with one bad keyword each
+ * and expect the run to refuse; production renders the real files.
+ */
+export function generateTypesSource(
+  schemas: { chart: SchemaNode; trust: SchemaNode; receipt: SchemaNode } = {
+    chart,
+    trust,
+    receipt,
+  },
+): string {
+  const { chart, trust, receipt } = schemas;
+  // The loud-failure contract holds whole-file, not only inside rendered
+  // subtrees: check every root and — via checkSubset's own $defs walk —
+  // every $defs member, referenced or not (review, formats-pass).
+  checkSubset(chart, "chart.schema.json");
+  checkSubset(trust, "trust-vocabulary.schema.json");
+  checkSubset(receipt, "receipt.schema.json");
   const defs = defsOf(chart);
   const parts: string[] = [];
 
   parts.push(`/**
- * Generated from the format schemas (core/schema/*.schema.json) by
- * scripts/gen-types.ts — do not edit by hand; schema wins (formats-pass,
- * design D7). Regenerate with \`bun run scripts/gen-types.ts\`; a committed
- * copy that differs from today's schemas fails the drift guard in
- * core/src/formats.test.ts.
+ * Generated from the chart, trust-vocabulary, and receipt schemas under
+ * core/schema/ by scripts/gen-types.ts — do not edit by hand; schema wins
+ * (formats-pass, design D7). Regenerate with \`bun run scripts/gen-types.ts\`;
+ * a committed copy that differs from today's schemas fails the drift guard
+ * in core/src/formats.test.ts.
  */
 
 `);

@@ -1,9 +1,9 @@
 /**
- * Generated from the format schemas (core/schema/*.schema.json) by
- * scripts/gen-types.ts — do not edit by hand; schema wins (formats-pass,
- * design D7). Regenerate with `bun run scripts/gen-types.ts`; a committed
- * copy that differs from today's schemas fails the drift guard in
- * core/src/formats.test.ts.
+ * Generated from the chart, trust-vocabulary, and receipt schemas under
+ * core/schema/ by scripts/gen-types.ts — do not edit by hand; schema wins
+ * (formats-pass, design D7). Regenerate with `bun run scripts/gen-types.ts`;
+ * a committed copy that differs from today's schemas fails the drift guard
+ * in core/src/formats.test.ts.
  */
 
 /** The closed trust vocabulary (chart notation): exactly five labels, one per claim. measured: taken from source directly; charted: from manifests/metadata; reported: from docs/commits/tickets — claims, not facts; doubtful: evidence present, could not be validated; unsurveyed: no usable evidence, never faked. Single source of the enum (design D2): chart.schema.json references this file by $id, and a validator needs both files registered. */
@@ -23,10 +23,13 @@ export interface VesselEntry {
   name: string;
   behavior?: string;
   paths: string[];
+  /** Store metadata on vessels as stored: cheap tree signature over the vessel's paths, re-stamped by the store on every write. Never hand-supplied. */
   signature?: { hash: string; files: number };
   note?: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
@@ -35,10 +38,13 @@ export interface FairwayEntry {
   id: string;
   from: string;
   to: string;
+  /** Optional closed relation vocabulary on a fairway: build, runtime, config. A fairway without a relation stays valid and reads as untyped. */
   relation?: FairwayRelation;
   note?: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
@@ -48,8 +54,10 @@ export interface PortOfEntryEntry {
   vessel: string;
   protocol: string;
   note?: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
@@ -60,8 +68,10 @@ export interface BeaconEntry {
   surface: "env" | "flag" | "port";
   key: string;
   note?: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
@@ -71,8 +81,10 @@ export interface LightEntry {
   vessel: string;
   name: string;
   note?: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
@@ -82,8 +94,10 @@ export interface DangerEntry {
   vessel: string;
   category: "rock" | "shallow" | "wreck";
   note: string;
+  /** An entry without at least one anchor does not ship. */
   anchors: Anchor[];
   trust: TrustLabel;
+  /** Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it. */
   stale?: boolean;
 }
 
