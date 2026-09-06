@@ -112,3 +112,19 @@ jobs:
       - name: Publish to npm (OIDC, no secrets)
         if: steps.gate.outputs.decision == 'publish'
         run: npm publish
+
+      # Task 6.2 closed by automation: the MCP Registry listing rides the same
+      # version-gated publish. GitHub OIDC (id-token: write above) binds the
+      # listing to this repo — io.github.fcon-tech/* — no OAuth app, no
+      # personal token. Registry docs: modelcontextprotocol/registry,
+      # docs/modelcontextprotocol-io/github-actions.mdx.
+      - name: Install mcp-publisher
+        if: steps.gate.outputs.decision == 'publish'
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+      - name: Publish server.json to the MCP Registry (OIDC)
+        if: steps.gate.outputs.decision == 'publish'
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
