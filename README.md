@@ -68,6 +68,9 @@ survey <target> with Portolan
 # serve the fifteen MCP tools to your harness:
 portolan serve --target /path/to/province
 
+# the Chart's machine layer as one JSON document (docs/formats.md):
+portolan export --target /path/to/province
+
 # the atlas for a surveyed province (map + graph + dossier + ledger):
 portolan chartroom render --target /path/to/province
 
