@@ -10,17 +10,22 @@
  *
  * Wiring note (design D2): the chart schema's trust label $refs the trust
  * vocabulary by $id, so every compile below registers all four schemas —
- * the same wiring core/src/validate.ts owns.
+ * the same wiring core/src/validate.ts owns. The suite also pins the
+ * writer to the schema (a receipt appended by the real log writer, so the
+ * pin holds on CI where no province exists) and the generated-type mirror
+ * to the schemas (drift guard, design D7).
  */
 import { test, expect } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Ajv2020 from "ajv/dist/2020";
 import chartJson from "../schema/chart.schema.json";
 import trustVocabularyJson from "../schema/trust-vocabulary.schema.json";
 import receiptJson from "../schema/receipt.schema.json";
 import graphExportJson from "../schema/graph-export.schema.json";
-import { ENTRY_KINDS, TRUST_LABELS } from "./types";
+import { ENTRY_KINDS, FAIRWAY_RELATIONS, TRUST_LABELS, type FairwayRelation } from "./types";
+import { appendReceipt } from "./tools/log";
 
 interface FormatSchema {
   $schema: string;
@@ -141,6 +146,22 @@ test("the receipt schema describes exactly what the ship's log writes", () => {
   expect(validate({ ...written, vibes: "good" }), "a receipt with an invented field").toBe(
     false,
   );
+
+  // The writer itself, not just a hand-built lookalike: a receipt actually
+  // appended by appendReceipt into a throwaway target validates too — the
+  // pin holds on CI, where no province's log exists to read.
+  const target = mkdtempSync(join(tmpdir(), "portolan-formats-"));
+  try {
+    const appended = appendReceipt(target, {
+      command: "chart.read",
+      scope: "src/",
+      outcome: "ok: 1 entry",
+      meta: { pass: 1, fail: 0 },
+    });
+    expect(validate(appended), "a receipt returned by the real log writer").toBe(true);
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
 });
 
 test("the trust vocabulary accepts exactly the five closed labels and rejects any other value", () => {
@@ -169,6 +190,54 @@ test("ENTRY_KINDS stays pinned to the chart schema's kind $defs", () => {
     const def = chart.$defs[kind];
     expect(def, `chart schema $defs/${kind}`).toBeDefined();
     expect(def?.properties?.kind?.const, `$defs/${kind} pins its kind`).toBe(kind);
+  }
+});
+
+test("FAIRWAY_RELATIONS stays pinned to the chart schema's relation vocabulary", () => {
+  const chart = chartJson as unknown as {
+    $defs: Record<string, { enum?: unknown[] }>;
+  };
+  const fromSchema = chart.$defs.fairwayRelation.enum;
+  expect(fromSchema, "chart schema $defs/fairwayRelation").toBeDefined();
+  expect(fromSchema, "the closed relation enumeration").toHaveLength(FAIRWAY_RELATIONS.length);
+  expect([...FAIRWAY_RELATIONS].sort()).toEqual((fromSchema as FairwayRelation[]).slice().sort());
+});
+
+test("the graph export schema's inline enums equal the chart schema's enum copies", () => {
+  interface EnumHost {
+    $defs: Record<
+      string,
+      { properties?: Record<string, { enum?: unknown[] }>; enum?: unknown[] }
+    >;
+  }
+  const chart = chartJson as unknown as EnumHost;
+  const graphExport = graphExportJson as unknown as EnumHost;
+
+  // The graph-export schema carries these three vocabularies inline (it
+  // cannot $ref the chart file). Each copy must equal its chart-schema
+  // counterpart exactly, so an additive chart-enum change fails here
+  // instead of silently rejecting pass-through exports.
+  const copies: Array<[string, unknown[], unknown[]]> = [
+    [
+      "beacon surface",
+      chart.$defs.beacon.properties?.surface?.enum ?? [],
+      graphExport.$defs.beacon.properties?.surface?.enum ?? [],
+    ],
+    [
+      "danger category",
+      chart.$defs.danger.properties?.category?.enum ?? [],
+      graphExport.$defs.danger.properties?.category?.enum ?? [],
+    ],
+    [
+      "fairway relation",
+      chart.$defs.fairwayRelation.enum ?? [],
+      graphExport.$defs.edge.properties?.relation?.enum ?? [],
+    ],
+  ];
+  for (const [name, fromChart, fromExport] of copies) {
+    expect(fromExport, `${name}: the export schema's copy vs the chart schema`).toEqual(
+      fromChart,
+    );
   }
 });
 
