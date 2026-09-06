@@ -21,7 +21,7 @@ import {
   unlinkSync,
 } from "node:fs";
 import { join } from "node:path";
-import type { Anchor } from "../types";
+import type { Anchor, Receipt } from "../types";
 
 export const SHIPS_LOG_FILE = "log.jsonl";
 export const LOG_LOCK_FILE = "log.lock";
@@ -36,19 +36,13 @@ export function logFile(targetRoot: string): string {
   return join(targetRoot, ".portolan", SHIPS_LOG_FILE);
 }
 
-export interface Receipt {
-  /** Stable, monotonic, citable as an anchor: r1, r2, ... */
-  id: string;
-  /** Command identity, e.g. `sweep pattern=UserService`. */
-  command: string;
-  /** What was surveyed, e.g. the module or path scope. */
-  scope?: string;
-  /** Outcome, e.g. `ok: 3 chunks` or `error: missing binary ctags`. */
-  outcome: string;
-  /** ISO timestamp of the append. */
-  recordedAt: string;
-  meta?: Record<string, unknown>;
-}
+/**
+ * The receipt type is generated from core/schema/receipt.schema.json
+ * (formats-pass, design D7) and lives in ../types; the writer stays
+ * authoritative (D3) — if a field the writer needs is missing there, the
+ * schema follows the writer, never this file.
+ */
+export type { Receipt } from "../types";
 
 export type ReceiptInput = Omit<Receipt, "id" | "recordedAt"> & {
   /** Callers normally let the log assign ids; a replayed id is checked. */

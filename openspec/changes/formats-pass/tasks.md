@@ -1,15 +1,15 @@
 ## 1. Format schemas — the contracts
 
-- [ ] 1.1 Test-first (RED): schema test suite that (a) validates every entry of the province's `.portolan/chart/index.jsonl` against the chart entry schema, (b) validates every line of `.portolan/log.jsonl` against the receipt schema, (c) pins the trust vocabulary to exactly the five closed labels. Verify: `bun test core/src/schema.test.ts` fails on the missing pieces only.
-- [ ] 1.2 Add `"version": "0.1.0"` to `core/schema/chart.schema.json`; keep `$id` unchanged. Verify: suite 1.1 still green; `$id` byte-identical to main.
-- [ ] 1.3 Create `core/schema/trust-vocabulary.schema.json` (closed enum + description); switch `chart.schema.json`'s trust label to a `$ref` by `$id`; register both schemas in `core/src/validate.ts`. Verify: suite 1.1 green; `chart.write` still rejects an invented label (existing tests pass).
-- [ ] 1.4 Create `core/schema/receipt.schema.json` from what `core/src/tools/log.ts` actually writes — if a historical line wouldn't validate, the schema follows the writer (design D3). Verify: full `log.jsonl` validates in suite 1.1.
-- [ ] 1.5 Create `core/schema/graph-export.schema.json`: `format` const `portolan-adjacency`, `version`, `nodes[]`, `edges[]`; no timestamp fields, no derived rollups (design D4). Verify: suite compiles the schema with ajv and rejects a document with a `generatedAt`.
+- [x] 1.1 Test-first (RED): schema test suite that (a) validates every entry of the province's `.portolan/chart/index.jsonl` against the chart entry schema, (b) validates every line of `.portolan/log.jsonl` against the receipt schema, (c) pins the trust vocabulary to exactly the five closed labels. Verify: `bun test core/src/schema.test.ts` fails on the missing pieces only.
+- [x] 1.2 Add `"version": "0.1.0"` to `core/schema/chart.schema.json`; keep `$id` unchanged. Verify: suite 1.1 still green; `$id` byte-identical to main.
+- [x] 1.3 Create `core/schema/trust-vocabulary.schema.json` (closed enum + description); switch `chart.schema.json`'s trust label to a `$ref` by `$id`; register both schemas in `core/src/validate.ts`. Verify: suite 1.1 green; `chart.write` still rejects an invented label (existing tests pass).
+- [x] 1.4 Create `core/schema/receipt.schema.json` from what `core/src/tools/log.ts` actually writes — if a historical line wouldn't validate, the schema follows the writer (design D3). Verify: full `log.jsonl` validates in suite 1.1.
+- [x] 1.5 Create `core/schema/graph-export.schema.json`: `format` const `portolan-adjacency`, `version`, `nodes[]`, `edges[]`; no timestamp fields, no derived rollups (design D4). Verify: suite compiles the schema with ajv and rejects a document with a `generatedAt`.
 
 ## 2. Schema → code, one direction
 
-- [ ] 2.1 Checked-in `scripts/gen-types.ts` generates entry/anchor/receipt TS types whole from the schema files, doc comments carried by schema `description` fields; commit generated output; split hand-written runtime constants from generated types in `core/src/types.ts`. Verify: `bun run scripts/gen-types.ts` is idempotent; `bunx tsc --noEmit` in `core/` passes.
-- [ ] 2.2 Drift guard: pin runtime constants (`TRUST_LABELS`, `ENTRY_KINDS`) to the schemas by test, and run the generator in a test that fails on uncommitted drift. Verify: mutating a schema enum locally turns the suite red.
+- [x] 2.1 Checked-in `scripts/gen-types.ts` generates entry/anchor/receipt TS types whole from the schema files, doc comments carried by schema `description` fields; commit generated output; split hand-written runtime constants from generated types in `core/src/types.ts`. Verify: `bun run scripts/gen-types.ts` is idempotent; `bunx tsc --noEmit` in `core/` passes.
+- [x] 2.2 Drift guard: pin runtime constants (`TRUST_LABELS`, `ENTRY_KINDS`) to the schemas by test, and run the generator in a test that fails on uncommitted drift. Verify: mutating a schema enum locally turns the suite red.
 
 ## 3. The adjacency export — core + tool
 

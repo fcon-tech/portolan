@@ -26,6 +26,7 @@ import receiptJson from "../schema/receipt.schema.json";
 import graphExportJson from "../schema/graph-export.schema.json";
 import { ENTRY_KINDS, FAIRWAY_RELATIONS, TRUST_LABELS, type FairwayRelation } from "./types";
 import { appendReceipt } from "./tools/log";
+import { generateTypesSource } from "../../scripts/gen-types";
 
 interface FormatSchema {
   $schema: string;
@@ -239,6 +240,14 @@ test("the graph export schema's inline enums equal the chart schema's enum copie
       fromChart,
     );
   }
+});
+
+test("the committed generated types match what the schemas generate today (drift guard)", () => {
+  const committed = readFileSync(join(import.meta.dir, "types.generated.ts"), "utf8");
+  expect(
+    committed,
+    "core/src/types.generated.ts drifted from core/schema — run `bun run scripts/gen-types.ts` and commit the regenerated file",
+  ).toBe(generateTypesSource());
 });
 
 test("the graph export schema compiles with ajv and rejects timestamps and derived rollups", () => {
