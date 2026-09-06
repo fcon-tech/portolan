@@ -13,10 +13,10 @@
 
 ## 3. The adjacency export — core + tool
 
-- [ ] 3.1 Test-first (RED): export tests asserting charted-truth-only (design D4): nodes/edges carry anchors, trust, staleness from entries; `doubtful`/`unsurveyed` pass through un-upgraded; no invented nodes, no timestamps, no derived rollups. Verify: new tests red, nothing else broken.
-- [ ] 3.2 Implement the adjacency builder over the machine layer in `core/src/tools/` (export document only; no file writes). Verify: tests from 3.1 green.
-- [ ] 3.3 Register `chart.export` — read-only tool, records+bytes budget with loud truncation naming omitted vessels+counts, honest error on absent Chart, exactly one ship's-log receipt per call (reuse neighborhood budget mechanics). Verify: tool tests for budget truncation, read-only (Chart byte-identical + one receipt), honest error; registry surface test sees fifteen tools.
-- [ ] 3.4 Sweep the "fourteen tools" counts: `docs/MANIFEST.md` tool table gains the `chart.export` row; skill and adapters docs updated where the number is stated. Verify: `grep -rn "fourteen" docs skill adapters` returns no stale count.
+- [x] 3.1 Test-first (RED): export tests asserting charted-truth-only (design D4): nodes/edges carry anchors, trust, staleness from entries; `doubtful`/`unsurveyed` pass through un-upgraded; no invented nodes, no timestamps, no derived rollups. Verify: new tests red, nothing else broken.
+- [x] 3.2 Implement the adjacency builder over the machine layer in `core/src/tools/` (export document only; no file writes). Verify: tests from 3.1 green.
+- [x] 3.3 Register `chart.export` — read-only tool, byte budget with loud truncation naming omitted vessels+counts, honest error on absent Chart, exactly one ship's-log receipt per call (reuse neighborhood budget mechanics). Verify: tool tests for budget truncation, read-only (Chart byte-identical + one receipt), honest error; registry surface test sees fifteen tools.
+- [x] 3.4 Sweep the "fourteen tools" counts: `docs/MANIFEST.md` tool table gains the `chart.export` row; skill and adapters docs updated where the number is stated. Verify: `grep -rn "fourteen" docs skill adapters` returns no stale count.
 
 ## 4. CLI verb
 

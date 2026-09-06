@@ -481,7 +481,56 @@ test("the served chart.export call leaves the Chart byte-identical, touches noth
 });
 
 // ---------------------------------------------------------------------------
-// 8. Export of an uncharted province is an honest error
+// 8. Fairways alone over budget refuse by name — served, because the
+//    no-receipt claim spans the handler (review fix, formats-pass)
+// ---------------------------------------------------------------------------
+
+test("fairways alone over the budget are an ExportError naming the budget, with no document and no receipt", () => {
+  const target = makeTarget();
+  // Fat anchor paths: twelve fairways serialize past the budget even with
+  // every vessel cut, so no honest cut remains.
+  const fat = Math.ceil(EXPORT_MAX_BYTES / 10);
+  const entries: ChartEntry[] = [vessel("port"), vessel("warehouse")];
+  for (let i = 0; i < 12; i++) {
+    entries.push(
+      fairway(`fw-fat-${i}`, "port", "warehouse", {
+        anchors: [{ type: "file", path: "x".repeat(fat), line: 1 }],
+      }),
+    );
+  }
+  writeChart(target, entries);
+  expect(readReceipts(target)).toEqual([]); // empty log before the call
+
+  let err: unknown;
+  try {
+    exportToolSpec().handler({}, { targetRoot: target });
+  } catch (e) {
+    err = e;
+  }
+
+  expect(err, "the refusal, not an over-budget document").toBeInstanceOf(ExportError);
+  expect((err as Error).message).toContain(String(EXPORT_MAX_BYTES));
+  expect((err as Error).message).toMatch(/budget/);
+  // The refusal writes nothing: no receipt is appended.
+  expect(readReceipts(target)).toEqual([]);
+});
+
+// ---------------------------------------------------------------------------
+// 9. Two consecutive calls over an unchanged province agree byte for byte
+// ---------------------------------------------------------------------------
+
+test("two consecutive chartExport calls over an unchanged province return byte-identical documents", () => {
+  const target = makeTarget();
+  writeChart(target, richEntries());
+
+  const first = chartExport(target);
+  const second = chartExport(target);
+
+  expect(JSON.stringify(second)).toBe(JSON.stringify(first));
+});
+
+// ---------------------------------------------------------------------------
+// 10. Export of an uncharted province is an honest error
 // ---------------------------------------------------------------------------
 
 test("an absent Chart is an honest error naming the absence, never a fabricated document", () => {

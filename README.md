@@ -65,7 +65,7 @@ bun install -g @fcon-tech/portolan    # or: npm i -g @fcon-tech/portolan
 # your agent installs Portolan itself from one phrase:
 survey <target> with Portolan
 
-# serve the fourteen MCP tools to your harness:
+# serve the fifteen MCP tools to your harness:
 portolan serve --target /path/to/province
 
 # the atlas for a surveyed province (map + graph + dossier + ledger):
@@ -94,7 +94,7 @@ bun core/src/server/main.ts --target /path/to/province    # dev path
 
 | Path | What lives there |
 | --- | --- |
-| `core/` | the Chart store, the fourteen MCP tools (stdio server), the Harbor, the Chart Room renderer |
+| `core/` | the Chart store, the fifteen MCP tools (stdio server), the Harbor, the Chart Room renderer |
 | `skill/` | the Cartographer's expedition method, as a harness-loadable skill |
 | `adapters/` | opencode installer + expedition launcher, pi/omp shims, drop-in night-watch crontab |
 | `acceptance/` | the sea-trial gate: the whole loop graded against a real corpus |

@@ -592,9 +592,10 @@ export const TOOL_TABLE: ToolSpec[] = [
       "as-is plus staleness — or an edge (fairways: from/to, relation when charted), each carrying its " +
       "anchors and trust label un-upgraded; no timestamps, no derived rollups, nothing a charted entry " +
       `does not state. Byte-budgeted (${EXPORT_MAX_BYTES} bytes): an oversized chart truncates loudly, ` +
-      "naming every omitted vessel with its cut entry count. Read-only — the Chart is left byte-identical, " +
-      "staleness refreshed first (chart.read semantics), and each call appends exactly one ship's-log " +
-      "receipt. A province with no Chart is an honest error naming the absence, never a fabricated document.",
+      "naming every omitted vessel with its cut entry count. Read-only — staleness is refreshed before " +
+      "serving exactly as chart.read refreshes it, no chart entry is created, removed, or altered, and " +
+      "each successful call appends exactly one ship's-log receipt (a rejected call writes nothing). " +
+      "A province with no Chart is an honest error naming the absence, never a fabricated document.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     handler: (_args, ctx) => {
       // The one write this call makes: exactly one ship's-log receipt, through

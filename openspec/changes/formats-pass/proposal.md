@@ -59,6 +59,10 @@ YAGNI until a consumer appears); no change to what the Chart itself records.
 
 - `tools`: ADDED requirement — `chart.export` joins the served tools as the
   read-only adjacency export with self-description, budget, and receipts.
+- `harness`: MODIFIED requirement — the advertised toolset grows to
+  fifteen: `chart.export` joins the served list.
+- `distribution`: MODIFIED requirements — the served-tool count the
+  clean-install and install-path scenarios pin moves fourteen → fifteen.
 
 ## Impact
 
