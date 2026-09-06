@@ -92,7 +92,12 @@ export async function runWatch(targetRoot: string, options: WatchOptions = {}): 
   const ran: WatchAction[] = [];
   if (!reportOnly) {
     for (const proposal of launch) {
-      appendDecision(targetRoot, proposal.fingerprint, "accepted", { by: NIGHT_WATCH });
+      // The auto-accept records the row's evidence (design D1, amendment
+      // 2026-09-06): flare closure matches the recorded evidence.
+      appendDecision(targetRoot, proposal.fingerprint, "accepted", {
+        by: NIGHT_WATCH,
+        evidence: proposal.evidence,
+      });
       const result = await launchExpedition({
         launcher: options.launcher as string,
         brief: briefFor(targetRoot, proposal),

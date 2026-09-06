@@ -419,7 +419,11 @@ export function computeProposals(
  * queue currently computes (declined proposals stay computable — the
  * Governor may overturn a refusal while the evidence is unchanged). An
  * unknown fingerprint is rejected: deciding on a proposal that does not
- * exist would write an unverifiable row into the history.
+ * exist would write an unverifiable row into the history. The decision
+ * records the row's evidence keys (design D1, amendment 2026-09-06): flare
+ * closure matches the recorded evidence instead of re-mining what the
+ * engine could have produced — monotonic, whatever the drift charge does
+ * after the repair.
  */
 export function decide(
   targetRoot: string,
@@ -437,13 +441,14 @@ export function decide(
     );
   }
   const computable = computeProposals(targetRoot, { includeDeclined: true });
-  if (!computable.proposals.some((p) => p.fingerprint === fingerprint)) {
+  const proposal = computable.proposals.find((p) => p.fingerprint === fingerprint);
+  if (proposal === undefined) {
     throw new HarborError(
       `unknown proposal fingerprint ${fingerprint}; decide on a proposal the queue currently computes ` +
         "(call expeditions.propose first)",
     );
   }
-  return appendDecision(targetRoot, fingerprint, decision);
+  return appendDecision(targetRoot, fingerprint, decision, { evidence: proposal.evidence });
 }
 
 export { PROPOSAL_KINDS };

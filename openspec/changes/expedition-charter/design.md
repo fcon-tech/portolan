@@ -53,6 +53,19 @@ append-only.
 > exactly): without it, two vessels' flare-only rows with identical reason
 > text shared one fingerprint, and declining one vessel's row closed the
 > other vessel's flare.
+>
+> **Amendment 2026-09-06 (code-review finding, continued).** Closure is
+> evidence-based: every decide path (`expeditions.decide`, the manual
+> `run`, the night watch's auto-accept) records the decided row's evidence
+> keys in the harbor history, and a decision closes a flare when that
+> recorded evidence — postdating the flare receipt — names the flare's
+> reason and the flare's vessel. Reason: candidate-mining up to the
+> *current* charge is non-monotonic — once an accepted repair emptied the
+> charge, the flare it answered resurrected and re-proposed, violating
+> "a decision closes the flare … proposes nothing further" — and mined
+> 2^n candidate fingerprints per flare per queue. Records written before
+> the amendment carry no evidence and fall back to the mined arithmetic
+> (absence-safe, D4).
 
 **D2 — Charter is a receipt pair; overreach is one shared function.**
 Start receipt (`meta.kind: "charter"`, vessels and entries promised),

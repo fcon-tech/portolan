@@ -7,9 +7,10 @@
  * start whose touched vessels fall outside the promise, aggregated per
  * vessel. A flare is a repair need filed as a receipt; it stays open until
  * the harbor history records a decision — accepted or declined — on a
- * repair proposal for its vessel after the flare's receipt (any repair of
- * the vessel after the flare answered the need on record; a re-found need
- * fires a new flare). Every marker rides the receipt's free-form `meta`, so
+ * repair proposal for its vessel after the flare's receipt (the decision
+ * carries its row's evidence and closure matches it; pre-evidence records
+ * fall back to mined arithmetic — design D1, amended 2026-09-06). Every
+ * marker rides the receipt's free-form `meta`, so
  * the formats-pass receipt schema never rejects a line (D1).
  *
  * Absence reads as absence (D4): a log written before this change holds no
@@ -18,7 +19,7 @@
  * specs/harbor/spec.md, specs/expedition/spec.md
  */
 import type { Receipt } from "../tools/log";
-import { proposalFingerprint } from "./fingerprint";
+import { evidenceVessel, proposalFingerprint } from "./fingerprint";
 import type { DecisionRecord } from "./history";
 
 /** One filed flare, read back from its receipt. */
@@ -130,7 +131,11 @@ export function charterOverreach(log: Receipt[], charter: Charter): Overreach[] 
     .map(([vessel, entries]) => ({ vessel, entries }));
 }
 
-/** What the closure arithmetic needs besides the history itself. */
+/**
+ * What the closure arithmetic needs besides the history itself — only for
+ * the pre-evidence fallback (records written before the 2026-09-06
+ * amendment; evidence-carrying decisions close without it).
+ */
 export interface FlareClosureContext {
   /**
    * Every flare receipt ever filed on THIS vessel (open or closed), log
@@ -157,21 +162,31 @@ export interface FlareClosureContext {
 const MAX_CANDIDATE_REASONS = 16;
 
 /**
- * The flare-closure decision (design D1): a decision — accepted or
- * declined — on a repair proposal for the flare's vessel, recorded in the
- * harbor history AFTER the flare's receipt, closes the flare outright.
+ * The flare-closure decision (design D1, amended 2026-09-06): a decision —
+ * accepted or declined — on a repair proposal for the flare's vessel,
+ * recorded in the harbor history AFTER the flare's receipt, closes the
+ * flare outright.
  *
- * The history records fingerprints, not vessels, so "for this vessel" is
- * decided by re-minting the fingerprints the proposal engine can actually
- * produce for the vessel: a repair row there carries the vessel's drift key
- * (`vessel/<id>#<stale-count>`, any count up to the current charge), the
- * count-less vessel key plus reasons (the vessel-scoped flare-only row),
- * or — for rows minted before the 2026-09-06 vessel-scoping amendment —
- * the reasons alone; plus the reasons of whatever flares on the vessel
- * were open when it was decided — here, some subset of every reason ever
- * filed on the vessel. Any postdating decision whose fingerprint equals
- * one of those candidates closes the flare. A decision recorded before the
- * flare's receipt closes nothing, whatever it was about.
+ * The happy path reads the evidence the decide path recorded with the
+ * decision (DecisionRecord.evidence): it closes the flare when it names
+ * the flare's reason AND the flare's vessel — a drift key
+ * (`vessel/<id>#<count>`), the count-less flare-row key (`vessel/<id>`), or
+ * otherwise the reason cannot be the flare's. Vessel-scoped, so a decision
+ * on one vessel's row can never close another vessel's flare even when the
+ * reason texts coincide; and monotonic — the recorded evidence does not
+ * change when the drift charge empties, so a flare its decision answered
+ * cannot resurrect (the mined arithmetic below could not promise that: its
+ * candidate set stopped at the CURRENT charge).
+ *
+ * Records written before the amendment carry no evidence (design D4:
+ * absence reads as absence, never an error) and fall back to re-minting
+ * the fingerprints the proposal engine could have produced for the vessel:
+ * the vessel's drift key at any count up to the current charge, the
+ * count-less flare-only shape, or the pre-amendment reasons alone — plus
+ * the reasons of whatever flares on the vessel were open when it was
+ * decided, here some subset of every reason ever filed on the vessel. A
+ * decision recorded before the flare's receipt closes nothing, whatever it
+ * was about.
  */
 export function flareClosed(
   flare: Flare,
@@ -180,6 +195,14 @@ export function flareClosed(
 ): boolean {
   const postdating = decisions.filter((record) => record.decidedAt > flare.recordedAt);
   if (postdating.length === 0) return false;
+  const namesTheFlare = (evidence: string[]): boolean =>
+    evidence.includes(flare.reason) &&
+    evidence.some((key) => evidenceVessel(key) === flare.vessel);
+  if (postdating.some((record) => record.evidence !== undefined && namesTheFlare(record.evidence))) {
+    return true;
+  }
+  const mined = postdating.filter((record) => record.evidence === undefined);
+  if (mined.length === 0) return false;
   const reasons = [...new Set(context.vesselFlares.map((f) => f.reason))].slice(
     -MAX_CANDIDATE_REASONS,
   );
@@ -194,7 +217,7 @@ export function flareClosed(
       candidates.add(proposalFingerprint("repair", [...keys, `vessel/${flare.vessel}#${stale}`]));
     }
   }
-  return postdating.some((record) => candidates.has(record.fingerprint));
+  return mined.some((record) => candidates.has(record.fingerprint));
 }
 
 /**

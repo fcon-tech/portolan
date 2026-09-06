@@ -167,10 +167,17 @@ test("night-watch 2.2 an invoked watch launches the in-bound repair and names wh
   expect(brief.proposal.kind).toBe("repair");
   expect(brief.proposal.fingerprint).toBe(fingerprint);
 
-  // History: the acceptance is attributed to the night watch.
+  // History: the acceptance is attributed to the night watch, and carries
+  // the decided row's evidence (design D1, amendment 2026-09-06 — flare
+  // closure matches the recorded evidence).
   const history = readHistory(target);
   expect(history).toHaveLength(1);
-  expect(history[0]).toMatchObject({ fingerprint, decision: "accepted", by: "night-watch" });
+  expect(history[0]).toMatchObject({
+    fingerprint,
+    decision: "accepted",
+    by: "night-watch",
+    evidence: ["vessel/api#2"], // the fixture's one drifted file charges 2 entries
+  });
 });
 
 test("night-watch 2.2 a night repair is attributable and leaves the queue once the chart heals", async () => {

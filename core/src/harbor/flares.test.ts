@@ -31,7 +31,11 @@
  *   The kind stays "repair" — flare rows rank, take decisions, and (night
  *   watch) auto-execute like any repair; no separate policy, no new tool.
  *   Closure is arithmetic over the harbor history: a decision postdating
- *   the flare's receipt closes it. A still province — no drift, no gap,
+ *   the flare's receipt closes it — by the evidence the decide path
+ *   recorded with the decision (reason + vessel key), or, for records
+ *   written without evidence, by the mined arithmetic (monotonicity:
+ *   the accepted repair emptying the drift charge must not resurrect the
+ *   flare it answered). A still province — no drift, no gap,
  *   no landscape change, no open flare — stays empty.
  *
  * Conventions mirror resurvey.test.ts. Flare receipts are hand-written
@@ -44,6 +48,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { writeChart } from "../chart-store";
 import type { ChartEntry } from "../types";
+import { proposalFingerprint } from "./fingerprint";
 import { computeProposals, decide, type Proposal } from "./proposals";
 
 const targets: string[] = [];
@@ -319,6 +324,55 @@ test("charter flare: declining one vessel's flare-only row never closes another 
   const after = repairRows(target);
   expect(after.map((r) => r.scope.vessels)).toEqual([["lib"]]);
   expect(after[0]!.evidence).toEqual(["vessel/lib", reason]);
+});
+
+// ---------------------------------------------------------------------------
+// Design D1, amended 2026-09-06 (code-review finding): closure is
+// monotonic. Mining candidate fingerprints only up to the CURRENT charge
+// resurrects a flare once its accepted repair empties the charge — the
+// decision's fingerprint (minted at the old charge) leaves the candidate
+// set and the flare re-proposes. The decision must carry its own record.
+// ---------------------------------------------------------------------------
+
+test("charter flare: after the accepted repair lands, the closed flare proposes nothing further — no resurrect", () => {
+  const dirs: Dirs = { api: "apps/api", lib: "packages/lib" };
+  const target = makeProvince(dirs);
+  writeChart(target, completeBase(dirs));
+  computeProposals(target); // still baseline
+  drift(target, dirs.api);
+  const reason = "api's fairway anchor is stale";
+  fileFlare(target, "r1", "api", reason);
+
+  // The drift-and-flare row is decided: the repair is accepted and lands.
+  const [merged] = repairRows(target);
+  expect(merged!.evidence).toEqual(["vessel/api#3", reason]);
+  decide(target, merged!.fingerprint, "accepted");
+  writeChart(target, completeBase(dirs)); // the repair: the chart heals, the charge empties
+
+  // Closure must outlive the repair: the flare proposes nothing further,
+  // whatever the drift charge does afterwards.
+  expect(computeProposals(target).proposals).toEqual([]);
+});
+
+test("charter flare: a pre-amendment decision without recorded evidence still closes via the mined arithmetic", () => {
+  const dirs: Dirs = { api: "apps/api", lib: "packages/lib" };
+  const target = makeProvince(dirs);
+  writeChart(target, completeBase(dirs));
+  computeProposals(target); // still baseline
+  const reason = "lib's light cites a moved export";
+  fileFlare(target, "r1", "lib", reason);
+
+  // A history row written before decisions carried evidence (design D4:
+  // absence-safe): its fingerprint is matched by re-mining the shapes the
+  // engine could have produced — here the pre-amendment flare-only shape,
+  // the bare reason.
+  writeDecision(
+    target,
+    proposalFingerprint("repair", [reason]),
+    "declined",
+    "2026-09-02T00:00:00.000Z",
+  );
+  expect(computeProposals(target).proposals).toEqual([]);
 });
 
 // ---------------------------------------------------------------------------
