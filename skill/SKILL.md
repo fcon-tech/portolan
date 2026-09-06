@@ -24,8 +24,9 @@ before other work:
 
 1. Call `expeditions.propose` (no input). The queue is computed, never imagined:
    vessels marked `pending correction`, charted vessels with no recorded
-   behavior or no charted light, and landscape present since the last
-   survey snapshot. Propose nothing the queue does not contain.
+   behavior or no charted light, landscape present since the last
+   survey snapshot, and open flares — repair needs filed by expeditions.
+   Propose nothing the queue does not contain.
 2. Empty queue: say nothing about proposals and proceed with the
    Governor's ask.
 3. Otherwise, present the top proposals in one chat message before other
