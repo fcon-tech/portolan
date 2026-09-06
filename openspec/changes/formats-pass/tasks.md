@@ -20,11 +20,11 @@
 
 ## 4. CLI verb
 
-- [ ] 4.1 `portolan export [--target <root>]` over the same core function: JSON to stdout, non-zero exit on the honest error. Verify: CLI test — stdout document validates against the graph export schema; absent-Chart exit code is non-zero.
+- [x] 4.1 `portolan export [--target <root>]` over the same core function: JSON to stdout, non-zero exit on the honest error. Verify: CLI test — stdout document validates against the graph export schema; absent-Chart exit code is non-zero.
 
 ## 5. Documentation of the formats
 
-- [ ] 5.1 `docs/formats.md` — the versioning policy up top (semver from 0.1.0; breaking=minor, additive=patch while 0.x; 1.0.0 is the Governor's call), then a section per format: purpose, schema path, current version, stability promise; one ajv validation snippet on the page. Verify: each section names its schema file and version; no section requires reading core source; `scripts/leak-gate.sh` stays clean.
+- [x] 5.1 `docs/formats.md` — the versioning policy up top (semver from 0.1.0; breaking=minor, additive=patch while 0.x; 1.0.0 is the Governor's call), then a section per format: purpose, schema path, current version, stability promise; one ajv validation snippet on the page. Verify: each section names its schema file and version; no section requires reading core source; `scripts/leak-gate.sh` stays clean.
 
 ## 6. Verification and wrap
 
