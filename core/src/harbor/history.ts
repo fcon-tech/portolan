@@ -41,6 +41,15 @@ export interface DecisionRecord {
   decidedAt: string;
   /** Who decided; absent = the Governor in session, `night-watch` = the night watch. */
   by?: string;
+  /**
+   * The decided proposal's evidence keys, recorded with the decision
+   * (expedition-charter design D1, amendment 2026-09-06): flare closure
+   * matches this recorded evidence — monotonic, unlike re-mining candidate
+   * fingerprints against a drift charge that the repair may since have
+   * emptied. Absent on records written before the amendment; those fall
+   * back to the mined arithmetic.
+   */
+  evidence?: string[];
 }
 
 /**
@@ -79,7 +88,9 @@ function parseLine(line: string, file: string, lineNo: number): HistoryRecord {
         typeof record?.fingerprint !== "string" ||
         (record.decision !== "accepted" && record.decision !== "declined") ||
         typeof record?.decidedAt !== "string" ||
-        (record.by !== undefined && typeof record.by !== "string")
+        (record.by !== undefined && typeof record.by !== "string") ||
+        (record.evidence !== undefined &&
+          (!Array.isArray(record.evidence) || record.evidence.some((key) => typeof key !== "string")))
       ) {
         throw new Error("not a decision");
       }
@@ -134,7 +145,7 @@ export function appendDecision(
   targetRoot: string,
   fingerprint: string,
   decision: GovernorDecision,
-  options: { by?: string } = {},
+  options: { by?: string; evidence?: string[] } = {},
 ): DecisionRecord {
   if ((DECISIONS as readonly string[]).includes(decision) === false) {
     throw new HarborError(
@@ -143,6 +154,7 @@ export function appendDecision(
   }
   const record: DecisionRecord = { fingerprint, decision, decidedAt: new Date().toISOString() };
   if (options.by !== undefined) record.by = options.by;
+  if (options.evidence !== undefined) record.evidence = options.evidence;
   mkdirSync(harborDir(targetRoot), { recursive: true });
   appendFileSync(historyFile(targetRoot), `${JSON.stringify(record)}\n`);
   return record;

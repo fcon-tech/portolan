@@ -47,14 +47,34 @@ not a `flares.jsonl` state file: it would fork the truth the log already
 holds and need its own write path; closure-by-arithmetic keeps everything
 append-only.
 
+> **Amendment 2026-09-06 (code-review finding).** Flare-only rows carry a
+> count-less, vessel-scoped evidence key (`vessel/<id>`, distinct from the
+> drift key's `vessel/<id>#<count>` shape, which parsers must match
+> exactly): without it, two vessels' flare-only rows with identical reason
+> text shared one fingerprint, and declining one vessel's row closed the
+> other vessel's flare.
+>
+> **Amendment 2026-09-06 (code-review finding, continued).** Closure is
+> evidence-based: every decide path (`expeditions.decide`, the manual
+> `run`, the night watch's auto-accept) records the decided row's evidence
+> keys in the harbor history, and a decision closes a flare when that
+> recorded evidence — postdating the flare receipt — names the flare's
+> reason and the flare's vessel. Reason: candidate-mining up to the
+> *current* charge is non-monotonic — once an accepted repair emptied the
+> charge, the flare it answered resurrected and re-proposed, violating
+> "a decision closes the flare … proposes nothing further" — and mined
+> 2^n candidate fingerprints per flare per queue. Records written before
+> the amendment carry no evidence and fall back to the mined arithmetic
+> (absence-safe, D4).
+
 **D2 — Charter is a receipt pair; overreach is one shared function.**
 Start receipt (`meta.kind: "charter"`, vessels and entries promised),
 outcome receipt at the end. Overreach = chart-write receipts whose touched
 vessels fall outside the charter, computed by one core function that both
 the watch report and `trust.report` call, so the two surfaces cannot
-diverge. Chart-write receipts already name their command and scope; if
-the current shape does not name the written vessels, the marker is added
-inside `meta` — additive, schema-safe.
+diverge. This change introduces the chart.write receipt, naming the
+written vessels; had it not named them, the marker would go inside
+`meta` — additive, schema-safe.
 
 **D3 — The launcher renders the charter; the skill teaches it.**
 When an expedition is launched from a proposal, the brief carries the

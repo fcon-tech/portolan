@@ -53,7 +53,12 @@ export async function runProposal(targetRoot: string, options: RunOptions): Prom
     );
   }
 
-  appendDecision(targetRoot, proposal.fingerprint, "accepted", { by: GOVERNOR });
+  // The acceptance records the row's evidence (design D1, amendment
+  // 2026-09-06): flare closure matches the recorded evidence.
+  appendDecision(targetRoot, proposal.fingerprint, "accepted", {
+    by: GOVERNOR,
+    evidence: proposal.evidence,
+  });
   const result = await launchExpedition({
     launcher: options.launcher,
     brief: briefFor(targetRoot, proposal),

@@ -1,0 +1,328 @@
+/**
+ * The charter ledger: arithmetic over the ship's-log receipts that record an
+ * expedition's charter and its flares (openspec/changes/expedition-charter,
+ * design D1/D2/D4). A charter is a receipt pair — a start receipt promising
+ * vessels and entries, an outcome receipt naming the start — and overreach
+ * is computed, never prevented: the chart-write receipts recorded after a
+ * start whose touched vessels fall outside the promise, aggregated per
+ * vessel. A flare is a repair need filed as a receipt; it stays open until
+ * the harbor history records a decision — accepted or declined — on a
+ * repair proposal for its vessel after the flare's receipt (the decision
+ * carries its row's evidence and closure matches it; pre-evidence records
+ * fall back to mined arithmetic — design D1, amended 2026-09-06). Every
+ * marker rides the receipt's free-form `meta`, so
+ * the formats-pass receipt schema never rejects a line (D1).
+ *
+ * Absence reads as absence (D4): a log written before this change holds no
+ * charter or flare markers, and every reader returns an empty answer —
+ * never an error. This module only reads; nothing here writes.
+ * specs/harbor/spec.md, specs/expedition/spec.md
+ */
+import type { Receipt } from "../tools/log";
+import { evidenceVessel, proposalFingerprint } from "./fingerprint";
+import type { DecisionRecord } from "./history";
+
+/** One filed flare, read back from its receipt. */
+export interface Flare {
+  /** The receipt id, citable and monotonic. */
+  id: string;
+  /** The vessel the repair need names. */
+  vessel: string;
+  /**
+   * The stated reason, read back with control characters flattened to
+   * spaces (oneLine) — the receipt keeps it verbatim; what rides the queue
+   * and the chat renders as one line, never a forged one.
+   */
+  reason: string;
+  /** The evidence the filing expedition stated. */
+  evidence: string;
+  /** When the flare was filed (the receipt's recordedAt). */
+  recordedAt: string;
+}
+
+/** A charter start receipt, read back: the vessels and entries promised. */
+export interface Charter {
+  /** The start receipt's id — the outcome receipt cites it. */
+  id: string;
+  /** The vessels the expedition promised to touch. */
+  vessels: string[];
+  /** The chart entries the expedition promised to touch. */
+  entries: number;
+}
+
+/** Out-of-charter chart writes by one vessel: the overreach row. */
+export interface Overreach {
+  vessel: string;
+  /** Chart entries the charter's writes recorded for this vessel. */
+  entries: number;
+}
+
+/**
+ * Control characters (a newline included) collapsed to spaces. Receipt
+ * strings are DATA: a control character riding from a receipt into a prompt
+ * or a chat line could forge a line the engine never wrote (security fix
+ * 2026-09-06). Applied at read — the receipt stays as written.
+ */
+export function oneLine(text: string): string {
+  return text.replace(/\r\n|\r|\n/g, " ").replace(/[\u0000-\u001f\u007f]/g, " ");
+}
+
+/**
+ * Every flare receipt in log order, whatever its closure state — the queue
+ * applies the closure arithmetic (flareClosed); this reader stays a pure
+ * read of the markers. A marker without a vessel or a reason (or carrying
+ * them as non-strings) cannot propose and is skipped, loudly — the warning
+ * names the receipt, so a mis-filed marker is never silently swallowed
+ * (code-review fix 2026-09-06, extended to malformed values by the security
+ * fix the same day); an empty-string reason is skipped too. The minted
+ * vessel and reason are one line (oneLine) — the receipt keeps them
+ * verbatim, and a newline in either cannot forge a queue line downstream.
+ */
+export function openFlares(log: Receipt[]): Flare[] {
+  const flares: Flare[] = [];
+  for (const receipt of log) {
+    const meta = receipt.meta;
+    if (meta?.kind !== "flare") continue;
+    if (typeof meta.vessel !== "string" || typeof meta.reason !== "string") {
+      console.warn(
+        `openFlares: flare receipt ${receipt.id} carries a non-string vessel or reason; skipped`,
+      );
+      continue;
+    }
+    if (meta.reason.length === 0) {
+      console.warn(`openFlares: flare receipt ${receipt.id} carries an empty reason; skipped`);
+      continue;
+    }
+    flares.push({
+      id: receipt.id,
+      vessel: oneLine(meta.vessel),
+      reason: oneLine(meta.reason),
+      evidence: typeof meta.evidence === "string" ? meta.evidence : "",
+      recordedAt: receipt.recordedAt,
+    });
+  }
+  return flares;
+}
+
+/**
+ * The most recent charter START receipt (`meta.kind: "charter"`), in log
+ * order; an outcome receipt (`meta.kind: "charter-outcome"`) is a different
+ * marker and never shadows the start it closes. Undefined when the log
+ * holds no charter start.
+ */
+export function latestCharter(log: Receipt[]): Charter | undefined {
+  for (let i = log.length - 1; i >= 0; i--) {
+    const meta = log[i]?.meta;
+    if (meta?.kind !== "charter") continue;
+    if (!Array.isArray(meta.vessels) || typeof meta.entries !== "number") continue;
+    return {
+      id: log[i]!.id,
+      vessels: meta.vessels.filter((vessel): vessel is string => typeof vessel === "string"),
+      entries: meta.entries,
+    };
+  }
+  return undefined;
+}
+
+/** The receipt id's monotonic sequence number; undefined for a foreign id. */
+function receiptSequence(id: string): number | undefined {
+  const match = /^r(\d+)$/.exec(id);
+  return match === null ? undefined : Number(match[1]);
+}
+
+/**
+ * Overreach (design D2): for every `chart.write` receipt recorded AFTER the
+ * charter's start receipt (ids are monotonic, so id order is time order),
+ * the entries its `meta.vessels` recorded for vessels OUTSIDE the charter —
+ * aggregated per vessel, sorted by vessel id. Receipts that are not chart
+ * writes contribute nothing even when their meta names vessels; in-charter
+ * vessels are never listed; a charter is never listed against itself.
+ */
+export function charterOverreach(log: Receipt[], charter: Charter): Overreach[] {
+  const start = receiptSequence(charter.id);
+  if (start === undefined) return [];
+  const entriesByVessel = new Map<string, number>();
+  for (const receipt of log) {
+    if (receipt.command !== "chart.write") continue;
+    const sequence = receiptSequence(receipt.id);
+    if (sequence === undefined || sequence <= start) continue;
+    const vessels = receipt.meta?.vessels;
+    if (typeof vessels !== "object" || vessels === null) continue;
+    for (const [vessel, count] of Object.entries(vessels)) {
+      if (charter.vessels.includes(vessel)) continue;
+      if (typeof count !== "number") continue;
+      entriesByVessel.set(vessel, (entriesByVessel.get(vessel) ?? 0) + count);
+    }
+  }
+  return [...entriesByVessel.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([vessel, entries]) => ({ vessel, entries }));
+}
+
+/**
+ * What the closure arithmetic needs besides the history itself — only for
+ * the pre-evidence fallback (records written before the 2026-09-06
+ * amendment; evidence-carrying decisions close without it).
+ */
+export interface FlareClosureContext {
+  /**
+   * Every flare receipt ever filed on THIS vessel (open or closed), log
+   * order — the candidate rows a decision could have been made on carried
+   * some subset of these reasons. Must include the flare being tested.
+   */
+  vesselFlares: Flare[];
+  /**
+   * The stale entries currently charged to the vessel (the repair queue's
+   * own attribution, ../fan-in.ts): the drift counts a repair row for this
+   * vessel could have carried at or before now.
+   */
+  staleEntries: number;
+}
+
+/**
+ * How many distinct reasons per vessel the candidate enumeration will
+ * combine. Beyond the cap the oldest reasons drop out of the enumeration:
+ * a flare those reasons alone could close stays open and proposes again —
+ * the loud failure mode, never a silent one. One vessel collecting 16
+ * distinct flare reasons is not a province this arithmetic should optimize
+ * for; unbounded subsets would be.
+ */
+const MAX_CANDIDATE_REASONS = 16;
+
+/**
+ * The flare-closure decision (design D1, amended 2026-09-06): a decision —
+ * accepted or declined — on a repair proposal for the flare's vessel,
+ * recorded in the harbor history AFTER the flare's receipt, closes the
+ * flare outright.
+ *
+ * The happy path reads the evidence the decide path recorded with the
+ * decision (DecisionRecord.evidence): it closes the flare when that
+ * evidence names the flare's reason AND the flare's vessel — the vessel
+ * named by a drift key (`vessel/<id>#<count>`) or by the count-less
+ * flare-row key (`vessel/<id>`). Vessel-scoped, so a decision
+ * on one vessel's row can never close another vessel's flare even when the
+ * reason texts coincide; and monotonic — the recorded evidence does not
+ * change when the drift charge empties, so a flare its decision answered
+ * cannot resurrect (the mined arithmetic below could not promise that: its
+ * candidate set stopped at the CURRENT charge).
+ *
+ * Records written before the amendment carry no evidence (design D4:
+ * absence reads as absence, never an error) and fall back to re-minting
+ * the fingerprints the proposal engine could have produced for the vessel:
+ * the vessel's drift key at any count up to the current charge, the
+ * count-less flare-only shape, or the pre-amendment reasons alone — plus
+ * the reasons of whatever flares on the vessel were open when it was
+ * decided, here some subset of every reason ever filed on the vessel. A
+ * decision recorded before the flare's receipt closes nothing, whatever it
+ * was about.
+ */
+export function flareClosed(
+  flare: Flare,
+  decisions: DecisionRecord[],
+  context: FlareClosureContext,
+): boolean {
+  const postdating = decisions.filter((record) => record.decidedAt > flare.recordedAt);
+  if (postdating.length === 0) return false;
+  // The vessel is matched ONLY at the engine-minted key — the decided row's
+  // first evidence entry (a drift key or the count-less flare-row key).
+  // Reason strings are DATA, never keys: scanning them let a crafted reason
+  // (`vessel/<id>` riding another vessel's row as a flare reason) pose as a
+  // key naming the flare's vessel and close a flare the decision never
+  // named (security fix 2026-09-06).
+  const namesTheFlare = (evidence: string[]): boolean =>
+    evidence.length > 0 &&
+    evidence.includes(flare.reason) &&
+    evidenceVessel(evidence[0]) === flare.vessel;
+  if (postdating.some((record) => record.evidence !== undefined && namesTheFlare(record.evidence))) {
+    return true;
+  }
+  const mined = postdating.filter((record) => record.evidence === undefined);
+  if (mined.length === 0) return false;
+  const reasons = [...new Set(context.vesselFlares.map((f) => f.reason))].slice(
+    -MAX_CANDIDATE_REASONS,
+  );
+  const candidates = new Set<string>();
+  for (let mask = 0; mask < (1 << reasons.length); mask++) {
+    const keys = reasons.filter((_, i) => (mask & (1 << i)) !== 0);
+    if (keys.length > 0) {
+      candidates.add(proposalFingerprint("repair", keys));
+      candidates.add(proposalFingerprint("repair", [`vessel/${flare.vessel}`, ...keys]));
+    }
+    for (let stale = 0; stale <= context.staleEntries; stale++) {
+      candidates.add(proposalFingerprint("repair", [...keys, `vessel/${flare.vessel}#${stale}`]));
+    }
+  }
+  return mined.some((record) => candidates.has(record.fingerprint));
+}
+
+/**
+ * Refusal-respect for a repair row when flares exist on its vessel. A
+ * declined decision filters not only the exact row it was recorded on but
+ * any other shape of that vessel's row at the SAME stale count — the
+ * Governor who declined the drift-plus-flare row refused that drift too,
+ * and the row must not recompute without its flare reasons merely because
+ * the decline closed them. The refusal reaches across shapes only forward
+ * in time: a decline predating a flare never filters a row carrying that
+ * flare's reason — the flare is evidence the Governor had not seen. With
+ * no flares ever filed on the vessel this reduces to the exact-fingerprint
+ * rule the resurvey queue pinned.
+ *
+ * `row.staleEntries` is the count in the row's own `vessel/<id>#<count>`
+ * key, undefined for a flare-only row (no drift key). `vesselFlares` is
+ * every flare receipt ever filed on the vessel, log order — same input as
+ * flareClosed.
+ */
+export function repairRowRefused(
+  row: {
+    vessel: string;
+    /** The row's own stale count, when its evidence carries the drift key. */
+    staleEntries?: number;
+    /** The flare reasons the row carries (the open flares folded in). */
+    flareReasons: string[];
+    fingerprint: string;
+  },
+  decisions: DecisionRecord[],
+  vesselFlares: Flare[],
+): boolean {
+  const declined = decisions.filter((record) => record.decision === "declined");
+  if (declined.length === 0) return false;
+  const reasons = [...new Set(vesselFlares.map((f) => f.reason))].slice(-MAX_CANDIDATE_REASONS);
+  const rowReasons = new Set(row.flareReasons);
+  const newestFlareByReason = new Map<string, string>();
+  for (const flare of vesselFlares) {
+    const newest = newestFlareByReason.get(flare.reason);
+    if (newest === undefined || flare.recordedAt > newest) {
+      newestFlareByReason.set(flare.reason, flare.recordedAt);
+    }
+  }
+  // The row shapes a decline could have been recorded on: this row's own
+  // shape — its drift key at its own count, or the count-less vessel key
+  // plus its flare reasons (the flare-only row is vessel-scoped, so its
+  // fingerprint can never collide with another vessel's) — combined with
+  // every subset of the vessel's flare reasons. A keyed row never matches a
+  // keyless shape: a changed stale count is new evidence (the resurvey
+  // rule), and so is drift appearing at all.
+  const shapeOf = new Map<string, string[]>();
+  for (let mask = 0; mask < (1 << reasons.length); mask++) {
+    const subset = reasons.filter((_, i) => (mask & (1 << i)) !== 0);
+    const keys =
+      row.staleEntries === undefined
+        ? [`vessel/${row.vessel}`, ...subset]
+        : [...subset, `vessel/${row.vessel}#${row.staleEntries}`];
+    shapeOf.set(proposalFingerprint("repair", keys), subset);
+  }
+  for (const record of declined) {
+    const subset = shapeOf.get(record.fingerprint);
+    if (subset === undefined) continue;
+    // The decline refuses this shape only if it postdates every flare whose
+    // reason it saw that this row lacks, or this row carries that it did not
+    // see — otherwise the difference is evidence newer than the refusal.
+    const sawOrCarries = (reason: string): boolean =>
+      subset.includes(reason) !== rowReasons.has(reason);
+    const newer = [...newestFlareByReason].some(
+      ([reason, at]) => sawOrCarries(reason) && record.decidedAt <= at,
+    );
+    if (!newer) return true;
+  }
+  return false;
+}

@@ -102,6 +102,41 @@ test("chart.write through the server persists; chart.read reads it back verbatim
 });
 
 // ---------------------------------------------------------------------------
+// expedition-charter (design D2, code-review fix 2026-09-06): the write
+// receipt's meta.vessels names the vessels the write itself touched — the
+// delta the Notices to Mariners report — never the whole post-write chart.
+// A compliant one-vessel correction receipts one vessel; a receipt naming
+// every charted vessel would make overreach arithmetic blind to exactly
+// the incident the charter exists to catch.
+// ---------------------------------------------------------------------------
+
+test("chart.write receipts name the vessels the write itself touched, not the whole post-write chart", async () => {
+  const target = makeProvince();
+  await withServer({ targetRoot: target }, async (client) => {
+    // First write: the whole batch is the delta (three additions).
+    const first = await client.callTool({ name: "chart.write", arguments: { entries: sampleEntries() } });
+    expect(first.isError).toBeUndefined();
+
+    // A one-vessel correction: only v-cart's behavior changes; the rest of
+    // the batch re-serves verbatim (full-replace semantics).
+    const corrected = (sampleEntries() as Array<Record<string, unknown>>).map((entry) =>
+      entry.id === "v-cart" ? { ...entry, behavior: "holds the persisted cart" } : entry,
+    );
+    const second = await client.callTool({ name: "chart.write", arguments: { entries: corrected } });
+    expect(second.isError).toBeUndefined();
+    expect((structuredOf(second) as { notices: unknown[] }).notices).toHaveLength(1); // the one correction
+
+    const receipts = readReceipts(target, { command: "chart.write" });
+    expect(receipts).toHaveLength(2);
+    // Both receipts are deltas: the first names the three added entries'
+    // vessels, the second names the one corrected vessel alone — never the
+    // whole post-write chart.
+    expect(receipts[0]!.meta).toEqual({ vessels: { "v-cart": 2, "v-checkout": 2 } });
+    expect(receipts[1]!.meta).toEqual({ vessels: { "v-cart": 1 } });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // verification-spine task 3.1: the verification summary serves like any other
 // tool — called through the live server with no arguments, it returns the
 // module's own report unchanged, with a refuted anchor named through the wire.

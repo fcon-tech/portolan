@@ -1,6 +1,6 @@
 /**
  * The proposal engine: the deterministic Harbor Master. The queue is
- * computed from exactly three inputs — never imagined (the trust spine
+ * computed from exactly four inputs — never imagined (the trust spine
  * forbids model-invented proposals):
  *
  * 1. repair   — one proposal per vessel marked `pending correction`; the
@@ -10,7 +10,22 @@
  *               charted light (both signals read from the index, never from
  *               parsed sheets — design.md, decision 1);
  * 3. new-land — landscape entries absent from the last-survey snapshot,
- *               compared only while the chart index hash is unchanged.
+ *               compared only while the chart index hash is unchanged;
+ * 4. flares   — repair needs filed as ship's-log receipts by expeditions
+ *               (openspec/changes/expedition-charter, design D1): every
+ *               open flare contributes to the repair row of the vessel it
+ *               names, its stated reason riding the evidence; a vessel
+ *               with open flares and no drift gets a flare-only row, its
+ *               evidence the count-less vessel key plus the stated reasons
+ *               (vessel-scoped, code-review fix 2026-09-06). Flare rows
+ *               are repair rows for every purpose — same rank, same
+ *               decisions, same night bound; no join layer, just a fold of
+ *               the flare reasons onto the per-vessel row (filter plus
+ *               concat). Closure is arithmetic over the harbor history
+ *               (./charter, flareClosed): a decision — accepted or
+ *               declined — on a repair proposal for the vessel recorded
+ *               after the flare's receipt closes it; undecided flares keep
+ *               proposing.
  *
  * Ranking: repair rows order among themselves by the shared rank — direct
  * cross-vessel charted fan-in, ties by vessel id (../fan-in.ts) — before
@@ -37,12 +52,15 @@ import { resolveInsideTarget } from "../perimeter";
 import { readChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
+import { readReceipts } from "../tools/log";
 import { HarborError } from "./errors";
-import { PROPOSAL_KINDS, proposalFingerprint, type ProposalKind } from "./fingerprint";
+import { PROPOSAL_KINDS, driftEntryCount, proposalFingerprint, type ProposalKind } from "./fingerprint";
+import { flareClosed, openFlares, repairRowRefused, type Flare } from "./charter";
 import {
   DECISIONS,
   appendDecision,
   lastRecordPerFingerprint,
+  readDecisions,
   readHistory,
   type DecisionRecord,
   type GovernorDecision,
@@ -148,15 +166,26 @@ function soundableAnchorUnder(targetRoot: string, rel: string): Anchor | undefin
  * carries the stale-entry count charged to that vessel (../fan-in.ts, the
  * report's own attribution rule), so a refusal holds while the drift is
  * unchanged and reopens when the count changes.
+ *
+ * The fourth input folds in here with no join layer: the open flares of a
+ * vessel are filtered and their reasons concatenated onto that vessel's
+ * single row — the row already carries the drift, so it carries the flares
+ * too; a vessel with open flares and no drift gets a flare-only row, its
+ * evidence the stated reasons alone.
  */
-function repairProposals(targetRoot: string, entries: IndexedEntry[]): Proposal[] {
-  const charged = chargeStaleEntries(entries);
-  return sortById(
+function repairProposals(
+  targetRoot: string,
+  entries: IndexedEntry[],
+  charged: Map<string, number>,
+  openFlaresByVessel: Map<string, Flare[]>,
+): Proposal[] {
+  const rows = new Map<string, Proposal>();
+  for (const vessel of sortById(
     entries.filter((e): e is IndexedVessel => e.kind === "vessel" && e.stale === true),
-  ).map((vessel) => {
+  )) {
     const staleEntries = charged.get(vessel.id) ?? 0;
     const evidence = [`vessel/${vessel.id}#${staleEntries}`];
-    return {
+    rows.set(vessel.id, {
       kind: "repair" as const,
       fingerprint: proposalFingerprint("repair", evidence),
       summary:
@@ -171,8 +200,73 @@ function repairProposals(targetRoot: string, entries: IndexedEntry[]): Proposal[
           .filter((anchor): anchor is Anchor => anchor !== undefined),
       ),
       scope: { vessels: [vessel.id], entries: staleEntries, soundings: staleEntries },
-    };
-  });
+    });
+  }
+  for (const [vesselId, flares] of [...openFlaresByVessel].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
+    const reasons = [...new Set(flares.map((flare) => flare.reason))];
+    const driftRow = rows.get(vesselId);
+    if (driftRow !== undefined) {
+      const evidence = [...driftRow.evidence, ...reasons];
+      rows.set(vesselId, {
+        ...driftRow,
+        fingerprint: proposalFingerprint("repair", evidence),
+        summary: `${driftRow.summary}; open flare: ${reasons.join("; ")}`,
+        evidence,
+      });
+      continue;
+    }
+    // A flare-only row: the vessel's charted paths still anchor it when they
+    // sound (omitted, never faked, when they do not); the scope counts what
+    // a re-survey would touch — the drift charge, zero on a still vessel.
+    // The evidence is vessel-scoped: the count-less vessel key plus the
+    // stated reasons, so two vessels' flare-only rows never share a
+    // fingerprint whatever their reason texts — declining one vessel's row
+    // must never close another vessel's flare (code-review fix 2026-09-06).
+    const vessel = entries.find((e): e is IndexedVessel => e.kind === "vessel" && e.id === vesselId);
+    const staleEntries = charged.get(vesselId) ?? 0;
+    const evidence = [`vessel/${vesselId}`, ...reasons];
+    rows.set(vesselId, {
+      kind: "repair" as const,
+      fingerprint: proposalFingerprint("repair", evidence),
+      summary: `open flare on vessel ${vesselId}: ${reasons.join("; ")}`,
+      evidence,
+      anchors:
+        vessel === undefined
+          ? []
+          : uniqueAnchors(
+              vessel.paths
+                .map((path) => soundableAnchorUnder(targetRoot, path))
+                .filter((anchor): anchor is Anchor => anchor !== undefined),
+            ),
+      scope: { vessels: [vesselId], entries: staleEntries, soundings: staleEntries },
+    });
+  }
+  return [...rows.values()];
+}
+
+/**
+ * The open flares per vessel: every flare receipt on a vessel that no
+ * postdating decision on a repair proposal for that vessel has closed
+ * (./charter, flareClosed — the closure arithmetic). Deterministic: flares
+ * grouped by vessel in, vessel-keyed map of the survivors out.
+ */
+function stillOpenFlares(
+  byVessel: Map<string, Flare[]>,
+  decisions: DecisionRecord[],
+  charged: Map<string, number>,
+): Map<string, Flare[]> {
+  const open = new Map<string, Flare[]>();
+  for (const [vesselId, vesselFlares] of byVessel) {
+    const stillOpen = vesselFlares.filter(
+      (flare) =>
+        !flareClosed(flare, decisions, {
+          vesselFlares,
+          staleEntries: charged.get(vesselId) ?? 0,
+        }),
+    );
+    if (stillOpen.length > 0) open.set(vesselId, stillOpen);
+  }
+  return open;
 }
 
 /** Gap proposals: one per charted vessel missing its behavior and/or its lights. */
@@ -253,8 +347,18 @@ export function computeProposals(
   }
 
   const fanIn = vesselFanIn(entries);
+  const charged = chargeStaleEntries(entries);
+  const flares = openFlares(readReceipts(targetRoot));
+  const flaresByVessel = new Map<string, Flare[]>();
+  for (const flare of flares) {
+    const vesselFlares = flaresByVessel.get(flare.vessel) ?? [];
+    vesselFlares.push(flare);
+    flaresByVessel.set(flare.vessel, vesselFlares);
+  }
+  const decisions = readDecisions(targetRoot);
+  const openByVessel = stillOpenFlares(flaresByVessel, decisions, charged);
   const proposals: Proposal[] = [
-    ...repairProposals(targetRoot, entries),
+    ...repairProposals(targetRoot, entries, charged, openByVessel),
     ...newLandProposals(targetRoot, newLand),
     ...gapProposals(entries),
   ];
@@ -277,16 +381,44 @@ export function computeProposals(
   // acceptance — Governor's or night-watch's — never filters, and neither
   // does a night-watch `launch-failed` outcome, so a failed launch leaves
   // the proposal queued for retry or the Governor's decision. The LAST
-  // record of any kind is the latest word on the fingerprint.
-  const declined = new Set(
-    [...lastRecordPerFingerprint(readHistory(targetRoot)).values()]
-      .filter(
-        (record): record is DecisionRecord =>
-          "decision" in record && record.decision === "declined",
-      )
-      .map((record) => record.fingerprint),
+  // record of any kind is the latest word on the fingerprint. Repair rows
+  // additionally respect the flare refusal arithmetic (./charter,
+  // repairRowRefused): a decline filters the other shapes of that vessel's
+  // row at the same stale count — it is a no-op where no flare was ever
+  // filed, where it reduces to this exact-fingerprint set.
+  const declinedRecords = [...lastRecordPerFingerprint(readHistory(targetRoot)).values()].filter(
+    (record): record is DecisionRecord =>
+      "decision" in record && record.decision === "declined",
   );
-  return { proposals: proposals.filter((p) => !declined.has(p.fingerprint)) };
+  const declined = new Set(declinedRecords.map((record) => record.fingerprint));
+  return {
+    proposals: proposals.filter((p) => {
+      if (declined.has(p.fingerprint)) return false;
+      if (p.kind !== "repair") return true;
+      const vessel = p.scope.vessels[0]!;
+      // The drift key is matched only at the engine-minted position —
+      // evidence[0] of a drift-keyed row — by its exact
+      // `vessel/<id>#<digits>` shape (./fingerprint, driftEntryCount).
+      // Reason strings are DATA, never keys: scanning the whole evidence
+      // let a free-text flare reason shaped like `vessel/<id>#<count>` pose
+      // as the row's drift charge (and slip out of the flare reasons), so a
+      // previously-declined shape could suppress the flare row (security
+      // fix 2026-09-06).
+      const [mintedKey] = p.evidence;
+      const driftKey =
+        mintedKey !== undefined && driftEntryCount(mintedKey) !== undefined ? mintedKey : undefined;
+      return !repairRowRefused(
+        {
+          vessel,
+          ...(driftKey === undefined ? {} : { staleEntries: driftEntryCount(driftKey) }),
+          flareReasons: p.evidence.filter((key) => key !== driftKey),
+          fingerprint: p.fingerprint,
+        },
+        declinedRecords,
+        flaresByVessel.get(vessel) ?? [],
+      );
+    }),
+  };
 }
 
 /**
@@ -294,7 +426,11 @@ export function computeProposals(
  * queue currently computes (declined proposals stay computable — the
  * Governor may overturn a refusal while the evidence is unchanged). An
  * unknown fingerprint is rejected: deciding on a proposal that does not
- * exist would write an unverifiable row into the history.
+ * exist would write an unverifiable row into the history. The decision
+ * records the row's evidence keys (design D1, amendment 2026-09-06): flare
+ * closure matches the recorded evidence instead of re-mining what the
+ * engine could have produced — monotonic, whatever the drift charge does
+ * after the repair.
  */
 export function decide(
   targetRoot: string,
@@ -312,13 +448,14 @@ export function decide(
     );
   }
   const computable = computeProposals(targetRoot, { includeDeclined: true });
-  if (!computable.proposals.some((p) => p.fingerprint === fingerprint)) {
+  const proposal = computable.proposals.find((p) => p.fingerprint === fingerprint);
+  if (proposal === undefined) {
     throw new HarborError(
       `unknown proposal fingerprint ${fingerprint}; decide on a proposal the queue currently computes ` +
         "(call expeditions.propose first)",
     );
   }
-  return appendDecision(targetRoot, fingerprint, decision);
+  return appendDecision(targetRoot, fingerprint, decision, { evidence: proposal.evidence });
 }
 
 export { PROPOSAL_KINDS };

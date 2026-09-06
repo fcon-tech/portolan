@@ -334,6 +334,16 @@ test("night-watch history: a corrupt launch-outcome line fails loudly", () => {
   expect(() => readHistory(target)).toThrow(/corrupt decision history/);
 });
 
+test("history: a decision line whose evidence is not a list of strings fails loudly", () => {
+  const target = makeProvince();
+  mkdirSync(join(target, ".portolan", "harbor"), { recursive: true });
+  writeFileSync(
+    historyFile(target),
+    `${JSON.stringify({ fingerprint: "f1", decision: "accepted", decidedAt: "x", evidence: "vessel/api#3" })}\n`,
+  );
+  expect(() => readHistory(target)).toThrow(/corrupt decision history/);
+});
+
 // ---------------------------------------------------------------------------
 // Task 2.1 — computeProposals: the five scenario tests.
 // ---------------------------------------------------------------------------
@@ -442,8 +452,12 @@ test("2.2 decide: accept round-trip writes history and keeps the proposal visibl
   expect(record.fingerprint).toBe(gap.fingerprint);
   expect(record.decision).toBe("accepted");
   expect(record.decidedAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
+  // The decision records the row's evidence keys (design D1, amendment
+  // 2026-09-06 — flare closure matches the recorded evidence).
+  expect(record.evidence).toEqual(gap.evidence);
   const last = lastDecisionPerFingerprint(readDecisions(target)).get(gap.fingerprint);
   expect(last?.decision).toBe("accepted");
+  expect(last?.evidence).toEqual(gap.evidence);
   // Acceptance is not a refusal: the outstanding gap stays in the queue.
   expect(computeProposals(target).proposals.map((p) => p.fingerprint)).toContain(gap.fingerprint);
 });

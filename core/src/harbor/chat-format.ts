@@ -11,6 +11,7 @@
  * capability: the watch report is chat-formatted and deterministic)
  */
 import { formatAnchor } from "../types";
+import { oneLine } from "./charter";
 import type { Proposal, ProposeResult } from "./proposals";
 import type { WatchAction, WatchReport } from "./watch";
 import type { RunReport } from "./run";
@@ -24,7 +25,7 @@ function scopeLine(proposal: Proposal): string {
     return `full survey of ${path}; no charted vessels there yet`;
   }
   return (
-    `vessels ${proposal.scope.vessels.join(", ")} · ` +
+    `vessels ${proposal.scope.vessels.map(oneLine).join(", ")} · ` +
     `${proposal.scope.entries} entries · ${proposal.scope.soundings} soundings`
   );
 }
@@ -76,6 +77,28 @@ function ranLine(action: WatchAction): string {
   return action.outcome === "completed"
     ? "   outcome: completed"
     : `   outcome: launch-failed (${action.reason})`;
+}
+
+/**
+ * The charter an expedition filed rides what it did (openspec/changes/
+ * expedition-charter): the promised vessels and entries, then kept — or the
+ * out-of-charter writes named by vessel and count, never summarized away
+ * (harbor spec: overreach is named). Vessel ids are receipt data and render
+ * with control characters flattened (oneLine), so no id can forge a report
+ * line (security fix 2026-09-06). A launch-failed row gets no verdict line
+ * at all: nothing it wrote was measured, so kept would be a verdict the
+ * run cannot back. Absent charter (design D4) renders nothing.
+ */
+function charterLines(action: WatchAction): string[] {
+  if (action.outcome !== "completed") return [];
+  if (action.charter === undefined) return [];
+  const promised =
+    `   charter: vessels ${action.charter.vessels.map(oneLine).join(", ")} · ` +
+    `${action.charter.entries} entries`;
+  const overreach = action.overreach ?? [];
+  if (overreach.length === 0) return [`${promised} — kept`];
+  const broken = overreach.map((row) => `${oneLine(row.vessel)} · ${row.entries} entries`).join("; ");
+  return [`${promised} — broken: ${broken} written outside the charter`];
 }
 
 /**
@@ -132,6 +155,7 @@ export function renderWatchChat(report: WatchReport): string {
   for (const [index, action] of completed.entries()) {
     lines.push(`${index + 1}. ${action.proposal.kind} — ${action.proposal.summary}`);
     lines.push(ranLine(action));
+    lines.push(...charterLines(action));
   }
 
   lines.push("pending:");
@@ -147,6 +171,7 @@ export function renderWatchChat(report: WatchReport): string {
   for (const [index, action] of failed.entries()) {
     lines.push(`${index + 1}. ${action.proposal.kind} — ${action.proposal.summary}`);
     lines.push(`   failure: ${action.reason}`);
+    lines.push(...charterLines(action));
     lines.push("   note: recorded in history; the proposal stays queued for the Governor");
   }
 

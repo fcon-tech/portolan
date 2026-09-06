@@ -21,11 +21,13 @@
  * Determinism: the report carries no timestamps — two watch runs over an
  * unchanged province (same launcher behavior) emit byte-identical reports.
  */
+import { readReceipts } from "../tools/log";
 import { computeProposals, type Proposal } from "./proposals";
 import { readSettings } from "./settings";
 import { nightPolicy } from "./night-policy";
 import { briefFor, launchExpedition, DEFAULT_LAUNCHER_TIMEOUT_MS } from "./launcher";
 import { appendDecision, appendLaunchFailure, NIGHT_WATCH } from "./history";
+import { charterOverreach, latestCharter, type Overreach } from "./charter";
 
 /** What the watch was told at invocation. */
 export interface WatchOptions {
@@ -41,6 +43,18 @@ export interface WatchAction {
   outcome: "completed" | "launch-failed";
   /** Deterministic failure reason; present iff the outcome is launch-failed. */
   reason?: string;
+  /**
+   * The charter the expedition recorded at start (openspec/changes/
+   * expedition-charter); absent when it filed none — a pre-change
+   * expedition or province reads as absence, never an error (design D4).
+   */
+  charter?: { vessels: string[]; entries: number };
+  /**
+   * Out-of-charter chart writes by vessel and entry count, present with
+   * the charter; [] reads as kept, out-of-charter vessels as broken. The
+   * same shared arithmetic trust.report calls (design D2).
+   */
+  overreach?: Overreach[];
 }
 
 /** The watch report's data: what ran, what stayed pending, and the policy that decided. */
@@ -78,18 +92,43 @@ export async function runWatch(targetRoot: string, options: WatchOptions = {}): 
   const ran: WatchAction[] = [];
   if (!reportOnly) {
     for (const proposal of launch) {
-      appendDecision(targetRoot, proposal.fingerprint, "accepted", { by: NIGHT_WATCH });
+      // The auto-accept records the row's evidence (design D1, amendment
+      // 2026-09-06): flare closure matches the recorded evidence.
+      appendDecision(targetRoot, proposal.fingerprint, "accepted", {
+        by: NIGHT_WATCH,
+        evidence: proposal.evidence,
+      });
       const result = await launchExpedition({
         launcher: options.launcher as string,
         brief: briefFor(targetRoot, proposal),
         timeoutMs: options.launcherTimeoutMs ?? DEFAULT_LAUNCHER_TIMEOUT_MS,
       });
-      if (result.ok) {
-        ran.push({ proposal, outcome: "completed" });
-      } else {
+      if (!result.ok) {
         appendLaunchFailure(targetRoot, proposal.fingerprint, result.reason as string);
-        ran.push({ proposal, outcome: "launch-failed", reason: result.reason });
       }
+      // What the expedition put on record (openspec/changes/expedition-
+      // charter): the charter it filed at start and whether its chart
+      // writes stayed inside it, read from the ship's log through the same
+      // shared arithmetic trust.report calls (design D2 — one function, so
+      // the surfaces cannot diverge). The log read cumulatively through
+      // this launch is the record this report speaks from: a retry that
+      // files nothing reports against the charter already on record, which
+      // keeps two watch runs over an unchanged province byte-identical. A
+      // log with no charter receipt (a pre-change expedition, design D4)
+      // leaves both fields absent.
+      const receipts = readReceipts(targetRoot);
+      const charter = latestCharter(receipts);
+      ran.push({
+        proposal,
+        outcome: result.ok ? "completed" : "launch-failed",
+        ...(result.ok ? {} : { reason: result.reason }),
+        ...(charter === undefined
+          ? {}
+          : {
+              charter: { vessels: charter.vessels, entries: charter.entries },
+              overreach: charterOverreach(receipts, charter),
+            }),
+      });
     }
   }
 

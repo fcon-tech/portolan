@@ -71,7 +71,14 @@ test("a named gap proposal launches end-to-end and the acceptance is attributed 
   expect(report.proposal.fingerprint).toBe(gap!.fingerprint);
   const history = readHistory(target);
   const last = history[history.length - 1];
-  expect(last).toMatchObject({ fingerprint: gap!.fingerprint, decision: "accepted", by: "governor" });
+  // The acceptance carries the decided row's evidence (design D1,
+  // amendment 2026-09-06 — flare closure matches the recorded evidence).
+  expect(last).toMatchObject({
+    fingerprint: gap!.fingerprint,
+    decision: "accepted",
+    by: "governor",
+    evidence: gap!.evidence,
+  });
 });
 
 test("an unknown fingerprint is a loud input error that writes nothing", async () => {

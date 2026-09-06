@@ -10,7 +10,7 @@
  * specs/harness/spec.md
  */
 import type { Anchor, ChartEntry, FairwayEntry, VesselEntry } from "../types";
-import { readChart, writeChart } from "../chart-store";
+import { readChart, writeChart, vesselsTouched } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { sweep } from "../tools/sweep";
 import { symbols } from "../tools/symbols";
@@ -269,11 +269,25 @@ export const TOOL_TABLE: ToolSpec[] = [
     handler: (args, ctx) => {
       const options =
         args.allowShrink === undefined ? {} : { allowShrink: optBool("chart.write", args, "allowShrink") as boolean };
-      return writeChart(
+      const result = writeChart(
         ctx.targetRoot,
         reqArray("chart.write", args, "entries") as ChartEntry[],
         options,
       );
+      // The one write this call makes beyond the Chart: exactly one ship's-log
+      // receipt, through the same append path log.append serves, with the
+      // vessels the write itself touched — the write's delta (result.changed),
+      // not the whole post-write chart — and their entry counts in meta: the
+      // marker charter overreach is computed from (expedition-charter, design
+      // D2). A rejected write throws above and never reaches this line, so a
+      // rejection leaves no receipt.
+      appendReceipt(ctx.targetRoot, {
+        command: "chart.write",
+        scope: "chart",
+        outcome: `ok: ${result.index.length} entries`,
+        meta: { vessels: vesselsTouched(result.changed) },
+      });
+      return result;
     },
   },
   {
@@ -444,9 +458,10 @@ export const TOOL_TABLE: ToolSpec[] = [
   {
     name: "expeditions.propose",
     description:
-      "The Harbor Master: compute the expedition-proposal queue from deterministic chart state — vessels marked " +
-      "pending correction (repair), charted vessels with no recorded behavior or no charted light (gap), and " +
-      "landscape present since the last survey snapshot (new-land). Every proposal carries its kind, evidence " +
+      "The Harbor Master: compute the expedition-proposal queue from deterministic state — vessels marked " +
+      "pending correction (repair), charted vessels with no recorded behavior or no charted light (gap), " +
+      "landscape present since the last survey snapshot (new-land), and open flares, which propose as repair " +
+      "rows for the vessels they name. Every proposal carries its kind, evidence " +
       "anchors, a scope estimate, and a stable fingerprint; fingerprints declined by the Governor are not " +
       "re-proposed while their evidence is unchanged. No input; refreshes staleness first; a still province " +
       "yields an empty queue. Proposals are computed, never imagined.",

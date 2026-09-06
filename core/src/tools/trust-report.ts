@@ -21,6 +21,15 @@ import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { refreshStaleness } from "../staleness";
 import { readReceipts, type Receipt } from "./log";
 import { SoundingError, soundAnchor } from "./sound";
+import {
+  charterOverreach,
+  flareClosed,
+  latestCharter,
+  openFlares,
+  type Flare,
+  type Overreach,
+} from "../harbor/charter";
+import { readDecisions } from "../harbor/history";
 
 /**
  * The mandated query tools whose invocations the report must account for
@@ -59,6 +68,19 @@ export interface PendingVessel {
   entries: number;
 }
 
+/** One open flare: the vessel it names and the reason its receipt states. */
+export interface OpenFlare {
+  vessel: string;
+  reason: string;
+}
+
+/** The most recent charter with its overreach; `[]` overreach reads as kept. */
+export interface CharterSection {
+  vessels: string[];
+  entries: number;
+  overreach: Overreach[];
+}
+
 /** What `trust.report` returns: the one-call verification summary. */
 export interface TrustReport {
   /** Chart entries per trust label; all five labels stated, zero-filled. */
@@ -84,6 +106,10 @@ export interface TrustReport {
   log: { receipts: number; lastReceipt: Receipt | null };
   /** Per-tool invocation facts for every mandated query tool, zero-filled. */
   adoption: { tools: Record<MandatedQueryTool, ToolAdoption> };
+  /** Open flares in log order — a decision on the vessel's repair row after the flare's receipt closes it (design D1). */
+  flares: OpenFlare[];
+  /** The most recent charter start receipt with any overreach; null when the log holds none (design D4). */
+  charter: CharterSection | null;
 }
 
 /**
@@ -161,6 +187,35 @@ export function trustReport(targetRoot: string): TrustReport {
   const refutedList: RefutedAnchor[] = refuted.map(({ index: _index, ...r }) => r);
 
   const receipts = readReceipts(targetRoot);
+  // The charter surfaces (openspec/changes/expedition-charter). Flares: the
+  // open ones in log order — the same closure arithmetic the queue applies
+  // (design D1: a decision, accepted or declined, on a repair proposal for
+  // the vessel after the flare's receipt closes it). Charter: the most
+  // recent start receipt with its overreach, through the one shared
+  // function the watch report calls (design D2 — the surfaces cannot
+  // diverge). Absence reads as absence (design D4): no markers is an empty
+  // list and null, never an error.
+  const allFlares = openFlares(receipts);
+  const decisions = readDecisions(targetRoot);
+  const stillOpen = (flare: Flare): boolean => {
+    const vesselFlares = allFlares.filter((f) => f.vessel === flare.vessel);
+    return !flareClosed(flare, decisions, {
+      vesselFlares,
+      staleEntries: pending.get(flare.vessel) ?? 0,
+    });
+  };
+  const flares: OpenFlare[] = allFlares
+    .filter(stillOpen)
+    .map(({ vessel, reason }) => ({ vessel, reason }));
+  const latest = latestCharter(receipts);
+  const charter: CharterSection | null =
+    latest === undefined
+      ? null
+      : {
+          vessels: latest.vessels,
+          entries: latest.entries,
+          overreach: charterOverreach(receipts, latest),
+        };
   // Append-only log: file order is invocation order, so first/last by it.
   const adoption = Object.fromEntries(
     ADOPTION_TOOLS.map((tool) => {
@@ -189,5 +244,7 @@ export function trustReport(targetRoot: string): TrustReport {
       lastReceipt: receipts.length > 0 ? receipts[receipts.length - 1]! : null,
     },
     adoption: { tools: adoption },
+    flares,
+    charter,
   };
 }
