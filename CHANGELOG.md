@@ -1,5 +1,62 @@
 # Changelog
 
+## 0.6.0 — 2026-09-06
+
+The expedition charter (openspec change `expedition-charter`): what an
+expedition promises is on record before the work begins, what it did between
+promise and answer is derivable from receipts, and a repair need outside the
+promise gets a legitimate route into the queue instead of a silent fix. Born
+of a real overreach — the 2026-09-06 core repair corrected 42 entries against
+a 27-entry, one-vessel charter while its instructions said not to; the failure
+was invisibility, not absence of enforcement.
+
+- **Charters are a receipt pair.** An expedition records a start receipt
+  (`log.append`, `meta.kind: "charter"` — the vessels and entries it
+  promises, taken from the proposal's scope) before its first chart write,
+  and closes with an outcome receipt (`meta.kind: "charter-outcome"`,
+  naming the start) when it ends. No new tool, no new file: the ship's log
+  already receipts every command, and the markers ride the free-form `meta`
+  the formats-pass receipt schema admits.
+- **Overreach is computed and loud, never prevented.** Served `chart.write`
+  receipts name the write's delta (`meta.vessels` — per-vessel entry counts
+  over the changed entries, not the whole post-write chart), and one shared
+  arithmetic lists out-of-charter writes by vessel and entry count in both
+  the watch report and `trust.report`. A kept charter reads as kept; a
+  broken one is named vessel by vessel. Writes are never blocked — a broken
+  charter just cannot be invisible.
+- **Flares are the fourth deterministic queue input.** An out-of-charter
+  repair need is filed as a receipt (`meta.kind: "flare"` — vessel, stated
+  reason, evidence) instead of being fixed silently; every open flare
+  proposes as a repair row for the vessel it names, its reason riding the
+  row's evidence, folded into the drift row when the vessel has both.
+  Closure is arithmetic over the harbor history: a decision — accepted or
+  declined — recorded after the flare closes it, and undecided flares keep
+  proposing. The decide paths record the decided row's evidence keys, and
+  closure matches that recorded evidence — monotonic, so a flare its
+  decision answered cannot resurrect when the drift charge later empties;
+  history rows written before the amendment fall back to the mined
+  arithmetic. Flare-only rows are vessel-scoped (the count-less
+  `vessel/<id>` evidence key), so declining one vessel's row can never close
+  another vessel's flare whose reason text coincides. Flare rows are repair
+  rows for every other purpose — same rank, same decisions, same night
+  bound; that is a stated non-change, not an oversight.
+- **The surfaces teach it**: the expedition launcher brief carries the
+  charter line derived from the proposal's scope; `skill/SKILL.md` gains the
+  method steps (charter at start, flare on out-of-charter finds, outcome at
+  end); the glossary gains Charter/Чартер and Flare/Ракета.
+- **Honest limits, stated in the spec itself**: receipts are agent-written
+  facts — detection is arithmetic over an honor system, and the spec claims
+  visibility, not compliance. The change's live proof is the task-4.2
+  end-to-end trial on this repository's own province: charter r48 recorded,
+  flare r49 fired against vessel `skill`, the row decided declined with its
+  evidence, the flare closed and proposed nothing further, outcome r50
+  closed a kept charter — transcript with receipt ids and queue rows in the
+  change's task report.
+
+No data migration: logs and histories written before this change hold no
+charter or flare markers, and every reader returns an empty answer — never
+an error. Only the package version moves.
+
 ## 0.5.0 — 2026-09-06
 
 The formats (openspec change `formats-pass`): Portolan's data model —
