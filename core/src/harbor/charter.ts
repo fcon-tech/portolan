@@ -28,7 +28,11 @@ export interface Flare {
   id: string;
   /** The vessel the repair need names. */
   vessel: string;
-  /** The stated reason, verbatim from the receipt. */
+  /**
+   * The stated reason, read back with control characters flattened to
+   * spaces (oneLine) — the receipt keeps it verbatim; what rides the queue
+   * and the chat renders as one line, never a forged one.
+   */
   reason: string;
   /** The evidence the filing expedition stated. */
   evidence: string;
@@ -54,19 +58,36 @@ export interface Overreach {
 }
 
 /**
+ * Control characters (a newline included) collapsed to spaces. Receipt
+ * strings are DATA: a control character riding from a receipt into a prompt
+ * or a chat line could forge a line the engine never wrote (security fix
+ * 2026-09-06). Applied at read — the receipt stays as written.
+ */
+export function oneLine(text: string): string {
+  return text.replace(/\r\n|\r|\n/g, " ").replace(/[\u0000-\u001f\u007f]/g, " ");
+}
+
+/**
  * Every flare receipt in log order, whatever its closure state — the queue
  * applies the closure arithmetic (flareClosed); this reader stays a pure
- * read of the markers. A marker without a vessel or a reason cannot propose
- * and is skipped; an empty-string reason is skipped too, but loudly — the
- * warning names the receipt, so a mis-filed marker is never silently
- * swallowed (code-review fix 2026-09-06).
+ * read of the markers. A marker without a vessel or a reason (or carrying
+ * them as non-strings) cannot propose and is skipped, loudly — the warning
+ * names the receipt, so a mis-filed marker is never silently swallowed
+ * (code-review fix 2026-09-06, extended to malformed values by the security
+ * fix the same day); an empty-string reason is skipped too. The minted
+ * reason is one line (oneLine) — the receipt keeps it verbatim.
  */
 export function openFlares(log: Receipt[]): Flare[] {
   const flares: Flare[] = [];
   for (const receipt of log) {
     const meta = receipt.meta;
     if (meta?.kind !== "flare") continue;
-    if (typeof meta.vessel !== "string" || typeof meta.reason !== "string") continue;
+    if (typeof meta.vessel !== "string" || typeof meta.reason !== "string") {
+      console.warn(
+        `openFlares: flare receipt ${receipt.id} carries a non-string vessel or reason; skipped`,
+      );
+      continue;
+    }
     if (meta.reason.length === 0) {
       console.warn(`openFlares: flare receipt ${receipt.id} carries an empty reason; skipped`);
       continue;
@@ -74,7 +95,7 @@ export function openFlares(log: Receipt[]): Flare[] {
     flares.push({
       id: receipt.id,
       vessel: meta.vessel,
-      reason: meta.reason,
+      reason: oneLine(meta.reason),
       evidence: typeof meta.evidence === "string" ? meta.evidence : "",
       recordedAt: receipt.recordedAt,
     });
@@ -201,9 +222,16 @@ export function flareClosed(
 ): boolean {
   const postdating = decisions.filter((record) => record.decidedAt > flare.recordedAt);
   if (postdating.length === 0) return false;
+  // The vessel is matched ONLY at the engine-minted key — the decided row's
+  // first evidence entry (a drift key or the count-less flare-row key).
+  // Reason strings are DATA, never keys: scanning them let a crafted reason
+  // (`vessel/<id>` riding another vessel's row as a flare reason) pose as a
+  // key naming the flare's vessel and close a flare the decision never
+  // named (security fix 2026-09-06).
   const namesTheFlare = (evidence: string[]): boolean =>
+    evidence.length > 0 &&
     evidence.includes(flare.reason) &&
-    evidence.some((key) => evidenceVessel(key) === flare.vessel);
+    evidenceVessel(evidence[0]) === flare.vessel;
   if (postdating.some((record) => record.evidence !== undefined && namesTheFlare(record.evidence))) {
     return true;
   }

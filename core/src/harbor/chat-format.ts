@@ -11,6 +11,7 @@
  * capability: the watch report is chat-formatted and deterministic)
  */
 import { formatAnchor } from "../types";
+import { oneLine } from "./charter";
 import type { Proposal, ProposeResult } from "./proposals";
 import type { WatchAction, WatchReport } from "./watch";
 import type { RunReport } from "./run";
@@ -82,17 +83,21 @@ function ranLine(action: WatchAction): string {
  * The charter an expedition filed rides what it did (openspec/changes/
  * expedition-charter): the promised vessels and entries, then kept — or the
  * out-of-charter writes named by vessel and count, never summarized away
- * (harbor spec: overreach is named). Absent charter (design D4) renders
- * nothing.
+ * (harbor spec: overreach is named). Vessel ids are receipt data and render
+ * with control characters flattened (oneLine), so no id can forge a report
+ * line (security fix 2026-09-06). A launch-failed row gets no verdict line
+ * at all: nothing it wrote was measured, so kept would be a verdict the
+ * run cannot back. Absent charter (design D4) renders nothing.
  */
 function charterLines(action: WatchAction): string[] {
+  if (action.outcome !== "completed") return [];
   if (action.charter === undefined) return [];
   const promised =
-    `   charter: vessels ${action.charter.vessels.join(", ")} · ` +
+    `   charter: vessels ${action.charter.vessels.map(oneLine).join(", ")} · ` +
     `${action.charter.entries} entries`;
   const overreach = action.overreach ?? [];
   if (overreach.length === 0) return [`${promised} — kept`];
-  const broken = overreach.map((row) => `${row.vessel} · ${row.entries} entries`).join("; ");
+  const broken = overreach.map((row) => `${oneLine(row.vessel)} · ${row.entries} entries`).join("; ");
   return [`${promised} — broken: ${broken} written outside the charter`];
 }
 

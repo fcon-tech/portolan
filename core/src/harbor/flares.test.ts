@@ -401,3 +401,37 @@ test("charter flare: a decision recorded before the flare's receipt does not clo
   expect(rows[0]!.evidence).toContain("vessel/api#3");
   expect(rows[0]!.evidence).toContain(reason);
 });
+
+// ---------------------------------------------------------------------------
+// Security fix 2026-09-06 — reason strings are DATA, never keys. A reason
+// shaped like a drift key (`vessel/<id>#<count>`) must neither pose as the
+// row's drift charge nor let an older decline suppress the flare row: a
+// refusal predating the flare never filters a row carrying that flare's
+// reason — the flare is evidence the Governor had not seen.
+// ---------------------------------------------------------------------------
+
+test("charter flare: a reason shaped like a drift key cannot let an older decline suppress the flare row", () => {
+  const dirs: Dirs = { api: "apps/api", lib: "packages/lib" };
+  const target = makeProvince(dirs);
+  writeChart(target, completeBase(dirs));
+
+  // The Governor declined api's drift row back when it stood at five stale
+  // entries; the chart has since healed — no drift is charged now.
+  writeDecision(
+    target,
+    proposalFingerprint("repair", ["vessel/api#5"]),
+    "declined",
+    "2026-08-30T00:00:00.000Z",
+  );
+
+  // The flare is filed afterwards, its free-text reason shaped exactly like
+  // a drift key. It is a reason, not a key: the older refusal must not
+  // filter this row, and the text must not pose as the row's drift charge.
+  fileFlare(target, "r1", "api", "vessel/lib#5");
+
+  const rows = repairRows(target);
+  expect(rows).toHaveLength(1);
+  expect(rows[0]!.scope.vessels).toEqual(["api"]);
+  // The row stays flare-only: the count-less vessel key plus the reason.
+  expect(rows[0]!.evidence).toEqual(["vessel/api", "vessel/lib#5"]);
+});

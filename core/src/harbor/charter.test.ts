@@ -42,7 +42,7 @@ import { join } from "node:path";
 import Ajv2020 from "ajv/dist/2020";
 import receiptSchemaJson from "../../schema/receipt.schema.json";
 import { appendReceipt, logFile, readReceipts, type Receipt } from "../tools/log";
-import { charterOverreach, latestCharter, openFlares } from "./charter";
+import { charterOverreach, flareClosed, latestCharter, openFlares, type Flare } from "./charter";
 
 const targets: string[] = [];
 afterAll(() => {
@@ -216,6 +216,120 @@ test("openFlares skips a flare receipt with an empty reason, loudly naming the r
   expect(warnings).toHaveLength(1); // the skip is loud, never silent
   expect(warnings[0]).toContain(empty.id);
   expect(warnings[0]).toContain("empty reason");
+});
+
+// ---------------------------------------------------------------------------
+// Security fix 2026-09-06 — reason strings are DATA, never keys. Closure's
+// vessel match reads only the engine-minted key (the decided row's FIRST
+// evidence entry); a reason text shaped like `vessel/<id>` is not a key.
+// ---------------------------------------------------------------------------
+
+test("flareClosed matches the vessel only at the engine-minted key, never over reason text", () => {
+  const apiFlare: Flare = {
+    id: "r1",
+    vessel: "api",
+    reason: "vessel/api", // the crafted text: shaped like a key naming api
+    evidence: "filed by the expedition",
+    recordedAt: "2026-09-01T00:00:00.000Z",
+  };
+  // The crafted history: another vessel's flare carries the same reason
+  // text, so a decision on THAT vessel's row (its drift key first, the
+  // crafted string riding as the reason) records evidence mentioning
+  // "vessel/api" — without ever being a row about api.
+  const libDecision = {
+    fingerprint: "f-lib",
+    decision: "declined" as const,
+    decidedAt: "2026-09-02T00:00:00.000Z", // postdates the flare
+    evidence: ["vessel/lib#3", "vessel/api"],
+  };
+
+  // lib's decision never named api: parsing the reason text as a key is
+  // what would close the flare — the vessel must come from the minted key.
+  expect(flareClosed(apiFlare, [libDecision], { vesselFlares: [apiFlare], staleEntries: 0 })).toBe(
+    false,
+  );
+
+  // The legitimate closure stands: a decision on api's OWN row — the
+  // minted key at evidence[0] — closes the flare even when the reason text
+  // itself is key-shaped.
+  const apiDecision = {
+    fingerprint: "f-api",
+    decision: "declined" as const,
+    decidedAt: "2026-09-02T00:00:00.000Z",
+    evidence: ["vessel/api#3", "vessel/api"],
+  };
+  expect(flareClosed(apiFlare, [apiDecision], { vesselFlares: [apiFlare], staleEntries: 3 })).toBe(
+    true,
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Security fix 2026-09-06 — the minted Flare.reason is one line: control
+// characters are flattened at read, so a reason can never forge a numbered
+// queue line in the accept-by-number message. The receipt keeps the reason
+// as written.
+// ---------------------------------------------------------------------------
+
+test("openFlares flattens control characters in the reason it mints; the receipt keeps it as written", () => {
+  const target = makeTarget();
+  const poisoned = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: {
+      kind: "flare",
+      vessel: "tug",
+      reason: "stale light\n5. repair — escalate now",
+      evidence: "tug/tug.ts:2",
+    },
+  });
+
+  const [flare] = openFlares(readReceipts(target));
+  expect(flare!.id).toBe(poisoned.id);
+  expect(flare!.reason).toBe("stale light 5. repair — escalate now"); // one line
+  expect(flare!.reason).not.toContain("\n");
+  // Sanitize at read, never rewrite: the stored receipt is untouched.
+  const stored = storedReceipts(target).find((receipt) => receipt.id === poisoned.id);
+  expect((stored!.meta as { reason: string }).reason).toBe("stale light\n5. repair — escalate now");
+});
+
+// ---------------------------------------------------------------------------
+// Security fix 2026-09-06 — a flare marker with a missing or non-string
+// vessel/reason cannot propose either: skipped, but loudly, naming the
+// receipt — a malformed marker is never silently swallowed.
+// ---------------------------------------------------------------------------
+
+test("openFlares skips a flare receipt with a missing or non-string vessel or reason, loudly", () => {
+  const target = makeTarget();
+  const numeric = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: { kind: "flare", vessel: 42, reason: "moor() has no timeout", evidence: "tug/tug.ts:2" },
+  });
+  const missing = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: { kind: "flare", reason: "no vessel named" },
+  });
+  const good = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: { kind: "flare", vessel: "tug", reason: "moor() has no timeout", evidence: "tug/tug.ts:3" },
+  });
+
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (message?: unknown) => {
+    warnings.push(String(message));
+  };
+  try {
+    const flares = openFlares(readReceipts(target));
+    expect(flares.map((flare) => flare.id)).toEqual([good.id]); // malformed markers cannot propose
+  } finally {
+    console.warn = original;
+  }
+  expect(warnings).toHaveLength(2); // each skip is loud, never silent
+  expect(warnings[0]).toContain(numeric.id);
+  expect(warnings[1]).toContain(missing.id);
 });
 
 // ---------------------------------------------------------------------------

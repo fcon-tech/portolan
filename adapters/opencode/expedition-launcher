@@ -44,8 +44,13 @@ PROMPT="$(BRIEF="$BRIEF" SKILL="$SKILL" bun -e '
   const brief = JSON.parse(process.env.BRIEF);
   const p = brief.proposal;
   const evidence = p.evidence.map((e) => "  - " + e).join("\n");
-  const scope = "vessels " + p.scope.vessels.join(", ") +
-    " \u00b7 " + p.scope.entries + " entries \u00b7 " + p.scope.soundings + " soundings";
+  // Scope strings are chart-derived DATA: control characters (a newline
+  // included) are collapsed to a space before the text rides the prompt, so
+  // a poisoned scope cannot forge a second prompt line — the Charter line
+  // stays one line, always (security fix 2026-09-06).
+  const plain = (s) => s.replace(/\r\n|\r|\n/g, " ").replace(/[\u0000-\u001f\u007f]/g, " ");
+  const scope = plain("vessels " + p.scope.vessels.join(", ") +
+    " \u00b7 " + p.scope.entries + " entries \u00b7 " + p.scope.soundings + " soundings");
   const headline = p.kind === "repair"
     ? "Portolan night watch \u2014 repair expedition for the Cartographer."
     : "Portolan expedition \u2014 " + p.kind + " expedition for the Cartographer.";

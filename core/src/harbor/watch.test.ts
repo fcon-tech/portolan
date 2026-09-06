@@ -542,3 +542,77 @@ test("charter: two watch runs over an unchanged province with a filed charter ar
   expect(firstChat).toContain("charter");
   expect(firstChat).toContain("lib");
 });
+
+// ---------------------------------------------------------------------------
+// Security fix 2026-09-06 — charter vessels and overreach vessels render
+// into the report with control characters flattened: receipt data is DATA,
+// and a newline in a vessel id must not forge numbered report lines.
+// ---------------------------------------------------------------------------
+
+test("charter hardening: control characters in charter and overreach vessels cannot forge report lines", () => {
+  const report: WatchReport = {
+    bound: 1,
+    reportOnly: false,
+    ran: [
+      {
+        proposal: {
+          kind: "repair",
+          fingerprint: "f1",
+          summary: "vessel api marked pending correction",
+          evidence: ["vessel/api#2"],
+          anchors: [],
+          scope: { vessels: ["api"], entries: 2, soundings: 2 },
+        },
+        outcome: "completed",
+        charter: { vessels: ["api\n6. fake — stop reading"], entries: 3 },
+        overreach: [{ vessel: "lib\n7. fake — stop reading", entries: 4 }],
+      },
+    ],
+    pending: [],
+  };
+
+  const chat = renderWatchChat(report);
+  // No report line begins with a forged line.
+  const forged = chat
+    .split("\n")
+    .filter((line) => /^(6|7)\. fake/.test(line.trimStart()));
+  expect(forged).toEqual([]);
+  // The flattened vessels still render, on their own single lines.
+  expect(chat).toContain("vessels api 6. fake — stop reading");
+  expect(chat).toContain("lib 7. fake — stop reading · 4 entries");
+});
+
+// ---------------------------------------------------------------------------
+// Security-and-honesty fix 2026-09-06 — a launch-failed expedition wrote
+// nothing to measure: the report carries no kept/broken verdict for it.
+// ---------------------------------------------------------------------------
+
+test("charter: a launch-failed expedition gets no kept or broken verdict line", async () => {
+  const { target } = driftedProvince(3);
+  // A launcher that files a charter, then fails: the charter is on record,
+  // but nothing was measured under it — "kept" would be a verdict the run
+  // cannot back.
+  const dir = mkdtempSync(join(tmpdir(), "portolan-night-fail-charter-"));
+  dirs.push(dir);
+  const script = join(dir, "fail-after-charter.sh");
+  const logPath = join(target, ".portolan", "log.jsonl");
+  writeFileSync(
+    script,
+    [
+      "#!/usr/bin/env bash",
+      "cat >/dev/null",
+      `mkdir -p ${JSON.stringify(join(target, ".portolan"))}`,
+      `printf '%s\\n' ${JSON.stringify(JSON.stringify(charterReceipt(["api"], 3, "r1")))} >> ${JSON.stringify(logPath)}`,
+      "exit 3",
+      "",
+    ].join("\n"),
+  );
+  chmodSync(script, 0o755);
+
+  const report = await runWatch(target, { launcher: script, launcherTimeoutMs: 10_000 });
+  expect(report.ran[0]!.outcome).toBe("launch-failed");
+  expect(report.ran[0]!.charter).toEqual({ vessels: ["api"], entries: 3 }); // filed, on record
+  const chat = renderWatchChat(report);
+  expect(chat).not.toMatch(/— kept/);
+  expect(chat).not.toMatch(/— broken/);
+});

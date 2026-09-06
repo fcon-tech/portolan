@@ -396,10 +396,17 @@ export function computeProposals(
       if (declined.has(p.fingerprint)) return false;
       if (p.kind !== "repair") return true;
       const vessel = p.scope.vessels[0]!;
-      // The drift key is matched by its exact `vessel/<id>#<digits>` shape
-      // (./fingerprint, driftEntryCount): a free-text flare reason that
-      // merely begins with `vessel/<id>#` is not drift.
-      const driftKey = p.evidence.find((key) => driftEntryCount(key) !== undefined);
+      // The drift key is matched only at the engine-minted position —
+      // evidence[0] of a drift-keyed row — by its exact
+      // `vessel/<id>#<digits>` shape (./fingerprint, driftEntryCount).
+      // Reason strings are DATA, never keys: scanning the whole evidence
+      // let a free-text flare reason shaped like `vessel/<id>#<count>` pose
+      // as the row's drift charge (and slip out of the flare reasons), so a
+      // previously-declined shape could suppress the flare row (security
+      // fix 2026-09-06).
+      const [mintedKey] = p.evidence;
+      const driftKey =
+        mintedKey !== undefined && driftEntryCount(mintedKey) !== undefined ? mintedKey : undefined;
       return !repairRowRefused(
         {
           vessel,
