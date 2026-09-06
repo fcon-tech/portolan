@@ -175,3 +175,25 @@ test("night-watch 3.1 without opencode on PATH the launcher fails (nothing silen
   const run = runLauncher(brief(province), env);
   expect(run.status).not.toBe(0);
 });
+
+// ---------------------------------------------------------------------------
+// expedition-charter task 3.3 — the brief renders the charter line derived
+// from the proposal's scope (design D3): the old "Scope: do only what the
+// proposal names" instruction is superseded by the receipted charter.
+// ---------------------------------------------------------------------------
+
+test("expedition-charter 3.3 the brief renders the charter from the proposal scope; the stale scope line is gone", () => {
+  const province = mkdtempSync(join(tmpdir(), "portolan-launcher-charter-"));
+  dirs.push(province);
+  const { binDir, log } = fakeOpencode(0);
+
+  const run = runLauncher(brief(province), envWithPaths(binDir));
+  expect(run.status).toBe(0);
+
+  const prompt = loggedArgs(log).arg5 ?? "";
+  // The charter names the promised vessels and entries — exactly the
+  // proposal's scope the charter is derived from, ready to be receipted.
+  expect(prompt).toContain("Charter: vessels api · 3 entries · 3 soundings");
+  // Prompt lines steer; receipts measure: the superseded wording is gone.
+  expect(prompt).not.toContain("do only what the proposal names");
+});

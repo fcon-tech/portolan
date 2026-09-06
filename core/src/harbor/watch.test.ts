@@ -419,3 +419,119 @@ test("night-watch 2.3 golden: a still province renders an honest empty report", 
   ].join("\n");
   expect(renderWatchChat({ bound: 0, reportOnly: true, ran: [], pending: [] })).toBe(GOLDEN);
 });
+
+// ---------------------------------------------------------------------------
+// Charter delta (openspec/changes/expedition-charter, harbor: the watch
+// report is chat-formatted and deterministic — extended): for each
+// expedition it launched, the report carries the expedition's charter and
+// whether the expedition kept it, with any out-of-charter writes named by
+// vessel and count.
+//
+// Pinned report contract (WatchAction):
+//   charter?: { vessels: string[]; entries: number }       — the charter the
+//     expedition recorded at start; absent when it filed none (design D4).
+//   overreach?: Array<{ vessel: string; entries: number }> — present with
+//     the charter; [] reads as kept, out-of-charter vessels as broken.
+// The same { vessel, entries } arithmetic as trust.report (design D2: one
+// shared core function, so the surfaces cannot diverge).
+// ---------------------------------------------------------------------------
+
+const CHARTER_AT = "2026-09-06T00:00:00.000Z";
+
+const charterReceipt = (vessels: string[], entries: number, id: string) => ({
+  id,
+  command: "log.append",
+  scope: vessels.join(", "),
+  outcome: "charter recorded",
+  recordedAt: CHARTER_AT,
+  meta: { kind: "charter", vessels, entries },
+});
+
+const chartWriteReceipt = (vessels: Record<string, number>, id: string) => ({
+  id,
+  command: "chart.write",
+  scope: "chart write",
+  outcome: "ok",
+  recordedAt: CHARTER_AT,
+  meta: { vessels },
+});
+
+/**
+ * A launcher that files receipts into the province's ship's log — on its
+ * first run only, so a second watch run over the same province appends
+ * nothing and the report stays byte-identical. The direct file append
+ * stands in for log.append: a fake expedition, not a concurrency claim.
+ */
+function receiptingLauncher(target: string, receipts: object[]): { command: string } {
+  const dir = mkdtempSync(join(tmpdir(), "portolan-night-charter-"));
+  dirs.push(dir);
+  const script = join(dir, "charter-expedition.sh");
+  const guard = join(dir, "filed");
+  const logPath = join(target, ".portolan", "log.jsonl");
+  const appends = receipts
+    .map((receipt) => `printf '%s\\n' ${JSON.stringify(JSON.stringify(receipt))} >> ${JSON.stringify(logPath)}`)
+    .join("\n  ");
+  writeFileSync(
+    script,
+    [
+      "#!/usr/bin/env bash",
+      "cat >/dev/null", // consume the brief
+      `[ -f ${JSON.stringify(guard)} ] && exit 0`,
+      `mkdir -p ${JSON.stringify(join(target, ".portolan"))}`,
+      `touch ${JSON.stringify(guard)}`,
+      appends,
+      "exit 0",
+      "",
+    ].join("\n"),
+  );
+  chmodSync(script, 0o755);
+  return { command: script };
+}
+
+test("charter: the report names a launched expedition's charter and lists overreach by vessel and count", async () => {
+  const { target } = driftedProvince(3);
+  const launcher = receiptingLauncher(target, [
+    charterReceipt(["api"], 3, "r1"),
+    chartWriteReceipt({ lib: 4 }, "r2"), // outside the one-vessel charter
+  ]);
+
+  const report = await runWatch(target, { launcher: launcher.command, launcherTimeoutMs: 10_000 });
+  expect(report.ran).toHaveLength(1);
+  // The charter the expedition recorded rides what it did.
+  expect(report.ran[0]!.charter).toEqual({ vessels: ["api"], entries: 3 });
+  // Overreach is named, not summarized away: the out-of-charter write on
+  // lib, by vessel and entry count, alongside the charter it broke.
+  expect(report.ran[0]!.overreach).toEqual([{ vessel: "lib", entries: 4 }]);
+  const chat = renderWatchChat(report);
+  expect(chat).toContain("charter");
+  expect(chat).toContain("lib");
+});
+
+test("charter: an expedition that kept its charter reads as kept — no overreach listed", async () => {
+  const { target } = driftedProvince(3);
+  const launcher = receiptingLauncher(target, [
+    charterReceipt(["api"], 3, "r1"),
+    chartWriteReceipt({ api: 2 }, "r2"), // inside the charter
+  ]);
+
+  const report = await runWatch(target, { launcher: launcher.command, launcherTimeoutMs: 10_000 });
+  expect(report.ran[0]!.charter).toEqual({ vessels: ["api"], entries: 3 });
+  expect(report.ran[0]!.overreach).toEqual([]);
+  expect(renderWatchChat(report)).toMatch(/kept/i);
+});
+
+test("charter: two watch runs over an unchanged province with a filed charter are byte-identical", async () => {
+  const { target } = driftedProvince(3);
+  const launcher = receiptingLauncher(target, [
+    charterReceipt(["api"], 3, "r1"),
+    chartWriteReceipt({ lib: 4 }, "r2"),
+  ]);
+
+  const first = await runWatch(target, { launcher: launcher.command, launcherTimeoutMs: 10_000 });
+  const second = await runWatch(target, { launcher: launcher.command, launcherTimeoutMs: 10_000 });
+  const firstChat = renderWatchChat(first);
+  expect(renderWatchChat(second)).toBe(firstChat);
+  // The stability is not vacuous: the charter section is part of the bytes.
+  expect(firstChat).toContain("charter");
+  expect(firstChat).toContain("lib");
+});

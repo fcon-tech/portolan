@@ -463,6 +463,36 @@ check("4.2", "second dry run repairs only stale entries and emits notices", () =
 });
 
 // ---------------------------------------------------------------------------
+// expedition-charter task 3.3 — the charter/flare method in the skill and
+// the glossary rows (openspec/changes/expedition-charter/proposal.md: the
+// Governor picked Charter/Чартер and Flare/Ракета, added to the MANIFEST
+// glossary at implementation).
+// ---------------------------------------------------------------------------
+
+check("charter 3.3", "SKILL.md teaches the charter method: charter recorded at start, flare on out-of-charter finds, outcome at end", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  // The receipt markers the method teaches (meta is free-form; the markers
+  // are pinned by core/src/harbor/charter.test.ts).
+  for (const marker of ['"charter"', '"charter-outcome"', '"flare"']) {
+    assert(
+      new RegExp(`"kind"\\s*:\\s*${marker}`).test(text),
+      `the method never teaches the receipt marker kind ${marker}`,
+    );
+  }
+  for (const phrase of ["charter", "flare", "out-of-charter"]) {
+    assert(text.toLowerCase().includes(phrase), `the method never mentions "${phrase}"`);
+  }
+  return "charter start, flare, and outcome markers taught";
+});
+
+check("charter 3.3", "docs/MANIFEST.md glossary carries Charter/Чартер and Flare/Ракета", () => {
+  const manifest = readFileSync(join(REPO, "docs", "MANIFEST.md"), "utf8");
+  assert(/Charter[^\n]*\|[^\n]*Чартер/.test(manifest), "the glossary lacks the Charter/Чартер row");
+  assert(/Flare[^\n]*\|[^\n]*Ракета/.test(manifest), "the glossary lacks the Flare/Ракета row");
+  return "both glossary rows present";
+});
+
+// ---------------------------------------------------------------------------
 // Optional: regenerate the checked-in example from scenario S1.
 // ---------------------------------------------------------------------------
 

@@ -8,6 +8,7 @@
  */
 import { test, expect, afterEach } from "bun:test";
 import {
+  appendFileSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -25,7 +26,7 @@ import { readChart, writeChart } from "../chart-store";
 import { refreshStaleness } from "../staleness";
 import { appendReceipt, readReceipt } from "./log";
 import { trustReport } from "./trust-report";
-import { computeProposals } from "../harbor/proposals";
+import { computeProposals, decide } from "../harbor/proposals";
 
 const targets: string[] = [];
 afterEach(() => {
@@ -660,4 +661,120 @@ test("pendingVessels follow the repair rank — fan-in highest first, vessel id 
   // And the queue's repair rows speak the same order over the drifted vessels.
   const rows = computeProposals(target).proposals.filter((p) => p.kind === "repair");
   expect(rows.map((r) => r.scope.vessels[0])).toEqual(["mike", "zulu", "alpha", "bravo"]);
+});
+
+// ---------------------------------------------------------------------------
+// expedition-charter (specs/tools/spec.md, MODIFIED): the summary carries
+// the open flares (vessel and stated reason each) and the charter from the
+// most recent charter start receipt with any overreach named by vessel and
+// entry count; a kept charter reads as kept; absence reads as absence
+// (design D4).
+//
+// Pinned report contract (TrustReport):
+//   flares: Array<{ vessel: string; reason: string }>   — open flares, in
+//     log order; a flare its decision closed is no longer listed.
+//   charter: { vessels: string[]; entries: number;
+//              overreach: Array<{ vessel: string; entries: number }> } | null
+//     — the most recent charter start receipt; null when the log holds
+//       none; overreach [] reads as kept. The same { vessel, entries }
+//       arithmetic as the watch report (design D2: one shared function).
+// ---------------------------------------------------------------------------
+
+/** Hand-file a flare receipt with a fixed recordedAt, so "open vs closed" is deterministic against decisions appended now. */
+function fileFlare(target: string, id: string, vessel: string, reason: string): void {
+  mkdirSync(join(target, ".portolan"), { recursive: true });
+  appendFileSync(
+    join(target, ".portolan", "log.jsonl"),
+    `${JSON.stringify({
+      id,
+      command: "log.append",
+      scope: vessel,
+      outcome: `flare filed: ${reason}`,
+      recordedAt: "2026-09-01T00:00:00.000Z",
+      meta: { kind: "flare", vessel, reason, evidence: "filed by the expedition" },
+    })}\n`,
+  );
+}
+
+test("the report carries open flares with vessel and reason, and drops a flare its decision closed", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  const reason = "the tug's manifest key drifted from its light";
+  fileFlare(target, "r1", "tug", reason);
+
+  // The flare's repair row is computable and decidable. (The fixture's
+  // vessels also hold gap rows — harbor has no behavior, tug no light — so
+  // the row is picked from the repair rows alone.)
+  const rows = computeProposals(target).proposals.filter((p) => p.kind === "repair");
+  expect(rows).toHaveLength(1);
+  const row = rows[0]!;
+  expect(row.scope.vessels).toEqual(["tug"]);
+
+  const before = trustReport(target);
+  expect(before.flares).toEqual([{ vessel: "tug", reason }]);
+
+  // A decision on the flare's row closes it: the summary stops carrying it.
+  decide(target, row!.fingerprint, "accepted");
+  const after = trustReport(target);
+  expect(after.flares).toEqual([]);
+});
+
+test("the report names the last charter with any overreach by vessel and entry count", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  appendReceipt(target, {
+    command: "log.append",
+    scope: "harbor",
+    outcome: "charter recorded",
+    meta: { kind: "charter", vessels: ["harbor"], entries: 2 },
+  });
+  appendReceipt(target, {
+    command: "chart.write",
+    scope: "tug",
+    outcome: "ok: 4 entries",
+    meta: { vessels: { tug: 4 } },
+  });
+  appendReceipt(target, {
+    command: "chart.write",
+    scope: "harbor, tug",
+    outcome: "ok: 3 entries",
+    meta: { vessels: { harbor: 2, tug: 1 } },
+  });
+
+  const report = trustReport(target);
+  expect(report.charter).toEqual({
+    vessels: ["harbor"],
+    entries: 2,
+    overreach: [{ vessel: "tug", entries: 5 }], // 4 + 1 across two writes
+  });
+});
+
+test("a kept charter reads as kept: the charter section lists no overreach", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  appendReceipt(target, {
+    command: "log.append",
+    scope: "harbor",
+    outcome: "charter recorded",
+    meta: { kind: "charter", vessels: ["harbor"], entries: 2 },
+  });
+  appendReceipt(target, {
+    command: "chart.write",
+    scope: "harbor",
+    outcome: "ok: 2 entries",
+    meta: { vessels: { harbor: 2 } }, // inside the charter
+  });
+
+  const report = trustReport(target);
+  expect(report.charter).toEqual({ vessels: ["harbor"], entries: 2, overreach: [] });
+});
+
+test("a log with no charter and no flares: the sections read as empty, never an error", () => {
+  const target = makeProvince();
+  writeFullChart(target);
+  appendReceipt(target, { command: "sweep pattern=tug", outcome: "ok: 1 chunk" });
+
+  const report = trustReport(target);
+  expect(report.charter).toBeNull();
+  expect(report.flares).toEqual([]);
 });
