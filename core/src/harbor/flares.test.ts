@@ -98,6 +98,18 @@ function fairwayEntry(n: number, from: string, to: string, dirs: Dirs): ChartEnt
   };
 }
 
+function dangerEntry(id: string, vesselId: string, dirs: Dirs): ChartEntry {
+  return {
+    kind: "danger",
+    id,
+    vessel: vesselId,
+    category: "shallow",
+    note: `mooring near ${dirs[vesselId]} has no depth check.`,
+    anchors: [{ type: "file", path: srcFile(dirs, vesselId), line: 2 }],
+    trust: "reported",
+  };
+}
+
 /** Drift: change a file under one vessel's charted paths after the survey. */
 function drift(target: string, dir: string): void {
   appendFileSync(join(target, dir, "src", "main.ts"), "\n// a later edit\n");
@@ -246,6 +258,10 @@ test("charter flare: a declined decision on the row closes the flare — it prop
 
   // The drift grows: a fresh repair row computes, but the closed flare
   // contributes nothing to it — the reason is gone from the evidence.
+  // (The growth is a fourth charted entry hanging from api, as in
+  // resurvey.test.ts: staleness is a per-vessel mark, so a second edit of
+  // the same file would leave the charged count at three.)
+  writeChart(target, [...completeBase(dirs), dangerEntry("d-api-shallow", "api", dirs)]);
   drift(target, dirs.api);
   const reopened = repairRows(target);
   expect(reopened.map((r) => r.scope.vessels)).toEqual([["api"]]);
