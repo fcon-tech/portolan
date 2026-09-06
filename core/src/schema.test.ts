@@ -1,8 +1,13 @@
 import { test, expect } from "bun:test";
 import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/chart.schema.json";
+import trustVocabulary from "../schema/trust-vocabulary.schema.json";
 
+// The chart schema's trust label $refs the vocabulary by $id (design D2);
+// `version` is the D1 format-version annotation ajv strict mode must know.
 const ajv = new Ajv2020({ allErrors: true });
+ajv.addKeyword("version");
+ajv.addSchema(trustVocabulary);
 const validate = ajv.compile(schema);
 
 const file = (path: string, line?: number) =>

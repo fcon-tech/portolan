@@ -1,32 +1,62 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://portolan.dev/core/chart.schema.json",
+  "$id": "https://portolan.dev/core/graph-export.schema.json",
+  "title": "Portolan adjacency graph export",
   "version": "0.1.0",
-  "title": "Portolan Chart entry",
-  "description": "One entry of the Chart (the Padrón): vessel, fairway, port of entry, beacon, light, or danger. Every entry carries at least one anchor and exactly one trust label from the closed vocabulary (a standalone $ref to trust-vocabulary.schema.json — register both files). Entries as stored in index.jsonl additionally carry the store's `stale` marker, and vessels its `signature`; a hand-supplied write carries neither, the store stamps them. This schema is the published contract for Cartographer agents; core/src/types.ts mirrors it.",
-  "$ref": "#/$defs/chartEntry",
+  "description": "The chart.export document: the Chart's machine layer rendered as nodes and edges, consumable without the MCP server. Arithmetic over charted bytes only — no timestamps anywhere (the ship's log carries the when), no derived rollups (no top-level `vessels` list — every node carries its vessel; no dangling-endpoint `issues[]` — a raw edge id already states the fact), no invented nodes. Nodes mirror the charted entries field-for-field plus `stale`; the store's `signature` stays in the Chart. Trust labels $ref trust-vocabulary.schema.json — register both files.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "nodes", "edges", "truncated", "omitted"],
+  "properties": {
+    "format": {
+      "description": "The format name; a consumer dispatches on it.",
+      "const": "portolan-adjacency"
+    },
+    "version": {
+      "description": "The graph-export schema version this document was produced against.",
+      "type": "string",
+      "minLength": 1
+    },
+    "nodes": {
+      "description": "Every charted entry that is not a fairway, rendered whole: the entry's charted fields as-is plus staleness.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "description": "Every charted fairway. The arrays are disjoint: nodes and edges together draw exactly the charted entries.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "truncated": {
+      "description": "True when the export byte budget cut entries; `omitted` then names every cut vessel.",
+      "type": "boolean"
+    },
+    "omitted": {
+      "description": "The loud truncation report: one record per vessel with entries cut, empty when nothing was cut.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["vessel", "entries"],
+        "properties": {
+          "vessel": { "type": "string", "minLength": 1 },
+          "entries": {
+            "description": "How many of that vessel's entries were cut.",
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  },
   "$defs": {
+    "entryId": { "type": "string", "minLength": 1 },
     "trustLabel": {
       "$ref": "https://portolan.dev/core/trust-vocabulary.schema.json"
     },
-    "fairwayRelation": {
-      "description": "Optional closed relation vocabulary on a fairway: build, runtime, config. A fairway without a relation stays valid and reads as untyped.",
-      "enum": ["build", "runtime", "config"]
-    },
-    "entryId": { "type": "string", "minLength": 1 },
     "stale": {
-      "description": "Store metadata on entries as stored: true when the anchored sources drifted since the last survey — the entry is pending correction (Notices to Mariners). Never hand-supplied; the store stamps it.",
+      "description": "Pending correction: true when the anchored sources drifted since the last survey. Carried as-is, never hidden.",
       "type": "boolean"
-    },
-    "signature": {
-      "description": "Store metadata on vessels as stored: cheap tree signature over the vessel's paths, re-stamped by the store on every write. Never hand-supplied.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["hash", "files"],
-      "properties": {
-        "hash": { "type": "string", "minLength": 1 },
-        "files": { "type": "integer", "minimum": 0 }
-      }
     },
     "anchor": {
       "oneOf": [
@@ -67,33 +97,26 @@
       "minItems": 1,
       "items": { "$ref": "#/$defs/anchor" }
     },
+    "node": {
+      "oneOf": [
+        { "$ref": "#/$defs/vessel" },
+        { "$ref": "#/$defs/portOfEntry" },
+        { "$ref": "#/$defs/beacon" },
+        { "$ref": "#/$defs/light" },
+        { "$ref": "#/$defs/danger" }
+      ]
+    },
     "vessel": {
+      "description": "A charted vessel, rendered whole: the charted fields as-is plus `stale`. The store's `signature` is not exported.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id", "name", "paths", "anchors", "trust"],
+      "required": ["kind", "id", "name", "paths", "anchors", "trust", "stale"],
       "properties": {
         "kind": { "const": "vessel" },
         "id": { "$ref": "#/$defs/entryId" },
         "name": { "type": "string", "minLength": 1 },
         "behavior": { "type": "string" },
         "paths": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-        "signature": { "$ref": "#/$defs/signature" },
-        "note": { "type": "string" },
-        "anchors": { "$ref": "#/$defs/anchors" },
-        "trust": { "$ref": "#/$defs/trustLabel" },
-        "stale": { "$ref": "#/$defs/stale" }
-      }
-    },
-    "fairway": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["kind", "id", "from", "to", "anchors", "trust"],
-      "properties": {
-        "kind": { "const": "fairway" },
-        "id": { "$ref": "#/$defs/entryId" },
-        "from": { "$ref": "#/$defs/entryId" },
-        "to": { "$ref": "#/$defs/entryId" },
-        "relation": { "$ref": "#/$defs/fairwayRelation" },
         "note": { "type": "string" },
         "anchors": { "$ref": "#/$defs/anchors" },
         "trust": { "$ref": "#/$defs/trustLabel" },
@@ -103,7 +126,7 @@
     "portOfEntry": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id", "vessel", "protocol", "anchors", "trust"],
+      "required": ["kind", "id", "vessel", "protocol", "anchors", "trust", "stale"],
       "properties": {
         "kind": { "const": "portOfEntry" },
         "id": { "$ref": "#/$defs/entryId" },
@@ -118,7 +141,7 @@
     "beacon": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id", "vessel", "surface", "key", "anchors", "trust"],
+      "required": ["kind", "id", "vessel", "surface", "key", "anchors", "trust", "stale"],
       "properties": {
         "kind": { "const": "beacon" },
         "id": { "$ref": "#/$defs/entryId" },
@@ -134,7 +157,7 @@
     "light": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id", "vessel", "name", "anchors", "trust"],
+      "required": ["kind", "id", "vessel", "name", "anchors", "trust", "stale"],
       "properties": {
         "kind": { "const": "light" },
         "id": { "$ref": "#/$defs/entryId" },
@@ -149,7 +172,7 @@
     "danger": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "id", "vessel", "category", "note", "anchors", "trust"],
+      "required": ["kind", "id", "vessel", "category", "note", "anchors", "trust", "stale"],
       "properties": {
         "kind": { "const": "danger" },
         "id": { "$ref": "#/$defs/entryId" },
@@ -161,15 +184,20 @@
         "stale": { "$ref": "#/$defs/stale" }
       }
     },
-    "chartEntry": {
-      "oneOf": [
-        { "$ref": "#/$defs/vessel" },
-        { "$ref": "#/$defs/fairway" },
-        { "$ref": "#/$defs/portOfEntry" },
-        { "$ref": "#/$defs/beacon" },
-        { "$ref": "#/$defs/light" },
-        { "$ref": "#/$defs/danger" }
-      ]
+    "edge": {
+      "description": "A charted fairway as an edge. No `kind` tag — nodes and edges are disjoint by construction; `relation` stays absent when the fairway is untyped.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to", "anchors", "trust", "stale"],
+      "properties": {
+        "id": { "$ref": "#/$defs/entryId" },
+        "from": { "$ref": "#/$defs/entryId" },
+        "to": { "$ref": "#/$defs/entryId" },
+        "relation": { "enum": ["build", "runtime", "config"] },
+        "anchors": { "$ref": "#/$defs/anchors" },
+        "trust": { "$ref": "#/$defs/trustLabel" },
+        "stale": { "$ref": "#/$defs/stale" }
+      }
     }
   }
 }

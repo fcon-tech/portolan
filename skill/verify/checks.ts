@@ -152,7 +152,7 @@ check("harbor 5.1", "SKILL.md teaches the harbor watch at session start", () => 
   ]) {
     assert(text.includes(phrase), `the harbor teaching omits "${phrase}"`);
   }
-  assert(/Fourteen tools:/.test(text), "the tool desk does not count fourteen tools");
+  assert(/Fifteen tools:/.test(text), "the tool desk does not count fifteen tools");
   assert(text.includes('"tool": "trust.report", "input": {}'), "no call shape for trust.report");
   assert(
     text.includes("call `trust.report` (no input) when composing"),
