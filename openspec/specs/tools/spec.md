@@ -219,8 +219,11 @@ is the Cartographer's write through the chart store, never the sounding's.
 The `trust.report` tool SHALL return, in one call, the verification summary
 of the province: the count of chart entries per trust label, the count per
 entry kind, the staleness state (which vessels are pending correction and
-how many entries each drags), and a ship's-log summary (total receipts and
-the most recent receipt). The pending-correction vessels SHALL be listed
+how many entries each drags), the open flares (vessel and stated reason
+each), the charter from the most recent charter start receipt with any
+overreach named by vessel
+and entry count, and a ship's-log summary (total receipts and the most
+recent receipt). The pending-correction vessels SHALL be listed
 in the repair rank's order — direct charted fan-in highest first, ties by
 vessel id. The report SHALL refresh staleness first, exactly
 as `chart.read` does, so the staleness section is never served from a stale
@@ -231,7 +234,8 @@ trust label, or file outside `<target>/.portolan/`.
 - **WHEN** the Cartographer calls `trust.report` against a charted province
 - **THEN** the response carries the trust-label distribution, the per-kind
   counts, the pending-correction vessels with their entry counts in the
-  repair rank's order, and the ship's-log summary
+  repair rank's order, the open flares, the last charter with any
+  overreach, and the ship's-log summary
 
 #### Scenario: The pending-vessel list follows the queue order
 - **WHEN** several vessels are pending correction with different fan-in
@@ -249,6 +253,11 @@ trust label, or file outside `<target>/.portolan/`.
   unchanged
 - **THEN** the Chart on disk is byte-identical afterwards, and no file
   outside `<target>/.portolan/` was touched
+
+#### Scenario: A kept charter reads as kept
+- **WHEN** every write made under the most recent charter falls inside it
+  and `trust.report` is called
+- **THEN** the charter section names the charter with no overreach listed
 
 ### Requirement: trust.report re-sounds anchors live
 The report SHALL re-verify every chart anchor through the deterministic
