@@ -122,7 +122,9 @@ test("night-watch 3.1 the launcher renders the repair prompt and runs opencode i
   expect(prompt).toContain("Summary: vessel api marked pending correction");
   expect(prompt).toContain(`Method: ${SKILL_PATH}`);
   expect(prompt).toContain("Perimeter: never modify anything outside .portolan/ in the province.");
-  expect(prompt).toContain("Scope: do only what the proposal names — nothing else.");
+  // expedition-charter supersedes the old "do only what the proposal names"
+  // line: the scope now rides the prompt as the receipted charter (design D3).
+  expect(prompt).toContain("Charter: vessels api · 3 entries · 3 soundings");
 });
 
 test("night-watch 3.1 a non-repair launch names its own kind, not repair", () => {

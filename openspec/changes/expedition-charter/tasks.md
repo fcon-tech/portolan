@@ -10,9 +10,9 @@
 
 ## 3. Surfaces — reports, brief, skill, glossary
 
-- [ ] 3.1 Watch report carries each launched expedition's charter and its overreach by vessel and count; two runs over an unchanged province stay byte-identical. Verify: watch report tests including the stability scenario.
-- [ ] 3.2 `trust.report` carries open flares (vessel, reason) and the last charter with any overreach; a kept charter reads as kept. Verify: trust-report tests for both sections and the kept-charter scenario.
-- [ ] 3.3 The launcher brief renders the charter line from the proposal scope; `skill/SKILL.md` gains the charter/flare method steps; `docs/MANIFEST.md` glossary gains Charter/Чартер and Flare/Ракета. Verify: launcher prompt test; grep shows the glossary rows; no stale wording ("do only what the proposal names" superseded by the charter line).
+- [x] 3.1 Watch report carries each launched expedition's charter and its overreach by vessel and count; two runs over an unchanged province stay byte-identical. Verify: watch report tests including the stability scenario.
+- [x] 3.2 `trust.report` carries open flares (vessel, reason) and the last charter with any overreach; a kept charter reads as kept. Verify: trust-report tests for both sections and the kept-charter scenario.
+- [x] 3.3 The launcher brief renders the charter line from the proposal scope; `skill/SKILL.md` gains the charter/flare method steps; `docs/MANIFEST.md` glossary gains Charter/Чартер and Flare/Ракета. Verify: launcher prompt test; grep shows the glossary rows; no stale wording ("do only what the proposal names" superseded by the charter line).
 
 ## 4. Verification and wrap
 

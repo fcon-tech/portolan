@@ -209,3 +209,5 @@ portolan/
 | One-file map/graph export of the Chart | Chart room | Штурманская |
 | Assembled view of several provinces | Fleet review | Смотр флота |
 | One-call verification summary | Trust report | Верификационная сводка |
+| An expedition's recorded promise of scope (vessels and entries) | Charter | Чартер |
+| Out-of-charter repair need, filed as a receipt | Flare | Ракета |

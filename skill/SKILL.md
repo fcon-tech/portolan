@@ -38,7 +38,12 @@ before other work:
    from its evidence (the drifted vessels, the gapped vessel, or the new
    land) and survey per section 4. A province with no standing Chart has
    no queue; that is a first survey, so start at section 1.
-6. Before any edit: a task touching more than one file or vessel requires
+6. An Expedition launched from an accepted proposal records its charter
+   before its first chart write: `log.append` with
+   `meta: { "kind": "charter", "vessels": ["api"], "entries": 3 }` — the
+   vessels and entries taken from the proposal's scope. The charter is a
+   receipt, not a wish: it names what the Expedition promises to touch.
+7. Before any edit: a task touching more than one file or vessel requires
    calling `chart.neighborhood` for each touched vessel first — sound the
    neighborhood before the first edit.
 
@@ -216,6 +221,20 @@ anchors and trust labels.
   written back exactly as read (minus your correction) and lands fresh.
 - The Chart's diff emits Notices to Mariners (added, corrected, marked
   stale, retired). Repeat the principal notices in the Sailing Directions.
+- Keep the charter you recorded at start (section 0): write only the
+  vessels and entries it names. A repair need the charter does not name —
+  an out-of-charter need — is filed as a flare, never fixed silently:
+  `log.append` with
+  `meta: { "kind": "flare", "vessel": "lib", "reason": "the stated reason", "evidence": "where you found it" }`,
+  and the entry left untouched. The harbor queue turns every open flare
+  into a repair proposal for that vessel; a decision — accepted or
+  declined — closes it. If you write outside the charter anyway, the
+  writes stay receipted and surface as overreach in the watch report and
+  in `trust.report`: a broken charter is never invisible, but nothing is
+  ever blocked.
+- Close the charter when the Expedition ends with an outcome receipt
+  naming the start receipt: `log.append` with
+  `meta: { "kind": "charter-outcome", "charter": "r12" }`.
 - When the Governor returns in a later session and asks about the surveyed
   target, answer from the surviving Chart with anchors and trust labels;
   resurvey only what is `pending correction` or newly `unsurveyed`.
