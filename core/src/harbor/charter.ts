@@ -75,7 +75,8 @@ export function oneLine(text: string): string {
  * names the receipt, so a mis-filed marker is never silently swallowed
  * (code-review fix 2026-09-06, extended to malformed values by the security
  * fix the same day); an empty-string reason is skipped too. The minted
- * reason is one line (oneLine) — the receipt keeps it verbatim.
+ * vessel and reason are one line (oneLine) — the receipt keeps them
+ * verbatim, and a newline in either cannot forge a queue line downstream.
  */
 export function openFlares(log: Receipt[]): Flare[] {
   const flares: Flare[] = [];
@@ -94,7 +95,7 @@ export function openFlares(log: Receipt[]): Flare[] {
     }
     flares.push({
       id: receipt.id,
-      vessel: meta.vessel,
+      vessel: oneLine(meta.vessel),
       reason: oneLine(meta.reason),
       evidence: typeof meta.evidence === "string" ? meta.evidence : "",
       recordedAt: receipt.recordedAt,

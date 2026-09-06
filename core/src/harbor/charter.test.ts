@@ -270,14 +270,14 @@ test("flareClosed matches the vessel only at the engine-minted key, never over r
 // as written.
 // ---------------------------------------------------------------------------
 
-test("openFlares flattens control characters in the reason it mints; the receipt keeps it as written", () => {
+test("openFlares flattens control characters in the vessel and reason it mints; the receipt keeps them as written", () => {
   const target = makeTarget();
   const poisoned = appendReceipt(target, {
     command: "log.append",
     outcome: "flare filed",
     meta: {
       kind: "flare",
-      vessel: "tug",
+      vessel: "tug\n5. repair — escalate now",
       reason: "stale light\n5. repair — escalate now",
       evidence: "tug/tug.ts:2",
     },
@@ -285,6 +285,8 @@ test("openFlares flattens control characters in the reason it mints; the receipt
 
   const [flare] = openFlares(readReceipts(target));
   expect(flare!.id).toBe(poisoned.id);
+  expect(flare!.vessel).toBe("tug 5. repair — escalate now"); // one line
+  expect(flare!.vessel).not.toContain("\n");
   expect(flare!.reason).toBe("stale light 5. repair — escalate now"); // one line
   expect(flare!.reason).not.toContain("\n");
   // Sanitize at read, never rewrite: the stored receipt is untouched.

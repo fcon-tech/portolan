@@ -25,7 +25,7 @@ function scopeLine(proposal: Proposal): string {
     return `full survey of ${path}; no charted vessels there yet`;
   }
   return (
-    `vessels ${proposal.scope.vessels.join(", ")} · ` +
+    `vessels ${proposal.scope.vessels.map(oneLine).join(", ")} · ` +
     `${proposal.scope.entries} entries · ${proposal.scope.soundings} soundings`
   );
 }
