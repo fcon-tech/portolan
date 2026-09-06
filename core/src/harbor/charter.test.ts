@@ -184,6 +184,41 @@ test("openFlares lists every flare receipt in log order and nothing else", () =>
 });
 
 // ---------------------------------------------------------------------------
+// Code-review fix 2026-09-06: a flare receipt whose reason is the empty
+// string cannot propose and cannot be matched by reason — openFlares skips
+// it, loudly, naming the receipt.
+// ---------------------------------------------------------------------------
+
+test("openFlares skips a flare receipt with an empty reason, loudly naming the receipt", () => {
+  const target = makeTarget();
+  const empty = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: { kind: "flare", vessel: "tug", reason: "", evidence: "tug/tug.ts:2" },
+  });
+  const good = appendReceipt(target, {
+    command: "log.append",
+    outcome: "flare filed",
+    meta: { kind: "flare", vessel: "tug", reason: "moor() has no timeout", evidence: "tug/tug.ts:3" },
+  });
+
+  const warnings: string[] = [];
+  const original = console.warn;
+  console.warn = (message?: unknown) => {
+    warnings.push(String(message));
+  };
+  try {
+    const flares = openFlares(readReceipts(target));
+    expect(flares.map((flare) => flare.id)).toEqual([good.id]); // the empty marker cannot propose
+  } finally {
+    console.warn = original;
+  }
+  expect(warnings).toHaveLength(1); // the skip is loud, never silent
+  expect(warnings[0]).toContain(empty.id);
+  expect(warnings[0]).toContain("empty reason");
+});
+
+// ---------------------------------------------------------------------------
 // Task 1.1 — charterOverreach: out-of-charter chart writes by vessel and
 // entry count; in-charter writes, writes that predate the charter, and
 // receipts that are not chart writes never count.

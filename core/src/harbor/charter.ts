@@ -57,7 +57,9 @@ export interface Overreach {
  * Every flare receipt in log order, whatever its closure state — the queue
  * applies the closure arithmetic (flareClosed); this reader stays a pure
  * read of the markers. A marker without a vessel or a reason cannot propose
- * and is skipped.
+ * and is skipped; an empty-string reason is skipped too, but loudly — the
+ * warning names the receipt, so a mis-filed marker is never silently
+ * swallowed (code-review fix 2026-09-06).
  */
 export function openFlares(log: Receipt[]): Flare[] {
   const flares: Flare[] = [];
@@ -65,6 +67,10 @@ export function openFlares(log: Receipt[]): Flare[] {
     const meta = receipt.meta;
     if (meta?.kind !== "flare") continue;
     if (typeof meta.vessel !== "string" || typeof meta.reason !== "string") continue;
+    if (meta.reason.length === 0) {
+      console.warn(`openFlares: flare receipt ${receipt.id} carries an empty reason; skipped`);
+      continue;
+    }
     flares.push({
       id: receipt.id,
       vessel: meta.vessel,
@@ -168,10 +174,10 @@ const MAX_CANDIDATE_REASONS = 16;
  * flare outright.
  *
  * The happy path reads the evidence the decide path recorded with the
- * decision (DecisionRecord.evidence): it closes the flare when it names
- * the flare's reason AND the flare's vessel — a drift key
- * (`vessel/<id>#<count>`), the count-less flare-row key (`vessel/<id>`), or
- * otherwise the reason cannot be the flare's. Vessel-scoped, so a decision
+ * decision (DecisionRecord.evidence): it closes the flare when that
+ * evidence names the flare's reason AND the flare's vessel — the vessel
+ * named by a drift key (`vessel/<id>#<count>`) or by the count-less
+ * flare-row key (`vessel/<id>`). Vessel-scoped, so a decision
  * on one vessel's row can never close another vessel's flare even when the
  * reason texts coincide; and monotonic — the recorded evidence does not
  * change when the drift charge empties, so a flare its decision answered
