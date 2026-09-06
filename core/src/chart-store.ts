@@ -26,6 +26,28 @@ import {
 
 export { INDEX_FILE, NOTICES_FILE, chartDir, readChart } from "./chart-io";
 
+/**
+ * The vessels a batch of chart entries touches, with the entry count each
+ * accrues: a vessel entry names itself, a fairway both its endpoints, every
+ * other entry its vessel. This is the write path's own attribution — the
+ * served `chart.write` tool records it in the receipt's `meta.vessels`, so
+ * charter overreach is arithmetic over receipts (expedition-charter D2).
+ */
+export function vesselsTouched(entries: ReadonlyArray<IndexedEntry | ChartEntry>): Record<string, number> {
+  const touched: Record<string, number> = {};
+  const bump = (vesselId: string): void => {
+    touched[vesselId] = (touched[vesselId] ?? 0) + 1;
+  };
+  for (const entry of entries) {
+    if (entry.kind === "vessel") bump(entry.id);
+    else if (entry.kind === "fairway") {
+      bump(entry.from);
+      bump(entry.to);
+    } else bump(entry.vessel);
+  }
+  return touched;
+}
+
 /** Result of a chart write: where the chart lives, the index, and the notices it produced. */
 export interface WriteResult {
   dir: string;
