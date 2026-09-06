@@ -208,6 +208,8 @@ function snapshotOutsideStats(root: string): Map<string, string> {
 
 function exportSchemaValidator(): (doc: unknown) => boolean {
   const ajv = new Ajv2020({ allErrors: true });
+  // D1: `version` is the schema-file version annotation ajv strict must know.
+  ajv.addKeyword("version");
   ajv.addSchema(trustVocabularyJson);
   ajv.addSchema(graphExportJson);
   return ajv.compile(graphExportJson);

@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/core/trust-vocabulary.schema.json",
+  "title": "Portolan trust vocabulary",
+  "version": "0.1.0",
+  "description": "The closed trust vocabulary (chart notation): exactly five labels, one per claim. measured: taken from source directly; charted: from manifests/metadata; reported: from docs/commits/tickets — claims, not facts; doubtful: evidence present, could not be validated; unsurveyed: no usable evidence, never faked. Single source of the enum (design D2): chart.schema.json references this file by $id, and a validator needs both files registered.",
+  "enum": ["measured", "charted", "reported", "doubtful", "unsurveyed"]
+}

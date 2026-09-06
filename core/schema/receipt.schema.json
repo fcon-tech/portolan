@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portolan.dev/core/receipt.schema.json",
+  "title": "Portolan ship's-log receipt",
+  "version": "0.1.0",
+  "description": "One line of <target>/.portolan/log.jsonl — the append-only receipt the log writes per executed command (core/src/tools/log.ts). The writer is authoritative (design D3): this schema documents what log.ts writes, ids are monotonic and citable as chart anchors, and no field outside the six named ones may appear.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "command", "outcome", "recordedAt"],
+  "properties": {
+    "id": {
+      "description": "Monotonic, assigned by the log: r1, r2, ... — citable as a receipt anchor.",
+      "type": "string",
+      "pattern": "^r\\d+$"
+    },
+    "command": {
+      "description": "Command identity, e.g. `sweep pattern=UserService`.",
+      "type": "string"
+    },
+    "scope": {
+      "description": "What was surveyed, e.g. the module or path scope. Optional — short probes may carry none.",
+      "type": "string"
+    },
+    "outcome": {
+      "description": "Outcome, e.g. `ok: 3 chunks` or `error: missing binary ctags`.",
+      "type": "string"
+    },
+    "recordedAt": {
+      "description": "ISO timestamp of the append (the log writes Date.prototype.toISOString).",
+      "type": "string"
+    },
+    "meta": {
+      "description": "Free-form command metadata (counts, notes, cited receipts). Open object: the log does not constrain keys or value shapes.",
+      "type": "object"
+    }
+  }
+}

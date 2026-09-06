@@ -36,6 +36,9 @@ const formats: Array<[string, unknown]> = [
 ];
 
 const ajv = new Ajv2020({ allErrors: true });
+// `version` is the D1 format-version annotation on each schema file; ajv
+// strict mode rejects unknown keywords unless it is declared as an annotation.
+ajv.addKeyword("version");
 ajv.addSchema(chartJson);
 ajv.addSchema(trustVocabularyJson);
 ajv.addSchema(receiptJson);

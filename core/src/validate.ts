@@ -1,10 +1,16 @@
 /**
  * Chart entry validation — ajv (draft 2020-12) against
  * core/schema/chart.schema.json, with entry-locating errors: every problem
- * names the offending entry's kind and id.
+ * names the offending entry's kind and id. The chart schema's trust label
+ * $refs trust-vocabulary.schema.json by $id (design D2), so both files are
+ * registered here; any standalone compile of the chart schema needs the
+ * vocabulary registered too. `version` is the format-version annotation on
+ * each schema file (design D1) — ajv strict mode rejects unknown keywords,
+ * so it is declared as an annotation keyword instead of dropping strictness.
  */
 import Ajv2020 from "ajv/dist/2020";
 import schema from "../schema/chart.schema.json";
+import trustVocabulary from "../schema/trust-vocabulary.schema.json";
 import { ENTRY_KINDS, type ChartEntry, type EntryKind } from "./types";
 
 interface AjvErrorLike {
@@ -20,6 +26,8 @@ type SubschemaValidator = ((data: unknown) => boolean) & {
 const SCHEMA_ID = schema.$id;
 
 const ajv = new Ajv2020({ allErrors: true });
+ajv.addKeyword("version");
+ajv.addSchema(trustVocabulary);
 ajv.addSchema(schema);
 
 const validators = new Map<string, SubschemaValidator>();
