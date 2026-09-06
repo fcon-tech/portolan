@@ -15,9 +15,11 @@
  * read from the schema file itself (design D1).
  *
  * Exit 0 means: schemas + docs alone consume the export. Any other outcome
- * exits nonzero naming what failed. The repo root is resolved from this
- * file's own location, never from the working directory, so the script
- * runs identically from a clean directory.
+ * exits nonzero naming what failed. An optional target — the province root
+ * — is taken from argv[2]; the default is this repository's own province.
+ * The repo root (dispatcher location and default target) is resolved from
+ * this file's own location, never from the working directory, so the
+ * script runs identically from a clean directory.
  */
 import { spawnSync } from "node:child_process";
 import { dirname, join } from "node:path";
@@ -27,6 +29,7 @@ import trustVocabulary from "../core/schema/trust-vocabulary.schema.json";
 import graphExport from "../core/schema/graph-export.schema.json";
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+const targetRoot = process.argv[2] ?? REPO_ROOT;
 
 function fail(message: string): never {
   console.error(`FAIL ${message}`);
@@ -36,7 +39,7 @@ function fail(message: string): never {
 // 1. Obtain the document through the CLI — the path a consumer without the
 // server takes (docs/formats.md: "No server is needed").
 const dispatcher = join(REPO_ROOT, "core", "src", "bin", "portolan.ts");
-const run = spawnSync(process.execPath, [dispatcher, "export", "--target", REPO_ROOT], {
+const run = spawnSync(process.execPath, [dispatcher, "export", "--target", targetRoot], {
   encoding: "utf8",
 });
 if (run.error !== undefined) {

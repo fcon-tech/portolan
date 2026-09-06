@@ -166,7 +166,7 @@ function edgeById(doc: GraphExport, id: string): GraphExport["edges"][number] {
 }
 
 /** The entry's charted fields, its store signature aside. */
-function chartedFields(entry: IndexedEntry): Omit<IndexedEntry, "signature"> {
+function chartedFields(entry: Exclude<IndexedEntry, FairwayEntry>) {
   const { signature: _signature, ...rest } = entry;
   return rest;
 }
@@ -485,12 +485,17 @@ test("the served chart.export call leaves the Chart byte-identical, touches noth
 //    no-receipt claim spans the handler (review fix, formats-pass)
 // ---------------------------------------------------------------------------
 
-test("fairways alone over the budget are an ExportError naming the budget, with no document and no receipt", () => {
+test("fairways alone over the budget are an ExportError naming the budget, with no document, no receipt, and no chart mutation", () => {
   const target = makeTarget();
+  // The port has real bytes so its drift is provable: if the builder
+  // refreshed staleness before refusing, the index would move under us.
+  mkdirSync(join(target, "port"), { recursive: true });
+  const drifted = join(target, "port", "port.ts");
+  writeFileSync(drifted, "// the port module\n");
   // Fat anchor paths: twelve fairways serialize past the budget even with
   // every vessel cut, so no honest cut remains.
   const fat = Math.ceil(EXPORT_MAX_BYTES / 10);
-  const entries: ChartEntry[] = [vessel("port"), vessel("warehouse")];
+  const entries: ChartEntry[] = [vessel("port", { paths: ["port"] }), vessel("warehouse")];
   for (let i = 0; i < 12; i++) {
     entries.push(
       fairway(`fw-fat-${i}`, "port", "warehouse", {
@@ -499,6 +504,9 @@ test("fairways alone over the budget are an ExportError naming the budget, with 
     );
   }
   writeChart(target, entries);
+  // An outside force drifts the port after the survey.
+  writeFileSync(drifted, readFileSync(drifted, "utf8") + "// drifted by an outside force\n");
+  const chartBefore = snapshotChartBytes(target);
   expect(readReceipts(target)).toEqual([]); // empty log before the call
 
   let err: unknown;
@@ -511,8 +519,11 @@ test("fairways alone over the budget are an ExportError naming the budget, with 
   expect(err, "the refusal, not an over-budget document").toBeInstanceOf(ExportError);
   expect((err as Error).message).toContain(String(EXPORT_MAX_BYTES));
   expect((err as Error).message).toMatch(/budget/);
-  // The refusal writes nothing: no receipt is appended.
+  // The refusal writes nothing: no receipt is appended...
   expect(readReceipts(target)).toEqual([]);
+  // ...and the staleness refresh does not run either — the Chart (drifted
+  // index included) is byte-identical after the refused call.
+  expect(snapshotChartBytes(target), "the Chart untouched by the refusal").toEqual(chartBefore);
 });
 
 // ---------------------------------------------------------------------------

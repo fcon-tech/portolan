@@ -96,10 +96,11 @@ must be registered for them; the receipt schema stands alone.
   `portolan-adjacency`: every non-fairway entry as a node (the charted
   fields as-is, plus `stale`), every fairway as an edge (from/to, relation
   when charted), each carrying its anchors and trust label un-upgraded. No
-  timestamps; nothing appears that has no charted counterpart. Byte-budgeted:
-  an oversized chart truncates loudly — `truncated` plus `omitted`, naming
-  every cut vessel with its cut entry count. The document's `version` field
-  names the schema version it was produced against.
+  timestamps; nothing appears that has no charted counterpart. Byte-budgeted
+  (262 144 bytes): an oversized chart truncates loudly — `truncated` plus
+  `omitted`, naming every cut vessel with its cut entry count. The
+  document's `version` field names the schema version it was produced
+  against.
 - **How to obtain:** `portolan export --target <province root>` writes the
   document to stdout; the same document is served by the `chart.export`
   MCP tool. No server is needed.
