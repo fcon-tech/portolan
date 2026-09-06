@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.6 — 2026-09-06
+
+Distribution follow-up: the MCP Registry listing rides the version-gated
+publish job — after npm publishes, the same job logs into the registry
+with GitHub OIDC (`mcp-publisher login github-oidc`) and publishes the
+committed `server.json`. No OAuth app, no personal token, no manual
+step: the listing is bound to this repository and updates on every
+version-grown merge. First release of the package (`0.4.5`) was manual
+per the runbook; trusted publishing and the registry path take over
+from here. No product behavior changes.
+
 ## 0.4.5 — 2026-09-02
 
 Distribution pass (openspec change `distribution-pass`, backlog candidate
