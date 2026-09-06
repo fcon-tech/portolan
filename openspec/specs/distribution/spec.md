@@ -22,7 +22,7 @@ this repository.
 - **WHEN** a machine with Bun, ripgrep, and ctags — and no Portolan
   repository — installs `@fcon-tech/portolan` from npm
 - **THEN** the package's entry point runs and the served tool list matches
-  the fourteen Portolan tools
+  the fifteen Portolan tools
 
 ### Requirement: One launch surface serves the product
 The package SHALL expose a single executable, `portolan`, with the
@@ -83,7 +83,7 @@ documentation SHALL describe the registry-based install path.
 #### Scenario: The installer works without a clone
 - **WHEN** the installer runs on a machine that has the published package
   but no Portolan repository
-- **THEN** the written launch configuration starts the fourteen-tool
+- **THEN** the written launch configuration starts the fifteen-tool
   server against the given target
 
 #### Scenario: The documentation points at the registry
