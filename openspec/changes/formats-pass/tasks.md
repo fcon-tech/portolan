@@ -28,6 +28,6 @@
 
 ## 6. Verification and wrap
 
-- [ ] 6.1 Full suite: `bun test`, `bunx tsc --noEmit` in `core/` and `acceptance/`, `openspec validate --specs --strict`, `bun run skill/verify/checks.ts`, `scripts/leak-gate.sh`. Verify: all green, failures named if any.
-- [ ] 6.2 External-consumer acceptance (the bet's proof): a script that imports nothing from `core/src` — schemas + docs only — obtains the CLI export and validates it against the schemas. Verify: script green from a clean directory outside the repo checkout of core.
-- [ ] 6.3 Merge preparation: `@portolan/core` version bump and CHANGELOG entry drafted per standing rules. Verify: CHANGELOG names the four formats and the fifteenth tool; version bump matches standing rule.
+- [x] 6.1 Full suite: `bun test`, `bunx tsc --noEmit` in `core/` and `acceptance/`, `openspec validate --specs --strict`, `bun run skill/verify/checks.ts`, `scripts/leak-gate.sh`. Verify: all green, failures named if any.
+- [x] 6.2 External-consumer acceptance (the bet's proof): a script that imports nothing from `core/src` — schemas + docs only — obtains the CLI export and validates it against the schemas. Verify: script green from a clean directory outside the repo checkout of core.
+- [x] 6.3 Merge preparation: `@portolan/core` version bump and CHANGELOG entry drafted per standing rules. Verify: CHANGELOG names the four formats and the fifteenth tool; version bump matches standing rule.

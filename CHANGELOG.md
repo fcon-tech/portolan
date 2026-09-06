@@ -1,5 +1,55 @@
 # Changelog
 
+## 0.5.0 — 2026-09-06
+
+The formats (openspec change `formats-pass`): Portolan's data model —
+anchors, trust labels, receipts, staleness — becomes an interface a
+consumer can adopt without this repository's source. Four JSON Schema
+files are now the single source of four named, versioned format
+contracts, and the Chart's machine layer leaves the server as one
+self-describing document obtainable without the MCP server.
+
+- **Four named, versioned formats** (draft 2020-12, each with a
+  `version` field and a stable `$id`, all at `0.1.0`): the chart entry
+  format (`chart.schema.json`), the trust vocabulary
+  (`trust-vocabulary.schema.json` — the closed five-label enum, single
+  source, `$ref`'d by the chart and export schemas), the ship's-log
+  receipt format (`receipt.schema.json` — documents exactly what the
+  log writes, so every historical line validates), and the adjacency
+  graph export (`graph-export.schema.json`). The chart-entry and
+  receipt schemas admit the store's metadata (`stale`, the vessels'
+  `signature`) — additive schema facts, recorded in the `0.1.0`
+  formats, not version bumps. Versioning policy and stability promise:
+  semver from `0.1.0`, breaking=minor and additive=patch while 0.x;
+  `1.0.0` stays the Governor's call.
+- **`chart.export`, the fifteenth served tool** — the Chart's machine
+  layer in one deterministic document: format `portolan-adjacency`,
+  every non-fairway entry a node and every fairway an edge, each
+  carrying its anchors, trust label, and staleness un-upgraded —
+  `doubtful` and `unsurveyed` pass through; no timestamps, no invented
+  nodes, no derived rollups. Byte-budgeted with loud truncation naming
+  every cut vessel and its cut entry count; an absent Chart is a named
+  error; staleness is refreshed before serving; exactly one ship's-log
+  receipt per successful call, nothing else written.
+- **`portolan export [--target <root>]`** — the same document on
+  stdout through the CLI, over the same core function the tool calls,
+  so MCP and CLI cannot diverge; non-zero exit on the honest errors,
+  and no receipt on the CLI path.
+- **`docs/formats.md` is the consumer contract** — purpose, schema
+  path, current version, and stability promise per format, one ajv
+  registration snippet, no core source reading required. The
+  consumability claim is checked, not asserted:
+  `scripts/consume-export.ts` obtains the export through the CLI and
+  validates it against the schemas alone from an arbitrary working
+  directory, and CI runs it on every change. Types are generated from
+  the schemas (`scripts/gen-types.ts`, CI-failed drift guard) — schema
+  wins, the hand mirror cannot drift.
+- No data migration: `index.jsonl` and `log.jsonl` keep their shapes.
+  The formats stay `0.1.0`; only the package version moves. The
+  adoption bet itself remains judgment, not evidence — the schemas and
+  the acceptance script prove consumability; further format spend
+  waits for a real external consumer.
+
 ## 0.4.6 — 2026-09-06
 
 Distribution follow-up: the MCP Registry listing rides the version-gated
