@@ -79,6 +79,24 @@ function ranLine(action: WatchAction): string {
 }
 
 /**
+ * The charter an expedition filed rides what it did (openspec/changes/
+ * expedition-charter): the promised vessels and entries, then kept — or the
+ * out-of-charter writes named by vessel and count, never summarized away
+ * (harbor spec: overreach is named). Absent charter (design D4) renders
+ * nothing.
+ */
+function charterLines(action: WatchAction): string[] {
+  if (action.charter === undefined) return [];
+  const promised =
+    `   charter: vessels ${action.charter.vessels.join(", ")} · ` +
+    `${action.charter.entries} entries`;
+  const overreach = action.overreach ?? [];
+  if (overreach.length === 0) return [`${promised} — kept`];
+  const broken = overreach.map((row) => `${row.vessel} · ${row.entries} entries`).join("; ");
+  return [`${promised} — broken: ${broken} written outside the charter`];
+}
+
+/**
  * Render the manual run report as one postable chat message: the proposal
  * (kind, summary, evidence, scope), the launcher, and the outcome. Always
  * renders; deterministic — no timestamps, no ambient state. A failure says
@@ -132,6 +150,7 @@ export function renderWatchChat(report: WatchReport): string {
   for (const [index, action] of completed.entries()) {
     lines.push(`${index + 1}. ${action.proposal.kind} — ${action.proposal.summary}`);
     lines.push(ranLine(action));
+    lines.push(...charterLines(action));
   }
 
   lines.push("pending:");
@@ -147,6 +166,7 @@ export function renderWatchChat(report: WatchReport): string {
   for (const [index, action] of failed.entries()) {
     lines.push(`${index + 1}. ${action.proposal.kind} — ${action.proposal.summary}`);
     lines.push(`   failure: ${action.reason}`);
+    lines.push(...charterLines(action));
     lines.push("   note: recorded in history; the proposal stays queued for the Governor");
   }
 
