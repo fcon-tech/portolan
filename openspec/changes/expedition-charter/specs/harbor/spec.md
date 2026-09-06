@@ -58,8 +58,9 @@ The watch SHALL emit one report listing what ran (with outcomes), what
 was left pending (with evidence summaries), any launcher failures, and —
 for each expedition it launched — the expedition's charter and whether
 the expedition kept it, with any out-of-charter writes named — in a form
-suitable for posting to chat as-is. Two watch runs over an unchanged
-province SHALL emit identical reports.
+suitable for posting to chat as-is. A launch that filed no charter
+receipt is reported against the latest charter on record. Two watch runs
+over an unchanged province SHALL emit identical reports.
 
 #### Scenario: The report is stable
 - **WHEN** the watch command runs twice over an unchanged province

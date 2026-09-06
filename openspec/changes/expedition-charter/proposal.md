@@ -18,11 +18,12 @@ arithmetic over receipts, not as an invisible sin.
   it with an outcome receipt when it ends. The charter rides the launch
   brief when an expedition starts from a harbor proposal.
 - **Overreach is computed, shown, never silent**: writes outside the
-  charter are derived from the log's receipts (every chart write already
-  receipts) and surface in the night watch report and in `trust.report`.
-  No write is blocked — a violated charter is a loud, recorded fact, not a
-  hidden one. Honest limit: receipts are agent-written facts, not a
-  compliance guarantee.
+  charter are derived from the log's receipts — this change introduces the
+  chart.write receipt, naming the written vessels; had it not named them,
+  the marker would go inside `meta` — and surface in the night watch
+  report and in `trust.report`. No write is blocked — a violated charter
+  is a loud, recorded fact, not a hidden one. Honest limit: receipts are
+  agent-written facts, not a compliance guarantee.
 - **Flares**: an expedition that finds a need outside its charter fires a
   flare — a structured ship's-log receipt naming the vessel, the reason,
   and the finding's evidence. Open flares become repair proposals in the

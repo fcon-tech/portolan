@@ -72,9 +72,9 @@ Start receipt (`meta.kind: "charter"`, vessels and entries promised),
 outcome receipt at the end. Overreach = chart-write receipts whose touched
 vessels fall outside the charter, computed by one core function that both
 the watch report and `trust.report` call, so the two surfaces cannot
-diverge. Chart-write receipts already name their command and scope; if
-the current shape does not name the written vessels, the marker is added
-inside `meta` — additive, schema-safe.
+diverge. This change introduces the chart.write receipt, naming the
+written vessels; had it not named them, the marker would go inside
+`meta` — additive, schema-safe.
 
 **D3 — The launcher renders the charter; the skill teaches it.**
 When an expedition is launched from a proposal, the brief carries the

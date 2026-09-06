@@ -1,12 +1,12 @@
 ## 1. Charter receipts and overreach
 
-- [ ] 1.1 Test-first (RED): receipt markers for charter start and outcome inside `meta` (valid against the formats-pass receipt schema), and one overreach function — given a charter and the log, it lists out-of-charter chart writes by vessel and entry count. Verify: new tests red, nothing else broken.
-- [ ] 1.2 Implement the markers and the overreach function; if chart-write receipts do not name their written vessels, add the marker in `meta` (design D2). Verify: tests from 1.1 green; receipt schema suite still validates the full `log.jsonl`.
+- [x] 1.1 Test-first (RED): receipt markers for charter start and outcome inside `meta` (valid against the formats-pass receipt schema), and one overreach function — given a charter and the log, it lists out-of-charter chart writes by vessel and entry count. Verify: new tests red, nothing else broken.
+- [x] 1.2 Implement the markers and the overreach function; if chart-write receipts do not name their written vessels, add the marker in `meta` (design D2). Verify: tests from 1.1 green; receipt schema suite still validates the full `log.jsonl`.
 
 ## 2. Flares — the fourth queue input
 
-- [ ] 2.1 Test-first (RED): flare receipt → repair proposal derivation; multiple flares on one vessel fold by filter-plus-concat into the per-vessel row carrying every reason (no join layer); drift+flare on one vessel yield the single per-vessel row with both evidences; closure rules — accepted or declined closes, undecided keeps proposing; province with no drift/gap/landscape/flare is empty. Verify: new tests red, nothing else broken.
-- [ ] 2.2 Implement the fourth input in `core/src/harbor/proposals.ts` (design D1). Verify: tests from 2.1 green; existing queue tests (drift, gap, new-land, fan-in rank) stay green.
+- [x] 2.1 Test-first (RED): flare receipt → repair proposal derivation; multiple flares on one vessel fold by filter-plus-concat into the per-vessel row carrying every reason (no join layer); drift+flare on one vessel yield the single per-vessel row with both evidences; closure rules — accepted or declined closes, undecided keeps proposing; province with no drift/gap/landscape/flare is empty. Verify: new tests red, nothing else broken.
+- [x] 2.2 Implement the fourth input in `core/src/harbor/proposals.ts` (design D1). Verify: tests from 2.1 green; existing queue tests (drift, gap, new-land, fan-in rank) stay green.
 
 ## 3. Surfaces — reports, brief, skill, glossary
 

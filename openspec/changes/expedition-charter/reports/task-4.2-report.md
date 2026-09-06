@@ -169,6 +169,8 @@ row on record, all inside `.portolan/`.
   flare discipline: filed, not silently fixed; declined in trial). Both are
   visible in `.portolan/` and in this report; the next skill edit reopens
   the row.
+  Postscript: the finding was subsequently fixed on record — commit
+  `3d37a1c` makes the skill's queue enumeration name all four inputs.
 - Receipts `r48`–`r50` carry the trial attribution in their `command`
   strings, but the harbor history has no note field — the declined row
   reads as any Governor decline. Accepted: the history's shape is
