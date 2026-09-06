@@ -42,26 +42,19 @@ Cartographer agent runs every command and all verification.
 Verify: `npm view @fcon-tech/portolan version` returns the published
 version.
 
-## 2. MCP Registry listing
+## 2. MCP Registry listing — automatic since 0.4.6
 
-1. Confirm you are an **Owner** of the GitHub org `fcon-tech` (required
-   for `io.github.fcon-tech/*` names).
-2. Install `mcp-publisher` from the official registry repo only —
-   follow the installation section of
-   github.com/modelcontextprotocol/registry (README). Do NOT
-   `npx mcp-publisher`: the npm package of that name is maintained by a
-   third party (verified 2026-09-02, `measured`). Then
-   `mcp-publisher login github` — a device flow: the agent runs it, the
-   Governor approves in the browser (must be an Owner of the fcon-tech
-   GitHub org) — then the agent runs `mcp-publisher publish`.
-   - Domain-based alternatives (DNS TXT on the apex, or
-     `/.well-known/mcp-registry-auth`) exist if you prefer not to use
-     GitHub OAuth.
-3. Note: the registry is in **preview** — listings can be re-published
-   after breaking changes; versions are immutable per publication.
-
-Verify: `curl "https://registry.modelcontextprotocol.io/v0.1/servers?search=portolan"`
-resolves the entry.
+The listing rides the CI publish job: after npm publishes, the job runs
+`mcp-publisher login github-oidc` + `mcp-publisher publish` with the
+workflow's own OIDC token — bound to this repository, no OAuth app, no
+personal token, no org-settings change. Every version-grown merge
+updates both npm and the registry. (Manual fallback: install
+`mcp-publisher` from the official registry repo releases — NOT
+`npx mcp-publisher`, that npm package is a stranger's — then
+`mcp-publisher login github` + `publish`. Note: org namespaces require
+the Owner role, and GitHub orgs with third-party app restrictions will
+hide the org from the device-flow check — the OIDC path has neither
+problem.)
 
 ## 3. After setup
 
