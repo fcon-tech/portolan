@@ -52,6 +52,16 @@ export function vesselsTouched(entries: ReadonlyArray<IndexedEntry | ChartEntry>
 export interface WriteResult {
   dir: string;
   index: IndexedEntry[];
+  /**
+   * The entries this write changed — the delta the Notices to Mariners
+   * report, as entry ids: post-write state for added and corrected entries,
+   * pre-write state for retired ones. The served `chart.write` receipt
+   * names the vessels here (its `meta.vessels`), never the whole post-write
+   * chart: a receipt naming every charted vessel would blind the charter
+   * overreach arithmetic to exactly the overreach it exists to catch
+   * (expedition-charter D2, code-review fix 2026-09-06).
+   */
+  changed: IndexedEntry[];
   notices: Notice[];
   noticesText: string;
   /** Set when post-write cleanup failed: the write persisted, its cleanup did not. */
@@ -130,6 +140,16 @@ export function writeChart(
   );
   const notices = diffNotices(previous ?? [], indexed);
   const noticesText = renderNotices(notices);
+  // The write's delta, keyed by the notices' entry ids: survivors in their
+  // post-write state, retired entries from the chart they left.
+  const changedIds = new Set(notices.map((notice) => `${notice.kind}/${notice.id}`));
+  const retiredIds = new Set(
+    notices.filter((notice) => notice.action === "retired").map((notice) => `${notice.kind}/${notice.id}`),
+  );
+  const changed = [
+    ...indexed.filter((entry) => changedIds.has(`${entry.kind}/${entry.id}`)),
+    ...(previous ?? []).filter((entry) => retiredIds.has(`${entry.kind}/${entry.id}`)),
+  ];
   const sheets = renderSheets(indexed);
 
   mkdirSync(dir, { recursive: true });
@@ -155,5 +175,12 @@ export function writeChart(
   } catch (err) {
     cleanupError = err instanceof Error ? err.message : String(err);
   }
-  return { dir, index: indexed, notices, noticesText, ...(cleanupError !== undefined ? { cleanupError } : {}) };
+  return {
+    dir,
+    index: indexed,
+    changed,
+    notices,
+    noticesText,
+    ...(cleanupError !== undefined ? { cleanupError } : {}),
+  };
 }

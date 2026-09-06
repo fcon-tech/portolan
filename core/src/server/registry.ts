@@ -276,15 +276,16 @@ export const TOOL_TABLE: ToolSpec[] = [
       );
       // The one write this call makes beyond the Chart: exactly one ship's-log
       // receipt, through the same append path log.append serves, with the
-      // touched vessels and their entry counts in meta — the marker charter
-      // overreach is computed from (expedition-charter, design D2). A
-      // rejected write throws above and never reaches this line, so a
+      // vessels the write itself touched — the write's delta (result.changed),
+      // not the whole post-write chart — and their entry counts in meta: the
+      // marker charter overreach is computed from (expedition-charter, design
+      // D2). A rejected write throws above and never reaches this line, so a
       // rejection leaves no receipt.
       appendReceipt(ctx.targetRoot, {
         command: "chart.write",
         scope: "chart",
         outcome: `ok: ${result.index.length} entries`,
-        meta: { vessels: vesselsTouched(result.index) },
+        meta: { vessels: vesselsTouched(result.changed) },
       });
       return result;
     },
