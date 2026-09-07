@@ -14,6 +14,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { readChart } from "../../core/src/index";
+import {
+  renderPointer,
+  shippedSkillName,
+  POINTER_FORMAT_NAME,
+  POINTER_FORMAT_VERSION,
+} from "../../core/src/pointer/index";
 import { createFixture } from "./fixture";
 import { runExpedition, type DryRunResult } from "./dry-run";
 
@@ -490,6 +496,112 @@ check("charter 3.3", "docs/MANIFEST.md glossary carries Charter/Чартер and
   assert(/Charter[^\n]*\|[^\n]*Чартер/.test(manifest), "the glossary lacks the Charter/Чартер row");
   assert(/Flare[^\n]*\|[^\n]*Ракета/.test(manifest), "the glossary lacks the Flare/Ракета row");
   return "both glossary rows present";
+});
+
+// ---------------------------------------------------------------------------
+// pointer-bridge tasks 5.1–5.3 — the Pointer in the skill: the close-out
+// step, the perimeter exception, the approval wording (openspec/changes/
+// pointer-bridge/specs/pointer: "The expedition keeps the Pointer current";
+// the block's own content is verified against the one core template).
+// ---------------------------------------------------------------------------
+
+function skillBetween(text: string, from: string, to: string): string {
+  const fromAt = text.indexOf(from);
+  const toAt = text.indexOf(to);
+  assert(fromAt >= 0, `missing section "${from}"`);
+  assert(toAt > fromAt, `"${to}" no longer follows "${from}"`);
+  return text.slice(fromAt, toAt);
+}
+
+check("pointer 5.1", "SKILL.md teaches the close-out Pointer step with the pointer install receipt", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const closeOut = skillBetween(text, "## 9. Deliver Sailing Directions", "## 10. Tool desk");
+  const pointerAt = closeOut.indexOf("bring the Pointer current");
+  const briefAt = closeOut.indexOf("The brief states:");
+  assert(pointerAt >= 0 && briefAt > pointerAt, "the Pointer step must sit before the brief");
+  for (const phrase of [
+    "<!-- portolan:harbor:begin -->",
+    "<!-- portolan:harbor:end -->",
+    "portolan-pointer",
+    "`portolan pointer`",
+    "append no receipt",
+    "`pointer install`",
+    "found version",
+    "set version",
+    "`missing`",
+    "never creates a top-level file",
+    "No other edit to `AGENTS.md`",
+  ]) {
+    assert(closeOut.includes(phrase), `the close-out teaching omits "${phrase}"`);
+  }
+  assert(
+    /version line\s+and the bytes/.test(closeOut),
+    "the close-out step does not compare the version line AND the bytes"
+  );
+  assert(
+    /Stale \(the version line behind, or the bytes diverging from the render\)/.test(closeOut),
+    "the stale predicate is not version-behind-or-bytes-diverge"
+  );
+});
+
+check("pointer 5.1", "the perimeter names the Pointer exception", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const perimeter = skillBetween(text, "## 3. The perimeter", "## 4. The survey");
+  assert(perimeter.includes("Pointer"), "the perimeter never names the Pointer");
+  assert(perimeter.includes("<target>/AGENTS.md"), "the exception does not name <target>/AGENTS.md");
+  assert(/placed and refreshed/.test(perimeter), "the exception does not bind placement to the close-out step");
+  assert(perimeter.includes("everything else stays under"), "the exception does not close with the .portolan/ rule");
+});
+
+check("pointer 5.1", "the approval wording covers the Pointer", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const approval = skillBetween(text, "## 2. The one approval", "## 3. The perimeter");
+  assert(
+    approval.includes("plus the Pointer") &&
+      approval.includes("block in \\<target\\>/AGENTS.md at the close-out"),
+    "the approval's write scope does not cover the Pointer block in <target>/AGENTS.md"
+  );
+});
+
+check("pointer 5.1", "the tool desk rows for expeditions.propose and trust.report name the Pointer status", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const desk = skillBetween(text, "## 10. Tool desk", "Call shapes");
+  const row = (tool: string) => desk.split("\n").find((l) => l.startsWith(`| \`${tool}\` |`));
+  for (const tool of ["expeditions.propose", "trust.report"]) {
+    const line = row(tool);
+    assert(!!line, `no tool-desk row for ${tool}`);
+    assert(/Pointer status/.test(line!), `the ${tool} row does not name the Pointer status`);
+  }
+});
+
+check("pointer 5.2", "the core template agrees with the skill: markers, version line, bootstrap command, boundary exception", () => {
+  const block = renderPointer(shippedSkillName());
+  assert(
+    block.startsWith("<!-- portolan:harbor:begin -->") && block.endsWith("<!-- portolan:harbor:end -->"),
+    "the render is not marker-delimited"
+  );
+  assert(
+    block.includes(`${POINTER_FORMAT_NAME} ${POINTER_FORMAT_VERSION}`),
+    "the render lacks its dedicated version line"
+  );
+  assert(
+    block.includes("bunx --package @fcon-tech/portolan portolan install --target ."),
+    "the bootstrap line does not name the pinned runnable bunx form"
+  );
+  assert(
+    block.includes("this block's own refresh excepted"),
+    "the boundary mandate does not carry its own refresh exception"
+  );
+  const name = shippedSkillName();
+  assert(block.includes(`the \`${name}\` skill`), "the render does not name the shipped skill as the full method");
+  const frontmatter = /^name:\s*(\S+)\s*$/m.exec(readFileSync(SKILL_PATH, "utf8"));
+  assert(!!frontmatter && frontmatter[1] === name, "shippedSkillName() disagrees with SKILL.md's frontmatter");
+  const closeOut = skillBetween(
+    readFileSync(SKILL_PATH, "utf8"),
+    "## 9. Deliver Sailing Directions",
+    "## 10. Tool desk"
+  );
+  assert(closeOut.includes(POINTER_FORMAT_NAME), "the close-out teaching names a different format than the template");
 });
 
 // ---------------------------------------------------------------------------
