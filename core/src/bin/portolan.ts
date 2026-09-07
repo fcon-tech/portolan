@@ -8,6 +8,7 @@
  *   portolan chartroom <render|review> …        → chartroom/cli.ts
  *   portolan harbor <propose|watch|run> …       → harbor/cli.ts
  *   portolan pointer                             → pointer/index.ts (renderPointer)
+ *   portolan install --target <province root>    → adapters/opencode/install.ts
  *
  * `serve` runs in-process (same parse, same server wiring as main.ts);
  * the CLIs are spawned with inherited stdio so their behavior — output,
@@ -21,13 +22,17 @@
  * Pointer block — the same core render the installer places, the skill
  * name derived from the shipped SKILL.md frontmatter — takes no arguments
  * (the block is target-independent), and touches no ship's log. `install`
- * is named in the usage but has no route yet (pointer-bridge task 3).
+ * is spawned with the remaining args verbatim — the chartroom/harbor
+ * pattern. The bin is the composition root: core spawning the adapter
+ * installer there is wiring, not the core→adapters library dependency
+ * engineering.md §1 forbids (that rule governs library layering; the entry
+ * point composes, as the server wiring does — pointer-bridge design.md).
  */
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const SUBCOMMANDS = ["serve", "export", "chartroom", "harbor", "pointer"] as const;
+const SUBCOMMANDS = ["serve", "export", "chartroom", "harbor", "pointer", "install"] as const;
 
 const usage = `usage: portolan <command> [args]
 
@@ -131,6 +136,11 @@ async function dispatch(argv: readonly string[]): Promise<void> {
       return runCli(srcPath("../chartroom/cli.ts"), rest);
     case "harbor":
       return runCli(srcPath("../harbor/cli.ts"), rest);
+    case "install":
+      // The harness installer (opencode first) gets the remaining args
+      // verbatim — e.g. `--target <province>` — so its behavior, output,
+      // and exit codes are indistinguishable from running it directly.
+      return runCli(srcPath("../../../adapters/opencode/install.ts"), rest);
     default:
       failUsage();
   }

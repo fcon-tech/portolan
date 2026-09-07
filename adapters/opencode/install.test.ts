@@ -16,9 +16,12 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { renderPointer, skillNameFromFrontmatter } from "../../core/src/pointer/index";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
 const INSTALLER = join(REPO_ROOT, "adapters", "opencode", "install.ts");
+const BEGIN = "<!-- portolan:harbor:begin -->";
+const END = "<!-- portolan:harbor:end -->";
 
 const dirs: string[] = [];
 afterAll(() => {
@@ -81,6 +84,18 @@ test("the installer copies the skill into ~/.config/opencode/skills and keeps AG
   const agents = readFileSync(join(province, "AGENTS.md"), "utf8");
   expect(agents).not.toContain(REPO_ROOT);
   expect(agents).toContain("portolan-expedition");
+  // Shared template: the block the installer places is byte-identical to the
+  // core render (the same source `portolan pointer` prints; pointer-bridge).
+  const begin = agents.indexOf(BEGIN);
+  const end = agents.indexOf(END);
+  expect(
+    agents.slice(begin, end + END.length),
+    "the placed block equals the core render",
+  ).toBe(
+    renderPointer(
+      skillNameFromFrontmatter(readFileSync(join(REPO_ROOT, "skill", "SKILL.md"), "utf8")),
+    ),
+  );
 });
 
 // Preserved behavior (design.md decision 5): JSONC surgery keeps comments.

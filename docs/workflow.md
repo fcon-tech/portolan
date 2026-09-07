@@ -4,14 +4,18 @@ This target runs two operating systems side by side: the OpenSpec cycle
 (product behavior changes) and the Portolan province (the Chart, the harbor,
 expeditions). This page is the assembled protocol that routes between them —
 rules and pointers only, never a manual. Each home named here owns its layer:
-the installer-owned block in AGENTS.md owns the harbor mandate, AGENTS.md owns
-the rules, this page owns the joints between the two systems.
+the Pointer — the block between the harbor markers in AGENTS.md — owns the
+harbor mandate, AGENTS.md owns the rules, this page owns the joints between
+the two systems.
 
 ## J1 — the unified session briefing
 
-- The harbor half is owned by the installer-generated block in AGENTS.md
-  (between `<!-- portolan:harbor:begin -->` and `<!-- portolan:harbor:end -->`):
-  run it as written at session start; the OpenSpec half follows.
+- The harbor half is the Pointer in AGENTS.md (between
+  `<!-- portolan:harbor:begin -->` and `<!-- portolan:harbor:end -->`): the
+  block is owned by the core template (`core/src/pointer`), written at
+  install and at expedition close-out, version-checked by the Pointer status
+  in `trust.report` and `expeditions.propose` — run it as written at session
+  start; the OpenSpec half follows.
 - The OpenSpec half, added here: the same briefing appends the active-change
   state, if any, from `openspec list --json` — harbor queue first, then
   change state. One decision round for the Governor, not two.
@@ -76,11 +80,14 @@ recorded trigger, never by default.
   after an Edit/Write it flags the touched file when it carries a machine
   home path signature. It goes deny only if a leaked literal reaches a
   commit despite the warning.
-- `scripts/hooks/harbor-markers.sh` serves the installer-owned harbor block
-  in AGENTS.md (the harbor half of J1): before an Edit/Write targeting
-  AGENTS.md it reminds that the block between the harbor markers is
-  rewritten wholesale on install. It goes deny only if a hand edit inside
-  the markers survives to an install and is reverted.
+- `scripts/hooks/harbor-markers.sh` serves the Pointer — the block between
+  the harbor markers in AGENTS.md, the harbor half of J1: owned by the core
+  template (`core/src/pointer`), written at install and at expedition
+  close-out, version-checked by the Pointer status in `trust.report` and
+  `expeditions.propose`. Before an Edit/Write targeting AGENTS.md it reminds
+  that the block is rewritten wholesale by the next write (install or
+  close-out). It goes deny only if a hand edit inside the markers survives
+  to an install and is reverted.
 - `scripts/hooks/session-brief.ts` implements the J1 briefing mandate,
   quietly (at session start): it speaks only when the harbor queue or the
   change list is non-empty — an all-quiet province prints nothing. The

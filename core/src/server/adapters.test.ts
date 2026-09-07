@@ -21,11 +21,26 @@ import { TOOL_NAMES } from "./registry";
 import { readManifest } from "../tools/manifests";
 import { soundAnchor } from "../tools/sound";
 import { findBinary } from "../tools/shared";
+import { renderPointer, skillNameFromFrontmatter } from "../pointer/index";
 
 const REPO_ROOT = join(import.meta.dir, "..", "..", "..");
 const OPENCODE_INSTALL = join(REPO_ROOT, "adapters", "opencode", "install.ts");
 const PI_SHIM = join(REPO_ROOT, "adapters", "pi", "portolan-mcp");
 const OMP_SHIM = join(REPO_ROOT, "adapters", "omp", "portolan-mcp");
+const BEGIN = "<!-- portolan:harbor:begin -->";
+const END = "<!-- portolan:harbor:end -->";
+
+/** The shipped skill's frontmatter name — the render input every surface uses. */
+function shippedSkillName(): string {
+  return skillNameFromFrontmatter(readFileSync(join(REPO_ROOT, "skill", "SKILL.md"), "utf8"));
+}
+
+/** The marker-delimited Pointer block of an AGENTS.md text. */
+function pointerBlock(agents: string): string {
+  const begin = agents.indexOf(BEGIN);
+  const end = agents.indexOf(END);
+  return agents.slice(begin, end + END.length);
+}
 
 /** Install the opencode adapter into a sandbox config; return its parsed JSON. */
 function installOpencode(province: string): { configPath: string; config: Record<string, unknown> } {
@@ -283,7 +298,7 @@ test("the opencode installer replaces an existing portolan block, keeping mcp si
   rmSync(sandbox, { recursive: true, force: true });
 });
 
-test("the installer writes an idempotent harbor block into the province AGENTS.md", () => {
+test("the installer writes an idempotent Pointer block into the province AGENTS.md", () => {
   const sandbox = mkdtempSync(join(tmpdir(), "portolan-agents-"));
   writeFileSync(join(sandbox, "AGENTS.md"), "# My province notes\n\nExisting guidance.\n");
   const run = spawnSync(
@@ -297,6 +312,11 @@ test("the installer writes an idempotent harbor block into the province AGENTS.m
   expect(agents).toContain("<!-- portolan:harbor:begin -->");
   expect(agents).toContain("expeditions.propose");
   expect(agents).toContain("Never modify anything outside `.portolan/`");
+  // Shared template: the placed block is byte-identical to the core render
+  // (the same source `portolan pointer` prints).
+  expect(pointerBlock(agents), "the placed block equals the core render").toBe(
+    renderPointer(shippedSkillName()),
+  );
   // Idempotent: a second install replaces the block in place, no duplicate.
   const rerun = spawnSync(
     process.execPath,
@@ -307,13 +327,37 @@ test("the installer writes an idempotent harbor block into the province AGENTS.m
   const after = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
   expect((after.match(/portolan:harbor:begin/g) ?? []).length).toBe(1);
   expect(after).toContain("# My province notes");
+  // A hand edit inside the markers survives no reinstall: the block is
+  // rewritten wholesale, the text outside the markers stays byte-identical.
+  const outside = (text: string): string => {
+    const begin = text.indexOf(BEGIN);
+    const end = text.indexOf(END);
+    return text.slice(0, begin) + text.slice(end + END.length);
+  };
+  writeFileSync(
+    join(sandbox, "AGENTS.md"),
+    after.replace(END, `\nA hand edit survives no reinstall.\n${END}`),
+  );
+  const repair = spawnSync(
+    process.execPath,
+    [OPENCODE_INSTALL, "--target", sandbox, "--config", join(sandbox, "oc.json")],
+    { encoding: "utf8", env: childEnv() },
+  );
+  expect(repair.status).toBe(0);
+  const healed = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
+  expect(pointerBlock(healed), "the hand edit is gone — current template again").toBe(
+    renderPointer(shippedSkillName()),
+  );
+  expect(outside(healed), "text outside the markers is byte-identical").toBe(outside(after));
   rmSync(sandbox, { recursive: true, force: true });
 });
 
-test("the harbor block is path-free — it names the skill, not a filesystem location", () => {
+test("the Pointer block is path-free — it names the skill, not a filesystem location", () => {
   // The skill is delivered by copy into the harness's skills directory
-  // (task 5.1), so the AGENTS.md block names the skill instead of pathing to
-  // it — the block carries no repo-relative or machine path anywhere.
+  // (task 5.1), so the Pointer names the skill instead of pathing to it —
+  // the block carries no repo-relative or machine path anywhere. The bytes
+  // are the core render's, so the shared template itself is what stays
+  // path-free.
   const sandbox = mkdtempSync(join(tmpdir(), "portolan-agents-rel-"));
   try {
     const run = spawnSync(
@@ -323,6 +367,9 @@ test("the harbor block is path-free — it names the skill, not a filesystem loc
     );
     expect(run.status).toBe(0);
     const agents = readFileSync(join(sandbox, "AGENTS.md"), "utf8");
+    expect(pointerBlock(agents), "the block equals the core render").toBe(
+      renderPointer(shippedSkillName()),
+    );
     expect(agents).toContain("portolan-expedition");
     expect(agents).not.toContain("skill/SKILL.md");
     expect(agents).not.toContain(REPO_ROOT);

@@ -29,6 +29,11 @@
  * `~/.pi/agent/skills/`, `~/.omp/agent/skills/`, plus `~/.agents/skills/` —
  * their installers belong in their adapters, not here.)
  *
+ * The province's AGENTS.md gains the Pointer — the marker-delimited mandate
+ * block — rendered by the one core template (core/src/pointer) and placed
+ * idempotently by the core placement function; this adapter owns no block
+ * text of its own (pointer-bridge design.md, decision 3).
+ *
  * (Shape verified against opencode 1.18.21's own `opencode mcp add`.)
  * opencode config files are JSONC (comments and trailing commas allowed), so
  * the merge is text surgery through a small JSONC scanner: the user's
@@ -43,6 +48,10 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
+// The Pointer's one template and the placement transform are core's, not
+// this adapter's: byte-identity with `portolan pointer` is the spec scenario
+// (adapters may depend on core; the reverse is the forbidden direction).
+import { placePointer, renderPointer, skillNameFromFrontmatter } from "../../core/src/pointer/index";
 
 // The skill source is resolved relative to THIS file, so the same installer
 // works from a clone (repo skill/) and from the published package
@@ -284,16 +293,9 @@ writeFileSync(configTmp, finalText);
 renameSync(configTmp, configPath);
 
 // The skill's destination directory name must equal the SKILL.md frontmatter
-// name (opencode's rule), so it is read from the shipped file itself rather
-// than hardcoded.
-function skillName(): string {
-  const text = readFileSync(join(SKILL_SOURCE, "SKILL.md"), "utf8");
-  const match = /^name:\s*(\S+)\s*$/m.exec(text);
-  if (match === null) throw new Error(`no frontmatter name in ${join(SKILL_SOURCE, "SKILL.md")}`);
-  return match[1];
-}
-
-const skillDirName = skillName();
+// name (opencode's rule), so it is read from the shipped file itself via the
+// core helper rather than hardcoded.
+const skillDirName = skillNameFromFrontmatter(readFileSync(join(SKILL_SOURCE, "SKILL.md"), "utf8"));
 // The name becomes a directory under the skills root and the rmSync target:
 // a hostile or malformed frontmatter must never steer the wipe outside it.
 // (A lone ".." passes the character class, so it is rejected explicitly.)
@@ -310,43 +312,19 @@ const skillsRoot = join(configHome(), "opencode", "skills", skillDirName);
 rmSync(skillsRoot, { recursive: true, force: true });
 cpSync(SKILL_SOURCE, skillsRoot, { recursive: true });
 
-// The province's AGENTS.md carries the harbor protocol so every harness
-// that reads agent instructions (opencode first) knows to propose
-// expeditions at session start — no prompt injection needed. The skill is
-// named, not pathed: the harness loads it from its own skills directory, so
-// the block carries no machine path and works identically from a clone or
-// the published package.
+// The province's AGENTS.md carries the Pointer — the marker-delimited block
+// that mandates the harbor protocol so every harness that reads agent
+// instructions (opencode first) knows to propose expeditions at session
+// start. Rendered by the core template (the skill named, not pathed: the
+// block carries no machine path and works identically from a clone or the
+// published package), placed by the core placement function: an existing
+// block is replaced wholesale, orphan/misordered markers are cleaned, a
+// file without the block gains one appended block.
 const agentsPath = join(province, "AGENTS.md");
-const BLOCK_BEGIN = "<!-- portolan:harbor:begin -->";
-const BLOCK_END = "<!-- portolan:harbor:end -->";
-const block =
-  `${BLOCK_BEGIN}\n` +
-  `## Portolan province\n\n` +
-  `This target is a charted Portolan province (Chart at \`.portolan/chart/\`, ship's log at \`.portolan/log.jsonl\`).\n\n` +
-  `At session start, before other work: call the \`expeditions.propose\` tool from the \`portolan\` MCP server; ` +
-  `if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) ` +
-  `and ask for a one-phrase decision; record it with \`expeditions.decide\`. ` +
-  `Answer landscape questions from the Chart, citing anchors and trust labels. ` +
-  `The full Cartographer's method: the \`${skillDirName}\` skill (your harness loads it from its skills directory). ` +
-  `Never modify anything outside \`.portolan/\`.\n` +
-  BLOCK_END;
-let agentsText = existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "";
-const beginIdx = agentsText.indexOf(BLOCK_BEGIN);
-const endIdx = agentsText.indexOf(BLOCK_END);
-if (beginIdx !== -1 && endIdx !== -1 && endIdx > beginIdx) {
-  agentsText = agentsText.slice(0, beginIdx) + block + agentsText.slice(endIdx + BLOCK_END.length);
-} else {
-  // No block, or orphan/misordered markers: strip any stray markers (and an
-  // orphaned body between a begin and a later-end pairing is already covered
-  // above; here only unmatched leftovers can remain) and append one fresh block.
-  const cleaned = agentsText
-    .replace(/<!-- portolan:harbor:begin -->[\s\S]*?<!-- portolan:harbor:end -->/g, "")
-    .split(BLOCK_BEGIN)
-    .join("")
-    .split(BLOCK_END)
-    .join("");
-  agentsText = cleaned.trim().length > 0 ? `${cleaned.replace(/\s*$/, "\n")}\n${block}\n` : `${block}\n`;
-}
+const agentsText = placePointer(
+  existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "",
+  renderPointer(skillDirName),
+);
 mkdirSync(province, { recursive: true });
 writeFileSync(agentsPath, agentsText);
 
@@ -354,4 +332,4 @@ console.log(`portolan MCP server registered in ${configPath}`);
 console.log(`  province: ${province}`);
 console.log(`  launch:   ${launchCommand.join(" ")}`);
 console.log(`  skill copied to: ${skillsRoot}`);
-console.log(`  harbor protocol: ${agentsPath}`);
+console.log(`  pointer block: ${agentsPath}`);
