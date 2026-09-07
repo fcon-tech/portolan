@@ -93,12 +93,12 @@ the task report.
 
 ## 8. Whole-change verify
 
-- [ ] 8.1 Full suite green: `bun test`; `bunx tsc --noEmit` in `core/` and
+- [x] 8.1 Full suite green: `bun test`; `bunx tsc --noEmit` in `core/` and
   `acceptance/`; `openspec validate --specs --strict`; `bun run
   skill/verify/checks.ts`; `scripts/leak-gate.sh`.
-- [ ] 8.2 Socratic-advisor pass on the change; deferrals recorded in
+- [x] 8.2 Socratic-advisor pass on the change; deferrals recorded in
   design.md.
-- [ ] 8.3 Security-auditor pass on the whole diff (outside-perimeter write,
+- [x] 8.3 Security-auditor pass on the whole diff (outside-perimeter write,
   install command, instruction-file bootstrap).
 - [ ] 8.4 MR from `change/pointer-bridge`; merge on green CI; bump
   `@portolan/core`; CHANGELOG entry; post-merge repair expedition covers
