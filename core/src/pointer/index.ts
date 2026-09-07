@@ -18,6 +18,9 @@
  *   skillNameFromFrontmatter(skillText: string): string
  *       — the SKILL.md frontmatter `name:` helper; render takes the name
  *         as input, nothing hardcodes it
+ *   shippedSkillName(): string
+ *       — the shipped SKILL.md's frontmatter name at this module's own
+ *         resolution; the one derivation the installer and the CLI call
  *   renderPointer(skillName: string): string
  *       — the rendered block: begin marker, mandate lines, one dedicated
  *         version line naming `portolan-pointer <version>`, end marker
@@ -80,8 +83,13 @@ const VERSION_LINE = new RegExp(
  */
 const SKILL_MD = join(import.meta.dir, "..", "..", "..", "skill", "SKILL.md");
 
-/** The shipped skill's frontmatter name — the installer's derivation. */
-function shippedSkillName(): string {
+/**
+ * The shipped skill's frontmatter name — the one shipped-skill derivation
+ * (this module's own resolution of the packaged SKILL.md); the installer,
+ * `portolan pointer`, and the status parse all take their render input
+ * from here instead of duplicating the path logic.
+ */
+export function shippedSkillName(): string {
   return skillNameFromFrontmatter(readFileSync(SKILL_MD, "utf8"));
 }
 

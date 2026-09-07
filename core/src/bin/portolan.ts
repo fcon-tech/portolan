@@ -7,6 +7,7 @@
  *   portolan export [--target <province root>]   → tools/export.ts (chartExport)
  *   portolan chartroom <render|review> …        → chartroom/cli.ts
  *   portolan harbor <propose|watch|run> …       → harbor/cli.ts
+ *   portolan pointer                             → pointer/index.ts (renderPointer)
  *
  * `serve` runs in-process (same parse, same server wiring as main.ts);
  * the CLIs are spawned with inherited stdio so their behavior — output,
@@ -16,12 +17,17 @@
  * document pretty-printed (two spaces, trailing newline), the same shape
  * the harbor CLI prints its JSON in, and it appends no ship's-log receipt —
  * receipts are the served tools' discipline, never a CLI side effect.
+ * `pointer` runs in-process on the same discipline: it prints the rendered
+ * Pointer block — the same core render the installer places, the skill
+ * name derived from the shipped SKILL.md frontmatter — takes no arguments
+ * (the block is target-independent), and touches no ship's log. `install`
+ * is named in the usage but has no route yet (pointer-bridge task 3).
  */
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const SUBCOMMANDS = ["serve", "export", "chartroom", "harbor"] as const;
+const SUBCOMMANDS = ["serve", "export", "chartroom", "harbor", "pointer"] as const;
 
 const usage = `usage: portolan <command> [args]
 
@@ -29,7 +35,9 @@ commands:
   serve      run the Portolan MCP server (stdio)
   export     adjacency graph export of the Chart (JSON to stdout)
   chartroom  Chart Room CLI (render | review)
-  harbor     harbor CLI (propose | watch | run)`;
+  harbor     harbor CLI (propose | watch | run)
+  pointer    print the Pointer block for AGENTS.md (to stdout)
+  install    install server, skill, and Pointer into a province (--target)`;
 
 function failUsage(): never {
   console.error(`${usage}\n\nvalid commands: ${SUBCOMMANDS.join(", ")}`);
@@ -89,6 +97,16 @@ async function exportJson(rest: readonly string[]): Promise<void> {
   }
 }
 
+async function printPointer(rest: readonly string[]): Promise<void> {
+  // The block is target-independent: no arguments are accepted — any extra
+  // argument is a usage error, never a block. The render is the same core
+  // function the installer places (byte-identity is the delta's scenario),
+  // and no ship's-log receipt is appended — the `export` CLI discipline.
+  if (rest.length > 0) failUsage();
+  const { renderPointer, shippedSkillName } = await import("../pointer/index");
+  console.log(renderPointer(shippedSkillName()));
+}
+
 /** Run one of the existing CLI scripts with the remaining args, verbatim. */
 function runCli(script: string, args: string[]): never {
   const child = spawn(process.execPath, [script, ...args], { stdio: "inherit" });
@@ -107,6 +125,8 @@ async function dispatch(argv: readonly string[]): Promise<void> {
       return serve(rest);
     case "export":
       return exportJson(rest);
+    case "pointer":
+      return printPointer(rest);
     case "chartroom":
       return runCli(srcPath("../chartroom/cli.ts"), rest);
     case "harbor":
