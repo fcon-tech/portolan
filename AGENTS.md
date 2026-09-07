@@ -76,9 +76,11 @@ scripts/leak-gate.sh                # no machine paths in tracked files
 ```
 
 <!-- portolan:harbor:begin -->
-## Portolan province
+## Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`)
 
-This target is a charted Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`).
+At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. Call `chart.neighborhood` before a task touching more than one file or vessel. Never modify anything outside `.portolan/`, this block's own refresh excepted. The full Cartographer's method: the `portolan-expedition` skill (your harness loads it from its skills directory).
 
-At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. The full Cartographer's method: skill/SKILL.md. Never modify anything outside `.portolan/`.
+No `portolan` tools in this harness yet? One command installs the server, the skill, and this block: `bunx --package @fcon-tech/portolan portolan install --target .`
+
+portolan-pointer 0.1.0
 <!-- portolan:harbor:end -->

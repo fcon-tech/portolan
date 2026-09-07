@@ -56,38 +56,38 @@ the task report.
 
 ## 5. Skill: the Pointer step and the block's mandates
 
-- [ ] 5.1 Close-out Pointer step (verify version and bytes → silence, or
+- [x] 5.1 Close-out Pointer step (verify version and bytes → silence, or
   rewrite + `log.append` receipt `pointer install` naming found/set
   versions and the file; repairs only an existing `AGENTS.md`, never
   creates the file); perimeter section names the Pointer exception; the
   one-approval wording covers it.
-- [ ] 5.2 Block content (in the core template, verified here): session-start
+- [x] 5.2 Block content (in the core template, verified here): session-start
   propose; one-message queue decision via `expeditions.decide`; chart-first
   Q&A with anchors and trust labels; `chart.neighborhood` before a
   multi-file/multi-vessel task; `.portolan/` boundary with the block's own
   refresh excepted; the skill by name; the bootstrap line naming the
   runnable bunx form (`bunx --package @fcon-tech/portolan portolan install
   --target .`).
-- [ ] 5.3 Verify: `bun run skill/verify/checks.ts` green; a check for the
+- [x] 5.3 Verify: `bun run skill/verify/checks.ts` green; a check for the
   close-out step added if the harness has one — otherwise record the skip
   in the task report.
 
 ## 6. Docs
 
-- [ ] 6.1 `docs/formats.md`: the pointer section (purpose, markers, version
+- [x] 6.1 `docs/formats.md`: the pointer section (purpose, markers, version
   line, defining artifact, version `0.1.0`, stability promise); the
   versioning section stops calling the adjacency export's version field
   "the only one".
-- [ ] 6.2 `docs/MANIFEST.md`: glossary row **Pointer / Указатель**; the
+- [x] 6.2 `docs/MANIFEST.md`: glossary row **Pointer / Указатель**; the
   first-run contract mentions the Pointer; the tools table's
   `trust.report` row mentions the Pointer status line.
 
 ## 7. Dogfood
 
-- [ ] 7.1 This repo's `AGENTS.md` block regenerated from the template
+- [x] 7.1 This repo's `AGENTS.md` block regenerated from the template
   (byte-identical to `portolan pointer` output); git diff touches nothing
   outside the markers.
-- [ ] 7.2 Receipt for the placement deferred to the post-merge repair
+- [x] 7.2 Receipt for the placement deferred to the post-merge repair
   expedition (recorded in the task report — the cycle does not write the
   ship's log).
 
