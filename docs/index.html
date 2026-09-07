@@ -111,18 +111,25 @@
 <section id="features">
   <h2>What ships</h2>
   <div class="cards">
-    <div class="card"><h3>MCP survey tools</h3><p>Fourteen stdio tools your agent calls:
+    <div class="card"><h3>MCP survey tools</h3><p>Fifteen stdio tools your agent calls:
       sweeps, symbols, manifests, soundings (<code>sound.edge</code>/<code>sound.anchor</code>),
-      the Chart store, the Harbor queue, and the <code>trust.report</code> verification summary.
+      the Chart store, the Harbor queue, the <code>trust.report</code> verification summary,
+      and <code>chart.export</code> — the whole Chart as one self-describing JSON document.
       Deterministic where it must be.</p></div>
     <div class="card"><h3>Verification as the spine</h3><p>One call — <code>trust.report</code> — re-sounds
       every anchor on the Chart deterministically, then lays out trust labels, staleness, and
-      receipts, naming any refuted anchor. <a href="demo/trust-report.md">Portolan's own
-      receipt</a>: 45 entries, 43 <code>measured</code>, 89/89 anchors confirmed. No surveyed
-      tool markets this combination — <a href="verification-trials.md">the dated trials</a>.</p></div>
-    <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue
-      (repairs, gaps, new land), plus a bounded night watch that launches repairs through any
-      external launcher. No daemon, ever.</p></div>
+      receipts, naming any refuted anchor. Portolan charts itself: <a href="demo/trust-report.md">its own
+      receipt</a> holds 46 entries, 45 <code>measured</code>, 99/99 anchors confirmed.</p></div>
+    <div class="card"><h3>Versioned formats</h3><p>The Chart's data model ships as four named,
+      versioned schemas — chart entries, the trust vocabulary, receipts, and the adjacency
+      graph export (all at 0.1.0, semver from there). A consumer validates an export with the
+      schemas alone: <a href="formats.md">docs/formats.md</a> is the contract, no source
+      reading required.</p></div>
+    <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue — repairs,
+      gaps, new land, and flares (out-of-charter needs filed by expeditions) — plus a bounded
+      night watch that launches repairs through any external launcher. Every expedition records
+      its charter (promised scope) in the ship's log; overreach is computed from receipts and
+      shown, never silent. No daemon, ever.</p></div>
     <div class="card"><h3>Byproduct exports</h3><p>The Chart Room and Fleet Review are generated
       on demand, byte-deterministic, zero dependencies. Exports, never the storage.</p></div>
     <div class="card"><h3>Skill = method</h3><p>The Cartographer's whole expedition method is a
@@ -176,10 +183,14 @@ bun core/src/harbor/cli.ts run    --target &lt;t&gt; --fingerprint &lt;fp&gt; \
     --launcher adapters/opencode/expedition-launcher            # launch one by hand
 bun core/src/harbor/cli.ts watch  --target &lt;t&gt; [same flags]     # the bounded night policy
 
+<b># the whole Chart as one machine-readable document (no MCP needed):</b>
+bun core/src/bin/portolan.ts export --target /path/to/province   # validates against docs/formats.md schemas
+
 <b># serve the fifteen MCP tools to your harness:</b>
 bun core/src/server/main.ts --target /path/to/province</pre>
   <p style="font-size:14px">Requirements: <a href="https://bun.sh">Bun</a>, ripgrep, universal-ctags.
-     Full contract: <a href="MANIFEST.md">docs/MANIFEST.md</a> ·
+     Full contract: <a href="MANIFEST.md">docs/MANIFEST.md</a> · format schemas:
+     <a href="formats.md">docs/formats.md</a> ·
      specs live in <code>openspec/specs/</code> (validated), history in
      <code>openspec/changes/archive/</code>.</p>
 </section>
