@@ -10,7 +10,8 @@
  *
  * Scenario map:
  * - "Both surfaces agree" (one test per state: current, stale via a
- *   behind version line, stale via diverged bytes, unparseable, missing)
+ *   behind version line, stale via diverged bytes, unparseable, missing,
+ *   and — security review — unreadable through an escaping symlink)
  *   -> both surfaces carry the same status with the same version facts.
  * - "A stale Pointer proposes nothing" -> the queue rows are identical
  *   with a healthy and a stale or missing Pointer — the status is never a
@@ -19,7 +20,15 @@
  *   mtime-identical) after both surfaces run.
  */
 import { afterEach, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -145,6 +154,38 @@ test("trust.report and expeditions.propose agree the Pointer is missing when the
     state: "missing",
   });
 });
+
+// Scenario: An unreadable AGENTS.md is a fact, not a crash (security
+// review) — an in-target symlink resolving outside the target is refused
+// unread by both surfaces; no byte outside the target is read.
+const SYMLINKS_OK = (() => {
+  try {
+    const probe = mkdtempSync(join(tmpdir(), "portolan-symlink-probe-"));
+    symlinkSync("unrealized-target", join(probe, "probe-link"));
+    rmSync(probe, { recursive: true, force: true });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+test.skipIf(!SYMLINKS_OK)(
+  "trust.report and expeditions.propose agree the Pointer is unreadable when AGENTS.md is an escaping symlink",
+  () => {
+    const target = makeChartedProvince(undefined);
+    const outside = mkdtempSync(join(tmpdir(), "portolan-pointer-surfaces-outside-"));
+    targets.push(outside);
+    const outsideFile = join(outside, "secret.md");
+    writeFileSync(outsideFile, "# bytes outside the target\n");
+    symlinkSync(outsideFile, join(target, "AGENTS.md"));
+
+    const expected: PointerStatus = { state: "unreadable", reason: "escaping path" };
+    expect(reportPointer(target), "trust.report reports unreadable, never reads through").toEqual(
+      expected,
+    );
+    expect(proposePointer(target), "expeditions.propose reports the same").toEqual(expected);
+  },
+);
 
 // Scenario: A stale Pointer proposes nothing — the queue computed with a
 // stale or missing Pointer has exactly the rows of a healthy one.

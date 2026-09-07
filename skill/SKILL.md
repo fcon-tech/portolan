@@ -266,6 +266,8 @@ makes outside `.portolan/` (section 3's exception):
   gains one appended block — and receipt it with `log.append`, command
   `pointer install`, meta naming the found version, the set version, and
   the file.
+- Cleanup removes only complete stray marker pairs and the text between
+  them — never any other line.
 - No `AGENTS.md` at all: report `missing` and touch nothing — installation
   owns creating the file; the close-out never creates a top-level file.
 - No other edit to `AGENTS.md`, ever.
@@ -301,10 +303,10 @@ One MCP server over stdio, bound to the target root at launch. Fifteen tools:
 | `sound.anchor` | verify an anchor resolves: `confirmed` / `refuted` |
 | `log.append` | receipt an executed command; returns the receipt id |
 | `log.read` | read receipts by id or filter |
-| `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint; also reports the Pointer status of the province's `AGENTS.md` block — a fact, never a queue input |
+| `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint; also reports the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable) — a fact, never a queue input |
 | `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
 | `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province" or similar, in any language), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
-| `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block, ship's-log tail; feeds the Sailing Directions |
+| `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable), ship's-log tail; feeds the Sailing Directions |
 | `chart.neighborhood` | one vessel's neighborhood in one call: the charted fairways touching it (direction `in`/`out`/`both`, depth 1–3) with trust labels, anchors, and staleness, plus the touched vessels ranked by fan-in with their ports of entry; budgeted (`maxEdges`, `maxBytes`) and a budget cut is stated loudly; `verify: true` re-sounds every edge and names the refuted ones; read-only toward the Chart, and each call receipts itself in the ship's log |
 | `chart.export` | no input; the whole Chart as one self-describing adjacency document (format `portolan-adjacency`): every charted entry as a node or edge carrying its anchors, trust label, and staleness; byte-budgeted, and a cut is reported loudly naming the omitted vessels with their counts; staleness refreshed first, as chart.read; read-only toward the Chart, and each call receipts itself in the ship's log |
 

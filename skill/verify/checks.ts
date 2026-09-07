@@ -571,7 +571,25 @@ check("pointer 5.1", "the tool desk rows for expeditions.propose and trust.repor
     const line = row(tool);
     assert(!!line, `no tool-desk row for ${tool}`);
     assert(/Pointer status/.test(line!), `the ${tool} row does not name the Pointer status`);
+    assert(
+      line!.includes("current / stale / missing / unparseable / unreadable"),
+      `the ${tool} row does not carry the closed Pointer status vocabulary`,
+    );
   }
+});
+
+check("pointer 5.1", "the close-out cleanup is scoped to complete stray marker pairs", () => {
+  const text = readFileSync(SKILL_PATH, "utf8");
+  const closeOut = skillBetween(text, "## 9. Deliver Sailing Directions", "## 10. Tool desk");
+  // Whitespace-collapsed: the sentence may wrap across markdown lines.
+  assert(
+    closeOut
+      .replace(/\s+/g, " ")
+      .includes(
+        "Cleanup removes only complete stray marker pairs and the text between them — never any other line",
+      ),
+    "the close-out teaching does not scope marker cleanup to complete stray pairs",
+  );
 });
 
 check("pointer 5.2", "the core template agrees with the skill: markers, version line, bootstrap command, boundary exception", () => {

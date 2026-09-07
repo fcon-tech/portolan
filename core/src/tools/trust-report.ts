@@ -115,7 +115,7 @@ export interface TrustReport {
   flares: OpenFlare[];
   /** The most recent charter start receipt with any overreach; null when the log holds none (design D4). */
   charter: CharterSection | null;
-  /** The Pointer's status — one of current/stale/missing/unparseable (../pointer), a reported fact, never a queue input. */
+  /** The Pointer's status — one of current/stale/missing/unparseable/unreadable (../pointer), a reported fact, never a queue input. */
   pointer: PointerStatus;
 }
 

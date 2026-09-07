@@ -103,7 +103,7 @@ export interface Proposal {
 /** What `expeditions.propose` returns: the ranked, refusal-filtered queue. */
 export interface ProposeResult {
   proposals: Proposal[];
-  /** The Pointer's status — one of current/stale/missing/unparseable (../pointer), a reported fact, never a queue input. */
+  /** The Pointer's status — one of current/stale/missing/unparseable/unreadable (../pointer), a reported fact, never a queue input. */
   pointer: PointerStatus;
 }
 

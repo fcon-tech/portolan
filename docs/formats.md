@@ -139,8 +139,9 @@ must be registered for them; the receipt schema stands alone.
 - **How to check:** the block is current when its version line names the
   current format version and its bytes equal the render; `trust.report`
   and `expeditions.propose` report the status — `current` / `stale` /
-  `missing` / `unparseable` — as a fact, never a queue input. The repair
-  path is the expedition's close-out step and reinstall, not the harbor.
+  `missing` / `unparseable` / `unreadable` — as a fact, never a queue
+  input. The repair path is the expedition's close-out step and reinstall,
+  not the harbor.
 - **Current version:** `0.1.0`
 - **Stability:** the versioning policy above. The mandate set is closed:
   adding, removing, or rewording a mandate — the bootstrap command

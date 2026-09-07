@@ -35,19 +35,25 @@
  *         nothing, and returns exactly one of: current (the version),
  *         stale (the found version and the current one), missing (no file,
  *         no markers, or no block between them), unparseable (markers
- *         present, text between them but no parsable version line); the
- *         reference render's skill name comes from the shipped SKILL.md
- *         frontmatter, the same derivation the installer and CLI make
+ *         present, but no parsable version line or more than one ordered
+ *         marker pair), unreadable (with the reason: an escaping path, a
+ *         non-regular file, or a refused read); the reference render's
+ *         skill name comes from the shipped SKILL.md frontmatter, the same
+ *         derivation the installer and CLI make
  *
- * Error modes (the interface includes them): an AGENTS.md that exists but
- * cannot be read throws — a lie like `missing` is worse than a throw; the
+ * Error modes (the interface includes them): the AGENTS.md read is routed
+ * through the province's read perimeter (core/src/perimeter.ts) and files
+ * above 1 MiB are refused unread — an escaping path, a non-regular file,
+ * an unreadable or oversized file reports `unreadable` with the reason and
+ * is never read past the refusal; no throw remains on the read path. The
  * shipped-skill derivation throws when the packaged SKILL.md is absent or
- * nameless. Both only surface on paths that need the reference render
+ * nameless; it only surfaces on paths that need the reference render
  * (a parsable, current-version block); no-file and no-block paths never
  * touch the skill.
  */
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync, statSync, type Stats } from "node:fs";
 import { join } from "node:path";
+import { resolveInsideTarget } from "../perimeter";
 
 /** The pointer format's name (specs/formats/spec.md: the fifth format). */
 export const POINTER_FORMAT_NAME = "portolan-pointer";
@@ -62,12 +68,20 @@ const END_MARKER = "<!-- portolan:harbor:end -->";
 /** A whole begin..end span, for stripping stray paired markers. */
 const MARKER_SPAN = new RegExp(`${BEGIN_MARKER}[\\s\\S]*?${END_MARKER}`, "g");
 
-/** The Pointer status, exactly one of the four states the delta names. */
+/** The status read refuses an AGENTS.md above this size (1 MiB) unread. */
+const MAX_AGENTS_BYTES = 1024 * 1024;
+
+/**
+ * The Pointer status, exactly one of the five states the delta names.
+ * `unreadable` is a read the province's perimeter refuses — the reason
+ * says which, and no byte is read past the refusal.
+ */
 export type PointerStatus =
   | { state: "current"; version: string }
   | { state: "stale"; found: string; current: string }
   | { state: "missing" }
-  | { state: "unparseable" };
+  | { state: "unparseable" }
+  | { state: "unreadable"; reason: "escaping path" | "not a regular file" | "refused" };
 
 /** The version line's grammar: a dedicated line — format name, semver, EOL. */
 const VERSION_LINE = new RegExp(
@@ -139,7 +153,12 @@ export function placePointer(existing: string, block: string): string {
   const beginIdx = existing.indexOf(BEGIN_MARKER);
   const endIdx = existing.indexOf(END_MARKER);
   if (beginIdx !== -1 && endIdx !== -1 && endIdx > beginIdx) {
-    return existing.slice(0, beginIdx) + block + existing.slice(endIdx + END_MARKER.length);
+    // Replace the first ordered pair wholesale; any further complete pair
+    // in the tail is stripped — the file must end with exactly one block
+    // (a forged second block never survives a placement; security review).
+    // The head cannot hold a pair: beginIdx is the first begin marker.
+    const tail = existing.slice(endIdx + END_MARKER.length).replace(MARKER_SPAN, "");
+    return existing.slice(0, beginIdx) + block + tail;
   }
   // No ordered marker pair: strip any stray markers (a begin..end pairing
   // is already handled above; only unmatched leftovers can remain) and
@@ -165,15 +184,56 @@ function compareSemver(a: string, b: string): number {
   return 0;
 }
 
+/** Count ordered begin..end marker pairs, greedily left to right. */
+function countOrderedPairs(text: string): number {
+  let count = 0;
+  let from = 0;
+  for (;;) {
+    const begin = text.indexOf(BEGIN_MARKER, from);
+    if (begin === -1) break;
+    const end = text.indexOf(END_MARKER, begin + BEGIN_MARKER.length);
+    if (end === -1) break;
+    count += 1;
+    from = end + END_MARKER.length;
+  }
+  return count;
+}
+
 /**
  * The Pointer status of the province: reads AGENTS.md, writes nothing.
  * The skill name defaults to the shipped frontmatter's; the default is
  * resolved lazily so the no-file and no-block paths never touch the skill.
  */
 export function pointerStatus(targetRoot: string): PointerStatus {
-  const agentsPath = join(targetRoot, "AGENTS.md");
-  if (!existsSync(agentsPath)) return { state: "missing" };
-  const text = readFileSync(agentsPath, "utf8");
+  // The read is perimeter-bounded: an AGENTS.md that resolves outside the
+  // target — an escaping symlink included — is never read (security review).
+  const agentsPath = resolveInsideTarget(targetRoot, "AGENTS.md");
+  if (agentsPath === undefined) return { state: "unreadable", reason: "escaping path" };
+
+  let stats: Stats;
+  try {
+    stats = statSync(agentsPath);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { state: "missing" };
+    return { state: "unreadable", reason: "refused" };
+  }
+  // A directory, fifo, or device named AGENTS.md is a fact, not a crash —
+  // and never opened.
+  if (!stats.isFile()) return { state: "unreadable", reason: "not a regular file" };
+  // An oversized file is refused unread: the status must not become a
+  // read-the-world primitive (security review).
+  if (stats.size > MAX_AGENTS_BYTES) return { state: "unreadable", reason: "refused" };
+
+  let text: string;
+  try {
+    text = readFileSync(agentsPath, "utf8");
+  } catch {
+    return { state: "unreadable", reason: "refused" };
+  }
+
+  // More than one ordered begin..end pair: ambiguous which one is the
+  // Pointer — the status never vouches for one of several (security review).
+  if (countOrderedPairs(text) > 1) return { state: "unparseable" };
 
   const beginIdx = text.indexOf(BEGIN_MARKER);
   const endIdx = text.indexOf(END_MARKER);

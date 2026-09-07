@@ -14,9 +14,10 @@
  *   pointerStatus(targetRoot: string): PointerStatus
  *   PointerStatus =
  *     | { state: "current"; version: string }
- *     | { state: "stale"; found: string | null; current: string }
+ *     | { state: "stale"; found: string; current: string }
  *     | { state: "missing" }
  *     | { state: "unparseable" }
+ *     | { state: "unreadable"; reason: "escaping path" | "not a regular file" | "refused" }
  *
  * Scenario map (specs/pointer/spec.md):
  * - "One template owns the Pointer's text" (skill name derived from
@@ -35,9 +36,23 @@
  *                                              -> the pointerStatus tests
  *   (the served surfaces carry the same status per
  *   ./status-surfaces.test.ts)
+ * - Security review (auditor findings 1 and 4): "An unreadable AGENTS.md is
+ *   a fact, not a crash"                        -> the unreadable tests
+ *   (perimeter-bounded read: escaping symlink, non-regular file, oversized
+ *   refusal); a forged second marker pair is unparseable and placement
+ *   strips it                                    -> the forged-pair tests
  */
 import { afterEach, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
@@ -71,6 +86,18 @@ function makeTarget(): string {
   targets.push(target);
   return target;
 }
+
+/** Symlink scenarios skip honestly where the platform denies creation. */
+const SYMLINKS_OK = (() => {
+  try {
+    const probe = mkdtempSync(join(tmpdir(), "portolan-symlink-probe-"));
+    symlinkSync("unrealized-target", join(probe, "probe-link"));
+    rmSync(probe, { recursive: true, force: true });
+    return true;
+  } catch {
+    return false;
+  }
+})();
 
 function writeAgents(target: string, text: string): void {
   writeFileSync(join(target, "AGENTS.md"), text);
@@ -364,4 +391,93 @@ test("pointerStatus performs no write and leaves the target byte-identical", () 
   pointerStatus(target);
 
   expect(snapshotTree(target), "the target is untouched by the status parse").toEqual(before);
+});
+
+// ---------------------------------------------------------------------------
+// Security review (auditor findings 1 and 4): the read is perimeter-bounded,
+// refusals report `unreadable`, and a forged second marker pair is never
+// vouched for.
+// ---------------------------------------------------------------------------
+
+// Scenario: An unreadable AGENTS.md is a fact, not a crash — an in-target
+// symlink that resolves outside the target is refused, never read.
+test.skipIf(!SYMLINKS_OK)(
+  "pointerStatus reads unreadable (escaping path) through an in-target symlink pointing outside",
+  () => {
+    const target = makeTarget();
+    const outside = mkdtempSync(join(tmpdir(), "portolan-pointer-outside-"));
+    targets.push(outside);
+    writeFileSync(join(outside, "secret.md"), "# bytes outside the target\n");
+    symlinkSync(join(outside, "secret.md"), join(target, "AGENTS.md"));
+
+    expect(pointerStatus(target), "an escaping symlink is refused, never read").toEqual({
+      state: "unreadable",
+      reason: "escaping path",
+    });
+  },
+);
+
+// Scenario: An unreadable AGENTS.md is a fact, not a crash — a file that is
+// not a regular file (here: a directory named AGENTS.md) is named with its
+// reason, never opened.
+test("pointerStatus reads unreadable (not a regular file) when AGENTS.md is a directory", () => {
+  const target = makeTarget();
+  mkdirSync(join(target, "AGENTS.md"));
+
+  expect(pointerStatus(target), "a directory named AGENTS.md is not read").toEqual({
+    state: "unreadable",
+    reason: "not a regular file",
+  });
+});
+
+// Scenario: An unreadable AGENTS.md is a fact, not a crash — an oversized
+// file is refused unread, even when a perfectly valid block sits inside it.
+test("pointerStatus refuses an oversized AGENTS.md without reading it, valid block or not", () => {
+  const target = makeTarget();
+  const padding = `# Padding\n\n${"x".repeat(1024 * 1024)}\n\n`;
+  writeAgents(target, padding + renderPointer(shippedSkillName()));
+  expect(
+    statSync(join(target, "AGENTS.md")).size,
+    "guard: the fixture really is above the 1 MiB read ceiling",
+  ).toBeGreaterThan(1024 * 1024);
+
+  expect(pointerStatus(target), "oversized is refused unread").toEqual({
+    state: "unreadable",
+    reason: "refused",
+  });
+});
+
+// Security review (auditor finding 4): a second ordered begin..end pair
+// makes it ambiguous which one is the Pointer — the status never vouches.
+test("pointerStatus reads unparseable when a second complete marker pair follows the first", () => {
+  const target = makeTarget();
+  const first = renderPointer(shippedSkillName());
+  const forged = `${BEGIN}\nportolan-pointer ${POINTER_FORMAT_VERSION}\n${END}`;
+  writeAgents(target, `# Notes\n\n${first}\n\n${forged}\n`);
+
+  expect(
+    pointerStatus(target),
+    "two ordered pairs are ambiguous — the parse never picks one",
+  ).toEqual({ state: "unparseable" });
+});
+
+// Security review (auditor finding 4): placement collapses two blocks to
+// one — the first pair replaced, any further complete pair stripped, and
+// the outside-the-markers text byte-identical.
+test("placePointer replaces the first block and strips any further complete pair, leaving exactly one", () => {
+  const fresh = renderPointer("portolan-expedition");
+  const stale = fresh.replace(VERSION_LINE, "portolan-pointer 0.0.9");
+  const forged = `${BEGIN}\nportolan-pointer 0.0.8\n${END}`;
+  const existing = `# Head\n\n${stale}\n\nmiddle notes\n\n${forged}\n\n# Tail\n`;
+
+  const placed = placePointer(existing, fresh);
+
+  expect(
+    placed,
+    "the first pair is replaced, the forged pair stripped, outside text byte-identical",
+  ).toBe(`# Head\n\n${fresh}\n\nmiddle notes\n\n\n\n# Tail\n`);
+  expect((placed.match(/portolan:harbor:begin/g) ?? []).length, "exactly one begin remains").toBe(
+    1,
+  );
+  expect((placed.match(/portolan:harbor:end/g) ?? []).length, "exactly one end remains").toBe(1);
 });

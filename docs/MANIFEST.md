@@ -104,7 +104,7 @@ MCP tools (core):
 | --- | --- |
 | `chart.read` / `chart.write` | Chart CRUD; schema-validated; requires anchors + trust labels, else rejects |
 | `chart.render` | the Chart Room: the one-file visual export of the province |
-| `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block, ship's-log tail |
+| `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable), ship's-log tail |
 | `chart.neighborhood` | the neighborhood query over the Chart's fairways: direction/depth traversal, fan-in-ranked, budgeted, on-demand verify re-sounding, read-only (one ship's-log receipt per call) |
 | `chart.export` | the adjacency graph export: every charted entry drawn as a node or edge carrying its anchors, trust label, and staleness, in one self-describing JSON document (format `portolan-adjacency`); byte-budgeted with loud truncation naming the omitted vessels; staleness refreshed first, as chart.read; read-only (one ship's-log receipt per call) |
 | `sweep` | ripgrep-backed search returning anchored chunks |

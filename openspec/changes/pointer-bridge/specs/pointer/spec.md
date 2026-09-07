@@ -100,13 +100,16 @@ install: the close-out never creates a top-level file. No other edit to
 `trust.report` SHALL include the Pointer status in its summary, and
 `expeditions.propose` SHALL include the same status in its output: exactly
 one of `current` (the version), `stale` (the found version, when parseable,
-and the current one), `missing`, or `unparseable` (markers present but no
-parsable block between them). A block is stale when its version is behind
-the current format version or its text diverges from the current render.
-Determining the status SHALL read `<target>/AGENTS.md` and nothing else,
-SHALL write nothing, and the status SHALL never become a queue input or
-block any operation — the close-out step is the repair path, not the
-harbor queue.
+and the current one), `missing`, `unparseable` (markers present but no
+parsable block between them), or `unreadable` (with the reason). A block is
+stale when its version is behind the current format version or its text
+diverges from the current render. An `AGENTS.md` that cannot be read
+through the province's read perimeter — an escaping symlink, a non-regular
+file, an unreadable or oversized file — reports `unreadable` and is never
+read past the refusal; the status still blocks nothing. Determining the
+status SHALL read `<target>/AGENTS.md` and nothing else, SHALL write
+nothing, and the status SHALL never become a queue input or block any
+operation — the close-out step is the repair path, not the harbor queue.
 
 #### Scenario: Both surfaces agree
 - **WHEN** `trust.report` and `expeditions.propose` run against the same
@@ -128,6 +131,10 @@ harbor queue.
   parsable version line
 - **THEN** both surfaces report `unparseable` instead of inventing a
   version
+
+#### Scenario: An unreadable AGENTS.md is a fact, not a crash
+- **WHEN** `<target>/AGENTS.md` is an in-target symlink escaping the target, or cannot be read as a regular file
+- **THEN** both surfaces report `unreadable` with the reason, and no byte outside the target is read
 
 ### Requirement: The block mandates; it never describes
 The block SHALL consist of actionable mandates and nothing else: call

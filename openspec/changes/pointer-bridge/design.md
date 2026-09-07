@@ -112,6 +112,17 @@ derived decisions made there explicit. Evidence anchors: backlog C10 row
 - Marker handling is already adversarially tested (orphan markers,
   misordering); the template module inherits those tests and keeps the
   installer's replace/cleanup semantics byte-for-byte.
+- **The bootstrap line is unpinned by design.** `bunx --package
+  @fcon-tech/portolan …` resolves latest at execution time; a compromised
+  npm release would propagate to every charted repo's visitors. Pinning to
+  the package version instead would stale every province's block on every
+  release (bytes diverge from the new render) — the exact rot this change
+  exists to kill; a range pin (`@0`) narrows but does not remove the
+  exposure. Accepted with mitigations: npm trusted publishing (GitHub OIDC,
+  no long-lived tokens), auto-publish only on version-grown merges to
+  protected `main`, and the mandate set is format-versioned so any wording
+  change is a deliberate minor bump. Trigger: any npm account or scope
+  anomaly → the Governor decides on pinning.
 
 ## Deferrals (socratic pass, 2026-09-07 — verdict SIMPLIFY-FIRST)
 

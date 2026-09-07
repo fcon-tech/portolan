@@ -32,7 +32,9 @@
  * The province's AGENTS.md gains the Pointer — the marker-delimited mandate
  * block — rendered by the one core template (core/src/pointer) and placed
  * idempotently by the core placement function; this adapter owns no block
- * text of its own (pointer-bridge design.md, decision 3).
+ * text of its own (pointer-bridge design.md, decision 3). A symlinked
+ * AGENTS.md is refused outright: the Pointer is never placed through a
+ * link (security review).
  *
  * (Shape verified against opencode 1.18.21's own `opencode mcp add`.)
  * opencode config files are JSONC (comments and trailing commas allowed), so
@@ -45,7 +47,16 @@
  *   bun adapters/opencode/install.ts --target /path/to/province
  *   bun adapters/opencode/install.ts --target . --config ~/proj/opencode.jsonc
  */
-import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 // The Pointer's one template and the placement transform are core's, not
@@ -301,11 +312,12 @@ const skillDirName = skillNameFromFrontmatter(
 );
 // The name becomes a directory under the skills root and the rmSync target:
 // a hostile or malformed frontmatter must never steer the wipe outside it.
-// (A lone ".." passes the character class, so it is rejected explicitly.)
-if (!/^[A-Za-z0-9._-]+$/.test(skillDirName) || skillDirName === "..") {
+// (Lone "." and ".." pass the character class, so both are rejected
+// explicitly — rmSync over "<skills root>/." would wipe every skill.)
+if (!/^[A-Za-z0-9._-]+$/.test(skillDirName) || skillDirName === ".." || skillDirName === ".") {
   console.error(
     `error: skill frontmatter name ${JSON.stringify(skillDirName)} is not a safe directory name ` +
-      `(expected [A-Za-z0-9._-], not "..") — refusing to install the skill.`,
+      `(expected [A-Za-z0-9._-], not "." or "..") — refusing to install the skill.`,
   );
   process.exit(1);
 }
@@ -324,6 +336,21 @@ cpSync(SKILL_SOURCE, skillsRoot, { recursive: true });
 // block is replaced wholesale, orphan/misordered markers are cleaned, a
 // file without the block gains one appended block.
 const agentsPath = join(province, "AGENTS.md");
+// Refused before any read or write: placing the Pointer through a symlink
+// would land the block on whatever the link targets (security review). No
+// file yet is the normal install path — lstat fails, the guard passes.
+let agentsLstat: ReturnType<typeof lstatSync> | undefined;
+try {
+  agentsLstat = lstatSync(agentsPath);
+} catch {
+  agentsLstat = undefined;
+}
+if (agentsLstat !== undefined && agentsLstat.isSymbolicLink()) {
+  console.error(
+    "AGENTS.md is a symlink — refusing to place the Pointer through it; remove the link and rerun",
+  );
+  process.exit(1);
+}
 const agentsText = placePointer(
   existsSync(agentsPath) ? readFileSync(agentsPath, "utf8") : "",
   renderPointer(skillDirName),
