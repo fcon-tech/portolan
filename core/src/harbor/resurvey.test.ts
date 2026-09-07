@@ -370,5 +370,5 @@ test("resurvey chat: a wide queue renders every row uncapped and deterministical
   expect(rendered).toContain("12. repair — "); // past the struck cap of ten
   expect(rendered).toContain("12 expedition proposals");
 
-  expect(renderQueueChat({ proposals: [] })).toBe(""); // a still province posts nothing
+  expect(renderQueueChat({ proposals: [], pointer: { state: "missing" } })).toBe(""); // a still province posts nothing
 });

@@ -13,11 +13,16 @@
  * Refreshes staleness first, exactly as `chart.read` does; that refresh is
  * the only write the report may cause (inside `.portolan/`, per the
  * refresh's own contract). No receipt is appended.
+ *
+ * Carries the Pointer's status as one fact row (pointer-bridge): read from
+ * `<target>/AGENTS.md` and nothing else, written nowhere, and never a queue
+ * input — the close-out step is the repair path, not this report.
  */
 import type { Anchor, EntryKind, TrustLabel } from "../types";
 import { ENTRY_KINDS, TRUST_LABELS } from "../types";
 import { readChart } from "../chart-store";
 import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
+import { pointerStatus, type PointerStatus } from "../pointer";
 import { refreshStaleness } from "../staleness";
 import { readReceipts, type Receipt } from "./log";
 import { SoundingError, soundAnchor } from "./sound";
@@ -110,6 +115,8 @@ export interface TrustReport {
   flares: OpenFlare[];
   /** The most recent charter start receipt with any overreach; null when the log holds none (design D4). */
   charter: CharterSection | null;
+  /** The Pointer's status — one of current/stale/missing/unparseable (../pointer), a reported fact, never a queue input. */
+  pointer: PointerStatus;
 }
 
 /**
@@ -228,6 +235,10 @@ export function trustReport(targetRoot: string): TrustReport {
       return [tool, stat] as const;
     }),
   ) as Record<MandatedQueryTool, ToolAdoption>;
+  // The Pointer status (pointer-bridge): reads AGENTS.md and nothing else in
+  // the target, writes nothing, and never becomes a queue input — the
+  // close-out step is the repair path, not this report.
+  const pointer = pointerStatus(targetRoot);
   return {
     trust,
     kinds,
@@ -246,5 +257,6 @@ export function trustReport(targetRoot: string): TrustReport {
     adoption: { tools: adoption },
     flares,
     charter,
+    pointer,
   };
 }
