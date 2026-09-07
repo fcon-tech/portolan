@@ -21,7 +21,10 @@ Key rules:
 - The old v2 repo is frozen reference, preserved on the `v2-archive` branch
   of this repository: read for ideas, copy no code.
 - Code, artifacts, and commit messages in English; reply to the Governor in
-  Russian.
+  Russian — plain, human Russian (Ilyakhov's infostyle): no anglicisms or
+  jargon where a common Russian word exists, no bureaucratese, short
+  concrete sentences. Locked nautical terms and tool/format identifiers
+  stay as they are.
 
 ## Working principles
 
