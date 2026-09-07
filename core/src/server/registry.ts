@@ -463,7 +463,9 @@ export const TOOL_TABLE: ToolSpec[] = [
       "landscape present since the last survey snapshot (new-land), and open flares, which propose as repair " +
       "rows for the vessels they name. Every proposal carries its kind, evidence " +
       "anchors, a scope estimate, and a stable fingerprint; fingerprints declined by the Governor are not " +
-      "re-proposed while their evidence is unchanged. No input; refreshes staleness first; a still province " +
+      "re-proposed while their evidence is unchanged. The result also reports the Pointer status of the " +
+      "province's AGENTS.md block (current / stale / missing / unparseable) — a fact, never a queue input. " +
+      "No input; refreshes staleness first; a still province " +
       "yields an empty queue. Proposals are computed, never imagined.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     handler: (_args, ctx) => computeProposals(ctx.targetRoot),
@@ -514,7 +516,9 @@ export const TOOL_TABLE: ToolSpec[] = [
       "One-call verification summary of the province: the trust-label distribution, the per-kind counts, the " +
       "pending-correction vessels with the entries each drags (staleness refreshed first, same semantics as " +
       "chart.read), every chart anchor re-sounded live through the deterministic sound.anchor machinery with every " +
-      "refuted anchor named — entry id, cited anchor, what was actually found — and the ship's-log summary. " +
+      "refuted anchor named — entry id, cited anchor, what was actually found — the Pointer status of the " +
+      "province's AGENTS.md block (current / stale / missing / unparseable — a fact, never a queue input), " +
+      "and the ship's-log summary. " +
       "Read-only toward the sources and the Chart beyond that staleness refresh: a refuted verdict informs, it " +
       "never rewrites an entry or its trust label.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },

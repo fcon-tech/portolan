@@ -15,7 +15,9 @@
  * block's single source, not tool logic. The installer renders from it so
  * the placed block and `portolan pointer` cannot diverge; any other core
  * path, and any specifier that merely passes through the pointer directory,
- * stays flagged.
+ * stays flagged. The package-specifier form `@portolan/core/src/pointer/
+ * index` is admitted by the same rule (the same module); it is not
+ * separately pinned — the relative form is the repo's idiom.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";

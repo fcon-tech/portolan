@@ -84,7 +84,12 @@ derived decisions made there explicit. Evidence anchors: backlog C10 row
   core→adapters library dependency engineering.md §1 forbids (the rule
   governs library layering; the entry point composes, as the server wiring
   does). Today the route targets the opencode installer; the pi/omp launch
-  shims stay shims.
+  shims stay shims. Mechanical consequence, recorded: the adapter-boundary
+  scan carries a named exception for exactly `core/src/pointer/index` —
+  the template module is the one core import an adapter may make
+  (document text and a pure text transform, not tool behavior; the
+  evasion path through the pointer directory stays flagged, pinned by
+  tests).
 - **Ownership language moves in three places** — `scripts/hooks/
   harbor-markers.sh` (the reminder text), `docs/workflow.md:7,12,79-83`,
   and the installer comments: the block is owned by the core template,
@@ -116,8 +121,11 @@ derived decisions made there explicit. Evidence anchors: backlog C10 row
   own installer.
 - **Night-watch and watch reports carry no Pointer status.** The watch
   launches repair expeditions whose close-out self-heals the Pointer;
-  nothing at night consumes the block. Trigger: the watch starts reporting
-  session-start surfaces.
+  nothing at night consumes the block. Same for the harbor CLI's
+  `--format chat` rendering: it stays proposals-only (the served JSON and
+  `--format json` carry the status); the chat contract is pinned as-is.
+  Trigger: the watch or the chat format starts reporting session-start
+  surfaces.
 - **No adoption counter for the Pointer under the invocation capability.**
   Invocation scopes counters to chart-query tools; the Pointer is not one.
   Safe now: the adoption block stays `chart.neighborhood`-only. Trigger: a

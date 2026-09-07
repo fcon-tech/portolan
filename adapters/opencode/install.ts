@@ -295,7 +295,10 @@ renameSync(configTmp, configPath);
 // The skill's destination directory name must equal the SKILL.md frontmatter
 // name (opencode's rule), so it is read from the shipped file itself via the
 // core helper rather than hardcoded.
-const skillDirName = skillNameFromFrontmatter(readFileSync(join(SKILL_SOURCE, "SKILL.md"), "utf8"));
+const skillDirName = skillNameFromFrontmatter(
+  readFileSync(join(SKILL_SOURCE, "SKILL.md"), "utf8"),
+  join(SKILL_SOURCE, "SKILL.md"),
+);
 // The name becomes a directory under the skills root and the rmSync target:
 // a hostile or malformed frontmatter must never steer the wipe outside it.
 // (A lone ".." passes the character class, so it is rejected explicitly.)

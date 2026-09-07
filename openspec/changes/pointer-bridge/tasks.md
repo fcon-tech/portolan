@@ -8,7 +8,7 @@ the task report.
 
 ## 1. Core pointer module
 
-- [ ] 1.1 New `core/src/pointer/` module: the template renderer (takes the
+- [x] 1.1 New `core/src/pointer/` module: the template renderer (takes the
   skill name; the frontmatter derivation is an exported helper), the format
   name constant `portolan-pointer`, the format version constant `0.1.0`,
   the rendered block with begin/end markers and the version line, the
@@ -17,41 +17,41 @@ the task report.
   `<target>/AGENTS.md` returning exactly `current` / `stale (found,
   current)` / `missing` / `unparseable` — stale means the version is behind
   or the bytes diverge from the current render.
-- [ ] 1.2 Tests first (from the pointer delta): renderer bytes; version
+- [x] 1.2 Tests first (from the pointer delta): renderer bytes; version
   line carries the format version; installer-template and CLI-template
   byte-identity; parse of all four states; a version-preserving hand-edit
   parses stale; package-version independence of the rendered block.
 
 ## 2. `portolan pointer` CLI
 
-- [ ] 2.1 Dispatcher subcommand `pointer`: prints the rendered block to
+- [x] 2.1 Dispatcher subcommand `pointer`: prints the rendered block to
   stdout, exit 0, no arguments (the block is target-independent), no
   ship's-log receipt (the `export` pattern).
-- [ ] 2.2 Tests: printed bytes equal the renderer bytes; no receipt appended
+- [x] 2.2 Tests: printed bytes equal the renderer bytes; no receipt appended
   on success; usage text lists the new subcommands.
 
 ## 3. `portolan install` CLI + installer on the core template
 
-- [ ] 3.1 Dispatcher subcommand `install` (spawn pattern of
+- [x] 3.1 Dispatcher subcommand `install` (spawn pattern of
   `chartroom`/`harbor`) routing to the opencode installer with the passed
   `--target`.
-- [ ] 3.2 `adapters/opencode/install.ts` imports the core template and
+- [x] 3.2 `adapters/opencode/install.ts` imports the core template and
   calls the core placement function (delete its local block text and
   marker surgery); replace/append and orphan-marker cleanup semantics
   preserved byte-for-byte; output message names the Pointer.
-- [ ] 3.3 Update `core/src/server/adapters.test.ts` and
+- [x] 3.3 Update `core/src/server/adapters.test.ts` and
   `adapters/opencode/install.test.ts` to the shared template: idempotent
   reinstall over a hand-edited block; rest of file byte-identical.
-- [ ] 3.4 Ownership language: `scripts/hooks/harbor-markers.sh` reminder and
+- [x] 3.4 Ownership language: `scripts/hooks/harbor-markers.sh` reminder and
   `docs/workflow.md:7,12,79-83` — block owned by the core template, written
   at install and close-out, verified by the status line.
 
 ## 4. Status surfaces
 
-- [ ] 4.1 `trust.report`: one Pointer status line in the summary (tests
+- [x] 4.1 `trust.report`: one Pointer status line in the summary (tests
   first: four states; read-only — disk byte-identical; agreement with the
   parser).
-- [ ] 4.2 `expeditions.propose`: the same status in its output (tests
+- [x] 4.2 `expeditions.propose`: the same status in its output (tests
   first: four states; a stale Pointer adds no proposal).
 
 ## 5. Skill: the Pointer step and the block's mandates

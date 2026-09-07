@@ -4,14 +4,9 @@
  * status is a reported fact"; tasks.md 4.1–4.2), written red before the
  * wiring exists.
  *
- * The tests run against the CURRENT return shapes of `trust.report`
+ * The tests run against the return shapes of `trust.report`
  * (core/src/tools/trust-report.ts) and `expeditions.propose`
- * (core/src/harbor/proposals.ts) plus the NEW field, read through a cast
- * so the suite compiles until task 4 lands:
- *
- *   // pointer-bridge: new field, red until task 4
- *   TrustReport.pointer: PointerStatus
- *   ProposeResult.pointer: PointerStatus
+ * (core/src/harbor/proposals.ts), which both carry `pointer: PointerStatus`.
  *
  * Scenario map:
  * - "Both surfaces agree" (one test per state: current, stale via a
@@ -29,8 +24,8 @@ import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { writeChart } from "../chart-store";
-import { trustReport, type TrustReport } from "../tools/trust-report";
-import { computeProposals, type ProposeResult } from "../harbor/proposals";
+import { trustReport } from "../tools/trust-report";
+import { computeProposals } from "../harbor/proposals";
 import type { ChartEntry } from "../types";
 import {
   POINTER_FORMAT_VERSION,
@@ -78,14 +73,12 @@ function makeChartedProvince(agents: string | undefined): string {
   return target;
 }
 
-// pointer-bridge: new field, red until task 4
-function reportPointer(target: string): PointerStatus | undefined {
-  return (trustReport(target) as TrustReport & { pointer?: PointerStatus }).pointer;
+function reportPointer(target: string): PointerStatus {
+  return trustReport(target).pointer;
 }
 
-// pointer-bridge: new field, red until task 4
-function proposePointer(target: string): PointerStatus | undefined {
-  return (computeProposals(target) as ProposeResult & { pointer?: PointerStatus }).pointer;
+function proposePointer(target: string): PointerStatus {
+  return computeProposals(target).pointer;
 }
 
 /**
@@ -131,7 +124,6 @@ for (const state of STATE_CASES) {
   test(`trust.report and expeditions.propose agree the Pointer is ${state.name}`, () => {
     const target = makeChartedProvince(state.agents());
 
-    // pointer-bridge: new field, red until task 4
     expect(
       reportPointer(target),
       `trust.report carries the Pointer status (${state.name})`,

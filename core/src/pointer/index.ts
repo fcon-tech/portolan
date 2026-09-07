@@ -94,20 +94,20 @@ export function shippedSkillName(): string {
 }
 
 /** The SKILL.md frontmatter `name:` the block names as the full method. */
-export function skillNameFromFrontmatter(skillText: string): string {
+export function skillNameFromFrontmatter(skillText: string, source = "the skill text"): string {
   const match = /^name:\s*(\S+)\s*$/m.exec(skillText);
-  if (match === null) throw new Error("no frontmatter `name:` line in the skill text");
+  if (match === null) throw new Error(`no frontmatter \`name:\` line in ${source}`);
   return match[1];
 }
 
 /**
  * The rendered Pointer block for the named skill — the one template.
- * Wording follows the installer's block (adapters/opencode/install.ts),
- * adjusted: the neighborhood trigger and the boundary's refresh exception
- * are the delta's content additions, and the heading carries the chart/log
- * locations so every line mandates — a bare descriptive heading line would
- * violate the delta's "the block SHALL consist of actionable mandates and
- * nothing else".
+ * Wording descends from the block the opencode installer placed before
+ * pointer-bridge, adjusted: the neighborhood trigger and the boundary's
+ * refresh exception are the delta's content additions, and the heading
+ * carries the chart/log locations so every line mandates — a bare
+ * descriptive heading line would violate the delta's "the block SHALL
+ * consist of actionable mandates and nothing else".
  */
 export function renderPointer(skillName: string): string {
   return (
