@@ -27,14 +27,21 @@
  *         without the block gains one appended block; everything outside
  *         the block byte-identical (the installer's established semantics,
  *         tasks.md 3.2)
- *   pointerStatus(targetRoot: string, skillName?: string): PointerStatus
- *       — reads <target>/AGENTS.md and nothing else, writes nothing, and
- *         returns exactly one of: current (the version), stale (the found
- *         version, when parseable, and the current one), missing (no file,
+ *   pointerStatus(targetRoot: string): PointerStatus
+ *       — reads <target>/AGENTS.md and nothing else in the target, writes
+ *         nothing, and returns exactly one of: current (the version),
+ *         stale (the found version and the current one), missing (no file,
  *         no markers, or no block between them), unparseable (markers
  *         present, text between them but no parsable version line); the
- *         skill name defaults to the shipped SKILL.md frontmatter, the
- *         same derivation the installer and CLI make
+ *         reference render's skill name comes from the shipped SKILL.md
+ *         frontmatter, the same derivation the installer and CLI make
+ *
+ * Error modes (the interface includes them): an AGENTS.md that exists but
+ * cannot be read throws — a lie like `missing` is worse than a throw; the
+ * shipped-skill derivation throws when the packaged SKILL.md is absent or
+ * nameless. Both only surface on paths that need the reference render
+ * (a parsable, current-version block); no-file and no-block paths never
+ * touch the skill.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -55,12 +62,15 @@ const MARKER_SPAN = new RegExp(`${BEGIN_MARKER}[\\s\\S]*?${END_MARKER}`, "g");
 /** The Pointer status, exactly one of the four states the delta names. */
 export type PointerStatus =
   | { state: "current"; version: string }
-  | { state: "stale"; found: string | null; current: string }
+  | { state: "stale"; found: string; current: string }
   | { state: "missing" }
   | { state: "unparseable" };
 
-/** The version line's grammar: the format name, a space, a semver. */
-const VERSION_LINE = new RegExp(`${POINTER_FORMAT_NAME}\\s+(\\d+\\.\\d+\\.\\d+)`);
+/** The version line's grammar: a dedicated line — format name, semver, EOL. */
+const VERSION_LINE = new RegExp(
+  `^${POINTER_FORMAT_NAME}\\s+(\\d+\\.\\d+\\.\\d+)\\s*$`,
+  "m",
+);
 
 /**
  * The shipped SKILL.md. Resolved relative to this module, so the same
@@ -152,7 +162,7 @@ function compareSemver(a: string, b: string): number {
  * The skill name defaults to the shipped frontmatter's; the default is
  * resolved lazily so the no-file and no-block paths never touch the skill.
  */
-export function pointerStatus(targetRoot: string, skillName?: string): PointerStatus {
+export function pointerStatus(targetRoot: string): PointerStatus {
   const agentsPath = join(targetRoot, "AGENTS.md");
   if (!existsSync(agentsPath)) return { state: "missing" };
   const text = readFileSync(agentsPath, "utf8");
@@ -176,9 +186,8 @@ export function pointerStatus(targetRoot: string, skillName?: string): PointerSt
 
   // Stale predicate = version line AND bytes (design.md): a
   // version-preserving hand-edit is the rot that motivated the change.
-  const name = skillName ?? shippedSkillName();
   const block = text.slice(beginIdx, endIdx + END_MARKER.length);
-  return block === renderPointer(name)
+  return block === renderPointer(shippedSkillName())
     ? { state: "current", version: current }
     : { state: "stale", found: found[1], current };
 }
