@@ -83,6 +83,24 @@ md += r.anchors.refutedList.length === 0
       .map((x) => `- \`${mdSafe(x.entryId)}\` — anchor \`${mdSafe(formatAnchor(x.anchor))}\` — found: ${redactSecrets(mdSafe(x.found))}\n`)
       .join("") + "\n";
 
+// The Pointer's status, verbatim from the report: one line, every state named
+// (pointer-bridge) — the receipt must back the "Pointer current" claim a
+// reader of the demo is asked to trust.
+md += "## Pointer\n\n";
+switch (r.pointer.state) {
+  case "current":
+    md += `current — portolan-pointer ${mdSafe(r.pointer.version)}.\n\n`;
+    break;
+  case "stale":
+    md += `stale — found ${mdSafe(r.pointer.found)}, current is ${mdSafe(r.pointer.current)}.\n\n`;
+    break;
+  case "unreadable":
+    md += `unreadable — ${mdSafe(r.pointer.reason)}.\n\n`;
+    break;
+  default:
+    md += `${r.pointer.state}.\n\n`;
+}
+
 md += "## Adoption of mandated query tools\n\n";
 md += "| Tool | Invocations | First receipt | Last receipt |\n| --- | ---: | --- | --- |\n";
 for (const [tool, stat] of Object.entries(r.adoption.tools)) {

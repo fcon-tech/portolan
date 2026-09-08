@@ -119,12 +119,20 @@
     <div class="card"><h3>Verification as the spine</h3><p>One call — <code>trust.report</code> — re-sounds
       every anchor on the Chart deterministically, then lays out trust labels, staleness, and
       receipts, naming any refuted anchor. Portolan charts itself: <a href="demo/trust-report.md">its own
-      receipt</a> holds 46 entries, 45 <code>measured</code>, 99/99 anchors confirmed.</p></div>
-    <div class="card"><h3>Versioned formats</h3><p>The Chart's data model ships as four named,
-      versioned schemas — chart entries, the trust vocabulary, receipts, and the adjacency
-      graph export (all at 0.1.0, semver from there). A consumer validates an export with the
+      receipt</a> holds 49 entries, 48 <code>measured</code>, 108/108 anchors confirmed,
+      Pointer current.</p></div>
+    <div class="card"><h3>Versioned formats</h3><p>The Chart's data model ships as five named,
+      versioned formats — chart entries, the trust vocabulary, receipts, and the adjacency
+      graph export as JSON Schemas, plus the Pointer block as a versioned text format
+      (all at 0.1.0, semver from there). A consumer validates an export with the
       schemas alone: <a href="formats.md">docs/formats.md</a> is the contract, no source
       reading required.</p></div>
+    <div class="card"><h3>The Pointer — the front door</h3><p>Every surveyed province's
+      <code>AGENTS.md</code> carries a small versioned block that routes each incoming agent
+      session to the harbor: one bootstrap command, the survey mandate. Rendered from one
+      template, kept current by every expedition's close-out, and verified — current /
+      stale / missing — by <code>trust.report</code> at the moment of use. File as pointer,
+      MCP as truth.</p></div>
     <div class="card"><h3>Harbor & night watch</h3><p>A deterministic proposal queue — repairs,
       gaps, new land, and flares (out-of-charter needs filed by expeditions) — plus a bounded
       night watch that launches repairs through any external launcher. Every expedition records
@@ -170,6 +178,9 @@
   <h2>Quickstart</h2>
   <pre><b># survey a target with your agent (one phrase, it installs Portolan itself):</b>
 survey &lt;target&gt; with Portolan
+
+<b># no agent at hand? one command installs skill + MCP + the Pointer:</b>
+bunx --package @fcon-tech/portolan portolan install --target .
 
 <b># render one province's atlas — map + graph, find & filters, hover plates:</b>
 bun core/src/chartroom/cli.ts render --target /path/to/province

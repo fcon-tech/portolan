@@ -29,6 +29,12 @@ each drawn from its own Chart, every group linking to its atlas.
 repairs through any external launcher on a schedule you own, and a one-command
 manual launch for any single proposal. No daemon, ever.
 
+**The Pointer**: every surveyed target's `AGENTS.md` carries a small versioned
+block — one bootstrap command, the harbor mandate — that routes each incoming
+agent session to the harbor. Rendered from one template
+(`portolan-pointer 0.1.0`), kept current by every expedition's close-out, and
+verified by `trust.report` alongside the anchors: current / stale / missing.
+
 **Honesty built in**: facts the surveys could not establish render as blank
 water, never as decoration; sources that changed since the last survey wear a
 *pending correction* hatch; the trust legend is always visible.
@@ -38,8 +44,8 @@ province's verification state on the table: the trust-label distribution,
 what drifted into *pending correction*, the ship's-log tail, and a fresh
 deterministic re-sounding of every anchor on the Chart, any refuted one named
 instead of smoothed over. Portolan charts itself: [its own
-receipt](docs/demo/trust-report.md) holds 46 entries, 45 of them `measured`,
-all 99 anchors re-sounded `confirmed`.
+receipt](docs/demo/trust-report.md) holds 49 entries, 48 of them `measured`,
+all 108 anchors re-sounded `confirmed`, the Pointer current.
 
 ## The trust ladder
 
@@ -62,6 +68,9 @@ bun install -g @fcon-tech/portolan    # or: npm i -g @fcon-tech/portolan
 ```bash
 # your agent installs Portolan itself from one phrase:
 survey <target> with Portolan
+
+# install skill + MCP wiring + the AGENTS.md Pointer into a target:
+portolan install --target /path/to/province
 
 # serve the fifteen MCP tools to your harness:
 portolan serve --target /path/to/province
@@ -89,6 +98,7 @@ Contributors, from a checkout of this repository:
 
 ```bash
 bun core/src/server/main.ts --target /path/to/province    # dev path
+bun scripts/mcp-live-check.ts --target /path/to/province  # live end-to-end MCP check
 ```
 
 ## What's inside
@@ -99,7 +109,7 @@ bun core/src/server/main.ts --target /path/to/province    # dev path
 | `skill/` | the Cartographer's expedition method, as a harness-loadable skill |
 | `adapters/` | opencode installer + expedition launcher, pi/omp shims, drop-in night-watch crontab |
 | `acceptance/` | the sea-trial gate: the whole loop graded against a real corpus |
-| `docs/` | the landing page, the product contract, demo screenshots |
+| `docs/` | the landing page, the product contract, the formats contract, demo artifacts |
 
 ## Documents
 
