@@ -162,7 +162,13 @@ test("3.2 an empty queue prints nothing in chat mode and an empty machine queue 
 
   const json = runCli(target);
   expect(json.status).toBe(0);
-  expect(JSON.parse(json.stdout)).toEqual({ proposals: [] });
+  // The json mode serializes the tool's own result: the Pointer status rides
+  // beside the queue (pointer-bridge) — here `missing`, the fixture has no
+  // AGENTS.md.
+  expect(JSON.parse(json.stdout)).toEqual({
+    proposals: [],
+    pointer: { state: "missing" },
+  });
 });
 
 test("3.2 settings warnings print to stderr; stdout stays postable", () => {

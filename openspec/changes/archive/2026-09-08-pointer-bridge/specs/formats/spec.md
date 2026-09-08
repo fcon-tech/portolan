@@ -1,12 +1,13 @@
 # formats Specification
 
 ## Purpose
+
 The formats are Portolan's interface bet: the data model (anchors, trust
 labels, receipts, staleness) made adoptable by consumers outside the server.
 This capability defines the named formats, their versioning policy and
 stability promise, and the rule that any export renders charted truth only.
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: The formats are named and versioned
 Five formats SHALL be defined. Four SHALL be defined by a JSON Schema file
@@ -83,36 +84,3 @@ entry point an external consumer reads without reading Portolan's source.
 - **THEN** each format section names its defining artifact, the current
   version, and the versioning policy, and no section requires knowledge of
   core internals
-
-### Requirement: The adjacency export renders charted truth only
-The adjacency graph export SHALL be derived from the Chart's machine layer
-only — vessels, typed fairways, ports of entry, beacons, lights, dangers,
-their anchors, trust labels, and staleness. It SHALL NOT invent, decorate,
-or re-grade: every node and edge SHALL carry the trust label and anchors of
-the entries it renders, and stale entries SHALL be marked pending
-correction. What is not in the Chart SHALL NOT appear in the export.
-
-#### Scenario: The export mirrors the Chart
-- **WHEN** the export is produced for a province whose chart holds vessels,
-  fairways with anchors and trust labels, and stale entries
-- **THEN** every exported node and edge carries the anchors, trust label,
-  and staleness of its chart entry, and nothing appears in the export that
-  has no charted counterpart
-
-#### Scenario: Unsurveyed stays unsurveyed
-- **WHEN** the export is produced for a province with `doubtful` and
-  `unsurveyed` markers
-- **THEN** those markers are carried as-is and no export value upgrades
-  them
-
-### Requirement: The export is consumable without the MCP server
-The adjacency export document SHALL be obtainable without running the MCP
-server and SHALL self-describe: it names its format and its schema version.
-A consumer holding only the schemas and the documentation SHALL be able to
-validate the document without importing anything from Portolan's source.
-
-#### Scenario: A non-MCP consumer obtains and validates the export
-- **WHEN** the export is written through the command-line interface and
-  validated against the graph export schema alone
-- **THEN** the document validates, and its self-description names the
-  format and the schema version it was produced against

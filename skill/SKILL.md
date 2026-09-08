@@ -74,7 +74,8 @@ tool installation, and ask it before either occurs. Ask it in these words:
 > Portolan needs network access and external tool installation for this
 > survey (ripgrep, ctags, and the Portolan MCP server). Approve once: for the
 > rest of the session I will run the target's builds and tests without asking
-> again, and I will write only under \<target\>/.portolan/.
+> again, and I will write only under \<target\>/.portolan/, plus the Pointer
+> block in \<target\>/AGENTS.md at the close-out.
 
 Then hold these rules for the whole session:
 
@@ -90,7 +91,10 @@ Then hold these rules for the whole session:
 - Write only under `<target>/.portolan/`: the Chart under
   `<target>/.portolan/chart/`, the ship's log, the Harbor Master's
   snapshot and decision history, and the archived Sailing Directions at
-  `<target>/.portolan/sailing-directions.md`. Nothing else.
+  `<target>/.portolan/sailing-directions.md`. The single exception is the
+  Pointer block in `<target>/AGENTS.md`, placed and refreshed exactly per
+  the close-out step (section 9); everything else stays under
+  `.portolan/`.
 - Never mutate the target's source: no edits, no formatting, no generated
   code, no dependency upgrades. Portolan is a reader, not a surgeon.
 - Never request, perform, or propose a source change. If the target needs
@@ -245,7 +249,30 @@ anchors and trust labels.
 Conclude every Expedition with Sailing Directions, in the conversation and
 archived at `<target>/.portolan/sailing-directions.md` (fill
 `sailing-directions.template.md`; strip the template's instructional
-comments in the delivered brief). The brief states:
+comments in the delivered brief).
+
+Before the brief, bring the Pointer current — the one write an Expedition
+makes outside `.portolan/` (section 3's exception):
+
+- Read `<target>/AGENTS.md` and find the block between
+  `<!-- portolan:harbor:begin -->` and `<!-- portolan:harbor:end -->`.
+  Compare it against the fresh render — the `portolan-pointer` version line
+  and the bytes (`portolan pointer` prints the fresh block).
+- Current (the version line and the bytes both match): say nothing, write
+  nothing, append no receipt.
+- Stale (the version line behind, or the bytes diverging from the render)
+  in an existing `AGENTS.md`: replace the text between the markers with the
+  fresh block — stray markers cleaned first; an existing file with no block
+  gains one appended block — and receipt it with `log.append`, command
+  `pointer install`, meta naming the found version, the set version, and
+  the file.
+- Cleanup removes only complete stray marker pairs and the text between
+  them — never any other line.
+- No `AGENTS.md` at all: report `missing` and touch nothing — installation
+  owns creating the file; the close-out never creates a top-level file.
+- No other edit to `AGENTS.md`, ever.
+
+The brief states:
 
 - the top findings on structure, risks, and smells — each with its anchors,
   its trust label, and where it lives on the Chart;
@@ -276,10 +303,10 @@ One MCP server over stdio, bound to the target root at launch. Fifteen tools:
 | `sound.anchor` | verify an anchor resolves: `confirmed` / `refuted` |
 | `log.append` | receipt an executed command; returns the receipt id |
 | `log.read` | read receipts by id or filter |
-| `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint |
+| `expeditions.propose` | no input; the deterministic expedition-proposal queue — repair, gap, new-land — each with evidence anchors, a scope estimate, and a fingerprint; also reports the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable) — a fact, never a queue input |
 | `expeditions.decide` | record the Governor's decision on a proposal — fingerprint plus accepted or declined; refusals hold while the evidence is unchanged |
 | `chart.render` | no input; renders the Chart Room — the one-file visual export of this province's waters (archipelago map + dependency graph, every trust label visible) at `<target>/.portolan/chart-room.html`. When the Governor asks to *see* the landscape ("show me the province" or similar, in any language), call it and point to the file; say plainly that the picture renders only what the Chart holds, and nothing more |
-| `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, ship's-log tail; feeds the Sailing Directions |
+| `trust.report` | no input; the verification summary — trust-label distribution, per-kind counts, staleness refreshed first, every chart anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable), ship's-log tail; feeds the Sailing Directions |
 | `chart.neighborhood` | one vessel's neighborhood in one call: the charted fairways touching it (direction `in`/`out`/`both`, depth 1–3) with trust labels, anchors, and staleness, plus the touched vessels ranked by fan-in with their ports of entry; budgeted (`maxEdges`, `maxBytes`) and a budget cut is stated loudly; `verify: true` re-sounds every edge and names the refuted ones; read-only toward the Chart, and each call receipts itself in the ship's log |
 | `chart.export` | no input; the whole Chart as one self-describing adjacency document (format `portolan-adjacency`): every charted entry as a node or edge carrying its anchors, trust label, and staleness; byte-budgeted, and a cut is reported loudly naming the omitted vessels with their counts; staleness refreshed first, as chart.read; read-only toward the Chart, and each call receipts itself in the ship's log |
 

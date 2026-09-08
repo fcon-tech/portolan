@@ -21,7 +21,10 @@ Key rules:
 - The old v2 repo is frozen reference, preserved on the `v2-archive` branch
   of this repository: read for ideas, copy no code.
 - Code, artifacts, and commit messages in English; reply to the Governor in
-  Russian.
+  Russian — plain, human Russian (Ilyakhov's infostyle): no anglicisms or
+  jargon where a common Russian word exists, no bureaucratese, short
+  concrete sentences. Locked nautical terms and tool/format identifiers
+  stay as they are.
 
 ## Working principles
 
@@ -73,9 +76,11 @@ scripts/leak-gate.sh                # no machine paths in tracked files
 ```
 
 <!-- portolan:harbor:begin -->
-## Portolan province
+## Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`)
 
-This target is a charted Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`).
+At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. Call `chart.neighborhood` before a task touching more than one file or vessel. Never modify anything outside `.portolan/`, this block's own refresh excepted. The full Cartographer's method: the `portolan-expedition` skill (your harness loads it from its skills directory).
 
-At session start, before other work: call the `expeditions.propose` tool from the `portolan` MCP server; if the queue is non-empty, present the top proposals in ONE chat message (kind, evidence summary, scope) and ask for a one-phrase decision; record it with `expeditions.decide`. Answer landscape questions from the Chart, citing anchors and trust labels. The full Cartographer's method: skill/SKILL.md. Never modify anything outside `.portolan/`.
+No `portolan` tools in this harness yet? One command installs the server, the skill, and this block: `bunx --package @fcon-tech/portolan portolan install --target .`
+
+portolan-pointer 0.1.0
 <!-- portolan:harbor:end -->

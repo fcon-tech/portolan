@@ -50,6 +50,7 @@ import { join } from "node:path";
 import type { Anchor, IndexedEntry, VesselEntry } from "../types";
 import { resolveInsideTarget } from "../perimeter";
 import { readChart } from "../chart-store";
+import { pointerStatus, type PointerStatus } from "../pointer";
 import { refreshStaleness } from "../staleness";
 import { chargeStaleEntries, compareVesselRank, vesselFanIn } from "../fan-in";
 import { readReceipts } from "../tools/log";
@@ -102,6 +103,8 @@ export interface Proposal {
 /** What `expeditions.propose` returns: the ranked, refusal-filtered queue. */
 export interface ProposeResult {
   proposals: Proposal[];
+  /** The Pointer's status — one of current/stale/missing/unparseable/unreadable (../pointer), a reported fact, never a queue input. */
+  pointer: PointerStatus;
 }
 
 const KIND_RANK: Record<ProposalKind, number> = { repair: 0, "new-land": 1, gap: 2 };
@@ -376,7 +379,12 @@ export function computeProposals(
     );
   });
 
-  if (options.includeDeclined === true) return { proposals };
+  // The Pointer status (pointer-bridge): reported beside the queue, never a
+  // queue input — the four deterministic inputs above remain the queue's
+  // only sources, so a stale or missing Pointer proposes nothing. Reads
+  // AGENTS.md and nothing else in the target; writes nothing.
+  const pointer = pointerStatus(targetRoot);
+  if (options.includeDeclined === true) return { proposals, pointer };
   // Refusal filtering keys on `declined` only (the standing rule): an
   // acceptance — Governor's or night-watch's — never filters, and neither
   // does a night-watch `launch-failed` outcome, so a failed launch leaves
@@ -392,6 +400,7 @@ export function computeProposals(
   );
   const declined = new Set(declinedRecords.map((record) => record.fingerprint));
   return {
+    pointer,
     proposals: proposals.filter((p) => {
       if (declined.has(p.fingerprint)) return false;
       if (p.kind !== "repair") return true;

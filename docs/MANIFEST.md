@@ -104,7 +104,7 @@ MCP tools (core):
 | --- | --- |
 | `chart.read` / `chart.write` | Chart CRUD; schema-validated; requires anchors + trust labels, else rejects |
 | `chart.render` | the Chart Room: the one-file visual export of the province |
-| `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, ship's-log tail |
+| `trust.report` | the verification summary: trust-label distribution, staleness after a refresh, every anchor re-sounded deterministically with refuted ones named, the Pointer status of the province's `AGENTS.md` block (current / stale / missing / unparseable / unreadable), ship's-log tail |
 | `chart.neighborhood` | the neighborhood query over the Chart's fairways: direction/depth traversal, fan-in-ranked, budgeted, on-demand verify re-sounding, read-only (one ship's-log receipt per call) |
 | `chart.export` | the adjacency graph export: every charted entry drawn as a node or edge carrying its anchors, trust label, and staleness, in one self-describing JSON document (format `portolan-adjacency`); byte-budgeted with loud truncation naming the omitted vessels; staleness refreshed first, as chart.read; read-only (one ship's-log receipt per call) |
 | `sweep` | ripgrep-backed search returning anchored chunks |
@@ -134,8 +134,10 @@ always `reported`. Jira/Confluence optional adapters, never required.
 The Governor writes one phrase ("survey <target> with Portolan") → the agent
 installs the skill + MCP into its harness, asks the one approval, runs the
 expedition, and returns **Sailing Directions**: the top findings (structure,
-risks, smells) with anchors and where the Chart lives. Afterwards: continuous
-Q&A; the Chart survives sessions.
+risks, smells) with anchors and where the Chart lives. The close-out leaves
+the **Pointer** block in `<target>/AGENTS.md` current — the one write an
+expedition makes outside `.portolan/`, and the front door every later
+session reads. Afterwards: continuous Q&A; the Chart survives sessions.
 
 ## Sea trial (acceptance)
 
@@ -211,3 +213,4 @@ portolan/
 | One-call verification summary | Trust report | Верификационная сводка |
 | An expedition's recorded promise of scope (vessels and entries) | Charter | Чартер |
 | Out-of-charter repair need, filed as a receipt | Flare | Ракета |
+| The `AGENTS.md` block that routes every incoming session to the harbor (file as pointer, MCP as truth) | Pointer | Указатель |

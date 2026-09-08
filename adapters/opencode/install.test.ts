@@ -12,13 +12,25 @@
  * RED until task 5.2 switches install.ts off REPO_ROOT.
  */
 import { afterAll, test, expect } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
+import { renderPointer, skillNameFromFrontmatter } from "../../core/src/pointer/index";
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
 const INSTALLER = join(REPO_ROOT, "adapters", "opencode", "install.ts");
+const BEGIN = "<!-- portolan:harbor:begin -->";
+const END = "<!-- portolan:harbor:end -->";
 
 const dirs: string[] = [];
 afterAll(() => {
@@ -81,6 +93,18 @@ test("the installer copies the skill into ~/.config/opencode/skills and keeps AG
   const agents = readFileSync(join(province, "AGENTS.md"), "utf8");
   expect(agents).not.toContain(REPO_ROOT);
   expect(agents).toContain("portolan-expedition");
+  // Shared template: the block the installer places is byte-identical to the
+  // core render (the same source `portolan pointer` prints; pointer-bridge).
+  const begin = agents.indexOf(BEGIN);
+  const end = agents.indexOf(END);
+  expect(
+    agents.slice(begin, end + END.length),
+    "the placed block equals the core render",
+  ).toBe(
+    renderPointer(
+      skillNameFromFrontmatter(readFileSync(join(REPO_ROOT, "skill", "SKILL.md"), "utf8")),
+    ),
+  );
 });
 
 // Preserved behavior (design.md decision 5): JSONC surgery keeps comments.
@@ -102,4 +126,86 @@ test("user comments in a pre-existing JSONC config survive the install verbatim"
   expect(text).toContain('"theme": "paper"');
   // The portolan block landed too.
   expect(text).toContain('"portolan"');
+});
+
+// Security review (auditor finding 3): a symlinked AGENTS.md is refused
+// before any read or write — the Pointer is never placed through a link,
+// and the link's target stays byte-identical.
+function canSymlink(): boolean {
+  try {
+    const probe = tempDir("portolan-installer-symprobe-");
+    symlinkSync("unrealized-target", join(probe, "probe-link"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test.skipIf(!canSymlink())(
+  "the installer refuses a symlinked AGENTS.md and leaves the link target byte-identical",
+  () => {
+    const province = tempDir("portolan-installer-linkprov-");
+    const home = tempDir("portolan-installer-linkhome-");
+    const outside = tempDir("portolan-installer-linkoutside-");
+    const realFile = join(outside, "REAL.md");
+    writeFileSync(realFile, "# the real agent notes\n");
+    symlinkSync(realFile, join(province, "AGENTS.md"));
+
+    const result = spawnSync(process.execPath, [INSTALLER, "--target", province], {
+      encoding: "utf8",
+      env: { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, ".config") },
+    });
+
+    expect(result.status, "the installer exits 1 on a symlinked AGENTS.md").toBe(1);
+    expect(result.stderr, "the refusal is stated honestly, never silent").toContain("symlink");
+    expect(readFileSync(realFile, "utf8"), "nothing was written through the link").toBe(
+      "# the real agent notes\n",
+    );
+  },
+);
+
+// Security review (auditor finding 5): the frontmatter safety guard also
+// rejects "." — a lone dot passes the character class and would turn the
+// skills-root wipe into rmSync(<skills root>/.), destroying every
+// installed skill. The installer resolves its skill source relative to
+// itself, so the hostile frontmatter is staged in a repo-shaped copy.
+test("the installer refuses a frontmatter name of \".\" and leaves the skills root intact", () => {
+  const stage = tempDir("portolan-installer-stage-");
+  mkdirSync(join(stage, "adapters", "opencode"), { recursive: true });
+  mkdirSync(join(stage, "core", "src", "pointer"), { recursive: true });
+  mkdirSync(join(stage, "skill"), { recursive: true });
+  copyFileSync(INSTALLER, join(stage, "adapters", "opencode", "install.ts"));
+  copyFileSync(
+    join(REPO_ROOT, "core", "src", "pointer", "index.ts"),
+    join(stage, "core", "src", "pointer", "index.ts"),
+  );
+  copyFileSync(
+    join(REPO_ROOT, "core", "src", "perimeter.ts"),
+    join(stage, "core", "src", "perimeter.ts"),
+  );
+  writeFileSync(
+    join(stage, "skill", "SKILL.md"),
+    "---\nname: .\ndescription: a hostile frontmatter name\n---\n",
+  );
+
+  const province = tempDir("portolan-installer-dotprov-");
+  const home = tempDir("portolan-installer-dothome-");
+  const sentinel = join(home, ".config", "opencode", "skills", "someone-elses-skill", "SKILL.md");
+  mkdirSync(dirname(sentinel), { recursive: true });
+  writeFileSync(sentinel, "name: someone-elses-skill\n");
+
+  const result = spawnSync(
+    process.execPath,
+    [join(stage, "adapters", "opencode", "install.ts"), "--target", province],
+    {
+      encoding: "utf8",
+      env: { ...process.env, HOME: home, XDG_CONFIG_HOME: join(home, ".config") },
+    },
+  );
+
+  expect(result.status, "the installer exits 1 on the \".\" name").toBe(1);
+  expect(result.stderr, "the refusal names the unsafe directory name").toContain(
+    "safe directory name",
+  );
+  expect(existsSync(sentinel), "the \".\" name must not wipe the skills root").toBe(true);
 });

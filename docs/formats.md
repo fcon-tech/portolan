@@ -1,10 +1,12 @@
 # Portolan formats
 
-The four machine formats of a Portolan province. Each is defined by one JSON
+The five machine formats of a Portolan province. Four are defined by one JSON
 Schema file (draft 2020-12) in [`core/schema/`](../core/schema/), and that
-file is the single source of the contract. This page is the entry point for
-a consumer outside Portolan: the schemas and this page are enough to
-validate the data — no knowledge of Portolan's source is required.
+file is the single source of the contract; the fifth, the pointer, is a text
+format defined by its section below and the core module that renders it.
+This page is the entry point for a consumer outside Portolan: the schemas
+and this page are enough to validate the data — no knowledge of Portolan's
+source is required.
 
 Every schema file carries a `version` field and a stable `$id`. The `$id`
 is not a function of the version: it never changes when the version does.
@@ -19,10 +21,13 @@ Semver from `0.1.0`. While the major version is 0:
   `0.1.0` → `0.1.1`.
 
 Declaring `1.0.0` is a separate decision of the Governor, recorded when
-made. The version lives only in the schema file; the data files
-(`index.jsonl`, `log.jsonl`) carry no format version. Where a format's
-documents self-describe, they name the schema version they were produced
-against (the adjacency export's `version` field — the only one).
+made. The version lives in the schema file (for the pointer: in the core
+module that renders it); the data files (`index.jsonl`, `log.jsonl`) carry
+no format version. Where a format's documents self-describe, they name the
+format version they were produced against: the adjacency export's
+`version` field and the pointer block's version line. The pointer's
+version is the format's, never the package's — a package release never
+stales a single province.
 
 Stability promise: a consumer validating against version `0.1.x` keeps
 validating against every `0.1.y`. A minor bump announces a breaking change;
@@ -108,3 +113,36 @@ must be registered for them; the receipt schema stands alone.
 - **Current version:** `0.1.0`
 - **Stability:** the versioning policy above. References the trust
   vocabulary by `$id` — register both files (snippet above).
+
+## Pointer block — `core/src/pointer/index.ts`
+
+- **Purpose:** the marker-delimited block a charted province's `AGENTS.md`
+  carries between `<!-- portolan:harbor:begin -->` and
+  `<!-- portolan:harbor:end -->`. Its content is a closed set of mandates
+  that route an agent session to the Chart's tools — `expeditions.propose`
+  at session start, the one-message queue decision via `expeditions.decide`,
+  landscape questions answered from the Chart with anchors and trust
+  labels, `chart.neighborhood` before a multi-file or multi-vessel task,
+  the `.portolan/` write boundary (the block's own refresh excepted), the
+  expedition skill named as the full method, and the one install command
+  for a visitor without the tools. The block mandates; it never describes
+  or summarizes the codebase.
+- **Defining artifact:** the core module `core/src/pointer/index.ts` —
+  `renderPointer(skillName)` is the single source of the text; the opencode
+  installer, the `portolan pointer` command, and the status check all
+  consume that one render, so they cannot diverge. The block sits between
+  the harbor markers and carries one dedicated version line matching
+  `portolan-pointer <semver>`.
+- **How to obtain:** `portolan pointer` prints the current block (no
+  server, no receipt); `portolan install --target <province root>` places
+  it.
+- **How to check:** the block is current when its version line names the
+  current format version and its bytes equal the render; `trust.report`
+  and `expeditions.propose` report the status — `current` / `stale` /
+  `missing` / `unparseable` / `unreadable` — as a fact, never a queue
+  input. The repair path is the expedition's close-out step and reinstall,
+  not the harbor.
+- **Current version:** `0.1.0`
+- **Stability:** the versioning policy above. The mandate set is closed:
+  adding, removing, or rewording a mandate — the bootstrap command
+  included — is a breaking change and bumps the minor.

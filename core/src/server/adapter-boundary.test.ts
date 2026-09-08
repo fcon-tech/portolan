@@ -28,6 +28,11 @@ test("the check fails when a tool module is imported from an adapter", () => {
       [
         'import { sweep } from "@portolan/core";',
         'import { writeChart } from "../../../core/src/chart-store";',
+        // The Pointer template is the one sanctioned import — not flagged.
+        'import { renderPointer } from "../../../core/src/pointer/index";',
+        // But a specifier that merely passes through the pointer directory
+        // into other core code is still flagged.
+        'import { sweep } from "../../../core/src/pointer/index/../tools/sweep";',
         "export const x = 1;",
       ].join("\n"),
     );
@@ -50,6 +55,21 @@ test("the check fails when a tool module is imported from an adapter", () => {
     const fromPackageImport = violations.find((v) => v.file === "pi/evil.ts")!;
     expect(fromPackageImport.line).toBe(1);
     expect(fromPackageImport.text).toContain("@portolan/core");
+    // Exactly three of the four imports are flagged: the sanctioned Pointer
+    // template import is absent, the evasion through the pointer directory
+    // into tools is present.
+    const evilLines = violations
+      .filter((v) => v.file === "pi/evil.ts")
+      .map((v) => v.text);
+    expect(
+      evilLines.some((text) => text.endsWith('core/src/pointer/index";')),
+      "the sanctioned Pointer template import is not flagged",
+    ).toBe(false);
+    expect(
+      evilLines.some((text) => text.includes("pointer/index/../tools/sweep")),
+      "a specifier passing through the pointer directory into tools is flagged",
+    ).toBe(true);
+    expect(evilLines.length, "three imports flagged, one sanctioned").toBe(3);
   } finally {
     rmSync(sandbox, { recursive: true, force: true });
   }
