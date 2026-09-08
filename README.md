@@ -45,7 +45,7 @@ what drifted into *pending correction*, the ship's-log tail, and a fresh
 deterministic re-sounding of every anchor on the Chart, any refuted one named
 instead of smoothed over. Portolan charts itself: [its own
 receipt](docs/demo/trust-report.md) holds 49 entries, 48 of them `measured`,
-all 108 anchors re-sounded `confirmed`, the Pointer current.
+all 116 anchors re-sounded `confirmed`, the Pointer current.
 
 ## The trust ladder
 

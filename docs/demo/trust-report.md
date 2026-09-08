@@ -30,7 +30,7 @@ None.
 
 ## Anchor re-sounding
 
-Sounded 108 of 108 anchors: 108 confirmed, 0 refuted.
+Sounded 116 of 116 anchors: 116 confirmed, 0 refuted.
 
 None refuted.
 
@@ -42,8 +42,8 @@ current — portolan-pointer 0.1.0.
 
 | Tool | Invocations | First receipt | Last receipt |
 | --- | ---: | --- | --- |
-| chart.neighborhood | 3 | `r42` | `r64` |
+| chart.neighborhood | 4 | `r42` | `r66` |
 
 ## Ship's log
 
-65 receipts; most recent `r65`: `chart.export`
+70 receipts; most recent `r70`: `expedition close-out`
