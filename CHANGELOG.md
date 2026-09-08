@@ -1,5 +1,55 @@
 # Changelog
 
+## 0.7.0 — 2026-09-08
+
+The Pointer (openspec change `pointer-bridge`, backlog C10): the
+marker-delimited block a charted province's `AGENTS.md` carries is promoted
+from an installer side effect to a product-owned, versioned, verified
+artifact — the one generated text surface the backlog evidence allows (file
+as pointer, MCP as truth; instructions are the channel agents obey, passive
+overviews rot). The rot the change kills was live in this repo: the
+committed block had been hand-edited away from what the installer emits,
+with no version and no verification to say so.
+
+- **One template, one version.** `core/src/pointer` owns the block's single
+  source; the opencode installer and the new `portolan pointer` command
+  render byte-identical blocks from it. The block is the fifth named
+  format, `portolan-pointer 0.1.0` (a text format — markers plus a
+  dedicated version line, documented in `docs/formats.md`; no JSON
+  Schema). The version is the format's, never the package's: a package
+  release never stales a single province.
+- **The front door gains a handle.** `portolan install --target <t>` routes
+  to the harness installer — previously reachable only from a checkout by
+  an internal path — and the block's bootstrap line names the runnable
+  form (`bunx --package @fcon-tech/portolan portolan install --target .`)
+  so a visitor without the tools has one command, not a labyrinth.
+- **The expedition keeps the Pointer current.** The skill's close-out step
+  compares the block against the fresh render — version line and bytes; a
+  hand-edit with an intact version line is still stale, exactly the
+  incident that motivated the change. Current buys silence; stale is
+  replaced and receipted (`pointer install` — found version, set version,
+  file); a province with no `AGENTS.md` reports `missing` and is left to
+  install — the close-out never creates a top-level file.
+- **The status is a reported fact, never a queue input.** `trust.report`
+  and `expeditions.propose` carry the same Pointer status — `current` /
+  `stale` / `missing` / `unparseable` / `unreadable` — so the front door
+  verifies itself at the moment of use. Reads are perimeter-bounded
+  (escaping symlink, non-regular file, or oversized `AGENTS.md` reports
+  `unreadable` with a reason instead of crashing or lying); a forged
+  second marker pair reads `unparseable` and placement collapses it.
+- **The write perimeter has one named exception.** The Cartographer places
+  and refreshes the Pointer block in `<target>/AGENTS.md` between the
+  markers — the single write an expedition makes outside `.portolan/`,
+  pre-disclosed in the one approval, receipted in the ship's log. The
+  block's own boundary mandate carries the exception. The installer
+  refuses to place through a symlinked `AGENTS.md`.
+- **Honest limits.** The Pointer's effect on invocation stays `unsurveyed`
+  (no A/B; the underlying instruction-channel evidence is one unreplicated
+  study); receipts count installs, not mandate compliance. The unpinned
+  bootstrap command is a recorded accepted risk with a trigger
+  (design.md): any npm account or scope anomaly puts pinning to the
+  Governor.
+
 ## 0.6.0 — 2026-09-06
 
 The expedition charter (openspec change `expedition-charter`): what an

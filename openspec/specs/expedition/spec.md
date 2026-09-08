@@ -33,8 +33,10 @@ The expedition SHALL ask exactly one explicit approval per session,
 covering network access and external tool installation, and SHALL ask it
 before any network access or installation occurs. Running the target's
 builds and tests SHALL require no further approval. The expedition SHALL
-write only under `<target>/.portolan/` and SHALL never request, perform, or
-propose mutation of the target's source.
+write only under `<target>/.portolan/` — except the Pointer block in
+`<target>/AGENTS.md`, placed and refreshed as the pointer capability
+mandates — and SHALL never request, perform, or propose mutation of the
+target's source.
 
 #### Scenario: One prompt, then work
 - **WHEN** the first run begins
@@ -50,8 +52,10 @@ propose mutation of the target's source.
 
 #### Scenario: The perimeter holds
 - **WHEN** the expedition completes
-- **THEN** every file it created or modified is under `<target>/.portolan/`
-  and the target's source is byte-identical to before
+- **THEN** every file it created or modified is under
+  `<target>/.portolan/` — except the Pointer block in
+  `<target>/AGENTS.md`, whose placement the skill mandates — and the
+  target's source other than that block is byte-identical to before
 
 ### Requirement: The skill teaches a fixed survey order
 The expedition skill SHALL teach one survey order: first identify the
