@@ -46,16 +46,20 @@ Key rules:
 
 ## OpenSpec workflow
 
-Product behavior changes go through full OpenSpec cycles: explore → propose →
+Product behavior changes and large fixes go through full OpenSpec cycles: explore → propose →
 apply → verify → archive — openspec's own agent commands under
 `.zcode/commands/opsx/`; use `/opsx:*` where the harness serves them,
-otherwise run the same stages by hand. Nothing ships without a cycle; nothing
-stays unarchived. The rules:
+otherwise run the same stages by hand. A behavior change does not ship without
+a cycle, and its cycle does not stay unarchived. Documentation, process,
+mechanical edits, and small repairs of already specified behavior use the
+existing task or ticket, an ordinary working branch and pull request; they do not require an OpenSpec change, a
+`change/<id>` branch, a release-version bump, or a changelog entry. Their CI
+still runs. The rules for behavior changes:
 
 - Every change ships through a merge request from a `change/<id>` branch —
   never straight to `main`; merge only on green CI.
-- At merge time: bump the `@portolan/core` version and add the change's entry
-  to `CHANGELOG.md`.
+- At merge time for a behavior change: bump the `@portolan/core` version and
+  add the change's entry to `CHANGELOG.md`.
 - Verification is written before the work, and a skipped test-first pass is
   a recorded decision in the task report, not a default.
 
@@ -65,7 +69,7 @@ cycle and expeditions, the joints — is fixed in
 
 ## Verification
 
-Run before claiming anything is done:
+For a product-behavior cycle, run before claiming it done:
 
 ```sh
 bun test                            # repo root
@@ -74,6 +78,11 @@ openspec validate --specs --strict  # living specs
 bun run skill/verify/checks.ts      # expedition skill
 scripts/leak-gate.sh                # no machine paths in tracked files
 ```
+
+For documentation, process, mechanical edits, and small repairs of already
+specified behavior, inspect the final diff, run the smallest check that exercises the changed contract and the leak
+gate, then rely on the pull-request CI for the repository gate. Report exactly
+which checks ran and any material gap.
 
 <!-- portolan:harbor:begin -->
 ## Portolan province (Chart at `.portolan/chart/`, ship's log at `.portolan/log.jsonl`)
@@ -84,3 +93,12 @@ No `portolan` tools in this harness yet? One command installs the server, the sk
 
 portolan-pointer 0.1.0
 <!-- portolan:harbor:end -->
+
+## Repository scope of the generated harbor pointer
+
+The Portolan core template owns the generated block above. In this repository,
+this task scope overrides its unconditional session-start wording: run the
+harbor briefing only for Portolan planning or an expedition; surface a queue
+decision only when it materially affects the requested work. The `.portolan/`
+write boundary applies to Cartographer chart maintenance. Explicitly requested
+source changes follow the development workflow above.

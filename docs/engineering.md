@@ -126,16 +126,19 @@ key — walk the ladder and stop at the first rung that holds:
 
 ## 4. Verification is the bar
 
-Nothing is declared done until the block in AGENTS.md ("Verification") runs
-green: `bun test`, `tsc --noEmit` in core and in acceptance,
-`openspec validate --specs --strict`, the expedition-skill checks, the leak
-gate. Claims are reported with evidence labels (`verified` /
+For a product-behavior cycle, nothing is declared done until the full block in
+AGENTS.md ("Verification") runs green: `bun test`, `tsc --noEmit` in core and
+in acceptance, `openspec validate --specs --strict`, the expedition-skill
+checks, and the leak gate. For documentation, process, mechanical edits,
+and small repairs of already specified behavior, inspect the final diff, run the smallest check for the changed
+contract and the leak gate, then require pull-request CI. Claims are reported
+with evidence labels (`verified` /
 `not_assessed` / `assumed` / `blocked` / `failed`) and never
 self-certified: the Governor delivers the verdict.
 
 The repo charts itself. Sources changed since the last survey put their
 vessels `pending correction`; the harbor watch proposes the repair at
 session start, and the self-chart under `.portolan/` is corrected from that
-proposal (extend what stands, never redraw). The committed trust-report
+proposal during Portolan planning or an expedition (extend what stands, never redraw). The committed trust-report
 receipt (`docs/demo/trust-report.md`) is refreshed whenever it would
 otherwise state numbers that no longer hold.
