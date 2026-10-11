@@ -10,12 +10,13 @@ the two systems.
 
 ## J1 — the unified session briefing
 
-- The harbor half is the Pointer in AGENTS.md (between
+- For a Portolan planning or expedition task, the harbor half is the Pointer in AGENTS.md (between
   `<!-- portolan:harbor:begin -->` and `<!-- portolan:harbor:end -->`): the
   block is owned by the core template (`core/src/pointer`), written at
   install and at expedition close-out, version-checked by the Pointer status
-  in `trust.report` and `expeditions.propose` — run it as written at session
-  start; the OpenSpec half follows.
+  in `trust.report` and `expeditions.propose`. The repository-local scope
+  rule outside the generated block limits briefing and a decision round to
+  material Portolan work; the OpenSpec half follows.
 - The OpenSpec half, added here: the same briefing appends the active-change
   state, if any, from `openspec list --json` — harbor queue first, then
   change state. One decision round for the Governor, not two.
@@ -26,11 +27,15 @@ the two systems.
 
 ## J4 — routing the work
 
-- Product behavior changes → an OpenSpec cycle: explore → propose → apply →
+- Product behavior changes and large fixes → an OpenSpec cycle: explore → propose → apply →
   verify → archive (the `/opsx:*` stages under `.zcode/commands/opsx/`; in a
   harness without them, the same stages run by hand under the same rules),
   shipped through a merge request from a `change/<id>` branch, merged only on
   green CI.
+- Documentation, process, mechanical edits, and small repairs of already
+  specified behavior → the existing task or ticket and an ordinary working branch and pull request. They do not need an
+  OpenSpec change, a `change/<id>` branch, a release version, or a changelog
+  entry; pull-request CI remains required.
 - The cycle's procedure, owned here: `openspec validate --strict` passes
   before implementation and keeps passing; `bun test` stays green through
   apply; verify is the whole-change review plus the socratic pass — a pass
@@ -96,5 +101,6 @@ recorded trigger, never by default.
 ## Roles
 
 The Cartographer is the main agent's stance while it surveys a province — the
-method is skill/SKILL.md — not a subagent role. The cycle's stage→executor
-assignments live in the global agent contract (`~/.zcode/AGENTS.md`).
+method is skill/SKILL.md — not a subagent role. In Codex, delegation follows
+the global v2 contract and host policy and uses native Codex infrastructure.
+`~/.zcode/AGENTS.md` governs only its standalone runtime.
